@@ -81,14 +81,17 @@ these studios directly" section at the bottom of the List view. Currently: Turn 
 Theory, Bethesda/ZeniMax, Aspyr. Add more (Mojang, Techland, iam8bit, Starchild) once we
 confirm their careers URLs resolve.
 
-## 🎯 High-value future bespoke fetcher: ZeniMax / Bethesda
+## ✅ ZeniMax / Bethesda — SCRAPED (June 7 2026)
 
-jobs.zenimax.com covers Bethesda Game Studios, ZeniMax Online, id Software, Arkane, MachineGames
-(~100 jobs per GrackleHQ). Worth a dedicated fetcher someday. BUT: investigated June 2026 —
-the /jobs page is a custom Vue app; job IDs are embedded but in an obfuscated client-rendered
-form (no clean JSON, no HTML cards, no standard ATS). Reverse-engineering it is bespoke + fragile
-(GrackleHQ hand-built one for it). Stays on the directory until/unless someone builds the custom
-fetcher. Valve (valvesoftware.com/jobs) = custom site, also directory.
+~~Future bespoke fetcher.~~ DONE. The earlier "obfuscated custom Vue app" finding was STALE —
+jobs.zenimax.com/jobs now embeds its full posting list as an HTML-entity-encoded JSON array
+right in the page. The `zenimax` fetcher decodes the entities, bracket-matches the array, and
+JSON.parses it. Each posting names its real studio in `location.name` (Bethesda Game Studios,
+Bethesda Game Studios - Montreal, MachineGames, Arkane Studios - France, ZeniMax Media → "(HQ)"),
+so jobs split into proper studios under the "ZeniMax / Bethesda" umbrella. The apply links are
+iCIMS (careers-zenimax.icims.com), so salary backfill reads them via the generic path. ~32 jobs.
+LESSON: island "dead end" notes have dates and go stale — sites change. Re-audit periodically.
+(Valve = still custom; see the re-audit section below.)
 
 ## 🌍 Top-40 coverage push (June 2026)
 
@@ -311,3 +314,67 @@ scraper running first (so we keep historical snapshots).
 - SMS alert system (the original premium feature — needs a backend)
 - More studios
 - Job history / trends over time (needs the cloud scraper running first)
+
+## 🏝️→🌍 Full Island re-audit (June 7 2026)
+
+Prompted by ZeniMax turning out to be scrapeable after all, we re-tested EVERY remaining
+directory studio's careers system from scratch (web_fetch + search + browser render). Many old
+"can't scrape" notes were stale. Results sorted into three buckets.
+
+### A. MAINLAND-READY — already on an ATS we support (one-line / near one-line add)
+
+| Studio | ATS | Account/token | Notes |
+|---|---|---|---|
+| Nintendo | Greenhouse | `nintendo` | ~55 roles incl. Retro Studios, NST |
+| Mojang Studios | Greenhouse | `mojangab` | low count now (Stockholm) |
+| Bandai Namco | Greenhouse | `bandainamco` | ~7 jobs (was thought custom GraphQL — stale) |
+| Firaxis Games | Greenhouse | `firaxis` | 2K studio |
+| That's No Moon | Greenhouse | `thatsnomoonentertainment` | |
+| NCSOFT (NC America) | Greenhouse | `ncamerica` | |
+| HoYoverse | Greenhouse | `hoyoverse` | feed valid but 0 open now |
+| Frontier Developments | Lever (EU) | `frontier` via api.eu.lever.co | needs EU-host support in Lever fetcher (public feed is back) |
+| Behaviour Interactive | Lever | `bhvr` | Dead by Daylight |
+| Sega | Workday | `sega.wd3.myworkdayjobs.com/SEGA_Careers` | |
+| Cloud Imperium Games | Workday | `cloudimperiumgames.wd1 / CIG_Global_Careers` | |
+| Jagex | Workable | `jagex-limited` | ~13 jobs |
+| Climax Studios | Workable | `climax-studios` | ~25 jobs |
+| Rebellion | Workable | `rebellion` | ~50 jobs |
+| Keywords Studios | SmartRecruiters | `KeywordsStudios` | verify API call sends proper headers |
+| IO Interactive | Teamtailor | `apply.ioi.dk` | |
+| OtherSide Entertainment | Teamtailor | `careers.otherside-e.com` | 0 open now |
+| Warner Bros. Games | Phenom | `careers.wbd.com` (Games filter) | all-WBD; filter to games |
+| Wizards of the Coast | Eightfold | `careers.hasbro.com` (dept=WIZARDS) | Invoke roles sit on SuccessFactors — partial |
+| Aspyr Media | Greenhouse | token TBD | confirmed via `gh_jid`; real board token must be pulled from the page embed (not "aspyr"/"aspyrmedia") |
+
+### B. FEASIBLE — clean public feed, but a platform we don't support yet (build one fetcher)
+
+Grouped by platform (build the platform once, it unlocks all studios on it):
+- **Jobvite** → Capcom (`capcomusa`), Creative Assembly (Jobvite-sourced; some apply links may go to a SEGA Workday tenant — confirm). One fetcher, 2 studios.
+- **JobScore** → Nexon (`nexonamericainc`; has an atom feed at hire.jobscore.com/jobs/nexonamericainc/feed.atom).
+- **JazzHR** → Certain Affinity (`certainaffinityinc.applytojob.com`).
+- **BambooHR** → Studio Wildcard (`studiowildcard.bamboohr.com`).
+- **Custom embedded-HTML one-offs** (each its own small bespoke parser, ZeniMax-style): Valve, Playground Games (own Fable site, NOT the Xbox portal), Supermassive Games (Orchard CMS), Hello Games (Umbraco).
+
+### C. GENUINELY BLOCKED — keep as directory link-outs
+
+- **Microsoft / Xbox first-party portal, no studio field** (the one real structural wall):
+  Turn 10 Studios, The Coalition, Undead Labs. Jobs live on apply.careers.microsoft.com with no
+  way to isolate the studio. (Playground Games is Microsoft-owned but serves its own readable
+  site, so it's in bucket B, not here.)
+- **Ninja Theory** — no ATS at all; applications go to jobs@ninjatheory.com.
+- **Eidos-Montréal** — Dayforce (jobs.dayforcehcm.com), bot/token-protected (403). The
+  eidosmontreal.com/careers landing page does render a few current roles as a possible fallback.
+- **Saber Interactive** — static stub page, 0 jobs, no ATS. Recheck when hiring resumes.
+- **Telltale Games** — static stub, 0 jobs; old Breezy HR board retired. Recheck when hiring.
+
+### D. Recheck later (couldn't confirm a feed; 0 open roles or SPA)
+- **Remedy Entertainment** — Webflow site, 0 current openings, no detectable ATS embed. Recheck when hiring.
+- **Virtuos** — Oracle Fusion Recruiting (ORC) SPA; a direct REST probe returned empty. Possible
+  if the public recruitingCEJobRequisitions endpoint can be coaxed; needs a deeper look.
+- **Fuse Games** — 0 openings, no ATS signature. Recheck when hiring.
+
+### Takeaway
+The island was mostly stale, not impossible: ~20 studios are immediate mainland adds, ~9 more are
+feasible with a small number of new platform fetchers (Jobvite first — best ROI), and only ~7 are
+genuinely blocked (3 of them the Microsoft first-party cluster). "Dead end" notes should always be
+re-tested before being trusted.
