@@ -30,7 +30,6 @@ const DIRECTORY = [
   { name: "Valve", url: "https://www.valvesoftware.com/en/jobs", note: "Steam, Half-Life, Dota 2 — custom site" },
   { name: "Remedy Entertainment", url: "https://www.remedygames.com/careers", note: "Control, Alan Wake — Finland" },
   { name: "Nexon", url: "https://careers.jobscore.com/careers/nexonamericainc", note: "MapleStory, The Finals — JobScore" },
-  { name: "Warner Bros. Games", url: "https://careers.wbd.com/games", note: "NetherRealm, Rocksteady, Avalanche" },
   { name: "Virtuos", url: "https://www.virtuosgames.com/careers", note: "AAA co-dev / outsourcing — global" },
   { name: "Certain Affinity", url: "https://www.certainaffinity.com/careers", note: "Halo/CoD co-dev — Austin, TX" },
   { name: "Playground Games", url: "https://www.playground-games.com/careers", note: "Forza Horizon, Fable — Xbox" },
@@ -147,6 +146,11 @@ const STUDIOS = [
   // on the "pcsx" search endpoint; keep ONLY department "WIZARDS" (drops toys/corporate).
   { name: "Wizards of the Coast", type: "eightfold", token: "wotc", host: "careers.hasbro.com",
     domain: "hasbro.com", api: "pcsx", departments: ["WIZARDS"] },
+  // Warner Bros. Games = the games studios on WBD's all-divisions Phenom board
+  // (Rocksteady, NetherRealm, Avalanche, TT Games, WB Games Montreal). Keep only
+  // category "Game Development" so we don't pull WBD's ~415 non-game roles.
+  { name: "Warner Bros. Games", type: "phenom", token: "wbgames", host: "careers.wbd.com",
+    path: "/global/en/search-results", categories: ["Game Development"] },
   // Workday fetcher kept for future boards (EA, Nintendo...). Sony's Workday
   // board is superseded by the Greenhouse board above.
   // { name: "PlayStation (Sony)", type: "workday", token: "sonyglobal",
@@ -747,7 +751,11 @@ async function fetchPhenom(studio) {
       await new Promise(r => setTimeout(r, 400)); // be polite
     }
   }
-  return all.map(j => {
+  // Giant employers (Warner Bros. Discovery) post all divisions on one Phenom board;
+  // studio.categories keeps ONLY game roles (category "Game Development").
+  const allow = studio.categories ? new Set(studio.categories) : null;
+  const kept = allow ? all.filter(j => allow.has(j.category)) : all;
+  return kept.map(j => {
     const location = j.cityStateCountry || j.location || "Unlisted";
     return {
       id: `ph-${studio.token}-${j.reqId || j.jobId}`,
