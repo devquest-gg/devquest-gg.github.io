@@ -308,6 +308,13 @@ function extractSalary(text) {
       hi = parseFloat(m[3].replace(/,/g, "")); if (m[4]) hi *= 1000;
     }
   }
+  if (lo == null) {
+    // 3) currency-suffixed range with NO dollar sign: "151,300.00 - 264,700.00 USD
+    // annually" (Amazon). Require comma-grouped thousands + an explicit currency
+    // word so we never match stray numbers.
+    const m3 = text.match(/([\d]{1,3}(?:,\d{3})+(?:\.\d+)?)\s*(?:-|–|—|to)\s*([\d]{1,3}(?:,\d{3})+(?:\.\d+)?)\s*(?:USD|CAD|EUR|GBP)\b/i);
+    if (m3) { lo = parseFloat(m3[1].replace(/,/g, "")); hi = parseFloat(m3[2].replace(/,/g, "")); }
+  }
   if (lo == null || hi == null) return null;
   // sanity: annual USD salaries only (skip hourly rates and nonsense)
   if (!(lo >= 10000 && hi > lo && hi <= 2000000)) return null;
@@ -1063,6 +1070,14 @@ async function fetchText(url, ms = 15000) {
 async function jobDescriptionText(job) {
   const wd = workdayDetailUrl(job.url);
   if (wd) { const d = await fetchDetailJson(wd); return stripHtml(d.jobPostingInfo?.jobDescription || ""); }
+  // SmartRecruiters posting pages are a single-page app (no salary in the raw HTML),
+  // so read its public posting API instead: /v1/companies/<token>/postings/<id>.
+  const sr = (job.url || "").match(/jobs\.smartrecruiters\.com\/([^/]+)\/([^/?#]+)/);
+  if (sr) {
+    const d = await fetchDetailJson(`https://api.smartrecruiters.com/v1/companies/${sr[1]}/postings/${sr[2]}`);
+    const s = d.jobAd?.sections || {};
+    return stripHtml([s.jobDescription?.text, s.qualifications?.text, s.additionalInformation?.text].filter(Boolean).join(" "));
+  }
   return stripHtml(await fetchText(job.url));
 }
 
@@ -1100,7 +1115,9 @@ async function backfillSalaries(jobs) {
       if (j.yoe == null && yoe != null) j.yoe = yoe;
       hist[j.id] = { ...(hist[j.id] || {}), salary: sal || null, yoe: yoe ?? (hist[j.id]?.yoe ?? null), salaryAt: now };
     } catch (e) {
-      // leave uncached so we retry next run
+      // back off on error too (e.g. a host that blocks us), so one bad source can't
+      // consume the whole per-run budget every run. Rechecked like a "not found".
+      hist[j.id] = { ...(hist[j.id] || {}), salary: hist[j.id]?.salary ?? null, salaryAt: now };
     }
     await new Promise(r => setTimeout(r, 250)); // be polite between detail fetches
   }
