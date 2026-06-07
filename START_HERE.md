@@ -43,3 +43,26 @@ Only ever upload files you actually changed; never the 4 data files above.
 - Stage 1: email capture + automatic weekly job digest (see EMAIL_CAPTURE_PLAN.md).
 - Stage 2: paid SMS alerts (Twilio + Stripe); form an LLC before charging.
 - More studios; a curated layoffs/closures tracker; "follow a studio."
+
+## Disaster recovery — getting back to business on a new computer
+If this PC is lost/wiped, here's the full checklist. Everything needed is on GitHub or in
+Google Drive — nothing important lives only on the old machine.
+
+1. **Install the Claude desktop app** and turn on Cowork mode (sign in with the same account).
+2. **Get the repo back.** On GitHub, open `devquest-gg/devquest-gg.github.io` → green **Code**
+   button → **Download ZIP** (or clone it). Unzip to a folder like `Desktop\Claude\GameDevPostings`.
+   - The live site itself is unaffected — it keeps running on GitHub the whole time; this is
+     just getting *your local working copy* back.
+3. **Reconnect the folder in Cowork** (point a new project at that folder).
+4. **Re-orient the assistant:** say "Read START_HERE.md and DEVQUEST_HANDBOOK.md to catch up
+   on DevQuest." That restores all project context (this file + the handbook + LAUNCH_NOTES +
+   EMAIL_CAPTURE_PLAN are all in the repo).
+5. **Re-add the skills** (these are NOT in the repo — they're backed up in Google Drive under
+   `_skill-backups`: `tla-project-SKILL.md` and `cfw-writer-SKILL.md`). A backed-up .md is the
+   skill's *content*; to make it a live, auto-triggering skill again, re-create it once via
+   **Settings → Capabilities** on the new machine, pasting in the saved content.
+6. **Nothing to restore for the scraper/data** — the hourly GitHub Action and the four data
+   files (`jobs.js`, `jobs.json`, `seen.json`, `trends.json`) live in the cloud and kept
+   running. Don't re-upload your old local copies of those (the golden rule, see the Handbook).
+
+Keep this current: if we add new skills or new must-read docs, add them to step 4/5 above.
