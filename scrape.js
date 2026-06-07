@@ -55,7 +55,7 @@ const DIRECTORY = [
   { name: "Saber Interactive", url: "https://saber.games/careers/", note: "World War Z, Space Marine 2" },
   { name: "Supermassive Games", url: "https://www.supermassivegames.com/careers", note: "Until Dawn, The Quarry — UK" },
   { name: "The Coalition", url: "https://www.thecoalitionstudio.com/careers", note: "Gears of War — Xbox" },
-  { name: "Hello Games", url: "https://hellogames.org/careers/", note: "No Man's Sky — Guildford, UK" },
+  { name: "Hello Games", url: "https://hellogames.org/join-us/", note: "No Man's Sky — Guildford, UK" },
   { name: "Telltale Games", url: "https://telltale.com/careers/", note: "The Wolf Among Us — revived studio" },
   { name: "Cloud Imperium Games", url: "https://cloudimperiumgames.com/jobs", note: "Star Citizen" },
   { name: "Rebellion", url: "https://careers.rebellion.com", note: "Sniper Elite, Atomfall — Oxford, UK" },
