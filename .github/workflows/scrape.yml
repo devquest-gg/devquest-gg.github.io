@@ -1,18 +1,21 @@
 name: Scrape jobs hourly
 
 # Runs the scraper on GitHub's servers (not your PC) and commits the refreshed
-# data back into the repo so the site updates. The state files (seen.json,
-# trends.json) are committed too, so ghost-job ages and Pulse history persist.
+# data back into the repo, so a connected static host (GitHub Pages / Cloudflare
+# Pages) redeploys automatically. The state files (seen.json, trends.json) are
+# committed too, so ghost-job ages and the Pulse history persist between runs.
 
 on:
   schedule:
-    - cron: "0 * * * *"
-  workflow_dispatch: {}
+    - cron: "23 * * * *"     # :23 past every hour (UTC) — off-peak slot, far more reliable than :00
+  workflow_dispatch: {}        # adds a "Run workflow" button in the Actions tab
 
+# never let two scrapes run at once
 concurrency:
   group: scrape
   cancel-in-progress: false
 
+# allow the job to commit the refreshed data back to the repo
 permissions:
   contents: write
 
@@ -40,6 +43,6 @@ jobs:
           if git diff --staged --quiet; then
             echo "No changes this run."
           else
-            git commit -m "data: hourly scrape"
+            git commit -m "data: hourly scrape $(date -u +'%Y-%m-%dT%H:%MZ')"
             git push
           fi
