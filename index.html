@@ -1333,10 +1333,15 @@ render();
 </script>
 <!-- Cloudflare Web Analytics --><script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "95619b0dc4cf4d5c897a9ccd91097d8c"}'></script><!-- End Cloudflare Web Analytics -->
 <!-- ===== DevQuest alerts + cookieless event analytics (Phase 1) ===== -->
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
 <script>
 (function(){
   "use strict";
   var ALERTS_API = "https://devquest-alerts.balesdestin.workers.dev";
+  // Spam guard. Paste the Turnstile SITE key here to turn it on (public key, safe in client code).
+  // Leave "" to keep the signup working with no challenge until you're ready.
+  var TURNSTILE_SITEKEY = "0x4AAAAAADgYBtcO1AW8_rq_";
+  var _tsWidget = null;
 
   function track(name, props){
     try{
@@ -1427,16 +1432,26 @@ render();
       '<div style="display:flex;gap:8px;flex-wrap:wrap"><input id="alertEmail" type="email" required placeholder="you@email.com" style="flex:1;min-width:200px;padding:8px 10px;border:1px solid #2a3a28;border-radius:6px;background:#0d0f0e;color:#d0dcc8">'+
       '<button type="submit" style="background:#1f6feb;color:#fff;border:0;border-radius:6px;padding:8px 16px;font-weight:600;cursor:pointer">Subscribe</button></div>'+
       '<label style="font-size:12px;color:#7a8878;display:flex;gap:6px;align-items:flex-start"><input id="alertConsent" type="checkbox" required style="margin-top:2px">I agree to receive a weekly job-alert email. Unsubscribe anytime; no spam.</label>'+
+      (TURNSTILE_SITEKEY?'<div id="alertTurnstile" style="margin-top:2px"></div>':'')+
       '<div id="alertMsg" style="font-size:13px;min-height:16px"></div></form>';
+    _tsWidget=null;
+    if(TURNSTILE_SITEKEY && window.turnstile){
+      try{ _tsWidget=window.turnstile.render("#alertTurnstile",{sitekey:TURNSTILE_SITEKEY,theme:"dark"}); }catch(e){}
+    }
     document.getElementById("alertForm").onsubmit=function(ev){
       ev.preventDefault();
       var email=document.getElementById("alertEmail").value.trim();
       var consent=document.getElementById("alertConsent").checked;
       var msg=document.getElementById("alertMsg");
       if(!consent){ msg.textContent="Please tick the consent box."; msg.style.color="#c87878"; return; }
+      var tsToken="";
+      if(TURNSTILE_SITEKEY){
+        try{ tsToken=window.turnstile?window.turnstile.getResponse(_tsWidget):""; }catch(e){ tsToken=""; }
+        if(!tsToken){ msg.textContent="Please complete the verification box."; msg.style.color="#c87878"; return; }
+      }
       msg.textContent="Sending…"; msg.style.color="#7a8878";
       track("alert_signup",{});
-      fetch(ALERTS_API+"/subscribe",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email:email,criteria:c,label:label})})
+      fetch(ALERTS_API+"/subscribe",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email:email,criteria:c,label:label,token:tsToken})})
         .then(function(r){ return r.json().catch(function(){return{};}).then(function(j){ return {ok:r.ok,j:j}; }); })
         .then(function(res){
           if(res.ok&&res.j&&res.j.ok){ bar.setAttribute("data-state","done"); bar.innerHTML='<div style="font-size:14px;color:#58a6ff">✓ Almost there — check your inbox and click the confirmation link to start your weekly alert.</div>'; }
