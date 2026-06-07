@@ -1,0 +1,1330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DevQuest — Game Dev Jobs, Fresh and Filtered</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+  :root {
+    --bg: #0d1117; --panel: #161b22; --border: #30363d; --text: #e6edf3;
+    --muted: #8b949e; --accent: #58a6ff; --green: #3fb950; --pink: #f778ba;
+    --gold: #d29922;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; scrollbar-width: thin; scrollbar-color: #30363d transparent; }
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #30363d; border-radius: 999px; }
+  ::-webkit-scrollbar-thumb:hover { background: #58a6ff; }
+  ::-webkit-scrollbar-corner { background: transparent; }
+  body { background: var(--bg); color: var(--text); font-family: -apple-system, "Segoe UI", Roboto, sans-serif; }
+  header { padding: 16px 24px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; background: var(--bg); z-index: 10; }
+  .logo { font-size: 20px; font-weight: 800; letter-spacing: -0.3px; display: flex; align-items: center; gap: 8px; }
+  .logo .wordmark span { color: var(--accent); }
+  .logo .logo-tld { color: var(--accent); }
+  .logo svg { display: block; flex-shrink: 0; }
+  .pulse { font-size: 12px; color: var(--muted); }
+  .pulse b { color: var(--green); }
+  .hero { text-align: center; padding: 14px 20px 12px; }
+  .hero .herobrand { display: flex; align-items: center; justify-content: center; gap: 12px; font-size: 44px; font-weight: 800; letter-spacing: -1.5px; line-height: 1; margin-bottom: 6px; }
+  .hero .herobrand .hbword span { color: var(--accent); }
+  .hero .herobrand .logo-tld { color: var(--accent); }
+  .hero .hmark { width: 44px; height: 44px; flex-shrink: 0; }
+  .hero h1 { font-size: 18px; font-weight: 600; margin: 0 0 6px; }
+  .hero h1 em { color: var(--pink); font-style: normal; }
+  .hero p { color: var(--muted); max-width: 620px; margin: 0 auto; }
+  .layout { display: grid; grid-template-columns: 270px 1fr; gap: 24px; max-width: 1240px; margin: 0 auto; padding: 0 24px 60px; }
+  /* mobile-only controls — hidden on desktop so the PC layout is unchanged */
+  #filterToggle, #filterClose, #filterBackdrop, .swipehint { display: none; }
+  @media (max-width: 820px) {
+    .layout { grid-template-columns: 1fr; gap: 14px; padding: 0 12px 48px; }
+    /* filters become an off-canvas drawer; content (matrix + jobs) comes first */
+    #sidebar { position: fixed; top: 0; left: 0; bottom: 0; width: 86%; max-width: 330px; z-index: 60;
+      border-radius: 0; max-height: none; transform: translateX(-100%); transition: transform .25s ease; }
+    #sidebar.open { transform: translateX(0); box-shadow: 0 0 40px rgba(0,0,0,.6); }
+    #filterClose { display: block; position: absolute; top: 10px; right: 12px; background: none; border: none;
+      color: var(--muted); font-size: 20px; cursor: pointer; }
+    #filterBackdrop.show { display: block; position: fixed; inset: 0; background: rgba(0,0,0,.55); z-index: 55; }
+    #filterToggle { display: inline-flex; align-items: center; gap: 6px; background: var(--accent); color: #0d1117;
+      border: none; font-weight: 700; font-size: 14px; padding: 9px 16px; border-radius: 10px; cursor: pointer; margin-bottom: 12px; }
+    .hero { padding: 16px 16px 14px; }
+    .hero .herobrand { font-size: 32px; gap: 9px; }
+    .hero .hmark { width: 32px; height: 32px; }
+    .hero h1 { font-size: 15px; }
+    header { padding: 12px 14px; }
+    /* show the "Who do I know?" label on touch (no hover to reveal it) */
+    .knowtext { display: inline; }
+    .row:not(:hover) .knowbtn { color: var(--accent); border-color: rgba(88,166,255,.5); background: rgba(88,166,255,.08); }
+    .knowbtn { margin-left: 0; }
+    .swipehint { display: inline; }
+  }
+  @media (max-width: 480px) {
+    .hero .herobrand { font-size: 27px; gap: 8px; }
+    .hero .hmark { width: 27px; height: 27px; }
+    .hero h1 { font-size: 14px; }
+    .row { padding: 11px 12px; }
+    .rtop { gap: 6px; }
+    .status-sel { font-size: 11px; }
+    .blabel { width: 110px; }
+  }
+  aside { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 18px; height: fit-content; position: sticky; top: 80px; max-height: calc(100vh - 100px); overflow-y: auto; }
+  aside h3 { font-size: 13px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin: 16px 0 8px; }
+  aside h3:first-child { margin-top: 0; }
+  input[type=text], select { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 9px 10px; color: var(--text); font-size: 14px; }
+  .chk { display: flex; align-items: center; gap: 8px; padding: 4px 0; font-size: 14px; cursor: pointer; }
+  .chk input { accent-color: var(--accent); }
+  .flabel { display: block; color: var(--muted); font-size: 12px; margin: 8px 0 4px; }
+  .filtersearch { margin-bottom: 6px; }
+  .filterscroll { max-height: 220px; overflow-y: auto; padding-right: 4px; }
+  .filterscroll .chk { padding: 3px 0; }
+  .filterscroll .fname { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .filterscroll .fcount { color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+  .filterscroll a.dirrow { text-decoration: none; color: var(--text); }
+  .filterscroll a.dirrow:hover .fname { color: var(--accent); }
+  .filterscroll a.dirrow .fcount { color: var(--accent); }
+  .count { color: var(--muted); font-size: 14px; margin-bottom: 12px; }
+  .group { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 14px; overflow: hidden; }
+  .group-header { display: flex; align-items: center; gap: 10px; padding: 13px 16px; cursor: pointer; font-weight: 700; user-select: none; }
+  .group-header:hover { background: rgba(88,166,255,.06); }
+  .arrow { display: inline-block; transition: transform .15s; color: var(--muted); }
+  .arrow.open { transform: rotate(90deg); }
+  .gcount { background: var(--bg); border: 1px solid var(--border); border-radius: 999px; padding: 1px 10px; font-size: 12px; color: var(--muted); }
+  .row { display: flex; flex-direction: column; gap: 7px; padding: 10px 16px; border-top: 1px solid var(--border); cursor: pointer; }
+  .rtop { display: flex; align-items: center; gap: 10px; }
+  .row:nth-child(odd) { background: rgba(13,17,23,.45); }
+  .row:hover { background: rgba(88,166,255,.06); }
+  .row.stale { opacity: .5; }
+  .row.st-applied { border-left: 3px solid var(--accent); }
+  .row.st-interviewing { border-left: 3px solid var(--green); }
+  .row.st-rejected { border-left: 3px solid var(--pink); opacity: .55; }
+  .rmain { flex: 1; min-width: 200px; }
+  .rmain .title { font-weight: 600; font-size: 14px; }
+  .rmain .studio { color: var(--accent); font-size: 13px; margin-left: 8px; }
+  .nfy { background: var(--green); color: #0d1117; font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 999px; margin-left: 8px; vertical-align: middle; }
+  .multibadge { background: rgba(88,166,255,.15); color: var(--accent); font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 999px; margin-left: 8px; vertical-align: middle; }
+  .tag.locchip[onclick] { cursor: pointer; }
+  .tag.locchip[onclick]:hover { color: var(--accent); border-color: var(--accent); }
+  .rtags { display: flex; gap: 6px; flex-wrap: wrap; }
+  .tag { font-size: 12px; padding: 3px 9px; border-radius: 999px; border: 1px solid var(--border); color: var(--muted); }
+  .tag.remote { color: var(--green); border-color: var(--green); }
+  .tag.hybrid { color: var(--gold); border-color: var(--gold); }
+  .tag.onsite { color: var(--pink); border-color: var(--pink); }
+  .tag.unknown { border-style: dashed; }
+  .tag.salary { color: var(--green); border-color: var(--green); font-weight: 700; }
+  .tag.longwarn { color: var(--gold); border-color: rgba(210,153,34,.5); }
+  .tag.longbad { color: #f0883e; border-color: rgba(240,136,62,.6); font-weight: 700; }
+  .tag.relist { color: var(--pink); border-color: rgba(247,120,186,.5); cursor: help; }
+  .poolbadge { background: rgba(139,148,158,.18); color: var(--muted); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; padding: 2px 8px; border-radius: 999px; margin-left: 8px; vertical-align: middle; cursor: help; }
+  .row.dismissed { opacity: .6; }
+  .dismissedbadge { background: rgba(247,120,186,.15); color: var(--pink); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; padding: 2px 8px; border-radius: 999px; margin-left: 8px; vertical-align: middle; }
+  .tag.knowbtn { color: var(--muted); border-color: var(--border); background: transparent; cursor: pointer; text-decoration: none; font-weight: 600; margin-left: auto; display: inline-flex; align-items: center; gap: 5px; }
+  .knowtext { display: none; }
+  .row:hover .knowbtn { color: var(--accent); border-color: rgba(88,166,255,.5); background: rgba(88,166,255,.08); }
+  .row:hover .knowbtn .knowtext { display: inline; }
+  .tag.knowbtn:hover { background: var(--accent); color: #0d1117; border-color: var(--accent); }
+  .pulsehead { font-size: 18px; font-weight: 600; margin: 4px 0 10px; }
+  .pulsestats { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 14px; }
+  .ptile { flex: 1; min-width: 120px; background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; text-align: center; }
+  .ptile .pnum { font-size: 26px; font-weight: 800; color: var(--text); }
+  .ptile .plabelt { font-size: 12px; color: var(--muted); margin-top: 4px; }
+  .pulserow { display: flex; align-items: center; gap: 12px; padding: 6px 0; border-top: 1px solid var(--border); }
+  .pulserow:first-of-type { border-top: none; }
+  .pulserow .plabel { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .pulserow .spark { width: 120px; flex-shrink: 0; line-height: 0; }
+  .pulserow .pulsenum { width: 86px; text-align: right; flex-shrink: 0; font-variant-numeric: tabular-nums; color: var(--muted); }
+  .pdelta { margin-left: 6px; font-weight: 700; }
+  .p-up { color: var(--green); } .p-down { color: var(--pink); } .p-dark { color: #f0883e; } .p-flat { color: var(--muted); }
+  .darktag { background: rgba(240,136,62,.15); color: #f0883e; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; padding: 1px 7px; border-radius: 999px; margin-left: 6px; }
+  .posted { font-size: 12px; color: var(--muted); white-space: nowrap; }
+  .new { color: var(--green); font-weight: 700; }
+  .status-sel { width: auto; background: var(--bg); border: 1px solid var(--border); color: var(--muted); border-radius: 6px; font-size: 12px; padding: 4px 6px; cursor: pointer; }
+  .dismiss { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 14px; padding: 4px 6px; border-radius: 6px; }
+  .dismiss:hover { color: var(--pink); background: rgba(247,120,186,.1); }
+  .more-btn { width: 100%; padding: 10px; background: transparent; border: none; border-top: 1px solid var(--border); color: var(--accent); cursor: pointer; font-weight: 600; font-size: 13px; }
+  .more-btn:hover { background: rgba(88,166,255,.06); }
+  .empty { text-align: center; color: var(--muted); padding: 60px 0; }
+  .viewtabs { display: inline-flex; gap: 4px; background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 3px; margin-bottom: 12px; }
+  .viewtabs button { background: transparent; border: none; color: var(--muted); font-weight: 600; font-size: 13px; padding: 7px 16px; border-radius: 8px; cursor: pointer; }
+  .viewtabs button.active { background: var(--accent); color: #0d1117; }
+  #mapWrap { display: none; }
+  #statsWrap { display: none; }
+  .statgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 800px) { .statgrid { grid-template-columns: 1fr; } }
+  .statcard { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
+  .statcard h3 { font-size: 13px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin-bottom: 12px; }
+  .barrow { display: flex; align-items: center; gap: 8px; margin: 5px 0; font-size: 13px; }
+  .barrow .blabel { width: 150px; flex-shrink: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: right; color: var(--muted); }
+  .barrow .btrack { flex: 1; background: rgba(255,255,255,.04); border: 1px solid var(--border); border-radius: 999px; height: 16px; overflow: hidden; }
+  .barrow .bfill { display: block; height: 100%; background: linear-gradient(90deg, #1f6feb, #58a6ff); border-radius: 999px; min-width: 3px; box-shadow: 0 0 6px rgba(88,166,255,.4); }
+  .barrow .bnum { width: 44px; flex-shrink: 0; font-weight: 600; }
+  .salrange { position: relative; flex: 1; background: var(--bg); border-radius: 999px; height: 16px; }
+  .salbar { position: absolute; top: 3px; bottom: 3px; background: var(--green); border-radius: 999px; opacity: .75; }
+  .health-ok { color: var(--green); }
+  .health-bad { color: var(--pink); }
+  .healthrow { display: flex; gap: 10px; padding: 5px 0; font-size: 13px; border-bottom: 1px solid var(--border); }
+  .healthrow:last-child { border-bottom: none; }
+  .healthrow .hname { flex: 1; font-weight: 600; }
+  .healthrow .hmuted { color: var(--muted); }
+  .errbox { background: rgba(247,120,186,.08); border: 1px solid var(--pink); border-radius: 8px; padding: 10px 12px; font-size: 13px; color: var(--pink); margin-bottom: 10px; }
+  .statgrid + .statcard, .statcard + .statgrid { margin-top: 14px; }
+  table.xtab { border-collapse: collapse; width: 100%; font-size: 13px; }
+  table.xtab th { color: var(--muted); font-weight: 600; text-align: center; padding: 6px 8px; font-size: 12px; }
+  table.xtab th:first-child { text-align: left; }
+  table.xtab td { text-align: center; padding: 7px 8px; border: 1px solid var(--border); font-weight: 600; }
+  table.xtab td.xname { text-align: left; color: var(--text); font-weight: 600; white-space: nowrap; }
+  table.xtab td.xtot { color: var(--muted); background: var(--bg); }
+  table.xtab td[onclick] { cursor: pointer; }
+  table.xtab td[onclick]:hover { outline: 2px solid var(--accent); outline-offset: -2px; }
+  .xhint { color: var(--muted); font-size: 12px; margin-top: 8px; }
+  #matrixWrap { margin-bottom: 14px; }
+  .matrixhead { font-size: 13px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin-bottom: 8px; }
+  .matrixhead .mhint { text-transform: none; letter-spacing: 0; font-size: 12px; color: var(--muted); }
+  .xtab td.mcell[onclick] { cursor: pointer; transition: outline .1s; }
+  .xtab td.mcell[onclick]:hover { outline: 2px solid var(--accent); outline-offset: -2px; }
+  .xtab td.xsel { background: var(--accent) !important; color: #0d1117; font-weight: 800; }
+  #quickbar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+  #quickbar .qlabel, #subbar .qlabel, #hubbar .qlabel { color: var(--muted); font-size: 13px; margin-right: 2px; }
+  .qchip { cursor: pointer; border: 1px solid var(--border); background: var(--panel); color: var(--muted); border-radius: 999px; padding: 6px 13px; font-size: 13px; font-weight: 600; }
+  .qchip:hover { border-color: var(--accent); color: var(--text); }
+  .qchip.on { background: var(--accent); color: #0d1117; border-color: var(--accent); }
+  .qchip.clear { color: var(--pink); border-color: var(--pink); background: transparent; }
+  #subbar { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; margin-bottom: 16px; padding: 9px 12px; background: rgba(88,166,255,.05); border: 1px dashed var(--border); border-radius: 10px; }
+  .qchip.sub { padding: 5px 11px; font-size: 12px; }
+  .qchip.sub.on { background: var(--green); border-color: var(--green); color: #0d1117; }
+  .qchip.sub .subn, .qchip.hub .subn { opacity: .65; font-weight: 700; margin-left: 2px; }
+  #hubbar { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; margin-bottom: 12px; padding: 9px 12px; background: rgba(210,153,34,.06); border: 1px dashed var(--border); border-radius: 10px; }
+  .qchip.hub { padding: 5px 11px; font-size: 12px; }
+  .qchip.hub.on { background: var(--gold); border-color: var(--gold); color: #0d1117; }
+  #directory { margin-top: 18px; }
+  .dirhead { font-size: 13px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin-bottom: 6px; }
+  .dirsub { color: var(--muted); font-size: 13px; margin-bottom: 12px; }
+  .dirgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; }
+  .dircard { display: block; background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; text-decoration: none; transition: border-color .15s, transform .1s; }
+  .dircard:hover { border-color: var(--accent); transform: translateY(-1px); }
+  .dircard .dn { font-weight: 700; color: var(--text); }
+  .dircard .dnote { color: var(--muted); font-size: 12px; margin-top: 3px; }
+  .dircard .dgo { color: var(--accent); font-size: 12px; font-weight: 600; margin-top: 10px; }
+  #moon { margin-top: 26px; }
+  .moonhead { font-size: 13px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin-bottom: 6px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .moonsubmit { text-transform: none; letter-spacing: 0; font-size: 13px; font-weight: 700; color: var(--accent); border: 1px solid rgba(88,166,255,.5); border-radius: 999px; padding: 3px 12px; text-decoration: none; }
+  .moonsubmit:hover { background: var(--accent); color: #0d1117; }
+  .moongrid { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+  .moonchip { background: var(--panel); border: 1px solid var(--border); border-radius: 999px; padding: 6px 13px; font-size: 13px; color: var(--text); text-decoration: none; }
+  .moonchip:hover { border-color: var(--accent); color: var(--accent); }
+  .moonempty { color: var(--muted); font-size: 13px; padding: 6px 0; }
+  .moonempty a { color: var(--accent); }
+  #map { height: 600px; border: 1px solid var(--border); border-radius: 12px; background: var(--panel); }
+  .mapnote { color: var(--muted); font-size: 13px; margin-top: 10px; }
+  .leaflet-popup-content-wrapper, .leaflet-popup-tip { background: var(--panel); color: var(--text); }
+  .leaflet-popup-content a { color: var(--accent); cursor: pointer; font-weight: 600; }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <div class="logo"><svg width="24" height="24" viewBox="0 0 32 32" aria-hidden="true"><rect x="1" y="1" width="8" height="8" rx="2" fill="var(--accent)"/><rect x="12" y="1" width="8" height="8" rx="2" fill="#2d333b"/><rect x="23" y="1" width="8" height="8" rx="2" fill="#2d333b"/><rect x="1" y="12" width="8" height="8" rx="2" fill="#2d333b"/><rect x="12" y="12" width="8" height="8" rx="2" fill="var(--accent)"/><rect x="23" y="12" width="8" height="8" rx="2" fill="#2d333b"/><rect x="1" y="23" width="8" height="8" rx="2" fill="#2d333b"/><rect x="12" y="23" width="8" height="8" rx="2" fill="#2d333b"/><rect x="23" y="23" width="8" height="8" rx="2" fill="var(--accent)"/></svg><span class="wordmark">Dev<span>Quest</span><span class="logo-tld">.gg</span></span></div>
+    <div class="pulse">⟳ Last sync: <b id="syncTime"></b> · refreshes hourly</div>
+  </div>
+</header>
+
+<div class="hero">
+  <div class="herobrand">
+    <svg class="hmark" viewBox="0 0 32 32" aria-hidden="true"><rect x="1" y="1" width="8" height="8" rx="2" fill="var(--accent)"/><rect x="12" y="1" width="8" height="8" rx="2" fill="#2d333b"/><rect x="23" y="1" width="8" height="8" rx="2" fill="#2d333b"/><rect x="1" y="12" width="8" height="8" rx="2" fill="#2d333b"/><rect x="12" y="12" width="8" height="8" rx="2" fill="var(--accent)"/><rect x="23" y="12" width="8" height="8" rx="2" fill="#2d333b"/><rect x="1" y="23" width="8" height="8" rx="2" fill="#2d333b"/><rect x="12" y="23" width="8" height="8" rx="2" fill="#2d333b"/><rect x="23" y="23" width="8" height="8" rx="2" fill="var(--accent)"/></svg>
+    <span class="hbword">Dev<span>Quest</span><span class="logo-tld">.gg</span></span>
+  </div>
+  <h1>Game dev jobs. <em>Fresh, honest, trackable.</em></h1>
+  <p id="heroSub">Synced hourly from studio career pages. We show posting age, salary when published, and say "Unknown" instead of guessing.</p>
+</div>
+
+<div class="layout">
+  <div id="filterBackdrop" onclick="toggleFilters()"></div>
+  <aside id="sidebar">
+    <button id="filterClose" onclick="toggleFilters()" aria-label="Close filters">✕</button>
+    <h3>Search</h3>
+    <input type="text" id="q" placeholder="Title, studio, keyword…" oninput="render()">
+    <h3>Posted</h3>
+    <select id="age" onchange="render()">
+      <option value="0" selected>Any time</option>
+      <option value="1">Past 24 hours</option>
+      <option value="7">Past week</option>
+      <option value="30">Past 30 days</option>
+      <option value="90">Past 3 months</option>
+    </select>
+    <h3>My pipeline</h3>
+    <label class="chk"><input type="checkbox" id="hideTracked" onchange="render()">Hide applied / rejected</label>
+    <label class="chk"><input type="checkbox" id="showDismissed" onchange="render()">Show dismissed (<span id="dismissCount">0</span>)</label>
+    <label class="chk"><input type="checkbox" id="salOnly" onchange="render()">Has salary info</label>
+    <h3>Ghost-job filters</h3>
+    <label class="chk"><input type="checkbox" id="hidePools" checked onchange="render()">Hide talent pools</label>
+    <label class="chk"><input type="checkbox" id="hideRelisted" onchange="render()">Hide re-listed posts</label>
+    <label class="flabel">Hide listings live longer than</label>
+    <select id="maxListed" onchange="render()">
+      <option value="0" selected>No limit</option>
+      <option value="30">30 days</option>
+      <option value="60">60 days</option>
+      <option value="90">90 days</option>
+    </select>
+    <h3>Studio</h3>
+    <input type="text" id="studioSearch" class="filtersearch" placeholder="Search studios…"
+      oninput="renderSearchGroup('studioFilters','studioSearch',STUDIO_COUNTS,selStudios,STUDIO_LABELS,DIR_STUDIOS)">
+    <div id="studioFilters" class="filterscroll"></div>
+    <h3>Discipline</h3>
+    <div id="discFilters"></div>
+    <h3>Work Type</h3>
+    <div id="workFilters"></div>
+    <h3>Seniority</h3>
+    <div id="seniorFilters"></div>
+    <h3>Region (continent)</h3>
+    <select id="region" onchange="render()">
+      <option value="">All regions</option>
+    </select>
+    <h3>Country</h3>
+    <input type="text" id="countrySearch" class="filtersearch" placeholder="Search countries…"
+      oninput="renderSearchGroup('countryFilters','countrySearch',COUNTRY_COUNTS,selCountries,null)">
+    <div id="countryFilters" class="filterscroll"></div>
+  </aside>
+
+  <main>
+    <button id="filterToggle" onclick="toggleFilters()">⚙ Filters</button>
+    <div class="viewtabs">
+      <button id="tabList" class="active" onclick="setView('list')">☰ List</button>
+      <button id="tabMap" onclick="setView('map')">🗺️ Map</button>
+      <button id="tabStats" onclick="setView('stats')">📊 Stats</button>
+      <button id="tabPulse" onclick="setView('pulse')">📈 Pulse</button>
+    </div>
+    <div id="matrixWrap"></div>
+    <div id="quickbar"></div>
+    <div id="hubbar"></div>
+    <div id="subbar"></div>
+    <div class="count" id="count"></div>
+    <div id="jobs"></div>
+    <div id="directory"></div>
+    <div id="moon"></div>
+    <div id="mapWrap">
+      <div id="map"></div>
+      <div class="mapnote" id="mapNote"></div>
+    </div>
+    <div id="statsWrap"></div>
+    <div id="pulseWrap"></div>
+  </main>
+</div>
+
+<script src="jobs.js"></script>
+<script>
+// ---- sample data (used when jobs.js hasn't been generated yet) -------------
+const SAMPLE_JOBS = [
+  {t:"Senior Gameplay Programmer", s:"Insomniac Games", d:"Engineering", w:"Hybrid", l:"Burbank, CA", r:"North America", sen:"Senior", h:2, salary:"$140K–$190K", yoe:5},
+  {t:"Combat Designer", s:"Santa Monica Studio", d:"Design", w:"Unknown", l:"Los Angeles, CA", r:"North America", sen:"Mid", h:1, salary:null, yoe:3},
+  {t:"Build Engineer", s:"Bungie", d:"Engineering", w:"Remote", l:"Remote (US)", r:"North America", sen:"Mid", h:1, salary:"$110K–$150K", yoe:null},
+  {t:"Build Engineer", s:"Bungie", d:"Engineering", w:"Remote", l:"Remote (Canada)", r:"North America", sen:"Mid", h:3, salary:"$110K–$150K", yoe:null},
+  {t:"Senior Concept Artist", s:"FromSoftware", d:"Art", w:"Onsite", l:"Tokyo, Japan", r:"Asia-Pacific", sen:"Senior", h:900, salary:null, yoe:null},
+  {t:"Community Manager", s:"Coffee Stain Studios", d:"Marketing", w:"Remote", l:"Remote (EU)", r:"Europe", sen:"Mid", h:18, salary:null, yoe:2},
+  {t:"Finance Analyst", s:"Riot Games", d:"People & Ops", w:"Unknown", l:"Los Angeles, CA", r:"North America", sen:"Mid", h:30, salary:null, yoe:null},
+];
+
+// ---- persistent state (survives page reloads) -------------------------------
+const store = {
+  get(k, d){ try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch(e){ return d; } },
+  set(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){} }
+};
+const appStatus = store.get("luj-status", {});
+const dismissed = new Set(store.get("luj-dismissed", []));
+const prevVisit = store.get("luj-lastVisit", 0);
+store.set("luj-lastVisit", Date.now());
+
+// ---- discipline consolidation: keep dev crafts, fold corporate noise -------
+const CORE_DISC = ["Engineering","Art","Animation","Design","Audio","Production","QA","Data & Analytics","Esports","Player Support"];
+function normDisc(d){
+  if (CORE_DISC.includes(d)) return d;
+  if (/marketing|comms|brand|communication|publishing|entertainment/i.test(d)) return "Marketing & Comms";
+  return "Business & Ops";
+}
+
+// ---- talent-pool detection: these aren't specific openings, they're pipelines ----
+function isPool(title){
+  return /general application|talent (community|pool|network|connection)|future opportunit|expression of interest|speculative|join our talent|introduce yourself|don'?t see (a|the|your) (role|fit)|prospective|candidate pool|stay connected/i.test(title || "");
+}
+
+// ---- load + normalize + dedupe ----------------------------------------------
+const LIVE = window.JOBS_DATA && window.JOBS_DATA.jobs && window.JOBS_DATA.jobs.length;
+const RAW = LIVE ? window.JOBS_DATA.jobs.map(j => ({
+  id: j.id, t: j.title, s: j.studio, p: j.parent || j.studio, d: normDisc(j.discipline), w: j.workType || "Unknown",
+  l: j.location, r: j.region, sen: j.seniority, url: j.url,
+  salary: j.salary || null, yoe: j.yoe || null,
+  ts: j.postedAt ? new Date(j.postedAt).getTime() : 0, // 0 = date unknown (e.g. EA)
+  fseen: j.firstSeen ? Date.parse(j.firstSeen) : 0,    // when WE first saw it (reliable age)
+  relisted: !!j.relisted, relistCount: j.relistCount || 0,
+  pool: isPool(j.title),
+})) : SAMPLE_JOBS.map((j,i) => ({ ...j, id: "sample-"+i, p: j.s, d: normDisc(j.d), url: null, ts: Date.now()-j.h*36e5, fseen: Date.now()-j.h*36e5, relisted:false, relistCount:0, pool:false }));
+
+// collapse duplicates: same studio + same title = one row, multiple locations.
+// Each location keeps its OWN posting URL (studios often post per-city listings),
+// so clicking a location chip opens that exact posting.
+const byKey = {};
+for (const j of RAW) {
+  const k = j.s + "|" + j.t;
+  if (byKey[k]) {
+    const m = byKey[k];
+    if (!m.places.some(p=>p.l===j.l)) m.places.push({ l: j.l, r: j.r, url: j.url });
+    if (!m.regions.includes(j.r)) m.regions.push(j.r);
+    m.ts = Math.max(m.ts, j.ts);
+    if (j.fseen && (!m.fseen || j.fseen < m.fseen)) m.fseen = j.fseen; // earliest sighting wins
+    m.relisted = m.relisted || j.relisted;
+    m.relistCount = Math.max(m.relistCount, j.relistCount);
+    if (!m.salary && j.salary) m.salary = j.salary;
+  } else byKey[k] = { ...j, places: [{ l: j.l, r: j.r, url: j.url }], regions: [j.r] };
+}
+const JOBS = Object.values(byKey);
+JOBS.forEach(j => { j.locs = j.places.map(p=>p.l); }); // keep .locs for search/map
+
+// ---- sub-discipline tagging (derived from the title, client-side so no re-scrape) ----
+// Only the three big, internally diverse buckets get sub-tags. Order = most specific first.
+const SUB_DISCS = new Set(["Art","Engineering","Design"]);
+function subOf(disc, title){
+  const t = (title||"").toLowerCase();
+  if (disc === "Art"){
+    if (/technical artist|tech artist|technical art\b/.test(t)) return "Technical Art";
+    if (/concept/.test(t)) return "Concept";
+    if (/\bvfx\b|visual effects|\bfx artist\b/.test(t)) return "VFX";
+    if (/environment|world art|\bprop\b|set dress/.test(t)) return "Environment";
+    if (/character|creature/.test(t)) return "Character";
+    if (/lighting/.test(t)) return "Lighting";
+    if (/\bui\b|\bux\b|user interface/.test(t)) return "UI Art";
+    if (/sculpt|\b3d\b|modeler|modeller|modeling|modelling/.test(t)) return "3D/Modeling";
+    if (/illustrat|\b2d\b|graphic design/.test(t)) return "Illustration/2D";
+    return "";
+  }
+  if (disc === "Engineering"){
+    if (/gameplay/.test(t)) return "Gameplay";
+    if (/graphics|render|shader|gpu/.test(t)) return "Graphics/Rendering";
+    if (/\bai\b|artificial intelligence|machine learning|\bml\b/.test(t)) return "AI/ML";
+    if (/network|multiplayer|netcode|\bonline\b|\blive ?ops\b/.test(t)) return "Network/Online";
+    if (/\btools?\b|tooling|pipeline/.test(t)) return "Tools/Pipeline";
+    if (/\bengine\b|systems engineer|\bcore\b/.test(t)) return "Engine/Systems";
+    if (/backend|back-end|\bserver\b|services|infrastructure|\bsre\b|devops|\bplatform\b|\bcloud\b/.test(t)) return "Backend/Infra";
+    if (/frontend|front-end|\bweb\b|full ?stack/.test(t)) return "Frontend/Web";
+    if (/mobile|android|\bios\b/.test(t)) return "Mobile";
+    if (/\bdata\b|analytics/.test(t)) return "Data";
+    if (/\bqa\b|\bsdet\b|\btest\b|automation/.test(t)) return "QA/Test";
+    if (/physics|animation programmer|audio programmer/.test(t)) return "Specialized";
+    return "";
+  }
+  if (disc === "Design"){
+    if (/level design|level designer|world design/.test(t)) return "Level";
+    if (/narrative|writer|writing|story|dialog/.test(t)) return "Narrative";
+    if (/\bux\b|\bui\b|user experience|user interface|user research/.test(t)) return "UX/UI";
+    if (/economy|monetization|monetisation|\blive ?ops\b/.test(t)) return "Economy/LiveOps";
+    if (/encounter|quest|mission|content design|content designer/.test(t)) return "Content";
+    if (/combat|systems design|systems designer|game design|game designer|gameplay design/.test(t)) return "Systems";
+    if (/technical designer|technical design/.test(t)) return "Technical Design";
+    return "";
+  }
+  return "";
+}
+JOBS.forEach(j => { j.sub = subOf(j.d, j.t); });
+
+// derive country from a location string (for the country filter)
+const US_STATES = /\b(AL|AK|AZ|AR|CA|CO|CT|DE|FL|GA|HI|ID|IL|IN|IA|KS|KY|LA|ME|MD|MA|MI|MN|MS|MO|MT|NE|NV|NH|NJ|NM|NY|NC|ND|OH|OK|OR|PA|RI|SC|SD|TN|TX|UT|VT|VA|WA|WV|WI|WY)\b/;
+function inferCountry(loc){
+  const s = (loc||"").toLowerCase();
+  if (/united states|u\.?s\.?a\.?|, us\b|\bus -|remote \(us\)|america(?!n samoa)/.test(s)) return "United States";
+  if (US_STATES.test(loc||"") && !/canada|ontario|quebec|alberta|british columbia/i.test(loc||"")) return "United States";
+  if (/canada|ontario|quebec|québec|alberta|british columbia|manitoba|saskatchewan|nova scotia/.test(s)) return "Canada";
+  if (/united kingdom|england|scotland|wales|, uk\b|\bgb -|london|oxford|brighton|guildford|leamington|newcastle/.test(s)) return "United Kingdom";
+  if (/\bfrance|paris|lyon|bordeaux|montpellier|annecy|carentoir/.test(s)) return "France";
+  if (/germany|berlin|munich|hamburg|frankfurt|cologne|mainz|düsseldorf|dusseldorf/.test(s)) return "Germany";
+  if (/\bspain|barcelona|madrid|seville|sevilla/.test(s)) return "Spain";
+  if (/poland|warsaw|krakow|wroclaw/.test(s)) return "Poland";
+  if (/sweden|stockholm|malmö|malmo|gothenburg/.test(s)) return "Sweden";
+  if (/finland|helsinki|espoo|tampere/.test(s)) return "Finland";
+  if (/romania|bucharest/.test(s)) return "Romania";
+  if (/ireland|dublin/.test(s)) return "Ireland";
+  if (/netherlands|amsterdam/.test(s)) return "Netherlands";
+  if (/belgium|ghent|brussels/.test(s)) return "Belgium";
+  if (/\bchina|shanghai|guangzhou|beijing|shenzhen|chengdu/.test(s)) return "China";
+  if (/japan|tokyo|osaka|kyoto/.test(s)) return "Japan";
+  if (/korea|seoul/.test(s)) return "South Korea";
+  if (/singapore/.test(s)) return "Singapore";
+  if (/australia|sydney|melbourne|brisbane|adelaide/.test(s)) return "Australia";
+  if (/new zealand|auckland|wellington/.test(s)) return "New Zealand";
+  if (/\bindia|bangalore|bengaluru|hyderabad|pune|mumbai/.test(s)) return "India";
+  if (/vietnam|da nang|ho chi minh|hanoi/.test(s)) return "Vietnam";
+  if (/philippines|manila/.test(s)) return "Philippines";
+  if (/thailand|bangkok/.test(s)) return "Thailand";
+  if (/brazil|são paulo|sao paulo|porto alegre|rio/.test(s)) return "Brazil";
+  if (/mexico/.test(s)) return "Mexico";
+  if (/\buae|dubai|abu dhabi|emirates/.test(s)) return "UAE";
+  if (/czech|prague|brno/.test(s)) return "Czech Republic";
+  if (/\bturkey|istanbul|ankara/.test(s)) return "Turkey";
+  if (/ukraine|kyiv|kiev/.test(s)) return "Ukraine";
+  if (/bulgaria|sofia|, bg\b/.test(s)) return "Bulgaria";
+  if (/malaysia|petaling|kuala lumpur/.test(s)) return "Malaysia";
+  if (/taiwan|taipei/.test(s)) return "Taiwan";
+  if (/israel|tel aviv/.test(s)) return "Israel";
+  if (/switzerland|zurich|geneva/.test(s)) return "Switzerland";
+  if (/unlisted|multiple location|^blank|,blank/.test(s)) return "Unlisted / multiple";
+  if (/remote/.test(s)) return "Remote/Unspecified";
+  return "Other";
+}
+JOBS.forEach(j => {
+  j.places.forEach(p => p.country = inferCountry(p.l));
+  j.countries = [...new Set(j.places.map(p=>p.country))];
+});
+
+// ---- gaming hubs: map a location string to a known industry hub, scoped to a region.
+// Used for the region->hub quick-filter drill-down. Order = most specific first.
+// Only hubs that actually have jobs in the current view ever show as chips, so it's
+// safe for this list to be broad.
+const HUBS = [
+  // North America
+  { name:"Los Angeles", region:"North America", re:/los angeles|santa monica|burbank|culver city|el segundo|\birvine\b|aliso viejo|carlsbad|san diego|orange county|playa vista|sherman oaks/ },
+  { name:"SF Bay Area", region:"North America", re:/san francisco|bay area|redwood|san mateo|sunnyvale|mountain view|palo alto|oakland|emeryville|novato|petaluma|san jose|cupertino|foster city/ },
+  { name:"Seattle", region:"North America", re:/seattle|bellevue|redmond|kirkland|bothell/ },
+  { name:"Austin", region:"North America", re:/austin/ },
+  { name:"Dallas", region:"North America", re:/dallas|plano|frisco|richardson|\btexas\b/ },
+  { name:"New York", region:"North America", re:/new york|\bnyc\b|brooklyn|manhattan/ },
+  { name:"Raleigh-Durham", region:"North America", re:/raleigh|durham|\bcary\b|north carolina/ },
+  { name:"Boston", region:"North America", re:/boston|cambridge, ma|massachusetts/ },
+  { name:"Montréal", region:"North America", re:/montr[eé]al/ },
+  { name:"Vancouver", region:"North America", re:/vancouver|burnaby/ },
+  { name:"Toronto", region:"North America", re:/toronto|mississauga|ontario/ },
+  // Europe
+  { name:"London", region:"Europe", re:/london|guildford|brighton|\bsutton\b|\bsurrey\b/ },
+  { name:"UK (other)", region:"Europe", re:/england|united kingdom|newcastle|oxford|leamington|sheffield|manchester|nottingham|liverpool|scotland|\bwales\b/ },
+  { name:"Paris", region:"Europe", re:/paris|lyon|bordeaux|montpellier|annecy|\bfrance\b/ },
+  { name:"Germany", region:"Europe", re:/berlin|hamburg|frankfurt|munich|münchen|cologne|köln|mainz|d[üu]sseldorf|germany/ },
+  { name:"Stockholm", region:"Europe", re:/stockholm|malm[öo]|gothenburg|sk[öo]vde|sweden/ },
+  { name:"Warsaw", region:"Europe", re:/warsaw|warszawa|krak[óo]w|krakow|wroc[lł]aw|gda[nń]sk|poland/ },
+  { name:"Helsinki", region:"Europe", re:/helsinki|espoo|tampere|finland/ },
+  { name:"Amsterdam", region:"Europe", re:/amsterdam|utrecht|rotterdam|hilversum|netherlands/ },
+  { name:"Barcelona/Madrid", region:"Europe", re:/barcelona|madrid|sevilla|seville|valencia|\bspain\b/ },
+  { name:"Bucharest", region:"Europe", re:/bucharest|\bcluj\b|romania/ },
+  { name:"Dublin", region:"Europe", re:/dublin|ireland/ },
+  { name:"Copenhagen", region:"Europe", re:/copenhagen|denmark/ },
+  // Asia-Pacific
+  { name:"Tokyo", region:"Asia-Pacific", re:/tokyo|osaka|kyoto|yokohama|japan/ },
+  { name:"Singapore", region:"Asia-Pacific", re:/singapore/ },
+  { name:"China", region:"Asia-Pacific", re:/shanghai|beijing|shenzhen|guangzhou|chengdu|china/ },
+  { name:"Seoul", region:"Asia-Pacific", re:/seoul|korea/ },
+  { name:"Australia", region:"Asia-Pacific", re:/sydney|melbourne|brisbane|adelaide|perth|australia/ },
+  { name:"New Zealand", region:"Asia-Pacific", re:/auckland|wellington|new zealand/ },
+  { name:"India", region:"Asia-Pacific", re:/bangalore|bengaluru|hyderabad|\bpune\b|mumbai|\bdelhi\b|gurgaon|india/ },
+  { name:"Vietnam", region:"Asia-Pacific", re:/ho chi minh|hanoi|da nang|vietnam/ },
+];
+const HUB_REGION = {}; HUBS.forEach(h => HUB_REGION[h.name] = h.region);
+function hubOf(loc){ const s = (loc||"").toLowerCase(); for (const h of HUBS) if (h.re.test(s)) return h.name; return ""; }
+JOBS.forEach(j => { j.hubs = [...new Set(j.places.map(p=>hubOf(p.l)).filter(Boolean))]; });
+
+const hoursAgo = j => Math.max(0, Math.round((Date.now() - j.ts) / 36e5));
+// how long WE'VE seen the listing live (reliable age for ghost-job signal); null if unknown
+const daysListed = j => j.fseen ? Math.max(0, Math.floor((Date.now() - j.fseen) / 864e5)) : null;
+// "re-listed" = either the scraper saw the studio's date jump across runs, OR the role
+// has been live far longer than its currently-shown posted date claims (a refreshed /
+// continuously-reposted listing). The second check catches it without waiting for runs.
+function relistedNow(j){
+  if (j.relisted) return true;
+  const dl = daysListed(j);
+  if (dl == null || !j.ts) return false;
+  const postedDays = (Date.now() - j.ts) / 864e5;
+  return dl - postedDays >= 30; // live 30+ days longer than its posted date suggests
+}
+
+// ---- filter UI ----------------------------------------------------------------
+const DISC = [...new Set(JOBS.map(j=>j.d))].sort();
+const WORK = ["Remote","Hybrid","Onsite","Unknown"];
+const SEN_FILTER_ORDER = ["Entry","Mid","Senior","Lead","Director+"];
+const SEN = SEN_FILTER_ORDER.filter(s => JOBS.some(j=>j.sen===s))
+  .concat([...new Set(JOBS.map(j=>j.sen))].filter(s=>!SEN_FILTER_ORDER.includes(s)).sort());
+const REGIONS = [...new Set(JOBS.flatMap(j=>j.regions))].sort();
+
+function checkboxes(el, items, cls){
+  document.getElementById(el).innerHTML = items.map(i=>
+    `<label class="chk"><input type="checkbox" class="${cls}" value="${i}" onchange="render()">${i}</label>`).join("");
+}
+checkboxes("discFilters", DISC, "f-d");
+checkboxes("workFilters", WORK, "f-w");
+checkboxes("seniorFilters", SEN, "f-s");
+document.getElementById("region").innerHTML += REGIONS.map(r=>`<option>${r}</option>`).join("");
+
+function checked(cls){ return [...document.querySelectorAll("."+cls+":checked")].map(c=>c.value); }
+
+// ---- scalable searchable filter groups (studio, country) ---------------------
+// counts = how many job rows include each value; selection held in JS Sets so it
+// survives search-filtering the visible list.
+const STUDIO_COUNTS = {}; for (const j of JOBS) STUDIO_COUNTS[j.s] = (STUDIO_COUNTS[j.s]||0)+1;
+const COUNTRY_COUNTS = {}; for (const j of JOBS) for (const c of j.countries) COUNTRY_COUNTS[c] = (COUNTRY_COUNTS[c]||0)+1;
+// parent-company "all studios" entries: only for publishers that span >1 studio
+// (e.g. Ubisoft, Electronic Arts, Sony Interactive). Value is "@<parent>".
+const STUDIO_LABELS = {}; for (const s in STUDIO_COUNTS) STUDIO_LABELS[s] = s;
+const _parentStudios = {}; for (const j of JOBS) (_parentStudios[j.p] = _parentStudios[j.p] || new Set()).add(j.s);
+for (const [parent, set] of Object.entries(_parentStudios)) {
+  if (set.size > 1) {
+    STUDIO_COUNTS["@"+parent] = JOBS.filter(j=>j.p===parent).length;
+    STUDIO_LABELS["@"+parent] = parent + " — all studios";
+  }
+}
+const selStudios = new Set(), selCountries = new Set();
+// directory studios (no per-job feed) shown in the studio filter as click-through links
+const DIR_STUDIOS = ((LIVE && window.JOBS_DATA.directory) || [])
+  .map(d => ({ name: d.name, url: d.url }))
+  .sort((a,b) => a.name.localeCompare(b.name));
+
+function renderSearchGroup(boxId, searchId, counts, sel, labels, extras){
+  const q = (document.getElementById(searchId).value || "").toLowerCase();
+  const lbl = name => (labels && labels[name]) || name;
+  const entries = Object.entries(counts)
+    .filter(([name]) => lbl(name).toLowerCase().includes(q))
+    .sort((a,b) => (sel.has(b[0])-sel.has(a[0])) || b[1]-a[1]); // selected first, then by count
+  const checkboxes = entries.map(([name,n]) =>
+    `<label class="chk"><input type="checkbox" ${sel.has(name)?"checked":""}
+       onchange="toggleSel('${boxId}','${name.replace(/'/g,"\\'")}',this.checked)">
+       <span class="fname">${lbl(name)}</span><span class="fcount">${n}</span></label>`).join("");
+  // directory (link-out) rows, filtered by the same search
+  const extraRows = (extras || [])
+    .filter(d => d.name.toLowerCase().includes(q))
+    .map(d => `<a class="chk dirrow" href="${d.url}" target="_blank" rel="noopener" title="Opens ${d.name}'s careers page">
+       <span class="fname">${d.name}</span><span class="fcount">↗ link</span></a>`).join("");
+  document.getElementById(boxId).innerHTML = (checkboxes + extraRows)
+    || `<div class="xhint">No matches.</div>`;
+}
+function toggleSel(boxId, name, on){
+  const sel = boxId==="studioFilters" ? selStudios : selCountries;
+  on ? sel.add(name) : sel.delete(name);
+  // re-render that group so selected items pin to top, then refresh results
+  if (boxId==="studioFilters") renderSearchGroup("studioFilters","studioSearch",STUDIO_COUNTS,selStudios,STUDIO_LABELS,DIR_STUDIOS);
+  else renderSearchGroup("countryFilters","countrySearch",COUNTRY_COUNTS,selCountries,null);
+  render();
+}
+renderSearchGroup("studioFilters","studioSearch",STUDIO_COUNTS,selStudios,STUDIO_LABELS,DIR_STUDIOS);
+renderSearchGroup("countryFilters","countrySearch",COUNTRY_COUNTS,selCountries,null);
+function ago(h){ return h<1 ? "just now" : h===1 ? "1 hr ago" : h<24 ? h+" hrs ago" : Math.round(h/24)+" d ago"; }
+
+// ---- render --------------------------------------------------------------------
+let GROUPS = [];
+let LAST_LIST = [];
+const collapsed = new Set();
+const shown = {};
+const SHOW_STEP = 10;
+
+// matrix-cell + quick-filter state (the home page's primary filters)
+const selCells = new Set();        // keys "discipline|seniority"
+const selSubs = new Set();         // sub-discipline chips (Art/Eng/Design specializations)
+const selRegionsQuick = new Set(); // quick region chips
+const selHubs = new Set();         // gaming-hub chips (drill-down under a selected region)
+let quickRemote = false;
+
+function render(){
+  const q = document.getElementById("q").value.toLowerCase();
+  const d = checked("f-d"), w = checked("f-w"), s = checked("f-s");
+  const r = document.getElementById("region").value;
+  const maxDays = parseInt(document.getElementById("age").value, 10);
+  const salOnly = document.getElementById("salOnly").checked;
+  const hideTracked = document.getElementById("hideTracked").checked;
+  const showDismissed = document.getElementById("showDismissed").checked;
+  const hidePools = document.getElementById("hidePools").checked;
+  const hideRelisted = document.getElementById("hideRelisted").checked;
+  const maxListed = parseInt(document.getElementById("maxListed").value, 10);
+  document.getElementById("dismissCount").textContent = dismissed.size;
+
+  // "preHub" = everything EXCEPT the matrix cell selection and the hub drill-down.
+  // Dismissed jobs are always excluded here; "Show dismissed" is handled as its own
+  // focused review list below, so the matrix and counts stay about active roles.
+  const preHub = JOBS.filter(j =>
+    (!dismissed.has(j.id)) &&
+    (!hideTracked || !appStatus[j.id]) &&
+    (!salOnly || j.salary) &&
+    (!hidePools || !j.pool) &&
+    (!hideRelisted || !relistedNow(j)) &&
+    (!maxListed || daysListed(j)==null || daysListed(j) <= maxListed) &&
+    (!maxDays || (j.ts && hoursAgo(j) <= maxDays*24)) &&
+    (!q || (j.t+" "+j.s+" "+j.locs.join(" ")).toLowerCase().includes(q)) &&
+    (!selStudios.size || selStudios.has(j.s) || selStudios.has("@"+j.p)) &&
+    (!selCountries.size || j.countries.some(c=>selCountries.has(c))) &&
+    (!d.length || d.includes(j.d)) &&
+    (!w.length || w.includes(j.w)) &&
+    (!s.length || s.includes(j.sen)) &&
+    (!r || j.regions.includes(r)) &&
+    (!quickRemote || j.w === "Remote") &&
+    (!selRegionsQuick.size || j.regions.some(x=>selRegionsQuick.has(x)))
+  );
+
+  // facet helpers: each chip group's counts respect ALL the other active facets,
+  // so e.g. picking "Mid · Design" makes the hub counts show only mid design roles.
+  const passCells = j => !selCells.size || selCells.has(j.d+"|"+j.sen);
+  const passSubs  = j => !selSubs.size  || selSubs.has(j.sub);
+
+  // gaming-hub chips appear only when a region quick-filter is active. Counts respect
+  // the selected square(s) + specialize chips, scoped to the selected region(s).
+  const availHubs = {};
+  if (selRegionsQuick.size)
+    for (const j of preHub) if (passCells(j) && passSubs(j))
+      for (const hb of j.hubs)
+        if (selRegionsQuick.has(HUB_REGION[hb])) availHubs[hb] = (availHubs[hb]||0)+1;
+  for (const hb of [...selHubs]) if (!availHubs[hb]) selHubs.delete(hb); // prune stale picks
+
+  // "base" = preHub narrowed by the hub selection (feeds the matrix + cell list).
+  const base = selHubs.size ? preHub.filter(j => j.hubs.some(h=>selHubs.has(h))) : preHub;
+  // apply the matrix squares; the result feeds both the sub-discipline chips and the list
+  const cellList = selCells.size ? base.filter(j=>selCells.has(j.d+"|"+j.sen)) : base;
+
+  // sub-discipline chips appear only when a sub-bearing discipline (Art/Eng/Design)
+  // is selected via the matrix. Counts come from the cell-filtered set.
+  const selDiscs = new Set([...selCells].map(k=>k.split("|")[0]));
+  const subDiscsActive = [...selDiscs].filter(dn=>SUB_DISCS.has(dn));
+  const availSubs = {};
+  if (subDiscsActive.length)
+    for (const j of cellList) if (subDiscsActive.includes(j.d) && j.sub) availSubs[j.sub] = (availSubs[j.sub]||0)+1;
+  for (const sb of [...selSubs]) if (!availSubs[sb]) selSubs.delete(sb); // prune stale picks
+
+  let list = (selSubs.size ? cellList.filter(j=>selSubs.has(j.sub)) : cellList)
+    .sort((a,b)=>b.ts-a.ts);
+  // "Show dismissed" = a focused review list of ONLY the jobs you've hidden, ignoring
+  // other filters so they're always easy to find and restore.
+  if (showDismissed) list = JOBS.filter(j=>dismissed.has(j.id)).sort((a,b)=>b.ts-a.ts);
+
+  renderMatrix(base);
+  renderQuickbar();
+  renderHubbar(availHubs);
+  renderSubbar(availSubs);
+
+  const groups = {};
+  for (const j of list) (groups[j.d] = groups[j.d] || []).push(j);
+  GROUPS = Object.keys(groups).sort((a,b)=>groups[b].length-groups[a].length);
+
+  const newCount = list.filter(j => prevVisit && j.ts > prevVisit).length;
+  const cellNote = (selCells.size ? " · " + selCells.size + " square" + (selCells.size>1?"s":"") + " selected" : "")
+    + (selSubs.size ? " · " + [...selSubs].join(", ") : "")
+    + (selHubs.size ? " · " + [...selHubs].join(", ") : "");
+  document.getElementById("count").textContent = showDismissed
+    ? (list.length + " dismissed job" + (list.length!==1?"s":"") + " — click ↩ on a row to restore it")
+    : (list.length + " roles shown (" + JOBS.length + " total)" + cellNote +
+       (newCount ? " · " + newCount + " new since your last visit" : ""));
+
+  document.getElementById("jobs").innerHTML = list.length ? GROUPS.map((dn,gi)=>{
+    const jobs = groups[dn];
+    const open = !collapsed.has(dn);
+    const n = shown[dn] || SHOW_STEP;
+    const rest = jobs.length - n;
+    return `<div class="group">
+      <div class="group-header" onclick="toggleGroup(${gi})">
+        <span class="arrow ${open?'open':''}">▸</span> ${dn}
+        <span class="gcount">${jobs.length}</span>
+      </div>
+      ${open ? jobs.slice(0,n).map(rowHtml).join("") : ""}
+      ${open && rest > 0 ? `<button class="more-btn" onclick="showMore(${gi})">Show ${Math.min(SHOW_STEP,rest)} more (${rest} hidden)</button>` : ""}
+    </div>`;
+  }).join("") : `<div class="empty">No roles match. Click a highlighted square again to deselect, or clear your filters.</div>`;
+
+  LAST_LIST = list;
+  renderDirectory(); // keep the island in sync with the top search bar
+  if (view === "map") renderMap();
+  if (view === "stats") renderStats();
+}
+
+// ---- interactive matrix (home page) ------------------------------------------
+function renderMatrix(base){
+  const SEN_ORDER = ["Entry","Mid","Senior","Lead","Director+"];
+  const seniorities = SEN_ORDER.filter(sn => base.some(j=>j.sen===sn));
+  const discCount = {}; for (const j of base) discCount[j.d] = (discCount[j.d]||0)+1;
+  const discOrder = Object.keys(discCount).sort((a,b)=>discCount[b]-discCount[a]);
+  const cell = {}; for (const j of base) cell[j.d+"|"+j.sen] = (cell[j.d+"|"+j.sen]||0)+1;
+  const cmax = Math.max(1, ...Object.values(cell));
+  const heat = n => n===0 ? "transparent" : `rgba(88,166,255,${0.10 + 0.6*Math.sqrt(n/cmax)})`;
+  let h = `<div class="matrixhead">Find your square: tap to filter <span class="mhint">· discipline × seniority · brighter = more roles</span><span class="swipehint"> · swipe →</span></div>`;
+  if (!discOrder.length) { document.getElementById("matrixWrap").innerHTML = h + `<div class="xhint">No roles in the current filters.</div>`; return; }
+  h += `<div style="overflow-x:auto"><table class="xtab"><tr><th></th>${seniorities.map(sn=>`<th>${sn}</th>`).join("")}<th>Total</th></tr>`;
+  for (const dn of discOrder) {
+    const rowTotal = discCount[dn];
+    h += `<tr><td class="xname">${dn}</td>` + seniorities.map(sn=>{
+      const key = dn+"|"+sn, n = cell[key]||0, sel = selCells.has(key);
+      return `<td class="mcell ${sel?'xsel':''}" style="background:${sel?'':heat(n)}" ${n?`onclick="toggleCell('${dn.replace(/'/g,"\\'")}','${sn}')"`:''}>${n||""}</td>`;
+    }).join("") + `<td class="xtot">${rowTotal}</td></tr>`;
+  }
+  h += `</table></div>`;
+  document.getElementById("matrixWrap").innerHTML = h;
+}
+
+function renderQuickbar(){
+  const regions = ["North America","Europe","Asia-Pacific"];
+  let chips = `<button class="qchip ${quickRemote?'on':''}" onclick="toggleQuickRemote()">🌐 Remote only</button>`;
+  chips += regions.map(rg=>`<button class="qchip ${selRegionsQuick.has(rg)?'on':''}" onclick="toggleQuickRegion('${rg}')">${rg}</button>`).join("");
+  if (selCells.size || quickRemote || selRegionsQuick.size)
+    chips += `<button class="qchip clear" onclick="clearMatrix()">✕ Clear filters</button>`;
+  document.getElementById("quickbar").innerHTML = `<span class="qlabel">Quick filters:</span>${chips}`;
+}
+
+// sub-discipline chips: only rendered when a sub-bearing square is selected
+function renderSubbar(availSubs){
+  const el = document.getElementById("subbar");
+  const keys = Object.keys(availSubs).sort((a,b)=>availSubs[b]-availSubs[a]);
+  if (!keys.length) { el.innerHTML = ""; el.style.display = "none"; return; }
+  el.style.display = "";
+  el.innerHTML = `<span class="qlabel">Specialize:</span>` +
+    keys.map(s=>`<button class="qchip sub ${selSubs.has(s)?'on':''}" onclick="toggleSub('${s.replace(/'/g,"\\'")}')">${s} <span class="subn">${availSubs[s]}</span></button>`).join("");
+}
+
+// gaming-hub chips: only rendered when a region quick-filter is active
+function renderHubbar(availHubs){
+  const el = document.getElementById("hubbar");
+  const keys = Object.keys(availHubs).sort((a,b)=>availHubs[b]-availHubs[a]);
+  if (!keys.length) { el.innerHTML = ""; el.style.display = "none"; return; }
+  el.style.display = "";
+  el.innerHTML = `<span class="qlabel">📍 Hubs:</span>` +
+    keys.map(h=>`<button class="qchip hub ${selHubs.has(h)?'on':''}" onclick="toggleHub('${h.replace(/'/g,"\\'")}')">${h} <span class="subn">${availHubs[h]}</span></button>`).join("");
+}
+
+function toggleCell(dn, sn){ const k = dn+"|"+sn; selCells.has(k) ? selCells.delete(k) : selCells.add(k); render(); }
+function toggleSub(s){ selSubs.has(s) ? selSubs.delete(s) : selSubs.add(s); render(); }
+function toggleHub(h){ selHubs.has(h) ? selHubs.delete(h) : selHubs.add(h); render(); }
+function toggleQuickRemote(){ quickRemote = !quickRemote; render(); }
+function toggleQuickRegion(rg){ selRegionsQuick.has(rg) ? selRegionsQuick.delete(rg) : selRegionsQuick.add(rg); render(); }
+function clearMatrix(){ selCells.clear(); selSubs.clear(); selHubs.clear(); selRegionsQuick.clear(); quickRemote = false; render(); }
+
+// mobile: open/close the off-canvas filter drawer (no effect on desktop, where it's a column)
+function toggleFilters(){
+  const sb = document.getElementById("sidebar"), bd = document.getElementById("filterBackdrop");
+  const open = sb.classList.toggle("open");
+  bd.classList.toggle("show", open);
+}
+
+// "Who do I know?" — opens LinkedIn people search for the user's 1st-degree
+// connections at this studio, in their already-logged-in session. We send nothing;
+// it's just a constructed search URL. network=["F"] = first-degree connections.
+function liCompany(name){
+  return name.replace(/\s*\(HQ\)\s*/i, "").replace(/\s*[—-]\s*all studios.*/i, "").trim();
+}
+function whoDoIKnowUrl(name){
+  return "https://www.linkedin.com/search/results/people/?keywords=" +
+    encodeURIComponent(liCompany(name)) + "&network=%5B%22F%22%5D&origin=FACETED_SEARCH";
+}
+
+function rowHtml(j){
+  const h = hoursAgo(j);
+  const noDate = !j.ts;
+  const stale = !noDate && h > 720; // >30 days
+  const status = appStatus[j.id] || "";
+  const isNew = !noDate && prevVisit && j.ts > prevVisit;
+  const isDismissed = dismissed.has(j.id);
+  const locLabel = l => l.replace(/^united states,\s*/i, "").replace(/,/g, ", ");
+  const multi = j.places.length > 1;
+  // each location chip links to its own posting; a row with one place stays whole-row-clickable
+  const locChips = j.places.slice(0,3).map(p=>
+    `<span class="tag locchip" ${p.url?`onclick="event.stopPropagation(); window.open('${p.url}','_blank')" title="Open the ${locLabel(p.l)} posting"`:""}>${locLabel(p.l)}${multi?' ↗':''}</span>`).join("")
+    + (j.places.length>3 ? `<span class="tag">+${j.places.length-3} more</span>` : "");
+  const rowClick = (!multi && j.url) ? `onclick="window.open('${j.url}','_blank')"` : "";
+  // ghost-job signals (facts, not accusations)
+  const dl = daysListed(j);
+  const longClass = dl==null ? "" : dl>=90 ? "longbad" : dl>=45 ? "longwarn" : "";
+  const longChip = longClass ? `<span class="tag ${longClass}" title="We've seen this exact listing live for ${dl} days. Long-running posts are more likely to be stale or 'ghost' listings.">⏳ ${dl}d listed</span>` : "";
+  const relistChip = relistedNow(j) ? `<span class="tag relist" title="This role has been live far longer than its shown posted date${j.relistCount>1?` (date refreshed ${j.relistCount}×)`:''} — re-posted/refreshed rather than newly open.">↻ re-listed${j.relistCount>1?` ${j.relistCount}×`:''}</span>` : "";
+  const poolBadge = j.pool ? `<span class="poolbadge" title="A talent pool / general application — not a specific open role.">talent pool</span>` : "";
+  return `<div class="row ${stale?'stale':''} ${status?'st-'+status:''} ${isDismissed?'dismissed':''}" ${rowClick}>
+    <div class="rtop">
+      <div class="rmain">
+        <span class="title">${j.t}</span><span class="studio">${j.s}</span>
+        ${isDismissed?'<span class="dismissedbadge">dismissed</span>':''}
+        ${poolBadge}
+        ${multi?`<span class="multibadge">${j.places.length} locations</span>`:''}
+        ${isNew?'<span class="nfy">NEW FOR YOU</span>':''}
+      </div>
+      <div class="posted">${noDate?'date n/a':`${h<=24&&!isNew?'<span class="new">● </span>':''}${stale?'⚠ ':''}${ago(h)}`}</div>
+      <select class="status-sel" onclick="event.stopPropagation()" onchange="setStatus('${j.id}', this.value)">
+        <option value="">— track —</option>
+        <option value="applied" ${status==='applied'?'selected':''}>Applied ✓</option>
+        <option value="interviewing" ${status==='interviewing'?'selected':''}>Interviewing</option>
+        <option value="rejected" ${status==='rejected'?'selected':''}>Rejected</option>
+      </select>
+      <button class="dismiss" onclick="event.stopPropagation(); toggleDismiss('${j.id}')" title="${isDismissed?'Restore this job':'Hide this job forever'}">${isDismissed?'↩':'✕'}</button>
+    </div>
+    <div class="rtags">
+      ${j.w!=="Unknown"?`<span class="tag ${j.w.toLowerCase()}">${j.w}</span>`:""}
+      ${locChips}
+      <span class="tag">${j.sen}</span>
+      ${j.salary?`<span class="tag salary">${j.salary}</span>`:""}
+      ${j.yoe?`<span class="tag">${j.yoe}+ yrs</span>`:""}
+      ${longChip}
+      ${relistChip}
+      <a class="tag knowbtn" href="${whoDoIKnowUrl(j.s)}" target="_blank" rel="noopener" onclick="event.stopPropagation()" aria-label="Who do I know at ${j.s.replace(/"/g,'')}?" title="Who do I know here? Opens LinkedIn and shows your 1st-degree connections at ${j.s.replace(/"/g,'')} — your warmest path to a referral. (You'll need to be logged into LinkedIn.)">🤝<span class="knowtext">Who do I know?</span></a>
+    </div>
+  </div>`;
+}
+
+function setStatus(id, v){
+  if (v) appStatus[id] = v; else delete appStatus[id];
+  store.set("luj-status", appStatus);
+  render();
+}
+function toggleDismiss(id){
+  dismissed.has(id) ? dismissed.delete(id) : dismissed.add(id);
+  store.set("luj-dismissed", [...dismissed]);
+  render();
+}
+function toggleGroup(gi){ const d=GROUPS[gi]; collapsed.has(d)?collapsed.delete(d):collapsed.add(d); render(); }
+function showMore(gi){ const d=GROUPS[gi]; shown[d]=(shown[d]||SHOW_STEP)+SHOW_STEP; render(); }
+
+// ---- map view ----------------------------------------------------------------
+// gazetteer of game-industry cities: "match key" -> [lat, lng, display name]
+const GAZ = [
+  ["santa monica",34.02,-118.49],["culver city",34.02,-118.40],["burbank",34.18,-118.31],
+  ["los angeles",34.05,-118.24],["aliso viejo",33.58,-117.73],["irvine",33.68,-117.83],
+  ["san diego",32.72,-117.16],["san francisco",37.77,-122.42],["san mateo",37.56,-122.33],
+  ["foster city",37.56,-122.27],["redwood",37.49,-122.23],["mountain view",37.39,-122.08],
+  ["novato",38.11,-122.57],["sacramento",38.58,-121.49],["seattle",47.61,-122.33],
+  ["bellevue",47.61,-122.20],["redmond",47.67,-122.12],["kirkland",47.68,-122.21],
+  ["mercer island",47.57,-122.22],["portland",45.52,-122.68],["austin",30.27,-97.74],
+  ["dallas",32.78,-96.80],["houston",29.76,-95.37],["chicago",41.88,-87.63],
+  ["new york",40.71,-74.01],["boston",42.36,-71.06],["rockville",39.08,-77.15],
+  ["baltimore",39.29,-76.61],["raleigh",35.78,-78.64],["durham",35.99,-78.90],
+  ["cary",35.79,-78.78],["orlando",28.54,-81.38],["miami",25.76,-80.19],
+  ["atlanta",33.75,-84.39],["las vegas",36.17,-115.14],["phoenix",33.45,-112.07],
+  ["salt lake",40.76,-111.89],["denver",39.74,-104.99],["boulder",40.01,-105.27],
+  ["madison",43.07,-89.40],["minneapolis",44.98,-93.27],["detroit",42.33,-83.05],
+  ["albany",42.65,-73.75],
+  ["montreal",45.50,-73.57],["montréal",45.50,-73.57],["toronto",43.65,-79.38],
+  ["vancouver",49.28,-123.12],["quebec",46.81,-71.21],["edmonton",53.55,-113.49],
+  ["guildford",51.24,-0.57],["brighton",50.82,-0.14],["oxford",51.75,-1.26],
+  ["horsham",51.06,-0.33],["cambridge",52.21,0.12],["edinburgh",55.95,-3.19],
+  ["london",51.51,-0.13],["dublin",53.35,-6.26],["paris",48.86,2.35],["lyon",45.76,4.84],
+  ["bordeaux",44.84,-0.58],["montpellier",43.61,3.88],["berlin",52.52,13.40],
+  ["frankfurt",50.11,8.68],["hamburg",53.55,9.99],["munich",48.14,11.58],
+  ["cologne",50.94,6.96],["amsterdam",52.37,4.90],["ghent",51.05,3.72],
+  ["stockholm",59.33,18.07],["malmö",55.60,13.00],["malmo",55.60,13.00],
+  ["gothenburg",57.71,11.97],["helsinki",60.17,24.94],["espoo",60.21,24.66],
+  ["tampere",61.50,23.76],["copenhagen",55.68,12.57],["oslo",59.91,10.75],
+  ["warsaw",52.23,21.01],["krakow",50.06,19.94],["wroclaw",51.11,17.04],
+  ["prague",50.08,14.44],["vienna",48.21,16.37],["zurich",47.38,8.54],
+  ["madrid",40.42,-3.70],["barcelona",41.39,2.17],["seville",37.39,-5.98],
+  ["lisbon",38.72,-9.14],["milan",45.46,9.19],["kyiv",50.45,30.52],
+  ["istanbul",41.01,28.98],["bucharest",44.43,26.10],["belgrade",44.79,20.45],
+  ["tokyo",35.68,139.69],["osaka",34.69,135.50],["kyoto",35.01,135.77],
+  ["seoul",37.57,126.98],["shanghai",31.23,121.47],["guangzhou",23.13,113.26],
+  ["shenzhen",22.54,114.06],["beijing",39.90,116.41],["chengdu",30.57,104.07],
+  ["hong kong",22.32,114.17],["taipei",25.03,121.57],["singapore",1.35,103.82],
+  ["manila",14.60,120.98],["bangkok",13.76,100.50],["kuala lumpur",3.14,101.69],
+  ["hyderabad",17.39,78.49],["bangalore",12.97,77.59],["bengaluru",12.97,77.59],
+  ["pune",18.52,73.86],["sydney",-33.87,151.21],["melbourne",-37.81,144.96],
+  ["brisbane",-27.47,153.03],["adelaide",-34.93,138.60],["auckland",-36.85,174.76],
+  ["wellington",-41.29,174.78],
+  ["annecy",45.90,6.13],["carentoir",47.82,-2.14],["düsseldorf",51.23,6.78],["dusseldorf",51.23,6.78],
+  ["mainz",50.00,8.27],["newcastle",54.98,-1.61],["leamington",52.29,-1.53],["sofia",42.70,23.32],
+  ["da nang",16.05,108.21],["ho chi minh",10.82,106.63],["abu dhabi",24.45,54.38],
+  ["halifax",44.65,-63.58],["sherbrooke",45.40,-71.89],["saguenay",48.43,-71.07],
+  ["mexico city",19.43,-99.13],["são paulo",-23.55,-46.63],["sao paulo",-23.55,-46.63],
+  ["buenos aires",-34.60,-58.38],["bogotá",4.71,-74.07],["bogota",4.71,-74.07],
+  ["santiago",-33.45,-70.67],["dubai",25.20,55.27],["riyadh",24.71,46.68],
+  ["tel aviv",32.09,34.78],["cape town",-33.92,18.42],
+].sort((a,b)=>b[0].length-a[0].length); // longest keys first so "san mateo" wins over partials
+
+function matchCity(loc){
+  const s = loc.toLowerCase();
+  if (s.includes("london") && (s.includes("canada") || s.includes("ontario"))) return ["london (ontario)",42.98,-81.25];
+  for (const g of GAZ) if (s.includes(g[0])) return g;
+  return null;
+}
+
+// Coordinates for an island studio's map pin. Prefer an explicit DIR_GEO entry; else
+// auto-derive from the city named in its note (or name) via the gazetteer — so new
+// island studios pin themselves as long as their note mentions a known city.
+function dirCoords(d){
+  const g = DIR_GEO[d.name];
+  if (g) return { lat: g[0], lng: g[1], label: g[2] };
+  const m = matchCity(d.note || "") || matchCity(d.name || "");
+  if (m) return { lat: m[1], lng: m[2], label: m[0].replace(/\b\w/g, c=>c.toUpperCase()) };
+  return null;
+}
+
+let map = null, markerLayer = null, view = "list";
+function setView(v){
+  view = v;
+  for (const [tab, name] of [["tabList","list"],["tabMap","map"],["tabStats","stats"],["tabPulse","pulse"]])
+    document.getElementById(tab).classList.toggle("active", v===name);
+  document.getElementById("jobs").style.display = v==="list" ? "" : "none";
+  document.getElementById("directory").style.display = v==="list" ? "" : "none";
+  document.getElementById("moon").style.display = v==="list" ? "" : "none";
+  document.getElementById("matrixWrap").style.display = v==="list" ? "" : "none";
+  document.getElementById("quickbar").style.display = v==="list" ? "" : "none";
+  document.getElementById("hubbar").style.display = v==="list" ? "" : "none";
+  document.getElementById("subbar").style.display = v==="list" ? "" : "none";
+  document.getElementById("mapWrap").style.display = v==="map" ? "block" : "none";
+  document.getElementById("statsWrap").style.display = v==="stats" ? "block" : "none";
+  document.getElementById("pulseWrap").style.display = v==="pulse" ? "block" : "none";
+  if (v === "map") renderMap();
+  if (v === "stats") renderStats();
+  if (v === "pulse") renderPulse();
+}
+
+// ---- stats dashboard + data health -------------------------------------------
+function tally(list, fn){
+  const t = {};
+  for (const j of list) { const k = fn(j); if (k) t[k] = (t[k]||0)+1; }
+  return Object.entries(t).sort((a,b)=>b[1]-a[1]);
+}
+// like tally, but fn returns an array (e.g. countries/hubs spanning multiple places);
+// each value is counted once per job.
+function tallyMulti(list, fn){
+  const t = {};
+  for (const j of list) for (const k of new Set(fn(j)||[])) if (k) t[k] = (t[k]||0)+1;
+  return Object.entries(t).sort((a,b)=>b[1]-a[1]);
+}
+function barChart(title, entries, limit){
+  const top = entries.slice(0, limit || 12);
+  const max = Math.max(1, ...top.map(e=>e[1]));
+  return `<div class="statcard"><h3>${title}</h3>` + top.map(([k,n]) =>
+    `<div class="barrow"><span class="blabel" title="${k}">${k}</span>
+     <span class="btrack"><span class="bfill" style="width:${Math.round(100*n/max)}%"></span></span>
+     <span class="bnum">${n}</span></div>`).join("") + `</div>`;
+}
+
+function renderStats(){
+  const list = LAST_LIST;
+  // age buckets
+  const buckets = [["< 24 hrs",0],["1–7 days",0],["7–30 days",0],["> 30 days",0],["date n/a",0]];
+  for (const j of list) {
+    if (!j.ts) buckets[4][1]++;
+    else { const h = hoursAgo(j);
+      if (h<24) buckets[0][1]++; else if (h<168) buckets[1][1]++;
+      else if (h<720) buckets[2][1]++; else buckets[3][1]++; }
+  }
+  // salary ranges by discipline (jobs with parsed salary)
+  const sal = {};
+  for (const j of list) {
+    const m = j.salary && j.salary.match(/\$(\d+)K–\$(\d+)K/);
+    if (!m) continue;
+    (sal[j.d] = sal[j.d] || []).push([+m[1], +m[2]]);
+  }
+  const salRows = Object.entries(sal).filter(([,v])=>v.length>=2)
+    .map(([d,v])=>({ d, n: v.length,
+      lo: Math.round(v.reduce((s,x)=>s+x[0],0)/v.length),
+      hi: Math.round(v.reduce((s,x)=>s+x[1],0)/v.length) }))
+    .sort((a,b)=>b.hi-a.hi);
+  const salMax = Math.max(100, ...salRows.map(r=>r.hi));
+  const salCard = `<div class="statcard"><h3>Avg salary range by discipline (${salRows.reduce((s,r)=>s+r.n,0)} postings with pay data)</h3>`
+    + (salRows.length ? salRows.map(r =>
+      `<div class="barrow"><span class="blabel">${r.d} (${r.n})</span>
+       <span class="salrange"><span class="salbar" style="left:${Math.round(100*r.lo/salMax)}%; width:${Math.max(2,Math.round(100*(r.hi-r.lo)/salMax))}%"></span></span>
+       <span class="bnum" style="width:110px">$${r.lo}K–$${r.hi}K</span></div>`).join("")
+    : `<div class="hmuted" style="color:var(--muted);font-size:13px">No salary data in the current selection.</div>`) + `</div>`;
+
+  // data health (always unfiltered)
+  const D = window.JOBS_DATA;
+  let health = `<div class="statcard" style="grid-column:1/-1"><h3>Data health</h3>`;
+  if (!D) {
+    health += `<div class="hmuted" style="color:var(--muted)">Demo data — run the scraper (run-scraper.bat) for live health info.</div></div>`;
+  } else {
+    const ageH = Math.round((Date.now() - new Date(D.scrapedAt).getTime()) / 36e5);
+    health += (D.errors && D.errors.length ? `<div class="errbox">⚠ ${D.errors.length} source(s) failing:<br>${D.errors.join("<br>")}</div>` : "");
+    health += `<div class="healthrow"><span class="hname">Last scrape</span><span class="${ageH>2?'health-bad':'health-ok'}">${ageH<1?"under an hour ago":ageH+" hrs ago"}${ageH>2?" — overdue (target: hourly)":""}</span></div>`;
+    const byStudio = {};
+    for (const j of JOBS) {
+      const b = byStudio[j.s] = byStudio[j.s] || { n: 0, newest: 0 };
+      b.n++; b.newest = Math.max(b.newest, j.ts);
+    }
+    for (const [s, b] of Object.entries(byStudio).sort((a,b)=>b[1].n-a[1].n)) {
+      const fresh = b.newest ? Math.round((Date.now()-b.newest)/864e5) : null;
+      health += `<div class="healthrow"><span class="hname">${s}</span><span class="hmuted">${b.n} roles</span><span class="hmuted">${fresh===null?"no dates":fresh===0?"posted today":"newest: "+fresh+" d ago"}</span></div>`;
+    }
+    health += `</div>`;
+  }
+
+  // --- studios hiring NOW (fresh roles, last 7 days; ignores no-date listings) ---
+  const freshBy = {};
+  for (const j of list) if (j.ts && hoursAgo(j) <= 168) freshBy[j.s] = (freshBy[j.s]||0)+1;
+  const freshEntries = Object.entries(freshBy).sort((a,b)=>b[1]-a[1]);
+  const hiringCard = `<div class="statcard"><h3>Studios hiring now (posted in last 7 days)</h3>`
+    + (freshEntries.length ? barChart("", freshEntries, 12).replace(/^<div class="statcard"><h3><\/h3>/,"").replace(/<\/div>$/,"")
+       : `<div class="xhint">No roles posted in the last 7 days in this selection.</div>`) + `</div>`;
+
+  // --- work type: bars are a share of ALL roles (incl. unstated) so nothing looks
+  // bigger than it is. We do NOT guess unstated roles as onsite — that would be
+  // inventing data. Instead "Not stated" is shown as its own (usually dominant) bar.
+  const total = list.length;
+  const known = list.filter(j=>j.w!=="Unknown");
+  const rem = known.filter(j=>j.w==="Remote").length;
+  const hyb = known.filter(j=>j.w==="Hybrid").length;
+  const ons = known.filter(j=>j.w==="Onsite").length;
+  const unstated = total - known.length;
+  const pctT = n => total ? Math.round(100*n/total) : 0;        // share of all roles
+  const pctS = n => known.length ? Math.round(100*n/known.length) : 0; // share of stated
+  const wtRows = [["Remote",rem,"var(--green)"],["Hybrid",hyb,"var(--gold)"],["Onsite",ons,"var(--pink)"],["Not stated",unstated,"#484f58"]]
+    .sort((a,b)=>b[1]-a[1]);
+  const remoteCard = `<div class="statcard"><h3>Work type (all ${total} roles)</h3>`
+    + (total ? wtRows.map(([lbl,n,bg])=>
+        `<div class="barrow"><span class="blabel">${lbl}</span>
+         <span class="btrack"><span class="bfill" style="width:${pctT(n)}%;background:${bg}"></span></span>
+         <span class="bnum" style="width:74px">${n} · ${pctT(n)}%</span></div>`).join("")
+      : `<div class="xhint">No roles in this selection.</div>`)
+    + `<div class="xhint">Most studios don't state work type. Of the ${known.length} that do, ${pctS(rem)}% are remote, ${pctS(hyb)}% hybrid, ${pctS(ons)}% onsite.</div></div>`;
+
+  document.getElementById("statsWrap").innerHTML =
+    `<div class="statgrid">` +
+    hiringCard +
+    remoteCard +
+    barChart(`Roles by studio (filtered: ${list.length})`, tally(list, j=>j.s), 14) +
+    barChart("Roles by discipline", tally(list, j=>j.d)) +
+    barChart("Seniority", tally(list, j=>j.sen)) +
+    barChart("Roles by country", tallyMulti(list, j=>j.countries), 14) +
+    barChart("Roles by gaming hub", tallyMulti(list, j=>j.hubs), 14) +
+    barChart("Posting age", buckets.filter(b=>b[1]>0)) +
+    salCard + health + `</div>`;
+}
+
+// ---- Pulse: hiring momentum from our own listing history ---------------------
+function sparkline(series){
+  const pts = (series||[]).filter(v=>v!=null);
+  if (pts.length < 2) return "";
+  const w=120,h=22, max=Math.max(...pts), min=Math.min(...pts), rng=(max-min)||1, step=w/(pts.length-1);
+  const d = pts.map((v,i)=>`${i?'L':'M'}${(i*step).toFixed(1)},${(h-2-((v-min)/rng)*(h-4)).toFixed(1)}`).join(" ");
+  const up = pts[pts.length-1] >= pts[0];
+  return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}"><path d="${d}" fill="none" stroke="${up?'var(--green)':'var(--pink)'}" stroke-width="1.5" stroke-linejoin="round"/></svg>`;
+}
+
+function renderPulse(){
+  const el = document.getElementById("pulseWrap");
+  const T = (window.JOBS_DATA && window.JOBS_DATA.trends) || null;
+  const hasTrends = !!(T && T.studios && Object.keys(T.studios).length);
+  const enough = hasTrends && (T.span || 0) >= 8;
+  const tile = (num,label,cls="") => `<div class="ptile"><div class="pnum ${cls}">${num}</div><div class="plabelt">${label}</div></div>`;
+
+  // numbers available right now from current listings (work before any trend history)
+  const newThisWeek = JOBS.filter(j=>{ const d=daysListed(j); return d!=null ? d<=7 : (j.ts && hoursAgo(j)<=168); }).length;
+  const remoteNow = JOBS.filter(j=>j.w==="Remote").length;
+  const studiosTracked = (window.JOBS_DATA && window.JOBS_DATA.studios) || 0;
+
+  // week-over-week numbers (only once we have history)
+  let netTile = "", studiosUpTile = "";
+  if (enough) {
+    const totals = Object.values(T.studios);
+    const netWeek = totals.reduce((a,s)=>a+(s.now||0),0) - totals.reduce((a,s)=>a+(s.d7!=null?s.d7:s.now),0);
+    const studiosUp = totals.filter(s=>s.d7!=null && s.now>s.d7).length;
+    netTile = tile((netWeek>0?"+":"")+netWeek.toLocaleString(),"net vs last week", netWeek>0?"p-up":netWeek<0?"p-down":"p-flat");
+    studiosUpTile = tile(studiosUp,"studios hiring more");
+  }
+  const summary = `<div class="pulsestats">`
+    + tile(JOBS.length.toLocaleString(),"active jobs") + netTile
+    + tile(newThisWeek.toLocaleString(),"new this week") + studiosUpTile
+    + tile(remoteNow.toLocaleString(),"remote roles") + tile(studiosTracked,"studios tracked")
+    + `</div>`;
+
+  const note = `<div class="dirsub">Based on how many open roles we see on each studio's board over time — a signal of momentum, <b>not</b> official layoff news.${enough?' Compares now vs. ~30 days ago.':' <b>Momentum trends are still building</b> — the week-over-week numbers and the lists below fill in as we track studios over the coming days.'}</div>`;
+
+  let body = "";
+  if (hasTrends) {
+    const rows = Object.entries(T.studios).map(([name,s])=>{
+      const base = s.d30!=null ? s.d30 : (s.d7!=null ? s.d7 : s.now);
+      const delta = s.now - base;
+      const pct = base>0 ? delta/base : (s.now>0?1:0);
+      let cls;
+      if (s.now===0 && base>0) cls="dark";
+      else if (pct>=0.15 && delta>=2) cls="up";
+      else if (pct<=-0.15 && delta<=-2) cls="down";
+      else cls="flat";
+      return { name, now:s.now, delta, cls, series:s.series };
+    });
+    const up = rows.filter(r=>r.cls==="up").sort((a,b)=>b.delta-a.delta);
+    const down = rows.filter(r=>r.cls==="down"||r.cls==="dark").sort((a,b)=>a.delta-b.delta);
+    const row = r => `<div class="pulserow">
+       <span class="plabel" title="${r.name}">${r.name}${r.cls==="dark"?' <span class="darktag">board quiet</span>':''}</span>
+       <span class="spark">${sparkline(r.series)}</span>
+       <span class="pulsenum">${r.now}<span class="pdelta p-${r.cls}">${r.delta>0?'+':''}${r.delta}</span></span>
+     </div>`;
+    const upCard = `<div class="statcard"><h3>📈 Ramping up</h3>${up.length?up.map(row).join(""):'<div class="xhint">No clear risers yet — trends are still building.</div>'}</div>`;
+    const downCard = `<div class="statcard"><h3>📉 Pulling back / quiet</h3>${down.length?down.map(row).join(""):'<div class="xhint">No clear decliners right now.</div>'}</div>`;
+    body = `<div class="statgrid">${upCard}${downCard}</div>`;
+  }
+  el.innerHTML = `<h2 class="pulsehead">This week in hiring</h2>${summary}${note}${body}`;
+}
+
+function renderMap(){
+  if (typeof L === "undefined") {
+    document.getElementById("map").innerHTML = '<div class="empty">Map requires an internet connection (loads OpenStreetMap tiles).</div>';
+    return;
+  }
+  if (!map) {
+    map = L.map("map", { worldCopyJump: true }).setView([39, -35], 3);
+    L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
+      maxZoom: 12,
+    }).addTo(map);
+    markerLayer = L.layerGroup().addTo(map);
+  }
+  setTimeout(()=>map.invalidateSize(), 50);
+  markerLayer.clearLayers();
+
+  const list = LAST_LIST;
+  const cities = {}; // key -> {lat,lng,count,studios:{}}
+  let remote = 0, unmapped = 0;
+  for (const j of list) {
+    let placed = false;
+    const seen = new Set();
+    for (const loc of j.locs) {
+      if (/remote/i.test(loc)) { if(!placed){remote++;} placed = true; continue; }
+      const g = matchCity(loc);
+      if (g && !seen.has(g[0])) {
+        seen.add(g[0]);
+        const c = cities[g[0]] = cities[g[0]] || { lat: g[1], lng: g[2], name: g[0], count: 0, studios: {} };
+        c.count++;
+        c.studios[j.s] = (c.studios[j.s] || 0) + 1;
+        placed = true;
+      }
+    }
+    if (!placed) unmapped++;
+  }
+
+  const max = Math.max(1, ...Object.values(cities).map(c=>c.count));
+  for (const c of Object.values(cities)) {
+    const r = 6 + 22 * Math.sqrt(c.count / max);
+    const label = c.name.replace(/\b\w/g, ch=>ch.toUpperCase());
+    const topStudios = Object.entries(c.studios).sort((a,b)=>b[1]-a[1]).slice(0,4)
+      .map(([s,n])=>`${s} (${n})`).join("<br>");
+    L.circleMarker([c.lat, c.lng], {
+      radius: r, color: "#58a6ff", weight: 1.5, fillColor: "#58a6ff", fillOpacity: 0.35,
+    }).bindPopup(
+      `<b>${label}</b> — ${c.count} role${c.count>1?"s":""}<br><span style="color:#8b949e">${topStudios}</span><br>` +
+      `<a onclick="filterCity('${c.name.replace(/'/g,"\\'")}')">Show these jobs →</a>`
+    ).addTo(markerLayer);
+  }
+  // island studios: gold pins at each studio's HQ, grouped by city, linking out.
+  // Nudged slightly off the blue job-pins so overlapping cities stay clickable.
+  const dirCities = {};
+  const dq = (document.getElementById("q").value || "").toLowerCase(); // honor the search
+  for (const d of DIRECTORY) {
+    if (dq && !(d.name + " " + (d.note || "")).toLowerCase().includes(dq)) continue;
+    const c0 = dirCoords(d);
+    if (!c0) continue;
+    const key = c0.lat + "," + c0.lng;
+    (dirCities[key] = dirCities[key] || { lat: c0.lat, lng: c0.lng, label: c0.label, items: [] }).items.push(d);
+  }
+  let islandShown = 0;
+  for (const c of Object.values(dirCities)) {
+    islandShown += c.items.length;
+    const links = c.items.map(d=>`<a href="${d.url}" target="_blank" rel="noopener">${d.name} ↗</a>`).join("<br>");
+    L.circleMarker([c.lat + 0.06, c.lng + 0.06], {
+      radius: 5 + Math.min(8, c.items.length * 1.5), color: "#d29922", weight: 1.5,
+      fillColor: "#d29922", fillOpacity: 0.45,
+    }).bindPopup(
+      `<b>${c.label}</b> — ${c.items.length} studio${c.items.length>1?"s":""} to browse directly<br>` +
+      `<span style="color:#8b949e">${links}</span>`
+    ).addTo(markerLayer);
+  }
+
+  document.getElementById("mapNote").innerHTML =
+    `<span style="color:#58a6ff">●</span> ${Object.keys(cities).length} cities with listed roles · ` +
+    `<span style="color:#d29922">●</span> ${islandShown} "browse directly" studios · ` +
+    `${remote} remote roles &amp; ${unmapped} unmapped (not shown)`;
+}
+
+// ---- directory ("misfit island"): studios we link to directly ----------------
+const DIRECTORY = ((LIVE && window.JOBS_DATA.directory) || [
+  { name:"Turn 10 Studios", url:"#", note:"Forza — Xbox Game Studios" },
+  { name:"Ninja Theory", url:"#", note:"Hellblade — Xbox Game Studios" },
+]).slice().sort((a,b) => a.name.localeCompare(b.name));
+// HQ coordinates for island studios (researched), keyed by exact directory name.
+// Lets us plot "browse directly" studios on the map even though we can't scrape them.
+const DIR_GEO = {
+  "Turn 10 Studios":[47.67,-122.12,"Redmond, WA"],
+  "Mojang Studios":[59.33,18.07,"Stockholm, Sweden"],
+  "Ninja Theory":[52.20,0.12,"Cambridge, UK"],
+  "Bethesda / ZeniMax":[39.08,-77.15,"Rockville, MD"],
+  "Aspyr Media":[30.27,-97.74,"Austin, TX"],
+  "Frontier Developments":[52.20,0.12,"Cambridge, UK"],
+  "Eidos-Montréal":[45.50,-73.57,"Montréal, QC"],
+  "Bandai Namco":[33.68,-117.83,"Irvine, CA"],
+  "Studio Wildcard":[47.67,-122.12,"Redmond, WA"],
+  "Valve":[47.61,-122.20,"Bellevue, WA"],
+  "Nintendo":[47.67,-122.12,"Redmond, WA (NoA)"],
+  "Sega":[33.68,-117.83,"Irvine, CA (Sega of America)"],
+  "HoYoverse":[1.29,103.85,"Singapore"],
+  "Remedy Entertainment":[60.21,24.66,"Espoo, Finland"],
+  "Nexon":[33.92,-118.42,"El Segundo, CA (Nexon America)"],
+  "IO Interactive":[55.68,12.57,"Copenhagen, Denmark"],
+  "Jagex":[52.20,0.12,"Cambridge, UK"],
+  "Warner Bros. Games":[34.18,-118.31,"Burbank, CA"],
+  "Wizards of the Coast":[47.48,-122.21,"Renton, WA"],
+  "Virtuos":[1.29,103.85,"Singapore"],
+  "Certain Affinity":[30.27,-97.74,"Austin, TX"],
+  "Climax Studios":[50.82,-1.09,"Portsmouth, UK"],
+  "Firaxis Games":[39.51,-76.66,"Sparks, MD"],
+  "Playground Games":[52.29,-1.54,"Leamington Spa, UK"],
+  "Creative Assembly":[51.06,-0.33,"Horsham, UK"],
+  "Capcom":[34.69,135.50,"Osaka, Japan"],
+  "That's No Moon":[34.05,-118.24,"Los Angeles, CA"],
+  "Fuse Games":[51.24,-0.57,"Guildford, UK"],
+  "OtherSide Entertainment":[42.36,-71.06,"Boston, MA"],
+  "Behaviour Interactive":[45.50,-73.57,"Montréal, QC"],
+  "Undead Labs":[47.61,-122.33,"Seattle, WA"],
+  "Saber Interactive":[26.12,-80.14,"Fort Lauderdale, FL"],
+  "Supermassive Games":[51.24,-0.57,"Guildford, UK"],
+  "The Coalition":[49.28,-123.12,"Vancouver, BC"],
+  "Hello Games":[51.24,-0.57,"Guildford, UK"],
+  "Telltale Games":[34.03,-118.68,"Malibu, CA"],
+  "Cloud Imperium Games":[34.05,-118.24,"Los Angeles, CA"],
+  "Rebellion":[51.75,-1.26,"Oxford, UK"],
+  "Keywords Studios":[53.35,-6.26,"Dublin, Ireland"],
+  "NCSOFT":[37.39,127.11,"Seongnam, South Korea"],
+};
+
+function renderDirectory(){
+  const el = document.getElementById("directory");
+  if (!DIRECTORY.length) { el.innerHTML = ""; return; }
+  // honor the top search bar: typing narrows the island to matching studios
+  const q = (document.getElementById("q").value || "").toLowerCase();
+  const list = q ? DIRECTORY.filter(d => (d.name + " " + (d.note||"")).toLowerCase().includes(q)) : DIRECTORY;
+  if (!list.length) { el.innerHTML = ""; return; }
+  const head = q
+    ? `<div class="dirhead">Studios matching “${q}” — browse directly (${list.length})</div>`
+    : `<div class="dirhead">Browse these studios directly (${list.length})</div>`;
+  el.innerHTML = head +
+    `<div class="dirsub">Great studios whose openings we can't list individually yet — these links go straight to their careers page.</div>
+     <div class="dirgrid">` +
+    list.map(d =>
+      `<a class="dircard" href="${d.url}" target="_blank" rel="noopener">
+         <div class="dn">${d.name}</div>
+         ${d.note?`<div class="dnote">${d.note}</div>`:""}
+         <div class="dgo">View careers →</div>
+       </a>`).join("") +
+    `</div>`;
+}
+
+// ---- "The Moon": smaller / indie studios (standalone browse section, not searchable) ----
+const MOON_STUDIOS = ((LIVE && window.JOBS_DATA.moon) || [])
+  .slice().sort((a,b) => a.name.localeCompare(b.name));
+// TODO: set this to the real inbox once the domain is live (e.g. studios@devquest.gg)
+const SUBMIT_EMAIL = "studios@devquest.gg";
+function renderMoon(){
+  const el = document.getElementById("moon");
+  const submit = `<a class="moonsubmit" href="mailto:${SUBMIT_EMAIL}?subject=${encodeURIComponent("Add our studio to DevQuest")}&body=${encodeURIComponent("Studio name:\nCareers page URL:\nA one-line description (optional):\n")}">+ Submit your studio</a>`;
+  const head = `<div class="moonhead">Indie &amp; community studios${MOON_STUDIOS.length?` (${MOON_STUDIOS.length})`:""} ${submit}</div>` +
+    `<div class="dirsub">Smaller and independent studios, including many who asked to be listed. These links go straight to their careers pages.</div>`;
+  const body = MOON_STUDIOS.length
+    ? `<div class="moongrid">` + MOON_STUDIOS.map(d =>
+        `<a class="moonchip" href="${d.url}" target="_blank" rel="noopener" ${d.note?`title="${(d.note||'').replace(/"/g,'')}"`:""}>${d.name} ↗</a>`).join("") + `</div>`
+    : `<div class="moonempty">No indie studios listed here yet. Run a small or independent studio? <a href="mailto:${SUBMIT_EMAIL}?subject=${encodeURIComponent("Add our studio to DevQuest")}">Get listed →</a></div>`;
+  el.innerHTML = head + body;
+}
+
+function filterCity(name){
+  document.getElementById("q").value = name;
+  setView("list");
+  render();
+}
+
+
+// ---- header + hero ------------------------------------------------------------
+document.getElementById("syncTime").innerHTML = LIVE
+  ? new Date(window.JOBS_DATA.scrapedAt).toLocaleString([], {month:'short', day:'numeric', hour:'numeric', minute:'2-digit'}) + " (live data)"
+    + (window.JOBS_DATA.errors && window.JOBS_DATA.errors.length
+       ? ` · <a style="color:var(--gold);cursor:pointer" onclick="setView('stats')">⚠ ${window.JOBS_DATA.errors.length} source(s) failing</a>` : "")
+  : "demo data";
+if (LIVE) document.getElementById("heroSub").textContent =
+  JOBS.length + " roles from " + window.JOBS_DATA.studios + " studios (and growing), synced hourly. " +
+  "We show posting age, salary when published, and say \"Unknown\" instead of guessing.";
+
+renderDirectory();
+renderMoon();
+render();
+</script>
+</body>
+</html>
