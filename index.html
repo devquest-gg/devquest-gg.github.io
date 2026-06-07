@@ -1332,5 +1332,134 @@ renderMoon();
 render();
 </script>
 <!-- Cloudflare Web Analytics --><script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "95619b0dc4cf4d5c897a9ccd91097d8c"}'></script><!-- End Cloudflare Web Analytics -->
+<!-- ===== DevQuest alerts + cookieless event analytics (Phase 1) ===== -->
+<script>
+(function(){
+  "use strict";
+  var ALERTS_API = "https://devquest-alerts.balesdestin.workers.dev";
+
+  function track(name, props){
+    try{
+      var payload = JSON.stringify({ name:name, props:props||{} });
+      if (navigator.sendBeacon) navigator.sendBeacon(ALERTS_API+"/event", new Blob([payload], {type:"application/json"}));
+      else fetch(ALERTS_API+"/event", {method:"POST", headers:{"Content-Type":"application/json"}, body:payload, keepalive:true});
+    }catch(e){}
+  }
+  window.dqTrack = track;
+  track("view", { tab:"list" });
+
+  // wrap job-status + dismiss if present
+  try{ if(typeof window.setStatus==="function"){ var _ss=window.setStatus; window.setStatus=function(id,v){ try{ if(v) track("track_job",{status:v}); }catch(e){} return _ss.apply(this,arguments); }; } }catch(e){}
+  try{ if(typeof window.toggleDismiss==="function"){ var _td=window.toggleDismiss; window.toggleDismiss=function(id){ try{ track("dismiss_job",{}); }catch(e){} return _td.apply(this,arguments); }; } }catch(e){}
+
+  // search (debounced)
+  var _q = document.getElementById("q");
+  if(_q){ var _qt; _q.addEventListener("input", function(){ clearTimeout(_qt); _qt=setTimeout(function(){ if(_q.value.trim()) track("search",{len:_q.value.trim().length}); },1500); }); }
+
+  // delegated click tracking
+  document.addEventListener("click", function(e){
+    try{
+      var t = e.target;
+      var tabBtn = t.closest && t.closest(".viewtabs button");
+      if(tabBtn){ track("view", {tab:(tabBtn.textContent||"").replace(/[^a-z]/gi,"").toLowerCase()}); return; }
+      var a = t.closest && t.closest("a");
+      if(!a) return;
+      if(a.classList.contains("knowbtn")) track("who_do_i_know",{});
+      else if(a.classList.contains("dircard")||a.classList.contains("dirrow")) track("directory_click",{});
+      else if(a.classList.contains("moonchip")) track("moon_click",{});
+      else if(a.closest("#jobs")) track("apply_click",{});
+    }catch(_){}
+  }, true);
+
+  // ---------- "Email me these roles" signup widget ----------
+  function escapeH(s){ return String(s||"").replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];}); }
+  function val(id){ var e=document.getElementById(id); return e?e.value:""; }
+  function chk(id){ var e=document.getElementById(id); return !!(e&&e.checked); }
+  function setArr(name){ try{ return Array.from(eval(name)); }catch(e){ return []; } }
+
+  function readCriteria(){
+    var c={};
+    c.q=(val("q")||"").trim(); c.region=val("region"); c.age=val("age"); c.maxListed=val("maxListed");
+    c.salOnly=chk("salOnly"); c.hidePools=chk("hidePools");
+    try{ c.quickRemote=!!quickRemote; }catch(e){ c.quickRemote=false; }
+    try{ c.cells=Array.from(selCells); }catch(e){ c.cells=[]; }
+    try{ c.subs=Array.from(selSubs); }catch(e){ c.subs=[]; }
+    try{ c.studios=Array.from(selStudios); }catch(e){ c.studios=[]; }
+    try{ c.countries=Array.from(selCountries); }catch(e){ c.countries=[]; }
+    try{ c.regionsQuick=Array.from(selRegionsQuick); }catch(e){ c.regionsQuick=[]; }
+    try{ c.hubs=Array.from(selHubs); }catch(e){ c.hubs=[]; }
+    return c;
+  }
+  function hasFilters(c){
+    return !!(c.q||c.region||c.quickRemote||c.salOnly||(c.cells&&c.cells.length)||(c.subs&&c.subs.length)||
+      (c.studios&&c.studios.length)||(c.countries&&c.countries.length)||(c.regionsQuick&&c.regionsQuick.length)||(c.hubs&&c.hubs.length));
+  }
+  function labelFor(c){
+    var p=[];
+    (c.cells||[]).slice(0,3).forEach(function(k){ var x=k.split("|"); p.push((x[1]?x[1]+" ":"")+x[0]); });
+    (c.subs||[]).slice(0,2).forEach(function(s){ p.push(s); });
+    (c.studios||[]).slice(0,2).forEach(function(s){ p.push(String(s).replace(/^@/,"")); });
+    if(c.quickRemote) p.push("Remote");
+    (c.regionsQuick||[]).slice(0,1).forEach(function(r){ p.push(r); });
+    if(c.region) p.push(c.region);
+    (c.countries||[]).slice(0,1).forEach(function(x){ p.push(x); });
+    if(c.q) p.push('"'+c.q+'"');
+    var l=p.join(" · "); if(l.length>90) l=l.slice(0,87)+"…"; return l||"matching";
+  }
+
+  var bar=document.createElement("div");
+  bar.id="alertBar";
+  bar.style.cssText="display:none;margin:10px 0 8px;padding:11px 14px;border:1px solid #2a3a28;border-radius:8px;background:#141816";
+  var jobsEl=document.getElementById("jobs");
+  if(jobsEl&&jobsEl.parentNode) jobsEl.parentNode.insertBefore(bar, jobsEl);
+
+  function buildCta(label, c){
+    bar.setAttribute("data-state","cta"); bar.style.display="block";
+    bar.innerHTML='<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;color:#d0dcc8">'+
+      '<span style="font-size:14px">🔔 Get a weekly email of new <b>'+escapeH(label)+'</b> roles.</span>'+
+      '<button id="alertCta" style="margin-left:auto;background:#1f6feb;color:#fff;border:0;border-radius:6px;padding:7px 14px;font-weight:600;cursor:pointer">Email me these</button></div>';
+    var btn=document.getElementById("alertCta"); if(btn) btn.onclick=function(){ openForm(label, c); };
+  }
+  function openForm(label, c){
+    bar.setAttribute("data-state","form");
+    bar.innerHTML='<form id="alertForm" style="display:flex;flex-direction:column;gap:8px;color:#d0dcc8">'+
+      '<div style="font-size:14px">🔔 Weekly email of new <b>'+escapeH(label)+'</b> roles:</div>'+
+      '<div style="display:flex;gap:8px;flex-wrap:wrap"><input id="alertEmail" type="email" required placeholder="you@email.com" style="flex:1;min-width:200px;padding:8px 10px;border:1px solid #2a3a28;border-radius:6px;background:#0d0f0e;color:#d0dcc8">'+
+      '<button type="submit" style="background:#1f6feb;color:#fff;border:0;border-radius:6px;padding:8px 16px;font-weight:600;cursor:pointer">Subscribe</button></div>'+
+      '<label style="font-size:12px;color:#7a8878;display:flex;gap:6px;align-items:flex-start"><input id="alertConsent" type="checkbox" required style="margin-top:2px">I agree to receive a weekly job-alert email. Unsubscribe anytime; no spam.</label>'+
+      '<div id="alertMsg" style="font-size:13px;min-height:16px"></div></form>';
+    document.getElementById("alertForm").onsubmit=function(ev){
+      ev.preventDefault();
+      var email=document.getElementById("alertEmail").value.trim();
+      var consent=document.getElementById("alertConsent").checked;
+      var msg=document.getElementById("alertMsg");
+      if(!consent){ msg.textContent="Please tick the consent box."; msg.style.color="#c87878"; return; }
+      msg.textContent="Sending…"; msg.style.color="#7a8878";
+      track("alert_signup",{});
+      fetch(ALERTS_API+"/subscribe",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email:email,criteria:c,label:label})})
+        .then(function(r){ return r.json().catch(function(){return{};}).then(function(j){ return {ok:r.ok,j:j}; }); })
+        .then(function(res){
+          if(res.ok&&res.j&&res.j.ok){ bar.setAttribute("data-state","done"); bar.innerHTML='<div style="font-size:14px;color:#58a6ff">✓ Almost there — check your inbox and click the confirmation link to start your weekly alert.</div>'; }
+          else { msg.textContent="That didn’t go through. Please try again in a moment."; msg.style.color="#c87878"; }
+        }).catch(function(){ msg.textContent="Network hiccup — please try again."; msg.style.color="#c87878"; });
+    };
+  }
+
+  var lastSig="";
+  function renderBar(){
+    var c=readCriteria();
+    try{ var sig=JSON.stringify(c); if(sig!==lastSig){ lastSig=sig; if(hasFilters(c)) track("filter",{}); } }catch(e){}
+    var state=bar.getAttribute("data-state");
+    if(!hasFilters(c)){ bar.style.display="none"; bar.removeAttribute("data-state"); return; }
+    if(state==="form"||state==="done") return; // don't clobber an open/finished form
+    buildCta(labelFor(c), c);
+  }
+
+  // update the bar whenever the job list re-renders (i.e. filters changed)
+  if(jobsEl){ try{ new MutationObserver(function(){ try{ renderBar(); }catch(e){} }).observe(jobsEl,{childList:true}); }catch(e){} }
+  try{ renderBar(); }catch(e){}
+})();
+</script>
+
 </body>
 </html>
