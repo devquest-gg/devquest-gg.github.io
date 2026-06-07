@@ -23,8 +23,6 @@ const SAMPLE_FILE = sampleIdx > -1 ? process.argv[sampleIdx + 1] : null;
 const DIRECTORY = [
   { name: "Turn 10 Studios", url: "https://www.turn10studios.com/careers", note: "Forza — Xbox Game Studios" },
   { name: "Ninja Theory", url: "https://www.ninjatheory.com/careers/opportunities", note: "Hellblade — Xbox Game Studios" },
-  { name: "Aspyr Media", url: "https://www.aspyr.com/open_positions", note: "Austin, TX — Embracer" },
-  { name: "Frontier Developments", url: "https://www.frontier.co.uk/careers/jobs?location=All", note: "Elite Dangerous, Planet Zoo — Cambridge, UK" },
   { name: "Eidos-Montréal", url: "https://www.eidosmontreal.com/careers/", note: "Deus Ex, Tomb Raider — Embracer (Dayforce)" },
   { name: "Valve", url: "https://www.valvesoftware.com/en/jobs", note: "Steam, Half-Life, Dota 2 — custom site" },
   { name: "Remedy Entertainment", url: "https://www.remedygames.com/careers", note: "Control, Alan Wake — Finland" },
@@ -152,6 +150,8 @@ const STUDIOS = [
   { name: "Nexon", type: "jobscore", token: "nexonamericainc" },
   { name: "Certain Affinity", type: "jazzhr", token: "certainaffinityinc" },
   { name: "Capcom", type: "jobvite", token: "capcomusa" },
+  { name: "Frontier Developments", type: "lever", token: "frontier", region: "eu" }, // public feed is on the EU host
+  { name: "Aspyr Media", type: "greenhouse", token: "aspyrmediainc" }, // proxied under aspyr.com but a standard Greenhouse board
   // Workday fetcher kept for future boards (EA, Nintendo...). Sony's Workday
   // board is superseded by the Greenhouse board above.
   // { name: "PlayStation (Sony)", type: "workday", token: "sonyglobal",
@@ -403,7 +403,7 @@ async function fetchGreenhouse(studio) {
 
 async function fetchLever(studio) {
   const data = SAMPLE_FILE ? loadSample(studio)
-    : await fetchJson(`https://api.lever.co/v0/postings/${studio.token}?mode=json`);
+    : await fetchJson(`https://${studio.region === "eu" ? "api.eu.lever.co" : "api.lever.co"}/v0/postings/${studio.token}?mode=json`); // some studios (Frontier) post on Lever's EU host
   if (!data) return [];
   return data.map(j => {
     const location = (j.categories?.allLocations || [j.categories?.location]).filter(Boolean).join("; ") || "Unlisted";
