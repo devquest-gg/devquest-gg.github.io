@@ -31,7 +31,6 @@ const DIRECTORY = [
   { name: "Remedy Entertainment", url: "https://www.remedygames.com/careers", note: "Control, Alan Wake — Finland" },
   { name: "Nexon", url: "https://careers.jobscore.com/careers/nexonamericainc", note: "MapleStory, The Finals — JobScore" },
   { name: "Warner Bros. Games", url: "https://careers.wbd.com/games", note: "NetherRealm, Rocksteady, Avalanche" },
-  { name: "Wizards of the Coast", url: "https://company.wizards.com/en/careers", note: "D&D, Magic: The Gathering — Hasbro" },
   { name: "Virtuos", url: "https://www.virtuosgames.com/careers", note: "AAA co-dev / outsourcing — global" },
   { name: "Certain Affinity", url: "https://www.certainaffinity.com/careers", note: "Halo/CoD co-dev — Austin, TX" },
   { name: "Playground Games", url: "https://www.playground-games.com/careers", note: "Forza Horizon, Fable — Xbox" },
@@ -144,6 +143,10 @@ const STUDIOS = [
   // Amazon: keyword search + team allow-list (Amazon Games + Luna cloud gaming).
   { name: "Amazon Games", type: "amazonjobs", token: "amazon",
     queries: ["games", "game", "luna", "gameplay"], teams: ["team-games", "team-luna"] },
+  // Wizards of the Coast = Hasbro's games division (Magic, D&D). Hasbro runs Eightfold
+  // on the "pcsx" search endpoint; keep ONLY department "WIZARDS" (drops toys/corporate).
+  { name: "Wizards of the Coast", type: "eightfold", token: "wotc", host: "careers.hasbro.com",
+    domain: "hasbro.com", api: "pcsx", departments: ["WIZARDS"] },
   // Workday fetcher kept for future boards (EA, Nintendo...). Sony's Workday
   // board is superseded by the Greenhouse board above.
   // { name: "PlayStation (Sony)", type: "workday", token: "sonyglobal",
@@ -858,13 +861,20 @@ async function fetchEightfold(studio) {
     if (!data) return [];
     all = data.positions || [];
   } else {
+    // Two Eightfold flavours: classic /api/apply/v2/jobs (Netflix) and the "pcsx"
+    // search namespace (Hasbro) which nests results under data.data and 403s the
+    // apply/v2 path. studio.api === "pcsx" switches endpoint + parsing + adds Referer.
+    const pcsx = studio.api === "pcsx";
     const headers = { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36", "Accept": "application/json" };
+    if (pcsx) headers["Referer"] = `https://${studio.host}/careers`;
     let start = 0, total = Infinity, pages = 0;
     while (start < total && pages < 200) {
-      const url = `https://${studio.host}/api/apply/v2/jobs?domain=${studio.domain}&query=&start=${start}&num=10&sort_by=relevance`;
+      const path = pcsx ? "/api/pcsx/search" : "/api/apply/v2/jobs";
+      const url = `https://${studio.host}${path}?domain=${studio.domain}&query=&start=${start}&num=10&sort_by=relevance`;
       const res = await fetch(url, { headers });
       if (!res.ok) { if (pages === 0) throw new Error(`HTTP ${res.status}`); break; }
-      const data = await res.json();
+      const raw = await res.json();
+      const data = raw.data || raw; // pcsx nests positions/count under .data
       total = data.count ?? 0;
       const jobs = data.positions || [];
       if (!jobs.length) break;
