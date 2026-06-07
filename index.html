@@ -1341,7 +1341,7 @@ render();
   function track(name, props){
     try{
       var payload = JSON.stringify({ name:name, props:props||{} });
-      if (navigator.sendBeacon) navigator.sendBeacon(ALERTS_API+"/event", new Blob([payload], {type:"application/json"}));
+      if (navigator.sendBeacon) navigator.sendBeacon(ALERTS_API+"/event", payload);
       else fetch(ALERTS_API+"/event", {method:"POST", headers:{"Content-Type":"application/json"}, body:payload, keepalive:true});
     }catch(e){}
   }
