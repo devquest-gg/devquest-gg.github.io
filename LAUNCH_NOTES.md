@@ -378,3 +378,28 @@ The island was mostly stale, not impossible: ~20 studios are immediate mainland 
 feasible with a small number of new platform fetchers (Jobvite first — best ROI), and only ~7 are
 genuinely blocked (3 of them the Microsoft first-party cluster). "Dead end" notes should always be
 re-tested before being trusted.
+
+## 📦 Re-audit deployment log (June 7 2026)
+
+What actually shipped from the island re-audit (all live on the next hourly scrape):
+
+- **ZeniMax / Bethesda** — new `zenimax` fetcher (iCIMS embedded JSON), studio-split.
+- **Batch 1 (16 studios)** on existing ATS fetchers: Nintendo, Mojang, Bandai Namco, Firaxis,
+  That's No Moon, NCSOFT, HoYoverse (Greenhouse); Behaviour Interactive (Lever); Jagex, Climax,
+  Rebellion (Workable); Keywords Studios (SmartRecruiters); IO Interactive, OtherSide (Teamtailor);
+  Sega, Cloud Imperium (Workday).
+- **Wizards of the Coast** — Eightfold `pcsx` variant + `departments:["WIZARDS"]` games filter.
+- **Warner Bros. Games** — Phenom + `categories:["Game Development"]` games filter (drops ~415
+  non-game WBD roles; keeps Rocksteady, NetherRealm, Avalanche, TT Games, WB Games Montreal).
+- **Niche platforms (4 new fetchers)**: Studio Wildcard (BambooHR JSON), Nexon (JobScore atom feed,
+  incl. salary), Certain Affinity (JazzHR HTML), Capcom (Jobvite HTML).
+
+New reusable fetcher types added this pass: `zenimax`, `bamboohr`, `jobscore`, `jazzhr`, `jobvite`,
+plus an Eightfold `pcsx` mode and a Phenom category allow-list.
+
+STILL on the directory (genuinely blocked or deferred):
+- Microsoft first-party (Turn 10, The Coalition, Undead Labs), Ninja Theory, Eidos-Montréal (Dayforce).
+- Bespoke client-rendered sites not yet built: Creative Assembly (Next.js, no clean feed found),
+  Valve, Playground Games, Supermassive, Hello Games.
+- Deferred quick wins: Frontier (Lever EU-host tweak), Aspyr (Greenhouse board token to extract).
+- Recheck-when-hiring (0 roles / no ATS now): Remedy, Virtuos, Fuse Games, Saber, Telltale.
