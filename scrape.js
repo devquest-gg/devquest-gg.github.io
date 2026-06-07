@@ -1035,6 +1035,7 @@ function applyListingHistory(jobs) {
 // every job already has a seen.json entry to annotate.
 const SALARY_MAX_FETCH = 400;     // detail fetches per run (bounds runtime)
 const SALARY_RECHECK = 30 * DAY;  // re-open "no salary found" jobs at most this often
+const SALARY_CACHE_VERSION = 2;   // bump to re-check previously-empty results after parser/fetcher upgrades
 
 async function fetchDetailJson(url, ms = 15000) {
   const ctrl = new AbortController();
@@ -1091,9 +1092,12 @@ async function backfillSalaries(jobs) {
   for (const j of jobs) {
     if (j.salary) continue;                         // already supplied by the feed
     const h = hist[j.id];
-    if (h && h.salaryAt && (h.salary || (now - h.salaryAt) < SALARY_RECHECK)) {
+    // Cached if: we found a salary before (keep it, any version), OR we checked it
+    // empty recently AND under the current cache version (a version bump re-opens
+    // old empties so parser/fetcher upgrades take effect).
+    if (h && h.salaryAt && (h.salary || (h.salaryV === SALARY_CACHE_VERSION && (now - h.salaryAt) < SALARY_RECHECK))) {
       if (h.salary) { j.salary = h.salary; if (j.yoe == null && h.yoe != null) j.yoe = h.yoe; }
-      continue;                                     // cached (found, or recently checked empty)
+      continue;
     }
     if (j.url && /^https?:\/\//.test(j.url)) toFetch.push(j); // any public posting page
   }
@@ -1113,11 +1117,11 @@ async function backfillSalaries(jobs) {
       const yoe = extractYoe(desc);
       if (sal) { j.salary = sal; found++; }
       if (j.yoe == null && yoe != null) j.yoe = yoe;
-      hist[j.id] = { ...(hist[j.id] || {}), salary: sal || null, yoe: yoe ?? (hist[j.id]?.yoe ?? null), salaryAt: now };
+      hist[j.id] = { ...(hist[j.id] || {}), salary: sal || null, yoe: yoe ?? (hist[j.id]?.yoe ?? null), salaryAt: now, salaryV: SALARY_CACHE_VERSION };
     } catch (e) {
       // back off on error too (e.g. a host that blocks us), so one bad source can't
       // consume the whole per-run budget every run. Rechecked like a "not found".
-      hist[j.id] = { ...(hist[j.id] || {}), salary: hist[j.id]?.salary ?? null, salaryAt: now };
+      hist[j.id] = { ...(hist[j.id] || {}), salary: hist[j.id]?.salary ?? null, salaryAt: now, salaryV: SALARY_CACHE_VERSION };
     }
     await new Promise(r => setTimeout(r, 250)); // be polite between detail fetches
   }
