@@ -290,10 +290,25 @@ function stripHtml(s) {
 
 function extractSalary(text) {
   if (!text) return null;
-  const m = text.match(/\$\s?([\d][\d,.]*)\s*([kK])?\s*(?:-|–|—|to|through)\s*\$?\s?([\d][\d,.]*)\s*([kK])?/);
-  if (!m) return null;
-  let lo = parseFloat(m[1].replace(/,/g, "")); if (m[2]) lo *= 1000;
-  let hi = parseFloat(m[3].replace(/,/g, "")); if (m[4]) hi *= 1000;
+  let lo = null, hi = null;
+  // 1) adjacent range: "$120,000 - $150,000", "$120K to $150K", "$134,320 – $248,404"
+  let m = text.match(/\$\s?([\d][\d,.]*)\s*([kK])?\s*(?:-|–|—|to|through)\s*\$?\s?([\d][\d,.]*)\s*([kK])?/);
+  if (m) {
+    lo = parseFloat(m[1].replace(/,/g, "")); if (m[2]) lo *= 1000;
+    hi = parseFloat(m[3].replace(/,/g, "")); if (m[4]) hi *= 1000;
+  } else {
+    // 2) verbose range where words sit between the numbers, but an annual marker
+    // anchors the first figure as a yearly salary: "...ranges from $99,500/year in
+    // our lowest geographic market up to $185,000/year..." (Amazon and similar).
+    // The annual marker + bounded gap (no other $ between) guards against matching
+    // unrelated amounts like sign-on bonuses or relocation caps.
+    m = text.match(/\$\s?([\d][\d,.]*)\s*([kK])?\s*\/?\s*(?:yr|year|annually|annum|per year|\/yr)[^$]{0,80}?(?:up to|to|through|-|–|—)[^$]{0,20}?\$\s?([\d][\d,.]*)\s*([kK])?/i);
+    if (m) {
+      lo = parseFloat(m[1].replace(/,/g, "")); if (m[2]) lo *= 1000;
+      hi = parseFloat(m[3].replace(/,/g, "")); if (m[4]) hi *= 1000;
+    }
+  }
+  if (lo == null || hi == null) return null;
   // sanity: annual USD salaries only (skip hourly rates and nonsense)
   if (!(lo >= 10000 && hi > lo && hi <= 2000000)) return null;
   const f = n => "$" + Math.round(n / 1000) + "K";
@@ -1003,12 +1018,14 @@ function applyListingHistory(jobs) {
 }
 
 // ---- Salary backfill --------------------------------------------------------
-// Studio "list" feeds (Phenom, Workday, ...) omit salary; the legally-required
-// pay band lives on each job's detail page. For jobs still missing a salary we
-// open the detail page, parse the band, and CACHE the result in seen.json so a
-// given job is only ever fetched once (salaries don't change). Capped and
-// throttled per run so the hourly scrape stays fast and polite. Runs AFTER
-// applyListingHistory so every job already has a seen.json entry to annotate.
+// Studio "list" feeds omit salary; the legally-required pay band lives on each
+// job's detail page. For jobs still missing a salary we open the posting and
+// parse the band, then CACHE the result in seen.json so a given job is only ever
+// fetched once (salaries don't change). Workday needs its JSON endpoint; every
+// other ATS (SmartRecruiters, Amazon, Teamtailor, Workable, Avature, ...) serves
+// a server-rendered posting page, so we read its HTML. Capped + throttled per run
+// so the hourly scrape stays fast and polite. Runs AFTER applyListingHistory so
+// every job already has a seen.json entry to annotate.
 const SALARY_MAX_FETCH = 400;     // detail fetches per run (bounds runtime)
 const SALARY_RECHECK = 30 * DAY;  // re-open "no salary found" jobs at most this often
 
@@ -1025,6 +1042,30 @@ async function fetchDetailJson(url, ms = 15000) {
   } finally { clearTimeout(timer); }
 }
 
+async function fetchText(url, ms = 15000) {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), ms);
+  try {
+    const res = await fetch(url, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml",
+      },
+      signal: ctrl.signal,
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return await res.text();
+  } finally { clearTimeout(timer); }
+}
+
+// Full description text for salary mining. Workday needs its JSON detail endpoint;
+// for every other ATS the public posting page is server-rendered, so read its HTML.
+async function jobDescriptionText(job) {
+  const wd = workdayDetailUrl(job.url);
+  if (wd) { const d = await fetchDetailJson(wd); return stripHtml(d.jobPostingInfo?.jobDescription || ""); }
+  return stripHtml(await fetchText(job.url));
+}
+
 async function backfillSalaries(jobs) {
   if (SAMPLE_FILE) return; // offline/sample mode: skip network backfill
   let hist = {};
@@ -1039,18 +1080,20 @@ async function backfillSalaries(jobs) {
       if (h.salary) { j.salary = h.salary; if (j.yoe == null && h.yoe != null) j.yoe = h.yoe; }
       continue;                                     // cached (found, or recently checked empty)
     }
-    if (workdayDetailUrl(j.url)) toFetch.push(j);   // currently: Workday-backed detail pages
+    if (j.url && /^https?:\/\//.test(j.url)) toFetch.push(j); // any public posting page
   }
-  // never-checked jobs first, then stale rechecks
-  toFetch.sort((a, b) => (hist[a.id]?.salaryAt ? 1 : 0) - (hist[b.id]?.salaryAt ? 1 : 0));
+  // Order: never-checked before stale rechecks; within that, North America first
+  // (US/CO/NY/CA/WA pay-transparency laws mean those pages are likeliest to list a band).
+  const naFirst = j => (j.region === "North America" ? 0 : 1);
+  toFetch.sort((a, b) =>
+    ((hist[a.id]?.salaryAt ? 1 : 0) - (hist[b.id]?.salaryAt ? 1 : 0)) || (naFirst(a) - naFirst(b)));
 
   let fetched = 0, found = 0;
   for (const j of toFetch) {
     if (fetched >= SALARY_MAX_FETCH) break;
     fetched++;
     try {
-      const d = await fetchDetailJson(workdayDetailUrl(j.url));
-      const desc = stripHtml(d.jobPostingInfo?.jobDescription || "");
+      const desc = await jobDescriptionText(j);
       const sal = extractSalary(desc);
       const yoe = extractYoe(desc);
       if (sal) { j.salary = sal; found++; }
