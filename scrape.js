@@ -71,7 +71,17 @@ const STUDIOS = [
   // bounces external requests). Captured via browser: jobs are embedded in each
   // search-results page's HTML. Fixed!
   { name: "Blizzard Entertainment", type: "phenom", token: "blizzard", host: "careers.blizzard.com" },
-  { name: "Activision", type: "phenom", token: "activision", host: "careers.activision.com", path: "/search-results" },
+  // Activision's careers feed tags each job with its studio (jobCompany / legal entity), so we
+  // split the Call of Duty studios out as their own studios; everything else stays "Activision".
+  // (parentCompany groups them all under @Activision on the site.)
+  { name: "Activision", type: "phenom", token: "activision", host: "careers.activision.com", path: "/search-results",
+    parentCompany: "Activision",
+    companySplit: {
+      "INFINITY WARD": "Infinity Ward",
+      "TREYARCH": "Treyarch",
+      "SLEDGEHAMMER GAMES": "Sledgehammer Games",
+      "RAVEN SOFTWARE": "Raven Software",
+    } },
   // ZeniMax / Bethesda (jobs.zenimax.com) embeds its full posting list as encoded JSON
   // in the /jobs page; each posting names its real studio (Bethesda Game Studios,
   // MachineGames, Arkane...), so jobs split into proper studios under this umbrella.
@@ -756,12 +766,23 @@ async function fetchPhenom(studio) {
   // studio.categories keeps ONLY game roles (category "Game Development").
   const allow = studio.categories ? new Set(studio.categories) : null;
   const kept = allow ? all.filter(j => allow.has(j.category)) : all;
+  // companySplit: relabel individual studios out of a publisher's shared board, keyed on the
+  // job's jobCompany (legal entity). e.g. Activision's feed tags Infinity Ward / Sledgehammer /
+  // Treyarch / Raven jobs by company, so we surface them as their own studios (parent stays the
+  // publisher via parentCompany). Match is a case-insensitive substring (entities have suffixes
+  // like "INFINITY WARD, INC." / "SLEDGEHAMMER GAMES UK LIMITED").
+  const split = studio.companySplit ? Object.entries(studio.companySplit) : null;
   return kept.map(j => {
     const location = j.cityStateCountry || j.location || "Unlisted";
+    let studioName = studio.name;
+    if (split && j.jobCompany) {
+      const jc = String(j.jobCompany).toUpperCase();
+      for (const [needle, name] of split) { if (jc.includes(needle)) { studioName = name; break; } }
+    }
     return {
       id: `ph-${studio.token}-${j.reqId || j.jobId}`,
       title: j.title,
-      studio: studio.name,
+      studio: studioName,
       discipline: mapDiscipline(j.category, j.title || ""),
       workType: inferWorkType(j.title || "", location, [], stripHtml(j.description || j.descriptionTeaser || "").slice(0, 1200)),
       location,
