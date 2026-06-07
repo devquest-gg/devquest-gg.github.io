@@ -24,7 +24,6 @@ const DIRECTORY = [
   { name: "Turn 10 Studios", url: "https://www.turn10studios.com/careers", note: "Forza — Xbox Game Studios" },
   { name: "Mojang Studios", url: "https://www.minecraft.net/en-us/mojang-careers", note: "Minecraft — Xbox Game Studios" },
   { name: "Ninja Theory", url: "https://www.ninjatheory.com/careers/opportunities", note: "Hellblade — Xbox Game Studios" },
-  { name: "Bethesda / ZeniMax", url: "https://jobs.zenimax.com/", note: "Bethesda, id, Arkane — Xbox" },
   { name: "Aspyr Media", url: "https://www.aspyr.com/open_positions", note: "Austin, TX — Embracer" },
   { name: "Frontier Developments", url: "https://www.frontier.co.uk/careers/jobs?location=All", note: "Elite Dangerous, Planet Zoo — Cambridge, UK" },
   { name: "Eidos-Montréal", url: "https://www.eidosmontreal.com/careers/", note: "Deus Ex, Tomb Raider — Embracer (Dayforce)" },
@@ -97,6 +96,10 @@ const STUDIOS = [
   // search-results page's HTML. Fixed!
   { name: "Blizzard Entertainment", type: "phenom", token: "blizzard", host: "careers.blizzard.com" },
   { name: "Activision", type: "phenom", token: "activision", host: "careers.activision.com", path: "/search-results" },
+  // ZeniMax / Bethesda (jobs.zenimax.com) embeds its full posting list as encoded JSON
+  // in the /jobs page; each posting names its real studio (Bethesda Game Studios,
+  // MachineGames, Arkane...), so jobs split into proper studios under this umbrella.
+  { name: "ZeniMax / Bethesda", type: "zenimax", parentCompany: "ZeniMax / Bethesda" },
   // Ubisoft tags every job department as just "Ubisoft", so we attribute named
   // studios by location (only unambiguous cities; everything else stays "Ubisoft").
   { name: "Ubisoft", type: "smartrecruiters", token: "Ubisoft2", parentCompany: "Ubisoft", subStudios: {
@@ -976,7 +979,73 @@ async function fetchAshby(studio) {
   });
 }
 
-const FETCHERS = { greenhouse: fetchGreenhouse, lever: fetchLever, workday: fetchWorkday, avature: fetchAvature, smartrecruiters: fetchSmartRecruiters, workable: fetchWorkable, phenom: fetchPhenom, teamtailor: fetchTeamtailor, eightfold: fetchEightfold, amazonjobs: fetchAmazonJobs, ashby: fetchAshby };
+// ---- ZeniMax / Bethesda (jobs.zenimax.com) -----------------------------------
+// Custom careers site (iCIMS underneath) that embeds the full posting list as an
+// HTML-entity-encoded JSON array right in the /jobs page. We fetch the page, decode
+// the entities, and bracket-match the array out (it begins at [{"id":...). Each
+// posting carries its real studio in location.name (Bethesda Game Studios,
+// MachineGames, Arkane Studios...), which we use for studio attribution. The apply
+// links are absolute iCIMS URLs, so salary backfill reads them via the generic path.
+// No posted dates on the list page -> "date n/a", like our other HTML feeds.
+function zenimaxStudio(raw) {
+  const s = decodeEnt(raw || "").replace(/\s+/g, " ").trim();
+  if (/^zenimax media/i.test(s)) return "ZeniMax Media (HQ)"; // corporate, not a game studio
+  return s || "ZeniMax / Bethesda";
+}
+
+function parseZenimax(html) {
+  const dec = decodeEnt(html);
+  const start = dec.indexOf('[{"id":');
+  if (start < 0) return [];
+  // balanced scan (string-aware) to find the end of the postings array
+  let depth = 0, inStr = false, esc = false, end = -1;
+  for (let k = start; k < dec.length; k++) {
+    const c = dec[k];
+    if (inStr) { if (esc) esc = false; else if (c === "\\") esc = true; else if (c === '"') inStr = false; continue; }
+    if (c === '"') inStr = true;
+    else if (c === "[" || c === "{") depth++;
+    else if (c === "]" || c === "}") { depth--; if (depth === 0) { end = k; break; } }
+  }
+  if (end < 0) return [];
+  let arr;
+  try { arr = JSON.parse(dec.slice(start, end + 1)); } catch (e) { return []; }
+  return arr.map(j => {
+    const loc = j.location || {};
+    const extra = (j.additionalLocations || []).map(a => a && a.formatted_name).filter(Boolean);
+    const location = [loc.formatted_name, ...extra].filter(Boolean).join("; ") || "Unlisted";
+    const title = decodeEnt(j.title);
+    return {
+      id: `zmx-${j.id}`,
+      title,
+      studio: zenimaxStudio(loc.name),
+      discipline: mapDiscipline(j.department_name, title),
+      workType: inferWorkType(title, location, []),
+      location,
+      region: inferRegion(location),
+      seniority: inferSeniority(title),
+      salary: null,
+      yoe: null,
+      postedAt: null, // the list page doesn't expose posted dates
+      url: j.link,
+    };
+  });
+}
+
+async function fetchZenimax(studio) {
+  let html;
+  if (SAMPLE_FILE) {
+    const data = loadSample(studio);
+    if (!data) return [];
+    html = typeof data === "string" ? data : (data.html || "");
+  } else {
+    html = await fetchText("https://jobs.zenimax.com/jobs");
+  }
+  const jobs = parseZenimax(html);
+  if (!jobs.length) throw new Error("0 jobs parsed (Zenimax page may have changed layout)");
+  return jobs;
+}
+
+const FETCHERS = { greenhouse: fetchGreenhouse, lever: fetchLever, workday: fetchWorkday, avature: fetchAvature, smartrecruiters: fetchSmartRecruiters, workable: fetchWorkable, phenom: fetchPhenom, teamtailor: fetchTeamtailor, eightfold: fetchEightfold, amazonjobs: fetchAmazonJobs, ashby: fetchAshby, zenimax: fetchZenimax };
 
 // ---- Ghost-job tracking -----------------------------------------------------
 // Because we scrape on a schedule, we can see how long a listing has REALLY been
@@ -1146,7 +1215,7 @@ function buildTrends(runCounts, okSet) {
   const today = new Date().toISOString().slice(0, 10);
 
   const prev = days.length ? days[days.length - 1].counts : {};
-  const counts = { ...prev };                       // carry forward, then overwrite the OK ones
+  const counts = { ...prev };       // carry forward, then overwrite the OK ones
   for (const name of okSet) counts[name] = runCounts[name] || 0;
 
   if (days.length && days[days.length - 1].date === today) days[days.length - 1] = { date: today, counts };
@@ -1156,7 +1225,7 @@ function buildTrends(runCounts, okSet) {
   try { fs.writeFileSync(TRENDS_FILE, JSON.stringify(store)); }
   catch (e) { console.error("Could not write trends.json:", e.message); }
 
-  const snapNearest = nDaysAgo => {
+  const snapNearest = (nDaysAgo) => {
     const target = Date.now() - nDaysAgo * DAY;
     let best = null, bestDiff = Infinity;
     for (const d of days) { const diff = Math.abs(Date.parse(d.date) - target); if (diff < bestDiff) { bestDiff = diff; best = d; } }
