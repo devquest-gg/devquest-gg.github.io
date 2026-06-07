@@ -689,6 +689,8 @@ function render(){
   // other filters so they're always easy to find and restore.
   if (showDismissed) list = JOBS.filter(j=>dismissed.has(j.id)).sort((a,b)=>b.ts-a.ts);
 
+  try { window.__dqCount = list.length; } catch(e) {} // current result count, for analytics
+
   renderMatrix(base);
   renderQuickbar();
   renderHubbar(availHubs);
@@ -1359,7 +1361,7 @@ render();
 
   // search (debounced)
   var _q = document.getElementById("q");
-  if(_q){ var _qt; _q.addEventListener("input", function(){ clearTimeout(_qt); _qt=setTimeout(function(){ if(_q.value.trim()) track("search",{len:_q.value.trim().length}); },1500); }); }
+  if(_q){ var _qt; _q.addEventListener("input", function(){ clearTimeout(_qt); _qt=setTimeout(function(){ var _v=_q.value.trim(); if(_v){ var _n=(typeof window.__dqCount==="number"?window.__dqCount:null); track("search",{ q:_v.toLowerCase().slice(0,40), len:_v.length, n:_n, zero:_n===0 }); } },1500); }); }
 
   // delegated click tracking
   document.addEventListener("click", function(e){
@@ -1460,10 +1462,22 @@ render();
     };
   }
 
+  // compact, non-personal summary of the active filters (+ current result count) for analytics.
+  function filterSummary(c){
+    var cells=c.cells||[], disc=[], sen=[];
+    cells.forEach(function(k){ var x=String(k).split("|"); if(x[0]&&disc.indexOf(x[0])<0)disc.push(x[0]); if(x[1]&&sen.indexOf(x[1])<0)sen.push(x[1]); });
+    var regions=(c.regionsQuick||[]).slice(); if(c.region&&regions.indexOf(c.region)<0)regions.push(c.region);
+    var n=(typeof window.__dqCount==="number"?window.__dqCount:null);
+    return { disc:disc.slice(0,4), sen:sen.slice(0,4),
+      studios:(c.studios||[]).map(function(s){return String(s).replace(/^@/,"");}).slice(0,4),
+      regions:regions.slice(0,4), countries:(c.countries||[]).slice(0,4), subs:(c.subs||[]).slice(0,4),
+      remote:!!c.quickRemote, sal:!!c.salOnly, q:(c.q||"").toLowerCase().slice(0,30), n:n, zero:n===0 };
+  }
+
   var lastSig="";
   function renderBar(){
     var c=readCriteria();
-    try{ var sig=JSON.stringify(c); if(sig!==lastSig){ lastSig=sig; if(hasFilters(c)) track("filter",{}); } }catch(e){}
+    try{ var sig=JSON.stringify(c); if(sig!==lastSig){ lastSig=sig; if(hasFilters(c)) track("filter", filterSummary(c)); } }catch(e){}
     var state=bar.getAttribute("data-state");
     if(!hasFilters(c)){ bar.style.display="none"; bar.removeAttribute("data-state"); return; }
     if(state==="form"||state==="done") return; // don't clobber an open/finished form
