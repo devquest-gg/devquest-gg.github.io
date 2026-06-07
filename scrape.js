@@ -26,15 +26,11 @@ const DIRECTORY = [
   { name: "Aspyr Media", url: "https://www.aspyr.com/open_positions", note: "Austin, TX — Embracer" },
   { name: "Frontier Developments", url: "https://www.frontier.co.uk/careers/jobs?location=All", note: "Elite Dangerous, Planet Zoo — Cambridge, UK" },
   { name: "Eidos-Montréal", url: "https://www.eidosmontreal.com/careers/", note: "Deus Ex, Tomb Raider — Embracer (Dayforce)" },
-  { name: "Studio Wildcard", url: "https://studiowildcard.com/careers", note: "ARK: Survival Evolved" },
   { name: "Valve", url: "https://www.valvesoftware.com/en/jobs", note: "Steam, Half-Life, Dota 2 — custom site" },
   { name: "Remedy Entertainment", url: "https://www.remedygames.com/careers", note: "Control, Alan Wake — Finland" },
-  { name: "Nexon", url: "https://careers.jobscore.com/careers/nexonamericainc", note: "MapleStory, The Finals — JobScore" },
   { name: "Virtuos", url: "https://www.virtuosgames.com/careers", note: "AAA co-dev / outsourcing — global" },
-  { name: "Certain Affinity", url: "https://www.certainaffinity.com/careers", note: "Halo/CoD co-dev — Austin, TX" },
   { name: "Playground Games", url: "https://www.playground-games.com/careers", note: "Forza Horizon, Fable — Xbox" },
   { name: "Creative Assembly", url: "https://www.creative-assembly.com/careers", note: "Total War, Alien — Sega" },
-  { name: "Capcom", url: "https://www.capcom-careers.com/", note: "Resident Evil, Street Fighter" },
   { name: "Fuse Games", url: "https://fusegames.com/careers", note: "ex-Criterion devs — UK" },
   { name: "Undead Labs", url: "https://www.undeadlabs.com/careers", note: "State of Decay — Xbox" },
   { name: "Saber Interactive", url: "https://saber.games/careers/", note: "World War Z, Space Marine 2" },
@@ -151,6 +147,11 @@ const STUDIOS = [
   // category "Game Development" so we don't pull WBD's ~415 non-game roles.
   { name: "Warner Bros. Games", type: "phenom", token: "wbgames", host: "careers.wbd.com",
     path: "/global/en/search-results", categories: ["Game Development"] },
+  // Niche-platform studios promoted by the June 7 2026 island re-audit.
+  { name: "Studio Wildcard", type: "bamboohr", token: "studiowildcard" },
+  { name: "Nexon", type: "jobscore", token: "nexonamericainc" },
+  { name: "Certain Affinity", type: "jazzhr", token: "certainaffinityinc" },
+  { name: "Capcom", type: "jobvite", token: "capcomusa" },
   // Workday fetcher kept for future boards (EA, Nintendo...). Sony's Workday
   // board is superseded by the Greenhouse board above.
   // { name: "PlayStation (Sony)", type: "workday", token: "sonyglobal",
@@ -1064,7 +1065,138 @@ async function fetchZenimax(studio) {
   return jobs;
 }
 
-const FETCHERS = { greenhouse: fetchGreenhouse, lever: fetchLever, workday: fetchWorkday, avature: fetchAvature, smartrecruiters: fetchSmartRecruiters, workable: fetchWorkable, phenom: fetchPhenom, teamtailor: fetchTeamtailor, eightfold: fetchEightfold, amazonjobs: fetchAmazonJobs, ashby: fetchAshby, zenimax: fetchZenimax };
+// ---- BambooHR (Studio Wildcard + many indies) --------------------------------
+// Public JSON: GET https://<token>.bamboohr.com/careers/list -> { result: [...] }.
+async function fetchBambooHr(studio) {
+  let result = [];
+  if (SAMPLE_FILE) { const d = loadSample(studio); if (!d) return []; result = d.result || []; }
+  else { const d = await fetchJson(`https://${studio.token}.bamboohr.com/careers/list`); result = d.result || []; }
+  return result.map(j => {
+    const loc = j.location ? [j.location.city, j.location.state].filter(Boolean).join(", ") : "";
+    const location = loc || "Unlisted";
+    return {
+      id: `bamboo-${studio.token}-${j.id}`,
+      title: j.jobOpeningName,
+      studio: studio.name,
+      discipline: mapDiscipline(j.departmentLabel, j.jobOpeningName || ""),
+      workType: inferWorkType(j.jobOpeningName || "", location, []),
+      location,
+      region: inferRegion(location),
+      seniority: inferSeniority(j.jobOpeningName || ""),
+      salary: null,
+      yoe: null,
+      postedAt: null, // BambooHR list endpoint omits posted dates
+      url: `https://${studio.token}.bamboohr.com/careers/${j.id}`,
+    };
+  });
+}
+
+// ---- JobScore (Nexon + others) -----------------------------------------------
+// Public Atom feed: hire.jobscore.com/jobs/<token>/feed.atom. Each <entry> carries
+// <title>, <link>, <updated>, three <category term> values (department, "City, ST
+// (WorkType)", employment type) and optional <j:publicCompensation><j:formatted>.
+function parseJobScore(xml, studio) {
+  const entries = xml.split("<entry>").slice(1).map(e => e.split("</entry>")[0]);
+  return entries.map(e => {
+    const rawTitle = (e.match(/<title[^>]*>([\s\S]*?)<\/title>/) || [])[1] || "";
+    const title = decodeEnt(rawTitle.replace(/<!\[CDATA\[|\]\]>/g, "")).trim();
+    const url = (e.match(/<link[^>]*href="([^"]+)"/) || [])[1] || "";
+    const cats = [...e.matchAll(/<category[^>]*term="([^"]+)"/g)].map(m => decodeEnt(m[1]));
+    const isEmp = c => /full[- ]?time|part[- ]?time|contract|intern|temporary|freelance/i.test(c);
+    const locCat = cats.find(c => /\(.*\)|,\s*[A-Z]{2}\b|remote/i.test(c)) || "";
+    const dept = cats.find(c => c !== locCat && !isEmp(c)) || null;
+    const location = locCat.replace(/\s*\(([^)]*)\)\s*$/, "").trim() || "Unlisted";
+    const wtm = locCat.match(/\(([^)]*)\)/);
+    const workType = wtm ? (/remote/i.test(wtm[1]) ? "Remote" : /hybrid/i.test(wtm[1]) ? "Hybrid"
+      : /on-?site|office/i.test(wtm[1]) ? "Onsite" : inferWorkType(title, location, []))
+      : inferWorkType(title, location, []);
+    const postedAt = (e.match(/<updated>([^<]+)<\/updated>/) || [])[1] || null;
+    const salForm = (e.match(/<j:formatted>([\s\S]*?)<\/j:formatted>/) || [])[1];
+    const salary = (salForm && /\d/.test(salForm)) ? decodeEnt(stripHtml(salForm)).trim() : null;
+    return {
+      id: `js-${studio.token}-${(url.match(/[^/]+$/) || [""])[0]}`,
+      title, studio: studio.name,
+      discipline: mapDiscipline(dept, title),
+      workType, location, region: inferRegion(location),
+      seniority: inferSeniority(title),
+      salary, yoe: null, postedAt, url,
+    };
+  });
+}
+async function fetchJobScore(studio) {
+  let xml;
+  if (SAMPLE_FILE) { const d = loadSample(studio); if (!d) return []; xml = typeof d === "string" ? d : (d.xml || ""); }
+  else { xml = await fetchText(`https://hire.jobscore.com/jobs/${studio.token}/feed.atom`); }
+  return parseJobScore(xml, studio);
+}
+
+// ---- JazzHR (Certain Affinity + others) --------------------------------------
+// Server-rendered board at https://<token>.applytojob.com/apply. Each role is an
+// <h3 class='list-group-item-heading'><a href=".../apply/<code>/<slug>">Title</a>
+// followed by a <ul class='list-inline list-group-item-text'> whose first <li> is
+// the location. No posted dates on the list page.
+function parseJazzHr(html, studio) {
+  const re = /<h3 class='list-group-item-heading'>\s*<a href="([^"]+\/apply\/[^"]+)">([\s\S]*?)<\/a>\s*<\/h3>\s*<ul[^>]*list-inline list-group-item-text[^>]*>([\s\S]*?)<\/ul>/g;
+  const out = []; let m;
+  while ((m = re.exec(html))) {
+    const url = m[1];
+    const title = decodeEnt(m[2].replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim());
+    if (!title) continue;
+    const lis = [...m[3].matchAll(/<li[^>]*>([\s\S]*?)<\/li>/g)]
+      .map(x => decodeEnt(x[1].replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim())).filter(Boolean);
+    const location = lis[0] || "Unlisted";
+    out.push({
+      id: `jazz-${studio.token}-${(url.match(/apply\/([A-Za-z0-9]+)/) || [])[1] || url.slice(-8)}`,
+      title, studio: studio.name,
+      discipline: mapDiscipline(null, title),
+      workType: inferWorkType(title, location, []),
+      location, region: inferRegion(location),
+      seniority: inferSeniority(title),
+      salary: null, yoe: null, postedAt: null, url,
+    });
+  }
+  return out;
+}
+async function fetchJazzHr(studio) {
+  let html;
+  if (SAMPLE_FILE) { const d = loadSample(studio); if (!d) return []; html = typeof d === "string" ? d : (d.html || ""); }
+  else { html = await fetchText(`https://${studio.token}.applytojob.com/apply`); }
+  return parseJazzHr(html, studio);
+}
+
+// ---- Jobvite (Capcom + others) -----------------------------------------------
+// Server-rendered table at https://jobs.jobvite.com/<token>/jobs. Each <tr> has a
+// td.jv-job-list-name (anchor + title) and td.jv-job-list-location. No posted dates.
+function parseJobvite(html, studio) {
+  const re = /<td class="jv-job-list-name">\s*<a href="([^"]+)">([\s\S]*?)<\/a>\s*<\/td>\s*<td class="jv-job-list-location">([\s\S]*?)<\/td>/g;
+  const out = []; let m;
+  while ((m = re.exec(html))) {
+    const href = m[1];
+    const title = decodeEnt(m[2].replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim());
+    if (!title) continue;
+    const location = decodeEnt(m[3].replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim()) || "Unlisted";
+    const url = href.startsWith("http") ? href : `https://jobs.jobvite.com${href}`;
+    out.push({
+      id: `jvite-${studio.token}-${(href.match(/job\/([A-Za-z0-9]+)/) || [])[1] || href.slice(-8)}`,
+      title, studio: studio.name,
+      discipline: mapDiscipline(null, title),
+      workType: inferWorkType(title, location, []),
+      location, region: inferRegion(location),
+      seniority: inferSeniority(title),
+      salary: null, yoe: null, postedAt: null, url,
+    });
+  }
+  return out;
+}
+async function fetchJobvite(studio) {
+  let html;
+  if (SAMPLE_FILE) { const d = loadSample(studio); if (!d) return []; html = typeof d === "string" ? d : (d.html || ""); }
+  else { html = await fetchText(`https://jobs.jobvite.com/${studio.token}/jobs`); }
+  return parseJobvite(html, studio);
+}
+
+
+const FETCHERS = { greenhouse: fetchGreenhouse, lever: fetchLever, workday: fetchWorkday, avature: fetchAvature, smartrecruiters: fetchSmartRecruiters, workable: fetchWorkable, phenom: fetchPhenom, teamtailor: fetchTeamtailor, eightfold: fetchEightfold, amazonjobs: fetchAmazonJobs, ashby: fetchAshby, zenimax: fetchZenimax, bamboohr: fetchBambooHr, jobscore: fetchJobScore, jazzhr: fetchJazzHr, jobvite: fetchJobvite };
 
 // ---- Ghost-job tracking -----------------------------------------------------
 // Because we scrape on a schedule, we can see how long a listing has REALLY been
