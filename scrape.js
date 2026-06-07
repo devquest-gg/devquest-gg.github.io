@@ -308,6 +308,22 @@ function extractYoe(text) {
   return y >= 1 && y <= 15 ? y : null;
 }
 
+// Convert a Workday "viewable" job URL (or apply URL) into its JSON detail
+// endpoint (/wday/cxs/<tenant>/<site>/job/...), which carries the full
+// description and the legally-required pay band. Returns null for non-Workday URLs.
+function workdayDetailUrl(url) {
+  try {
+    const u = new URL(url);
+    if (!/\.myworkdayjobs\.com$/i.test(u.hostname)) return null;
+    const tenant = u.hostname.split(".")[0];
+    let parts = u.pathname.split("/").filter(Boolean);
+    if (/^[a-z]{2}-[A-Z]{2}$/.test(parts[0])) parts.shift();   // drop locale (e.g. en-US)
+    if (parts[parts.length - 1] === "apply") parts.pop();        // drop trailing /apply
+    if (parts[1] !== "job") return null;
+    return `https://${u.hostname}/wday/cxs/${tenant}/${parts.join("/")}`;
+  } catch (e) { return null; }
+}
+
 // ---- Fetchers ---------------------------------------------------------------
 
 function loadSample(studio) {
@@ -986,6 +1002,71 @@ function applyListingHistory(jobs) {
   catch (e) { console.error("Could not write seen.json:", e.message); }
 }
 
+// ---- Salary backfill --------------------------------------------------------
+// Studio "list" feeds (Phenom, Workday, ...) omit salary; the legally-required
+// pay band lives on each job's detail page. For jobs still missing a salary we
+// open the detail page, parse the band, and CACHE the result in seen.json so a
+// given job is only ever fetched once (salaries don't change). Capped and
+// throttled per run so the hourly scrape stays fast and polite. Runs AFTER
+// applyListingHistory so every job already has a seen.json entry to annotate.
+const SALARY_MAX_FETCH = 400;     // detail fetches per run (bounds runtime)
+const SALARY_RECHECK = 30 * DAY;  // re-open "no salary found" jobs at most this often
+
+async function fetchDetailJson(url, ms = 15000) {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), ms);
+  try {
+    const res = await fetch(url, {
+      headers: { "User-Agent": "DevQuest/0.1 (game-dev job aggregator)", "Accept": "application/json" },
+      signal: ctrl.signal,
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return await res.json();
+  } finally { clearTimeout(timer); }
+}
+
+async function backfillSalaries(jobs) {
+  if (SAMPLE_FILE) return; // offline/sample mode: skip network backfill
+  let hist = {};
+  try { hist = JSON.parse(fs.readFileSync(HISTORY_FILE, "utf8")); } catch (e) { hist = {}; }
+  const now = Date.now();
+  const toFetch = [];
+
+  for (const j of jobs) {
+    if (j.salary) continue;                         // already supplied by the feed
+    const h = hist[j.id];
+    if (h && h.salaryAt && (h.salary || (now - h.salaryAt) < SALARY_RECHECK)) {
+      if (h.salary) { j.salary = h.salary; if (j.yoe == null && h.yoe != null) j.yoe = h.yoe; }
+      continue;                                     // cached (found, or recently checked empty)
+    }
+    if (workdayDetailUrl(j.url)) toFetch.push(j);   // currently: Workday-backed detail pages
+  }
+  // never-checked jobs first, then stale rechecks
+  toFetch.sort((a, b) => (hist[a.id]?.salaryAt ? 1 : 0) - (hist[b.id]?.salaryAt ? 1 : 0));
+
+  let fetched = 0, found = 0;
+  for (const j of toFetch) {
+    if (fetched >= SALARY_MAX_FETCH) break;
+    fetched++;
+    try {
+      const d = await fetchDetailJson(workdayDetailUrl(j.url));
+      const desc = stripHtml(d.jobPostingInfo?.jobDescription || "");
+      const sal = extractSalary(desc);
+      const yoe = extractYoe(desc);
+      if (sal) { j.salary = sal; found++; }
+      if (j.yoe == null && yoe != null) j.yoe = yoe;
+      hist[j.id] = { ...(hist[j.id] || {}), salary: sal || null, yoe: yoe ?? (hist[j.id]?.yoe ?? null), salaryAt: now };
+    } catch (e) {
+      // leave uncached so we retry next run
+    }
+    await new Promise(r => setTimeout(r, 250)); // be polite between detail fetches
+  }
+
+  try { fs.writeFileSync(HISTORY_FILE, JSON.stringify(hist)); }
+  catch (e) { console.error("Could not write seen.json (salary cache):", e.message); }
+  console.log(`Salary backfill: ${fetched} detail fetches, ${found} new salaries (cap ${SALARY_MAX_FETCH}, ${toFetch.length} eligible).`);
+}
+
 // ---- Hiring momentum --------------------------------------------------------
 // One snapshot of each studio's open-role count per day, kept in trends.json. From
 // the time series we can show whether a studio is ramping up or pulling back — a
@@ -1054,6 +1135,7 @@ function buildTrends(runCounts, okSet) {
     }
   }
   applyListingHistory(all); // stamp first-seen dates + flag re-lists (writes seen.json)
+  await backfillSalaries(all); // open detail pages for jobs missing salary; cache in seen.json
   const trends = buildTrends(runCounts, okSet); // per-studio hiring momentum (writes trends.json)
   all.sort((a, b) => new Date(b.postedAt) - new Date(a.postedAt));
 
