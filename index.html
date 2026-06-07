@@ -1353,6 +1353,14 @@ render();
     }catch(e){}
   }
   window.dqTrack = track;
+  // one-time visitor-source capture: referrer host + any UTM tags on the URL (cookieless).
+  try {
+    var _host = location.hostname.replace(/^www\./,"");
+    var _ref = "(direct)";
+    if (document.referrer) { try { var _rh = new URL(document.referrer).hostname.replace(/^www\./,""); _ref = (_rh===_host) ? "(internal)" : _rh; } catch(e){ _ref = "(unknown)"; } }
+    var _p = new URLSearchParams(location.search);
+    track("landing", { ref:_ref, src:(_p.get("utm_source")||"").slice(0,40), medium:(_p.get("utm_medium")||"").slice(0,40), campaign:(_p.get("utm_campaign")||"").slice(0,60) });
+  } catch(e){}
   track("view", { tab:"list" });
 
   // wrap job-status + dismiss if present
