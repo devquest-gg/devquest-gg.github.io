@@ -52,6 +52,12 @@ const DIRECTORY = [
   { name: "Atlus", url: "https://atlus.com/careers", note: "Persona, Shin Megami Tensei — SEGA West" },
   { name: "Uppercut Games", url: "https://www.uppercut-games.com/jobs", note: "City of Brass, Submerged — Canberra indie" },
   { name: "Pipeworks Studios", url: "https://pipeworks.pinpointhq.com/", note: "Eugene, OR — Pinpoint board (fetcher later)" },
+  // Custom / first-party / unsupported-ATS boards — link-outs (June 2026 batch).
+  { name: "Owlcat Games", url: "https://owlcat.games/careers", note: "Pathfinder, Rogue Trader — CRPG, custom board (Cyprus)" },
+  { name: "Sucker Punch Productions", url: "https://jobs.suckerpunch.com/", note: "Ghost of Tsushima/Yōtei — Sony first-party (Bellevue, WA)" },
+  { name: "Grinding Gear Games", url: "https://www.grindinggear.com/?page=careers", note: "Path of Exile — Tencent (Auckland, NZ)" },
+  { name: "PikPok", url: "https://apply.workable.com/pikpok/", note: "Mobile — Wellington, NZ (Workable; graduate to mainland if we add a Workable fetcher)" },
+  { name: "Halo Studios", url: "https://www.halowaypoint.com/en-us/343/careers", note: "Halo (ex-343 Industries) — Xbox Game Studios" },
 ];
 
 // ---- "The Moon": smaller / indie studios, often ones who reached out to be listed.
@@ -221,7 +227,7 @@ const STUDIOS = [
   // ---- batch 2 verification pass (real ATS tokens confirmed from each careers page) ----
   { name: "Atari", type: "greenhouse", token: "atariinc" },                        // 9 live
   { name: "Digital Eclipse", type: "greenhouse", token: "digitaleclipse" },        // Atari-owned (remasters)
-  { name: "Bloober Team", type: "recruitee", token: "blooberteam" },               // Silent Hill 2 remake (PL)
+  { name: "Bloober Team", type: "teamtailor", token: "blooberteam", host: "careers.blooberteam.com" }, // Silent Hill 2 remake (PL) — migrated Recruitee→Teamtailor Jun 2026
   { name: "11 bit studios", type: "recruitee", token: "11bitstudios" },            // Frostpunk (PL)
   { name: "Raw Fury", type: "teamtailor", token: "rawfury", host: "jobs.rawfury.com" }, // indie publisher (SE)
   { name: "Wargaming", type: "greenhouse", token: "wargamingen" },                 // World of Tanks (public board API ~0 today — recheck)
