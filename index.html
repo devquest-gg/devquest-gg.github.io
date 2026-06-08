@@ -243,6 +243,9 @@
   .qchip:hover { border-color: var(--accent); color: var(--text); }
   .qchip.on { background: var(--accent); color: #0d1117; border-color: var(--accent); }
   .qchip.clear { color: var(--pink); border-color: var(--pink); background: transparent; }
+  .qchip.new { border-color: rgba(63,185,80,.55); color: var(--green); }
+  .qchip.new.on { background: var(--green); border-color: var(--green); color: #0d1117; }
+  .qchip.new .subn { opacity: .7; font-weight: 700; margin-left: 3px; }
   #subbar { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; margin-bottom: 16px; padding: 9px 12px; background: rgba(88,166,255,.05); border: 1px dashed var(--border); border-radius: 10px; }
   .qchip.sub { padding: 5px 11px; font-size: 12px; }
   .qchip.sub.on { background: var(--green); border-color: var(--green); color: #0d1117; }
@@ -699,7 +702,7 @@ const selCells = new Set();        // keys "discipline|seniority"
 const selSubs = new Set();         // sub-discipline chips (Art/Eng/Design specializations)
 const selRegionsQuick = new Set(); // quick region chips
 const selHubs = new Set();         // gaming-hub chips (drill-down under a selected region)
-let quickRemote = false;
+let quickRemote = false, quickNew = false;
 
 function render(){
   const q = document.getElementById("q").value.toLowerCase();
@@ -769,10 +772,15 @@ function render(){
   // other filters so they're always easy to find and restore.
   if (showDismissed) list = JOBS.filter(j=>dismissed.has(j.id)).sort((a,b)=>b.ts-a.ts);
 
+  // "✨ New for you" quick-filter: count new-since-last-visit within the current filters, then
+  // (if toggled) narrow the list to just those. Count is taken before narrowing so the chip stays stable.
+  const newCount = showDismissed ? 0 : list.filter(isNewForYou).length;
+  if (quickNew && !showDismissed) list = list.filter(isNewForYou);
+
   try { window.__dqCount = list.length; } catch(e) {} // current result count, for analytics
 
   renderMatrix(base);
-  renderQuickbar();
+  renderQuickbar(newCount);
   renderHubbar(availHubs);
   renderSubbar(availSubs);
   renderActiveFilters();
@@ -781,7 +789,6 @@ function render(){
   for (const j of list) (groups[j.d] = groups[j.d] || []).push(j);
   GROUPS = Object.keys(groups).sort((a,b)=>groups[b].length-groups[a].length);
 
-  const newCount = list.filter(isNewForYou).length;
   const cellNote = (selCells.size ? " · " + selCells.size + " square" + (selCells.size>1?"s":"") + " selected" : "")
     + (selSubs.size ? " · " + [...selSubs].join(", ") : "")
     + (selHubs.size ? " · " + [...selHubs].join(", ") : "");
@@ -888,11 +895,15 @@ function renderMatrix(base){
   document.getElementById("matrixWrap").innerHTML = h;
 }
 
-function renderQuickbar(){
+function renderQuickbar(newCount){
   const regions = ["North America","Europe","Asia-Pacific"];
-  let chips = `<button class="qchip ${quickRemote?'on':''}" onclick="toggleQuickRemote()">🌐 Remote only</button>`;
+  let chips = "";
+  // "New for you" only appears when there's actually something new since your last visit,
+  // so it adds no clutter for first-time visitors or when nothing's new.
+  if (newCount > 0) chips += `<button class="qchip new ${quickNew?'on':''}" onclick="toggleQuickNew()" title="Show only roles new since your last visit">✨ New for you <span class="subn">${newCount}</span></button>`;
+  chips += `<button class="qchip ${quickRemote?'on':''}" onclick="toggleQuickRemote()">🌐 Remote only</button>`;
   chips += regions.map(rg=>`<button class="qchip ${selRegionsQuick.has(rg)?'on':''}" onclick="toggleQuickRegion('${rg}')">${rg}</button>`).join("");
-  if (selCells.size || quickRemote || selRegionsQuick.size)
+  if (selCells.size || quickRemote || selRegionsQuick.size || quickNew)
     chips += `<button class="qchip clear" onclick="clearMatrix()">✕ Clear filters</button>`;
   document.getElementById("quickbar").innerHTML = `<span class="qlabel">Quick filters:</span>${chips}`;
 }
@@ -921,8 +932,9 @@ function toggleCell(dn, sn){ const k = dn+"|"+sn; selCells.has(k) ? selCells.del
 function toggleSub(s){ selSubs.has(s) ? selSubs.delete(s) : selSubs.add(s); render(); }
 function toggleHub(h){ selHubs.has(h) ? selHubs.delete(h) : selHubs.add(h); render(); }
 function toggleQuickRemote(){ quickRemote = !quickRemote; render(); }
+function toggleQuickNew(){ quickNew = !quickNew; render(); }
 function toggleQuickRegion(rg){ selRegionsQuick.has(rg) ? selRegionsQuick.delete(rg) : selRegionsQuick.add(rg); render(); }
-function clearMatrix(){ selCells.clear(); selSubs.clear(); selHubs.clear(); selRegionsQuick.clear(); quickRemote = false; render(); }
+function clearMatrix(){ selCells.clear(); selSubs.clear(); selHubs.clear(); selRegionsQuick.clear(); quickRemote = false; quickNew = false; render(); }
 
 // ---- Active-filters bar: shows every applied filter as a removable chip + "Clear all".
 // Each chip stores a closure that clears its specific filter, so removal needs no fragile
@@ -940,6 +952,7 @@ function renderActiveFilters(){
   if (document.getElementById('salOnly').checked) add('Has salary', () => { document.getElementById('salOnly').checked = false; });
   if (document.getElementById('hideStale').checked) add('Hiding stale', () => { document.getElementById('hideStale').checked = false; });
   if (quickRemote) add('Remote only', () => { quickRemote = false; });
+  if (quickNew) add('✨ New for you', () => { quickNew = false; });
   [...selCells].forEach(k => { const x = k.split('|'); add((x[1] ? x[1] + ' ' : '') + x[0], () => selCells.delete(k)); });
   [...selSubs].forEach(s => add(s, () => selSubs.delete(s)));
   [...selStudios].forEach(s => add(String(s).replace(/^@/, ''), () => { selStudios.delete(s); renderSearchGroup("studioFilters","studioSearch",STUDIO_COUNTS,selStudios,STUDIO_LABELS,DIR_STUDIOS); }));
@@ -962,7 +975,7 @@ function clearAllFilters(){
   document.getElementById('age').selectedIndex = 0;
   document.getElementById('salOnly').checked = false;
   document.getElementById('hideStale').checked = false;
-  selCells.clear(); selSubs.clear(); selHubs.clear(); selRegionsQuick.clear(); quickRemote = false;
+  selCells.clear(); selSubs.clear(); selHubs.clear(); selRegionsQuick.clear(); quickRemote = false; quickNew = false;
   selStudios.clear(); selCountries.clear();
   selKinds.clear(); ['dev','publisher','codev','tech'].forEach(k => { const b = document.getElementById('kind-' + k); if (b) b.checked = false; });
   renderSearchGroup("studioFilters","studioSearch",STUDIO_COUNTS,selStudios,STUDIO_LABELS,DIR_STUDIOS);
