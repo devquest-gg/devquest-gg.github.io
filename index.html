@@ -212,6 +212,14 @@
   .qchip.sub { padding: 5px 11px; font-size: 12px; }
   .qchip.sub.on { background: var(--green); border-color: var(--green); color: #0d1117; }
   .qchip.sub .subn, .qchip.hub .subn { opacity: .65; font-weight: 700; margin-left: 2px; }
+  /* active-filters bar: every applied filter as a removable chip + Clear all */
+  #activeFilters { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 2px 0 12px; }
+  #activeFilters .aflabel { color: var(--muted); font-size: 12px; font-weight: 700; margin-right: 2px; }
+  .afchip { background: rgba(88,166,255,.10); border: 1px solid rgba(88,166,255,.45); color: var(--accent); border-radius: 999px; padding: 4px 10px; font-size: 12.5px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+  .afchip:hover { background: rgba(88,166,255,.18); }
+  .afchip .afx { opacity: .65; font-weight: 700; }
+  .afclear { background: none; border: none; color: var(--muted); font-size: 12.5px; cursor: pointer; text-decoration: underline; margin-left: 4px; padding: 4px 4px; }
+  .afclear:hover { color: var(--text); }
   #hubbar { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; margin-bottom: 12px; padding: 9px 12px; background: rgba(210,153,34,.06); border: 1px dashed var(--border); border-radius: 10px; }
   .qchip.hub { padding: 5px 11px; font-size: 12px; }
   .qchip.hub.on { background: var(--gold); border-color: var(--gold); color: #0d1117; }
@@ -319,6 +327,7 @@
     <div id="hubbar"></div>
     <div id="subbar"></div>
     <div class="count" id="count"></div>
+    <div id="activeFilters"></div>
     <div id="jobs"></div>
     <div id="directory"></div>
     <div id="moon"></div>
@@ -710,6 +719,7 @@ function render(){
   renderQuickbar();
   renderHubbar(availHubs);
   renderSubbar(availSubs);
+  renderActiveFilters();
 
   const groups = {};
   for (const j of list) (groups[j.d] = groups[j.d] || []).push(j);
@@ -803,6 +813,51 @@ function toggleHub(h){ selHubs.has(h) ? selHubs.delete(h) : selHubs.add(h); rend
 function toggleQuickRemote(){ quickRemote = !quickRemote; render(); }
 function toggleQuickRegion(rg){ selRegionsQuick.has(rg) ? selRegionsQuick.delete(rg) : selRegionsQuick.add(rg); render(); }
 function clearMatrix(){ selCells.clear(); selSubs.clear(); selHubs.clear(); selRegionsQuick.clear(); quickRemote = false; render(); }
+
+// ---- Active-filters bar: shows every applied filter as a removable chip + "Clear all".
+// Each chip stores a closure that clears its specific filter, so removal needs no fragile
+// string-escaping in the onclick (we reference the filter by index into __af).
+let __af = [];
+function renderActiveFilters(){
+  __af = [];
+  const add = (label, fn) => __af.push({ label, fn });
+  const q = document.getElementById('q');
+  if (q.value.trim()) add('🔍 "' + q.value.trim() + '"', () => { q.value = ''; });
+  const region = document.getElementById('region');
+  if (region.value) add('Region: ' + region.options[region.selectedIndex].text, () => { region.selectedIndex = 0; });
+  const age = document.getElementById('age');
+  if (age.selectedIndex > 0) add('Posted: ' + age.options[age.selectedIndex].text, () => { age.selectedIndex = 0; });
+  const ml = document.getElementById('maxListed');
+  if (ml.selectedIndex > 0) add('Listed: ' + ml.options[ml.selectedIndex].text, () => { ml.selectedIndex = 0; });
+  if (document.getElementById('salOnly').checked) add('Has salary', () => { document.getElementById('salOnly').checked = false; });
+  if (quickRemote) add('Remote only', () => { quickRemote = false; });
+  [...selCells].forEach(k => { const x = k.split('|'); add((x[1] ? x[1] + ' ' : '') + x[0], () => selCells.delete(k)); });
+  [...selSubs].forEach(s => add(s, () => selSubs.delete(s)));
+  [...selStudios].forEach(s => add(String(s).replace(/^@/, ''), () => { selStudios.delete(s); renderSearchGroup("studioFilters","studioSearch",STUDIO_COUNTS,selStudios,STUDIO_LABELS,DIR_STUDIOS); }));
+  [...selCountries].forEach(c => add(c, () => { selCountries.delete(c); renderSearchGroup("countryFilters","countrySearch",COUNTRY_COUNTS,selCountries,null); }));
+  [...selRegionsQuick].forEach(r => add(r, () => selRegionsQuick.delete(r)));
+  const el = document.getElementById('activeFilters');
+  if (!el) return;
+  if (!__af.length) { el.style.display = 'none'; el.innerHTML = ''; return; }
+  el.style.display = 'flex';
+  const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  el.innerHTML = '<span class="aflabel">Filters:</span>'
+    + __af.map((f, i) => '<button class="afchip" onclick="rmActive(' + i + ')" title="Remove this filter">' + esc(f.label) + ' <span class="afx">✕</span></button>').join('')
+    + '<button class="afclear" onclick="clearAllFilters()">Clear all</button>';
+}
+function rmActive(i){ const f = __af[i]; if (f) { f.fn(); render(); } }
+function clearAllFilters(){
+  document.getElementById('q').value = '';
+  document.getElementById('region').selectedIndex = 0;
+  document.getElementById('age').selectedIndex = 0;
+  document.getElementById('maxListed').selectedIndex = 0;
+  document.getElementById('salOnly').checked = false;
+  selCells.clear(); selSubs.clear(); selHubs.clear(); selRegionsQuick.clear(); quickRemote = false;
+  selStudios.clear(); selCountries.clear();
+  renderSearchGroup("studioFilters","studioSearch",STUDIO_COUNTS,selStudios,STUDIO_LABELS,DIR_STUDIOS);
+  renderSearchGroup("countryFilters","countrySearch",COUNTRY_COUNTS,selCountries,null);
+  render();
+}
 
 // mobile: open/close the off-canvas filter drawer (no effect on desktop, where it's a column)
 function toggleFilters(){
