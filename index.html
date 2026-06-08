@@ -705,7 +705,16 @@ const selHubs = new Set();         // gaming-hub chips (drill-down under a selec
 let quickRemote = false, quickNew = false;
 
 function render(){
-  const q = document.getElementById("q").value.toLowerCase();
+  const qraw = document.getElementById("q").value.toLowerCase();
+  // "-term" tokens EXCLUDE roles containing that word (e.g. "designer -senior", or "-product"
+  // to drop product roles). The rest of the box is the normal include search (substring match).
+  const qExc = (qraw.match(/(^|\s)-(\S+)/g) || []).map(t => t.trim().slice(1)).filter(Boolean);
+  const q = qraw.replace(/(^|\s)-\S+/g, " ").replace(/\s+/g, " ").trim();
+  const qMatch = j => {
+    if (!q && !qExc.length) return true;
+    const hay = (j.t + " " + j.s + " " + j.locs.join(" ") + " " + (j.tech || []).join(" ")).toLowerCase();
+    return (!q || hay.includes(q)) && !qExc.some(x => hay.includes(x));
+  };
   const d = checked("f-d"), w = checked("f-w"), s = checked("f-s");
   const r = document.getElementById("region").value;
   const maxDays = parseInt(document.getElementById("age").value, 10);
@@ -726,7 +735,7 @@ function render(){
     (!hidePools || !j.pool) &&
     (!hideStale || !isStale(j)) &&
     (!maxDays || (j.ts && hoursAgo(j) <= maxDays*24)) &&
-    (!q || (j.t+" "+j.s+" "+j.locs.join(" ")+" "+(j.tech||[]).join(" ")).toLowerCase().includes(q)) &&
+    qMatch(j) &&
     (!selStudios.size || selStudios.has(j.s) || selStudios.has("@"+j.p)) &&
     (!selKinds.size || kindOf(j).some(k=>selKinds.has(k))) &&
     (!selCountries.size || j.countries.some(c=>selCountries.has(c))) &&
