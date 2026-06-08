@@ -825,7 +825,6 @@ function whoDoIKnowUrl(name){
 function rowHtml(j){
   const h = hoursAgo(j);
   const noDate = !j.ts;
-  const stale = !noDate && h > 720; // >30 days
   const status = appStatus[j.id] || "";
   const isNew = !noDate && prevVisit && j.ts > prevVisit;
   const isDismissed = dismissed.has(j.id);
@@ -842,7 +841,7 @@ function rowHtml(j){
   const longChip = longClass ? `<span class="tag ${longClass}" title="We've seen this exact listing live for ${dl} days. Long-running posts are more likely to be stale or 'ghost' listings.">⏳ ${dl}d listed</span>` : "";
   const relistChip = relistedNow(j) ? `<span class="tag relist" title="This role has been live far longer than its shown posted date${j.relistCount>1?` (date refreshed ${j.relistCount}×)`:''} — re-posted/refreshed rather than newly open.">↻ re-listed${j.relistCount>1?` ${j.relistCount}×`:''}</span>` : "";
   const poolBadge = j.pool ? `<span class="poolbadge" title="A talent pool / general application — not a specific open role.">talent pool</span>` : "";
-  return `<div class="row ${stale?'stale':''} ${status?'st-'+status:''} ${isDismissed?'dismissed':''}" ${rowClick}>
+  return `<div class="row ${status?'st-'+status:''} ${isDismissed?'dismissed':''}" ${rowClick}>
     <div class="rtop">
       <div class="rmain">
         <span class="title">${j.t}</span><span class="studio">${j.s}</span>
@@ -851,7 +850,7 @@ function rowHtml(j){
         ${multi?`<span class="multibadge">${j.places.length} locations</span>`:''}
         ${isNew?'<span class="nfy">NEW FOR YOU</span>':''}
       </div>
-      <div class="posted">${noDate?'date n/a':`${h<=24&&!isNew?'<span class="new">● </span>':''}${stale?'⚠ ':''}${ago(h)}`}</div>
+      <div class="posted">${noDate?'date n/a':`${h<=24&&!isNew?'<span class="new">● </span>':''}${ago(h)}`}</div>
       <select class="status-sel" onclick="event.stopPropagation()" onchange="setStatus('${j.id}', this.value)">
         <option value="">— track —</option>
         <option value="applied" ${status==='applied'?'selected':''}>Applied ✓</option>
