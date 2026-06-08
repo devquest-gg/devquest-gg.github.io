@@ -305,9 +305,14 @@ function inferWorkType(title, location, metadata, desc) {
   // 3) lower-trust: mine the description, but only for explicit, unambiguous phrases.
   const body = (desc || "").toLowerCase();
   if (body) {
+    // 3a) STRONG NEGATION first — postings that explicitly say remote is NOT offered. Must run
+    // before the positive remote check, or phrases like "remote positions are not available"
+    // (Aspyr) false-match the "remote position" pattern and wrongly read as Remote.
+    if (/remote\s*(?:positions?|work|roles?|options?)?\s*(?:are|is)\s*not\s*(?:available|offered|possible|permitted|an option)|no\s+remote\b|not\s+(?:a\s+)?remote\s+(?:position|role|option|opportunit)|in[- ]?(?:person|office)\s+only|on-?site\s+only|fully\s+(?:on-?site|in-?office)|must\s+(?:be\s+)?(?:able\s+to\s+)?(?:work\s+)?(?:on-?site|in[- ]?office)/.test(body))
+      return "Onsite";
     if (/\bhybrid\b|\d+\s*days?\s*(?:per week|a week|\/wk|\/week|in[- ]?office|on-?site)|split between (?:home|the office)/.test(body))
       return "Hybrid";
-    if (/fully remote|100% remote|remote[- ]first|work[- ]from[- ]home|\bwfh\b|telecommut|fully distributed|this (?:role|position) is remote|(?:role|position) (?:is|can be) (?:fully )?remote|remote(?:[- ]eligible| position| role| opportunity)|open to (?:fully )?remote|work remotely from/.test(body))
+    if (/fully remote|100% remote|remote[- ]first|work[- ]from[- ]home|\bwfh\b|telecommut|fully distributed|this (?:role|position) is remote|(?:role|position) (?:is|can be) (?:fully )?remote|remote(?:[- ]eligible| position| role| opportunity)|open to (?:fully )?remote|work(?:ing)? remotely|remotely\s+(?:within|from|in|across|anywhere)|remote\s+within/.test(body))
       return "Remote";
     if (/\bon-?site\b|\bin-?office\b|in[- ]person|relocation (?:is )?required|this (?:role|position) is (?:on-?site|in-?office)|based (?:in|at) our [a-z ]{0,20}(?:office|studio|campus|hq)/.test(body))
       return "Onsite";
@@ -710,7 +715,11 @@ async function fetchSmartRecruiters(studio) {
   return content.map(j => {
     const country = SR_COUNTRY[(j.location?.country || "").toLowerCase()] || (j.location?.country || "").toUpperCase();
     const location = [j.location?.city, country].filter(Boolean).join(", ") || "Unlisted";
-    const dept = j.function?.label || j.department?.label;
+    // Prefer the studio's own "department" (e.g. "Level Design") over SmartRecruiters' generic
+    // "function" taxonomy, which studios sometimes mis-set — People Can Fly tagged a Level Design
+    // role's function as "Production". Department is the real team; mapDiscipline's title fallback
+    // still covers cases where a department is non-disciplinary.
+    const dept = j.department?.label || j.function?.label;
     const exp = (j.experienceLevel?.label || "").toLowerCase();
     const seniority = /director|executive/.test(exp) ? "Director+"
       : /senior/.test(exp) ? "Senior" : /entry|junior|intern|apprentice/.test(exp) ? "Entry"
