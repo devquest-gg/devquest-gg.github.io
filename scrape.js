@@ -41,6 +41,10 @@ const DIRECTORY = [
   { name: "Square Enix", url: "https://www.square-enix-games.com/en_us/careers", note: "Final Fantasy, Dragon Quest — JP publisher" },
   { name: "NetEase Games", url: "https://www.neteasegames.com/careers/en/", note: "Marvel Rivals, Naraka — global/CN publisher" },
   { name: "LightSpeed Studios", url: "https://www.lightspeed-studios.com/join-us.html", note: "PUBG Mobile — Tencent" },
+  // Self-hosted / non-standard boards — link-outs until a bespoke fetcher is worth building.
+  { name: "Techland", url: "https://techland.net/job-offers", note: "Dying Light — self-hosted board, ~35 roles (PL)" },
+  { name: "Warhorse Studios", url: "https://warhorsestudios.cz/kariera", note: "Kingdom Come: Deliverance — Embracer (CZ)" },
+  { name: "Playdead", url: "https://playdead.com/jobs/", note: "Limbo, Inside — Denmark" },
 ];
 
 // ---- "The Moon": smaller / indie studios, often ones who reached out to be listed.
@@ -206,6 +210,13 @@ const STUDIOS = [
   { name: "thatgamecompany", type: "ashby", token: "thatgamecompany" },            // Journey, Sky
   { name: "Quantic Dream", type: "lever", token: "quanticdream", region: "eu" },   // Detroit: Become Human (FR, Lever EU)
   { name: "Don't Nod", type: "smartrecruiters", token: "DONTNOD" },                // Life is Strange (FR)
+
+  // ---- batch 2 verification pass (real ATS tokens confirmed from each careers page) ----
+  { name: "Atari", type: "greenhouse", token: "atariinc" },                        // 9 live
+  { name: "Bloober Team", type: "recruitee", token: "blooberteam" },               // Silent Hill 2 remake (PL)
+  { name: "11 bit studios", type: "recruitee", token: "11bitstudios" },            // Frostpunk (PL)
+  { name: "Raw Fury", type: "teamtailor", token: "rawfury", host: "jobs.rawfury.com" }, // indie publisher (SE)
+  { name: "Wargaming", type: "greenhouse", token: "wargamingen" },                 // World of Tanks (public board API ~0 today — recheck)
 ];
 
 // ---- Normalization helpers -------------------------------------------------
