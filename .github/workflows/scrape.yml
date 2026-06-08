@@ -1,21 +1,15 @@
 name: Scrape jobs hourly
 
-# Runs the scraper on GitHub's servers (not your PC) and commits the refreshed
-# data back into the repo, so a connected static host (GitHub Pages / Cloudflare
-# Pages) redeploys automatically. The state files (seen.json, trends.json) are
-# committed too, so ghost-job ages and the Pulse history persist between runs.
-
 on:
   schedule:
-    - cron: "23 * * * *"     # :23 past every hour (UTC) — off-peak slot, far more reliable than :00
-  workflow_dispatch: {}        # adds a "Run workflow" button in the Actions tab
+    - cron: "23 * * * *"     # :23 past every hour (UTC) — off-peak slot
+    - cron: "53 * * * *"     # :53 backup slot
+  workflow_dispatch: {}
 
-# never let two scrapes run at once
 concurrency:
   group: scrape
   cancel-in-progress: false
 
-# allow the job to commit the refreshed data back to the repo
 permissions:
   contents: write
 
@@ -26,6 +20,8 @@ jobs:
     steps:
       - name: Check out repo
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Node
         uses: actions/setup-node@v4
@@ -42,7 +38,17 @@ jobs:
           git add jobs.js jobs.json seen.json trends.json
           if git diff --staged --quiet; then
             echo "No changes this run."
-          else
-            git commit -m "data: hourly scrape $(date -u +'%Y-%m-%dT%H:%MZ')"
-            git push
+            exit 0
           fi
+          git commit -m "data: hourly scrape $(date -u +'%Y-%m-%dT%H:%MZ')"
+          for attempt in 1 2 3 4 5; do
+            if git push origin HEAD:main; then
+              echo "Pushed on attempt $attempt."
+              exit 0
+            fi
+            echo "Push attempt $attempt rejected; rebasing onto origin/main and retrying..."
+            git pull --rebase --autostash origin main || true
+            sleep 3
+          done
+          echo "::error::Push still rejected after 5 attempts." >&2
+          exit 1
