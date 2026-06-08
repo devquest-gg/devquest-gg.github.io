@@ -594,6 +594,13 @@ function relistedNow(j){
 // or we've seen it live 45+ days. One toggle ("Hide likely-stale listings") uses this, replacing
 // the old overlapping "Hide re-listed" + "Hide listings live longer than" controls.
 function isStale(j){ const dl = daysListed(j); return relistedNow(j) || (dl != null && dl >= 45); }
+// "NEW FOR YOU" = appeared in your view since your last visit — posted OR first-seen by us
+// after prevVisit (so freshly-added studios count too, and sources with no posted date still
+// qualify) — but never a likely-stale/re-listed role, so the badge stays "fresh opportunity".
+function isNewForYou(j){
+  if (!prevVisit || isStale(j)) return false;
+  return (j.ts && j.ts > prevVisit) || (j.fseen && j.fseen > prevVisit);
+}
 
 // ---- filter UI ----------------------------------------------------------------
 const DISC = [...new Set(JOBS.map(j=>j.d))].sort();
@@ -758,7 +765,7 @@ function render(){
   for (const j of list) (groups[j.d] = groups[j.d] || []).push(j);
   GROUPS = Object.keys(groups).sort((a,b)=>groups[b].length-groups[a].length);
 
-  const newCount = list.filter(j => prevVisit && j.ts > prevVisit).length;
+  const newCount = list.filter(isNewForYou).length;
   const cellNote = (selCells.size ? " · " + selCells.size + " square" + (selCells.size>1?"s":"") + " selected" : "")
     + (selSubs.size ? " · " + [...selSubs].join(", ") : "")
     + (selHubs.size ? " · " + [...selHubs].join(", ") : "");
@@ -967,7 +974,7 @@ function rowHtml(j){
   const h = hoursAgo(j);
   const noDate = !j.ts;
   const status = appStatus[j.id] || "";
-  const isNew = !noDate && prevVisit && j.ts > prevVisit;
+  const isNew = isNewForYou(j);
   const isDismissed = dismissed.has(j.id);
   const locLabel = l => l.replace(/^united states,\s*/i, "").replace(/,/g, ", ");
   const multi = j.places.length > 1;
