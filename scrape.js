@@ -835,9 +835,14 @@ async function fetchSmartRecruiters(studio) {
     // still covers cases where a department is non-disciplinary.
     const dept = j.department?.label || j.function?.label;
     const exp = (j.experienceLevel?.label || "").toLowerCase();
-    const seniority = /director|executive/.test(exp) ? "Director+"
+    // An explicit level in the TITLE (Senior/Lead/Junior…) is more reliable than SmartRecruiters'
+    // experienceLevel, which studios mis-set (CDPR tagged a "Senior Gameplay Animator" as entry-level).
+    // Use the title when it's explicit; defer to experienceLevel only when the title is ambiguous.
+    const titleSen = inferSeniority(j.name || "");
+    const seniority = titleSen !== "Mid" ? titleSen
+      : /director|executive/.test(exp) ? "Director+"
       : /senior/.test(exp) ? "Senior" : /entry|junior|intern|apprentice/.test(exp) ? "Entry"
-      : /mid/.test(exp) ? "Mid" : inferSeniority(j.name || "");
+      : /mid/.test(exp) ? "Mid" : "Mid";
     return {
       id: `sr-${studio.token}-${j.id}`,
       title: j.name,
