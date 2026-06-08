@@ -233,6 +233,55 @@ const STUDIOS = [
   { name: "Wargaming", type: "greenhouse", token: "wargamingen" },                 // World of Tanks (public board API ~0 today — recheck)
 ];
 
+// ---- Studio type tags (Michelle's idea) ------------------------------------
+// A studio's *type* almost never changes, so this is a one-time, fire-and-forget tag:
+// the scraper bakes it into jobs.js and the site filters on it. We only list studios that
+// are NOT a plain developer — anything absent here defaults to ["dev"] on the client.
+// Tags: "publisher" (publishes games, often its own + others'), "codev" (co-development /
+// porting / outsourcing services), "tech" (engine / platform / infrastructure). Multi-tag
+// is fine (e.g. EA is dev + publisher). Keys match the studio name as it appears on jobs;
+// owned dev studios (Naughty Dog, Massive…) stay developers by default — only the umbrella
+// publisher names are tagged. To tag a new studio later, add one line here.
+const STUDIO_KIND = {
+  "Take-Two Interactive": ["publisher"],
+  "2K": ["publisher", "dev"],
+  "Electronic Arts (HQ)": ["publisher", "dev"],
+  "Activision": ["publisher", "dev"],
+  "ZeniMax / Bethesda": ["publisher", "dev"],
+  "Ubisoft": ["publisher", "dev"],
+  "Sony Interactive (HQ)": ["publisher"],
+  "Sega": ["publisher", "dev"],
+  "Bandai Namco": ["publisher", "dev"],
+  "Nintendo": ["publisher", "dev"],
+  "NCSOFT": ["publisher", "dev"],
+  "Krafton": ["publisher", "dev"],
+  "Nexon": ["publisher", "dev"],
+  "Capcom": ["publisher", "dev"],
+  "Gameloft": ["publisher", "dev"],
+  "Paradox Interactive": ["publisher", "dev"],
+  "Team17": ["publisher", "dev"],
+  "Wizards of the Coast": ["publisher", "dev"],
+  "Warner Bros. Games": ["publisher", "dev"],
+  "Focus Entertainment": ["publisher", "dev"],
+  "Raw Fury": ["publisher"],
+  "Atari": ["publisher", "dev"],
+  "The Pokémon Company": ["publisher"],
+  "HoYoverse": ["publisher", "dev"],
+  "Netflix Games": ["publisher", "tech"],
+  "Don't Nod": ["publisher", "dev"],
+  "Wargaming": ["publisher", "dev"],
+  "Amazon Games": ["publisher", "dev", "tech"],
+  // Tech / platform / engine
+  "Unity": ["tech"],
+  "Roblox": ["tech"],
+  "Discord": ["tech"],
+  "Epic Games": ["tech", "dev"],
+  // Co-development / porting / outsourcing services
+  "Keywords Studios": ["codev"],
+  "Aspyr Media": ["codev", "dev"],
+  "Behaviour Interactive": ["codev", "dev"],
+};
+
 // ---- Normalization helpers -------------------------------------------------
 
 const DISCIPLINE_MAP = {
@@ -1536,6 +1585,7 @@ function buildTrends(runCounts, okSet) {
     jobs: all,
     directory: DIRECTORY,
     moon: MOON,
+    studioTags: STUDIO_KIND,
     trends,
   };
   const dir = __dirname;

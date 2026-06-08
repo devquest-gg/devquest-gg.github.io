@@ -329,6 +329,11 @@
     <input type="text" id="studioSearch" class="filtersearch" placeholder="Search studios…"
       oninput="renderSearchGroup('studioFilters','studioSearch',STUDIO_COUNTS,selStudios,STUDIO_LABELS,DIR_STUDIOS)">
     <div id="studioFilters" class="filterscroll"></div>
+    <h3 title="What the company primarily does. Most are developers; a company can be more than one.">Studio type</h3>
+    <label class="chk"><input type="checkbox" id="kind-dev" onchange="toggleKind('dev',this.checked)">Developer</label>
+    <label class="chk"><input type="checkbox" id="kind-publisher" onchange="toggleKind('publisher',this.checked)">Publisher</label>
+    <label class="chk"><input type="checkbox" id="kind-codev" onchange="toggleKind('codev',this.checked)">Co-Dev / Vendor</label>
+    <label class="chk"><input type="checkbox" id="kind-tech" onchange="toggleKind('tech',this.checked)">Platform / Tech</label>
     <h3>Discipline</h3>
     <div id="discFilters"></div>
     <h3>Work Type</h3>
@@ -642,6 +647,16 @@ const DIR_STUDIOS = ((LIVE && window.JOBS_DATA.directory) || [])
   .map(d => ({ name: d.name, url: d.url }))
   .sort((a,b) => a.name.localeCompare(b.name));
 
+// ---- Studio-type tags (Developer / Publisher / Co-Dev / Platform-Tech) -------
+// Tags are baked into jobs.js by the scraper (studioTags). Any studio not listed there is
+// a plain developer, so kindOf() defaults to ["dev"]. We key off the job's own studio name
+// (not the parent), so owned dev studios stay developers even under a publisher umbrella.
+const selKinds = new Set();
+const STUDIO_KIND = (LIVE && window.JOBS_DATA.studioTags) || {};
+const KIND_LABELS = { dev: "Developer", publisher: "Publisher", codev: "Co-Dev", tech: "Platform/Tech" };
+function kindOf(j){ return STUDIO_KIND[j.s] || ["dev"]; }
+function toggleKind(k, on){ on ? selKinds.add(k) : selKinds.delete(k); render(); }
+
 function renderSearchGroup(boxId, searchId, counts, sel, labels, extras){
   const q = (document.getElementById(searchId).value || "").toLowerCase();
   const lbl = name => (labels && labels[name]) || name;
@@ -710,6 +725,7 @@ function render(){
     (!maxDays || (j.ts && hoursAgo(j) <= maxDays*24)) &&
     (!q || (j.t+" "+j.s+" "+j.locs.join(" ")).toLowerCase().includes(q)) &&
     (!selStudios.size || selStudios.has(j.s) || selStudios.has("@"+j.p)) &&
+    (!selKinds.size || kindOf(j).some(k=>selKinds.has(k))) &&
     (!selCountries.size || j.countries.some(c=>selCountries.has(c))) &&
     (!d.length || d.includes(j.d)) &&
     (!w.length || w.includes(j.w)) &&
@@ -929,6 +945,7 @@ function renderActiveFilters(){
   [...selStudios].forEach(s => add(String(s).replace(/^@/, ''), () => { selStudios.delete(s); renderSearchGroup("studioFilters","studioSearch",STUDIO_COUNTS,selStudios,STUDIO_LABELS,DIR_STUDIOS); }));
   [...selCountries].forEach(c => add(c, () => { selCountries.delete(c); renderSearchGroup("countryFilters","countrySearch",COUNTRY_COUNTS,selCountries,null); }));
   [...selRegionsQuick].forEach(r => add(r, () => selRegionsQuick.delete(r)));
+  [...selKinds].forEach(k => add('Type: ' + (KIND_LABELS[k] || k), () => { selKinds.delete(k); const b = document.getElementById('kind-' + k); if (b) b.checked = false; }));
   const el = document.getElementById('activeFilters');
   if (!el) return;
   if (!__af.length) { el.style.display = 'none'; el.innerHTML = ''; return; }
@@ -947,6 +964,7 @@ function clearAllFilters(){
   document.getElementById('hideStale').checked = false;
   selCells.clear(); selSubs.clear(); selHubs.clear(); selRegionsQuick.clear(); quickRemote = false;
   selStudios.clear(); selCountries.clear();
+  selKinds.clear(); ['dev','publisher','codev','tech'].forEach(k => { const b = document.getElementById('kind-' + k); if (b) b.checked = false; });
   renderSearchGroup("studioFilters","studioSearch",STUDIO_COUNTS,selStudios,STUDIO_LABELS,DIR_STUDIOS);
   renderSearchGroup("countryFilters","countrySearch",COUNTRY_COUNTS,selCountries,null);
   render();
