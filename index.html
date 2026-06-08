@@ -420,7 +420,7 @@ const LIVE = window.JOBS_DATA && window.JOBS_DATA.jobs && window.JOBS_DATA.jobs.
 const RAW = LIVE ? window.JOBS_DATA.jobs.map(j => ({
   id: j.id, t: j.title, s: j.studio, p: j.parent || j.studio, d: normDisc(j.discipline), w: j.workType || "Unknown",
   l: j.location, r: j.region, sen: j.seniority, url: j.url,
-  salary: j.salary || null, yoe: j.yoe || null,
+  salary: j.salary || null, yoe: j.yoe || null, tech: j.tech || [],
   ts: j.postedAt ? new Date(j.postedAt).getTime() : 0, // 0 = date unknown (e.g. EA)
   fseen: j.firstSeen ? Date.parse(j.firstSeen) : 0,    // when WE first saw it (reliable age)
   relisted: !!j.relisted, relistCount: j.relistCount || 0,
@@ -726,7 +726,7 @@ function render(){
     (!hidePools || !j.pool) &&
     (!hideStale || !isStale(j)) &&
     (!maxDays || (j.ts && hoursAgo(j) <= maxDays*24)) &&
-    (!q || (j.t+" "+j.s+" "+j.locs.join(" ")).toLowerCase().includes(q)) &&
+    (!q || (j.t+" "+j.s+" "+j.locs.join(" ")+" "+(j.tech||[]).join(" ")).toLowerCase().includes(q)) &&
     (!selStudios.size || selStudios.has(j.s) || selStudios.has("@"+j.p)) &&
     (!selKinds.size || kindOf(j).some(k=>selKinds.has(k))) &&
     (!selCountries.size || j.countries.some(c=>selCountries.has(c))) &&
