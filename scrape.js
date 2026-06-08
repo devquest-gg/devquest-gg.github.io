@@ -282,6 +282,54 @@ const STUDIO_KIND = {
   "Behaviour Interactive": ["codev", "dev"],
 };
 
+// ---- Tech-stack tagging -----------------------------------------------------
+// Pulls a compact skill list from each job's title + description so the site's search
+// stops failing on skill terms (c#, unreal, python, houdini…). Word-boundary matched to
+// avoid noise; high-signal engines/languages/tools only. Fire-and-forget — add a line to extend.
+const TECH_VOCAB = [
+  ["C++", /\bc\+\+/i],
+  ["C#", /\bc#|\bc\s?sharp\b/i],
+  ["Unreal", /\bunreal\b|\bue4\b|\bue5\b/i],
+  ["Unity", /\bunity\b/i],
+  ["Godot", /\bgodot\b/i],
+  ["Frostbite", /\bfrostbite\b/i],
+  ["Python", /\bpython\b/i],
+  ["Lua", /\blua\b/i],
+  ["Rust", /\brust\b/i],
+  ["Golang", /\bgolang\b/i],
+  ["Java", /\bjava\b(?!script)/i],
+  ["JavaScript", /\bjavascript\b/i],
+  ["TypeScript", /\btypescript\b/i],
+  ["Kotlin", /\bkotlin\b/i],
+  ["Swift", /\bswift\b/i],
+  ["Objective-C", /\bobjective-?c\b/i],
+  ["SQL", /\bsql\b/i],
+  ["Kusto", /\bkusto\b/i],
+  ["AWS", /\baws\b/i],
+  ["Azure", /\bazure\b/i],
+  ["GCP", /\bgcp\b|google cloud/i],
+  ["Kubernetes", /\bkubernetes\b|\bk8s\b/i],
+  ["Docker", /\bdocker\b/i],
+  ["Perforce", /\bperforce\b|\bp4v?\b/i],
+  ["Maya", /\bmaya\b/i],
+  ["Houdini", /\bhoudini\b/i],
+  ["Blender", /\bblender\b/i],
+  ["ZBrush", /\bzbrush\b/i],
+  ["Substance", /\bsubstance\b/i],
+  ["3ds Max", /\b3ds ?max\b/i],
+  ["Photoshop", /\bphotoshop\b/i],
+  ["Shaders", /\bhlsl\b|\bglsl\b|\bshader/i],
+  ["Wwise", /\bwwise\b/i],
+  ["FMOD", /\bfmod\b/i],
+  ["Havok", /\bhavok\b/i],
+];
+function extractTech(text) {
+  if (!text) return [];
+  const out = [];
+  for (const [tag, re] of TECH_VOCAB) if (re.test(text)) out.push(tag);
+  return out;
+}
+
 // ---- Normalization helpers -------------------------------------------------
 
 const DISCIPLINE_MAP = {
@@ -499,6 +547,7 @@ async function fetchGreenhouse(studio) {
     return {
       id: `gh-${studio.token}-${j.id}`,
       title: j.title,
+      tech: extractTech(j.title + " " + desc),
       studio: isStudioDept ? dept : studio.name,
       discipline: mapDiscipline(craft, j.title),
       workType: inferWorkType(j.title, location, j.metadata, desc.slice(0, 1200)),
@@ -526,6 +575,7 @@ async function fetchRecruitee(studio) {
     return {
       id: `rec-${studio.token}-${o.id}`,
       title: o.title,
+      tech: extractTech(o.title + " " + desc),
       studio: studio.name,
       discipline: mapDiscipline(o.department || o.category_code || "", o.title || ""),
       workType: inferWorkType(o.title || "", location, [], desc.slice(0, 1200)),
@@ -557,6 +607,7 @@ async function fetchLever(studio) {
     return {
       id: `lever-${studio.token}-${j.id}`,
       title: j.text,
+      tech: extractTech(j.text + " " + desc),
       studio: studio.name,
       discipline: mapDiscipline(dept, j.text),
       workType: wt === "remote" ? "Remote" : wt === "hybrid" ? "Hybrid" : wt === "onsite" ? "Onsite"
@@ -915,6 +966,7 @@ async function fetchPhenom(studio) {
     return {
       id: `ph-${studio.token}-${j.reqId || j.jobId}`,
       title: j.title,
+      tech: extractTech((j.title || "") + " " + stripHtml(j.description || j.descriptionTeaser || "")),
       studio: studioName,
       discipline: mapDiscipline(j.category, j.title || ""),
       workType: inferWorkType(j.title || "", location, [], stripHtml(j.description || j.descriptionTeaser || "").slice(0, 1200)),
@@ -1057,6 +1109,7 @@ async function fetchEightfold(studio) {
     return {
       id: `ef-${studio.token}-${j.id || j.display_job_id}`,
       title: j.name,
+      tech: extractTech((j.name || "") + " " + stripHtml(j.job_description || "")),
       studio: studio.name,
       discipline: mapDiscipline(j.department, j.name || ""),
       workType: efWt,
@@ -1105,6 +1158,7 @@ async function fetchAmazonJobs(studio) {
     return {
       id: `az-${studio.token}-${j.id_icims || j.id}`,
       title: j.title,
+      tech: extractTech((j.title || "") + " " + stripHtml((j.description_short || "") + " " + (j.basic_qualifications || ""))),
       studio: studio.name,
       discipline: mapDiscipline(null, j.title || ""),
       workType: inferWorkType(j.title || "", location, [], stripHtml((j.description_short || "") + " " + (j.basic_qualifications || "")).slice(0, 1200)),
@@ -1137,6 +1191,7 @@ async function fetchAshby(studio) {
     return {
       id: `ashby-${studio.token}-${j.id}`,
       title: j.title,
+      tech: extractTech(j.title + " " + desc),
       studio: studio.name,
       discipline: mapDiscipline(dept, j.title || ""),
       workType: wt.includes("remote") || j.isRemote ? "Remote" : wt.includes("hybrid") ? "Hybrid"
@@ -1572,6 +1627,9 @@ function buildTrends(runCounts, okSet) {
       console.error(`FAIL ${studio.name}: ${e.message}`);
     }
   }
+  // Tech tags: fetchers with full descriptions already set j.tech; for the rest (SmartRecruiters,
+  // Workday, Teamtailor, Workable…) fall back to title-based tagging so every job has the field.
+  for (const j of all) if (!j.tech) j.tech = extractTech(j.title || "");
   applyListingHistory(all); // stamp first-seen dates + flag re-lists (writes seen.json)
   await backfillSalaries(all); // open detail pages for jobs missing salary; cache in seen.json
   const trends = buildTrends(runCounts, okSet); // per-studio hiring momentum (writes trends.json)
