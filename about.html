@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Our mission · DevQuest</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<meta name="description" content="Why DevQuest exists: a fast, honest, ad-free way to find real game-dev jobs, pulled straight from studio career pages. What we are, and what we're not.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="DevQuest">
+<meta property="og:title" content="Our mission · DevQuest">
+<meta property="og:description" content="A fast, honest, ad-free way to find real game-dev jobs, pulled straight from studio career pages. What we are, and what we're not.">
+<meta property="og:image" content="https://devquest.gg/og-image-v4.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Our mission · DevQuest">
+<meta name="twitter:description" content="A fast, honest, ad-free way to find real game-dev jobs, pulled straight from studio career pages.">
+<meta name="twitter:image" content="https://devquest.gg/og-image-v4.png">
+<style>
+  :root {
+    --bg: #0d1117; --panel: #161b22; --border: #30363d; --text: #e6edf3;
+    --muted: #8b949e; --accent: #58a6ff; --green: #3fb950; --pink: #f778ba;
+    --gold: #d29922;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-thumb { background: #30363d; border-radius: 999px; }
+  ::-webkit-scrollbar-thumb:hover { background: #58a6ff; }
+  body { background: var(--bg); color: var(--text); font-family: -apple-system, "Segoe UI", Roboto, sans-serif; line-height: 1.6; }
+  a { color: var(--accent); }
+  header { padding: 16px 24px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; background: var(--bg); z-index: 10; }
+  .logo { font-size: 20px; font-weight: 800; letter-spacing: -0.3px; display: flex; align-items: center; gap: 8px; text-decoration: none; color: var(--text); }
+  .logo .wordmark span { color: var(--accent); }
+  .logo .logo-tld { color: var(--accent); }
+  .logo svg { display: block; flex-shrink: 0; }
+  .backbtn { color: var(--accent); font-size: 13px; font-weight: 600; text-decoration: none; border: 1px solid var(--border); padding: 7px 13px; border-radius: 7px; white-space: nowrap; }
+  .backbtn:hover { border-color: var(--accent); }
+
+  .wrap { max-width: 760px; margin: 0 auto; padding: 0 24px 80px; }
+
+  .lede { text-align: center; padding: 46px 12px 8px; }
+  .lede .herobrand { display: flex; align-items: center; justify-content: center; gap: 12px; font-size: 40px; font-weight: 800; letter-spacing: -1.5px; line-height: 1; margin-bottom: 14px; }
+  .lede .herobrand .hbword span { color: var(--accent); }
+  .lede .herobrand .logo-tld { color: var(--accent); }
+  .lede .hmark { width: 40px; height: 40px; flex-shrink: 0; }
+  .lede .eyebrow { text-transform: uppercase; letter-spacing: 2px; font-size: 12px; color: var(--muted); margin-bottom: 10px; }
+  .lede h1 { font-size: 30px; font-weight: 800; letter-spacing: -0.5px; line-height: 1.25; margin-bottom: 16px; }
+  .lede h1 em { color: var(--pink); font-style: normal; }
+  .lede p { color: var(--muted); font-size: 17px; max-width: 620px; margin: 0 auto; }
+
+  section { margin-top: 40px; }
+  section h2 { font-size: 20px; font-weight: 800; margin-bottom: 12px; letter-spacing: -0.3px; }
+  section p { color: #c9d1d9; margin-bottom: 12px; }
+  section p:last-child { margin-bottom: 0; }
+  strong { color: var(--text); }
+
+  .cards { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 6px; }
+  @media (max-width: 620px) { .cards { grid-template-columns: 1fr; } }
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 16px 18px; }
+  .card.is { border-left: 3px solid var(--green); }
+  .card.isnot { border-left: 3px solid var(--pink); }
+  .card h3 { font-size: 14px; margin-bottom: 6px; display: flex; align-items: center; gap: 7px; }
+  .card.is h3 { color: var(--green); }
+  .card.isnot h3 { color: var(--pink); }
+  .card p { font-size: 13.5px; color: var(--muted); margin: 0; line-height: 1.5; }
+
+  .principles { list-style: none; margin-top: 8px; }
+  .principles li { padding: 13px 0; border-bottom: 1px solid var(--border); display: flex; gap: 13px; align-items: flex-start; }
+  .principles li:last-child { border-bottom: none; }
+  .principles .pi { font-size: 19px; line-height: 1.4; flex-shrink: 0; width: 26px; text-align: center; }
+  .principles .pt strong { display: block; margin-bottom: 2px; }
+  .principles .pt span { color: var(--muted); font-size: 14px; }
+
+  .cta { margin-top: 48px; text-align: center; background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 30px 24px; }
+  .cta h2 { margin-bottom: 8px; }
+  .cta p { color: var(--muted); margin-bottom: 18px; }
+  .cta .btnrow { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  .btn { display: inline-block; text-decoration: none; font-weight: 700; font-size: 14px; padding: 11px 20px; border-radius: 9px; }
+  .btn.primary { background: var(--accent); color: #0d1117; }
+  .btn.ghost { border: 1px solid var(--border); color: var(--text); }
+  .btn.ghost:hover { border-color: var(--accent); }
+
+  footer { border-top: 1px solid var(--border); margin-top: 60px; padding: 22px 24px; text-align: center; color: var(--muted); font-size: 13px; }
+  footer a { color: var(--muted); }
+  footer a:hover { color: var(--accent); }
+</style>
+</head>
+<body>
+
+<header>
+  <a class="logo" href="/"><svg width="24" height="24" viewBox="0 0 32 32" aria-hidden="true"><rect x="1" y="1" width="8" height="8" rx="2" fill="var(--accent)"/><rect x="12" y="1" width="8" height="8" rx="2" fill="#2d333b"/><rect x="23" y="1" width="8" height="8" rx="2" fill="#2d333b"/><rect x="1" y="12" width="8" height="8" rx="2" fill="#2d333b"/><rect x="12" y="12" width="8" height="8" rx="2" fill="var(--accent)"/><rect x="23" y="12" width="8" height="8" rx="2" fill="#2d333b"/><rect x="1" y="23" width="8" height="8" rx="2" fill="#2d333b"/><rect x="12" y="23" width="8" height="8" rx="2" fill="#2d333b"/><rect x="23" y="23" width="8" height="8" rx="2" fill="var(--accent)"/></svg><span class="wordmark">Dev<span>Quest</span><span class="logo-tld">.gg</span></span></a>
+  <a class="backbtn" href="/">← Browse jobs</a>
+</header>
+
+<div class="wrap">
+
+  <div class="lede">
+    <div class="herobrand">
+      <svg class="hmark" viewBox="0 0 32 32" aria-hidden="true"><rect x="1" y="1" width="8" height="8" rx="2" fill="var(--accent)"/><rect x="12" y="1" width="8" height="8" rx="2" fill="#2d333b"/><rect x="23" y="1" width="8" height="8" rx="2" fill="#2d333b"/><rect x="1" y="12" width="8" height="8" rx="2" fill="#2d333b"/><rect x="12" y="12" width="8" height="8" rx="2" fill="var(--accent)"/><rect x="23" y="12" width="8" height="8" rx="2" fill="#2d333b"/><rect x="1" y="23" width="8" height="8" rx="2" fill="#2d333b"/><rect x="12" y="23" width="8" height="8" rx="2" fill="#2d333b"/><rect x="23" y="23" width="8" height="8" rx="2" fill="var(--accent)"/></svg>
+      <span class="hbword">Dev<span>Quest</span><span class="logo-tld">.gg</span></span>
+    </div>
+    <div class="eyebrow">Our mission</div>
+    <h1>Finding a game-dev job should be <em>faster and more honest.</em></h1>
+    <p>DevQuest is a calm, ad-free place to find real, current openings across the games industry, pulled straight from the studios themselves, and kept honest about what each listing actually is.</p>
+  </div>
+
+  <section>
+    <h2>Why we built this</h2>
+    <p>The last few years have been brutal for people in games. Thousands of talented developers have been laid off, and the search that follows is exhausting: job boards clogged with stale postings, roles that were filled months ago, recruiters in the middle, and "competitive salary" where a number should be.</p>
+    <p>We thought the basics should be better. So DevQuest does one thing and tries to do it well: <strong>show you real, current game-dev jobs, fast, without getting in your way.</strong> Every listing links straight to the studio's own application page. We don't sit between you and the people hiring.</p>
+  </section>
+
+  <section>
+    <h2>What DevQuest is</h2>
+    <p>A live job board that reads openings directly from studios' own career pages and refreshes every hour. You get a map view, a discipline-by-seniority grid to find your lane, salary figures whenever a studio publishes them, posting age on every card, and free weekly email alerts tuned to the filters you care about. More than a hundred studios are wired in, and the list keeps growing.</p>
+  </section>
+
+  <section>
+    <h2>What it is, and what it isn't</h2>
+    <div class="cards">
+      <div class="card is"><h3>✓ Straight from the source</h3><p>Listings come from studios' own career pages, synced hourly. You apply on their site, not ours.</p></div>
+      <div class="card isnot"><h3>✕ Not a recruiter or middleman</h3><p>We never broker introductions or insert ourselves between you and the studio.</p></div>
+      <div class="card is"><h3>✓ Free, with no ads</h3><p>No ads, no trackers, no paywalls. The site stays out of your way.</p></div>
+      <div class="card isnot"><h3>✕ Not pay-to-post</h3><p>Studios can't buy placement or rank higher. Nobody pays to appear here.</p></div>
+      <div class="card is"><h3>✓ Honest about gaps</h3><p>When we don't know something, like salary, we say "Unknown" instead of guessing.</p></div>
+      <div class="card isnot"><h3>✕ Not a resume black hole</h3><p>We don't collect your resume or sell your data. We don't want it.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>How we keep it honest</h2>
+    <ul class="principles">
+      <li><span class="pi">🕒</span><div class="pt"><strong>Fresh, not fossilized.</strong><span>We re-read every source hourly and show how long a role has been live, so you're not applying into the void.</span></div></li>
+      <li><span class="pi">⏳</span><div class="pt"><strong>Ghost jobs flagged.</strong><span>Listings that have lingered for weeks or keep getting re-posted get a badge, and you can hide the likely-stale ones in one click.</span></div></li>
+      <li><span class="pi">💵</span><div class="pt"><strong>Real salary, or none.</strong><span>We show pay only when the studio publishes it. No invented ranges, no "competitive" filler.</span></div></li>
+      <li><span class="pi">🔒</span><div class="pt"><strong>Your privacy by default.</strong><span>No ads, no third-party trackers, and we never sell or share your data. Email alerts are opt-in and one-click to leave.</span></div></li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Who's behind it</h2>
+    <p>DevQuest is an independent passion project, built and maintained by people who work in games and want the industry to treat its people a little better. It isn't affiliated with or endorsed by any studio, publisher, or employer. It's simply a tool we wished existed, shared freely with everyone else looking for their next role.</p>
+  </section>
+
+  <div class="cta">
+    <h2>Spot something off? Tell us.</h2>
+    <p>A stale listing, a miscategorized role, a studio we're missing: your notes make it better for everyone.</p>
+    <div class="btnrow">
+      <a class="btn primary" href="/">Browse the jobs</a>
+      <a class="btn ghost" href="mailto:studios@devquest.gg?subject=DevQuest%20feedback&body=Bug%2C%20idea%2C%20or%20studio%20we're%20missing%3A%0A%0A">Send feedback</a>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  DevQuest.gg · Game dev jobs, fresh and honest · <a href="/">Browse jobs</a> · <a href="mailto:studios@devquest.gg">Contact</a>
+</footer>
+
+</body>
+</html>
