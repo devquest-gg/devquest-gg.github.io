@@ -1602,15 +1602,21 @@ try {
     try{ c.countries=Array.from(selCountries); }catch(e){ c.countries=[]; }
     try{ c.regionsQuick=Array.from(selRegionsQuick); }catch(e){ c.regionsQuick=[]; }
     try{ c.hubs=Array.from(selHubs); }catch(e){ c.hubs=[]; }
+    // Sidebar Discipline / Work type / Seniority checkboxes (were previously missed by alerts).
+    try{ c.disc=checked("f-d"); c.work=checked("f-w"); c.sen=checked("f-s"); }catch(e){ c.disc=[]; c.work=[]; c.sen=[]; }
     return c;
   }
   function hasFilters(c){
     return !!(c.q||c.region||c.quickRemote||c.salOnly||(c.cells&&c.cells.length)||(c.subs&&c.subs.length)||
-      (c.studios&&c.studios.length)||(c.countries&&c.countries.length)||(c.regionsQuick&&c.regionsQuick.length)||(c.hubs&&c.hubs.length));
+      (c.studios&&c.studios.length)||(c.countries&&c.countries.length)||(c.regionsQuick&&c.regionsQuick.length)||(c.hubs&&c.hubs.length)||
+      (c.disc&&c.disc.length)||(c.sen&&c.sen.length)||(c.work&&c.work.length));
   }
   function labelFor(c){
     var p=[];
     (c.cells||[]).slice(0,3).forEach(function(k){ var x=k.split("|"); p.push((x[1]?x[1]+" ":"")+x[0]); });
+    (c.sen||[]).slice(0,2).forEach(function(x){ p.push(x); });
+    (c.disc||[]).slice(0,2).forEach(function(x){ p.push(x); });
+    (c.work||[]).slice(0,1).forEach(function(x){ p.push(x); });
     (c.subs||[]).slice(0,2).forEach(function(s){ p.push(s); });
     (c.studios||[]).slice(0,2).forEach(function(s){ p.push(String(s).replace(/^@/,"")); });
     if(c.quickRemote) p.push("Remote");
