@@ -45,6 +45,13 @@ const DIRECTORY = [
   { name: "Techland", url: "https://techland.net/job-offers", note: "Dying Light — self-hosted board, ~35 roles (PL)" },
   { name: "Warhorse Studios", url: "https://warhorsestudios.cz/kariera", note: "Kingdom Come: Deliverance — Embracer (CZ)" },
   { name: "Playdead", url: "https://playdead.com/jobs/", note: "Limbo, Inside — Denmark" },
+  // Can't cleanly scrape (Xbox first-party portals, custom sites, or a Pinpoint board) — link-outs.
+  { name: "Retro Studios", url: "https://careers.nintendo.com/studios/retro-studios/", note: "Metroid Prime, Donkey Kong — Nintendo (Austin)" },
+  { name: "Rare", url: "https://www.rare.co.uk/careers", note: "Sea of Thieves — Xbox Game Studios (UK)" },
+  { name: "inXile Entertainment", url: "https://www.inxile-entertainment.com/careers", note: "Wasteland, Clockwork Revolution — Xbox" },
+  { name: "Atlus", url: "https://atlus.com/careers", note: "Persona, Shin Megami Tensei — SEGA West" },
+  { name: "Uppercut Games", url: "https://www.uppercut-games.com/jobs", note: "City of Brass, Submerged — Canberra indie" },
+  { name: "Pipeworks Studios", url: "https://pipeworks.pinpointhq.com/", note: "Eugene, OR — Pinpoint board (fetcher later)" },
 ];
 
 // ---- "The Moon": smaller / indie studios, often ones who reached out to be listed.
@@ -213,6 +220,7 @@ const STUDIOS = [
 
   // ---- batch 2 verification pass (real ATS tokens confirmed from each careers page) ----
   { name: "Atari", type: "greenhouse", token: "atariinc" },                        // 9 live
+  { name: "Digital Eclipse", type: "greenhouse", token: "digitaleclipse" },        // Atari-owned (remasters)
   { name: "Bloober Team", type: "recruitee", token: "blooberteam" },               // Silent Hill 2 remake (PL)
   { name: "11 bit studios", type: "recruitee", token: "11bitstudios" },            // Frostpunk (PL)
   { name: "Raw Fury", type: "teamtailor", token: "rawfury", host: "jobs.rawfury.com" }, // indie publisher (SE)
