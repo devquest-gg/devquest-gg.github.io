@@ -202,6 +202,14 @@
   .xtab td.mcell[onclick] { cursor: pointer; transition: outline .1s; }
   .xtab td.mcell[onclick]:hover { outline: 2px solid var(--accent); outline-offset: -2px; }
   .xtab td.xsel { background: var(--accent) !important; color: #0d1117; font-weight: 800; }
+  /* grid tooltips: hover a discipline label or seniority header to see what's in it */
+  .tipname { border-bottom: 1px dotted var(--muted); cursor: help; }
+  .xtab th.senh { cursor: help; }
+  .xtab th.senh span { border-bottom: 1px dotted var(--muted); }
+  #gridTip { position: fixed; z-index: 9999; max-width: 290px; background: #0d1117; border: 1px solid var(--border); border-radius: 8px; padding: 9px 12px; font-size: 12.5px; line-height: 1.5; color: var(--text); box-shadow: 0 8px 24px rgba(0,0,0,.55); pointer-events: none; opacity: 0; transition: opacity .12s; }
+  #gridTip.show { opacity: 1; }
+  #gridTip b { color: var(--accent); }
+  #gridTip .tipnote { color: var(--muted); display: block; margin-top: 5px; font-size: 12px; }
   #quickbar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
   #quickbar .qlabel, #subbar .qlabel, #hubbar .qlabel { color: var(--muted); font-size: 13px; margin-right: 2px; }
   .qchip { cursor: pointer; border: 1px solid var(--border); background: var(--panel); color: var(--muted); border-radius: 999px; padding: 6px 13px; font-size: 13px; font-weight: 600; }
@@ -750,6 +758,55 @@ function render(){
   if (view === "stats") renderStats();
 }
 
+// ---- grid tooltips: what actually lives in each discipline / seniority -------
+// Written to demystify the surprising buckets (Animation is its OWN craft, not Art;
+// outsourcing/vendor management sits in Business & Ops because it's coordination, not craft).
+const DISC_INFO = {
+  "Engineering": "Programming and software roles — gameplay, engine, graphics, tools, backend and online services, AI/ML, and mobile. Test automation (SDET) sits here too.",
+  "Art": "Visual craft made by hand: concept, environment, character, VFX, lighting, UI art, 3D modeling, and technical art.<span class='tipnote'>Looking for animation or UX/UI design? Those have their own spots.</span>",
+  "Animation": "Animators, riggers, and motion & cinematics artists — a separate row from Art, the way most studios organize it.",
+  "Design": "How the game plays: systems, level, narrative and writing, combat, economy and LiveOps, UX/UI, and technical design.",
+  "Audio": "Sound design, music and composition, audio implementation, and dialogue.",
+  "Production": "Roles that drive a project to ship: producers, project and program managers, product managers, and development directors.",
+  "QA": "Quality assurance and testing — manual QA, test analysts, and QA leads.<span class='tipnote'>Test automation engineering is under Engineering.</span>",
+  "Data & Analytics": "Data science, analytics, business intelligence, and player-insights roles.",
+  "Esports": "Competitive play — esports operations, leagues, and live events.",
+  "Player Support": "Player-facing support and community-support roles.",
+  "Marketing & Comms": "Marketing, brand, PR, social, community management, and communications.",
+  "Business & Ops": "The teams that keep a studio running: people and HR, finance, legal, IT, facilities, and security. Vendor and outsourcing management lives here too, including art outsourcing.",
+};
+const SEN_INFO = {
+  "Entry": "Early-career roles — junior, associate, intern, apprentice, and entry-level.",
+  "Mid": "Experienced individual contributors with no junior, senior, or lead label in the title.",
+  "Senior": "Senior individual contributors (Senior or Sr.).",
+  "Lead": "Leads, principals, and staff who own a craft area or a team's output.",
+  "Director+": "Leadership roles — director, head of, VP, and chief.",
+};
+
+// single floating tooltip, appended to <body> so the matrix's horizontal scroll can't clip it
+const gridTip = document.createElement("div"); gridTip.id = "gridTip"; document.body.appendChild(gridTip);
+function showGridTip(el){
+  const tip = el.getAttribute("data-tip"); if (!tip) return;
+  gridTip.innerHTML = tip; gridTip.classList.add("show");
+  const r = el.getBoundingClientRect();
+  gridTip.style.left = "0px"; gridTip.style.top = "0px"; // reset to measure
+  const tw = gridTip.offsetWidth, th = gridTip.offsetHeight;
+  let x = r.left, y = r.bottom + 8;
+  if (x + tw > window.innerWidth - 8) x = window.innerWidth - tw - 8;
+  if (y + th > window.innerHeight - 8) y = r.top - th - 8; // flip above if no room below
+  gridTip.style.left = Math.max(8, x) + "px";
+  gridTip.style.top = Math.max(8, y) + "px";
+}
+function hideGridTip(){ gridTip.classList.remove("show"); }
+// delegation on the persistent #matrixWrap survives every re-render of its innerHTML
+(function(){
+  const mw = document.getElementById("matrixWrap");
+  if (!mw) return;
+  mw.addEventListener("mouseover", e => { const el = e.target.closest("[data-tip]"); if (el) showGridTip(el); });
+  mw.addEventListener("mouseout",  e => { const el = e.target.closest("[data-tip]"); if (el) hideGridTip(); });
+})();
+const escTip = s => String(s).replace(/"/g, "&quot;");
+
 // ---- interactive matrix (home page) ------------------------------------------
 function renderMatrix(base){
   const SEN_ORDER = ["Entry","Mid","Senior","Lead","Director+"];
@@ -759,12 +816,17 @@ function renderMatrix(base){
   const cell = {}; for (const j of base) cell[j.d+"|"+j.sen] = (cell[j.d+"|"+j.sen]||0)+1;
   const cmax = Math.max(1, ...Object.values(cell));
   const heat = n => n===0 ? "transparent" : `rgba(88,166,255,${0.10 + 0.6*Math.sqrt(n/cmax)})`;
-  let h = `<div class="matrixhead">Find your square: tap to filter <span class="mhint">· discipline × seniority · brighter = more roles</span><span class="swipehint"> · swipe →</span></div>`;
+  let h = `<div class="matrixhead">Find your square: tap to filter <span class="mhint">· discipline × seniority · brighter = more roles · ⓘ hover a label</span><span class="swipehint"> · swipe →</span></div>`;
   if (!discOrder.length) { document.getElementById("matrixWrap").innerHTML = h + `<div class="xhint">No roles in the current filters.</div>`; return; }
-  h += `<div style="overflow-x:auto"><table class="xtab"><tr><th></th>${seniorities.map(sn=>`<th>${sn}</th>`).join("")}<th>Total</th></tr>`;
+  h += `<div style="overflow-x:auto"><table class="xtab"><tr><th></th>${seniorities.map(sn=>{
+    const info = SEN_INFO[sn];
+    return info ? `<th class="senh" data-tip="${escTip(info)}"><span>${sn}</span></th>` : `<th>${sn}</th>`;
+  }).join("")}<th>Total</th></tr>`;
   for (const dn of discOrder) {
     const rowTotal = discCount[dn];
-    h += `<tr><td class="xname">${dn}</td>` + seniorities.map(sn=>{
+    const dInfo = DISC_INFO[dn];
+    const dCell = dInfo ? `<span class="tipname" data-tip="${escTip(dInfo)}">${dn}</span>` : dn;
+    h += `<tr><td class="xname">${dCell}</td>` + seniorities.map(sn=>{
       const key = dn+"|"+sn, n = cell[key]||0, sel = selCells.has(key);
       return `<td class="mcell ${sel?'xsel':''}" style="background:${sel?'':heat(n)}" ${n?`onclick="toggleCell('${dn.replace(/'/g,"\\'")}','${sn}')"`:''}>${n||""}</td>`;
     }).join("") + `<td class="xtot">${rowTotal}</td></tr>`;
