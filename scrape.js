@@ -36,6 +36,11 @@ const DIRECTORY = [
   { name: "The Coalition", url: "https://www.thecoalitionstudio.com/careers", note: "Gears of War — Xbox" },
   { name: "Hello Games", url: "https://hellogames.org/join-us/", note: "No Man's Sky — Guildford, UK" },
   { name: "Telltale Games", url: "https://telltale.com/careers/", note: "The Wolf Among Us — revived studio" },
+  // Notable studios we can't cleanly scrape yet (Xbox first-party / custom corporate portals) — link-outs for now.
+  { name: "Obsidian Entertainment", url: "https://www.obsidian.net/careers", note: "Pillars of Eternity, Avowed — Xbox Game Studios" },
+  { name: "Square Enix", url: "https://www.square-enix-games.com/en_us/careers", note: "Final Fantasy, Dragon Quest — JP publisher" },
+  { name: "NetEase Games", url: "https://www.neteasegames.com/careers/en/", note: "Marvel Rivals, Naraka — global/CN publisher" },
+  { name: "LightSpeed Studios", url: "https://www.lightspeed-studios.com/join-us.html", note: "PUBG Mobile — Tencent" },
 ];
 
 // ---- "The Moon": smaller / indie studios, often ones who reached out to be listed.
@@ -183,6 +188,24 @@ const STUDIOS = [
   { name: "OtherSide Entertainment", type: "teamtailor", token: "otherside", host: "careers.otherside-e.com" },
   { name: "Sega", type: "workday", token: "sega", host: "sega.wd3.myworkdayjobs.com", tenant: "sega", site: "SEGA_Careers" },
   { name: "Cloud Imperium Games", type: "workday", token: "cig", host: "cloudimperiumgames.wd1.myworkdayjobs.com", tenant: "cloudimperiumgames", site: "CIG_Global_Careers" },
+
+  // ---- June 2026 batch ----
+  { name: "Digital Extremes", type: "greenhouse", token: "digitalextremes" }, // Warframe (London, Ontario)
+  { name: "Asobo Studio", type: "lever", token: "asobostudio", region: "eu" }, // MS Flight Sim, A Plague Tale (public feed on Lever EU host)
+  // LEGO Digital Play is the LEGO Group's in-house GAMES studio — its own Teamtailor careers
+  // site, so we get games-only roles without filtering LEGO corporate's giant Workday board.
+  { name: "LEGO Digital Play", type: "teamtailor", token: "legodigitalplay", host: "careers.legodigitalplay.com" },
+  { name: "Focus Entertainment", type: "recruitee", token: "focusentertainment" }, // FR publisher/dev (Recruitee)
+
+  // ---- June 2026 batch 2 (verified live feeds; a few have valid boards sitting at 0 today) ----
+  { name: "Bonfire Studios", type: "greenhouse", token: "bonfirestudios" },        // ex-Blizzard/Riot, LA (0 open now)
+  { name: "Wildlife Studios", type: "greenhouse", token: "wildlifestudios" },      // BR mobile
+  { name: "Absurd Ventures", type: "greenhouse", token: "absurdventures" },        // Dan Houser's new studio
+  { name: "Dream Games", type: "greenhouse", token: "dreamgames" },                // Royal Match (0 open now)
+  { name: "Crytek", type: "lever", token: "crytek" },                              // Crysis, Hunt: Showdown (DE)
+  { name: "thatgamecompany", type: "ashby", token: "thatgamecompany" },            // Journey, Sky
+  { name: "Quantic Dream", type: "lever", token: "quanticdream", region: "eu" },   // Detroit: Become Human (FR, Lever EU)
+  { name: "Don't Nod", type: "smartrecruiters", token: "DONTNOD" },                // Life is Strange (FR)
 ];
 
 // ---- Normalization helpers -------------------------------------------------
@@ -407,6 +430,33 @@ async function fetchGreenhouse(studio) {
       yoe: extractYoe(desc),
       postedAt: j.first_published || j.updated_at,
       url: j.absolute_url,
+    };
+  });
+}
+
+// ---- Recruitee (Focus Entertainment + many EU studios) -----------------------
+// Public JSON API: https://<token>.recruitee.com/api/offers/ -> { offers: [...] }.
+async function fetchRecruitee(studio) {
+  const data = SAMPLE_FILE ? loadSample(studio)
+    : await fetchJson(`https://${studio.token}.recruitee.com/api/offers/`);
+  if (!data) return [];
+  const offers = (data.offers || []).filter(o => (o.status || "published") === "published");
+  return offers.map(o => {
+    const location = o.location || [o.city, o.country].filter(Boolean).join(", ") || "Unlisted";
+    const desc = stripHtml(o.description || "");
+    return {
+      id: `rec-${studio.token}-${o.id}`,
+      title: o.title,
+      studio: studio.name,
+      discipline: mapDiscipline(o.department || o.category_code || "", o.title || ""),
+      workType: inferWorkType(o.title || "", location, [], desc.slice(0, 1200)),
+      location,
+      region: inferRegion(location),
+      seniority: inferSeniority(o.title || ""),
+      salary: extractSalary(desc),
+      yoe: extractYoe(desc),
+      postedAt: o.published_at || o.created_at || null,
+      url: o.careers_url || o.careers_apply_url || "",
     };
   });
 }
@@ -1217,7 +1267,7 @@ async function fetchJobvite(studio) {
 }
 
 
-const FETCHERS = { greenhouse: fetchGreenhouse, lever: fetchLever, workday: fetchWorkday, avature: fetchAvature, smartrecruiters: fetchSmartRecruiters, workable: fetchWorkable, phenom: fetchPhenom, teamtailor: fetchTeamtailor, eightfold: fetchEightfold, amazonjobs: fetchAmazonJobs, ashby: fetchAshby, zenimax: fetchZenimax, bamboohr: fetchBambooHr, jobscore: fetchJobScore, jazzhr: fetchJazzHr, jobvite: fetchJobvite };
+const FETCHERS = { greenhouse: fetchGreenhouse, lever: fetchLever, workday: fetchWorkday, avature: fetchAvature, smartrecruiters: fetchSmartRecruiters, workable: fetchWorkable, phenom: fetchPhenom, teamtailor: fetchTeamtailor, eightfold: fetchEightfold, amazonjobs: fetchAmazonJobs, ashby: fetchAshby, zenimax: fetchZenimax, bamboohr: fetchBambooHr, jobscore: fetchJobScore, jazzhr: fetchJazzHr, jobvite: fetchJobvite, recruitee: fetchRecruitee };
 
 // ---- Ghost-job tracking -----------------------------------------------------
 // Because we scrape on a schedule, we can see how long a listing has REALLY been
