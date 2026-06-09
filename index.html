@@ -1693,7 +1693,8 @@ try {
     return { disc:disc.slice(0,4), sen:sen.slice(0,4),
       studios:(c.studios||[]).map(function(s){return String(s).replace(/^@/,"");}).slice(0,4),
       regions:regions.slice(0,4), countries:(c.countries||[]).slice(0,4), subs:(c.subs||[]).slice(0,4),
-      remote:!!c.quickRemote, sal:!!c.salOnly, q:(c.q||"").toLowerCase().slice(0,30), n:n, zero:n===0 };
+      remote:!!c.quickRemote, sal:!!c.salOnly, q:(c.q||"").toLowerCase().slice(0,30), n:n, zero:n===0,
+      gc:cells.length, sd:(c.disc||[]).length, ss:(c.sen||[]).length };  // grid-cells vs sidebar disc/sen counts
   }
 
   var lastSig="";
