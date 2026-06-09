@@ -697,6 +697,20 @@ function extractSalary(text) {
   return f(lo) + "–" + f(hi);
 }
 
+// Collapse any salary string we display to one compact shape ("$120K–$150K" or "$120K").
+// Most fetchers already emit this via extractSalary, but a few pass through a verbatim pay
+// string from the source ("From $123,000 to $145,000 per year"); this re-parses those so the
+// board stays visually consistent. Hourly / non-USD / unparseable strings are left untouched.
+function prettySalary(s) {
+  if (!s) return s;
+  const range = extractSalary(s);
+  if (range) return range;
+  const m = String(s).match(/\$\s?([\d][\d,]*)\s*([kK])?\s*\/?\s*(?:yr|year|annually|annum|per\s*year|\/yr)/i);
+  if (m) { let n = parseFloat(m[1].replace(/,/g, "")); if (m[2]) n *= 1000;
+    if (n >= 10000 && n <= 2000000) return "$" + Math.round(n / 1000) + "K"; }
+  return s;
+}
+
 function extractYoe(text) {
   if (!text) return null;
   const m = text.match(/(\d{1,2})\s*\+?\s*(?:or more\s+)?years?/i);
@@ -1840,6 +1854,7 @@ function buildTrends(runCounts, okSet) {
   for (const j of all) if (!j.tech) j.tech = extractTech(j.title || "");
   applyListingHistory(all); // stamp first-seen dates + flag re-lists (writes seen.json)
   await backfillSalaries(all); // open detail pages for jobs missing salary; cache in seen.json
+  for (const j of all) if (j.salary) j.salary = prettySalary(j.salary); // one consistent salary format
   const trends = buildTrends(runCounts, okSet); // per-studio hiring momentum (writes trends.json)
   all.sort((a, b) => new Date(b.postedAt) - new Date(a.postedAt));
 
