@@ -1125,6 +1125,8 @@ const GAZ = [
   ["santiago",-33.45,-70.67],["dubai",25.20,55.27],["riyadh",24.71,46.68],
   ["tel aviv",32.09,34.78],["cape town",-33.92,18.42],
   ["uppsala",59.86,17.64],["saint-mandé",48.84,2.42],["montreuil",48.86,2.44],["rennes",48.11,-1.68],["gurugram",28.46,77.03],["burnaby",49.25,-122.98],["carlsbad",33.16,-117.35],["el segundo",33.92,-118.42],["sherman oaks",34.15,-118.45],["porto alegre",-30.03,-51.23],["hanoi",21.03,105.85],["lviv",49.84,24.03],["vilnius",54.69,25.28],["brno",49.20,16.61],["izmir",38.42,27.14],["yogyakarta",-7.80,110.36],["dundee",56.46,-2.97],["leeds",53.80,-1.55],["manchester",53.48,-2.24],["birmingham",52.49,-1.89],["andover",51.21,-1.48],["wakefield",53.68,-1.50],["southam",52.25,-1.39],["stratford-upon-avon",52.19,-1.71],["galway",53.27,-9.05],["oakville",43.47,-79.69],["warszawa",52.23,21.01],["köln",50.94,6.96],["québec",46.81,-71.21],["bay area",37.77,-122.42],
+  // island/moon HQ cities
+  ["fort lauderdale",26.12,-80.14],["malibu",34.03,-118.68],["hangzhou",30.27,120.15],["nicosia",35.17,33.36],["twycross",52.60,-1.53],["newport beach",33.62,-117.93],["canberra",-35.28,149.13],["eugene",44.05,-123.09],["san jose",37.34,-121.89],["skövde",58.39,13.85],["skovde",58.39,13.85],["wrocław",51.11,17.04],
 ].sort((a,b)=>b[0].length-a[0].length); // longest keys first so "san mateo" wins over partials
 
 function matchCity(loc){
@@ -1138,10 +1140,12 @@ function matchCity(loc){
 // auto-derive from the city named in its note (or name) via the gazetteer — so new
 // island studios pin themselves as long as their note mentions a known city.
 function dirCoords(d){
+  // Prefer the studio's own `city` (set on each island/moon entry), resolved via the GAZ table —
+  // so the map stays in sync with the roster automatically. Fall back to note/name, then DIR_GEO.
+  const m = matchCity(d.city || "") || matchCity(d.note || "") || matchCity(d.name || "");
+  if (m) return { lat: m[1], lng: m[2], label: d.city || m[0].replace(/\b\w/g, c=>c.toUpperCase()) };
   const g = DIR_GEO[d.name];
   if (g) return { lat: g[0], lng: g[1], label: g[2] };
-  const m = matchCity(d.note || "") || matchCity(d.name || "");
-  if (m) return { lat: m[1], lng: m[2], label: m[0].replace(/\b\w/g, c=>c.toUpperCase()) };
   return null;
 }
 
@@ -1399,7 +1403,8 @@ function renderMap(){
   // Nudged slightly off the blue job-pins so overlapping cities stay clickable.
   const dirCities = {};
   const dq = (document.getElementById("q").value || "").toLowerCase(); // honor the search
-  for (const d of DIRECTORY) {
+  // Both the island directory AND the moon (indie) studios plot as one amber "browse directly" layer.
+  for (const d of DIRECTORY.concat(MOON_STUDIOS)) {
     if (dq && !(d.name + " " + (d.note || "")).toLowerCase().includes(dq)) continue;
     const c0 = dirCoords(d);
     if (!c0) continue;
