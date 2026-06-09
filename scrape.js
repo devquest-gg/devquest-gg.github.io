@@ -62,6 +62,15 @@ const DIRECTORY = [
   { name: "Void Interactive", url: "https://voidinteractive.net/careers/", note: "Ready or Not · custom board (Dublin)", city: "Dublin, Ireland" },
   { name: "Grip Studios", url: "https://grip-studios.com/hiring.php", note: "Co-dev: Indiana Jones, Civ VII · self-hosted (Prague)", city: "Prague, Czechia" },
   { name: "Mad Mushroom", url: "https://apply.workable.com/otk-media/", note: "Indie publisher · OTK Network board (Austin)", city: "Austin, TX" },
+  // batch 4 (2026-06-09): notable + mobile studios on custom / region-specific ATS — browse directly
+  { name: "Kojima Productions", url: "https://www.kojimaproductions.jp/en/careers", note: "Death Stranding · HRMOS board (Tokyo)", city: "Tokyo, Japan" },
+  { name: "Cygames", url: "https://www.cygames.co.jp/en/recruit/", note: "Granblue Fantasy, Uma Musume · JP board (Tokyo)", city: "Tokyo, Japan" },
+  { name: "Fool's Theory", url: "https://careers.foolstheory.com/", note: "The Witcher Remake · ex-CDPR devs (Poland)", city: "Bielsko-Biała, Poland" },
+  { name: "Garena", url: "https://careers.garena.com/", note: "Free Fire · Sea Ltd (Singapore)", city: "Singapore" },
+  { name: "Plarium", url: "https://company.plarium.com/en/career/", note: "RAID: Shadow Legends · mobile (Israel)", city: "Herzliya, Israel" },
+  { name: "SuperPlay", url: "https://www.superplay.co/careers", note: "Dice Dreams · casual mobile (Israel)", city: "Tel Aviv, Israel" },
+  { name: "Outfit7", url: "https://outfit7.com/careers/", note: "Talking Tom · mobile/family (Cyprus + Ljubljana)", city: "Limassol, Cyprus" },
+  { name: "Playrix", url: "https://playrix.com/job/open/", note: "Gardenscapes, Township · custom portal (Dublin)", city: "Dublin, Ireland" },
 ];
 
 // ---- "The Moon": smaller / indie studios, often ones who reached out to be listed.
@@ -243,6 +252,15 @@ const STUDIOS = [
   { name: "Cast Iron Games", type: "teamtailor", token: "castirongames", host: "careers.castirongames.com" }, // co-dev/porting, Double Eleven sister (UK)
   { name: "Escape Velocity Entertainment", type: "workable", token: "escape-velocity-entertainment-inc" },    // ex-Blizzard MMO (remote)
   { name: "Snowed In Studios", type: "workable", token: "snowed-in-studios-3" },   // Keywords co-dev (Ottawa)
+
+  // ---- batch 4 (2026-06-09): mobile + notable studios (cross-referenced from ASGC, feeds verified live) ----
+  { name: "Voodoo", type: "ashby", token: "voodoo" },                              // hyper-casual mobile publisher (Paris)
+  { name: "Tripledot Studios", type: "greenhouse", token: "tripledotstudios" },    // casual mobile, owns Lion Studios (London)
+  { name: "Good Job Games", type: "greenhouse", token: "goodjobgames" },           // hyper-casual mobile (Istanbul)
+  { name: "Eleventh Hour Games", type: "greenhouse", token: "eleventhhourgames" }, // Last Epoch — ARPG (Chicago/remote)
+  { name: "Homa Games", type: "workable", token: "homa-games" },                   // mobile publisher (Paris)
+  { name: "Amanotes", type: "lever", token: "amanotes" },                          // #1 music games (Ho Chi Minh City)
+  { name: "Scorewarrior", type: "recruitee", token: "scorewarrior" },              // Total Battle — MMO strategy (Limassol)
 ];
 
 // ---- Studio type tags (Michelle's idea) ------------------------------------
@@ -295,6 +313,9 @@ const STUDIO_KIND = {
   "Snowed In Studios": ["codev"],
   "Cast Iron Games": ["codev"],
   "Daybreak Game Company": ["publisher", "dev"],
+  "Voodoo": ["publisher", "dev"],
+  "Homa Games": ["publisher", "dev"],
+  "Tripledot Studios": ["publisher", "dev"],
 };
 
 // ---- Tech-stack tagging -----------------------------------------------------
