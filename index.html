@@ -177,10 +177,10 @@
   .ptile { flex: 1; min-width: 120px; background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; text-align: center; }
   .ptile .pnum { font-size: 26px; font-weight: 800; color: var(--text); }
   .ptile .plabelt { font-size: 12px; color: var(--muted); margin-top: 4px; }
-  #pulseStrip { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 18px; padding: 10px 16px; margin: 0 0 14px; background: var(--panel); border: 1px solid var(--border); border-radius: 12px; }
+  #pulseStrip { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 18px; padding: 10px 18px; margin: 0 0 14px; background: var(--panel); border: 1px solid var(--border); border-radius: 12px; }
   .psitem { font-size: 13px; color: var(--muted); white-space: nowrap; }
   .psitem b { color: var(--text); font-size: 15px; font-weight: 800; margin-right: 5px; }
-  .psitem.top b { color: var(--accent); font-size: 14px; }
+  .psitem.top b { color: var(--text); font-size: 14px; font-weight: 600; }
   .psexport { margin-left: auto; background: none; border: 1px solid var(--border); color: var(--text); font-size: 12.5px; font-weight: 600; padding: 6px 12px; border-radius: 8px; cursor: pointer; }
   .psexport:hover { border-color: var(--accent); color: var(--accent); }
   .trendhead { margin: 2px 0 14px; }
@@ -281,6 +281,8 @@
   .afchip .afx { opacity: .65; font-weight: 700; }
   .afclear { background: none; border: none; color: var(--muted); font-size: 12.5px; cursor: pointer; text-decoration: underline; margin-left: 4px; padding: 4px 4px; }
   .afclear:hover { color: var(--text); }
+  .afexport { background: none; border: 1px solid var(--border); color: var(--text); font-size: 12px; font-weight: 600; cursor: pointer; border-radius: 999px; padding: 4px 11px; margin-left: 6px; }
+  .afexport:hover { border-color: var(--accent); color: var(--accent); }
   #hubbar { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; margin-bottom: 12px; padding: 9px 12px; background: rgba(210,153,34,.06); border: 1px dashed var(--border); border-radius: 10px; }
   .qchip.hub { padding: 5px 11px; font-size: 12px; }
   .qchip.hub.on { background: var(--gold); border-color: var(--gold); color: #0d1117; }
@@ -950,8 +952,6 @@ function renderQuickbar(newCount){
   if (newCount > 0) chips += `<button class="qchip new ${quickNew?'on':''}" onclick="toggleQuickNew()" title="Show only roles new since your last visit">✨ New for you <span class="subn">${newCount}</span></button>`;
   chips += `<button class="qchip ${quickRemote?'on':''}" onclick="toggleQuickRemote()">🌐 Remote only</button>`;
   chips += regions.map(rg=>`<button class="qchip ${selRegionsQuick.has(rg)?'on':''}" onclick="toggleQuickRegion('${rg}')">${rg}</button>`).join("");
-  if (selCells.size || quickRemote || selRegionsQuick.size || quickNew)
-    chips += `<button class="qchip clear" onclick="clearMatrix()">✕ Clear filters</button>`;
   document.getElementById("quickbar").innerHTML = `<span class="qlabel">Quick filters:</span>${chips}`;
 }
 
@@ -1004,6 +1004,12 @@ function renderActiveFilters(){
   [...selCountries].forEach(c => add(c, () => { selCountries.delete(c); renderSearchGroup("countryFilters","countrySearch",COUNTRY_COUNTS,selCountries,null); }));
   [...selRegionsQuick].forEach(r => add(r, () => selRegionsQuick.delete(r)));
   [...selKinds].forEach(k => add('Type: ' + (KIND_LABELS[k] || k), () => { selKinds.delete(k); const b = document.getElementById('kind-' + k); if (b) b.checked = false; }));
+  // Sidebar Discipline / Work Type / Seniority checkboxes — were filtering silently with no chip
+  // and no clear. Now each shows as a removable chip like every other filter.
+  const _uncheck = (cls, v) => { const cb=[...document.querySelectorAll('.'+cls+':checked')].find(c=>c.value===v); if(cb) cb.checked=false; };
+  checked('f-d').forEach(v => add(v, () => _uncheck('f-d', v)));
+  checked('f-w').forEach(v => add(v, () => _uncheck('f-w', v)));
+  checked('f-s').forEach(v => add(v, () => _uncheck('f-s', v)));
   const el = document.getElementById('activeFilters');
   if (!el) return;
   if (!__af.length) { el.style.display = 'none'; el.innerHTML = ''; return; }
@@ -1011,6 +1017,7 @@ function renderActiveFilters(){
   const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   el.innerHTML = '<span class="aflabel">Filters:</span>'
     + __af.map((f, i) => '<button class="afchip" onclick="rmActive(' + i + ')" title="Remove this filter">' + esc(f.label) + ' <span class="afx">✕</span></button>').join('')
+    + '<button class="afexport" onclick="exportCsv()" title="Download these filtered results as a CSV spreadsheet">⤓ Export CSV</button>'
     + '<button class="afclear" onclick="clearAllFilters()">Clear all</button>';
 }
 function rmActive(i){ const f = __af[i]; if (f) { f.fn(); render(); } }
@@ -1021,6 +1028,7 @@ function clearAllFilters(){
   selCells.clear(); selSubs.clear(); selHubs.clear(); selRegionsQuick.clear(); quickRemote = false; quickNew = false;
   selStudios.clear(); selCountries.clear();
   selKinds.clear(); ['dev','publisher','codev','tech'].forEach(k => { const b = document.getElementById('kind-' + k); if (b) b.checked = false; });
+  ['f-d','f-w','f-s'].forEach(cls => document.querySelectorAll('.'+cls+':checked').forEach(c => c.checked = false));
   renderSearchGroup("studioFilters","studioSearch",STUDIO_COUNTS,selStudios,STUDIO_LABELS,DIR_STUDIOS);
   renderSearchGroup("countryFilters","countrySearch",COUNTRY_COUNTS,selCountries,null);
   render();
@@ -1246,7 +1254,11 @@ function marketPulse(){
   const newWk = JOBS.filter(j=>{ const d=daysListed(j); return d!=null ? d<=7 : (j.ts && hoursAgo(j)<=168); }).length;
   const byS = {}; for (const j of JOBS) byS[j.s] = (byS[j.s]||0)+1;
   const top = Object.entries(byS).sort((a,b)=>b[1]-a[1])[0];
-  return { open, studios, newWk, topStudio: top ? top[0] : "—" };
+  const salPct = open ? Math.round(100 * JOBS.filter(j=>j.salary).length / open) : 0;
+  const remotePct = open ? Math.round(100 * JOBS.filter(j=>j.w==="Remote").length / open) : 0;
+  const ages = JOBS.filter(j=>j.ts).map(j=>Math.max(0, Math.floor((Date.now()-j.ts)/864e5))).sort((a,b)=>a-b);
+  const medianAge = ages.length ? ages[Math.floor(ages.length/2)] : null;
+  return { open, studios, newWk, topStudio: top ? top[0] : "—", salPct, remotePct, medianAge };
 }
 function renderPulseStrip(){
   const el = document.getElementById("pulseStrip"); if (!el) return;
@@ -1255,8 +1267,8 @@ function renderPulseStrip(){
   el.innerHTML = chip(m.open.toLocaleString(),"open roles")
     + chip(m.studios,"studios hiring")
     + chip(m.newWk.toLocaleString(),"new this week")
-    + chip(m.topStudio,"most active","top")
-    + `<button class="psexport" onclick="exportCsv()" title="Download your current filtered results as a CSV spreadsheet">⤓ Export CSV</button>`;
+    + chip(m.salPct+"%","list salary")
+    + chip(m.topStudio,"most active","top");
 }
 // Export the current filtered list to a CSV the user can open in a spreadsheet.
 function exportCsv(){
@@ -1364,6 +1376,9 @@ function renderStats(){
     + `<div class="ptile"><div class="pnum">${mp.open.toLocaleString()}</div><div class="plabelt">open roles</div></div>`
     + `<div class="ptile"><div class="pnum">${mp.studios}</div><div class="plabelt">studios hiring</div></div>`
     + `<div class="ptile"><div class="pnum">${mp.newWk.toLocaleString()}</div><div class="plabelt">new this week</div></div>`
+    + `<div class="ptile"><div class="pnum">${mp.medianAge==null?"—":mp.medianAge}${mp.medianAge==null?"":`<span style="font-size:14px;font-weight:600;color:var(--muted)"> days</span>`}</div><div class="plabelt">median posting age</div></div>`
+    + `<div class="ptile"><div class="pnum">${mp.salPct}%</div><div class="plabelt">list a salary</div></div>`
+    + `<div class="ptile"><div class="pnum">${mp.remotePct}%</div><div class="plabelt">remote</div></div>`
     + `<div class="ptile"><div class="pnum" style="font-size:18px;line-height:1.5">${mp.topStudio}</div><div class="plabelt">most active studio</div></div>`
     + `</div>`;
   document.getElementById("statsWrap").innerHTML = trendHead +
