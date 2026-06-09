@@ -441,7 +441,7 @@ function normDisc(d){
 
 // ---- talent-pool detection: these aren't specific openings, they're pipelines ----
 function isPool(title){
-  return /general application|talent (community|pool|network|connection)|future opportunit|expression of interest|speculative|join our talent|introduce yourself|don'?t see (a|the|your) (role|fit)|prospective|candidate pool|stay connected/i.test(title || "");
+  return /general (application|resume|submission|interest)|resume submission|open application|spontaneous application|unsolicited|talent (community|pool|network|connection)|future opportunit|expression of interest|speculative|join our talent|introduce yourself|don'?t see (a|the|your) (role|fit)|prospective|candidate pool|stay connected/i.test(title || "");
 }
 
 // ---- load + normalize + dedupe ----------------------------------------------
@@ -1557,20 +1557,36 @@ function renderStats(){
       : `<div class="xhint">No roles in this selection.</div>`)
     + `<div class="xhint">Most studios don't state work type. Of the ${known.length} that do, ${pctS(rem)}% are remote, ${pctS(hyb)}% hybrid, ${pctS(ons)}% onsite.</div></div>`;
 
-  // --- Listing longevity (neutral framing): how long roles have been live on DevQuest and
-  // how often their posted date was refreshed. Facts, not accusations — a long-running role
-  // may simply be hard to fill. Reflects the current filter, like the rest of Trends. ---
+  // --- Listing longevity (neutral framing): how long roles have been open since first posted
+  // (the scraper bootstraps first-seen from the studio's own posted date, so this is real
+  // time-since-posting). Facts, not accusations — a long-running role may be hard to fill.
+  // Talent pools / general-application pipelines are excluded. Reflects the current filter. ---
   const GH_THRESH = 60;
-  const ghLong = list.filter(j => { const d = daysListed(j); return d != null && d >= GH_THRESH; });
-  const ghRepCount = list.filter(j => (j.relistCount || 0) > 0).length;
-  const ghStudioEntries = tally(ghLong, j => j.s);
-  const ghStudioCard = `<div class="statcard"><h3>Longest-running listings by studio (live ${GH_THRESH}+ days)</h3>`
-    + (ghStudioEntries.length
-        ? barChart("", ghStudioEntries, 12).replace(/^<div class="statcard"><h3><\/h3>/, "").replace(/<\/div>$/, "")
-        : `<div class="xhint">No listings have been live ${GH_THRESH}+ days in this selection — a healthy sign.</div>`)
-    + `<div class="xhint">How long a role has been live here, not a judgment of the studio. A long-running listing may be hard to fill rather than stale — but it's worth knowing before you apply.</div></div>`;
-  const ghOldest = [...ghLong].sort((a,b)=>daysListed(b)-daysListed(a)).slice(0,8);
+  const ghLong = list.filter(j => { if (j.pool) return false; const d = daysListed(j); return d != null && d >= GH_THRESH; });
+  const ghRepCount = list.filter(j => !j.pool && (j.relistCount || 0) > 0).length;
+  // Leaderboard by SHARE of each studio's listings (raw count just favours the biggest boards),
+  // among studios with enough listings (8+) for the share to mean something.
+  const ghTotBy = {}; for (const j of list) if (!j.pool) ghTotBy[j.s] = (ghTotBy[j.s]||0)+1;
+  const ghLongBy = {}; for (const j of ghLong) ghLongBy[j.s] = (ghLongBy[j.s]||0)+1;
+  const ghShareRows = Object.keys(ghLongBy)
+    .filter(s => (ghTotBy[s]||0) >= 8)
+    .map(s => ({ s, long: ghLongBy[s], tot: ghTotBy[s], share: Math.round(100*ghLongBy[s]/ghTotBy[s]) }))
+    .sort((a,b)=> b.share - a.share || b.long - a.long).slice(0, 12);
+  const ghShareMax = Math.max(1, ...ghShareRows.map(r=>r.share));
+  const ghStudioCard = `<div class="statcard"><h3>Studios with the most long-running listings (60+ days, share of their board)</h3>`
+    + (ghShareRows.length
+        ? ghShareRows.map(r => `<div class="barrow"><span class="blabel" title="${r.s}">${r.s}</span>`
+            + `<span class="btrack"><span class="bfill" style="width:${Math.round(100*r.share/ghShareMax)}%"></span></span>`
+            + `<span class="bnum" style="width:96px">${r.share}% · ${r.long}/${r.tot}</span></div>`).join("")
+        : `<div class="xhint">Not enough data yet — this needs studios with 8+ current listings.</div>`)
+    + `<div class="xhint">Share of each studio's current listings first posted 60+ days ago (studios with 8+ listings). A long-running listing may be hard to fill rather than stale — not a judgment of the studio.</div></div>`;
+  // Oldest individual listings, capped at 2 per studio so one board can't dominate the list.
+  const ghPer = {}; const ghOldest = [];
+  for (const j of [...ghLong].sort((a,b)=>daysListed(b)-daysListed(a))) {
+    const c = ghPer[j.s] || 0; if (c >= 2) continue; ghPer[j.s] = c + 1; ghOldest.push(j); if (ghOldest.length >= 8) break;
+  }
   const ghListCard = `<div class="statcard"><h3>Oldest open listings right now</h3>`
+    + `<div class="xhint" style="margin-bottom:6px">Days since the listing was first posted (max 2 per studio).</div>`
     + (ghOldest.length
         ? ghOldest.map(j => { const d = daysListed(j), rep = j.relistCount || 0;
             const sev = d>=120 ? "#e06c5e" : d>=90 ? "#d6a531" : "var(--muted)";
@@ -1579,7 +1595,7 @@ function renderStats(){
               + (rep>0?`<span style="color:var(--muted);white-space:nowrap">↻ ${rep}×</span>`:"")
               + `<span style="color:${sev};white-space:nowrap;font-weight:600">${d}d</span></div>`;
           }).join("")
-        : `<div class="xhint">Nothing has been live unusually long right now — a good sign.</div>`)
+        : `<div class="xhint">Nothing has been open unusually long right now — a good sign.</div>`)
     + (ghRepCount ? `<div class="xhint">${ghRepCount} listing${ghRepCount===1?"":"s"} in this view ${ghRepCount===1?"has":"have"} had the posted date refreshed at least once (↻).</div>` : "")
     + `</div>`;
 
