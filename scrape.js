@@ -1811,7 +1811,7 @@ async function backfillSalaries(jobs) {
 // for a studio going dark.
 const TRENDS_FILE = path.join(__dirname, "trends.json");
 
-function buildTrends(runCounts, okSet) {
+function buildTrends(runCounts, okSet, discCounts, healthy) {
   let store = { days: [] };
   try { store = JSON.parse(fs.readFileSync(TRENDS_FILE, "utf8")); } catch (e) { store = { days: [] }; }
   const days = store.days || [];
@@ -1820,9 +1820,14 @@ function buildTrends(runCounts, okSet) {
   const prev = days.length ? days[days.length - 1].counts : {};
   const counts = { ...prev };       // carry forward, then overwrite the OK ones
   for (const name of okSet) counts[name] = runCounts[name] || 0;
+  // Per-discipline snapshot: disciplines span many studios, so they're robust to a single
+  // studio failing — but on a badly-degraded run we carry the previous day's disc forward
+  // rather than record an artificially low set.
+  const prevDisc = days.length ? (days[days.length - 1].disc || {}) : {};
+  const disc = (healthy || !days.length) ? (discCounts || {}) : prevDisc;
 
-  if (days.length && days[days.length - 1].date === today) days[days.length - 1] = { date: today, counts };
-  else days.push({ date: today, counts });
+  if (days.length && days[days.length - 1].date === today) days[days.length - 1] = { date: today, counts, disc };
+  else days.push({ date: today, counts, disc });
   while (days.length > 120) days.shift();           // keep ~4 months
   store.days = days;
   try { fs.writeFileSync(TRENDS_FILE, JSON.stringify(store)); }
@@ -1835,14 +1840,23 @@ function buildTrends(runCounts, okSet) {
     return best;
   };
   const cur = days[days.length - 1].counts;
+  const curDisc = days[days.length - 1].disc || {};
   const d7 = snapNearest(7), d30 = snapNearest(30);
-  const out = { asOf: today, span: days.length, studios: {} };
+  const out = { asOf: today, span: days.length, studios: {}, disc: {} };
   for (const name of Object.keys(cur)) {
     out.studios[name] = {
       now: cur[name],
       d7: d7 ? (d7.counts[name] ?? null) : null,
       d30: d30 ? (d30.counts[name] ?? null) : null,
       series: days.slice(-30).map(d => (d.counts[name] ?? null)),
+    };
+  }
+  for (const name of Object.keys(curDisc)) {
+    out.disc[name] = {
+      now: curDisc[name],
+      d7: d7 && d7.disc ? (d7.disc[name] ?? null) : null,
+      d30: d30 && d30.disc ? (d30.disc[name] ?? null) : null,
+      series: days.slice(-30).map(d => (d.disc ? (d.disc[name] ?? null) : null)),
     };
   }
   return out;
@@ -1876,7 +1890,9 @@ function buildTrends(runCounts, okSet) {
   applyListingHistory(all); // stamp first-seen dates + flag re-lists (writes seen.json)
   await backfillSalaries(all); // open detail pages for jobs missing salary; cache in seen.json
   for (const j of all) if (j.salary) j.salary = prettySalary(j.salary); // one consistent salary format
-  const trends = buildTrends(runCounts, okSet); // per-studio hiring momentum (writes trends.json)
+  const discCounts = {}; for (const j of all) { const d = j.discipline || "Other"; discCounts[d] = (discCounts[d] || 0) + 1; }
+  const healthy = okSet.size >= STUDIOS.length * 0.8; // skip recording disc on a badly-degraded run
+  const trends = buildTrends(runCounts, okSet, discCounts, healthy); // per-studio + per-discipline momentum (writes trends.json)
   all.sort((a, b) => new Date(b.postedAt) - new Date(a.postedAt));
 
   const out = {
