@@ -363,6 +363,14 @@ const LANDING_PAGES = [
   { slug:"entry-level-game-jobs",        h1:"Entry-Level Game Dev Jobs",    noun:"entry-level and junior",             sen:"Entry" },
 ];
 
+// Evergreen "talent pool" / speculative reqs aren't real openings — keep them off the SEO pages.
+function isPool(title){
+  return /\b(talent\s+)?(pool|pipeline)\b|general application|speculative|expression of interest|future opportunit|don'?t see (a|your)/i.test(title || "");
+}
+// Each job's discipline is already normalized to the canonical label set by mapDiscipline()
+// at scrape time, so this is an identity-safe pass-through (kept as a seam for future synonyms).
+function normDisc(d){ return d || ""; }
+
 function landingMatches(cfg, jobs){
   const seen = new Set(), out = [];
   for (const j of jobs){
