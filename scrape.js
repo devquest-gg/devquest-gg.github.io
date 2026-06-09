@@ -58,6 +58,10 @@ const DIRECTORY = [
   { name: "Grinding Gear Games", url: "https://www.grindinggear.com/?page=careers", note: "Path of Exile — Tencent (Auckland, NZ)", city: "Auckland, New Zealand" },
   { name: "PikPok", url: "https://apply.workable.com/pikpok/", note: "Mobile — Wellington, NZ (Workable; graduate to mainland if we add a Workable fetcher)", city: "Wellington, New Zealand" },
   { name: "Halo Studios", url: "https://www.halowaypoint.com/en-us/343/careers", note: "Halo (ex-343 Industries) — Xbox Game Studios", city: "Redmond, WA" },
+  // batch 3 (2026-06-08): self-hosted / no-API boards — browse directly
+  { name: "Void Interactive", url: "https://voidinteractive.net/careers/", note: "Ready or Not · custom board (Dublin)", city: "Dublin, Ireland" },
+  { name: "Grip Studios", url: "https://grip-studios.com/hiring.php", note: "Co-dev: Indiana Jones, Civ VII · self-hosted (Prague)", city: "Prague, Czechia" },
+  { name: "Mad Mushroom", url: "https://apply.workable.com/otk-media/", note: "Indie publisher · OTK Network board (Austin)", city: "Austin, TX" },
 ];
 
 // ---- "The Moon": smaller / indie studios, often ones who reached out to be listed.
@@ -231,6 +235,14 @@ const STUDIOS = [
   { name: "11 bit studios", type: "recruitee", token: "11bitstudios" },            // Frostpunk (PL)
   { name: "Raw Fury", type: "teamtailor", token: "rawfury", host: "jobs.rawfury.com" }, // indie publisher (SE)
   { name: "Wargaming", type: "greenhouse", token: "wargamingen" },                 // World of Tanks (public board API ~0 today — recheck)
+
+  // ---- batch 3 (2026-06-08): confirmed live ATS tokens ----
+  { name: "Mob Entertainment", type: "greenhouse", token: "mobentertainment" },    // Poppy Playtime (St. Louis)
+  { name: "Highdive", type: "greenhouse", token: "highdive" },                     // NetEase-owned dev (Montreal/Toronto)
+  { name: "Daybreak Game Company", type: "greenhouse", token: "daybreakgames" },   // EverQuest, DCUO — EG7 (San Diego)
+  { name: "Cast Iron Games", type: "teamtailor", token: "castirongames", host: "careers.castirongames.com" }, // co-dev/porting, Double Eleven sister (UK)
+  { name: "Escape Velocity Entertainment", type: "workable", token: "escape-velocity-entertainment-inc" },    // ex-Blizzard MMO (remote)
+  { name: "Snowed In Studios", type: "workable", token: "snowed-in-studios-3" },   // Keywords co-dev (Ottawa)
 ];
 
 // ---- Studio type tags (Michelle's idea) ------------------------------------
@@ -280,6 +292,9 @@ const STUDIO_KIND = {
   "Keywords Studios": ["codev"],
   "Aspyr Media": ["codev", "dev"],
   "Behaviour Interactive": ["codev", "dev"],
+  "Snowed In Studios": ["codev"],
+  "Cast Iron Games": ["codev"],
+  "Daybreak Game Company": ["publisher", "dev"],
 };
 
 // ---- Tech-stack tagging -----------------------------------------------------
