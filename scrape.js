@@ -107,9 +107,9 @@ const STUDIOS = [
   // search-results page's HTML. Fixed!
   { name: "Blizzard Entertainment", type: "phenom", token: "blizzard", host: "careers.blizzard.com" },
   // Activision's careers feed tags each job with its studio (jobCompany / legal entity), so we
-  // split the Call of Duty studios out as their own studios; everything else stays "Activision".
+  // split the Call of Duty studios out as their own studios; everything else stays "Activision (HQ)".
   // (parentCompany groups them all under @Activision on the site.)
-  { name: "Activision", type: "phenom", token: "activision", host: "careers.activision.com", path: "/search-results",
+  { name: "Activision (HQ)", type: "phenom", token: "activision", host: "careers.activision.com", path: "/search-results",
     parentCompany: "Activision",
     companySplit: {
       "INFINITY WARD": "Infinity Ward",
@@ -122,8 +122,8 @@ const STUDIOS = [
   // MachineGames, Arkane...), so jobs split into proper studios under this umbrella.
   { name: "ZeniMax / Bethesda", type: "zenimax", parentCompany: "ZeniMax / Bethesda" },
   // Ubisoft tags every job department as just "Ubisoft", so we attribute named
-  // studios by location (only unambiguous cities; everything else stays "Ubisoft").
-  { name: "Ubisoft", type: "smartrecruiters", token: "Ubisoft2", parentCompany: "Ubisoft", subStudios: {
+  // studios by location (only unambiguous cities; everything else stays "Ubisoft (HQ)").
+  { name: "Ubisoft (HQ)", type: "smartrecruiters", token: "Ubisoft2", parentCompany: "Ubisoft", subStudios: {
     "malmö": "Massive Entertainment", "malmo": "Massive Entertainment",
     "newcastle": "Ubisoft Reflections",
     "annecy": "Ubisoft Annecy",
@@ -276,9 +276,9 @@ const STUDIO_KIND = {
   "Take-Two Interactive": ["publisher"],
   "2K": ["publisher", "dev"],
   "Electronic Arts (HQ)": ["publisher", "dev"],
-  "Activision": ["publisher", "dev"],
+  "Activision (HQ)": ["publisher", "dev"],
   "ZeniMax / Bethesda": ["publisher", "dev"],
-  "Ubisoft": ["publisher", "dev"],
+  "Ubisoft (HQ)": ["publisher", "dev"],
   "Sony Interactive (HQ)": ["publisher"],
   "Sega": ["publisher", "dev"],
   "Bandai Namco": ["publisher", "dev"],

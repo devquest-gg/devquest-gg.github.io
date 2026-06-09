@@ -672,7 +672,7 @@ const _parentStudios = {}; for (const j of JOBS) (_parentStudios[j.p] = _parentS
 for (const [parent, set] of Object.entries(_parentStudios)) {
   if (set.size > 1) {
     STUDIO_COUNTS["@"+parent] = JOBS.filter(j=>j.p===parent).length;
-    STUDIO_LABELS["@"+parent] = parent + " — all studios";
+    STUDIO_LABELS["@"+parent] = parent + " (All)";
   }
 }
 const selStudios = new Set(), selCountries = new Set();
@@ -1038,7 +1038,7 @@ function toggleFilters(){
 // connections at this studio, in their already-logged-in session. We send nothing;
 // it's just a constructed search URL. network=["F"] = first-degree connections.
 function liCompany(name){
-  return name.replace(/\s*\(HQ\)\s*/i, "").replace(/\s*[—-]\s*all studios.*/i, "").trim();
+  return name.replace(/\s*\((?:HQ|All)\)\s*/i, "").replace(/\s*[—-]\s*all studios.*/i, "").trim();
 }
 function whoDoIKnowUrl(name){
   return "https://www.linkedin.com/search/results/people/?keywords=" +
