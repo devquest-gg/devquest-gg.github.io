@@ -1062,11 +1062,11 @@ function rowHtml(j){
   const isSaved = saved.has(j.id);
   const locLabel = l => l.replace(/^united states,\s*/i, "").replace(/,/g, ", ");
   const multi = j.places.length > 1;
-  // each location chip links to its own posting; a row with one place stays whole-row-clickable
+  // each location chip links to its own posting; clicking the row opens the first one (chips let you pick a city)
   const locChips = j.places.slice(0,3).map(p=>
     `<span class="tag locchip" ${p.url?`onclick="event.stopPropagation(); try{window.dqTrack&&window.dqTrack('apply_click',{})}catch(e){}; window.open('${p.url}','_blank')" title="Open the ${locLabel(p.l)} posting"`:""}>${locLabel(p.l)}${multi?' ↗':''}</span>`).join("")
     + (j.places.length>3 ? `<span class="tag">+${j.places.length-3} more</span>` : "");
-  const rowClick = (!multi && j.url) ? `onclick="try{window.dqTrack&&window.dqTrack('apply_click',{})}catch(e){}; window.open('${j.url}','_blank')"` : "";
+  const rowClick = j.url ? `onclick="try{window.dqTrack&&window.dqTrack('apply_click',{})}catch(e){}; window.open('${j.url}','_blank')"` : "";
   // ghost-job signals (facts, not accusations)
   const dl = daysListed(j);
   const longClass = dl==null ? "" : dl>=90 ? "longbad" : dl>=45 ? "longwarn" : "";
