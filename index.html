@@ -1557,6 +1557,32 @@ function renderStats(){
       : `<div class="xhint">No roles in this selection.</div>`)
     + `<div class="xhint">Most studios don't state work type. Of the ${known.length} that do, ${pctS(rem)}% are remote, ${pctS(hyb)}% hybrid, ${pctS(ons)}% onsite.</div></div>`;
 
+  // --- Listing longevity (neutral framing): how long roles have been live on DevQuest and
+  // how often their posted date was refreshed. Facts, not accusations — a long-running role
+  // may simply be hard to fill. Reflects the current filter, like the rest of Trends. ---
+  const GH_THRESH = 60;
+  const ghLong = list.filter(j => { const d = daysListed(j); return d != null && d >= GH_THRESH; });
+  const ghRepCount = list.filter(j => (j.relistCount || 0) > 0).length;
+  const ghStudioEntries = tally(ghLong, j => j.s);
+  const ghStudioCard = `<div class="statcard"><h3>Longest-running listings by studio (live ${GH_THRESH}+ days)</h3>`
+    + (ghStudioEntries.length
+        ? barChart("", ghStudioEntries, 12).replace(/^<div class="statcard"><h3><\/h3>/, "").replace(/<\/div>$/, "")
+        : `<div class="xhint">No listings have been live ${GH_THRESH}+ days in this selection — a healthy sign.</div>`)
+    + `<div class="xhint">How long a role has been live here, not a judgment of the studio. A long-running listing may be hard to fill rather than stale — but it's worth knowing before you apply.</div></div>`;
+  const ghOldest = [...ghLong].sort((a,b)=>daysListed(b)-daysListed(a)).slice(0,8);
+  const ghListCard = `<div class="statcard"><h3>Oldest open listings right now</h3>`
+    + (ghOldest.length
+        ? ghOldest.map(j => { const d = daysListed(j), rep = j.relistCount || 0;
+            const sev = d>=120 ? "#e06c5e" : d>=90 ? "#d6a531" : "var(--muted)";
+            return `<div style="display:flex;align-items:center;gap:10px;padding:6px 0;font-size:13px;border-top:1px solid var(--border)">`
+              + `<span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${j.t} <span style="color:var(--muted)">· ${j.s}</span></span>`
+              + (rep>0?`<span style="color:var(--muted);white-space:nowrap">↻ ${rep}×</span>`:"")
+              + `<span style="color:${sev};white-space:nowrap;font-weight:600">${d}d</span></div>`;
+          }).join("")
+        : `<div class="xhint">Nothing has been live unusually long right now — a good sign.</div>`)
+    + (ghRepCount ? `<div class="xhint">${ghRepCount} listing${ghRepCount===1?"":"s"} in this view ${ghRepCount===1?"has":"have"} had the posted date refreshed at least once (↻).</div>` : "")
+    + `</div>`;
+
   const mp = marketPulse();
   const trendHead = `<div class="trendhead"><h2>Game-dev hiring trends</h2>`
     + `<p class="dirsub">Live across ${mp.studios} studios, refreshed hourly. Every figure here is a real, current opening — no estimated dates, no padding.</p></div>`
@@ -1579,6 +1605,7 @@ function renderStats(){
     barChart("Roles by country", tallyMulti(list, j=>j.countries), 14) +
     barChart("Roles by gaming hub", tallyMulti(list, j=>j.hubs), 14) +
     barChart("Posting age", buckets.filter(b=>b[1]>0)) +
+    ghStudioCard + ghListCard +
     salCard + health + `</div>`;
 }
 
