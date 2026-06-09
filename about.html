@@ -73,6 +73,13 @@
   .principles .pt strong { display: block; margin-bottom: 2px; }
   .principles .pt span { color: var(--muted); font-size: 14px; }
 
+  .resources { margin-top: 8px; display: grid; gap: 12px; }
+  .resource { display: block; background: var(--panel); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: 12px; padding: 16px 18px; text-decoration: none; transition: border-color .15s; }
+  .resource:hover { border-color: var(--accent); }
+  .resource .rname { display: flex; align-items: center; gap: 7px; color: var(--text); font-weight: 700; font-size: 15px; margin-bottom: 5px; }
+  .resource .rname .ext { color: var(--accent); font-size: 13px; }
+  .resource .rdesc { display: block; color: var(--muted); font-size: 13.5px; line-height: 1.5; }
+
   .cta { margin-top: 48px; text-align: center; background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 30px 24px; }
   .cta h2 { margin-bottom: 8px; }
   .cta p { color: var(--muted); margin-bottom: 18px; }
@@ -142,6 +149,17 @@
   <section>
     <h2>Who's behind it</h2>
     <p>DevQuest is an independent passion project, built and maintained by people who work in games and want the industry to treat its people a little better. It isn't affiliated with or endorsed by any studio, publisher, or employer. It's simply a tool we wished existed, shared freely with everyone else looking for their next role.</p>
+  </section>
+
+  <section>
+    <h2>Trusted resources</h2>
+    <p>DevQuest isn't the only place doing this honestly, and we'd rather send you toward good help than pretend we're the whole story. These are resources we know and trust for people job-hunting in and around games. We'll grow this list as we get to know more of the people behind the work.</p>
+    <div class="resources">
+      <a class="resource" href="https://asgc.gg" target="_blank" rel="noopener">
+        <span class="rname">ASGC (Always Supporting the Games Community) <span class="ext">↗</span></span>
+        <span class="rdesc">Amir Satvat's free, ad-free games-career hub: a large curated jobs database alongside career planning, coaching, networking, and industry insight, built with a volunteer community.</span>
+      </a>
+    </div>
   </section>
 
   <div class="cta">
