@@ -187,6 +187,18 @@
   .status-sel { width: auto; background: var(--bg); border: 1px solid var(--border); color: var(--muted); border-radius: 6px; font-size: 12px; padding: 4px 6px; cursor: pointer; }
   .dismiss { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 14px; padding: 4px 6px; border-radius: 6px; }
   .dismiss:hover { color: var(--pink); background: rgba(247,120,186,.1); }
+  .save { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 15px; padding: 4px 5px; border-radius: 6px; line-height: 1; }
+  .save:hover { color: var(--gold); background: rgba(210,153,34,.1); }
+  .save.on { color: var(--gold); }
+  .statusgrp { display: inline-flex; align-items: center; gap: 2px; }
+  .stbtn { background: none; border: none; cursor: pointer; font-size: 14px; line-height: 1; padding: 5px 6px; border-radius: 7px; color: var(--muted); }
+  .stbtn:hover { background: rgba(139,148,158,.12); color: var(--text); }
+  .stbtn.applied.on { background: rgba(88,166,255,.16); color: var(--accent); }
+  .stbtn.interview.on { background: rgba(63,185,80,.16); color: var(--green); }
+  .stbtn.reject.on { background: rgba(247,120,186,.16); color: var(--pink); }
+  .actsep { display: inline-block; width: 1px; height: 18px; background: var(--border); margin: 0 3px; vertical-align: middle; }
+  .chk .fname { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .chk .fcount { margin-left: auto; color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
   .more-btn { width: 100%; padding: 10px; background: transparent; border: none; border-top: 1px solid var(--border); color: var(--accent); cursor: pointer; font-weight: 600; font-size: 13px; }
   .more-btn:hover { background: rgba(88,166,255,.06); }
   .empty { text-align: center; color: var(--muted); padding: 60px 0; }
@@ -323,6 +335,7 @@
     </select>
     <h3>My pipeline</h3>
     <label class="chk"><input type="checkbox" id="hideTracked" onchange="render()">Hide applied / rejected</label>
+    <label class="chk"><input type="checkbox" id="savedOnly" onchange="render()">★ Saved only (<span id="savedCount">0</span>)</label>
     <label class="chk"><input type="checkbox" id="showDismissed" onchange="render()">Show dismissed (<span id="dismissCount">0</span>)</label>
     <label class="chk"><input type="checkbox" id="salOnly" onchange="render()">Has salary info</label>
     <h3>Ghost-job filters</h3>
@@ -399,6 +412,7 @@ const store = {
 };
 const appStatus = store.get("luj-status", {});
 const dismissed = new Set(store.get("luj-dismissed", []));
+const saved = new Set(store.get("luj-saved", [])); // jobs the visitor stars to revisit (local only)
 const prevVisit = store.get("luj-lastVisit", 0);
 store.set("luj-lastVisit", Date.now());
 
@@ -618,14 +632,20 @@ const SEN = SEN_FILTER_ORDER.filter(s => JOBS.some(j=>j.sen===s))
   .concat([...new Set(JOBS.map(j=>j.sen))].filter(s=>!SEN_FILTER_ORDER.includes(s)).sort());
 const REGIONS = [...new Set(JOBS.flatMap(j=>j.regions))].sort();
 
-function checkboxes(el, items, cls){
+// how many roles sit behind each option, so the sidebar tells you where the jobs are before you click
+const DISC_COUNTS = {}; for (const j of JOBS) DISC_COUNTS[j.d] = (DISC_COUNTS[j.d]||0)+1;
+const WORK_COUNTS = {}; for (const j of JOBS) WORK_COUNTS[j.w] = (WORK_COUNTS[j.w]||0)+1;
+const SEN_COUNTS  = {}; for (const j of JOBS) SEN_COUNTS[j.sen] = (SEN_COUNTS[j.sen]||0)+1;
+const REGION_COUNTS = {}; for (const j of JOBS) for (const rg of j.regions) REGION_COUNTS[rg] = (REGION_COUNTS[rg]||0)+1;
+
+function checkboxes(el, items, cls, counts){
   document.getElementById(el).innerHTML = items.map(i=>
-    `<label class="chk"><input type="checkbox" class="${cls}" value="${i}" onchange="render()">${i}</label>`).join("");
+    `<label class="chk"><input type="checkbox" class="${cls}" value="${i}" onchange="render()"><span class="fname">${i}</span>${counts?`<span class="fcount">${counts[i]||0}</span>`:""}</label>`).join("");
 }
-checkboxes("discFilters", DISC, "f-d");
-checkboxes("workFilters", WORK, "f-w");
-checkboxes("seniorFilters", SEN, "f-s");
-document.getElementById("region").innerHTML += REGIONS.map(r=>`<option>${r}</option>`).join("");
+checkboxes("discFilters", DISC, "f-d", DISC_COUNTS);
+checkboxes("workFilters", WORK, "f-w", WORK_COUNTS);
+checkboxes("seniorFilters", SEN, "f-s", SEN_COUNTS);
+document.getElementById("region").innerHTML += REGIONS.map(r=>`<option value="${r}">${r} (${REGION_COUNTS[r]||0})</option>`).join("");
 
 function checked(cls){ return [...document.querySelectorAll("."+cls+":checked")].map(c=>c.value); }
 
@@ -723,13 +743,16 @@ function render(){
   const showDismissed = document.getElementById("showDismissed").checked;
   const hidePools = document.getElementById("hidePools").checked;
   const hideStale = document.getElementById("hideStale").checked;
+  const savedOnly = document.getElementById("savedOnly").checked;
   document.getElementById("dismissCount").textContent = dismissed.size;
+  document.getElementById("savedCount").textContent = saved.size;
 
   // "preHub" = everything EXCEPT the matrix cell selection and the hub drill-down.
   // Dismissed jobs are always excluded here; "Show dismissed" is handled as its own
   // focused review list below, so the matrix and counts stay about active roles.
   const preHub = JOBS.filter(j =>
     (!dismissed.has(j.id)) &&
+    (!savedOnly || saved.has(j.id)) &&
     (!hideTracked || !appStatus[j.id]) &&
     (!salOnly || j.salary) &&
     (!hidePools || !j.pool) &&
@@ -1016,6 +1039,7 @@ function rowHtml(j){
   const status = appStatus[j.id] || "";
   const isNew = isNewForYou(j);
   const isDismissed = dismissed.has(j.id);
+  const isSaved = saved.has(j.id);
   const locLabel = l => l.replace(/^united states,\s*/i, "").replace(/,/g, ", ");
   const multi = j.places.length > 1;
   // each location chip links to its own posting; a row with one place stays whole-row-clickable
@@ -1039,12 +1063,13 @@ function rowHtml(j){
         ${isNew?'<span class="nfy">NEW FOR YOU</span>':''}
       </div>
       <div class="posted">${noDate?'date n/a':`${h<=24&&!isNew?'<span class="new">● </span>':''}${ago(h)}`}</div>
-      <select class="status-sel" onclick="event.stopPropagation()" onchange="setStatus('${j.id}', this.value)">
-        <option value="">— track —</option>
-        <option value="applied" ${status==='applied'?'selected':''}>Applied ✓</option>
-        <option value="interviewing" ${status==='interviewing'?'selected':''}>Interviewing</option>
-        <option value="rejected" ${status==='rejected'?'selected':''}>Rejected</option>
-      </select>
+      <button class="save ${isSaved?'on':''}" onclick="event.stopPropagation(); toggleSave('${j.id}')" title="${isSaved?'Saved':'Save for later'}" aria-label="${isSaved?'Remove from saved':'Save for later'}">${isSaved?'★':'☆'}</button>
+      <span class="statusgrp" onclick="event.stopPropagation()">
+        <button class="stbtn applied ${status==='applied'?'on':''}" onclick="event.stopPropagation(); setStatusToggle('${j.id}','applied')" title="Applied" aria-label="Mark as applied">✓</button>
+        <button class="stbtn interview ${status==='interviewing'?'on':''}" onclick="event.stopPropagation(); setStatusToggle('${j.id}','interviewing')" title="Interviewing" aria-label="Mark as interviewing">💬</button>
+        <button class="stbtn reject ${status==='rejected'?'on':''}" onclick="event.stopPropagation(); setStatusToggle('${j.id}','rejected')" title="Rejected" aria-label="Mark as rejected">⊘</button>
+      </span>
+      <span class="actsep"></span>
       <button class="dismiss" onclick="event.stopPropagation(); toggleDismiss('${j.id}')" title="${isDismissed?'Restore this job':'Hide this job forever'}">${isDismissed?'↩':'✕'}</button>
     </div>
     <div class="rtags">
@@ -1065,9 +1090,17 @@ function setStatus(id, v){
   store.set("luj-status", appStatus);
   render();
 }
+// one-click status toggle for the per-row icon cluster: click a status to set it,
+// click the active one again to clear it (mutually exclusive across the three).
+function setStatusToggle(id, v){ setStatus(id, appStatus[id] === v ? "" : v); }
 function toggleDismiss(id){
   dismissed.has(id) ? dismissed.delete(id) : dismissed.add(id);
   store.set("luj-dismissed", [...dismissed]);
+  render();
+}
+function toggleSave(id){
+  saved.has(id) ? saved.delete(id) : saved.add(id);
+  store.set("luj-saved", [...saved]);
   render();
 }
 function toggleGroup(gi){ const d=GROUPS[gi]; collapsed.has(d)?collapsed.delete(d):collapsed.add(d); render(); }
