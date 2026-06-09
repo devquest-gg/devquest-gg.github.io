@@ -177,6 +177,14 @@
   .ptile { flex: 1; min-width: 120px; background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; text-align: center; }
   .ptile .pnum { font-size: 26px; font-weight: 800; color: var(--text); }
   .ptile .plabelt { font-size: 12px; color: var(--muted); margin-top: 4px; }
+  #pulseStrip { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 18px; padding: 10px 16px; margin: 0 0 14px; background: var(--panel); border: 1px solid var(--border); border-radius: 12px; }
+  .psitem { font-size: 13px; color: var(--muted); white-space: nowrap; }
+  .psitem b { color: var(--text); font-size: 15px; font-weight: 800; margin-right: 5px; }
+  .psitem.top b { color: var(--accent); font-size: 14px; }
+  .psexport { margin-left: auto; background: none; border: 1px solid var(--border); color: var(--text); font-size: 12.5px; font-weight: 600; padding: 6px 12px; border-radius: 8px; cursor: pointer; }
+  .psexport:hover { border-color: var(--accent); color: var(--accent); }
+  .trendhead { margin: 2px 0 14px; }
+  .trendhead h2 { font-size: 21px; font-weight: 800; letter-spacing: -0.3px; }
   .pulserow { display: flex; align-items: center; gap: 12px; padding: 6px 0; border-top: 1px solid var(--border); }
   .pulserow:first-of-type { border-top: none; }
   .pulserow .plabel { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -373,9 +381,10 @@
     <div class="viewtabs">
       <button id="tabList" class="active" onclick="setView('list')">☰ List</button>
       <button id="tabMap" onclick="setView('map')">🗺️ Map</button>
-      <button id="tabStats" onclick="setView('stats')">📊 Stats</button>
+      <button id="tabStats" onclick="setView('stats')">📊 Trends</button>
       <button id="tabPulse" onclick="setView('pulse')">📈 Pulse</button>
     </div>
+    <div id="pulseStrip"></div>
     <div id="matrixWrap"></div>
     <div id="quickbar"></div>
     <div id="hubbar"></div>
@@ -1190,6 +1199,7 @@ function setView(v){
   document.getElementById("quickbar").style.display = v==="list" ? "" : "none";
   document.getElementById("hubbar").style.display = v==="list" ? "" : "none";
   document.getElementById("subbar").style.display = v==="list" ? "" : "none";
+  document.getElementById("pulseStrip").style.display = v==="list" ? "" : "none";
   document.getElementById("mapWrap").style.display = v==="map" ? "block" : "none";
   document.getElementById("statsWrap").style.display = v==="stats" ? "block" : "none";
   document.getElementById("pulseWrap").style.display = v==="pulse" ? "block" : "none";
@@ -1218,6 +1228,44 @@ function barChart(title, entries, limit){
     `<div class="barrow"><span class="blabel" title="${k}">${k}</span>
      <span class="btrack"><span class="bfill" style="width:${Math.round(100*n/max)}%"></span></span>
      <span class="bnum">${n}</span></div>`).join("") + `</div>`;
+}
+
+// Market-pulse headline numbers (whole board, not the filtered view) — shared by the
+// front-page strip and the Trends report header. No estimates: every figure is a live role.
+function marketPulse(){
+  const open = JOBS.length;
+  const studios = new Set(JOBS.map(j=>j.s)).size;
+  const newWk = JOBS.filter(j=>{ const d=daysListed(j); return d!=null ? d<=7 : (j.ts && hoursAgo(j)<=168); }).length;
+  const byS = {}; for (const j of JOBS) byS[j.s] = (byS[j.s]||0)+1;
+  const top = Object.entries(byS).sort((a,b)=>b[1]-a[1])[0];
+  return { open, studios, newWk, topStudio: top ? top[0] : "—" };
+}
+function renderPulseStrip(){
+  const el = document.getElementById("pulseStrip"); if (!el) return;
+  const m = marketPulse();
+  const chip = (num,label,cls="") => `<span class="psitem ${cls}"><b>${num}</b>${label}</span>`;
+  el.innerHTML = chip(m.open.toLocaleString(),"open roles")
+    + chip(m.studios,"studios hiring")
+    + chip(m.newWk.toLocaleString(),"new this week")
+    + chip(m.topStudio,"most active","top")
+    + `<button class="psexport" onclick="exportCsv()" title="Download your current filtered results as a CSV spreadsheet">⤓ Export CSV</button>`;
+}
+// Export the current filtered list to a CSV the user can open in a spreadsheet.
+function exportCsv(){
+  const rows = LAST_LIST || [];
+  const head = ["Title","Studio","Discipline","Seniority","Work type","Location","Salary","Posted","URL"];
+  const esc = s => '"' + String(s==null?"":s).replace(/"/g,'""') + '"';
+  const out = [head.map(esc).join(",")];
+  for (const j of rows){
+    const loc = (j.places && j.places.map(p=>p.l).join("; ")) || j.l || "";
+    const posted = j.ts ? new Date(j.ts).toISOString().slice(0,10) : "";
+    const url = (j.places && j.places[0] && j.places[0].url) || j.url || "";
+    out.push([j.t, j.s, j.d, j.sen, j.w, loc, j.salary||"", posted, url].map(esc).join(","));
+  }
+  const blob = new Blob([out.join("\r\n")], { type: "text/csv;charset=utf-8" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob); a.download = "devquest-jobs.csv";
+  document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(a.href);
 }
 
 function renderStats(){
@@ -1300,7 +1348,16 @@ function renderStats(){
       : `<div class="xhint">No roles in this selection.</div>`)
     + `<div class="xhint">Most studios don't state work type. Of the ${known.length} that do, ${pctS(rem)}% are remote, ${pctS(hyb)}% hybrid, ${pctS(ons)}% onsite.</div></div>`;
 
-  document.getElementById("statsWrap").innerHTML =
+  const mp = marketPulse();
+  const trendHead = `<div class="trendhead"><h2>Game-dev hiring trends</h2>`
+    + `<p class="dirsub">Live across ${mp.studios} studios, refreshed hourly. Every figure here is a real, current opening — no estimated dates, no padding.</p></div>`
+    + `<div class="pulsestats">`
+    + `<div class="ptile"><div class="pnum">${mp.open.toLocaleString()}</div><div class="plabelt">open roles</div></div>`
+    + `<div class="ptile"><div class="pnum">${mp.studios}</div><div class="plabelt">studios hiring</div></div>`
+    + `<div class="ptile"><div class="pnum">${mp.newWk.toLocaleString()}</div><div class="plabelt">new this week</div></div>`
+    + `<div class="ptile"><div class="pnum" style="font-size:18px;line-height:1.5">${mp.topStudio}</div><div class="plabelt">most active studio</div></div>`
+    + `</div>`;
+  document.getElementById("statsWrap").innerHTML = trendHead +
     `<div class="statgrid">` +
     hiringCard +
     remoteCard +
@@ -1568,6 +1625,7 @@ if (LIVE) document.getElementById("heroSub").textContent =
 renderDirectory();
 renderMoon();
 render();
+renderPulseStrip();
 
 // Shareable search URLs + makes the JSON-LD SearchAction work: ?q=term pre-fills the search.
 try {
