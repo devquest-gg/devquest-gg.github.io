@@ -385,6 +385,7 @@
       <button id="tabMap" onclick="setView('map')">🗺️ Map</button>
       <button id="tabStats" onclick="setView('stats')">📊 Trends</button>
       <button id="tabPulse" onclick="setView('pulse')">📈 Pulse</button>
+      <button id="tabBest" onclick="setView('bestfit')">🎯 Best fit</button>
     </div>
     <div id="pulseStrip"></div>
     <div id="matrixWrap"></div>
@@ -402,6 +403,7 @@
     </div>
     <div id="statsWrap"></div>
     <div id="pulseWrap"></div>
+    <div id="bestfitWrap"></div>
   </main>
 </div>
 
@@ -1222,7 +1224,7 @@ function dirCoords(d){
 let map = null, markerLayer = null, view = "list";
 function setView(v){
   view = v;
-  for (const [tab, name] of [["tabList","list"],["tabMap","map"],["tabStats","stats"],["tabPulse","pulse"]])
+  for (const [tab, name] of [["tabList","list"],["tabMap","map"],["tabStats","stats"],["tabPulse","pulse"],["tabBest","bestfit"]])
     document.getElementById(tab).classList.toggle("active", v===name);
   document.getElementById("jobs").style.display = v==="list" ? "" : "none";
   document.getElementById("directory").style.display = v==="list" ? "" : "none";
@@ -1235,10 +1237,175 @@ function setView(v){
   document.getElementById("mapWrap").style.display = v==="map" ? "block" : "none";
   document.getElementById("statsWrap").style.display = v==="stats" ? "block" : "none";
   document.getElementById("pulseWrap").style.display = v==="pulse" ? "block" : "none";
+  document.getElementById("bestfitWrap").style.display = v==="bestfit" ? "block" : "none";
   if (v === "map") renderMap();
   if (v === "stats") renderStats();
   if (v === "pulse") renderPulse();
+  if (v === "bestfit") renderBestFit();
 }
+
+// ---- "Best fit — where should I apply?" view --------------------------------
+// A guided front door: pick discipline + seniority + work type, and we rank studios by
+// open roles, pay transparency, posting freshness and how contested they are (interest
+// per open role, from our own engagement data). Clicking a studio drops you into the
+// filtered list. Everything is computed live from the same JOBS the board uses.
+const ALERTS_BASE = "https://devquest-alerts.balesdestin.workers.dev";
+let INTEREST = null, _interestTried = false;
+function fetchInterest(){
+  if (_interestTried) return; _interestTried = true;
+  fetch(ALERTS_BASE + "/interest").then(r => r.ok ? r.json() : null).then(d => {
+    if (d && d.studios){ INTEREST = d.studios; if (view === "bestfit") bfCompute(); }
+  }).catch(function(){});
+}
+const STUDIO_TITLES = {
+  "Riot Games":"League of Legends, Valorant", "Insomniac Games":"Marvel's Spider-Man, Ratchet & Clank",
+  "Bungie":"Destiny 2", "2K":"NBA 2K, BioShock", "Crystal Dynamics":"Tomb Raider",
+  "Scopely":"Monopoly GO!, Stumble Guys", "Naughty Dog":"The Last of Us, Uncharted",
+  "Epic Games":"Fortnite, Unreal Engine", "Zynga":"FarmVille, Words With Friends",
+  "Electronic Arts (HQ)":"Battlefield, The Sims, Apex Legends", "Roblox":"Roblox",
+  "Larian Studios":"Baldur's Gate 3, Divinity: Original Sin", "Team17":"Worms, Overcooked",
+  "Rockstar Games":"Grand Theft Auto, Red Dead Redemption", "People Can Fly":"Outriders, Gears of War",
+  "CD Projekt Red":"The Witcher 3, Cyberpunk 2077", "Rovio":"Angry Birds", "The Pokémon Company":"Pokémon",
+  "Jam City":"Harry Potter: Hogwarts Mystery", "Krafton":"PUBG: Battlegrounds", "Gearbox Software":"Borderlands",
+  "Second Dinner":"Marvel Snap", "Supercell":"Clash of Clans, Brawl Stars", "King":"Candy Crush Saga",
+  "Sharkmob":"Vampire: The Masquerade – Bloodhunt", "Embark Studios":"The Finals, Arc Raiders",
+  "Gameloft":"Asphalt, Disney Dreamlight Valley", "Capcom":"Resident Evil, Street Fighter, Monster Hunter",
+  "Frontier Developments":"Planet Coaster, Elite Dangerous", "Nintendo":"Mario, Zelda", "Mojang Studios":"Minecraft",
+  "Bandai Namco":"Tekken, Elden Ring", "Firaxis Games":"Civilization, XCOM", "NCSOFT":"Guild Wars, Lineage",
+  "HoYoverse":"Genshin Impact, Honkai: Star Rail", "Behaviour Interactive":"Dead by Daylight", "Jagex":"RuneScape",
+  "Cloud Imperium Games":"Star Citizen", "Digital Extremes":"Warframe",
+  "Asobo Studio":"Microsoft Flight Simulator, A Plague Tale", "Dream Games":"Royal Match",
+  "Crytek":"Crysis, Hunt: Showdown", "thatgamecompany":"Journey, Sky: Children of the Light",
+  "Quantic Dream":"Detroit: Become Human, Heavy Rain", "Don't Nod":"Life is Strange",
+  "Bloober Team":"Silent Hill 2, The Medium", "11 bit studios":"Frostpunk, This War of Mine",
+  "Wargaming":"World of Tanks", "Mob Entertainment":"Poppy Playtime",
+  "Daybreak Game Company":"EverQuest, DC Universe Online", "Eleventh Hour Games":"Last Epoch",
+  "Scorewarrior":"Total Battle", "Tripledot Studios":"Solitaire, Woodoku", "Activision (HQ)":"Call of Duty",
+  "Ubisoft (HQ)":"Assassin's Creed, Far Cry", "Wizards of the Coast":"Magic: The Gathering, Dungeons & Dragons",
+  "Warner Bros. Games":"Mortal Kombat, Hogwarts Legacy", "Creative Assembly":"Total War",
+  "Kabam":"Marvel Contest of Champions", "Theorycraft Games":"Supervive", "Blackbird Interactive":"Homeworld 3",
+  "Take-Two Interactive":"Grand Theft Auto, NBA 2K"
+};
+function bfEsc(s){ return String(s==null?"":s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];}); }
+function bfFreshLabel(d){ return d==null?"":d<=10?"fresh":d<=21?"recent":d<=45?"aging":"stale"; }
+function bfContChip(l){
+  var m = { "less crowded":["#3fb950","rgba(63,185,80,.14)"], "contested":["#d6a531","rgba(210,153,34,.14)"], "very contested":["#e06c5e","rgba(224,108,94,.14)"] };
+  var c = m[l] || ["var(--muted)","transparent"];
+  return `<span style="color:${c[0]};background:${c[1]};padding:1px 8px;border-radius:6px;font-size:12px">${l}</span>`;
+}
+function _bfDefaultDisc(){ var t = Object.entries(DISC_COUNTS).sort(function(a,b){return b[1]-a[1];})[0]; return t ? t[0] : (DISC[0]||""); }
+let _bfBuilt = false;
+function renderBestFit(){
+  if (INTEREST === null) fetchInterest();
+  const wrap = document.getElementById("bestfitWrap");
+  if (!_bfBuilt){
+    const def = _bfDefaultDisc();
+    const discOpts = DISC.map(d=>`<option${d===def?" selected":""}>${bfEsc(d)}</option>`).join("");
+    const senOpts = `<option value="__any">any-level</option>` + SEN.map(s=>`<option value="${bfEsc(s)}">${bfEsc(s)}</option>`).join("");
+    wrap.innerHTML = `
+      <div style="max-width:640px">
+        <div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px;font-size:15px;color:var(--muted);margin-bottom:16px">
+          <span>I want</span>
+          <select id="bfSen" aria-label="Seniority" style="width:auto">${senOpts}</select>
+          <select id="bfDisc" aria-label="Discipline" style="width:auto">${discOpts}</select>
+          <span>roles</span>
+          <label style="display:inline-flex;align-items:center;gap:6px;margin-left:4px;cursor:pointer"><input type="checkbox" id="bfRemote"> remote only</label>
+        </div>
+        <div style="font-size:16px;font-weight:600;color:var(--text);margin-bottom:12px">Best places to apply right now</div>
+        <div id="bfResults"></div>
+        <div id="bfGemsWrap" style="display:none">
+          <div style="font-size:14px;font-weight:600;color:var(--text);margin:18px 0 10px">Better odds — more openings per applicant</div>
+          <div id="bfGems"></div>
+        </div>
+        <div style="font-size:12px;color:var(--muted);margin-top:16px;line-height:1.6">Ranked by open roles, pay transparency and posting freshness. "Contested" reflects how many people on DevQuest are eyeing a studio per open role — not who's best. Studios can't pay for placement.</div>
+      </div>`;
+    document.getElementById("bfDisc").addEventListener("change", bfOnChange);
+    document.getElementById("bfSen").addEventListener("change", bfOnChange);
+    document.getElementById("bfRemote").addEventListener("change", bfOnChange);
+    _bfBuilt = true;
+  }
+  bfCompute();
+}
+function bfOnChange(){
+  try { window.dqTrack && window.dqTrack("bestfit_filter", { disc: document.getElementById("bfDisc").value, sen: document.getElementById("bfSen").value, remote: document.getElementById("bfRemote").checked ? 1 : 0 }); } catch(e){}
+  bfCompute();
+}
+function bfCompute(){
+  const disc = document.getElementById("bfDisc").value;
+  const sen = document.getElementById("bfSen").value;
+  const remote = document.getElementById("bfRemote").checked;
+  const matched = JOBS.filter(j => j.d===disc && (sen==="__any" || j.sen===sen) && (!remote || j.w==="Remote"));
+  const byS = {};
+  for (const j of matched){
+    const o = byS[j.s] || (byS[j.s] = { n:j.s, roles:0, paid:0, ages:[] });
+    o.roles++; if (j.salary) o.paid++;
+    const t = j.ts || j.fseen; if (t) o.ages.push(Math.max(0, Math.floor((Date.now()-t)/864e5)));
+  }
+  let rows = Object.values(byS);
+  const resEl = document.getElementById("bfResults"), gemsWrap = document.getElementById("bfGemsWrap");
+  if (!rows.length){ resEl.innerHTML = `<div style="font-size:13px;color:var(--muted);padding:8px 0">No open ${bfEsc(disc)} roles match that mix right now — try a different discipline or turn off "remote only".</div>`; gemsWrap.style.display="none"; return; }
+  const maxR = Math.max(1, ...rows.map(r=>r.roles));
+  const haveInterest = INTEREST && Object.keys(INTEREST).length;
+  rows.forEach(r => {
+    r.payPct = Math.round(100*r.paid/r.roles);
+    r.medAge = r.ages.length ? r.ages.sort((a,b)=>a-b)[Math.floor(r.ages.length/2)] : null;
+    r.freshScore = r.medAge==null ? 50 : Math.max(0, Math.min(100, Math.round(100 - r.medAge*1.6)));
+    r.score = Math.round(100*(0.45*(r.roles/maxR) + 0.30*r.payPct/100 + 0.25*r.freshScore/100));
+    r.cont = (haveInterest && (INTEREST[r.n]||0) > 0) ? INTEREST[r.n]/r.roles : null;
+  });
+  if (haveInterest){
+    const cs = rows.filter(r=>r.cont!=null).map(r=>r.cont).sort((a,b)=>a-b);
+    if (cs.length >= 3){ const t1=cs[Math.floor(cs.length/3)], t2=cs[Math.floor(2*cs.length/3)];
+      rows.forEach(r=>{ r.clabel = r.cont==null ? null : r.cont<=t1 ? "less crowded" : r.cont<=t2 ? "contested" : "very contested"; });
+    }
+  }
+  const ranked = rows.sort((a,b)=> b.score - a.score);
+  const top = ranked.slice(0,6);
+  resEl.innerHTML = top.map((r,i)=>bfCard(r,i,disc)).join("");
+  if (haveInterest){
+    const topNames = new Set(top.slice(0,3).map(r=>r.n));
+    const gems = rows.filter(r=>r.cont!=null && !topNames.has(r.n) && r.roles>=2).sort((a,b)=>a.cont-b.cont).slice(0,3);
+    document.getElementById("bfGems").innerHTML = gems.map(g=>bfGem(g,disc)).join("");
+    gemsWrap.style.display = gems.length ? "" : "none";
+  } else { gemsWrap.style.display = "none"; }
+}
+function bfCard(r,i,disc){
+  const best = i===0, titles = STUDIO_TITLES[r.n] || "", fl = bfFreshLabel(r.medAge);
+  const flColor = r.medAge==null ? "var(--muted)" : r.medAge<=21 ? "#3fb950" : r.medAge<=45 ? "#d6a531" : "#e06c5e";
+  return `<div class="bfcard" data-studio="${bfEsc(r.n)}" data-disc="${bfEsc(disc)}" style="display:flex;align-items:center;gap:14px;border:${best?"2px solid var(--accent)":"1px solid var(--border)"};border-radius:12px;padding:13px 15px;margin-bottom:10px;background:var(--panel);cursor:pointer">
+    <div style="font-size:15px;color:var(--muted);width:16px;text-align:center">${i+1}</div>
+    <div style="flex:1;min-width:0">
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <span style="font-size:15px;font-weight:600;color:var(--text)">${bfEsc(r.n)}</span>
+        ${best?`<span style="font-size:12px;color:#0d1117;background:var(--accent);padding:2px 8px;border-radius:6px;font-weight:600">Best match</span>`:""}
+      </div>
+      ${titles?`<div style="font-size:12px;color:var(--muted);margin-top:2px">${bfEsc(titles)}</div>`:""}
+      <div style="display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:6px;font-size:13px;color:var(--muted)">
+        <span>${r.roles} open</span><span>${r.payPct}% pay</span>${fl?`<span style="color:${flColor}">${fl}</span>`:""}${r.clabel?bfContChip(r.clabel):""}
+      </div>
+    </div>
+    <div style="text-align:right"><div style="font-size:20px;font-weight:700;color:var(--accent)">${r.score}</div><div style="font-size:11px;color:var(--muted)">match</div></div>
+  </div>`;
+}
+function bfGem(g,disc){
+  return `<div class="bfcard" data-studio="${bfEsc(g.n)}" data-disc="${bfEsc(disc)}" style="display:flex;align-items:center;justify-content:space-between;gap:10px;border:1px solid var(--border);border-radius:8px;padding:9px 13px;margin-bottom:8px;background:var(--panel);cursor:pointer">
+    <div style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"><span style="font-size:14px;font-weight:600;color:var(--text)">${bfEsc(g.n)}</span>${STUDIO_TITLES[g.n]?` <span style="font-size:12px;color:var(--muted)">${bfEsc(STUDIO_TITLES[g.n])}</span>`:""}</div>
+    <div style="font-size:12.5px;color:var(--muted);white-space:nowrap">${g.roles} open · ${g.payPct}% pay${g.clabel?" · "+bfContChip(g.clabel):""}</div>
+  </div>`;
+}
+function bestfitPick(studio, disc){
+  try { window.dqTrack && window.dqTrack("bestfit_pick", { st:studio, disc:disc }); } catch(e){}
+  clearAllFilters();
+  selStudios.add(studio);
+  document.querySelectorAll(".f-d").forEach(function(c){ if (c.value===disc) c.checked = true; });
+  renderSearchGroup("studioFilters","studioSearch",STUDIO_COUNTS,selStudios,STUDIO_LABELS,DIR_STUDIOS);
+  setView("list");
+  render();
+}
+document.addEventListener("click", function(e){
+  var card = e.target && e.target.closest && e.target.closest("#bestfitWrap .bfcard");
+  if (card) bestfitPick(card.getAttribute("data-studio"), card.getAttribute("data-disc"));
+});
 
 // ---- stats dashboard + data health -------------------------------------------
 function tally(list, fn){
