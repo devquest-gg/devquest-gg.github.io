@@ -843,7 +843,7 @@ function render(){
     const rest = jobs.length - n;
     return `<div class="group">
       <div class="group-header" onclick="toggleGroup(${gi})">
-        <span class="arrow ${open?'open':''}">▸</span> ${dn}
+        <span class="arrow ${open?'open':''}">▸</span> <span style="color:${discColor(dn)}">${dn}</span>
         <span class="gcount">${jobs.length}</span>
       </div>
       ${open ? jobs.slice(0,n).map(rowHtml).join("") : ""}
@@ -907,6 +907,14 @@ function hideGridTip(){ gridTip.classList.remove("show"); }
 const escTip = s => String(s).replace(/"/g, "&quot;");
 
 // ---- interactive matrix (home page) ------------------------------------------
+// Signature colors per discipline (desaturated). Core crafts get a hue; corporate/ops
+// disciplines (Marketing, Player Support, Business & Ops, …) stay gray so they recede.
+const DISC_COLOR = {
+  "Engineering":"#5b9bd5","Art":"#b388d6","Animation":"#db8bb2","Design":"#4fb3a6",
+  "Audio":"#d4a85f","Production":"#7fb06c","QA":"#d18f63","Data & Analytics":"#5fb9cb","Esports":"#d27b7b"
+};
+function discColor(d){ return DISC_COLOR[d] || "var(--muted)"; }
+
 function renderMatrix(base){
   const SEN_ORDER = ["Entry","Mid","Senior","Lead","Director+"];
   const seniorities = SEN_ORDER.filter(sn => base.some(j=>j.sen===sn));
@@ -925,7 +933,7 @@ function renderMatrix(base){
     const rowTotal = discCount[dn];
     const dInfo = DISC_INFO[dn];
     const dCell = dInfo ? `<span class="tipname" data-tip="${escTip(dInfo)}">${dn}</span>` : dn;
-    h += `<tr><td class="xname">${dCell}</td>` + seniorities.map(sn=>{
+    h += `<tr><td class="xname" style="color:${discColor(dn)}">${dCell}</td>` + seniorities.map(sn=>{
       const key = dn+"|"+sn, n = cell[key]||0, sel = selCells.has(key);
       return `<td class="mcell ${sel?'xsel':''}" style="background:${sel?'':heat(n)}" ${n?`onclick="toggleCell('${dn.replace(/'/g,"\\'")}','${sn}')"`:''}>${n||""}</td>`;
     }).join("") + `<td class="xtot">${rowTotal}</td></tr>`;
