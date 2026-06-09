@@ -330,6 +330,186 @@ function extractTech(text) {
   return out;
 }
 
+// ---- SEO landing pages -----------------------------------------------------
+// Static category "doorway" pages, regenerated from the live data every run, so a Google search
+// for e.g. "remote game programming jobs" lands on a relevant, current page that funnels into the
+// main board. Existing visitors never see these — they're entry points from search. Fire-and-forget.
+function escHtml(s){ return String(s||"").replace(/[&<>"]/g, c=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;" }[c])); }
+const LANDING_PAGES = [
+  { slug:"remote-game-programming-jobs", h1:"Remote Game Programming Jobs", noun:"remote programming and engineering", disc:"Engineering", remote:true },
+  { slug:"game-programming-jobs",        h1:"Game Programming Jobs",        noun:"programming and engineering",        disc:"Engineering" },
+  { slug:"game-design-jobs",             h1:"Game Design Jobs",             noun:"game design",                        disc:"Design" },
+  { slug:"game-art-jobs",                h1:"Game Art Jobs",                noun:"game art",                           disc:"Art" },
+  { slug:"game-animation-jobs",          h1:"Game Animation Jobs",          noun:"animation and rigging",              disc:"Animation" },
+  { slug:"game-audio-jobs",              h1:"Game Audio Jobs",              noun:"audio and sound design",             disc:"Audio" },
+  { slug:"game-production-jobs",         h1:"Game Production Jobs",         noun:"production and project-management",   disc:"Production" },
+  { slug:"game-qa-tester-jobs",          h1:"Game QA & Tester Jobs",        noun:"QA and testing",                     disc:"QA" },
+  { slug:"remote-game-jobs",             h1:"Remote Game Dev Jobs",         noun:"remote game-dev",                    remote:true },
+  { slug:"entry-level-game-jobs",        h1:"Entry-Level Game Dev Jobs",    noun:"entry-level and junior",             sen:"Entry" },
+];
+
+function landingMatches(cfg, jobs){
+  const seen = new Set(), out = [];
+  for (const j of jobs){
+    if (isPool(j.title)) continue;
+    if (cfg.disc && normDisc(j.discipline) !== cfg.disc) continue;
+    if (cfg.remote && j.workType !== "Remote") continue;
+    if (cfg.sen && j.seniority !== cfg.sen) continue;
+    const k = (j.studio||"") + "|" + (j.title||"");
+    if (seen.has(k)) continue; seen.add(k);
+    out.push(j);
+  }
+  return out;
+}
+
+function landingRoleRow(j){
+  const sen = j.seniority ? `<span class="tag">${escHtml(j.seniority)}</span>` : "";
+  const sal = j.salary ? `<span class="tag sal">${escHtml(j.salary)}</span>` : "";
+  const rem = j.workType === "Remote" ? `<span class="tag remote">Remote</span>`
+    : (j.workType && j.workType !== "Unknown" ? `<span class="tag">${escHtml(j.workType)}</span>` : "");
+  const days = j.firstSeen ? Math.max(0, Math.round((Date.now() - Date.parse(j.firstSeen)) / 864e5)) : null;
+  const age = days == null ? "" : `<span class="tag age">${days<=0?"new today":days===1?"1 day ago":days+" days ago"}</span>`;
+  const loc = j.workType === "Remote" ? "Remote" : escHtml((j.location || "").split(",")[0]);
+  return `    <a class="role" href="${escHtml(j.url||"https://devquest.gg")}" target="_blank" rel="noopener">
+      <div class="rt">${escHtml((j.title||"").split("|")[0].trim())}</div>
+      <div class="rs">${escHtml(j.studio)}${loc?" · "+loc:""}</div>
+      <div class="tags">${rem}${sen}${sal}${age}</div>
+    </a>`;
+}
+
+function renderLandingPage(cfg, all){
+  const matches = landingMatches(cfg, all);
+  const total = matches.length;
+  const studios = new Set(matches.map(m => m.studio)).size;
+  const rows = matches.slice(0, 25).map(landingRoleRow).join("\n") || `<div style="padding:16px;color:#8b949e">No open ${escHtml(cfg.noun)} roles right this minute — check back soon or set an alert.</div>`;
+  const url = "https://devquest.gg/" + cfg.slug;
+  const title = cfg.h1 + " · DevQuest";
+  const desc = `${cfg.h1}, updated hourly. ${total} open ${cfg.noun} role${total===1?"":"s"} across ${studios} studios, pulled from studio career pages with salary shown when published and ghost-job filters. No ads.`;
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>${escHtml(title)}</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<meta name="description" content="${escHtml(desc)}">
+<link rel="canonical" href="${url}">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="DevQuest">
+<meta property="og:title" content="${escHtml(title)}">
+<meta property="og:description" content="${escHtml(desc)}">
+<meta property="og:image" content="https://devquest.gg/og-image-v4.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="${escHtml(title)}">
+<meta name="twitter:image" content="https://devquest.gg/og-image-v4.png">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"CollectionPage","name":"${escHtml(cfg.h1)}","url":"${url}","description":"Open ${escHtml(cfg.noun)} roles across the video-game industry, synced hourly from studio career pages.","isPartOf":{"@type":"WebSite","name":"DevQuest","url":"https://devquest.gg/"}}
+</script>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"DevQuest","item":"https://devquest.gg/"},{"@type":"ListItem","position":2,"name":"${escHtml(cfg.h1)}","item":"${url}"}]}
+</script>
+<style>
+  :root{--bg:#0d1117;--panel:#161b22;--border:#30363d;--text:#e6edf3;--muted:#8b949e;--accent:#58a6ff;--green:#3fb950;--pink:#f778ba;--gold:#d29922}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:-apple-system,"Segoe UI",Roboto,sans-serif;line-height:1.6}
+  a{color:var(--accent)}
+  header{padding:16px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--bg);z-index:10}
+  .logo{font-size:20px;font-weight:800;letter-spacing:-0.3px;display:flex;align-items:center;gap:8px;text-decoration:none;color:var(--text)}
+  .logo .wordmark span,.logo .logo-tld{color:var(--accent)}
+  .logo svg{display:block;flex-shrink:0}
+  .backbtn{color:var(--accent);font-size:13px;font-weight:600;text-decoration:none;border:1px solid var(--border);padding:7px 13px;border-radius:7px;white-space:nowrap}
+  .backbtn:hover{border-color:var(--accent)}
+  .wrap{max-width:820px;margin:0 auto;padding:0 24px 80px}
+  nav.crumbs{font-size:12.5px;color:var(--muted);padding:16px 0 0}
+  nav.crumbs a{color:var(--muted);text-decoration:none}nav.crumbs a:hover{color:var(--accent)}
+  .lede{padding:22px 0 6px}
+  .lede h1{font-size:30px;font-weight:800;letter-spacing:-0.6px;line-height:1.2}
+  .lede .sub{color:var(--muted);font-size:16px;margin-top:12px;max-width:680px}
+  .lede .meta{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+  .chip{background:var(--panel);border:1px solid var(--border);border-radius:999px;padding:5px 13px;font-size:13px;color:var(--text)}
+  .chip b{color:var(--accent)}.chip.fresh b{color:var(--green)}
+  .cta-row{display:flex;gap:12px;flex-wrap:wrap;margin:22px 0 8px}
+  .btn{display:inline-block;text-decoration:none;font-weight:700;font-size:14px;padding:11px 20px;border-radius:9px}
+  .btn.primary{background:var(--accent);color:#0d1117}
+  .btn.ghost{border:1px solid var(--border);color:var(--text)}.btn.ghost:hover{border-color:var(--accent)}
+  h2{font-size:18px;font-weight:800;margin:34px 0 6px;letter-spacing:-0.2px}
+  .roles{margin-top:12px;border:1px solid var(--border);border-radius:12px;overflow:hidden}
+  .role{display:block;padding:14px 16px;border-bottom:1px solid var(--border);text-decoration:none;color:var(--text)}
+  .role:last-child{border-bottom:none}.role:hover{background:var(--panel)}
+  .role .rt{font-weight:600;font-size:15px}
+  .role .rs{color:var(--muted);font-size:13px;margin-top:2px}
+  .role .tags{margin-top:7px;display:flex;gap:6px;flex-wrap:wrap}
+  .tag{font-size:12px;border:1px solid var(--border);border-radius:6px;padding:2px 8px;color:var(--muted)}
+  .tag.remote{color:var(--accent);border-color:rgba(88,166,255,.4)}
+  .tag.sal{color:var(--green);border-color:rgba(63,185,80,.4)}
+  .tag.age{color:var(--gold)}
+  .prose{color:#c9d1d9}.prose p{margin:12px 0}.prose h2{margin-top:30px}.prose strong{color:var(--text)}
+  .alertbox{margin-top:30px;background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:22px 24px;text-align:center}
+  .alertbox h2{margin:0 0 6px}.alertbox p{color:var(--muted);margin-bottom:16px}
+  footer{border-top:1px solid var(--border);margin-top:50px;padding:22px 24px;text-align:center;color:var(--muted);font-size:13px}
+  footer a{color:var(--muted)}footer a:hover{color:var(--accent)}
+</style>
+</head>
+<body>
+<header>
+  <a class="logo" href="/"><svg width="24" height="24" viewBox="0 0 32 32" aria-hidden="true"><rect x="1" y="1" width="8" height="8" rx="2" fill="var(--accent)"/><rect x="12" y="1" width="8" height="8" rx="2" fill="#2d333b"/><rect x="23" y="1" width="8" height="8" rx="2" fill="#2d333b"/><rect x="1" y="12" width="8" height="8" rx="2" fill="#2d333b"/><rect x="12" y="12" width="8" height="8" rx="2" fill="var(--accent)"/><rect x="23" y="12" width="8" height="8" rx="2" fill="#2d333b"/><rect x="1" y="23" width="8" height="8" rx="2" fill="#2d333b"/><rect x="12" y="23" width="8" height="8" rx="2" fill="#2d333b"/><rect x="23" y="23" width="8" height="8" rx="2" fill="var(--accent)"/></svg><span class="wordmark">Dev<span>Quest</span><span class="logo-tld">.gg</span></span></a>
+  <a class="backbtn" href="/">Browse all jobs →</a>
+</header>
+<div class="wrap">
+  <nav class="crumbs"><a href="/">DevQuest</a> &nbsp;›&nbsp; ${escHtml(cfg.h1)}</nav>
+  <div class="lede">
+    <h1>${escHtml(cfg.h1)}</h1>
+    <p class="sub">Every open <strong>${escHtml(cfg.noun)}</strong> role in the games industry, pulled straight from studios' own career pages and refreshed every hour. Salary shown when the studio publishes it, ghost-job listings flagged, and you apply on the studio's own site. No ads, no recruiters in the middle.</p>
+    <div class="meta">
+      <span class="chip"><b>${total}</b> open role${total===1?"":"s"}</span>
+      <span class="chip"><b>${studios}</b> studio${studios===1?"":"s"}</span>
+      <span class="chip fresh"><b>●</b> synced hourly · updated ${new Date().toISOString().slice(0,10)}</span>
+    </div>
+    <div class="cta-row">
+      <a class="btn primary" href="/">See all ${total} on DevQuest →</a>
+      <a class="btn ghost" href="/about">Why DevQuest is different</a>
+    </div>
+  </div>
+  <h2>Open ${escHtml(cfg.noun)} roles right now</h2>
+  <div class="roles">
+${rows}
+  </div>
+  <p style="margin-top:14px"><a href="/" class="btn primary">Browse all ${total} role${total===1?"":"s"} →</a></p>
+  <div class="prose">
+    <h2>How DevQuest keeps this list honest</h2>
+    <p>Game-dev hiring is full of stale and "ghost" postings. DevQuest shows <strong>how long each role has been live</strong> and flags listings that keep getting re-posted, so you don't waste an afternoon applying into the void. We show <strong>real salary only when the studio publishes it</strong>, never an invented "competitive" range, and we link you straight to the studio's own application page. No recruiters, no ads, and we never sell your data.</p>
+    <h2>Don't see your fit yet?</h2>
+    <p>New ${escHtml(cfg.noun)} roles land every hour. Filter the full board by seniority, region, studio, and tech stack (search a skill like <em>C++</em> or <em>Unreal</em>), or set a free weekly email alert and let the new ones come to you.</p>
+  </div>
+  <div class="alertbox">
+    <h2>Get ${escHtml(cfg.noun)} roles emailed to you</h2>
+    <p>A free weekly digest of new matching roles. One-click unsubscribe, no spam.</p>
+    <a class="btn primary" href="/">Set up a free alert →</a>
+  </div>
+</div>
+<footer>DevQuest.gg · Game dev jobs, fresh and honest · <a href="/">Browse all jobs</a> · <a href="/about">Our mission</a></footer>
+</body>
+</html>
+`;
+}
+
+function writeLandingPages(all, dir){
+  const slugs = [];
+  for (const cfg of LANDING_PAGES){
+    try { fs.writeFileSync(path.join(dir, cfg.slug + ".html"), renderLandingPage(cfg, all)); slugs.push(cfg.slug); }
+    catch(e){ console.error(`landing ${cfg.slug}: ${e.message}`); }
+  }
+  // Regenerate sitemap.xml (homepage + about + every landing page) so search engines find them all.
+  const urls = ["https://devquest.gg/", "https://devquest.gg/about"].concat(slugs.map(s => "https://devquest.gg/" + s));
+  const sm = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`
+    + urls.map(u => `  <url><loc>${u}</loc><changefreq>${u.endsWith("/about") ? "monthly" : "hourly"}</changefreq></url>`).join("\n")
+    + `\n</urlset>\n`;
+  fs.writeFileSync(path.join(dir, "sitemap.xml"), sm);
+  console.log(`Wrote ${slugs.length} SEO landing pages + sitemap.xml`);
+}
+
 // ---- Normalization helpers -------------------------------------------------
 
 const DISCIPLINE_MAP = {
@@ -1655,4 +1835,5 @@ function buildTrends(runCounts, okSet) {
   fs.writeFileSync(path.join(dir, "jobs.json"), JSON.stringify(out, null, 2));
   fs.writeFileSync(path.join(dir, "jobs.js"), "window.JOBS_DATA = " + JSON.stringify(out) + ";");
   console.log(`\nWrote ${all.length} jobs -> jobs.json + jobs.js`);
+  writeLandingPages(all, dir); // SEO category pages + sitemap.xml, regenerated from the live data
 })();
