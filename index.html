@@ -473,6 +473,17 @@ for (const j of RAW) {
 }
 const JOBS = Object.values(byKey);
 JOBS.forEach(j => { j.locs = j.places.map(p=>p.l); }); // keep .locs for search/map
+const JOB_BY_ID = {}; JOBS.forEach(j => { JOB_BY_ID[j.id] = j; });
+// apply-intent telemetry: clicking a job (or a location chip) sends an apply_click carrying the
+// job's studio, discipline, seniority, posting-age bucket and whether it lists salary — so the
+// owner dashboard can break apply intent down by studio / discipline / freshness. Cookieless.
+const _ageDays = j => j.ts ? Math.floor((Date.now()-j.ts)/864e5) : (j.fseen ? Math.floor((Date.now()-j.fseen)/864e5) : null);
+const _ageBucket = j => { const d=_ageDays(j); return d==null?'n/a':d<=3?'0-3d':d<=7?'4-7d':d<=14?'8-14d':d<=30?'15-30d':'30+d'; };
+const _applyProps = j => ({ st: j.s, d: j.d, sn: j.sen||'', age: _ageBucket(j), sal: j.salary?1:0 });
+function openApply(id, url){
+  try { const j = JOB_BY_ID[id]; window.dqTrack && window.dqTrack('apply_click', j ? _applyProps(j) : {}); } catch(e){}
+  if (url) window.open(url, '_blank');
+}
 
 // ---- sub-discipline tagging (derived from the title, client-side so no re-scrape) ----
 // Only the three big, internally diverse buckets get sub-tags. Order = most specific first.
@@ -1064,9 +1075,9 @@ function rowHtml(j){
   const multi = j.places.length > 1;
   // each location chip links to its own posting; clicking the row opens the first one (chips let you pick a city)
   const locChips = j.places.slice(0,3).map(p=>
-    `<span class="tag locchip" ${p.url?`onclick="event.stopPropagation(); try{window.dqTrack&&window.dqTrack('apply_click',{})}catch(e){}; window.open('${p.url}','_blank')" title="Open the ${locLabel(p.l)} posting"`:""}>${locLabel(p.l)}${multi?' ↗':''}</span>`).join("")
+    `<span class="tag locchip" ${p.url?`onclick="event.stopPropagation(); openApply('${j.id}','${p.url}')" title="Open the ${locLabel(p.l)} posting"`:""}>${locLabel(p.l)}${multi?' ↗':''}</span>`).join("")
     + (j.places.length>3 ? `<span class="tag">+${j.places.length-3} more</span>` : "");
-  const rowClick = j.url ? `onclick="try{window.dqTrack&&window.dqTrack('apply_click',{})}catch(e){}; window.open('${j.url}','_blank')"` : "";
+  const rowClick = j.url ? `onclick="openApply('${j.id}','${j.url}')"` : "";
   // ghost-job signals (facts, not accusations)
   const dl = daysListed(j);
   const longClass = dl==null ? "" : dl>=90 ? "longbad" : dl>=45 ? "longwarn" : "";
@@ -1108,19 +1119,24 @@ function rowHtml(j){
 function setStatus(id, v){
   if (v) appStatus[id] = v; else delete appStatus[id];
   store.set("luj-status", appStatus);
+  if (v) try { const j = JOB_BY_ID[id]; window.dqTrack && window.dqTrack('track_job', { status:v, st:j&&j.s, d:j&&j.d }); } catch(e){}
   render();
 }
 // one-click status toggle for the per-row icon cluster: click a status to set it,
 // click the active one again to clear it (mutually exclusive across the three).
 function setStatusToggle(id, v){ setStatus(id, appStatus[id] === v ? "" : v); }
 function toggleDismiss(id){
-  dismissed.has(id) ? dismissed.delete(id) : dismissed.add(id);
+  const adding = !dismissed.has(id);
+  adding ? dismissed.add(id) : dismissed.delete(id);
   store.set("luj-dismissed", [...dismissed]);
+  if (adding) try { const j = JOB_BY_ID[id]; window.dqTrack && window.dqTrack('dismiss_job', { st:j&&j.s, d:j&&j.d }); } catch(e){}
   render();
 }
 function toggleSave(id){
-  saved.has(id) ? saved.delete(id) : saved.add(id);
+  const adding = !saved.has(id);
+  adding ? saved.add(id) : saved.delete(id);
   store.set("luj-saved", [...saved]);
+  if (adding) try { const j = JOB_BY_ID[id]; window.dqTrack && window.dqTrack('save_job', { st:j&&j.s, d:j&&j.d, sn:j&&j.sen }); } catch(e){}
   render();
 }
 function toggleGroup(gi){ const d=GROUPS[gi]; collapsed.has(d)?collapsed.delete(d):collapsed.add(d); render(); }
