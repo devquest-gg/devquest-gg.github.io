@@ -1,15 +1,25 @@
 name: Scrape jobs hourly
 
+# Runs the scraper on GitHub's servers (not your PC) and commits the refreshed
+# data back into the repo, so a connected static host (GitHub Pages / Cloudflare
+# Pages) redeploys automatically. The state files (seen.json, trends.json) are
+# committed too, so ghost-job ages and the Pulse history persist between runs.
+
 on:
   schedule:
+    # Two slots per hour so a dropped GitHub cron (they're best-effort and often
+    # delayed/skipped) still leaves a second chance. The Cloudflare Worker also
+    # pings workflow_dispatch hourly as the primary, reliable trigger.
     - cron: "23 * * * *"     # :23 past every hour (UTC) — off-peak slot
     - cron: "53 * * * *"     # :53 backup slot
-  workflow_dispatch: {}
+  workflow_dispatch: {}        # adds a "Run workflow" button + lets the Worker trigger it via the API
 
+# never let two scrapes run at once
 concurrency:
   group: scrape
   cancel-in-progress: false
 
+# allow the job to commit the refreshed data back to the repo
 permissions:
   contents: write
 
@@ -21,7 +31,7 @@ jobs:
       - name: Check out repo
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 0       # full history so we can rebase onto main before pushing
 
       - name: Set up Node
         uses: actions/setup-node@v4
@@ -35,12 +45,17 @@ jobs:
         run: |
           git config user.name  "devquest-bot"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add jobs.js jobs.json seen.json trends.json
+          git add jobs.js jobs.json seen.json trends.json sitemap.xml *-jobs.html
           if git diff --staged --quiet; then
             echo "No changes this run."
             exit 0
           fi
           git commit -m "data: hourly scrape $(date -u +'%Y-%m-%dT%H:%MZ')"
+          # A scrape can take ~4 min, during which main may move (a site deploy, the
+          # pages build, or a manual push). A bare 'git push' then fails with
+          # "! [rejected] (fetch first)" and the data never lands. Rebase the data
+          # commit onto the latest main and retry. The data files (jobs.*, *.json)
+          # never overlap hand-edited files, so the rebase applies cleanly.
           for attempt in 1 2 3 4 5; do
             if git push origin HEAD:main; then
               echo "Pushed on attempt $attempt."
