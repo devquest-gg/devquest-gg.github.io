@@ -87,8 +87,10 @@
     .layout { grid-template-columns: 1fr; gap: 14px; padding: 0 12px 48px; }
     /* filters become an off-canvas drawer; content (matrix + jobs) comes first */
     #sidebar { position: fixed; top: 0; left: 0; bottom: 0; width: 86%; max-width: 330px; z-index: 60;
-      border-radius: 0; max-height: none; transform: translateX(-100%); transition: transform .25s ease; }
+      border-radius: 0; max-height: none; overflow-y: auto; -webkit-overflow-scrolling: touch; overscroll-behavior: contain;
+      transform: translateX(-100%); transition: transform .25s ease; }
     #sidebar.open { transform: translateX(0); box-shadow: 0 0 40px rgba(0,0,0,.6); }
+    body.filters-open { overflow: hidden; }
     #filterClose { display: block; position: absolute; top: 10px; right: 12px; background: none; border: none;
       color: var(--muted); font-size: 20px; cursor: pointer; }
     #filterBackdrop.show { display: block; position: fixed; inset: 0; background: rgba(0,0,0,.55); z-index: 55; }
@@ -334,12 +336,11 @@
       <option value="90">Past 3 months</option>
     </select>
     <h3>My pipeline</h3>
-    <label class="chk"><input type="checkbox" id="hideTracked" onchange="render()">Hide applied / rejected</label>
-    <label class="chk"><input type="checkbox" id="savedOnly" onchange="render()">★ Saved only (<span id="savedCount">0</span>)</label>
-    <label class="chk"><input type="checkbox" id="showDismissed" onchange="render()">Show dismissed (<span id="dismissCount">0</span>)</label>
-    <label class="chk"><input type="checkbox" id="salOnly" onchange="render()">Has salary info</label>
+    <label class="chk" title="Hides any job you've marked applied, interviewing, or rejected, so the board stays focused on roles you haven't acted on yet."><input type="checkbox" id="hideTracked" onchange="render()">Hide tracked jobs</label>
+    <label class="chk"><input type="checkbox" id="savedOnly" onchange="render()">★ Saved (<span id="savedCount">0</span>)</label>
+    <label class="chk"><input type="checkbox" id="showDismissed" onchange="render()">Show hidden (<span id="dismissCount">0</span>)</label>
     <h3>Ghost-job filters</h3>
-    <label class="chk"><input type="checkbox" id="hidePools" checked onchange="render()">Hide talent pools</label>
+    <label class="chk" title="Talent pools are open-ended 'introduce yourself' or 'general application' listings, not specific open roles. Hidden by default; uncheck to include them."><input type="checkbox" id="hidePools" checked onchange="render()">Hide talent pools</label>
     <label class="chk" title="Removes roles we've seen live 45+ days or that keep re-posting — the probable ghost jobs. The ⏳/↻ badges still show on every card."><input type="checkbox" id="hideStale" onchange="render()">Hide likely-stale listings</label>
     <h3>Studio</h3>
     <input type="text" id="studioSearch" class="filtersearch" placeholder="Search studios…"
@@ -737,9 +738,7 @@ function render(){
   };
   const d = checked("f-d"), w = checked("f-w"), s = checked("f-s");
   const r = document.getElementById("region").value;
-  const maxDays = parseInt(document.getElementById("age").value, 10);
-  const salOnly = document.getElementById("salOnly").checked;
-  const hideTracked = document.getElementById("hideTracked").checked;
+  const maxDays = parseInt(document.getElementById("age").value, 10);  const hideTracked = document.getElementById("hideTracked").checked;
   const showDismissed = document.getElementById("showDismissed").checked;
   const hidePools = document.getElementById("hidePools").checked;
   const hideStale = document.getElementById("hideStale").checked;
@@ -753,9 +752,7 @@ function render(){
   const preHub = JOBS.filter(j =>
     (!dismissed.has(j.id)) &&
     (!savedOnly || saved.has(j.id)) &&
-    (!hideTracked || !appStatus[j.id]) &&
-    (!salOnly || j.salary) &&
-    (!hidePools || !j.pool) &&
+    (!hideTracked || !appStatus[j.id]) &&    (!hidePools || !j.pool) &&
     (!hideStale || !isStale(j)) &&
     (!maxDays || (j.ts && hoursAgo(j) <= maxDays*24)) &&
     qMatch(j) &&
@@ -908,7 +905,7 @@ function renderMatrix(base){
   const cell = {}; for (const j of base) cell[j.d+"|"+j.sen] = (cell[j.d+"|"+j.sen]||0)+1;
   const cmax = Math.max(1, ...Object.values(cell));
   const heat = n => n===0 ? "transparent" : `rgba(88,166,255,${0.10 + 0.6*Math.sqrt(n/cmax)})`;
-  let h = `<div class="matrixhead">Find your square: tap to filter <span class="mhint">· discipline × seniority · brighter = more roles · ⓘ hover a label</span><span class="swipehint"> · swipe →</span></div>`;
+  let h = `<div class="matrixhead">Find your square: tap to filter <span class="mhint">· discipline × seniority · brighter = more roles · hover a label</span><span class="swipehint"> · swipe →</span></div>`;
   if (!discOrder.length) { document.getElementById("matrixWrap").innerHTML = h + `<div class="xhint">No roles in the current filters.</div>`; return; }
   h += `<div style="overflow-x:auto"><table class="xtab"><tr><th></th>${seniorities.map(sn=>{
     const info = SEN_INFO[sn];
@@ -980,9 +977,7 @@ function renderActiveFilters(){
   const region = document.getElementById('region');
   if (region.value) add('Region: ' + region.options[region.selectedIndex].text, () => { region.selectedIndex = 0; });
   const age = document.getElementById('age');
-  if (age.selectedIndex > 0) add('Posted: ' + age.options[age.selectedIndex].text, () => { age.selectedIndex = 0; });
-  if (document.getElementById('salOnly').checked) add('Has salary', () => { document.getElementById('salOnly').checked = false; });
-  if (document.getElementById('hideStale').checked) add('Hiding stale', () => { document.getElementById('hideStale').checked = false; });
+  if (age.selectedIndex > 0) add('Posted: ' + age.options[age.selectedIndex].text, () => { age.selectedIndex = 0; });  if (document.getElementById('hideStale').checked) add('Hiding stale', () => { document.getElementById('hideStale').checked = false; });
   if (quickRemote) add('Remote only', () => { quickRemote = false; });
   if (quickNew) add('✨ New for you', () => { quickNew = false; });
   [...selCells].forEach(k => { const x = k.split('|'); add((x[1] ? x[1] + ' ' : '') + x[0], () => selCells.delete(k)); });
@@ -1004,9 +999,7 @@ function rmActive(i){ const f = __af[i]; if (f) { f.fn(); render(); } }
 function clearAllFilters(){
   document.getElementById('q').value = '';
   document.getElementById('region').selectedIndex = 0;
-  document.getElementById('age').selectedIndex = 0;
-  document.getElementById('salOnly').checked = false;
-  document.getElementById('hideStale').checked = false;
+  document.getElementById('age').selectedIndex = 0;  document.getElementById('hideStale').checked = false;
   selCells.clear(); selSubs.clear(); selHubs.clear(); selRegionsQuick.clear(); quickRemote = false; quickNew = false;
   selStudios.clear(); selCountries.clear();
   selKinds.clear(); ['dev','publisher','codev','tech'].forEach(k => { const b = document.getElementById('kind-' + k); if (b) b.checked = false; });
@@ -1020,6 +1013,7 @@ function toggleFilters(){
   const sb = document.getElementById("sidebar"), bd = document.getElementById("filterBackdrop");
   const open = sb.classList.toggle("open");
   bd.classList.toggle("show", open);
+  document.body.classList.toggle("filters-open", open); // lock background scroll while the drawer is open
 }
 
 // "Who do I know?" — opens LinkedIn people search for the user's 1st-degree
@@ -1057,7 +1051,7 @@ function rowHtml(j){
     <div class="rtop">
       <div class="rmain">
         <span class="title">${j.t}</span><span class="studio">${j.s}</span>
-        ${isDismissed?'<span class="dismissedbadge">dismissed</span>':''}
+        ${isDismissed?'<span class="dismissedbadge">hidden</span>':''}
         ${poolBadge}
         ${multi?`<span class="multibadge">${j.places.length} locations</span>`:''}
         ${isNew?'<span class="nfy">NEW FOR YOU</span>':''}
@@ -1070,7 +1064,7 @@ function rowHtml(j){
         <button class="stbtn reject ${status==='rejected'?'on':''}" onclick="event.stopPropagation(); setStatusToggle('${j.id}','rejected')" title="Rejected" aria-label="Mark as rejected">⊘</button>
       </span>
       <span class="actsep"></span>
-      <button class="dismiss" onclick="event.stopPropagation(); toggleDismiss('${j.id}')" title="${isDismissed?'Restore this job':'Hide this job forever'}">${isDismissed?'↩':'✕'}</button>
+      <button class="dismiss" onclick="event.stopPropagation(); toggleDismiss('${j.id}')" title="${isDismissed?'Restore this job':'Hide this job'}">${isDismissed?'↩':'✕'}</button>
     </div>
     <div class="rtags">
       ${j.w!=="Unknown"?`<span class="tag ${j.w.toLowerCase()}">${j.w}</span>`:""}
@@ -1641,7 +1635,7 @@ try {
   function readCriteria(){
     var c={};
     c.q=(val("q")||"").trim(); c.region=val("region"); c.age=val("age");
-    c.salOnly=chk("salOnly"); c.hidePools=chk("hidePools");
+    c.hidePools=chk("hidePools");
     try{ c.quickRemote=!!quickRemote; }catch(e){ c.quickRemote=false; }
     try{ c.cells=Array.from(selCells); }catch(e){ c.cells=[]; }
     try{ c.subs=Array.from(selSubs); }catch(e){ c.subs=[]; }
@@ -1654,7 +1648,7 @@ try {
     return c;
   }
   function hasFilters(c){
-    return !!(c.q||c.region||c.quickRemote||c.salOnly||(c.cells&&c.cells.length)||(c.subs&&c.subs.length)||
+    return !!(c.q||c.region||c.quickRemote||(c.cells&&c.cells.length)||(c.subs&&c.subs.length)||
       (c.studios&&c.studios.length)||(c.countries&&c.countries.length)||(c.regionsQuick&&c.regionsQuick.length)||(c.hubs&&c.hubs.length)||
       (c.disc&&c.disc.length)||(c.sen&&c.sen.length)||(c.work&&c.work.length));
   }
@@ -1731,7 +1725,7 @@ try {
     return { disc:disc.slice(0,4), sen:sen.slice(0,4),
       studios:(c.studios||[]).map(function(s){return String(s).replace(/^@/,"");}).slice(0,4),
       regions:regions.slice(0,4), countries:(c.countries||[]).slice(0,4), subs:(c.subs||[]).slice(0,4),
-      remote:!!c.quickRemote, sal:!!c.salOnly, q:(c.q||"").toLowerCase().slice(0,30), n:n, zero:n===0,
+      remote:!!c.quickRemote, q:(c.q||"").toLowerCase().slice(0,30), n:n, zero:n===0,
       gc:cells.length, sd:(c.disc||[]).length, ss:(c.sen||[]).length };  // grid-cells vs sidebar disc/sen counts
   }
 
