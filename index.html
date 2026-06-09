@@ -68,12 +68,12 @@
   .logo svg { display: block; flex-shrink: 0; }
   .pulse { font-size: 12px; color: var(--muted); }
   .pulse b { color: var(--green); }
-  .hero { text-align: center; padding: 14px 20px 12px; }
-  .hero .herobrand { display: flex; align-items: center; justify-content: center; gap: 12px; font-size: 44px; font-weight: 800; letter-spacing: -1.5px; line-height: 1; margin-bottom: 6px; }
+  .hero { text-align: center; padding: 8px 20px 6px; }
+  .hero .herobrand { display: flex; align-items: center; justify-content: center; gap: 9px; font-size: 30px; font-weight: 800; letter-spacing: -1px; line-height: 1; margin-bottom: 4px; }
   .hero .herobrand .hbword span { color: var(--accent); }
   .hero .herobrand .logo-tld { color: var(--accent); }
-  .hero .hmark { width: 44px; height: 44px; flex-shrink: 0; }
-  .hero h1 { font-size: 18px; font-weight: 600; margin: 0 0 6px; }
+  .hero .hmark { width: 30px; height: 30px; flex-shrink: 0; }
+  .hero h1 { font-size: 18px; font-weight: 600; margin: 0 0 4px; }
   .hero h1 em { color: var(--pink); font-style: normal; }
   .hero p { color: var(--muted); max-width: 620px; margin: 0 auto; }
   .layout { display: grid; grid-template-columns: 270px 1fr; gap: 24px; max-width: 1240px; margin: 0 auto; padding: 0 24px 60px; }
@@ -97,9 +97,9 @@
     #filterBackdrop.show { display: block; position: fixed; inset: 0; background: rgba(0,0,0,.55); z-index: 55; }
     #filterToggle { display: inline-flex; align-items: center; gap: 6px; background: var(--accent); color: #0d1117;
       border: none; font-weight: 700; font-size: 14px; padding: 9px 16px; border-radius: 10px; cursor: pointer; margin-bottom: 12px; }
-    .hero { padding: 16px 16px 14px; }
-    .hero .herobrand { font-size: 32px; gap: 9px; }
-    .hero .hmark { width: 32px; height: 32px; }
+    .hero { padding: 10px 16px 8px; }
+    .hero .herobrand { font-size: 26px; gap: 8px; }
+    .hero .hmark { width: 26px; height: 26px; }
     .hero h1 { font-size: 15px; }
     header { padding: 12px 14px; }
     /* show the "Who do I know?" label on touch (no hover to reveal it) */
@@ -109,8 +109,8 @@
     .swipehint { display: inline; }
   }
   @media (max-width: 480px) {
-    .hero .herobrand { font-size: 27px; gap: 8px; }
-    .hero .hmark { width: 27px; height: 27px; }
+    .hero .herobrand { font-size: 23px; gap: 7px; }
+    .hero .hmark { width: 23px; height: 23px; }
     .hero h1 { font-size: 14px; }
     .row { padding: 11px 12px; }
     .rtop { gap: 6px; }
@@ -1616,7 +1616,7 @@ function filterCity(name){
 document.getElementById("syncTime").innerHTML = LIVE
   ? new Date(window.JOBS_DATA.scrapedAt).toLocaleString([], {month:'short', day:'numeric', hour:'numeric', minute:'2-digit'}) + " (live data)"
     + (window.JOBS_DATA.errors && window.JOBS_DATA.errors.length
-       ? ` · <a style="color:var(--gold);cursor:pointer" onclick="setView('stats')">⚠ ${window.JOBS_DATA.errors.length} source(s) failing</a>` : "")
+       ? ` · <a style="color:var(--muted);cursor:pointer" onclick="setView('stats')" title="One or more studio feeds are temporarily not updating — open Trends for details">${window.JOBS_DATA.errors.length} source${window.JOBS_DATA.errors.length===1?'':'s'} delayed</a>` : "")
   : "demo data";
 if (LIVE) document.getElementById("heroSub").textContent =
   JOBS.length + " roles from " + new Set(JOBS.map(j=>j.s)).size + " studios (and growing), synced hourly. " +
