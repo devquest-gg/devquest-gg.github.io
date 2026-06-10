@@ -483,8 +483,34 @@ const _ageDays = j => j.ts ? Math.floor((Date.now()-j.ts)/864e5) : (j.fseen ? Ma
 const _ageBucket = j => { const d=_ageDays(j); return d==null?'n/a':d<=3?'0-3d':d<=7?'4-7d':d<=14?'8-14d':d<=30?'15-30d':'30+d'; };
 const _applyProps = j => ({ st: j.s, d: j.d, sn: j.sen||'', age: _ageBucket(j), sal: j.salary?1:0 });
 function openApply(id, url){
-  try { const j = JOB_BY_ID[id]; window.dqTrack && window.dqTrack('apply_click', j ? _applyProps(j) : {}); } catch(e){}
+  var j = JOB_BY_ID[id];
+  try { window.dqTrack && window.dqTrack('apply_click', j ? _applyProps(j) : {}); } catch(e){}
   if (url) window.open(url, '_blank');
+  try { if (j) showApplyNudge(j.s, j.d); } catch(e){}
+}
+// After a genuine apply-click, a one-time, dismissible nudge offering alerts for that discipline.
+// Apply opens the studio in a NEW tab, so DevQuest stays open underneath and this waits on the
+// tab for their return. Shown at most once; "No thanks" or subscribing is remembered (localStorage)
+// so it never nags again.
+var _applyNudgeShown = false;
+function _h(s){ return String(s==null?"":s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];}); }
+function showApplyNudge(studio, disc){
+  if (_applyNudgeShown) return;
+  try { if (store.get("luj-applynudge", 0)) return; } catch(e){}
+  _applyNudgeShown = true;
+  var jobsEl = document.getElementById("jobs");
+  if (!jobsEl || !jobsEl.parentNode) return;
+  var bar = document.getElementById("applyNudge");
+  if (!bar){ bar = document.createElement("div"); bar.id = "applyNudge"; bar.style.cssText = "margin:10px 0 8px;padding:11px 14px;border:1px solid #2a3a28;border-radius:8px;background:#141816"; jobsEl.parentNode.insertBefore(bar, jobsEl); }
+  var d = disc || "matching";
+  bar.innerHTML = '<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;color:#d0dcc8">'
+    + '<span style="font-size:14px">You applied to a role at <b>'+_h(studio)+'</b>. Want alerts for new <b>'+_h(d)+'</b> roles?</span>'
+    + '<button id="anYes" style="margin-left:auto;background:transparent;color:#58a6ff;border:1px solid #58a6ff;border-radius:6px;padding:7px 13px;font-weight:600;cursor:pointer">Email me</button>'
+    + '<button id="anNo" style="background:transparent;color:#6e7681;border:0;font-size:13px;cursor:pointer">No thanks</button></div>';
+  bar.style.display = "block";
+  function done(){ try{ store.set("luj-applynudge", 1); }catch(e){} bar.style.display = "none"; }
+  document.getElementById("anYes").onclick = function(){ done(); try{ window.dqAlertForm && window.dqAlertForm(d+" roles", { disc: (disc?[disc]:[]) }); }catch(e){} };
+  document.getElementById("anNo").onclick = function(){ done(); };
 }
 
 // ---- sub-discipline tagging (derived from the title, client-side so no re-scrape) ----
@@ -1908,6 +1934,8 @@ try {
     }catch(e){}
   }
   window.dqTrack = track;
+  // let the after-apply nudge (top-level) open the same alert form, pre-set to a discipline.
+  window.dqAlertForm = function(label, c){ try{ openForm(label, c||{}); }catch(e){} };
   // one-time visitor-source capture: referrer host + any UTM tags on the URL (cookieless).
   try {
     var _host = location.hostname.replace(/^www\./,"");
@@ -1967,6 +1995,13 @@ try {
       (c.studios&&c.studios.length)||(c.countries&&c.countries.length)||(c.regionsQuick&&c.regionsQuick.length)||(c.hubs&&c.hubs.length)||
       (c.disc&&c.disc.length)||(c.sen&&c.sen.length)||(c.work&&c.work.length));
   }
+  // "structured" = filters other than the free-text box. A zero-result on a typed query
+  // ("Rito") must NOT offer an alert (it would never fire); only clean filter sets do.
+  function hasStructured(c){
+    return !!(c.region||c.quickRemote||(c.cells&&c.cells.length)||(c.subs&&c.subs.length)||
+      (c.studios&&c.studios.length)||(c.countries&&c.countries.length)||(c.regionsQuick&&c.regionsQuick.length)||(c.hubs&&c.hubs.length)||
+      (c.disc&&c.disc.length)||(c.sen&&c.sen.length)||(c.work&&c.work.length));
+  }
   function labelFor(c){
     var p=[];
     (c.cells||[]).slice(0,3).forEach(function(k){ var x=k.split("|"); p.push((x[1]?x[1]+" ":"")+x[0]); });
@@ -1989,11 +2024,19 @@ try {
   var jobsEl=document.getElementById("jobs");
   if(jobsEl&&jobsEl.parentNode) jobsEl.parentNode.insertBefore(bar, jobsEl);
 
-  function buildCta(label, c){
+  function buildCta(label, c, n){
     bar.setAttribute("data-state","cta"); bar.style.display="block";
+    var msg, btnLabel;
+    if(n===0){
+      msg='🔔 No <b>'+escapeH(label)+'</b> roles open right now. We\'ll email you when one opens.';
+      btnLabel='Notify me';
+    } else {
+      msg='🔔 <b style="color:#fff">'+n+' role'+(n===1?'':'s')+'</b> '+(n===1?'matches':'match')+' <b>'+escapeH(label)+'</b>. Get them emailed to you now, then weekly as new ones open.';
+      btnLabel='Email me these';
+    }
     bar.innerHTML='<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;color:#d0dcc8">'+
-      '<span style="font-size:14px">🔔 Get a weekly email of new <b>'+escapeH(label)+'</b> roles.</span>'+
-      '<button id="alertCta" style="margin-left:auto;background:#1f6feb;color:#fff;border:0;border-radius:6px;padding:7px 14px;font-weight:600;cursor:pointer">Email me these</button></div>';
+      '<span style="font-size:14px">'+msg+'</span>'+
+      '<button id="alertCta" style="margin-left:auto;background:#1f6feb;color:#fff;border:0;border-radius:6px;padding:7px 14px;font-weight:600;cursor:pointer">'+btnLabel+'</button></div>';
     var btn=document.getElementById("alertCta"); if(btn) btn.onclick=function(){ openForm(label, c); };
   }
   function openForm(label, c){
@@ -2049,9 +2092,12 @@ try {
     var c=readCriteria();
     try{ var sig=JSON.stringify(c); if(sig!==lastSig){ lastSig=sig; if(hasFilters(c)) track("filter", filterSummary(c)); } }catch(e){}
     var state=bar.getAttribute("data-state");
-    if(!hasFilters(c)){ bar.style.display="none"; bar.removeAttribute("data-state"); return; }
     if(state==="form"||state==="done") return; // don't clobber an open/finished form
-    buildCta(labelFor(c), c);
+    var n=(typeof window.__dqCount==="number"?window.__dqCount:null);
+    // No filters, or a free-text-only search that found nothing -> no email ask (the in-list
+    // "no roles match" helper covers the typo case). Structured filters at zero DO get the ask.
+    if(!hasFilters(c) || (n===0 && !hasStructured(c))){ bar.style.display="none"; bar.removeAttribute("data-state"); return; }
+    buildCta(labelFor(c), c, n);
   }
 
   // update the bar whenever the job list re-renders (i.e. filters changed)
