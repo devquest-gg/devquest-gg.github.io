@@ -493,11 +493,18 @@ function openApply(id, url){
 // tab for their return. Shown at most once; "No thanks" or subscribing is remembered (localStorage)
 // so it never nags again.
 var _applyNudgeShown = false;
+var APPLY_NUDGE_MAX = 3, APPLY_NUDGE_COOLDOWN = 7*864e5; // up to 3 declines, a week apart, then never again
 function _h(s){ return String(s==null?"":s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];}); }
 function showApplyNudge(studio, disc){
   if (_applyNudgeShown) return;
-  // Skip if they've dismissed it before, or already subscribed on this device (no reason to nudge).
-  try { if (store.get("luj-applynudge", 0) || store.get("luj-subscribed", 0)) return; } catch(e){}
+  try { if (store.get("luj-subscribed", 0)) return; } catch(e){} // already a subscriber: never nudge
+  // Dismissal state { n: times declined, ts: last dismissed }. Re-ask weekly, capped at 3 declines,
+  // then permanent. Legacy boolean value (old "1") counts as a single prior decline.
+  var raw; try { raw = store.get("luj-applynudge", null); } catch(e){ raw = null; }
+  var strikes = (raw && typeof raw === "object") ? (raw.n||0) : (raw ? 1 : 0);
+  var lastTs  = (raw && typeof raw === "object") ? (raw.ts||0) : 0;
+  if (strikes >= APPLY_NUDGE_MAX) return;                            // three strikes -> permanent
+  if (lastTs && (Date.now() - lastTs) < APPLY_NUDGE_COOLDOWN) return; // still inside the weekly cooldown
   // Never stack two email asks: if the filter bar is already offering email, don't add a nudge.
   var ab = document.getElementById("alertBar");
   if (ab && ab.getAttribute("data-state") && ab.style.display !== "none") return;
@@ -512,9 +519,10 @@ function showApplyNudge(studio, disc){
     + '<button id="anYes" style="margin-left:auto;background:#1f6feb;color:#fff;border:0;border-radius:6px;padding:7px 14px;font-weight:600;cursor:pointer">Email me</button>'
     + '<button id="anNo" style="background:transparent;color:#6e7681;border:0;font-size:13px;cursor:pointer">No thanks</button></div>';
   bar.style.display = "block";
-  function done(){ try{ store.set("luj-applynudge", 1); }catch(e){} bar.style.display = "none"; }
-  document.getElementById("anYes").onclick = function(){ done(); try{ window.dqAlertForm && window.dqAlertForm(d+" roles", { disc: (disc?[disc]:[]) }); }catch(e){} };
-  document.getElementById("anNo").onclick = function(){ done(); };
+  // "No thanks" counts as a strike; "Email me" just resets the weekly clock (engagement, not a no).
+  function record(declined){ try{ store.set("luj-applynudge", { n: strikes + (declined?1:0), ts: Date.now() }); }catch(e){} bar.style.display = "none"; }
+  document.getElementById("anYes").onclick = function(){ record(false); try{ window.dqAlertForm && window.dqAlertForm(d+" roles", { disc: (disc?[disc]:[]) }); }catch(e){} };
+  document.getElementById("anNo").onclick = function(){ record(true); };
 }
 
 // ---- sub-discipline tagging (derived from the title, client-side so no re-scrape) ----
