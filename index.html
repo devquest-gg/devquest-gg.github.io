@@ -474,7 +474,7 @@
       <button type="button" class="acch" onclick="toggleAcc(this)"><span class="t">My pipeline</span><span class="bdg"></span><span class="chev">▸</span></button>
       <div class="accb">
         <label class="chk tgl" title="Hides any job you've marked applied, interviewing, or rejected, so the board stays focused on roles you haven't acted on yet."><input type="checkbox" id="hideTracked" onchange="render()"><span class="sw"></span>Hide tracked jobs</label>
-        <label class="chk tgl"><input type="checkbox" id="savedOnly" onchange="render()"><span class="sw"></span>★ Saved (<span id="savedCount">0</span>)</label>
+        <label class="chk tgl"><input type="checkbox" id="savedOnly" onchange="render()"><span class="sw"></span><svg width="11" height="13" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:-2px;margin-right:3px" aria-hidden="true"><path d="M6 2a2 2 0 0 0-2 2v18l8-5 8 5V4a2 2 0 0 0-2-2H6z"/></svg>Saved (<span id="savedCount">0</span>)</label>
         <label class="chk tgl"><input type="checkbox" id="showDismissed" onchange="render()"><span class="sw"></span>Show hidden (<span id="dismissCount">0</span>)</label>
       </div>
     </div>
@@ -1465,7 +1465,7 @@ function rowHtml(j){
         ${isNew?'<span class="nfy">NEW FOR YOU</span>':''}
       </div>
       <div class="posted">${noDate?'date n/a':`${h<=24&&!isNew?'<span class="new">● </span>':''}${ago(h)}`}</div>
-      <button class="save ${isSaved?'on':''}" onclick="event.stopPropagation(); toggleSave('${j.id}')" title="${isSaved?'Saved':'Save for later'}" aria-label="${isSaved?'Remove from saved':'Save for later'}">${isSaved?'★':'☆'}</button>
+      <button class="save ${isSaved?'on':''}" onclick="event.stopPropagation(); toggleSave('${j.id}')" title="${isSaved?'Saved for later':'Save for later'}" aria-label="${isSaved?'Remove from saved':'Save for later'}">${isSaved?'<svg width="13" height="15" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle" aria-hidden="true"><path d="M6 2a2 2 0 0 0-2 2v18l8-5 8 5V4a2 2 0 0 0-2-2H6z"/></svg>':'<svg width="13" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle" aria-hidden="true"><path d="M6 2a2 2 0 0 0-2 2v18l8-5 8 5V4a2 2 0 0 0-2-2H6z"/></svg>'}</button>
       <span class="statusgrp" onclick="event.stopPropagation()">
         <button class="stbtn applied ${status==='applied'?'on':''}" onclick="event.stopPropagation(); setStatusToggle('${j.id}','applied')" title="Applied" aria-label="Mark as applied">✓</button>
         <button class="stbtn interview ${status==='interviewing'?'on':''}" onclick="event.stopPropagation(); setStatusToggle('${j.id}','interviewing')" title="Interviewing" aria-label="Mark as interviewing">💬</button>
