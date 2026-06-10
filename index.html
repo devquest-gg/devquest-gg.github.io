@@ -195,6 +195,9 @@
   .poolbadge { background: rgba(139,148,158,.18); color: var(--muted); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; padding: 2px 8px; border-radius: 999px; margin-left: 8px; vertical-align: middle; cursor: help; }
   .row.dismissed { opacity: .6; }
   .dismissedbadge { background: rgba(247,120,186,.15); color: var(--pink); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; padding: 2px 8px; border-radius: 999px; margin-left: 8px; vertical-align: middle; }
+  /* Keep pill badges/tags whole — never split their text across two lines. */
+  .nfy, .multibadge, .poolbadge, .dismissedbadge { display: inline-block; white-space: nowrap; }
+  .tag { white-space: nowrap; }
   .tag.knowbtn { color: var(--muted); border-color: var(--border); background: transparent; cursor: pointer; text-decoration: none; font-weight: 600; margin-left: auto; display: inline-flex; align-items: center; gap: 5px; }
   .knowtext { display: none; }
   .row:hover .knowbtn { color: var(--accent); border-color: rgba(88,166,255,.5); background: rgba(88,166,255,.08); }
