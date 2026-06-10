@@ -216,6 +216,9 @@
   .psitem { font-size: 13px; color: var(--muted); white-space: nowrap; }
   .psitem b { color: var(--text); font-size: 15px; font-weight: 800; margin-right: 5px; }
   .psitem.top b { color: var(--text); font-size: 14px; font-weight: 600; }
+  .psitem.psclick { cursor: pointer; border-radius: 6px; padding: 2px 6px; margin: -2px -6px; transition: background .12s; }
+  .psitem.psclick:hover, .psitem.psclick:focus-visible { background: rgba(88,166,255,.12); outline: none; }
+  .psitem.psclick:hover b { color: var(--accent); }
   .psexport { margin-left: auto; background: none; border: 1px solid var(--border); color: var(--text); font-size: 12.5px; font-weight: 600; padding: 6px 12px; border-radius: 8px; cursor: pointer; }
   .psexport:hover { border-color: var(--accent); color: var(--accent); }
   .trendhead { margin: 2px 0 14px; }
@@ -452,9 +455,9 @@
     <button id="filterToggle" onclick="toggleFilters()">⚙ Filters</button>
     <div class="viewtabs">
       <button id="tabList" class="active" onclick="setView('list')">☰ List</button>
+      <button id="tabBest" onclick="setView('bestfit')">🎯 Best fit</button>
       <button id="tabMap" onclick="setView('map')">🗺️ Map</button>
       <button id="tabStats" onclick="setView('stats')">📊 Trends</button>
-      <button id="tabBest" onclick="setView('bestfit')">🎯 Best fit</button>
     </div>
     <div id="pulseStrip"></div>
     <div id="matrixWrap"></div>
@@ -1702,11 +1705,25 @@ function renderPulseStrip(){
   const el = document.getElementById("pulseStrip"); if (!el) return;
   const m = marketPulse();
   const chip = (num,label,cls="") => `<span class="psitem ${cls}"><b>${num}</b>${label}</span>`;
+  window.__pulseTopStudio = m.topStudio;   // read by the clickable chip (avoids escaping studio names with quotes)
+  const topClickable = m.topStudio && m.topStudio !== "—";
   el.innerHTML = chip(m.open.toLocaleString(),"open roles")
     + chip(m.studios,"studios hiring")
     + chip(m.newWk.toLocaleString(),"new this week")
     + chip(m.salPct+"%","list salary")
-    + chip(m.topStudio,"most active","top");
+    + (topClickable
+        ? `<span class="psitem top psclick" role="button" tabindex="0" title="Show ${m.topStudio} jobs" onclick="filterToStudio(window.__pulseTopStudio)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();filterToStudio(window.__pulseTopStudio);}"><b>${m.topStudio}</b>most active</span>`
+        : chip(m.topStudio,"most active","top"));
+}
+// Filter the list down to a single studio (used by the "most active" pulse chip).
+function filterToStudio(studio){
+  if (!studio || studio === "—") return;
+  try { window.dqTrack && window.dqTrack("pulse_studio_click", { st: studio }); } catch(e){}
+  clearAllFilters();
+  selStudios.add(studio);
+  renderSearchGroup("studioFilters","studioSearch",STUDIO_COUNTS,selStudios,STUDIO_LABELS,DIR_STUDIOS);
+  setView("list");
+  render();
 }
 // Export the current filtered list to a CSV the user can open in a spreadsheet.
 function exportCsv(){
