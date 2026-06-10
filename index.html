@@ -857,16 +857,142 @@ const selRegionsQuick = new Set(); // quick region chips
 const selHubs = new Set();         // gaming-hub chips (drill-down under a selected region)
 let quickRemote = false, quickNew = false;
 
+// ---- Search normalization + synonyms -----------------------------------------
+// Collapse punctuation that otherwise splinters a match: "UI/UX", "R&D", "node.js"
+// all become space-separated words. We deliberately KEEP "+" and "#" so "c++" and
+// "c#" survive (they live in each job's tech tags).
+function normS(s){ return (s || "").toLowerCase().replace(/[\/&_,.|]+/g, " ").replace(/\s+/g, " ").trim(); }
+// Maps what people type to the words actually in the postings. Keys are in normalized
+// form (no slashes). When the stats show a zero-result search that should have hit
+// something, add a line here. Matching is substring-based, so a value is a hit if it
+// appears anywhere in the title/studio/discipline/tech/location text.
+const SEARCH_SYNONYMS = {
+  // UI / UX / product design
+  "ui ux": ["ui", "ux", "user experience", "user interface", "product designer", "interaction design"],
+  "ux ui": ["ui", "ux", "user experience", "user interface"],
+  "ux": ["user experience", "ui ux", "ux designer", "ux researcher"],
+  "ui": ["user interface", "ui ux"],
+  "ux research": ["user research", "ux researcher"],
+  "user research": ["ux research", "ux researcher", "user researcher"],
+  "ux writer": ["ux writing", "content designer", "ux content"],
+  // Art / animation
+  "vfx": ["visual effects", "fx artist", "effects artist"],
+  "visual effects": ["vfx"],
+  "tech art": ["technical artist", "technical art"],
+  "tech artist": ["technical artist"],
+  "technical artist": ["tech artist", "technical art"],
+  "char art": ["character artist", "character art"],
+  "character art": ["character artist"],
+  "env art": ["environment artist", "environment art"],
+  "environment art": ["environment artist"],
+  "concept art": ["concept artist"],
+  "anim": ["animator", "animation"],
+  "animation": ["animator"],
+  "animator": ["animation"],
+  "rigging": ["rigger", "technical animator"],
+  // Audio
+  "sfx": ["sound effects", "sound designer", "audio"],
+  "sound design": ["sound designer", "audio designer"],
+  "audio": ["sound designer", "sound design", "composer", "music"],
+  // Design / narrative
+  "level design": ["level designer"],
+  "game design": ["game designer", "gameplay designer"],
+  "systems design": ["systems designer", "system designer"],
+  "narrative": ["writer", "writing", "narrative designer", "story"],
+  "writer": ["narrative", "writing", "scriptwriter", "copywriter", "content writer"],
+  "writing": ["writer", "narrative"],
+  // Engineering
+  "swe": ["software engineer", "software developer"],
+  "sde": ["software engineer", "software development engineer"],
+  "gameplay": ["gameplay engineer", "gameplay programmer", "gameplay designer"],
+  "gameplay engineer": ["gameplay programmer"],
+  "gameplay programmer": ["gameplay engineer"],
+  "backend": ["back end", "server engineer", "backend engineer"],
+  "back end": ["backend"],
+  "frontend": ["front end", "frontend engineer"],
+  "front end": ["frontend"],
+  "fullstack": ["full stack"],
+  "full stack": ["fullstack"],
+  "devops": ["dev ops", "site reliability", "sre", "infrastructure engineer"],
+  "sre": ["site reliability", "devops"],
+  "ml": ["machine learning", "ml engineer"],
+  "machine learning": ["ml", "ai"],
+  "ai": ["artificial intelligence", "machine learning"],
+  "graphics": ["graphics engineer", "rendering engineer", "rendering"],
+  "rendering": ["graphics engineer", "rendering engineer"],
+  "qa": ["quality assurance", "tester", "test engineer", "sdet"],
+  "sdet": ["software development engineer in test", "test engineer", "qa"],
+  "unreal": ["ue4", "ue5", "unreal engine"],
+  "ue5": ["unreal", "unreal engine"],
+  "ue4": ["unreal", "unreal engine"],
+  "csharp": ["c#"],
+  "cpp": ["c++"],
+  // Production / management
+  "pm": ["product manager", "program manager", "project manager", "producer"],
+  "tpm": ["technical program manager", "technical project manager", "technical producer"],
+  "po": ["product owner"],
+  "producer": ["production", "program manager", "project manager"],
+  "production": ["producer"],
+  "em": ["engineering manager"],
+  // Data
+  "data scientist": ["data science", "machine learning"],
+  "data science": ["data scientist"],
+  "data analyst": ["data analytics", "analyst", "analytics"],
+  "data analytics": ["data analyst", "analyst"],
+  "ba": ["business analyst"],
+  "bi": ["business intelligence"],
+  // Business / ops / marketing / people
+  "biz dev": ["business development", "partnerships"],
+  "bizdev": ["business development", "partnerships"],
+  "bd": ["business development"],
+  "partnerships": ["business development", "partner manager", "strategic partnership"],
+  "strategic partnership": ["partnerships", "business development", "partner manager", "strategic partnerships"],
+  "ua": ["user acquisition"],
+  "user acquisition": ["ua", "performance marketing", "growth"],
+  "growth": ["user acquisition", "growth marketing"],
+  "comms": ["communications"],
+  "pr": ["public relations", "communications"],
+  "hr": ["human resources", "people operations", "people team"],
+  "people ops": ["people operations", "human resources"],
+  "talent": ["recruiter", "recruiting", "talent acquisition"],
+  "recruiter": ["talent acquisition", "recruiting"],
+  // Seniority / level shorthands
+  "sr": ["senior"],
+  "sen": ["senior"],
+  "jr": ["junior", "entry"],
+  "vp": ["vice president", "head of"],
+  "vice president": ["vp", "head of"],
+  // Misc role nouns
+  "eng": ["engineer", "engineering"],
+  "dev": ["developer", "engineer"],
+};
+// A typed term -> the set of strings (itself + any synonyms) that count as a hit.
+function searchVariants(nq){
+  const out = new Set([nq]);
+  const syn = SEARCH_SYNONYMS[nq];
+  if (syn) for (const v of syn) out.add(normS(v));
+  return [...out];
+}
+
 function render(){
   const qraw = document.getElementById("q").value.toLowerCase();
   // "-term" tokens EXCLUDE roles containing that word (e.g. "designer -senior", or "-product"
-  // to drop product roles). The rest of the box is the normal include search (substring match).
-  const qExc = (qraw.match(/(^|\s)-(\S+)/g) || []).map(t => t.trim().slice(1)).filter(Boolean);
-  const q = qraw.replace(/(^|\s)-\S+/g, " ").replace(/\s+/g, " ").trim();
+  // to drop product roles). Parse the excludes off the raw text, then normalize the rest.
+  const qExc = (qraw.match(/(^|\s)-(\S+)/g) || []).map(t => normS(t.trim().slice(1))).filter(Boolean);
+  const q = normS(qraw.replace(/(^|\s)-\S+/g, " "));
+  const qVariants = q ? searchVariants(q) : [];     // whole-query + its synonym phrases
+  const qToks = q ? q.split(" ").filter(Boolean) : [];
   const qMatch = j => {
     if (!q && !qExc.length) return true;
-    const hay = (j.t + " " + j.s + " " + j.locs.join(" ") + " " + (j.tech || []).join(" ")).toLowerCase();
-    return (!q || hay.includes(q)) && !qExc.some(x => hay.includes(x));
+    const hay = normS(j.t + " " + j.s + " " + j.locs.join(" ") + " " + (j.d || "") + " " + (j.tech || []).join(" "));
+    if (qExc.some(x => hay.includes(x))) return false;
+    if (!q) return true;
+    // Hit if the whole query (or any synonym phrase) appears, OR every word — each
+    // itself synonym-expanded — appears somewhere, so word order and punctuation
+    // ("character animation lead", "sen animator") don't block an otherwise-good match.
+    if (qVariants.some(v => hay.includes(v))) return true;
+    if (qToks.length > 1 && qToks.every(t => searchVariants(t).some(v => hay.includes(v)))) return true;
+    return false;
   };
   const d = checked("f-d"), w = checked("f-w"), s = checked("f-s");
   const r = document.getElementById("region").value;

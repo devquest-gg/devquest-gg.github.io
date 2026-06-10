@@ -152,6 +152,7 @@ const STUDIOS = [
   { name: "Discord", type: "greenhouse", token: "discord" },
   { name: "Blackbird Interactive", type: "lever", token: "blackbirdinteractive" },
   { name: "Larian Studios", type: "lever", token: "larian" },
+  { name: "Xsolla", type: "lever", token: "xsolla" },   // game commerce / monetization / publishing platform (HQ LA); community-requested via search
   { name: "Unity", type: "greenhouse", token: "unity3d" },
   { name: "Team17", type: "workable", token: "team-17-digital" },
   { name: "Rockstar Games", type: "greenhouse", token: "rockstargames" },
@@ -310,6 +311,7 @@ const STUDIO_KIND = {
   "Amazon Games": ["publisher", "dev", "tech"],
   // Tech / platform / engine
   "Unity": ["tech"],
+  "Xsolla": ["tech", "publisher"],
   "Roblox": ["tech"],
   "Discord": ["tech"],
   "Epic Games": ["tech", "dev"],
