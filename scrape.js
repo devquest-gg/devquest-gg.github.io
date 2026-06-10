@@ -43,7 +43,6 @@ const DIRECTORY = [
   { name: "LightSpeed Studios", url: "https://www.lightspeed-studios.com/join-us.html", note: "PUBG Mobile — Tencent", city: "Los Angeles, CA" },
   // ---- June 2026: requested / community additions (link-outs; no clean scrapeable feed yet) ----
   { name: "PUBG Studios", url: "https://www.krafton.com/en/careers/jobs/", note: "PUBG: Battlegrounds — Krafton", city: "Seoul, South Korea" },
-  { name: "Thought Pennies", url: "https://www.careers-page.com/thought-pennies", note: "Story-first RPG — fully remote", city: "Remote" },
   // Self-hosted / non-standard boards — link-outs until a bespoke fetcher is worth building.
   { name: "Techland", url: "https://techland.net/job-offers", note: "Dying Light — self-hosted board, ~35 roles (PL)", city: "Wrocław, Poland" },
   { name: "Warhorse Studios", url: "https://warhorsestudios.cz/kariera", note: "Kingdom Come: Deliverance — Embracer (CZ)", city: "Prague, Czechia" },
@@ -268,6 +267,7 @@ const STUDIOS = [
 
   // ---- June 2026: community / requested studios (verified ATS feeds) ----
   { name: "Counterplay Games", type: "breezy", token: "counterplay-games-inc" },   // Godfall, Duelyst — fully remote (board may sit at 0)
+  { name: "Thought Pennies", type: "manatal", token: "thought-pennies" },          // story-first RPG, fully remote (first community request)
 ];
 
 // ---- Studio type tags (Michelle's idea) ------------------------------------
@@ -1679,7 +1679,45 @@ async function fetchBreezy(studio) {
   });
 }
 
-const FETCHERS = { greenhouse: fetchGreenhouse, lever: fetchLever, workday: fetchWorkday, avature: fetchAvature, smartrecruiters: fetchSmartRecruiters, workable: fetchWorkable, phenom: fetchPhenom, teamtailor: fetchTeamtailor, eightfold: fetchEightfold, amazonjobs: fetchAmazonJobs, ashby: fetchAshby, zenimax: fetchZenimax, bamboohr: fetchBambooHr, jobscore: fetchJobScore, jazzhr: fetchJazzHr, jobvite: fetchJobvite, recruitee: fetchRecruitee, breezy: fetchBreezy };
+// ---- Manatal / careers-page.com (api/v1.0/c/{slug}/jobs/) --------------------
+// Public Django-REST feed behind careers-page.com career portals. Paginated
+// ({count,next,results}); each result has position_name, hash (slug) and location
+// fields. No posted date in the feed, but the full description is included, so we
+// mine salary / years-of-experience / tech from it (some studios put pay in the body).
+async function fetchManatal(studio) {
+  const mapJob = j => {
+    const text = stripHtml(j.description || "");
+    let loc = j.location_display || [j.city, j.state, j.country].filter(Boolean).join(", ") || "Remote";
+    loc = loc.split(", ").filter((p, i, a) => p && p !== a[i - 1]).join(", ") || "Remote";
+    return {
+      id: `manatal-${studio.token}-${j.hash || j.id}`,
+      title: j.position_name || "",
+      tech: extractTech((j.position_name || "") + " " + text),
+      studio: studio.name,
+      discipline: mapDiscipline(null, j.position_name || ""),
+      workType: inferWorkType(j.position_name || "", loc, [], text.slice(0, 1500)),
+      location: loc,
+      region: inferRegion(loc),
+      seniority: inferSeniority(j.position_name || ""),
+      salary: extractSalary(text),
+      yoe: extractYoe(text),
+      postedAt: null,
+      url: `https://www.careers-page.com/${studio.token}/job/${j.hash}`,
+    };
+  };
+  if (SAMPLE_FILE) { const d = loadSample(studio); return ((d && d.results) || []).map(mapJob); }
+  const out = [];
+  let url = `https://www.careers-page.com/api/v1.0/c/${studio.token}/jobs/?page_size=100`;
+  for (let i = 0; i < 20 && url; i++) {
+    const data = await fetchJson(url);
+    if (!data) break;
+    out.push(...((data.results) || []).map(mapJob));
+    url = data.next || null;
+  }
+  return out;
+}
+
+const FETCHERS = { greenhouse: fetchGreenhouse, lever: fetchLever, workday: fetchWorkday, avature: fetchAvature, smartrecruiters: fetchSmartRecruiters, workable: fetchWorkable, phenom: fetchPhenom, teamtailor: fetchTeamtailor, eightfold: fetchEightfold, amazonjobs: fetchAmazonJobs, ashby: fetchAshby, zenimax: fetchZenimax, bamboohr: fetchBambooHr, jobscore: fetchJobScore, jazzhr: fetchJazzHr, jobvite: fetchJobvite, recruitee: fetchRecruitee, breezy: fetchBreezy, manatal: fetchManatal };
 
 // ---- Ghost-job tracking -----------------------------------------------------
 // Because we scrape on a schedule, we can see how long a listing has REALLY been
