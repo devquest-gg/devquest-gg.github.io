@@ -198,6 +198,7 @@ const STUDIOS = [
   { name: "Nexon", type: "jobscore", token: "nexonamericainc" },
   { name: "Certain Affinity", type: "jazzhr", token: "certainaffinityinc" },
   { name: "Capcom", type: "jobvite", token: "capcomusa" },
+  { name: "ProbablyMonsters", type: "jobvite", token: "probablymonsters" },   // family of studios (Bellevue/Dallas); careers UI wraps a Jobvite board
   { name: "Frontier Developments", type: "lever", token: "frontier", region: "eu" }, // public feed is on the EU host
   { name: "Aspyr Media", type: "greenhouse", token: "aspyrmediainc" }, // proxied under aspyr.com but a standard Greenhouse board
   // Workday fetcher kept for future boards (EA, Nintendo...). Sony's Workday
