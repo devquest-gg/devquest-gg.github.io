@@ -41,6 +41,9 @@ const DIRECTORY = [
   { name: "Square Enix", url: "https://www.square-enix-games.com/en_us/careers", note: "Final Fantasy, Dragon Quest — JP publisher", city: "Tokyo, Japan" },
   { name: "NetEase Games", url: "https://www.neteasegames.com/careers/en/", note: "Marvel Rivals, Naraka — global/CN publisher", city: "Hangzhou, China" },
   { name: "LightSpeed Studios", url: "https://www.lightspeed-studios.com/join-us.html", note: "PUBG Mobile — Tencent", city: "Los Angeles, CA" },
+  // ---- June 2026: requested / community additions (link-outs; no clean scrapeable feed yet) ----
+  { name: "PUBG Studios", url: "https://www.krafton.com/en/careers/jobs/", note: "PUBG: Battlegrounds — Krafton", city: "Seoul, South Korea" },
+  { name: "Thought Pennies", url: "https://www.careers-page.com/thought-pennies", note: "Story-first RPG — fully remote", city: "Remote" },
   // Self-hosted / non-standard boards — link-outs until a bespoke fetcher is worth building.
   { name: "Techland", url: "https://techland.net/job-offers", note: "Dying Light — self-hosted board, ~35 roles (PL)", city: "Wrocław, Poland" },
   { name: "Warhorse Studios", url: "https://warhorsestudios.cz/kariera", note: "Kingdom Come: Deliverance — Embracer (CZ)", city: "Prague, Czechia" },
@@ -116,6 +119,7 @@ const STUDIOS = [
       "TREYARCH": "Treyarch",
       "SLEDGEHAMMER GAMES": "Sledgehammer Games",
       "RAVEN SOFTWARE": "Raven Software",
+      "ELSEWHERE": "Elsewhere Entertainment",   // new AAA narrative studio (Warsaw/Malmö), splits out of the Activision feed
     } },
   // ZeniMax / Bethesda (jobs.zenimax.com) embeds its full posting list as encoded JSON
   // in the /jobs page; each posting names its real studio (Bethesda Game Studios,
@@ -261,6 +265,9 @@ const STUDIOS = [
   { name: "Homa Games", type: "workable", token: "homa-games" },                   // mobile publisher (Paris)
   { name: "Amanotes", type: "lever", token: "amanotes" },                          // #1 music games (Ho Chi Minh City)
   { name: "Scorewarrior", type: "recruitee", token: "scorewarrior" },              // Total Battle — MMO strategy (Limassol)
+
+  // ---- June 2026: community / requested studios (verified ATS feeds) ----
+  { name: "Counterplay Games", type: "breezy", token: "counterplay-games-inc" },   // Godfall, Duelyst — fully remote (board may sit at 0)
 ];
 
 // ---- Studio type tags (Michelle's idea) ------------------------------------
@@ -1648,7 +1655,31 @@ async function fetchJobvite(studio) {
 }
 
 
-const FETCHERS = { greenhouse: fetchGreenhouse, lever: fetchLever, workday: fetchWorkday, avature: fetchAvature, smartrecruiters: fetchSmartRecruiters, workable: fetchWorkable, phenom: fetchPhenom, teamtailor: fetchTeamtailor, eightfold: fetchEightfold, amazonjobs: fetchAmazonJobs, ashby: fetchAshby, zenimax: fetchZenimax, bamboohr: fetchBambooHr, jobscore: fetchJobScore, jazzhr: fetchJazzHr, jobvite: fetchJobvite, recruitee: fetchRecruitee };
+// ---- Breezy HR ({company}.breezy.hr/json) -----------------------------------
+// Public JSON of published positions; array of { name, department, location, url, published_date }.
+async function fetchBreezy(studio) {
+  const data = SAMPLE_FILE ? loadSample(studio) : await fetchJson(`https://${studio.token}.breezy.hr/json`);
+  if (!Array.isArray(data)) return [];
+  return data.map(j => {
+    const loc = (j.location && (j.location.name || [j.location.city, j.location.country && j.location.country.name].filter(Boolean).join(", "))) || "Unlisted";
+    return {
+      id: `breezy-${studio.token}-${j._id || j.friendly_id || (j.url || "").split("/").pop()}`,
+      title: j.name || "",
+      studio: studio.name,
+      discipline: mapDiscipline(j.department || null, j.name || ""),
+      workType: inferWorkType(j.name || "", loc, []),
+      location: loc,
+      region: inferRegion(loc),
+      seniority: inferSeniority(j.name || ""),
+      salary: null,
+      yoe: null,
+      postedAt: j.published_date || j.creation_date || null,
+      url: j.url || `https://${studio.token}.breezy.hr/`,
+    };
+  });
+}
+
+const FETCHERS = { greenhouse: fetchGreenhouse, lever: fetchLever, workday: fetchWorkday, avature: fetchAvature, smartrecruiters: fetchSmartRecruiters, workable: fetchWorkable, phenom: fetchPhenom, teamtailor: fetchTeamtailor, eightfold: fetchEightfold, amazonjobs: fetchAmazonJobs, ashby: fetchAshby, zenimax: fetchZenimax, bamboohr: fetchBambooHr, jobscore: fetchJobScore, jazzhr: fetchJazzHr, jobvite: fetchJobvite, recruitee: fetchRecruitee, breezy: fetchBreezy };
 
 // ---- Ghost-job tracking -----------------------------------------------------
 // Because we scrape on a schedule, we can see how long a listing has REALLY been
