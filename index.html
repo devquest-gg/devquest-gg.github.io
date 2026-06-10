@@ -2377,7 +2377,7 @@ try {
       + (TURNSTILE_SITEKEY ? '<div id="digestTurnstile" style="margin-top:8px"></div>' : '')
       + '<div id="digestMsg" style="font-size:13px;min-height:16px;margin-top:6px;color:var(--muted)"></div>';
     var dts = null;
-    if (TURNSTILE_SITEKEY && window.turnstile){ try { dts = window.turnstile.render("#digestTurnstile", { sitekey: TURNSTILE_SITEKEY, theme: "dark" }); } catch(e){} }
+    if (TURNSTILE_SITEKEY && window.turnstile){ try { dts = window.turnstile.render("#digestTurnstile", { sitekey: TURNSTILE_SITEKEY, theme: "dark", retry: "auto", "retry-interval": 3000, "refresh-expired": "auto", "error-callback": function(){ var m=document.getElementById("digestMsg"); if(m){ m.textContent="Verification hiccup — it'll retry automatically. Give it a moment, then try again."; m.style.color="#8b949e"; } return true; } }); } catch(e){} }
     var btn = document.getElementById("digestBtn");
     if (btn) btn.onclick = function(){
       var email = (document.getElementById("digestEmail").value || "").trim();
@@ -2408,7 +2408,7 @@ try {
       + (TURNSTILE_SITEKEY ? '<div id="wlTurnstile" style="margin-top:8px"></div>' : '')
       + '<div id="wlMsg" style="font-size:13px;min-height:16px;margin-top:6px;color:var(--muted)"></div>';
     var wts = null;
-    if (TURNSTILE_SITEKEY && window.turnstile){ try { wts = window.turnstile.render("#wlTurnstile", { sitekey: TURNSTILE_SITEKEY, theme: "dark" }); } catch(e){} }
+    if (TURNSTILE_SITEKEY && window.turnstile){ try { wts = window.turnstile.render("#wlTurnstile", { sitekey: TURNSTILE_SITEKEY, theme: "dark", retry: "auto", "retry-interval": 3000, "refresh-expired": "auto", "error-callback": function(){ var m=document.getElementById("wlMsg"); if(m){ m.textContent="Verification hiccup — it'll retry automatically. Give it a moment, then try again."; m.style.color="#8b949e"; } return true; } }); } catch(e){} }
     var btn = document.getElementById("wlBtn");
     if (btn) btn.onclick = function(){
       var email = (document.getElementById("wlEmail").value || "").trim();
@@ -2562,7 +2562,7 @@ try {
       '<div id="alertMsg" style="font-size:13px;min-height:16px"></div></form>';
     _tsWidget=null;
     if(TURNSTILE_SITEKEY && window.turnstile){
-      try{ _tsWidget=window.turnstile.render("#alertTurnstile",{sitekey:TURNSTILE_SITEKEY,theme:"dark"}); }catch(e){}
+      try{ _tsWidget=window.turnstile.render("#alertTurnstile",{sitekey:TURNSTILE_SITEKEY,theme:"dark",retry:"auto","retry-interval":3000,"refresh-expired":"auto","error-callback":function(){ var m=document.getElementById("alertMsg"); if(m){ m.textContent="Verification hiccup — it'll retry automatically. Give it a moment, then try again."; m.style.color="#8b949e"; } return true; }}); }catch(e){}
     }
     document.getElementById("alertForm").onsubmit=function(ev){
       ev.preventDefault();
