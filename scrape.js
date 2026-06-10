@@ -58,7 +58,6 @@ const DIRECTORY = [
   { name: "Owlcat Games", url: "https://owlcat.games/careers", note: "Pathfinder, Rogue Trader — CRPG, custom board (Cyprus)", city: "Nicosia, Cyprus" },
   { name: "Sucker Punch Productions", url: "https://jobs.suckerpunch.com/", note: "Ghost of Tsushima/Yōtei — Sony first-party (Bellevue, WA)", city: "Bellevue, WA" },
   { name: "Grinding Gear Games", url: "https://www.grindinggear.com/?page=careers", note: "Path of Exile — Tencent (Auckland, NZ)", city: "Auckland, New Zealand" },
-  { name: "PikPok", url: "https://apply.workable.com/pikpok/", note: "Mobile — Wellington, NZ (Workable; graduate to mainland if we add a Workable fetcher)", city: "Wellington, New Zealand" },
   { name: "Halo Studios", url: "https://www.halowaypoint.com/en-us/343/careers", note: "Halo (ex-343 Industries) — Xbox Game Studios", city: "Redmond, WA" },
   // batch 3 (2026-06-08): self-hosted / no-API boards — browse directly
   { name: "Void Interactive", url: "https://voidinteractive.net/careers/", note: "Ready or Not · custom board (Dublin)", city: "Dublin, Ireland" },
@@ -268,6 +267,7 @@ const STUDIOS = [
   // ---- June 2026: community / requested studios (verified ATS feeds) ----
   { name: "Counterplay Games", type: "breezy", token: "counterplay-games-inc" },   // Godfall, Duelyst — fully remote (board may sit at 0)
   { name: "Thought Pennies", type: "manatal", token: "thought-pennies" },          // story-first RPG, fully remote (first community request)
+  { name: "PikPok", type: "workable", token: "pikpok" },                           // mobile (Wellington, NZ) — promoted from directory; Workable already supported
 ];
 
 // ---- Studio type tags (Michelle's idea) ------------------------------------
