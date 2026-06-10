@@ -259,8 +259,13 @@
   .viewtabs button.active { background: var(--accent); color: #0d1117; }
   #mapWrap { display: none; }
   #statsWrap { display: none; }
-  .statgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; align-items: start; }
-  @media (max-width: 800px) { .statgrid { grid-template-columns: 1fr; } }
+  /* Masonry-style columns: cards keep their natural height AND pack tightly, so short
+     cards next to tall ones don't leave blank gaps (the grid did one or the other). */
+  .statgrid { column-count: 2; column-gap: 14px; }
+  .statgrid .statcard { break-inside: avoid; -webkit-column-break-inside: avoid; width: 100%; margin: 0 0 14px; }
+  .statgrid .full { column-span: all; }
+  .mhead { margin: 6px 0 10px; }
+  @media (max-width: 800px) { .statgrid { column-count: 1; } }
   .statcard { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
   .statcard h3 { font-size: 13px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin-bottom: 12px; }
   .barrow { display: flex; align-items: center; gap: 8px; margin: 5px 0; font-size: 13px; }
@@ -1780,7 +1785,7 @@ function renderStats(){
 
   // data health (always unfiltered)
   const D = window.JOBS_DATA;
-  let health = `<div class="statcard" style="grid-column:1/-1"><h3>Data health</h3>`;
+  let health = `<div class="statcard full"><h3>Data health</h3>`;
   if (!D) {
     health += `<div class="hmuted" style="color:var(--muted)">Demo data — run the scraper (run-scraper.bat) for live health info.</div></div>`;
   } else {
@@ -1882,9 +1887,11 @@ function renderStats(){
     + `<div class="ptile"><div class="pnum">${mp.remotePct}%</div><div class="plabelt">remote</div></div>`
     + `<div class="ptile"><div class="pnum" style="font-size:18px;line-height:1.5">${mp.topStudio}</div><div class="plabelt">most active studio</div></div>`
     + `</div>`;
+  const mo = buildMomentum();
   document.getElementById("statsWrap").innerHTML = trendHead +
-    buildMomentum() +
+    (mo.head ? `<div class="mhead">` + mo.head + `</div>` : "") +
     `<div class="statgrid">` +
+    mo.cards +
     hiringCard +
     remoteCard +
     barChart(`Roles by studio (filtered: ${list.length})`, tally(list, j=>j.s), 14) +
@@ -1901,7 +1908,7 @@ function renderStats(){
 // All derived from trends.json (per-studio + per-discipline daily counts) — momentum, not news.
 function buildMomentum(){
   const T = (window.JOBS_DATA && window.JOBS_DATA.trends) || null;
-  if (!T || !T.studios || !Object.keys(T.studios).length) return "";
+  if (!T || !T.studios || !Object.keys(T.studios).length) return { head: "", cards: "" };
   const enough = (T.span||0) >= 8;
   const sArr = Object.keys(T.studios).map(name => Object.assign({name}, T.studios[name]));
   const sumNow = sArr.reduce((a,s)=>a+(s.now||0),0);
@@ -1934,16 +1941,15 @@ function buildMomentum(){
     : "";
   const moverHint='<div class="xhint">No clear movers yet. Fills in as we track studios over the coming days.</div>';
   const discHint='<div class="xhint">Per-discipline history is just starting to bank. Check back in a few days.</div>';
-  return `<div style="margin:6px 0 4px"><h2 class="pulsehead">What's moving this week</h2>`
+  const head = `<h2 class="pulsehead">What's moving this week</h2>`
     + `<div class="dirsub">${enough?'Change vs ~30 days ago, from how many roles each studio lists over time. Momentum, not official layoff news.':'<b>Momentum is still building.</b> The week-over-week totals appear once we have about 8 days of history; the movers below are live as soon as a studio shifts.'}</div>`
-    + tilesRow
-    + `<div class="statgrid">`
-    + card('📈 Ramping up', up.length?up.map(srow).join(''):moverHint)
+    + tilesRow;
+  const cards = card('📈 Ramping up', up.length?up.map(srow).join(''):moverHint)
     + card('📉 Pulling back / quiet', down.length?down.map(srow).join(''):moverHint)
     + card('🔥 Disciplines heating up', hot.length?hot.map(r=>drow(r,'up')).join(''):discHint)
     + card('🧊 Disciplines cooling', cool.length?cool.map(r=>drow(r,'down')).join(''):'<div class="xhint">Nothing clearly cooling yet.</div>')
-    + card('✨ New studios this week', fresh.length?fresh.map(r=>`<div class="pulserow"><span class="plabel">${r.name}</span><span class="pulsenum">${r.now} role${r.now===1?'':'s'}</span></div>`).join(''):(enough?'<div class="xhint">No studios newly added in the last week.</div>':'<div class="xhint">Starts once we have a full week of history.</div>'))
-    + `</div></div>`;
+    + card('✨ New studios this week', fresh.length?fresh.map(r=>`<div class="pulserow"><span class="plabel">${r.name}</span><span class="pulsenum">${r.now} role${r.now===1?'':'s'}</span></div>`).join(''):(enough?'<div class="xhint">No studios newly added in the last week.</div>':'<div class="xhint">Starts once we have a full week of history.</div>'));
+  return { head, cards };
 }
 
 // ---- Pulse: hiring momentum from our own listing history ---------------------
