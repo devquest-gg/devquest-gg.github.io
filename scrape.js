@@ -1892,7 +1892,7 @@ async function backfillSalaries(jobs) {
 // for a studio going dark.
 const TRENDS_FILE = path.join(__dirname, "trends.json");
 
-function buildTrends(runCounts, okSet, discCounts, healthy) {
+function buildTrends(runCounts, okSet, discCounts, healthy, salInfo, skillCounts) {
   let store = { days: [] };
   try { store = JSON.parse(fs.readFileSync(TRENDS_FILE, "utf8")); } catch (e) { store = { days: [] }; }
   const days = store.days || [];
@@ -1906,9 +1906,15 @@ function buildTrends(runCounts, okSet, discCounts, healthy) {
   // rather than record an artificially low set.
   const prevDisc = days.length ? (days[days.length - 1].disc || {}) : {};
   const disc = (healthy || !days.length) ? (discCounts || {}) : prevDisc;
+  // Salary transparency (pct of live roles publishing pay, plus raw count/total) and the
+  // skill/tech-tag demand map — board-wide, so likewise carried forward on a degraded run.
+  const prevSal = days.length ? (days[days.length - 1].sal || null) : null;
+  const sal = (healthy || !days.length) ? (salInfo || prevSal || null) : (prevSal || salInfo || null);
+  const prevSkills = days.length ? (days[days.length - 1].skills || {}) : {};
+  const skills = (healthy || !days.length) ? (skillCounts || {}) : prevSkills;
 
-  if (days.length && days[days.length - 1].date === today) days[days.length - 1] = { date: today, counts, disc };
-  else days.push({ date: today, counts, disc });
+  if (days.length && days[days.length - 1].date === today) days[days.length - 1] = { date: today, counts, disc, sal, skills };
+  else days.push({ date: today, counts, disc, sal, skills });
   while (days.length > 120) days.shift();           // keep ~4 months
   store.days = days;
   try { fs.writeFileSync(TRENDS_FILE, JSON.stringify(store)); }
@@ -1922,8 +1928,10 @@ function buildTrends(runCounts, okSet, discCounts, healthy) {
   };
   const cur = days[days.length - 1].counts;
   const curDisc = days[days.length - 1].disc || {};
+  const curSal = days[days.length - 1].sal || null;
+  const curSkills = days[days.length - 1].skills || {};
   const d7 = snapNearest(7), d30 = snapNearest(30);
-  const out = { asOf: today, span: days.length, studios: {}, disc: {} };
+  const out = { asOf: today, span: days.length, studios: {}, disc: {}, salary: null, skills: {} };
   for (const name of Object.keys(cur)) {
     out.studios[name] = {
       now: cur[name],
@@ -1938,6 +1946,26 @@ function buildTrends(runCounts, okSet, discCounts, healthy) {
       d7: d7 && d7.disc ? (d7.disc[name] ?? null) : null,
       d30: d30 && d30.disc ? (d30.disc[name] ?? null) : null,
       series: days.slice(-30).map(d => (d.disc ? (d.disc[name] ?? null) : null)),
+    };
+  }
+  // Salary-transparency trend: pct of roles publishing pay, plus raw count, now vs 7/30d ago.
+  if (curSal) {
+    const pctOf = (x) => (x && x.total ? Math.round(100 * x.n / x.total) : (x ? (x.pct ?? null) : null));
+    out.salary = {
+      now: pctOf(curSal),
+      nowN: curSal.n ?? null,
+      d7: d7 && d7.sal ? pctOf(d7.sal) : null,
+      d7N: d7 && d7.sal ? (d7.sal.n ?? null) : null,
+      d30: d30 && d30.sal ? pctOf(d30.sal) : null,
+      series: days.slice(-30).map(d => (d.sal ? pctOf(d.sal) : null)),
+    };
+  }
+  // Skill/tech-tag demand trend: for each skill live today, count now vs 7/30d ago.
+  for (const name of Object.keys(curSkills)) {
+    out.skills[name] = {
+      now: curSkills[name],
+      d7: d7 && d7.skills ? (d7.skills[name] ?? null) : null,
+      d30: d30 && d30.skills ? (d30.skills[name] ?? null) : null,
     };
   }
   return out;
@@ -1972,8 +2000,12 @@ function buildTrends(runCounts, okSet, discCounts, healthy) {
   await backfillSalaries(all); // open detail pages for jobs missing salary; cache in seen.json
   for (const j of all) if (j.salary) j.salary = prettySalary(j.salary); // one consistent salary format
   const discCounts = {}; for (const j of all) { const d = j.discipline || "Other"; discCounts[d] = (discCounts[d] || 0) + 1; }
+  // Salary transparency + skill demand snapshots, banked daily so the trend cards build over time.
+  const salN = all.filter(j => j.salary).length;
+  const salInfo = { n: salN, total: all.length, pct: all.length ? Math.round(100 * salN / all.length) : 0 };
+  const skillCounts = {}; for (const j of all) for (const t of (j.tech || [])) if (t) skillCounts[t] = (skillCounts[t] || 0) + 1;
   const healthy = okSet.size >= STUDIOS.length * 0.8; // skip recording disc on a badly-degraded run
-  const trends = buildTrends(runCounts, okSet, discCounts, healthy); // per-studio + per-discipline momentum (writes trends.json)
+  const trends = buildTrends(runCounts, okSet, discCounts, healthy, salInfo, skillCounts); // per-studio + per-discipline + salary + skills momentum (writes trends.json)
   all.sort((a, b) => new Date(b.postedAt) - new Date(a.postedAt));
 
   const out = {
