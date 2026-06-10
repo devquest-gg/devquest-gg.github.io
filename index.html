@@ -504,7 +504,7 @@ function showApplyNudge(studio, disc){
   if (!bar){ bar = document.createElement("div"); bar.id = "applyNudge"; bar.style.cssText = "margin:10px 0 8px;padding:11px 14px;border:1px solid #2a3a28;border-radius:8px;background:#141816"; jobsEl.parentNode.insertBefore(bar, jobsEl); }
   var d = disc || "matching";
   bar.innerHTML = '<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;color:#d0dcc8">'
-    + '<span style="font-size:14px">You applied to a role at <b>'+_h(studio)+'</b>. Want alerts for new <b>'+_h(d)+'</b> roles?</span>'
+    + '<span style="font-size:14px">Checking out roles at <b>'+_h(studio)+'</b>? Want alerts for new <b>'+_h(d)+'</b> roles?</span>'
     + '<button id="anYes" style="margin-left:auto;background:transparent;color:#58a6ff;border:1px solid #58a6ff;border-radius:6px;padding:7px 13px;font-weight:600;cursor:pointer">Email me</button>'
     + '<button id="anNo" style="background:transparent;color:#6e7681;border:0;font-size:13px;cursor:pointer">No thanks</button></div>';
   bar.style.display = "block";
