@@ -173,8 +173,8 @@
   .row.st-interviewing { border-left: 3px solid var(--green); }
   .row.st-rejected { border-left: 3px solid var(--pink); opacity: .55; }
   .rmain { flex: 1; min-width: 200px; }
-  .rmain .title { font-weight: 600; font-size: 14px; }
-  .rmain .studio { color: var(--accent); font-size: 13px; margin-left: 8px; }
+  .rmain .title { font-weight: 700; font-size: 15.5px; color: var(--text); }
+  .rmain .studio { color: var(--accent); font-size: 13px; font-weight: 400; margin-left: 8px; }
   .nfy { background: var(--green); color: #0d1117; font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 999px; margin-left: 8px; vertical-align: middle; }
   .multibadge { background: rgba(88,166,255,.15); color: var(--accent); font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 999px; margin-left: 8px; vertical-align: middle; }
   .tag.locchip[onclick] { cursor: pointer; }
@@ -284,9 +284,10 @@
   table.xtab td[onclick] { cursor: pointer; }
   table.xtab td[onclick]:hover { outline: 2px solid var(--accent); outline-offset: -2px; }
   .xhint { color: var(--muted); font-size: 12px; margin-top: 8px; }
-  #matrixWrap { margin-bottom: 14px; }
-  .matrixhead { font-size: 13px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin-bottom: 8px; }
-  .matrixhead .mhint { text-transform: none; letter-spacing: 0; font-size: 12px; color: var(--muted); }
+  #matrixWrap { margin-bottom: 14px; padding: 16px; background: var(--panel); border: 1px solid var(--border); border-radius: 12px; }
+  .matrixhead { margin-bottom: 10px; }
+  .matrixhead .mh-title { display: block; font-size: 18px; font-weight: 700; color: var(--text); letter-spacing: 0; text-transform: none; }
+  .matrixhead .mhint { display: block; margin-top: 3px; text-transform: none; letter-spacing: 0; font-size: 12px; color: var(--muted); }
   .xtab td.mcell[onclick] { cursor: pointer; transition: outline .1s; }
   .xtab td.mcell[onclick]:hover { outline: 2px solid var(--accent); outline-offset: -2px; }
   .xtab td.xsel { background: var(--accent) !important; color: #0d1117; font-weight: 800; }
@@ -1174,7 +1175,7 @@ function renderMatrix(base){
   const cell = {}; for (const j of base) cell[j.d+"|"+j.sen] = (cell[j.d+"|"+j.sen]||0)+1;
   const cmax = Math.max(1, ...Object.values(cell));
   const heat = n => n===0 ? "transparent" : `rgba(88,166,255,${0.10 + 0.6*Math.sqrt(n/cmax)})`;
-  let h = `<div class="matrixhead">Find your square: tap to filter <span class="mhint">· discipline × seniority · brighter = more roles · hover a label</span><span class="swipehint"> · swipe →</span></div>`;
+  let h = `<div class="matrixhead"><span class="mh-title">Where are the jobs right now?</span><span class="mhint">Tap any role × seniority cell to filter · brighter = more roles · hover a label<span class="swipehint"> · swipe →</span></span></div>`;
   if (!discOrder.length) { document.getElementById("matrixWrap").innerHTML = h + `<div class="xhint">No roles in the current filters.</div>`; return; }
   h += `<div style="overflow-x:auto"><table class="xtab"><tr><th></th>${seniorities.map(sn=>{
     const info = SEN_INFO[sn];
@@ -1699,7 +1700,7 @@ function marketPulse(){
   const remotePct = open ? Math.round(100 * JOBS.filter(j=>j.w==="Remote").length / open) : 0;
   const ages = JOBS.filter(j=>j.ts).map(j=>Math.max(0, Math.floor((Date.now()-j.ts)/864e5))).sort((a,b)=>a-b);
   const medianAge = ages.length ? ages[Math.floor(ages.length/2)] : null;
-  return { open, studios, newWk, topStudio: top ? top[0] : "—", salPct, remotePct, medianAge };
+  return { open, studios, newWk, topStudio: top ? top[0] : "—", topStudioN: top ? top[1] : 0, salPct, remotePct, medianAge };
 }
 function renderPulseStrip(){
   const el = document.getElementById("pulseStrip"); if (!el) return;
@@ -1712,7 +1713,7 @@ function renderPulseStrip(){
     + chip(m.newWk.toLocaleString(),"new this week")
     + chip(m.salPct+"%","list salary")
     + (topClickable
-        ? `<span class="psitem top psclick" role="button" tabindex="0" title="Show ${m.topStudio} jobs" onclick="filterToStudio(window.__pulseTopStudio)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();filterToStudio(window.__pulseTopStudio);}"><b>${m.topStudio}</b>most active</span>`
+        ? `<span class="psitem top psclick" role="button" tabindex="0" title="Show ${m.topStudio} jobs" onclick="filterToStudio(window.__pulseTopStudio)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();filterToStudio(window.__pulseTopStudio);}"><b>${m.topStudio}</b>${m.topStudioN.toLocaleString()} role${m.topStudioN===1?'':'s'} · most active</span>`
         : chip(m.topStudio,"most active","top"));
 }
 // Filter the list down to a single studio (used by the "most active" pulse chip).
