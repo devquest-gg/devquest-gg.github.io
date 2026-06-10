@@ -216,6 +216,34 @@
   .ptile .pnum { font-size: 26px; font-weight: 800; color: var(--text); }
   .ptile .plabelt { font-size: 12px; color: var(--muted); margin-top: 4px; }
   #pulseStrip { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 18px; padding: 10px 18px; margin: 0 0 14px; background: var(--panel); border: 1px solid var(--border); border-radius: 12px; }
+  /* Dream Studio watchlist */
+  .strow { display: flex; align-items: center; gap: 4px; }
+  .fstar { cursor: pointer; color: #565d68; font-size: 15px; width: 17px; flex: none; text-align: center; line-height: 1; user-select: none; transition: color .12s, transform .12s; }
+  .fstar:hover { color: var(--gold); transform: scale(1.15); }
+  .fstar.on { color: var(--gold); }
+  .cardstar { cursor: pointer; color: #475059; font-size: 14px; margin-left: 7px; line-height: 1; user-select: none; vertical-align: 1px; transition: color .12s, transform .12s; }
+  .cardstar:hover { color: var(--gold); transform: scale(1.2); }
+  .cardstar.on { color: var(--gold); }
+  #followWrap { display: none; }
+  .wlpanel { background: var(--panel); border: 1px solid rgba(210,153,34,.45); border-radius: 14px; padding: 16px 18px; margin: 0 0 14px; }
+  .wlpanel.empty { border-style: dashed; border-color: var(--border); }
+  .wlhead { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+  .wlhead h2 { font-size: 17px; font-weight: 800; margin: 0; display: flex; align-items: center; gap: 8px; }
+  .wlhead h2 .s { color: var(--gold); }
+  .wltiles { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-bottom: 12px; }
+  .wltile { background: var(--panel2, #1c2230); border: 1px solid var(--border); border-radius: 10px; padding: 11px 13px; }
+  .wltile .n { font-size: 22px; font-weight: 800; } .wltile .n .up { color: var(--green); font-size: 14px; }
+  .wltile .l { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .wlchips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+  .wlchip { display: flex; align-items: center; gap: 7px; background: var(--panel2, #1c2230); border: 1px solid var(--border); border-radius: 999px; padding: 5px 11px; font-size: 13px; }
+  .wlchip .st { color: var(--gold); cursor: pointer; }
+  .wlchip .c { color: var(--muted); } .wlchip .d { font-weight: 700; } .wlchip .d.up { color: var(--green); } .wlchip .d.dn { color: var(--pink); }
+  .wlmovers { font-size: 13px; color: var(--muted); margin-bottom: 12px; } .wlmovers .up { color: var(--green); } .wlmovers .dn { color: var(--pink); }
+  .wlcta { display: flex; gap: 10px; flex-wrap: wrap; }
+  .wlbtn { border-radius: 8px; padding: 9px 15px; font-size: 14px; font-weight: 700; cursor: pointer; border: 1px solid var(--border); background: var(--panel2, #1c2230); color: var(--text); }
+  .wlbtn.primary { background: var(--accent); border-color: var(--accent); color: #0d1117; }
+  .wlbtn.on { background: var(--accent); border-color: var(--accent); color: #0d1117; }
+  .wlnote { font-size: 12px; color: var(--muted); margin-top: 10px; }
   .psitem { font-size: 13px; color: var(--muted); white-space: nowrap; }
   .psitem b { color: var(--text); font-size: 15px; font-weight: 800; margin-right: 5px; }
   .psitem.top b { color: var(--text); font-size: 14px; font-weight: 600; }
@@ -464,11 +492,13 @@
     <button id="filterToggle" onclick="toggleFilters()">⚙ Filters</button>
     <div class="viewtabs">
       <button id="tabList" class="active" onclick="setView('list')">☰ List</button>
+      <button id="tabFollow" onclick="setView('follow')">★ Following</button>
       <button id="tabBest" onclick="setView('bestfit')">🎯 Best fit</button>
       <button id="tabMap" onclick="setView('map')">🗺️ Map</button>
       <button id="tabStats" onclick="setView('stats')">📊 Trends</button>
     </div>
     <div id="pulseStrip"></div>
+    <div id="followWrap"></div>
     <div id="matrixWrap"></div>
     <div id="quickbar"></div>
     <div id="hubbar"></div>
@@ -509,6 +539,73 @@ const store = {
 const appStatus = store.get("luj-status", {});
 const dismissed = new Set(store.get("luj-dismissed", []));
 const saved = new Set(store.get("luj-saved", [])); // jobs the visitor stars to revisit (local only)
+// ---- Dream Studio watchlist: studios the visitor follows (local only, no account) ----
+const FOLLOWS = new Set(store.get("dq-follows", []) || []);
+function isFollowed(s){ return FOLLOWS.has(s); }
+function toggleFollow(s, ev){
+  if (ev){ try { ev.stopPropagation(); ev.preventDefault(); } catch(e){} }
+  const on = !FOLLOWS.has(s);
+  on ? FOLLOWS.add(s) : FOLLOWS.delete(s);
+  try { store.set("dq-follows", Array.from(FOLLOWS)); } catch(e){}
+  try { window.dqTrack && window.dqTrack("studio_follow", { st: s, on: on }); } catch(e){}
+  try { renderSearchGroup("studioFilters","studioSearch",STUDIO_COUNTS,selStudios,STUDIO_LABELS,DIR_STUDIOS); } catch(e){}
+  updateFollowTab();
+  refreshFollowStars();
+  if (typeof view !== "undefined" && view === "follow"){ renderFollowView(); render(); }
+}
+function refreshFollowStars(){
+  document.querySelectorAll(".cardstar").forEach(function(el){
+    var st = el.getAttribute("data-st"), on = FOLLOWS.has(st);
+    el.classList.toggle("on", on);
+    el.textContent = on ? "★" : "☆";
+    el.title = (on ? "Following " : "Follow ") + st;
+  });
+}
+function updateFollowTab(){
+  const t = document.getElementById("tabFollow");
+  if (t) t.innerHTML = "★ Following" + (FOLLOWS.size ? ' <span style="opacity:.75">' + FOLLOWS.size + '</span>' : "");
+}
+window.dqShowFollowEmail = function(){
+  const box = document.getElementById("followEmailBox"); if (!box) return;
+  box.style.display = "block";
+  try { window.dqStudioAlertForm && window.dqStudioAlertForm("followEmailBox", Array.from(FOLLOWS)); } catch(e){}
+};
+function renderFollowView(){
+  const el = document.getElementById("followWrap"); if (!el) return;
+  if (!FOLLOWS.size){
+    el.innerHTML = `<div class="wlpanel empty" style="text-align:center;padding:24px 40px"><div style="font-size:15px;color:var(--text);margin-bottom:8px">⭐ <b>Build your studio watchlist</b></div><div style="font-size:14px;color:var(--muted);max-width:600px;margin:0 auto;line-height:1.6">Tap the ★ next to any studio in the sidebar to follow it. Your Following tab then tracks all their openings, shows what's moving, and can email you new roles weekly. Saved on this device — no account needed.</div></div>`;
+    return;
+  }
+  const T = (window.JOBS_DATA && window.JOBS_DATA.trends) || null;
+  const followed = JOBS.filter(j => FOLLOWS.has(j.s));
+  const open = followed.length;
+  const newWk = followed.filter(j => j.ts && hoursAgo(j) <= 168).length;
+  const byS = {}; for (const j of followed) byS[j.s] = (byS[j.s] || 0) + 1;
+  const deltaOf = s => { if (!T || !T.studios || !T.studios[s]) return null; const t = T.studios[s]; const base = t.d7 != null ? t.d7 : t.now; return (t.now || 0) - base; };
+  const studios = [...FOLLOWS].map(s => ({ s, n: byS[s] || 0, d: deltaOf(s) })).sort((a,b)=> b.n - a.n);
+  const arrow = d => d > 0 ? ` <span class="d up">+${d}</span>` : (d < 0 ? ` <span class="d dn">−${-d}</span>` : "");
+  const chips = studios.map(o => `<span class="wlchip"><span class="st" role="button" tabindex="0" title="Unfollow ${o.s.replace(/"/g,'')}" onclick="toggleFollow('${o.s.replace(/'/g,"\\'")}', event)">★</span><span class="nm">${o.s}</span><span class="c">${o.n}</span>${arrow(o.d)}</span>`).join("");
+  const ups = studios.filter(o => o.d > 0).sort((a,b)=> b.d - a.d).slice(0, 4);
+  const downs = studios.filter(o => o.d < 0).sort((a,b)=> a.d - b.d).slice(0, 3);
+  const moversLine = (ups.length || downs.length)
+    ? `<div class="wlmovers">What’s moving in your studios: ${ups.map(o=>`<span class="up">${o.s} +${o.d}</span>`).join(" · ")}${(ups.length&&downs.length)?" · ":""}${downs.map(o=>`<span class="dn">${o.s} −${-o.d}</span>`).join(" · ")}</div>`
+    : `<div class="wlmovers">Week-over-week movement for your studios fills in as history banks (~8 days).</div>`;
+  el.innerHTML = `<div class="wlpanel">`
+    + `<div class="wlhead"><h2><span class="s">★</span> My studios <span style="color:var(--muted);font-weight:600;font-size:14px">· ${FOLLOWS.size} followed</span></h2></div>`
+    + `<div class="wltiles">`
+    + `<div class="wltile"><div class="n">${open.toLocaleString()}</div><div class="l">open roles across your studios</div></div>`
+    + `<div class="wltile"><div class="n">${newWk.toLocaleString()}${newWk?' <span class="up">▲</span>':''}</div><div class="l">new in the last 7 days</div></div>`
+    + `<div class="wltile"><div class="n">${FOLLOWS.size}</div><div class="l">studios followed</div></div>`
+    + `</div>`
+    + `<div class="wlchips">${chips}</div>`
+    + moversLine
+    + `<div class="wlcta">`
+    + `<button class="wlbtn primary" onclick="window.dqShowFollowEmail()">📬 Email me their new roles weekly</button>`
+    + `</div>`
+    + `<div id="followEmailBox" style="display:none;margin-top:12px"></div>`
+    + `<div class="wlnote">Saved on this device — no account needed. “Email me…” sets up a weekly alert for these studios (the same job alert, pre-filled). The roles from your studios are listed below.</div>`
+    + `</div>`;
+}
 const prevVisit = store.get("luj-lastVisit", 0);
 store.set("luj-lastVisit", Date.now());
 
@@ -831,10 +928,15 @@ function renderSearchGroup(boxId, searchId, counts, sel, labels, extras){
   const entries = Object.entries(counts)
     .filter(([name]) => lbl(name).toLowerCase().includes(q))
     .sort((a,b) => (sel.has(b[0])-sel.has(a[0])) || b[1]-a[1]); // selected first, then by count
-  const checkboxes = entries.map(([name,n]) =>
-    `<label class="chk"><input type="checkbox" ${sel.has(name)?"checked":""}
+  const isStudio = boxId === "studioFilters";
+  const checkboxes = entries.map(([name,n]) => {
+    const row = `<label class="chk"${isStudio?' style="flex:1;min-width:0"':''}><input type="checkbox" ${sel.has(name)?"checked":""}
        onchange="toggleSel('${boxId}','${name.replace(/'/g,"\\'")}',this.checked)">
-       <span class="fname">${lbl(name)}</span><span class="fcount">${n}</span></label>`).join("");
+       <span class="fname">${lbl(name)}</span><span class="fcount">${n}</span></label>`;
+    if (!isStudio) return row;
+    const fav = isFollowed(name);
+    return `<div class="strow"><span class="fstar${fav?' on':''}" role="button" tabindex="0" title="${fav?'Following':'Follow'} ${lbl(name).replace(/"/g,'')}" onclick="toggleFollow('${name.replace(/'/g,"\\'")}', event)">${fav?'★':'☆'}</span>${row}</div>`;
+  }).join("");
   // directory (link-out) rows, filtered by the same search
   const extraRows = (extras || [])
     .filter(d => d.name.toLowerCase().includes(q))
@@ -1022,6 +1124,7 @@ function render(){
   const preHub = JOBS.filter(j =>
     (!dismissed.has(j.id)) &&
     (!savedOnly || saved.has(j.id)) &&
+    (view !== "follow" || FOLLOWS.has(j.s)) &&
     (!hideTracked || !appStatus[j.id]) &&    (!hidePools || !j.pool) &&
     (!hideStale || !isStale(j)) &&
     (!maxDays || (j.ts && hoursAgo(j) <= maxDays*24)) &&
@@ -1352,7 +1455,7 @@ function rowHtml(j){
   return `<div class="row ${status?'st-'+status:''} ${isDismissed?'dismissed':''}" ${rowClick}>
     <div class="rtop">
       <div class="rmain">
-        <span class="title">${j.t}</span><span class="studio">${j.s}</span>
+        <span class="title">${j.t}</span><span class="studio">${j.s}</span><span class="cardstar${isFollowed(j.s)?' on':''}" data-st="${j.s.replace(/"/g,'')}" role="button" tabindex="0" title="${isFollowed(j.s)?'Following':'Follow'} ${j.s.replace(/"/g,'')}" onclick="toggleFollow(this.getAttribute('data-st'), event)">${isFollowed(j.s)?'★':'☆'}</span>
         ${isDismissed?'<span class="dismissedbadge">hidden</span>':''}
         ${poolBadge}
         ${multi?`<span class="multibadge">${j.places.length} locations</span>`:''}
@@ -1487,9 +1590,11 @@ function dirCoords(d){
 let map = null, markerLayer = null, view = "list";
 function setView(v){
   view = v;
-  for (const [tab, name] of [["tabList","list"],["tabMap","map"],["tabStats","stats"],["tabBest","bestfit"]])
+  for (const [tab, name] of [["tabList","list"],["tabFollow","follow"],["tabMap","map"],["tabStats","stats"],["tabBest","bestfit"]])
     document.getElementById(tab).classList.toggle("active", v===name);
-  document.getElementById("jobs").style.display = v==="list" ? "" : "none";
+  const listish = (v==="list" || v==="follow");   // both show the job list (Following filters it to your studios)
+  document.getElementById("jobs").style.display = listish ? "" : "none";
+  document.getElementById("count").style.display = listish ? "" : "none";
   document.getElementById("directory").style.display = v==="list" ? "" : "none";
   document.getElementById("moon").style.display = v==="list" ? "" : "none";
   document.getElementById("matrixWrap").style.display = v==="list" ? "" : "none";
@@ -1497,10 +1602,13 @@ function setView(v){
   document.getElementById("hubbar").style.display = v==="list" ? "" : "none";
   document.getElementById("subbar").style.display = v==="list" ? "" : "none";
   document.getElementById("pulseStrip").style.display = v==="list" ? "" : "none";
+  document.getElementById("followWrap").style.display = v==="follow" ? "block" : "none";
   document.getElementById("mapWrap").style.display = v==="map" ? "block" : "none";
   document.getElementById("statsWrap").style.display = v==="stats" ? "block" : "none";
   document.getElementById("pulseWrap").style.display = v==="pulse" ? "block" : "none";
   document.getElementById("bestfitWrap").style.display = v==="bestfit" ? "block" : "none";
+  if (v === "follow") renderFollowView();
+  if (listish) render();          // re-filter the job list (Following = only your studios)
   if (v === "map") renderMap();
   if (v === "stats") renderStats();
   if (v === "bestfit") renderBestFit();
@@ -2236,6 +2344,7 @@ renderDirectory();
 renderMoon();
 render();
 renderPulseStrip();
+updateFollowTab();
 
 // Shareable search URLs + makes the JSON-LD SearchAction work: ?q=term pre-fills the search.
 try {
@@ -2278,6 +2387,37 @@ try {
       fetch(ALERTS_API + "/subscribe", { method:"POST", headers:{ "Content-Type":"application/json" }, body: JSON.stringify({ email: email, criteria: { digest:true, digestOnly:true }, label: "Weekly market digest", token: tok }) })
         .then(function(r){ return r.json().catch(function(){ return {}; }).then(function(j){ return { ok:r.ok, j:j }; }); })
         .then(function(res){ if (res.ok && res.j && res.j.ok){ el.innerHTML = '<div style="color:var(--accent);font-size:14px">✓ Almost there — check your inbox and click the link to confirm your weekly digest.</div>'; } else { msg.textContent = "That didn’t go through. Please try again."; msg.style.color = "#f778ba"; } })
+        .catch(function(){ msg.textContent = "Network hiccup. Please try again."; msg.style.color = "#f778ba"; });
+    };
+  };
+
+  // Watchlist email bridge: a weekly job alert pre-filled with the visitor's followed studios.
+  window.dqStudioAlertForm = function(cid, studios){
+    var el = document.getElementById(cid); if(!el) return;
+    studios = studios || [];
+    if (!studios.length){ el.innerHTML = '<div style="font-size:13px;color:var(--muted)">Follow at least one studio first.</div>'; return; }
+    var label = studios.length===1 ? studios[0] : (studios.length+" followed studios");
+    var names = studios.map(function(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;"); }).join(", ");
+    el.innerHTML = '<div style="font-size:13px;color:var(--muted);margin-bottom:6px">Weekly email of new roles at: <b style="color:var(--text)">'+names+'</b></div>'
+      + '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">'
+      + '<input id="wlEmail" type="email" placeholder="you@email.com" style="flex:1;min-width:200px;padding:8px 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text)">'
+      + '<button id="wlBtn" style="background:var(--accent);color:#0d1117;border:0;border-radius:6px;padding:8px 16px;font-weight:700;cursor:pointer">Email me weekly</button></div>'
+      + (TURNSTILE_SITEKEY ? '<div id="wlTurnstile" style="margin-top:8px"></div>' : '')
+      + '<div id="wlMsg" style="font-size:13px;min-height:16px;margin-top:6px;color:var(--muted)"></div>';
+    var wts = null;
+    if (TURNSTILE_SITEKEY && window.turnstile){ try { wts = window.turnstile.render("#wlTurnstile", { sitekey: TURNSTILE_SITEKEY, theme: "dark" }); } catch(e){} }
+    var btn = document.getElementById("wlBtn");
+    if (btn) btn.onclick = function(){
+      var email = (document.getElementById("wlEmail").value || "").trim();
+      var msg = document.getElementById("wlMsg");
+      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){ msg.textContent = "Enter a valid email."; msg.style.color = "#f778ba"; return; }
+      var tok = "";
+      if (TURNSTILE_SITEKEY){ try { tok = window.turnstile ? window.turnstile.getResponse(wts) : ""; } catch(e){} if (!tok){ msg.textContent = "Please complete the verification box."; msg.style.color = "#f778ba"; return; } }
+      msg.textContent = "Sending…"; msg.style.color = "var(--muted)";
+      try { track("watchlist_email_signup", { n: studios.length }); } catch(e){}
+      fetch(ALERTS_API + "/subscribe", { method:"POST", headers:{ "Content-Type":"application/json" }, body: JSON.stringify({ email: email, criteria: { studios: studios, src: "watchlist" }, label: label, token: tok }) })
+        .then(function(r){ return r.json().catch(function(){ return {}; }).then(function(j){ return { ok:r.ok, j:j }; }); })
+        .then(function(res){ if (res.ok && res.j && res.j.ok){ el.innerHTML = '<div style="color:var(--accent);font-size:14px">✓ Almost there — check your inbox and confirm to start your weekly studio alert.</div>'; } else { msg.textContent = "That didn’t go through. Please try again."; msg.style.color = "#f778ba"; } })
         .catch(function(){ msg.textContent = "Network hiccup. Please try again."; msg.style.color = "#f778ba"; });
     };
   };
