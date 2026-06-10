@@ -496,7 +496,11 @@ var _applyNudgeShown = false;
 function _h(s){ return String(s==null?"":s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];}); }
 function showApplyNudge(studio, disc){
   if (_applyNudgeShown) return;
-  try { if (store.get("luj-applynudge", 0)) return; } catch(e){}
+  // Skip if they've dismissed it before, or already subscribed on this device (no reason to nudge).
+  try { if (store.get("luj-applynudge", 0) || store.get("luj-subscribed", 0)) return; } catch(e){}
+  // Never stack two email asks: if the filter bar is already offering email, don't add a nudge.
+  var ab = document.getElementById("alertBar");
+  if (ab && ab.getAttribute("data-state") && ab.style.display !== "none") return;
   _applyNudgeShown = true;
   var jobsEl = document.getElementById("jobs");
   if (!jobsEl || !jobsEl.parentNode) return;
@@ -2026,6 +2030,19 @@ try {
 
   function buildCta(label, c, n){
     bar.setAttribute("data-state","cta"); bar.style.display="block";
+    var subbed=false; try{ subbed=!!store.get("luj-subscribed",0); }catch(e){}
+    if(subbed){
+      // Already subscribed on this device: go quiet, but stay available so they can add an
+      // alert for a NEW search. Muted styling, low-key "+ Add alert" instead of the loud prompt.
+      var qmsg = (n===0)
+        ? 'You\'re subscribed. Get an email when a <b style="color:#9fb499">'+escapeH(label)+'</b> role opens?'
+        : 'You\'re subscribed. Want <b style="color:#9fb499">'+escapeH(label)+'</b> emailed too?';
+      bar.innerHTML='<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;color:#7a8878;font-size:13px">'+
+        '<span>'+qmsg+'</span>'+
+        '<button id="alertCta" style="margin-left:auto;background:transparent;color:#58a6ff;border:0;font-size:13px;font-weight:600;cursor:pointer;padding:2px 4px">'+(n===0?'+ Notify me':'+ Add alert')+'</button></div>';
+      var qbtn=document.getElementById("alertCta"); if(qbtn) qbtn.onclick=function(){ openForm(label, c); };
+      return;
+    }
     var msg, btnLabel;
     if(n===0){
       msg='🔔 No <b>'+escapeH(label)+'</b> roles open right now. We\'ll email you when one opens.';
@@ -2068,9 +2085,9 @@ try {
       fetch(ALERTS_API+"/subscribe",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email:email,criteria:c,label:label,token:tsToken})})
         .then(function(r){ return r.json().catch(function(){return{};}).then(function(j){ return {ok:r.ok,j:j}; }); })
         .then(function(res){
-          if(res.ok&&res.j&&res.j.ok){ bar.setAttribute("data-state","done"); bar.innerHTML='<div style="font-size:14px;color:#58a6ff">✓ Almost there — check your inbox and click the confirmation link to start your weekly alert.</div>'; }
+          if(res.ok&&res.j&&res.j.ok){ try{ store.set("luj-subscribed",1); }catch(e){} bar.setAttribute("data-state","done"); bar.innerHTML='<div style="font-size:14px;color:#58a6ff">✓ Almost there. Check your inbox and click the confirmation link to start your weekly alert.</div>'; }
           else { msg.textContent="That didn’t go through. Please try again in a moment."; msg.style.color="#c87878"; }
-        }).catch(function(){ msg.textContent="Network hiccup — please try again."; msg.style.color="#c87878"; });
+        }).catch(function(){ msg.textContent="Network hiccup. Please try again."; msg.style.color="#c87878"; });
     };
   }
 
@@ -2090,9 +2107,14 @@ try {
   var lastSig="";
   function renderBar(){
     var c=readCriteria();
-    try{ var sig=JSON.stringify(c); if(sig!==lastSig){ lastSig=sig; if(hasFilters(c)) track("filter", filterSummary(c)); } }catch(e){}
+    var sig=""; try{ sig=JSON.stringify(c); }catch(e){}
+    var changed=(sig!==lastSig);
+    if(changed){ lastSig=sig; if(hasFilters(c)){ try{ track("filter", filterSummary(c)); }catch(e){} } }
     var state=bar.getAttribute("data-state");
-    if(state==="form"||state==="done") return; // don't clobber an open/finished form
+    // Keep an open or just-submitted form while the filters are unchanged. The moment the
+    // filters change, clear it so a subscriber can set up an alert for the NEW search.
+    if((state==="form"||state==="done") && !changed) return;
+    if(state==="form"||state==="done") bar.removeAttribute("data-state");
     var n=(typeof window.__dqCount==="number"?window.__dqCount:null);
     // No filters, or a free-text-only search that found nothing -> no email ask (the in-list
     // "no roles match" helper covers the typo case). Structured filters at zero DO get the ask.
