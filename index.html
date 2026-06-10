@@ -132,6 +132,31 @@
   .filterscroll a.dirrow { text-decoration: none; color: var(--text); }
   .filterscroll a.dirrow:hover .fname { color: var(--accent); }
   .filterscroll a.dirrow .fcount { color: var(--accent); }
+  /* modernized sidebar: header, pinned fields, collapsible accordions, chips, toggle switches */
+  .sbhead { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+  .sbttl { font-size: 15px; font-weight: 600; color: var(--text); }
+  .sbclear { background: none; border: 0; color: var(--accent); font-size: 12px; cursor: pointer; padding: 0; }
+  .fpin { margin-bottom: 12px; }
+  .acc { border-top: 1px solid var(--border); }
+  .acch { display: flex; align-items: center; gap: 8px; width: 100%; background: none; border: 0; padding: 12px 0; cursor: pointer; color: inherit; text-align: left; }
+  .acch .t { flex: 1; font-size: 12px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); }
+  .acch .bdg { font-size: 11px; font-weight: 700; color: #0d1117; background: var(--accent); border-radius: 999px; padding: 0 7px; line-height: 17px; min-width: 8px; text-align: center; }
+  .acch .bdg:empty { display: none; }
+  .acch .chev { color: var(--muted); font-size: 11px; transition: transform .15s; }
+  .acc.open .acch .chev { transform: rotate(90deg); }
+  .accb { display: none; padding: 0 0 12px; }
+  .acc.open .accb { display: block; }
+  .chips { display: flex; flex-wrap: wrap; gap: 7px; }
+  .kindchip { font-size: 12.5px; border: 1px solid var(--border); color: var(--muted); background: var(--bg); border-radius: 999px; padding: 6px 12px; cursor: pointer; }
+  .kindchip.on { border-color: var(--accent); color: var(--accent); background: rgba(88,166,255,.12); }
+  .tgl { gap: 9px; }
+  .tgl input { position: absolute; opacity: 0; width: 0; height: 0; }
+  .tgl .sw { width: 34px; height: 19px; border-radius: 999px; background: var(--border); position: relative; flex: none; transition: background .15s; }
+  .tgl .sw::after { content: ""; position: absolute; top: 2px; left: 2px; width: 15px; height: 15px; border-radius: 50%; background: var(--muted); transition: all .15s; }
+  .tgl input:checked + .sw { background: var(--accent); }
+  .tgl input:checked + .sw::after { left: 17px; background: #fff; }
+  #filterApply { display: none; }
+  @media (max-width: 820px) { #filterApply { display: block; position: sticky; bottom: 0; width: 100%; margin-top: 14px; background: var(--accent); color: #0d1117; border: 0; border-radius: 10px; padding: 12px; font-weight: 700; font-size: 14px; cursor: pointer; } }
   .count { color: var(--muted); font-size: 14px; margin-bottom: 12px; }
   .group { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 14px; overflow: hidden; }
   .group-header { display: flex; align-items: center; gap: 10px; padding: 13px 16px; cursor: pointer; font-weight: 700; user-select: none; }
@@ -336,46 +361,81 @@
   <div id="filterBackdrop" onclick="toggleFilters()"></div>
   <aside id="sidebar">
     <button id="filterClose" onclick="toggleFilters()" aria-label="Close filters">✕</button>
-    <h3>Search</h3>
-    <input type="text" id="q" placeholder="Title, studio, keyword…" oninput="render()">
-    <h3>Posted</h3>
-    <select id="age" onchange="render()">
-      <option value="0" selected>Any time</option>
-      <option value="1">Past 24 hours</option>
-      <option value="7">Past week</option>
-      <option value="30">Past 30 days</option>
-      <option value="90">Past 3 months</option>
-    </select>
-    <h3>My pipeline</h3>
-    <label class="chk" title="Hides any job you've marked applied, interviewing, or rejected, so the board stays focused on roles you haven't acted on yet."><input type="checkbox" id="hideTracked" onchange="render()">Hide tracked jobs</label>
-    <label class="chk"><input type="checkbox" id="savedOnly" onchange="render()">★ Saved (<span id="savedCount">0</span>)</label>
-    <label class="chk"><input type="checkbox" id="showDismissed" onchange="render()">Show hidden (<span id="dismissCount">0</span>)</label>
-    <h3>Ghost-job filters</h3>
-    <label class="chk" title="Talent pools are open-ended 'introduce yourself' or 'general application' listings, not specific open roles. Hidden by default; uncheck to include them."><input type="checkbox" id="hidePools" checked onchange="render()">Hide talent pools</label>
-    <label class="chk" title="Removes roles we've seen live 45+ days or that keep re-posting — the probable ghost jobs. The ⏳/↻ badges still show on every card."><input type="checkbox" id="hideStale" onchange="render()">Hide likely-stale listings</label>
-    <h3>Studio</h3>
-    <input type="text" id="studioSearch" class="filtersearch" placeholder="Search studios…"
-      oninput="renderSearchGroup('studioFilters','studioSearch',STUDIO_COUNTS,selStudios,STUDIO_LABELS,DIR_STUDIOS)">
-    <div id="studioFilters" class="filterscroll"></div>
-    <h3 title="What the company primarily does. Most are developers; a company can be more than one.">Studio type</h3>
-    <label class="chk"><input type="checkbox" id="kind-dev" onchange="toggleKind('dev',this.checked)">Developer</label>
-    <label class="chk"><input type="checkbox" id="kind-publisher" onchange="toggleKind('publisher',this.checked)">Publisher</label>
-    <label class="chk"><input type="checkbox" id="kind-codev" onchange="toggleKind('codev',this.checked)">Co-Dev / Vendor</label>
-    <label class="chk"><input type="checkbox" id="kind-tech" onchange="toggleKind('tech',this.checked)">Platform / Tech</label>
-    <h3>Discipline</h3>
-    <div id="discFilters"></div>
-    <h3>Work Type</h3>
-    <div id="workFilters"></div>
-    <h3>Seniority</h3>
-    <div id="seniorFilters"></div>
-    <h3>Region (continent)</h3>
-    <select id="region" onchange="render()">
-      <option value="">All regions</option>
-    </select>
-    <h3>Country</h3>
-    <input type="text" id="countrySearch" class="filtersearch" placeholder="Search countries…"
-      oninput="renderSearchGroup('countryFilters','countrySearch',COUNTRY_COUNTS,selCountries,null)">
-    <div id="countryFilters" class="filterscroll"></div>
+    <div class="sbhead"><span class="sbttl">Filters</span><button type="button" class="sbclear" onclick="clearAllFilters()">Clear all</button></div>
+
+    <div class="fpin"><label class="flabel">Search</label>
+      <input type="text" id="q" placeholder="Title, studio, keyword…" oninput="render()"></div>
+    <div class="fpin"><label class="flabel">Posted</label>
+      <select id="age" onchange="render()">
+        <option value="0" selected>Any time</option>
+        <option value="1">Past 24 hours</option>
+        <option value="7">Past week</option>
+        <option value="30">Past 30 days</option>
+        <option value="90">Past 3 months</option>
+      </select></div>
+
+    <div class="acc open" data-sec="studio">
+      <button type="button" class="acch" onclick="toggleAcc(this)"><span class="t">Studio</span><span class="bdg"></span><span class="chev">▸</span></button>
+      <div class="accb">
+        <input type="text" id="studioSearch" class="filtersearch" placeholder="Search studios…"
+          oninput="renderSearchGroup('studioFilters','studioSearch',STUDIO_COUNTS,selStudios,STUDIO_LABELS,DIR_STUDIOS)">
+        <div id="studioFilters" class="filterscroll"></div>
+      </div>
+    </div>
+
+    <div class="acc open" data-sec="kind">
+      <button type="button" class="acch" onclick="toggleAcc(this)"><span class="t" title="What the company primarily does. Most are developers; a company can be more than one.">Studio type</span><span class="bdg"></span><span class="chev">▸</span></button>
+      <div class="accb"><div class="chips">
+        <button type="button" class="kindchip" data-k="dev" onclick="kindChip(this,'dev')">Developer</button>
+        <button type="button" class="kindchip" data-k="publisher" onclick="kindChip(this,'publisher')">Publisher</button>
+        <button type="button" class="kindchip" data-k="codev" onclick="kindChip(this,'codev')">Co-Dev / Vendor</button>
+        <button type="button" class="kindchip" data-k="tech" onclick="kindChip(this,'tech')">Platform / Tech</button>
+      </div></div>
+    </div>
+
+    <div class="acc" data-sec="work">
+      <button type="button" class="acch" onclick="toggleAcc(this)"><span class="t">Work type</span><span class="bdg"></span><span class="chev">▸</span></button>
+      <div class="accb"><div id="workFilters"></div></div>
+    </div>
+
+    <div class="acc" data-sec="sen">
+      <button type="button" class="acch" onclick="toggleAcc(this)"><span class="t">Seniority</span><span class="bdg"></span><span class="chev">▸</span></button>
+      <div class="accb"><div id="seniorFilters"></div></div>
+    </div>
+
+    <div class="acc" data-sec="region">
+      <button type="button" class="acch" onclick="toggleAcc(this)"><span class="t">Region</span><span class="bdg"></span><span class="chev">▸</span></button>
+      <div class="accb"><select id="region" onchange="render()"><option value="">All regions</option></select></div>
+    </div>
+
+    <div class="acc" data-sec="country">
+      <button type="button" class="acch" onclick="toggleAcc(this)"><span class="t">Country</span><span class="bdg"></span><span class="chev">▸</span></button>
+      <div class="accb">
+        <input type="text" id="countrySearch" class="filtersearch" placeholder="Search countries…"
+          oninput="renderSearchGroup('countryFilters','countrySearch',COUNTRY_COUNTS,selCountries,null)">
+        <div id="countryFilters" class="filterscroll"></div>
+      </div>
+    </div>
+
+    <div class="acc" data-sec="pipeline">
+      <button type="button" class="acch" onclick="toggleAcc(this)"><span class="t">My pipeline</span><span class="bdg"></span><span class="chev">▸</span></button>
+      <div class="accb">
+        <label class="chk tgl" title="Hides any job you've marked applied, interviewing, or rejected, so the board stays focused on roles you haven't acted on yet."><input type="checkbox" id="hideTracked" onchange="render()"><span class="sw"></span>Hide tracked jobs</label>
+        <label class="chk tgl"><input type="checkbox" id="savedOnly" onchange="render()"><span class="sw"></span>★ Saved (<span id="savedCount">0</span>)</label>
+        <label class="chk tgl"><input type="checkbox" id="showDismissed" onchange="render()"><span class="sw"></span>Show hidden (<span id="dismissCount">0</span>)</label>
+      </div>
+    </div>
+
+    <div class="acc" data-sec="quality">
+      <button type="button" class="acch" onclick="toggleAcc(this)"><span class="t">Listing quality</span><span class="bdg"></span><span class="chev">▸</span></button>
+      <div class="accb">
+        <label class="chk tgl" title="Talent pools are open-ended 'introduce yourself' or 'general application' listings, not specific open roles. Hidden by default; uncheck to include them."><input type="checkbox" id="hidePools" checked onchange="render()"><span class="sw"></span>Hide talent pools</label>
+        <label class="chk tgl" title="Removes roles we've seen live 45+ days or that keep re-posting, the probable ghost jobs. The ⏳/↻ badges still show on every card."><input type="checkbox" id="hideStale" onchange="render()"><span class="sw"></span>Hide likely-stale listings</label>
+      </div>
+    </div>
+
+    <div id="discFilters" hidden></div>
+    <button id="filterApply" type="button" onclick="toggleFilters()">Show results</button>
   </aside>
 
   <main>
@@ -705,7 +765,7 @@ function checkboxes(el, items, cls, counts){
   document.getElementById(el).innerHTML = items.map(i=>
     `<label class="chk"><input type="checkbox" class="${cls}" value="${i}" onchange="render()"><span class="fname">${i}</span>${counts?`<span class="fcount">${counts[i]||0}</span>`:""}</label>`).join("");
 }
-checkboxes("discFilters", DISC, "f-d", DISC_COUNTS);
+checkboxes("discFilters", DISC, "f-d", DISC_COUNTS); // hidden in the sidebar (the matrix is the visible discipline filter); kept so Best-fit click-through + active-filter chips still work
 checkboxes("workFilters", WORK, "f-w", WORK_COUNTS);
 checkboxes("seniorFilters", SEN, "f-s", SEN_COUNTS);
 document.getElementById("region").innerHTML += REGIONS.map(r=>`<option value="${r}">${r} (${REGION_COUNTS[r]||0})</option>`).join("");
@@ -868,7 +928,7 @@ function render(){
   const newCount = showDismissed ? 0 : list.filter(isNewForYou).length;
   if (quickNew && !showDismissed) list = list.filter(isNewForYou);
 
-  try { window.__dqCount = list.length; } catch(e) {} // current result count, for analytics
+  try { window.__dqCount = list.length; updateAccBadges(); } catch(e) {} // current result count, for analytics
 
   renderMatrix(base);
   renderQuickbar(newCount);
@@ -1053,7 +1113,7 @@ function renderActiveFilters(){
   [...selStudios].forEach(s => add(String(s).replace(/^@/, ''), () => { selStudios.delete(s); renderSearchGroup("studioFilters","studioSearch",STUDIO_COUNTS,selStudios,STUDIO_LABELS,DIR_STUDIOS); }));
   [...selCountries].forEach(c => add(c, () => { selCountries.delete(c); renderSearchGroup("countryFilters","countrySearch",COUNTRY_COUNTS,selCountries,null); }));
   [...selRegionsQuick].forEach(r => add(r, () => selRegionsQuick.delete(r)));
-  [...selKinds].forEach(k => add('Type: ' + (KIND_LABELS[k] || k), () => { selKinds.delete(k); const b = document.getElementById('kind-' + k); if (b) b.checked = false; }));
+  [...selKinds].forEach(k => add('Type: ' + (KIND_LABELS[k] || k), () => { selKinds.delete(k); const c = document.querySelector('.kindchip[data-k="' + k + '"]'); if (c) c.classList.remove('on'); }));
   // Sidebar Discipline / Work Type / Seniority checkboxes — were filtering silently with no chip
   // and no clear. Now each shows as a removable chip like every other filter.
   const _uncheck = (cls, v) => { const cb=[...document.querySelectorAll('.'+cls+':checked')].find(c=>c.value===v); if(cb) cb.checked=false; };
@@ -1077,7 +1137,7 @@ function clearAllFilters(){
   document.getElementById('age').selectedIndex = 0;  document.getElementById('hideStale').checked = false;
   selCells.clear(); selSubs.clear(); selHubs.clear(); selRegionsQuick.clear(); quickRemote = false; quickNew = false;
   selStudios.clear(); selCountries.clear();
-  selKinds.clear(); ['dev','publisher','codev','tech'].forEach(k => { const b = document.getElementById('kind-' + k); if (b) b.checked = false; });
+  selKinds.clear(); document.querySelectorAll('.kindchip.on').forEach(c => c.classList.remove('on'));
   ['f-d','f-w','f-s'].forEach(cls => document.querySelectorAll('.'+cls+':checked').forEach(c => c.checked = false));
   renderSearchGroup("studioFilters","studioSearch",STUDIO_COUNTS,selStudios,STUDIO_LABELS,DIR_STUDIOS);
   renderSearchGroup("countryFilters","countrySearch",COUNTRY_COUNTS,selCountries,null);
@@ -1090,6 +1150,24 @@ function toggleFilters(){
   const open = sb.classList.toggle("open");
   bd.classList.toggle("show", open);
   document.body.classList.toggle("filters-open", open); // lock background scroll while the drawer is open
+}
+// ---- modernized sidebar: collapsible accordions, studio-type chips, active-count badges ----
+function toggleAcc(btn){ btn.parentElement.classList.toggle("open"); }
+function kindChip(el, kind){ toggleKind(kind, el.classList.toggle("on")); }
+function updateAccBadges(){
+  const set = (sec, n) => { const a = document.querySelector('.acc[data-sec="' + sec + '"] .bdg'); if (a) a.textContent = n ? String(n) : ""; };
+  try {
+    set("studio", selStudios.size);
+    set("kind", selKinds.size);
+    set("work", checked("f-w").length);
+    set("sen", checked("f-s").length);
+    set("region", document.getElementById("region").value ? 1 : 0);
+    set("country", selCountries.size);
+    let pl = 0; ["hideTracked","savedOnly","showDismissed"].forEach(id => { const e = document.getElementById(id); if (e && e.checked) pl++; });
+    set("pipeline", pl);
+    const hs = document.getElementById("hideStale"); set("quality", hs && hs.checked ? 1 : 0);
+    const ap = document.getElementById("filterApply"); if (ap) ap.textContent = "Show " + (window.__dqCount || 0).toLocaleString() + " jobs";
+  } catch(e){}
 }
 
 // "Who do I know?" — opens LinkedIn people search for the user's 1st-degree
