@@ -1233,7 +1233,7 @@ function renderHubbar(availHubs){
     keys.map(h=>`<button class="qchip hub ${selHubs.has(h)?'on':''}" onclick="toggleHub('${h.replace(/'/g,"\\'")}')">${h} <span class="subn">${availHubs[h]}</span></button>`).join("");
 }
 
-function toggleCell(dn, sn){ const k = dn+"|"+sn; selCells.has(k) ? selCells.delete(k) : selCells.add(k); render(); }
+function toggleCell(dn, sn){ const k = dn+"|"+sn; selCells.has(k) ? selCells.delete(k) : selCells.add(k); try{ window.dqTrack && window.dqTrack("grid_cell", { d: dn, s: sn }); }catch(e){} render(); }
 function toggleSub(s){ selSubs.has(s) ? selSubs.delete(s) : selSubs.add(s); render(); }
 function toggleHub(h){ selHubs.has(h) ? selHubs.delete(h) : selHubs.add(h); render(); }
 function toggleQuickRemote(){ quickRemote = !quickRemote; render(); }
