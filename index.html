@@ -2152,7 +2152,7 @@ function renderDirectory(){
     `<div class="dirsub">Great studios whose openings we can't list individually yet — these links go straight to their careers page.</div>
      <div class="dirgrid">` +
     list.map(d =>
-      `<a class="dircard" href="${d.url}" target="_blank" rel="noopener">
+      `<a class="dircard" data-st="${(d.name||'').replace(/"/g,'')}" href="${d.url}" target="_blank" rel="noopener">
          <div class="dn">${d.name}</div>
          ${d.note?`<div class="dnote">${d.note}</div>`:""}
          <div class="dgo">View careers →</div>
@@ -2172,7 +2172,7 @@ function renderMoon(){
     `<div class="dirsub">Smaller and independent studios, including many who asked to be listed. These links go straight to their careers pages.</div>`;
   const body = MOON_STUDIOS.length
     ? `<div class="moongrid">` + MOON_STUDIOS.map(d =>
-        `<a class="moonchip" href="${d.url}" target="_blank" rel="noopener" ${d.note?`title="${(d.note||'').replace(/"/g,'')}"`:""}>${d.name} ↗</a>`).join("") + `</div>`
+        `<a class="moonchip" data-st="${(d.name||'').replace(/"/g,'')}" href="${d.url}" target="_blank" rel="noopener" ${d.note?`title="${(d.note||'').replace(/"/g,'')}"`:""}>${d.name} ↗</a>`).join("") + `</div>`
     : `<div class="moonempty">No indie studios listed here yet. Run a small or independent studio? <a href="mailto:${SUBMIT_EMAIL}?subject=${encodeURIComponent("Add our studio to DevQuest")}">Get listed →</a></div>`;
   el.innerHTML = head + body;
 }
@@ -2254,8 +2254,8 @@ try {
       var a = t.closest && t.closest("a");
       if(!a) return;
       if(a.classList.contains("knowbtn")) track("who_do_i_know",{});
-      else if(a.classList.contains("dircard")||a.classList.contains("dirrow")) track("directory_click",{});
-      else if(a.classList.contains("moonchip")) track("moon_click",{});
+      else if(a.classList.contains("dircard")||a.classList.contains("dirrow")) track("directory_click",{st:a.getAttribute("data-st")||""});
+      else if(a.classList.contains("moonchip")) track("moon_click",{st:a.getAttribute("data-st")||""});
       else if(a.closest("#jobs")) track("apply_click",{});
     }catch(_){}
   }, true);

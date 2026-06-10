@@ -1984,6 +1984,7 @@ function buildTrends(runCounts, okSet, discCounts, healthy) {
     directory: DIRECTORY,
     moon: MOON,
     studioTags: STUDIO_KIND,
+    studioList: STUDIOS.map(s => ({ name: s.name, type: s.type })),   // scraped ("mainland") registry, for the stats-page studio lookup
     trends,
   };
   const dir = __dirname;
