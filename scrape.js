@@ -718,7 +718,16 @@ function extractSalary(text) {
     const m3 = text.match(/([\d]{1,3}(?:,\d{3})+(?:\.\d+)?)\s*(?:-|–|—|to)\s*([\d]{1,3}(?:,\d{3})+(?:\.\d+)?)\s*(?:USD|CAD|EUR|GBP)\b/i);
     if (m3) { lo = parseFloat(m3[1].replace(/,/g, "")); hi = parseFloat(m3[2].replace(/,/g, "")); }
   }
-  if (lo == null || hi == null) return null;
+  if (lo == null || hi == null) {
+    // 4) single annual figure, anchored to a salary keyword so we never grab stray $ amounts
+    // (sign-on bonuses, budgets, etc.). e.g. careers-page bodies: "Salary: $156,000 USD".
+    const m4 = text.match(/(?:salary|compensation|base\s*pay|base\s*salary|total\s*comp(?:ensation)?)\b[^$]{0,40}\$\s?([\d][\d,.]*)\s*([kK])?/i);
+    if (m4) {
+      let n = parseFloat(m4[1].replace(/,/g, "")); if (m4[2]) n *= 1000;
+      if (n >= 10000 && n <= 2000000) return "$" + Math.round(n / 1000) + "K";
+    }
+    return null;
+  }
   // sanity: annual USD salaries only (skip hourly rates and nonsense)
   if (!(lo >= 10000 && hi > lo && hi <= 2000000)) return null;
   const f = n => "$" + Math.round(n / 1000) + "K";
@@ -1776,7 +1785,7 @@ function applyListingHistory(jobs) {
 // every job already has a seen.json entry to annotate.
 const SALARY_MAX_FETCH = 400;     // detail fetches per run (bounds runtime)
 const SALARY_RECHECK = 30 * DAY;  // re-open "no salary found" jobs at most this often
-const SALARY_CACHE_VERSION = 2;   // bump to re-check previously-empty results after parser/fetcher upgrades
+const SALARY_CACHE_VERSION = 3;   // bump to re-check previously-empty results after parser/fetcher upgrades (v3: single-value salaries)
 
 async function fetchDetailJson(url, ms = 15000) {
   const ctrl = new AbortController();
