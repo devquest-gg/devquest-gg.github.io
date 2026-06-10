@@ -384,7 +384,6 @@
       <button id="tabList" class="active" onclick="setView('list')">☰ List</button>
       <button id="tabMap" onclick="setView('map')">🗺️ Map</button>
       <button id="tabStats" onclick="setView('stats')">📊 Trends</button>
-      <button id="tabPulse" onclick="setView('pulse')">📈 Pulse</button>
       <button id="tabBest" onclick="setView('bestfit')">🎯 Best fit</button>
     </div>
     <div id="pulseStrip"></div>
@@ -1262,7 +1261,7 @@ function dirCoords(d){
 let map = null, markerLayer = null, view = "list";
 function setView(v){
   view = v;
-  for (const [tab, name] of [["tabList","list"],["tabMap","map"],["tabStats","stats"],["tabPulse","pulse"],["tabBest","bestfit"]])
+  for (const [tab, name] of [["tabList","list"],["tabMap","map"],["tabStats","stats"],["tabBest","bestfit"]])
     document.getElementById(tab).classList.toggle("active", v===name);
   document.getElementById("jobs").style.display = v==="list" ? "" : "none";
   document.getElementById("directory").style.display = v==="list" ? "" : "none";
@@ -1278,7 +1277,6 @@ function setView(v){
   document.getElementById("bestfitWrap").style.display = v==="bestfit" ? "block" : "none";
   if (v === "map") renderMap();
   if (v === "stats") renderStats();
-  if (v === "pulse") renderPulse();
   if (v === "bestfit") renderBestFit();
 }
 
@@ -1650,6 +1648,7 @@ function renderStats(){
     + `<div class="ptile"><div class="pnum" style="font-size:18px;line-height:1.5">${mp.topStudio}</div><div class="plabelt">most active studio</div></div>`
     + `</div>`;
   document.getElementById("statsWrap").innerHTML = trendHead +
+    buildMomentum() +
     `<div class="statgrid">` +
     hiringCard +
     remoteCard +
@@ -1661,6 +1660,55 @@ function renderStats(){
     barChart("Posting age", buckets.filter(b=>b[1]>0)) +
     ghStudioCard + ghListCard +
     salCard + health + `</div>`;
+}
+
+// ---- "What's moving this week": momentum block, folded into the Trends tab ----
+// All derived from trends.json (per-studio + per-discipline daily counts) — momentum, not news.
+function buildMomentum(){
+  const T = (window.JOBS_DATA && window.JOBS_DATA.trends) || null;
+  if (!T || !T.studios || !Object.keys(T.studios).length) return "";
+  const enough = (T.span||0) >= 8;
+  const sArr = Object.keys(T.studios).map(name => Object.assign({name}, T.studios[name]));
+  const sumNow = sArr.reduce((a,s)=>a+(s.now||0),0);
+  const sumD7  = sArr.reduce((a,s)=>a+(s.d7!=null?s.d7:s.now),0);
+  const netWeek = sumNow - sumD7;
+  const studiosUp = sArr.filter(s=>s.d7!=null && s.now>s.d7).length;
+  const studiosDown = sArr.filter(s=>s.d7!=null && s.now<s.d7).length;
+  let len=0; for (const s of sArr){ if (s.series && s.series.length>len) len=s.series.length; }
+  const totalSeries=[]; for (let i=0;i<len;i++){ let sum=0, any=false; for (const s of sArr){ const v=s.series&&s.series[i]; if(v!=null){sum+=v;any=true;} } totalSeries.push(any?sum:null); }
+  const klass=(now,base)=>{ const d=now-base, p=base>0?d/base:(now>0?1:0); if(now===0&&base>0)return"dark"; if(p>=0.15&&d>=2)return"up"; if(p<=-0.15&&d<=-2)return"down"; return"flat"; };
+  const sRows=sArr.map(s=>{ const base=s.d30!=null?s.d30:(s.d7!=null?s.d7:s.now); return {name:s.name, now:s.now, delta:s.now-base, c:klass(s.now,base), series:s.series}; });
+  const up=sRows.filter(r=>r.c==="up").sort((a,b)=>b.delta-a.delta);
+  const down=sRows.filter(r=>r.c==="down"||r.c==="dark").sort((a,b)=>a.delta-b.delta);
+  const srow=r=>`<div class="pulserow"><span class="plabel" title="${r.name}">${r.name}${r.c==="dark"?' <span class="darktag">board quiet</span>':''}</span><span class="spark">${sparkline(r.series)}</span><span class="pulsenum">${r.now}<span class="pdelta p-${r.c}">${r.delta>0?'+':''}${r.delta}</span></span></div>`;
+  const dArr=T.disc?Object.keys(T.disc).map(name=>Object.assign({name}, T.disc[name])):[];
+  const dRows=dArr.map(s=>{ const base=s.d30!=null?s.d30:(s.d7!=null?s.d7:s.now); return {name:s.name, now:s.now, delta:s.now-base, series:s.series}; });
+  const hot=dRows.filter(r=>r.delta>0).sort((a,b)=>b.delta-a.delta).slice(0,6);
+  const cool=dRows.filter(r=>r.delta<0).sort((a,b)=>a.delta-b.delta).slice(0,6);
+  const drow=(r,sgn)=>`<div class="pulserow"><span class="plabel">${r.name}</span><span class="spark">${sparkline(r.series)}</span><span class="pulsenum">${r.now}<span class="pdelta p-${sgn}">${r.delta>0?'+':''}${r.delta}</span></span></div>`;
+  const fresh=enough?sArr.filter(s=>s.d7==null && (s.now||0)>0).sort((a,b)=>b.now-a.now).slice(0,12):[];
+  const card=(t,inner)=>`<div class="statcard"><h3>${t}</h3>${inner}</div>`;
+  const tM=(num,label,c)=>`<div class="ptile"><div class="pnum ${c||''}">${num}</div><div class="plabelt">${label}</div></div>`;
+  const tilesRow = enough
+    ? `<div class="pulsestats">`
+      + tM((netWeek>0?'+':'')+netWeek.toLocaleString(),'net roles vs last week', netWeek>0?'p-up':netWeek<0?'p-down':'p-flat')
+      + tM(studiosUp,'studios hiring more')
+      + tM(studiosDown,'studios slowing')
+      + `<div class="ptile"><div style="height:28px;display:flex;align-items:center;justify-content:center">${sparkline(totalSeries)||'<span style="color:var(--muted);font-size:12px">building</span>'}</div><div class="plabelt">whole-market trend</div></div>`
+      + `</div>`
+    : "";
+  const moverHint='<div class="xhint">No clear movers yet. Fills in as we track studios over the coming days.</div>';
+  const discHint='<div class="xhint">Per-discipline history is just starting to bank. Check back in a few days.</div>';
+  return `<div style="margin:6px 0 4px"><h2 class="pulsehead">What's moving this week</h2>`
+    + `<div class="dirsub">${enough?'Change vs ~30 days ago, from how many roles each studio lists over time. Momentum, not official layoff news.':'<b>Momentum is still building.</b> The week-over-week totals appear once we have about 8 days of history; the movers below are live as soon as a studio shifts.'}</div>`
+    + tilesRow
+    + `<div class="statgrid">`
+    + card('📈 Ramping up', up.length?up.map(srow).join(''):moverHint)
+    + card('📉 Pulling back / quiet', down.length?down.map(srow).join(''):moverHint)
+    + card('🔥 Disciplines heating up', hot.length?hot.map(r=>drow(r,'up')).join(''):discHint)
+    + card('🧊 Disciplines cooling', cool.length?cool.map(r=>drow(r,'down')).join(''):'<div class="xhint">Nothing clearly cooling yet.</div>')
+    + card('✨ New studios this week', fresh.length?fresh.map(r=>`<div class="pulserow"><span class="plabel">${r.name}</span><span class="pulsenum">${r.now} role${r.now===1?'':'s'}</span></div>`).join(''):(enough?'<div class="xhint">No studios newly added in the last week.</div>':'<div class="xhint">Starts once we have a full week of history.</div>'))
+    + `</div></div>`;
 }
 
 // ---- Pulse: hiring momentum from our own listing history ---------------------
