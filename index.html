@@ -577,7 +577,9 @@ function updateFollowTab(){
   if (!t) return;
   // badge = everything personal: tracked (pipeline) + saved + followed studios
   let n = 0; try { n = Object.keys(appStatus).length + saved.size + FOLLOWS.size; } catch(e){}
-  t.innerHTML = "★ My Jobs" + (n ? ' <span style="opacity:.75">' + n + '</span>' : "");
+  // Light the star gold whenever the tab holds anything personal; stays lit while populated.
+  const star = n ? '<span style="color:var(--gold)">★</span>' : '★';
+  t.innerHTML = star + " My Jobs" + (n ? ' <span style="opacity:.75">' + n + '</span>' : "");
 }
 window.dqShowFollowEmail = function(){
   const box = document.getElementById("followEmailBox"); if (!box) return;
