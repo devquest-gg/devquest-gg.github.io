@@ -39,7 +39,6 @@ const DIRECTORY = [
   // Notable studios we can't cleanly scrape yet (Xbox first-party / custom corporate portals) — link-outs for now.
   { name: "Obsidian Entertainment", url: "https://www.obsidian.net/careers", note: "Pillars of Eternity, Avowed — Xbox Game Studios", city: "Irvine, CA" },
   { name: "Square Enix", url: "https://www.square-enix-games.com/en_us/careers", note: "Final Fantasy, Dragon Quest — JP publisher", city: "Tokyo, Japan" },
-  { name: "NetEase Games", url: "https://www.neteasegames.com/careers/en/", note: "Marvel Rivals, Naraka — global/CN publisher", city: "Hangzhou, China" },
   { name: "LightSpeed Studios", url: "https://www.lightspeed-studios.com/join-us.html", note: "PUBG Mobile — Tencent", city: "Los Angeles, CA" },
   // ---- June 2026: requested / community additions (link-outs; no clean scrapeable feed yet) ----
   { name: "PUBG Studios", url: "https://www.krafton.com/en/careers/jobs/", note: "PUBG: Battlegrounds — Krafton", city: "Seoul, South Korea" },
@@ -70,7 +69,6 @@ const DIRECTORY = [
   { name: "Garena", url: "https://careers.garena.com/", note: "Free Fire · Sea Ltd (Singapore)", city: "Singapore" },
   { name: "Plarium", url: "https://company.plarium.com/en/career/", note: "RAID: Shadow Legends · mobile (Israel)", city: "Herzliya, Israel" },
   { name: "SuperPlay", url: "https://www.superplay.co/careers", note: "Dice Dreams · casual mobile (Israel)", city: "Tel Aviv, Israel" },
-  { name: "Outfit7", url: "https://outfit7.com/careers/", note: "Talking Tom · mobile/family (Cyprus + Ljubljana)", city: "Limassol, Cyprus" },
   { name: "Playrix", url: "https://playrix.com/job/open/", note: "Gardenscapes, Township · custom portal (Dublin)", city: "Dublin, Ireland" },
   // batch 5 (2026-06-11): big names with custom / no-API careers sites (christran sweep holdouts) — browse directly.
   { name: "Guerrilla Games", url: "https://www.guerrilla-games.com/join", note: "Horizon · Sony first-party, custom board (Amsterdam)", city: "Amsterdam, Netherlands" },
@@ -292,6 +290,14 @@ const STUDIOS = [
   { name: "Kwalee", type: "lever", token: "kwalee", region: "eu" },                // mobile + PC publisher (UK, Lever EU)
   { name: "Double Eleven", type: "workable", token: "double-eleven" },             // Minecraft Dungeons, Prison Architect 2 (UK/KL)
   { name: "Tactical Adventures", type: "teamtailor", token: "tacticaladventures", host: "tacticaladventures.teamtailor.com" }, // Solasta (Paris)
+  // Promoted from island/moon (2026-06-11): link-outs that turned out to have a scrapeable feed.
+  { name: "NetEase Games", type: "greenhouse", token: "neteasegames" },            // was island — Western/UK roles
+  { name: "Outfit7", type: "greenhouse", token: "outfit7" },                       // was island — Talking Tom (Ljubljana)
+  { name: "Innersloth", type: "bamboohr", token: "innersloth" },                   // was moon — Among Us
+  { name: "Balor Games", type: "ashby", token: "balorgames" },                     // was moon
+  { name: "Coffee Stain Studios", type: "teamtailor", token: "coffeestain", host: "jobs.coffeestain.com" }, // was moon — Satisfactory
+  { name: "Ghost Ship Games", type: "teamtailor", token: "ghostship", host: "jobs.ghostship.dk" },          // was moon — Deep Rock Galactic
+  { name: "Stunlock Studios", type: "teamtailor", token: "stunlock", host: "jobs.stunlockstudios.com" },    // was moon — V Rising
   { name: "Quantic Dream", type: "lever", token: "quanticdream", region: "eu" },   // Detroit: Become Human (FR, Lever EU)
   { name: "Don't Nod", type: "smartrecruiters", token: "DONTNOD" },                // Life is Strange (FR)
 
