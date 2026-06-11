@@ -308,6 +308,7 @@ const STUDIOS = [
   { name: "Panic Button", type: "greenhouse", token: "panicbutton" },              // porting studio (Austin) — Doom Switch
   { name: "SkyBox Labs", type: "lever", token: "skyboxlabs" },                     // Minecraft/Halo co-dev (Vancouver)
   { name: "Keen Games", type: "teamtailor", token: "keengames", host: "jobs.keengames.com" }, // Enshrouded (Frankfurt) — not Keen Software House
+  { name: "Neowiz", type: "lever", token: "neowiz" },                              // Lies of P / ROUND8 Studio (Korea) — from Alexander Rehm sweep
   { name: "Quantic Dream", type: "lever", token: "quanticdream", region: "eu" },   // Detroit: Become Human (FR, Lever EU)
   { name: "Don't Nod", type: "smartrecruiters", token: "DONTNOD" },                // Life is Strange (FR)
 
