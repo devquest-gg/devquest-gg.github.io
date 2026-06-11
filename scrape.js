@@ -654,13 +654,35 @@ const DISCIPLINE_MAP = {
   it: "IT & Security", "information technology": "IT & Security",
 };
 
+// Strong, role-defining title signals (EN + FR). When a title clearly names a craft, that beats
+// whatever department the feed filed it under — many studios file e.g. a "Security Engineer" under
+// a "Security" dept, which would otherwise land in the Business & Ops catch-all. Order matters:
+// Audio/QA/Art/Animation/Design run before Engineering so "Audio Engineer" / "QA Engineer" /
+// "Technical Artist" map to their craft; Engineering runs before Data so an "ML Engineer" is
+// Engineering while an "ML Scientist/Researcher" stays Data. Returns a canonical discipline or null.
+function strongTitleDiscipline(t) {
+  if (/developer (relations|engagement|evangelis|advocat|marketing|outreach|experience rep)|\bdev ?rel\b|community developer|content developer|video content|publisher developer relations/.test(t)) return "Marketing";
+  if (/\baudio\b|sound design|\bcomposer\b|music design|\bsonore\b|conception sonore/.test(t)) return "Audio";
+  if (/\bqa\b|quality assurance|\btester\b|\bsdet\b|test (engineer|analyst|lead|automation|specialist)|quality (engineer|analyst|specialist)|assurance qualit/.test(t)) return "QA";
+  if (/art director|\bartist\b|\bartiste\b|direct(eur|rice|ion) artistique|\bart lead\b|lead artist|concept art|\bvfx\b|lighting (artist|lead)|environment artist|character artist|technical artist/.test(t)) return "Art";
+  if (/\banimator\b|animation (director|lead|manager|supervisor)|\brigging\b/.test(t)) return "Animation";
+  if (/game design|level design|systems? design|narrative design|\bwriter\b|\bscénariste\b|encounter design|combat design|content design|economy design|quality design|gameplay design|ux design|ui design|concepteur|conceptrice|conception de jeu/.test(t)) return "Design";
+  if ((/(engineer|programmer|developer|architect)\b|architecte|ingénieur|programmeur|développeur/.test(t)) && !/\bsales\b|customer success|account exec|solutions? consultant/.test(t)) return "Engineering";
+  if (/machine learning|\bml\b ?(scientist|researcher|ops)|data scien|data analytics|deep learning|\bnlp\b/.test(t)) return "Data & Analytics";
+  if (/\b(project|programme?|delivery|release|portfolio)\s+(manager|management|coordinator|lead|director|assistant)\b|technical (program|project) manager|scrum master|agile coach|\bpmo\b|\bproducer\b|production (coordinator|manager|director|assistant)|product (manager|owner|management)|head of product|producteur|productrice|réalisat(eur|rice)|gestionnaire de (projet|programme)|chef de (projet|produit)|coordonnateur de projet/.test(t)) return "Production";
+  return null;
+}
+
 function mapDiscipline(raw, title) {
+  const t = (title || "").toLowerCase();
+  // 1) Strong, role-defining title wins over the department (fixes the Business & Ops catch-all).
+  const strong = strongTitleDiscipline(t);
+  if (strong) return strong;
+  // 2) Department mapping.
   const key = (raw || "").toLowerCase().trim();
   if (DISCIPLINE_MAP[key]) return DISCIPLINE_MAP[key];
   for (const [k, v] of Object.entries(DISCIPLINE_MAP)) if (key.includes(k)) return v;
-  // Title-keyword fallback. ORDER MATTERS — most specific first. This is what
-  // keeps roles out of the "Business & Ops" catch-all, so it's fairly thorough.
-  const t = title.toLowerCase();
+  // 3) Broader, less-specific title fallback (bare "designer", "ux", "analytics"…).
   // "Developer" shows up in many NON-engineering titles — developer relations / advocacy /
   // evangelism, community & content developers, developer marketing. Catch those first so they
   // don't fall into the Engineering bucket below (they're really Marketing / DevRel roles).
@@ -2126,6 +2148,18 @@ function buildTrends(runCounts, okSet, discCounts, healthy, salInfo, skillCounts
       console.error(`FAIL ${studio.name}: ${e.message}`);
     }
   }
+  // Drop clearly non-game-industry roles that some studios post on the same board — facility /
+  // welfare / manual-service jobs (e.g. campus massage therapist, car care, cafeteria, janitor).
+  // Title-based and deliberately conservative: matched ONLY on the role title (never the hiring
+  // program), and tuned so it catches zero real game / business / IT roles (validated against live
+  // data). NOTE: "chef" is intentionally EXCLUDED — it means "lead/head" in French ("Chef d'équipe")
+  // at our many Québécois studios, so blocking it would wrongly drop real lead roles.
+  // ("culinary" and bare "landscap" are deliberately omitted — they'd catch real roles like a
+  // cooking-game "Culinary Designer" or a "Landscape Artist"; we use "landscaping" for grounds work.)
+  const NON_GAME_TITLE = /\bmassage\b|masseu|car care|car wash|\bvalet\b|\bbarista\b|cafeteria|kitchen (porter|staff|assistant|hand|aide)|security guard|security officer|\bjanitor\b|custodian|housekeep|cleaning (staff|crew|attendant|service)|\bcleaner\b|\bgardener\b|landscaping|groundskeep|shuttle driver|delivery driver|\bchauffeur\b|\bnurse\b|\bcaregiver\b|physical therapist|occupational therapist|facilit(?:y|ies) (?:assistant|attendant|helper|worker|staff|aide)/i;
+  let droppedNonGame = 0;
+  for (let i = all.length - 1; i >= 0; i--) { if (NON_GAME_TITLE.test(all[i].title || "")) { all.splice(i, 1); droppedNonGame++; } }
+  if (droppedNonGame) console.log(`Filtered out ${droppedNonGame} non-game facility/service role(s).`);
   // Tech tags: fetchers with full descriptions already set j.tech; for the rest (SmartRecruiters,
   // Workday, Teamtailor, Workable…) fall back to title-based tagging so every job has the field.
   for (const j of all) if (!j.tech) j.tech = extractTech(j.title || "");
