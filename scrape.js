@@ -647,6 +647,10 @@ function mapDiscipline(raw, title) {
   // Title-keyword fallback. ORDER MATTERS — most specific first. This is what
   // keeps roles out of the "Business & Ops" catch-all, so it's fairly thorough.
   const t = title.toLowerCase();
+  // "Developer" shows up in many NON-engineering titles — developer relations / advocacy /
+  // evangelism, community & content developers, developer marketing. Catch those first so they
+  // don't fall into the Engineering bucket below (they're really Marketing / DevRel roles).
+  if (/developer (relations|engagement|evangelis|advocat|marketing|outreach|experience rep)|\bdev ?rel\b|community developer|content developer|video content|publisher developer relations/.test(t)) return "Marketing";
   if (/engineer|programmer|\bdeveloper|software|\bsre\b|devops|\bsdet\b/.test(t)) return "Engineering";
   if (/product (manager|owner|management)|head of product/.test(t)) return "Production"; // PMs grouped with Production
   if (/artist|concept|\bvfx\b|lighting|illustrat|sculpt/.test(t)) return "Art";
