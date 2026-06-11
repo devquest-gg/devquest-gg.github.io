@@ -1914,26 +1914,7 @@ function renderStats(){
         : `<div class="xhint">Not enough data yet — needs studios with 15+ current listings that publish a salary.</div>`)
     + `<div class="xhint">Share of each studio's current listings that publish a salary (studios with 15+ listings, ranked with sample-size weighting so a bigger board earns a higher rank at the same rate). We celebrate the transparent — no shaming the rest.</div></div>`;
 
-  // data health (always unfiltered)
-  const D = window.JOBS_DATA;
-  let health = `<div class="statcard full"><h3>Data health</h3>`;
-  if (!D) {
-    health += `<div class="hmuted" style="color:var(--muted)">Demo data — run the scraper (run-scraper.bat) for live health info.</div></div>`;
-  } else {
-    const ageH = Math.round((Date.now() - new Date(D.scrapedAt).getTime()) / 36e5);
-    health += (D.errors && D.errors.length ? `<div class="errbox">⚠ ${D.errors.length} source(s) failing:<br>${D.errors.join("<br>")}</div>` : "");
-    health += `<div class="healthrow"><span class="hname">Last scrape</span><span class="${ageH>2?'health-bad':'health-ok'}">${ageH<1?"under an hour ago":ageH+" hrs ago"}${ageH>2?" — overdue (target: hourly)":""}</span></div>`;
-    const byStudio = {};
-    for (const j of JOBS) {
-      const b = byStudio[j.s] = byStudio[j.s] || { n: 0, newest: 0 };
-      b.n++; b.newest = Math.max(b.newest, j.ts);
-    }
-    for (const [s, b] of Object.entries(byStudio).sort((a,b)=>b[1].n-a[1].n)) {
-      const fresh = b.newest ? Math.round((Date.now()-b.newest)/864e5) : null;
-      health += `<div class="healthrow"><span class="hname">${s}</span><span class="hmuted">${b.n} roles</span><span class="hmuted">${fresh===null?"no dates":fresh===0?"posted today":"newest: "+fresh+" d ago"}</span></div>`;
-    }
-    health += `</div>`;
-  }
+  // Data health moved to the private stats dashboard (worker /stats → 🩺 Health tab).
 
   // --- studios hiring NOW (fresh roles, last 7 days; ignores no-date listings) ---
   const freshBy = {};
