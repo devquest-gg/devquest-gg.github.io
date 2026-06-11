@@ -78,6 +78,9 @@ const DIRECTORY = [
   { name: "Keen Software House", url: "https://www.keenswh.com/careers/", note: "Space Engineers · custom site (Prague)", city: "Prague, Czechia" },
   // Demoted from mainland 2026-06-11: Workday CXS API started returning HTTP 422 (all request variants); link-out until the workday fetcher is fixed.
   { name: "Cloud Imperium Games", url: "https://cloudimperiumgames.com/jobs", note: "Star Citizen · Workday board (scrape 422'd — link-out for now)", city: "Los Angeles, CA" },
+  // From the Grackle HQ comparison (2026-06-11): notable studios on custom careers sites.
+  { name: "FromSoftware", url: "https://careers.fromsoftware.jp/en/openpositions.html", note: "Elden Ring, Dark Souls — custom JP recruiting site", city: "Tokyo, Japan" },
+  { name: "Robot Entertainment", url: "https://robotentertainment.com/careers", note: "Orcs Must Die! — fully remote (US Central)", city: "Plano, TX" },
 ];
 
 // ---- "The Moon": smaller / indie studios, often ones who reached out to be listed.
@@ -304,6 +307,7 @@ const STUDIOS = [
   { name: "Amber", type: "ashby", token: "amber" },                                // AAA co-dev/outsourcing (Bucharest/Tirana/Köln)
   { name: "Panic Button", type: "greenhouse", token: "panicbutton" },              // porting studio (Austin) — Doom Switch
   { name: "SkyBox Labs", type: "lever", token: "skyboxlabs" },                     // Minecraft/Halo co-dev (Vancouver)
+  { name: "Keen Games", type: "teamtailor", token: "keengames", host: "jobs.keengames.com" }, // Enshrouded (Frankfurt) — not Keen Software House
   { name: "Quantic Dream", type: "lever", token: "quanticdream", region: "eu" },   // Detroit: Become Human (FR, Lever EU)
   { name: "Don't Nod", type: "smartrecruiters", token: "DONTNOD" },                // Life is Strange (FR)
 
