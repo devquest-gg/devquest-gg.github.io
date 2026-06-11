@@ -612,6 +612,24 @@ function inferSeniority(title) {
   return "Mid";
 }
 
+// Some ATS feeds (e.g. Greenhouse for Epic) emit "BLANK" as a placeholder for an unknown city or
+// state, producing locations like "BLANK, BLANK, Multiple Locations". Strip those placeholder tokens
+// while preserving structure: "; " separates distinct locations, "," separates city/state/country.
+function cleanLocation(loc) {
+  if (!loc) return loc;
+  const isJunk = p => !p || /^(blank|n\/?a|null|undefined|unlisted|tbd|various)$/i.test(p);
+  const cleanOne = one => {
+    const parts = one.split(",").map(p => p.trim()).filter(p => !isJunk(p));
+    const out = [];
+    for (const p of parts) if (!out.length || out[out.length - 1].toLowerCase() !== p.toLowerCase()) out.push(p);
+    return out.join(", ");
+  };
+  const locs = String(loc).split(";").map(s => cleanOne(s.trim())).filter(Boolean);
+  const dedup = [];
+  for (const p of locs) if (!dedup.some(x => x.toLowerCase() === p.toLowerCase())) dedup.push(p);
+  return dedup.length ? dedup.join("; ") : "Unlisted";
+}
+
 function inferRegion(location) {
   const l = location.toLowerCase();
   if (/(united states|usa|\b(ca|wa|tx|ny|md|fl|il|ma|nc|ga)\b|los angeles|seattle|austin|new york|san (francisco|mateo|diego)|bellevue|irvine|burbank|santa monica|redmond|mercer island|atlanta|chicago|boston|novato)/.test(l)) return "North America";
@@ -1996,6 +2014,8 @@ function buildTrends(runCounts, okSet, discCounts, healthy, salInfo, skillCounts
   // Tech tags: fetchers with full descriptions already set j.tech; for the rest (SmartRecruiters,
   // Workday, Teamtailor, Workable…) fall back to title-based tagging so every job has the field.
   for (const j of all) if (!j.tech) j.tech = extractTech(j.title || "");
+  // Scrub placeholder location tokens (e.g. "BLANK") from any feed; re-infer region if it changed.
+  for (const j of all) { if (j.location) { const c = cleanLocation(j.location); if (c !== j.location) { j.location = c; j.region = inferRegion(c); } } }
   applyListingHistory(all); // stamp first-seen dates + flag re-lists (writes seen.json)
   await backfillSalaries(all); // open detail pages for jobs missing salary; cache in seen.json
   for (const j of all) if (j.salary) j.salary = prettySalary(j.salary); // one consistent salary format
