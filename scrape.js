@@ -72,6 +72,12 @@ const DIRECTORY = [
   { name: "SuperPlay", url: "https://www.superplay.co/careers", note: "Dice Dreams · casual mobile (Israel)", city: "Tel Aviv, Israel" },
   { name: "Outfit7", url: "https://outfit7.com/careers/", note: "Talking Tom · mobile/family (Cyprus + Ljubljana)", city: "Limassol, Cyprus" },
   { name: "Playrix", url: "https://playrix.com/job/open/", note: "Gardenscapes, Township · custom portal (Dublin)", city: "Dublin, Ireland" },
+  // batch 5 (2026-06-11): big names with custom / no-API careers sites (christran sweep holdouts) — browse directly.
+  { name: "Guerrilla Games", url: "https://www.guerrilla-games.com/join", note: "Horizon · Sony first-party, custom board (Amsterdam)", city: "Amsterdam, Netherlands" },
+  { name: "CCP Games", url: "https://careers.fenriscreations.com/", note: "EVE Online · now Fenris Creations, custom site (Reykjavík)", city: "Reykjavík, Iceland" },
+  { name: "Miniclip", url: "https://www.miniclip.com/careers/vacancies", note: "8 Ball Pool, Agar.io · custom board (Switzerland)", city: "Neuchâtel, Switzerland" },
+  { name: "GIANTS Software", url: "https://www.giants-software.com/career.php", note: "Farming Simulator · self-hosted board (Switzerland)", city: "Zurich, Switzerland" },
+  { name: "Keen Software House", url: "https://www.keenswh.com/careers/", note: "Space Engineers · custom site (Prague)", city: "Prague, Czechia" },
 ];
 
 // ---- "The Moon": smaller / indie studios, often ones who reached out to be listed.
@@ -275,6 +281,17 @@ const STUDIOS = [
   { name: "Hangar 13", type: "greenhouse", token: "hangar13" },                    // Mafia (2K studio)
   { name: "Visual Concepts", type: "greenhouse", token: "visualconcepts" },        // NBA 2K (2K studio)
   { name: "5minlab", type: "greenhouse", token: "5minlab" },                       // Krafton studio (Korea)
+  // christran sweep, round 4 (Workable-hosted studios, feeds peeked, June 2026).
+  { name: "nDreams", type: "workable", token: "ndreams" },                         // VR (Megabit, Ghostbusters VR; UK)
+  { name: "Velan Studios", type: "workable", token: "velanstudios" },              // Knockout City, Mario Kart Live
+  { name: "ZeptoLab", type: "workable", token: "zeptolab" },                       // Cut the Rope
+  { name: "Studio Gobo", type: "workable", token: "studiogobo" },                  // Brighton (Disney Illusion Island)
+  { name: "Hutch", type: "workable", token: "hutch" },                             // mobile racing (F1 Clash; UK)
+  { name: "BeamNG", type: "workable", token: "beamng" },                           // BeamNG.drive (DE)
+  { name: "DECA Games", type: "workable", token: "deca-games" },                   // live-game operator (0 open now)
+  { name: "Kwalee", type: "lever", token: "kwalee", region: "eu" },                // mobile + PC publisher (UK, Lever EU)
+  { name: "Double Eleven", type: "workable", token: "double-eleven" },             // Minecraft Dungeons, Prison Architect 2 (UK/KL)
+  { name: "Tactical Adventures", type: "teamtailor", token: "tacticaladventures", host: "tacticaladventures.teamtailor.com" }, // Solasta (Paris)
   { name: "Quantic Dream", type: "lever", token: "quanticdream", region: "eu" },   // Detroit: Become Human (FR, Lever EU)
   { name: "Don't Nod", type: "smartrecruiters", token: "DONTNOD" },                // Life is Strange (FR)
 
