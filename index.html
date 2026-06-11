@@ -576,7 +576,7 @@ window.dqShowFollowEmail = function(){
 function renderFollowView(){
   const el = document.getElementById("followWrap"); if (!el) return;
   if (!FOLLOWS.size){
-    el.innerHTML = `<div class="wlpanel empty" style="text-align:center;padding:24px 40px"><div style="font-size:15px;color:var(--text);margin-bottom:8px">⭐ <b>Build your studio watchlist</b></div><div style="font-size:14px;color:var(--muted);max-width:600px;margin:0 auto;line-height:1.6">Tap the ★ next to any studio in the sidebar to follow it. Your Following tab then tracks all their openings, shows what's moving, and can email you new roles weekly. Saved on this device — no account needed.</div></div>`;
+    el.innerHTML = `<div class="wlpanel empty" style="text-align:center;padding:24px 40px"><div style="font-size:15px;color:var(--text);margin-bottom:8px">⭐ <b>Build your studio watchlist</b></div><div style="font-size:14px;color:var(--muted);max-width:600px;margin:0 auto;line-height:1.6">Tap the ★ next to any studio in the sidebar to follow it. Your Following tab then tracks all their openings, shows what's moving, and can set up a weekly job alert for them. Saved on this device — no account needed.</div></div>`;
     return;
   }
   const T = (window.JOBS_DATA && window.JOBS_DATA.trends) || null;
@@ -603,10 +603,10 @@ function renderFollowView(){
     + `<div class="wlchips">${chips}</div>`
     + moversLine
     + `<div class="wlcta">`
-    + `<button class="wlbtn primary" onclick="window.dqShowFollowEmail()">📬 Email me their new roles weekly</button>`
+    + `<button class="wlbtn primary" onclick="window.dqShowFollowEmail()">🔔 Get a weekly job alert for these studios</button>`
     + `</div>`
     + `<div id="followEmailBox" style="display:none;margin-top:12px"></div>`
-    + `<div class="wlnote">Saved on this device — no account needed. “Email me…” sets up a weekly alert for these studios (the same job alert, pre-filled). The roles from your studios are listed below.</div>`
+    + `<div class="wlnote">Saved on this device — no account needed. This sets up a regular <b>job alert</b> pre-filled with your followed studios — the same job alert you can build from the filters. The roles from your studios are listed below.</div>`
     + `</div>`;
 }
 const prevVisit = store.get("luj-lastVisit", 0);
@@ -2382,10 +2382,11 @@ try {
     if (!studios.length){ el.innerHTML = '<div style="font-size:13px;color:var(--muted)">Follow at least one studio first.</div>'; return; }
     var label = studios.length===1 ? studios[0] : (studios.length+" followed studios");
     var names = studios.map(function(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;"); }).join(", ");
-    el.innerHTML = '<div style="font-size:13px;color:var(--muted);margin-bottom:6px">Weekly email of new roles at: <b style="color:var(--text)">'+names+'</b></div>'
+    el.innerHTML = '<div style="font-size:13px;color:var(--muted);margin-bottom:6px">🔔 <b style="color:var(--text)">Weekly job alert</b> — new roles at: <b style="color:var(--text)">'+names+'</b></div>'
       + '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">'
       + '<input id="wlEmail" type="email" placeholder="you@email.com" style="flex:1;min-width:200px;padding:8px 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text)">'
-      + '<button id="wlBtn" style="background:var(--accent);color:#0d1117;border:0;border-radius:6px;padding:8px 16px;font-weight:700;cursor:pointer">Email me weekly</button></div>'
+      + '<button id="wlBtn" style="background:var(--accent);color:#0d1117;border:0;border-radius:6px;padding:8px 16px;font-weight:700;cursor:pointer">Create alert</button></div>'
+      + '<label style="font-size:12px;color:var(--muted);display:flex;gap:6px;align-items:flex-start;margin-top:6px"><input id="wlConsent" type="checkbox" style="margin-top:2px">I agree to receive a weekly job-alert email. Unsubscribe anytime; no spam.</label>'
       + (TURNSTILE_SITEKEY ? '<div id="wlTurnstile" style="margin-top:8px"></div>' : '')
       + '<div id="wlMsg" style="font-size:13px;min-height:16px;margin-top:6px;color:var(--muted)"></div>';
     var wts = null;
@@ -2395,13 +2396,15 @@ try {
       var email = (document.getElementById("wlEmail").value || "").trim();
       var msg = document.getElementById("wlMsg");
       if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){ msg.textContent = "Enter a valid email."; msg.style.color = "#f778ba"; return; }
+      var consentEl = document.getElementById("wlConsent");
+      if (consentEl && !consentEl.checked){ msg.textContent = "Please tick the consent box."; msg.style.color = "#f778ba"; return; }
       var tok = "";
       if (TURNSTILE_SITEKEY){ try { tok = window.turnstile ? window.turnstile.getResponse(wts) : ""; } catch(e){} if (!tok){ msg.textContent = "Just a sec — finishing a quick security check. Tap again."; msg.style.color = "#f778ba"; return; } }
       msg.textContent = "Sending…"; msg.style.color = "var(--muted)";
-      try { track("watchlist_email_signup", { n: studios.length }); } catch(e){}
+      try { track("alert_signup", { src: "following", n: studios.length }); } catch(e){}
       fetch(ALERTS_API + "/subscribe", { method:"POST", headers:{ "Content-Type":"application/json" }, body: JSON.stringify({ email: email, criteria: { studios: studios, src: "watchlist" }, label: label, token: tok }) })
         .then(function(r){ return r.json().catch(function(){ return {}; }).then(function(j){ return { ok:r.ok, j:j }; }); })
-        .then(function(res){ if (res.ok && res.j && res.j.ok){ el.innerHTML = '<div style="color:var(--accent);font-size:14px">✓ Almost there — check your inbox and confirm to start your weekly studio alert.</div>'; } else { msg.textContent = "That didn’t go through. Please try again."; msg.style.color = "#f778ba"; } })
+        .then(function(res){ if (res.ok && res.j && res.j.ok){ el.innerHTML = '<div style="color:var(--accent);font-size:14px">✓ Almost there — check your inbox and confirm to start your weekly job alert.</div>'; } else { msg.textContent = "That didn’t go through. Please try again."; msg.style.color = "#f778ba"; } })
         .catch(function(){ msg.textContent = "Network hiccup. Please try again."; msg.style.color = "#f778ba"; });
     };
   };
