@@ -313,6 +313,7 @@ const STUDIOS = [
   { name: "Tango Gameworks", type: "greenhouse", token: "tangogameworks" },        // Hi-Fi Rush, The Evil Within (Krafton, Tokyo)
   { name: "Bigger Games", type: "ashby", token: "biggergames" },                   // mobile (Istanbul)
   { name: "Exploding Kittens", type: "lever", token: "explodingkittens" },         // card + digital games
+  { name: "Sumo Digital", type: "sumodigital", url: "https://www.sumo-digital.com/careers/" }, // bespoke parser — moved off Lever to a custom WP board
   { name: "Quantic Dream", type: "lever", token: "quanticdream", region: "eu" },   // Detroit: Become Human (FR, Lever EU)
   { name: "Don't Nod", type: "smartrecruiters", token: "DONTNOD" },                // Life is Strange (FR)
 
@@ -1763,6 +1764,41 @@ async function fetchJobvite(studio) {
   return parseJobvite(html, studio);
 }
 
+// ---- Sumo Digital (bespoke: custom WordPress careers table) ------------------
+// They moved off Lever to a self-hosted board; the "vacancy" CPT's REST endpoint returns 0,
+// so we parse the server-rendered <table>. Each row:
+//   <tr data-item-id="…"><td><a href="…">Title</a></td><td>Location</td><td>Dept</td><td>Type</td></tr>
+// No salary or posted date on the board (firstSeen is stamped by applyListingHistory).
+function parseSumoDigital(html, studio) {
+  const re = /<tr[^>]*data-item-id="([^"]*)"[^>]*>\s*<td>\s*<a href="([^"]+)"[^>]*>([\s\S]*?)<\/a>\s*<\/td>\s*<td>([\s\S]*?)<\/td>\s*<td>([\s\S]*?)<\/td>\s*<td>([\s\S]*?)<\/td>/g;
+  const strip = s => decodeEnt(String(s).replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim());
+  const out = []; let m;
+  while ((m = re.exec(html))) {
+    const id = m[1], url = m[2], title = strip(m[3]); if (!title) continue;
+    const location = strip(m[4]) || "Unlisted";
+    const deptRaw = strip(m[5]);                                  // Sumo uses Art / Code / Design
+    const typeStr = strip(m[6]);                                  // e.g. "Permanent / Remote"
+    const dept = /^code$/i.test(deptRaw) ? "Engineering" : deptRaw;
+    const workType = /remote/i.test(typeStr) ? "Remote" : (/hybrid/i.test(typeStr) ? "Hybrid" : (/on-?site|in-?studio/i.test(typeStr) ? "On-site" : inferWorkType(title, location, [])));
+    out.push({
+      id: `sumo-${id || url.slice(-10)}`,
+      title, studio: studio.name,
+      discipline: mapDiscipline(dept, title),
+      workType,
+      location, region: inferRegion(location),
+      seniority: inferSeniority(title),
+      salary: null, yoe: null, postedAt: null, url,
+    });
+  }
+  return out;
+}
+async function fetchSumoDigital(studio) {
+  let html;
+  if (SAMPLE_FILE) { const d = loadSample(studio); if (!d) return []; html = typeof d === "string" ? d : (d.html || ""); }
+  else { html = await fetchText(studio.url || "https://www.sumo-digital.com/careers/"); }
+  return parseSumoDigital(html, studio);
+}
+
 
 // ---- Breezy HR ({company}.breezy.hr/json) -----------------------------------
 // Public JSON of published positions; array of { name, department, location, url, published_date }.
@@ -1826,7 +1862,7 @@ async function fetchManatal(studio) {
   return out;
 }
 
-const FETCHERS = { greenhouse: fetchGreenhouse, lever: fetchLever, workday: fetchWorkday, avature: fetchAvature, smartrecruiters: fetchSmartRecruiters, workable: fetchWorkable, phenom: fetchPhenom, teamtailor: fetchTeamtailor, eightfold: fetchEightfold, amazonjobs: fetchAmazonJobs, ashby: fetchAshby, zenimax: fetchZenimax, bamboohr: fetchBambooHr, jobscore: fetchJobScore, jazzhr: fetchJazzHr, jobvite: fetchJobvite, recruitee: fetchRecruitee, breezy: fetchBreezy, manatal: fetchManatal };
+const FETCHERS = { greenhouse: fetchGreenhouse, lever: fetchLever, workday: fetchWorkday, avature: fetchAvature, smartrecruiters: fetchSmartRecruiters, workable: fetchWorkable, phenom: fetchPhenom, teamtailor: fetchTeamtailor, eightfold: fetchEightfold, amazonjobs: fetchAmazonJobs, ashby: fetchAshby, zenimax: fetchZenimax, bamboohr: fetchBambooHr, jobscore: fetchJobScore, jazzhr: fetchJazzHr, jobvite: fetchJobvite, recruitee: fetchRecruitee, breezy: fetchBreezy, manatal: fetchManatal, sumodigital: fetchSumoDigital };
 
 // ---- Ghost-job tracking -----------------------------------------------------
 // Because we scrape on a schedule, we can see how long a listing has REALLY been
