@@ -250,6 +250,7 @@
   .psitem { font-size: 13px; color: var(--muted); white-space: nowrap; }
   .psitem b { color: var(--text); font-size: 15px; font-weight: 800; margin-right: 5px; }
   .psitem.top b { color: var(--text); font-size: 14px; font-weight: 600; }
+  .psitem.fresh b { color: var(--green); }
   .psitem.psclick { cursor: pointer; border-radius: 6px; padding: 2px 6px; margin: -2px -6px; transition: background .12s; }
   .psitem.psclick:hover, .psitem.psclick:focus-visible { background: rgba(88,166,255,.12); outline: none; }
   .psitem.psclick:hover b { color: var(--accent); }
@@ -1813,13 +1814,14 @@ function marketPulse(){
   const open = JOBS.length;
   const studios = new Set(JOBS.map(j=>j.s)).size;
   const newWk = JOBS.filter(j=>{ const d=daysListed(j); return d!=null ? d<=7 : (j.ts && hoursAgo(j)<=168); }).length;
+  const new72h = JOBS.filter(j=>{ const d=daysListed(j); return d!=null ? d<=3 : (j.ts && hoursAgo(j)<=72); }).length;
   const byS = {}; for (const j of JOBS) byS[j.s] = (byS[j.s]||0)+1;
   const top = Object.entries(byS).sort((a,b)=>b[1]-a[1])[0];
   const salPct = open ? Math.round(100 * JOBS.filter(j=>j.salary).length / open) : 0;
   const remotePct = open ? Math.round(100 * JOBS.filter(j=>j.w==="Remote").length / open) : 0;
   const ages = JOBS.filter(j=>j.ts).map(j=>Math.max(0, Math.floor((Date.now()-j.ts)/864e5))).sort((a,b)=>a-b);
   const medianAge = ages.length ? ages[Math.floor(ages.length/2)] : null;
-  return { open, studios, newWk, topStudio: top ? top[0] : "—", topStudioN: top ? top[1] : 0, salPct, remotePct, medianAge };
+  return { open, studios, newWk, new72h, topStudio: top ? top[0] : "—", topStudioN: top ? top[1] : 0, salPct, remotePct, medianAge };
 }
 function renderPulseStrip(){
   const el = document.getElementById("pulseStrip"); if (!el) return;
@@ -1829,7 +1831,7 @@ function renderPulseStrip(){
   const topClickable = m.topStudio && m.topStudio !== "—";
   el.innerHTML = chip(m.open.toLocaleString(),"open roles")
     + chip(m.studios,"studios hiring")
-    + chip(m.newWk.toLocaleString(),"new this week")
+    + chip(m.new72h.toLocaleString(),"new in 72h","fresh")
     + chip(m.salPct+"%","list salary")
     + (topClickable
         ? `<span class="psitem top psclick" role="button" tabindex="0" title="Show ${m.topStudio} jobs" onclick="filterToStudio(window.__pulseTopStudio)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();filterToStudio(window.__pulseTopStudio);}"><b>${m.topStudio}</b>${m.topStudioN.toLocaleString()} role${m.topStudioN===1?'':'s'} · most active</span>`
