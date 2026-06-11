@@ -216,7 +216,7 @@ const STUDIOS = [
   { name: "Firaxis Games", type: "greenhouse", token: "firaxis" },
   { name: "That's No Moon", type: "greenhouse", token: "thatsnomoonentertainment" },
   { name: "NCSOFT", type: "greenhouse", token: "ncamerica" },
-  { name: "HoYoverse", type: "greenhouse", token: "hoyoverse" },
+  { name: "HoYoverse", type: "smartrecruiters", token: "HoYoverse" },              // Genshin/Star Rail — migrated greenhouse→SmartRecruiters (gh board went empty), fixed Jun 2026
   { name: "Behaviour Interactive", type: "lever", token: "bhvr" },
   { name: "Jagex", type: "workable", token: "jagex-limited" },
   { name: "Climax Studios", type: "workable", token: "climax-studios" },
