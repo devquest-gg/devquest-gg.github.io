@@ -309,6 +309,10 @@ const STUDIOS = [
   { name: "SkyBox Labs", type: "lever", token: "skyboxlabs" },                     // Minecraft/Halo co-dev (Vancouver)
   { name: "Keen Games", type: "teamtailor", token: "keengames", host: "jobs.keengames.com" }, // Enshrouded (Frankfurt) — not Keen Software House
   { name: "Neowiz", type: "lever", token: "neowiz" },                              // Lies of P / ROUND8 Studio (Korea) — from Alexander Rehm sweep
+  // From the Animation/VFX/Game community spreadsheet (2026-06-11) — only feeds that verified live.
+  { name: "Tango Gameworks", type: "greenhouse", token: "tangogameworks" },        // Hi-Fi Rush, The Evil Within (Krafton, Tokyo)
+  { name: "Bigger Games", type: "ashby", token: "biggergames" },                   // mobile (Istanbul)
+  { name: "Exploding Kittens", type: "lever", token: "explodingkittens" },         // card + digital games
   { name: "Quantic Dream", type: "lever", token: "quanticdream", region: "eu" },   // Detroit: Become Human (FR, Lever EU)
   { name: "Don't Nod", type: "smartrecruiters", token: "DONTNOD" },                // Life is Strange (FR)
 
