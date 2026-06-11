@@ -255,6 +255,26 @@ const STUDIOS = [
   { name: "Wooga", type: "greenhouse", token: "wooga" },                           // mobile (Berlin)
   { name: "Kolibri Games", type: "lever", token: "kolibrigames" },                 // Idle Miner Tycoon (Berlin)
   { name: "Demiurge Studios", type: "lever", token: "demiurgestudios" },           // Marvel Puzzle Quest
+  // christran sweep, round 3 (full-list probe; each feed peeked to confirm game-dev, June 2026).
+  { name: "Peak Games", type: "lever", token: "peakgames" },                       // Toon Blast (Zynga, Istanbul)
+  { name: "Easybrain", type: "lever", token: "easybrain" },                        // mobile puzzle (Cyprus)
+  { name: "Fanatee", type: "lever", token: "fanatee" },                            // CodyCross (mobile)
+  { name: "Limit Break", type: "lever", token: "limitbreak" },                     // mobile (Tokyo)
+  { name: "Sun Studio", type: "lever", token: "sunstudio" },                       // casual games (Vietnam)
+  { name: "Voldex", type: "ashby", token: "voldex" },                              // Roblox games (Brookhaven)
+  { name: "HyperHug", type: "ashby", token: "hyperhug" },                          // mobile (Cyprus)
+  { name: "Joyteractive", type: "ashby", token: "joyteractive" },                  // mobile (Poland)
+  { name: "TapBlaze", type: "ashby", token: "tapblaze" },                          // Good Pizza, Great Pizza
+  { name: "Tactile Games", type: "greenhouse", token: "tactilegames" },            // Lily's Garden (DK)
+  { name: "MobilityWare", type: "greenhouse", token: "mobilityware" },             // solitaire (US)
+  { name: "Dots", type: "greenhouse", token: "dots" },                             // TwoDots (NYC)
+  { name: "PlayQ", type: "greenhouse", token: "playq" },                           // mobile (Santa Monica)
+  { name: "Rushdown Studios", type: "greenhouse", token: "rushdownstudios" },      // indie
+  { name: "Nex", type: "greenhouse", token: "nex" },                               // active-play games (HK)
+  { name: "Kano", type: "greenhouse", token: "kano" },                             // social games (Victoria BC)
+  { name: "Hangar 13", type: "greenhouse", token: "hangar13" },                    // Mafia (2K studio)
+  { name: "Visual Concepts", type: "greenhouse", token: "visualconcepts" },        // NBA 2K (2K studio)
+  { name: "5minlab", type: "greenhouse", token: "5minlab" },                       // Krafton studio (Korea)
   { name: "Quantic Dream", type: "lever", token: "quanticdream", region: "eu" },   // Detroit: Become Human (FR, Lever EU)
   { name: "Don't Nod", type: "smartrecruiters", token: "DONTNOD" },                // Life is Strange (FR)
 
