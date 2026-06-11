@@ -76,6 +76,8 @@ const DIRECTORY = [
   { name: "Miniclip", url: "https://www.miniclip.com/careers/vacancies", note: "8 Ball Pool, Agar.io · custom board (Switzerland)", city: "Neuchâtel, Switzerland" },
   { name: "GIANTS Software", url: "https://www.giants-software.com/career.php", note: "Farming Simulator · self-hosted board (Switzerland)", city: "Zurich, Switzerland" },
   { name: "Keen Software House", url: "https://www.keenswh.com/careers/", note: "Space Engineers · custom site (Prague)", city: "Prague, Czechia" },
+  // Demoted from mainland 2026-06-11: Workday CXS API started returning HTTP 422 (all request variants); link-out until the workday fetcher is fixed.
+  { name: "Cloud Imperium Games", url: "https://cloudimperiumgames.com/jobs", note: "Star Citizen · Workday board (scrape 422'd — link-out for now)", city: "Los Angeles, CA" },
 ];
 
 // ---- "The Moon": smaller / indie studios, often ones who reached out to be listed.
@@ -225,7 +227,6 @@ const STUDIOS = [
   { name: "IO Interactive", type: "teamtailor", token: "ioi", host: "apply.ioi.dk" },
   { name: "OtherSide Entertainment", type: "teamtailor", token: "otherside", host: "careers.otherside-e.com" },
   { name: "Sega", type: "workday", token: "sega", host: "sega.wd3.myworkdayjobs.com", tenant: "sega", site: "SEGA_Careers" },
-  { name: "Cloud Imperium Games", type: "workday", token: "cig", host: "cloudimperiumgames.wd1.myworkdayjobs.com", tenant: "cloudimperiumgames", site: "CIG_Global_Careers" },
 
   // ---- June 2026 batch ----
   { name: "Digital Extremes", type: "greenhouse", token: "digitalextremes" }, // Warframe (London, Ontario)
