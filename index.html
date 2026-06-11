@@ -2377,14 +2377,14 @@ try {
       + (TURNSTILE_SITEKEY ? '<div id="digestTurnstile" style="margin-top:8px"></div>' : '')
       + '<div id="digestMsg" style="font-size:13px;min-height:16px;margin-top:6px;color:var(--muted)"></div>';
     var dts = null;
-    if (TURNSTILE_SITEKEY && window.turnstile){ try { dts = window.turnstile.render("#digestTurnstile", { sitekey: TURNSTILE_SITEKEY, theme: "dark", retry: "auto", "retry-interval": 3000, "refresh-expired": "auto", "error-callback": function(){ var m=document.getElementById("digestMsg"); if(m){ m.textContent="Verification hiccup — it'll retry automatically. Give it a moment, then try again."; m.style.color="#8b949e"; } return true; } }); } catch(e){} }
+    if (TURNSTILE_SITEKEY && window.turnstile){ try { dts = window.turnstile.render("#digestTurnstile", { sitekey: TURNSTILE_SITEKEY, theme: "dark", appearance: "interaction-only", retry: "auto", "retry-interval": 3000, "refresh-expired": "auto", "error-callback": function(){ var m=document.getElementById("digestMsg"); if(m){ m.textContent="Verification hiccup — it'll retry automatically. Give it a moment, then try again."; m.style.color="#8b949e"; } return true; } }); } catch(e){} }
     var btn = document.getElementById("digestBtn");
     if (btn) btn.onclick = function(){
       var email = (document.getElementById("digestEmail").value || "").trim();
       var msg = document.getElementById("digestMsg");
       if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){ msg.textContent = "Enter a valid email."; msg.style.color = "#f778ba"; return; }
       var tok = "";
-      if (TURNSTILE_SITEKEY){ try { tok = window.turnstile ? window.turnstile.getResponse(dts) : ""; } catch(e){} if (!tok){ msg.textContent = "Please complete the verification box."; msg.style.color = "#f778ba"; return; } }
+      if (TURNSTILE_SITEKEY){ try { tok = window.turnstile ? window.turnstile.getResponse(dts) : ""; } catch(e){} if (!tok){ msg.textContent = "Just a sec — finishing a quick security check. Tap again."; msg.style.color = "#f778ba"; return; } }
       msg.textContent = "Sending…"; msg.style.color = "var(--muted)";
       try { track("digest_signup", {}); } catch(e){}
       fetch(ALERTS_API + "/subscribe", { method:"POST", headers:{ "Content-Type":"application/json" }, body: JSON.stringify({ email: email, criteria: { digest:true, digestOnly:true }, label: "Weekly market digest", token: tok }) })
@@ -2408,14 +2408,14 @@ try {
       + (TURNSTILE_SITEKEY ? '<div id="wlTurnstile" style="margin-top:8px"></div>' : '')
       + '<div id="wlMsg" style="font-size:13px;min-height:16px;margin-top:6px;color:var(--muted)"></div>';
     var wts = null;
-    if (TURNSTILE_SITEKEY && window.turnstile){ try { wts = window.turnstile.render("#wlTurnstile", { sitekey: TURNSTILE_SITEKEY, theme: "dark", retry: "auto", "retry-interval": 3000, "refresh-expired": "auto", "error-callback": function(){ var m=document.getElementById("wlMsg"); if(m){ m.textContent="Verification hiccup — it'll retry automatically. Give it a moment, then try again."; m.style.color="#8b949e"; } return true; } }); } catch(e){} }
+    if (TURNSTILE_SITEKEY && window.turnstile){ try { wts = window.turnstile.render("#wlTurnstile", { sitekey: TURNSTILE_SITEKEY, theme: "dark", appearance: "interaction-only", retry: "auto", "retry-interval": 3000, "refresh-expired": "auto", "error-callback": function(){ var m=document.getElementById("wlMsg"); if(m){ m.textContent="Verification hiccup — it'll retry automatically. Give it a moment, then try again."; m.style.color="#8b949e"; } return true; } }); } catch(e){} }
     var btn = document.getElementById("wlBtn");
     if (btn) btn.onclick = function(){
       var email = (document.getElementById("wlEmail").value || "").trim();
       var msg = document.getElementById("wlMsg");
       if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){ msg.textContent = "Enter a valid email."; msg.style.color = "#f778ba"; return; }
       var tok = "";
-      if (TURNSTILE_SITEKEY){ try { tok = window.turnstile ? window.turnstile.getResponse(wts) : ""; } catch(e){} if (!tok){ msg.textContent = "Please complete the verification box."; msg.style.color = "#f778ba"; return; } }
+      if (TURNSTILE_SITEKEY){ try { tok = window.turnstile ? window.turnstile.getResponse(wts) : ""; } catch(e){} if (!tok){ msg.textContent = "Just a sec — finishing a quick security check. Tap again."; msg.style.color = "#f778ba"; return; } }
       msg.textContent = "Sending…"; msg.style.color = "var(--muted)";
       try { track("watchlist_email_signup", { n: studios.length }); } catch(e){}
       fetch(ALERTS_API + "/subscribe", { method:"POST", headers:{ "Content-Type":"application/json" }, body: JSON.stringify({ email: email, criteria: { studios: studios, src: "watchlist" }, label: label, token: tok }) })
@@ -2562,7 +2562,7 @@ try {
       '<div id="alertMsg" style="font-size:13px;min-height:16px"></div></form>';
     _tsWidget=null;
     if(TURNSTILE_SITEKEY && window.turnstile){
-      try{ _tsWidget=window.turnstile.render("#alertTurnstile",{sitekey:TURNSTILE_SITEKEY,theme:"dark",retry:"auto","retry-interval":3000,"refresh-expired":"auto","error-callback":function(){ var m=document.getElementById("alertMsg"); if(m){ m.textContent="Verification hiccup — it'll retry automatically. Give it a moment, then try again."; m.style.color="#8b949e"; } return true; }}); }catch(e){}
+      try{ _tsWidget=window.turnstile.render("#alertTurnstile",{sitekey:TURNSTILE_SITEKEY,theme:"dark",appearance:"interaction-only",retry:"auto","retry-interval":3000,"refresh-expired":"auto","error-callback":function(){ var m=document.getElementById("alertMsg"); if(m){ m.textContent="Verification hiccup — it'll retry automatically. Give it a moment, then try again."; m.style.color="#8b949e"; } return true; }}); }catch(e){}
     }
     document.getElementById("alertForm").onsubmit=function(ev){
       ev.preventDefault();
@@ -2573,7 +2573,7 @@ try {
       var tsToken="";
       if(TURNSTILE_SITEKEY){
         try{ tsToken=window.turnstile?window.turnstile.getResponse(_tsWidget):""; }catch(e){ tsToken=""; }
-        if(!tsToken){ msg.textContent="Please complete the verification box."; msg.style.color="#c87878"; return; }
+        if(!tsToken){ msg.textContent="Just a sec — finishing a quick security check. Tap again."; msg.style.color="#c87878"; return; }
       }
       msg.textContent="Sending…"; msg.style.color="#7a8878";
       track("alert_signup",{});
