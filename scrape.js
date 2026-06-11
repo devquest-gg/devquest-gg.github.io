@@ -300,6 +300,10 @@ const STUDIOS = [
   { name: "Ghost Ship Games", type: "teamtailor", token: "ghostship", host: "jobs.ghostship.dk" },          // was moon — Deep Rock Galactic
   { name: "Stunlock Studios", type: "teamtailor", token: "stunlock", host: "jobs.stunlockstudios.com" },    // was moon — V Rising
   { name: "Cinnamon", type: "teamtailor", token: "cinnamonsoftware", host: "cinnamonsoftware.teamtailor.com" }, // Roblox game studio (UK, fully remote)
+  // From the Grackle HQ comparison (2026-06-11): notable studios with verified feeds.
+  { name: "Amber", type: "ashby", token: "amber" },                                // AAA co-dev/outsourcing (Bucharest/Tirana/Köln)
+  { name: "Panic Button", type: "greenhouse", token: "panicbutton" },              // porting studio (Austin) — Doom Switch
+  { name: "SkyBox Labs", type: "lever", token: "skyboxlabs" },                     // Minecraft/Halo co-dev (Vancouver)
   { name: "Quantic Dream", type: "lever", token: "quanticdream", region: "eu" },   // Detroit: Become Human (FR, Lever EU)
   { name: "Don't Nod", type: "smartrecruiters", token: "DONTNOD" },                // Life is Strange (FR)
 
