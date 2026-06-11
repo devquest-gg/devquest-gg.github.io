@@ -299,6 +299,7 @@ const STUDIOS = [
   { name: "Coffee Stain Studios", type: "teamtailor", token: "coffeestain", host: "jobs.coffeestain.com" }, // was moon — Satisfactory
   { name: "Ghost Ship Games", type: "teamtailor", token: "ghostship", host: "jobs.ghostship.dk" },          // was moon — Deep Rock Galactic
   { name: "Stunlock Studios", type: "teamtailor", token: "stunlock", host: "jobs.stunlockstudios.com" },    // was moon — V Rising
+  { name: "Cinnamon", type: "teamtailor", token: "cinnamonsoftware", host: "cinnamonsoftware.teamtailor.com" }, // Roblox game studio (UK, fully remote)
   { name: "Quantic Dream", type: "lever", token: "quanticdream", region: "eu" },   // Detroit: Become Human (FR, Lever EU)
   { name: "Don't Nod", type: "smartrecruiters", token: "DONTNOD" },                // Life is Strange (FR)
 
