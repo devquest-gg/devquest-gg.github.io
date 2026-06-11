@@ -229,6 +229,13 @@
   .cardstar.on { color: var(--gold); }
   #followWrap { display: none; }
   .wlpanel { background: var(--panel); border: 1px solid rgba(210,153,34,.45); border-radius: 14px; padding: 16px 18px; margin: 0 0 14px; }
+  /* "My Jobs" dashboard sections */
+  .minesec { margin: 0 0 24px; }
+  .minehead { display: flex; align-items: center; gap: 10px; margin: 0 0 10px; }
+  .minehead h2 { font-size: 18px; font-weight: 800; margin: 0; }
+  .minecount { background: var(--panel2, #1c2230); border: 1px solid var(--border); color: var(--muted); border-radius: 999px; padding: 1px 10px; font-size: 13px; font-weight: 700; }
+  .minesub { font-size: 11px; text-transform: uppercase; letter-spacing: .6px; color: var(--muted); font-weight: 700; margin: 14px 0 6px; }
+  .minesub:first-child { margin-top: 0; }
   .wlpanel.empty { border-style: dashed; border-color: var(--border); }
   .wlhead { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
   .wlhead h2 { font-size: 17px; font-weight: 800; margin: 0; display: flex; align-items: center; gap: 8px; }
@@ -496,7 +503,7 @@
     <button id="filterToggle" onclick="toggleFilters()">⚙ Filters</button>
     <div class="viewtabs">
       <button id="tabList" class="active" onclick="setView('list')">☰ List</button>
-      <button id="tabFollow" onclick="setView('follow')">★ Following</button>
+      <button id="tabFollow" onclick="setView('follow')">★ My Jobs</button>
       <button id="tabBest" onclick="setView('bestfit')">🎯 Best fit</button>
       <button id="tabMap" onclick="setView('map')">🗺️ Map</button>
       <button id="tabStats" onclick="setView('stats')">📊 Trends</button>
@@ -567,19 +574,19 @@ function refreshFollowStars(){
 }
 function updateFollowTab(){
   const t = document.getElementById("tabFollow");
-  if (t) t.innerHTML = "★ Following" + (FOLLOWS.size ? ' <span style="opacity:.75">' + FOLLOWS.size + '</span>' : "");
+  if (!t) return;
+  // badge = everything personal: tracked (pipeline) + saved + followed studios
+  let n = 0; try { n = Object.keys(appStatus).length + saved.size + FOLLOWS.size; } catch(e){}
+  t.innerHTML = "★ My Jobs" + (n ? ' <span style="opacity:.75">' + n + '</span>' : "");
 }
 window.dqShowFollowEmail = function(){
   const box = document.getElementById("followEmailBox"); if (!box) return;
   box.style.display = "block";
   try { window.dqStudioAlertForm && window.dqStudioAlertForm("followEmailBox", Array.from(FOLLOWS)); } catch(e){}
 };
-function renderFollowView(){
-  const el = document.getElementById("followWrap"); if (!el) return;
-  if (!FOLLOWS.size){
-    el.innerHTML = `<div class="wlpanel empty" style="text-align:center;padding:24px 40px"><div style="font-size:15px;color:var(--text);margin-bottom:8px">⭐ <b>Build your studio watchlist</b></div><div style="font-size:14px;color:var(--muted);max-width:600px;margin:0 auto;line-height:1.6">Tap the ★ next to any studio in the sidebar to follow it. Your Following tab then tracks all their openings, shows what's moving, and can set up a weekly job alert for them. Saved on this device — no account needed.</div></div>`;
-    return;
-  }
+// The followed-studios dashboard (tiles + clickable chips + movers + weekly-alert) — one
+// section of the larger "My Jobs" view. Returns inner HTML (no outer panel/heading).
+function buildStudioDash(){
   const T = (window.JOBS_DATA && window.JOBS_DATA.trends) || null;
   const followed = JOBS.filter(j => FOLLOWS.has(j.s));
   const open = followed.length;
@@ -588,14 +595,13 @@ function renderFollowView(){
   const deltaOf = s => { if (!T || !T.studios || !T.studios[s]) return null; const t = T.studios[s]; const base = t.d7 != null ? t.d7 : t.now; return (t.now || 0) - base; };
   const studios = [...FOLLOWS].map(s => ({ s, n: byS[s] || 0, d: deltaOf(s) })).sort((a,b)=> b.n - a.n);
   const arrow = d => d > 0 ? ` <span class="d up">+${d}</span>` : (d < 0 ? ` <span class="d dn">−${-d}</span>` : "");
-  const chips = studios.map(o => `<span class="wlchip"><span class="st" role="button" tabindex="0" title="Unfollow ${o.s.replace(/"/g,'')}" onclick="toggleFollow('${o.s.replace(/'/g,"\\'")}', event)">★</span><span class="nm">${o.s}</span><span class="c">${o.n}</span>${arrow(o.d)}</span>`).join("");
+  const chips = studios.map(o => `<span class="wlchip"><span class="st" role="button" tabindex="0" title="Unfollow ${o.s.replace(/"/g,'')}" onclick="toggleFollow('${o.s.replace(/'/g,"\\'")}', event)">★</span><span class="nm" role="button" tabindex="0" title="Browse ${o.s.replace(/"/g,'')} roles" style="cursor:pointer" onclick="filterToStudio('${o.s.replace(/'/g,"\\'")}')">${o.s}</span><span class="c">${o.n}</span>${arrow(o.d)}</span>`).join("");
   const ups = studios.filter(o => o.d > 0).sort((a,b)=> b.d - a.d).slice(0, 4);
   const downs = studios.filter(o => o.d < 0).sort((a,b)=> a.d - b.d).slice(0, 3);
   const moversLine = (ups.length || downs.length)
-    ? `<div class="wlmovers">What’s moving in your studios: ${ups.map(o=>`<span class="up">${o.s} +${o.d}</span>`).join(" · ")}${(ups.length&&downs.length)?" · ":""}${downs.map(o=>`<span class="dn">${o.s} −${-o.d}</span>`).join(" · ")}</div>`
-    : `<div class="wlmovers">Week-over-week movement for your studios fills in as history banks (~8 days).</div>`;
-  el.innerHTML = `<div class="wlpanel">`
-    + `<div class="wlhead"><h2><span class="s">★</span> My studios <span style="color:var(--muted);font-weight:600;font-size:14px">· ${FOLLOWS.size} followed</span></h2></div>`
+    ? `<div class="wlmovers">What’s moving: ${ups.map(o=>`<span class="up">${o.s} +${o.d}</span>`).join(" · ")}${(ups.length&&downs.length)?" · ":""}${downs.map(o=>`<span class="dn">${o.s} −${-o.d}</span>`).join(" · ")}</div>`
+    : `<div class="wlmovers">Week-over-week movement fills in as history banks (~8 days).</div>`;
+  return `<div class="wlpanel">`
     + `<div class="wltiles">`
     + `<div class="wltile"><div class="n">${open.toLocaleString()}</div><div class="l">open roles across your studios</div></div>`
     + `<div class="wltile"><div class="n">${newWk.toLocaleString()}${newWk?' <span class="up">▲</span>':''}</div><div class="l">new in the last 7 days</div></div>`
@@ -603,12 +609,44 @@ function renderFollowView(){
     + `</div>`
     + `<div class="wlchips">${chips}</div>`
     + moversLine
-    + `<div class="wlcta">`
-    + `<button class="wlbtn primary" onclick="window.dqShowFollowEmail()">🔔 Get a weekly job alert for these studios</button>`
-    + `</div>`
+    + `<div class="wlcta"><button class="wlbtn primary" onclick="window.dqShowFollowEmail()">🔔 Get a weekly job alert for these studios</button></div>`
     + `<div id="followEmailBox" style="display:none;margin-top:12px"></div>`
-    + `<div class="wlnote">Saved on this device — no account needed. This sets up a regular <b>job alert</b> pre-filled with your followed studios — the same job alert you can build from the filters. The roles from your studios are listed below.</div>`
+    + `<div class="wlnote">Tap a studio to browse its roles, the ★ to unfollow. The alert button sets up a weekly job alert pre-filled with these studios. Saved on this device.</div>`
     + `</div>`;
+}
+// "My Jobs" — the personal dashboard: pipeline, saved, followed studios, and hidden.
+function renderFollowView(){
+  const el = document.getElementById("followWrap"); if (!el) return;
+  const lookup = ids => ids.map(id => JOB_BY_ID[id]).filter(Boolean);
+  const ids = Object.keys(appStatus);
+  const applied = lookup(ids.filter(id => appStatus[id] === "applied"));
+  const interviewing = lookup(ids.filter(id => appStatus[id] === "interviewing"));
+  const rejected = lookup(ids.filter(id => appStatus[id] === "rejected"));
+  const pipeN = applied.length + interviewing.length + rejected.length;
+  const savedJobs = lookup([...saved]);
+  const hiddenJobs = lookup([...dismissed]);
+  const followN = FOLLOWS.size;
+  if (!pipeN && !savedJobs.length && !followN && !hiddenJobs.length){
+    el.innerHTML = `<div class="wlpanel empty" style="text-align:center;padding:28px 40px"><div style="font-size:16px;color:var(--text);margin-bottom:8px">★ <b>Your personal job tracker</b></div><div style="font-size:14px;color:var(--muted);max-width:620px;margin:0 auto;line-height:1.6">As you use DevQuest this becomes your dashboard. <b>Bookmark</b> roles to revisit (🔖), mark what you've <b>applied</b> to (✓ 💬 ⊘), <b>follow</b> studios (★), and <b>hide</b> roles you're not interested in (✕). Everything is saved on this device — no account needed.</div></div>`;
+    return;
+  }
+  const cards = jobs => `<div class="group">${jobs.map(rowHtml).join("")}</div>`;
+  const sec = (title, count, body) => `<div class="minesec"><div class="minehead"><h2>${title}</h2><span class="minecount">${count}</span></div>${body}</div>`;
+  let html = "";
+  if (pipeN){
+    let body = "";
+    if (applied.length) body += `<div class="minesub">Applied · ${applied.length}</div>` + cards(applied);
+    if (interviewing.length) body += `<div class="minesub">Interviewing · ${interviewing.length}</div>` + cards(interviewing);
+    if (rejected.length) body += `<div class="minesub">Rejected · ${rejected.length}</div>` + cards(rejected);
+    html += sec("📋 My pipeline", pipeN, body);
+  }
+  if (savedJobs.length) html += sec("🔖 Saved", savedJobs.length, cards(savedJobs));
+  if (followN) html += sec("★ Followed studios", followN, buildStudioDash());
+  if (hiddenJobs.length){
+    const op = !!window.__mineHiddenOpen;
+    html += `<div class="minesec"><div class="minehead" role="button" tabindex="0" style="cursor:pointer" title="Show or hide" onclick="window.__mineHiddenOpen=!window.__mineHiddenOpen;renderFollowView();"><h2 style="color:var(--muted)">🚫 Hidden ${op?'▾':'▸'}</h2><span class="minecount">${hiddenJobs.length}</span></div>${op?cards(hiddenJobs):''}</div>`;
+  }
+  el.innerHTML = html;
 }
 const prevVisit = store.get("luj-lastVisit", 0);
 store.set("luj-lastVisit", Date.now());
@@ -1492,7 +1530,7 @@ function setStatus(id, v){
   if (v) appStatus[id] = v; else delete appStatus[id];
   store.set("luj-status", appStatus);
   if (v) try { const j = JOB_BY_ID[id]; window.dqTrack && window.dqTrack('track_job', { status:v, st:j&&j.s, d:j&&j.d }); } catch(e){}
-  render();
+  render(); updateFollowTab(); if (typeof view !== "undefined" && view === "follow") renderFollowView();
 }
 // one-click status toggle for the per-row icon cluster: click a status to set it,
 // click the active one again to clear it (mutually exclusive across the three).
@@ -1502,14 +1540,14 @@ function toggleDismiss(id){
   adding ? dismissed.add(id) : dismissed.delete(id);
   store.set("luj-dismissed", [...dismissed]);
   if (adding) try { const j = JOB_BY_ID[id]; window.dqTrack && window.dqTrack('dismiss_job', { st:j&&j.s, d:j&&j.d }); } catch(e){}
-  render();
+  render(); if (typeof view !== "undefined" && view === "follow") renderFollowView();
 }
 function toggleSave(id){
   const adding = !saved.has(id);
   adding ? saved.add(id) : saved.delete(id);
   store.set("luj-saved", [...saved]);
   if (adding) try { const j = JOB_BY_ID[id]; window.dqTrack && window.dqTrack('save_job', { st:j&&j.s, d:j&&j.d, sn:j&&j.sen }); } catch(e){}
-  render();
+  render(); updateFollowTab(); if (typeof view !== "undefined" && view === "follow") renderFollowView();
 }
 function toggleGroup(gi){ const d=GROUPS[gi]; collapsed.has(d)?collapsed.delete(d):collapsed.add(d); render(); }
 function showMore(gi){ const d=GROUPS[gi]; shown[d]=(shown[d]||SHOW_STEP)+SHOW_STEP; render(); }
@@ -1596,9 +1634,10 @@ function setView(v){
   view = v;
   for (const [tab, name] of [["tabList","list"],["tabFollow","follow"],["tabMap","map"],["tabStats","stats"],["tabBest","bestfit"]])
     document.getElementById(tab).classList.toggle("active", v===name);
-  const listish = (v==="list" || v==="follow");   // both show the job list (Following filters it to your studios)
-  document.getElementById("jobs").style.display = listish ? "" : "none";
-  document.getElementById("count").style.display = listish ? "" : "none";
+  const listish = (v==="list" || v==="follow");   // run render() in both (keeps sidebar counts fresh)
+  // The My Jobs dashboard renders its own cards, so the main job list shows only in List view.
+  document.getElementById("jobs").style.display = (v==="list") ? "" : "none";
+  document.getElementById("count").style.display = (v==="list") ? "" : "none";
   document.getElementById("directory").style.display = v==="list" ? "" : "none";
   document.getElementById("moon").style.display = v==="list" ? "" : "none";
   document.getElementById("matrixWrap").style.display = v==="list" ? "" : "none";
