@@ -238,7 +238,7 @@ const STUDIOS = [
   { name: "Focus Entertainment", type: "recruitee", token: "focusentertainment" }, // FR publisher/dev (Recruitee)
 
   // ---- June 2026 batch 2 (verified live feeds; a few have valid boards sitting at 0 today) ----
-  { name: "Bonfire Studios", type: "greenhouse", token: "bonfirestudios" },        // ex-Blizzard/Riot, LA (0 open now)
+  { name: "Bonfire Studios", type: "greenhouse", token: "bonfirestudiosinc" },     // ex-Blizzard/Riot (Irvine, CA) — token was "bonfirestudios" (stale/empty); fixed Jun 2026
   { name: "Wildlife Studios", type: "greenhouse", token: "wildlifestudios" },      // BR mobile
   { name: "Absurd Ventures", type: "greenhouse", token: "absurdventures" },        // Dan Houser's new studio
   { name: "Dream Games", type: "greenhouse", token: "dreamgames" },                // Royal Match (0 open now)
