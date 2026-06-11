@@ -238,6 +238,23 @@ const STUDIOS = [
   { name: "Dream Games", type: "greenhouse", token: "dreamgames" },                // Royal Match (0 open now)
   { name: "Crytek", type: "lever", token: "crytek" },                              // Crysis, Hunt: Showdown (DE)
   { name: "thatgamecompany", type: "ashby", token: "thatgamecompany" },            // Journey, Sky
+  // Added from the christran/Unstoppable Guild sweep (feeds verified live, June 2026).
+  { name: "Housemarque", type: "greenhouse", token: "housemarque" },               // Returnal (Sony, FI)
+  { name: "Haven Studios", type: "greenhouse", token: "haven" },                   // Fairgame$ (Sony, CA)
+  { name: "Turtle Rock Studios", type: "greenhouse", token: "turtlerockstudios" }, // Back 4 Blood, L4D
+  { name: "Tripwire Interactive", type: "greenhouse", token: "tripwireinteractive" }, // Killing Floor
+  { name: "Unknown Worlds", type: "greenhouse", token: "unknownworlds" },          // Subnautica
+  { name: "Gravity Well", type: "greenhouse", token: "gravitywell" },              // ex-Respawn founders
+  // christran sweep, round 2 (feeds verified game-dev, June 2026).
+  { name: "Bad Robot Games", type: "ashby", token: "badrobotgames" },              // J.J. Abrams' game division
+  { name: "Stellar Entertainment", type: "ashby", token: "stellarentertainment" },// racing studio, Guildford UK
+  { name: "The Believer Company", type: "ashby", token: "believer" },              // ex-Riot founders
+  { name: "VRChat", type: "lever", token: "vrchat" },                              // social VR platform
+  { name: "Singularity 6", type: "greenhouse", token: "singularity6" },            // Palia
+  { name: "Night Dive Studios", type: "greenhouse", token: "nightdivestudios" },   // classic remasters
+  { name: "Wooga", type: "greenhouse", token: "wooga" },                           // mobile (Berlin)
+  { name: "Kolibri Games", type: "lever", token: "kolibrigames" },                 // Idle Miner Tycoon (Berlin)
+  { name: "Demiurge Studios", type: "lever", token: "demiurgestudios" },           // Marvel Puzzle Quest
   { name: "Quantic Dream", type: "lever", token: "quanticdream", region: "eu" },   // Detroit: Become Human (FR, Lever EU)
   { name: "Don't Nod", type: "smartrecruiters", token: "DONTNOD" },                // Life is Strange (FR)
 
