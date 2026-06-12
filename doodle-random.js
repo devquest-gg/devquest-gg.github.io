@@ -94,6 +94,11 @@
   function todayStr() { var d = new Date(), p = function (n) { return (n < 10 ? "0" : "") + n; }; return d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate()); }
   function escC(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
 
+  // ---- Analytics: cookieless first-party events via the site's dqTrack pipe (server adds the
+  // anonymous visitor hash). Fires only on real visits/interactions — the DQ test tools don't emit. ----
+  function track(name, props) { try { if (window.dqTrack) window.dqTrack(name, props || {}); } catch (e) {} }
+  function packOf(idx) { for (var i = 0; i < SECTIONS.length; i++) { var s = SECTIONS[i]; if (idx >= s.start && idx < s.start + s.count) return s.name; } return ""; }
+
   // ---- Styles ----
   function injectStyle() {
     if (document.getElementById("dqa-style")) return;
@@ -234,6 +239,7 @@
   // ---- Collection modal ----
   function openCollection() {
     if (document.querySelector(".dqa-modal")) return;
+    track("collect_open", { n: unlockedCount() });
     if (hintEl && hintEl.parentNode) hintEl.parentNode.removeChild(hintEl);
     var uc = unlockedCount(), pct = TOTAL ? Math.round(uc / TOTAL * 100) : 0;
     var html = '<div class="dqa-head"><div><div class="dqa-title">Your collection</div>'
@@ -272,7 +278,7 @@
       if (!isUnlocked(parseInt(i, 10))) return;
       playSound(SND_CLICK);
       if (pin === i) { pin = null; saveStr(PIN_KEY, null); }   // clicking the pinned one again un-pins it
-      else { pin = i; saveStr(PIN_KEY, i); }
+      else { pin = i; saveStr(PIN_KEY, i); track("collect_pin", { idx: parseInt(i, 10), pack: packOf(parseInt(i, 10)) }); }
       applyPins(box); refreshIcon();
     }
     cell.addEventListener("click", toggle);
@@ -294,6 +300,12 @@
     buildIcon();
     refreshIcon();
     var after = unlockedCount();
+    // Real new-day unlock → analytics (day number rides the event; test tools never reach here).
+    if (isNewDay && after > before) {
+      var ui = ORDER[after - 1];
+      track("collect_unlock", { day: after, idx: ui, pack: packOf(ui) });
+      if (after >= TOTAL) track("collect_complete", { day: after });
+    }
     // The intro pop-up now appears on day 2 (the first return), not day 1 — so a
     // first visit stays clean. One pop-up per day: when the intro shows, the
     // welcome-back toast sits out that day and resumes on later return days.
