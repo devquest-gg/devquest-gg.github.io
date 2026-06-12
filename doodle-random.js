@@ -78,8 +78,8 @@
   function initSounds() {
     if (SND_UNLOCK) return;
     try {
-      SND_UNLOCK = new Audio(BASE + "sounds/unlock.wav"); SND_UNLOCK.preload = "auto"; SND_UNLOCK.volume = 0.55;
-      SND_CLICK  = new Audio(BASE + "sounds/click.wav");  SND_CLICK.preload  = "auto"; SND_CLICK.volume  = 0.55;
+      SND_UNLOCK = new Audio(BASE + "packs/unlock.wav"); SND_UNLOCK.preload = "auto"; SND_UNLOCK.volume = 0.55;
+      SND_CLICK  = new Audio(BASE + "packs/click.wav");  SND_CLICK.preload  = "auto"; SND_CLICK.volume  = 0.55;
     } catch (e) {}
   }
   function playSound(a) {
