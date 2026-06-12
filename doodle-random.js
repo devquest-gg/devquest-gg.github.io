@@ -19,9 +19,9 @@
   var BASE = "doodle-sprites/";
   var reduce = !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion:reduce)").matches);
 
-  // ---- Master collection. Day N unlocks SPRITES[N-1]. Sections = packs. ----
+  // ---- Master collection. Sections = packs (this defines the modal layout). ----
   // Pirate's Hoard leads, and its goblet (sprite 43) is moved to the very front
-  // so Day 1 unlocks the goblet (also the default floating icon).
+  // so sprite index 0 is the goblet (the day-1 unlock and default floating icon).
   var SECTIONS = [
     { name: "Pirate's Hoard", dir: "packs/pirate/",      first: 43 },
     { name: "Goblin Loot",    dir: "packs/goblin/" },
@@ -44,19 +44,34 @@
   var TOTAL = SPRITES.length;
 
   // ---- Persistent state ----
-  var DAYS_KEY = "dq-days", PIN_KEY = "dq-pin", HINT_KEY = "dq-col-hint";
+  var DAYS_KEY = "dq-days", PIN_KEY = "dq-pin", HINT_KEY = "dq-col-hint", SEED_KEY = "dq-seed";
   function loadJSON(k, d) { try { var v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } }
   function saveJSON(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
   function loadStr(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
   function saveStr(k, v) { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (e) {} }
 
+  // ---- Per-device unlock ORDER (seeded shuffle) ----
+  // Day 1 always unlocks the goblet (sprite index 0, the default mascot). The
+  // remaining sprites unlock in a shuffled order that is stable per device, so a
+  // returning user gets variety instead of 48 of the same pack in a row. The
+  // collection modal still groups sprites by pack; only the unlock sequence shuffles.
+  function mulberry32(a) { return function () { a |= 0; a = a + 0x6D2B79F5 | 0; var t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+  function getSeed() { var v = parseInt(loadStr(SEED_KEY), 10); if (isNaN(v)) { v = (Math.floor(Math.random() * 0xffffffff)) >>> 0; saveStr(SEED_KEY, String(v)); } return v || 1; }
+  var ORDER = (function () {
+    var arr = []; for (var i = 1; i < TOTAL; i++) arr.push(i);   // every sprite except the goblet (0)
+    var rnd = mulberry32(getSeed());
+    for (var j = arr.length - 1; j > 0; j--) { var k = Math.floor(rnd() * (j + 1)), t = arr[j]; arr[j] = arr[k]; arr[k] = t; }
+    return [0].concat(arr);                                       // goblet first, then the shuffled rest
+  })();
+  var RANK = []; for (var _r = 0; _r < TOTAL; _r++) RANK[ORDER[_r]] = _r;  // RANK[spriteIndex] = unlock position
+
   var days = loadJSON(DAYS_KEY, []);   // distinct "YYYY-MM-DD" visit days
   var pin = loadStr(PIN_KEY);          // pinned sprite index (as a string) or null
 
   function unlockedCount() { return Math.min(days.length, TOTAL); }
-  function isUnlocked(i) { return i >= 0 && i < unlockedCount(); }
+  function isUnlocked(i) { return i >= 0 && i < TOTAL && RANK[i] < unlockedCount(); }
   function pinnedIndex() { var p = pin == null ? -1 : parseInt(pin, 10); return (!isNaN(p) && isUnlocked(p)) ? p : -1; }
-  function mascotIndex() { var p = pinnedIndex(); return p >= 0 ? p : Math.max(0, unlockedCount() - 1); }
+  function mascotIndex() { var p = pinnedIndex(); return p >= 0 ? p : ORDER[Math.max(0, unlockedCount() - 1)]; }
   function todayStr() { var d = new Date(), p = function (n) { return (n < 10 ? "0" : "") + n; }; return d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate()); }
   function escC(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
 
@@ -78,7 +93,6 @@
       "border:1px solid var(--accent,#58a6ff);color:var(--text,#e6edf3);font-size:12px;line-height:1.4;padding:8px 11px;border-radius:9px;" +
       "box-shadow:0 8px 20px rgba(0,0,0,.45);z-index:30;text-align:left;font-family:-apple-system,'Segoe UI',Roboto,sans-serif}" +
       ".dqa-hint::after{content:'';position:absolute;bottom:100%;right:14px;border:6px solid transparent;border-bottom-color:var(--accent,#58a6ff)}" +
-      ".dqa-hint b{color:var(--accent,#58a6ff)}" +
       // Welcome-back toast (top of screen)
       ".dqa-toast{position:fixed;left:50%;top:16px;transform:translateX(-50%) translateY(-10px);display:flex;align-items:center;gap:10px;" +
       "background:var(--panel,#161b22);border:1px solid var(--gold,#d29922);border-radius:11px;padding:9px 14px 9px 10px;z-index:9999;" +
@@ -86,8 +100,8 @@
       "font-family:-apple-system,'Segoe UI',Roboto,sans-serif;max-width:90vw;cursor:pointer}" +
       ".dqa-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}" +
       ".dqa-toast img{width:44px;height:44px;image-rendering:pixelated;flex:none}" +
-      ".dqa-toast .t1{font-size:10px;font-weight:700;color:var(--gold,#d29922);letter-spacing:.4px;text-transform:uppercase}" +
-      ".dqa-toast .t2{font-size:13px;font-weight:700;color:var(--text,#e6edf3)}" +
+      ".dqa-toast .t1{font-size:10px;font-weight:600;color:var(--gold,#d29922);letter-spacing:.4px;text-transform:uppercase}" +
+      ".dqa-toast .t2{font-size:13px;font-weight:400;color:var(--text,#e6edf3)}" +
       // Collection modal
       ".dqa-modal{position:fixed;inset:0;background:rgba(0,0,0,.62);z-index:9998;display:flex;align-items:flex-start;justify-content:center;" +
       "padding:5vh 14px;overflow:auto;opacity:0;transition:opacity .2s}" +
@@ -117,6 +131,9 @@
       ".dqa-cell.pinned{border-color:var(--gold,#d29922);box-shadow:0 0 0 2px var(--gold,#d29922),0 0 14px rgba(210,153,34,.3)}" +
       ".dqa-star{position:absolute;top:3px;right:4px;color:var(--gold,#d29922);font-size:11px;opacity:0;text-shadow:0 1px 2px rgba(0,0,0,.7)}" +
       ".dqa-cell.pinned .dqa-star{opacity:1}" +
+      // On phones the mascot sat ~16px off the wordmark (logo gap + its own margin) and
+      // looked detached; tuck it closer and size it down so it nests into the logo lockup.
+      "@media(max-width:560px){.dqa-ico{margin-left:2px}.dqa-ico img{width:26px;height:26px}}" +
       "@media(prefers-reduced-motion:reduce){.dqa-ico.flash{animation:none}.dqa-ico img{animation:none}.dqa-toast{transition:none}.dqa-cell,.dqa-cell img,.dqa-prog{transition:none}}";
     document.head.appendChild(s);
   }
@@ -168,12 +185,12 @@
     icoEl.classList.remove("flash"); void icoEl.offsetWidth; icoEl.classList.add("flash");
   }
 
-  // ---- First-time discovery hint ----
+  // ---- Discovery hint (now shown on the first RETURN visit — day 2 — not day 1) ----
   function maybeHint() {
     try { if (localStorage.getItem(HINT_KEY) === "1") return; localStorage.setItem(HINT_KEY, "1"); } catch (e) {}
     if (!icoEl) return;
     hintEl = document.createElement("div"); hintEl.className = "dqa-hint";
-    hintEl.innerHTML = "<b>Your collection!</b> Come back each day to unlock a new sprite. Click to open it.";
+    hintEl.innerHTML = "Your collection! Come back each day to unlock a new sprite. Click to open it.";
     icoEl.appendChild(hintEl);
     setTimeout(function () { if (hintEl && hintEl.parentNode) hintEl.parentNode.removeChild(hintEl); }, 9000);
   }
@@ -206,7 +223,7 @@
       + '<div class="dqa-tip">A new sprite unlocks every day you visit (they don’t have to be in a row). Click any unlocked sprite to pin it as your floating mascot.</div>';
     for (var s = 0; s < SECTIONS.length; s++) {
       var sec = SECTIONS[s];
-      var got = Math.max(0, Math.min(sec.count, uc - sec.start));
+      var got = 0; for (var _g = 0; _g < sec.count; _g++) if (isUnlocked(sec.start + _g)) got++;
       html += '<div class="dqa-sec"><span>' + escC(sec.name) + '</span><span class="c">' + got + ' / ' + sec.count + '</span></div><div class="dqa-grid">';
       for (var j = 0; j < sec.count; j++) {
         var gi = sec.start + j, u = isUnlocked(gi), isPin = (pin != null && parseInt(pin, 10) === gi);
@@ -255,11 +272,57 @@
     buildIcon();
     refreshIcon();
     var after = unlockedCount();
-    // Returning on a new day (2nd+ visit-day) → welcome-back pop-up with the new sprite.
-    if (isNewDay && after > before && after > 1) { flashIcon(); welcomeToast(after - 1); }
-    // First time the icon ever appears → one-time discovery hint.
-    if (after >= 1) maybeHint();
+    // The intro pop-up now appears on day 2 (the first return), not day 1 — so a
+    // first visit stays clean. One pop-up per day: when the intro shows, the
+    // welcome-back toast sits out that day and resumes on later return days.
+    var doHint = (loadStr(HINT_KEY) !== "1") && after >= 2;
+    if (doHint) {
+      flashIcon(); maybeHint();
+    } else if (isNewDay && after > before && after > 1) {
+      // Returning on a new day → welcome-back pop-up with the newly unlocked sprite.
+      flashIcon(); welcomeToast(ORDER[after - 1]);
+    }
   }
+
+  // ---- Dev / test controls (browser console) ----
+  // Fake day increments and reset without waiting for real calendar days.
+  function simDays(n) { for (var i = 0; i < n; i++) days.push("sim-" + Date.now() + "-" + days.length); saveJSON(DAYS_KEY, days); }
+  window.DQ = {
+    addDay: function (n) {
+      n = (n && n > 0) ? Math.floor(n) : 1;
+      var before = unlockedCount();
+      simDays(n); refreshIcon();
+      var after = unlockedCount();
+      if (after > before) { flashIcon(); welcomeToast(ORDER[after - 1]); }
+      console.log("[DQ] +" + n + " day(s) → " + after + "/" + TOTAL + " unlocked · mascot:", SPRITES[mascotIndex()]);
+      return after;
+    },
+    setDays: function (n) {
+      n = Math.max(0, Math.min(TOTAL, Math.floor(n || 0)));
+      days = []; for (var i = 0; i < n; i++) days.push("sim-" + i);
+      saveJSON(DAYS_KEY, days); refreshIcon();
+      console.log("[DQ] set to " + n + "/" + TOTAL + " unlocked.");
+      return n;
+    },
+    reset: function () {
+      saveStr(PIN_KEY, null);
+      try { localStorage.removeItem(DAYS_KEY); localStorage.removeItem(HINT_KEY); } catch (e) {}
+      days = []; pin = null; refreshIcon();
+      console.log("[DQ] reset — visit history, pin & hint cleared. Reload for a clean first visit.");
+    },
+    status: function () {
+      console.log("[DQ] " + unlockedCount() + "/" + TOTAL + " unlocked · " + days.length + " day(s) · pin=" + pin + " · mascot=" + SPRITES[mascotIndex()]);
+      return { unlocked: unlockedCount(), days: days.length, pin: pin };
+    },
+    help: function () {
+      console.log("DevQuest collection — test controls:");
+      console.log("  DQ.addDay(n)   simulate n return-day visits (default 1)");
+      console.log("  DQ.setDays(n)  jump straight to n unlocked sprites");
+      console.log("  DQ.reset()     wipe visit history, pin & hint (reload after for a clean first visit)");
+      console.log("  DQ.status()    print current state");
+    }
+  };
+  try { console.log("%c[DQ]%c collection test controls ready — type %cDQ.help()", "color:#d29922;font-weight:700", "", "font-family:monospace"); } catch (e) {}
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", mount);
   else mount();
