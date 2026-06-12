@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The DevQuest Sprite Collection: 365 little guys, made by humans over time</title>
+<meta name="description" content="DevQuest's daily pixel mascots. Every one starts as a code-generated placeholder and gets replaced by a working game artist. One slot per artist, paid and credited.">
+<meta name="robots" content="index,follow">
+<style>
+  :root{
+    --bg:#0d1117; --panel:#161b22; --border:#30363d; --text:#e6edf3;
+    --muted:#8b949e; --accent:#58a6ff; --green:#3fb950; --pink:#f778ba; --gold:#d29922;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:-apple-system,"Segoe UI",Roboto,sans-serif;line-height:1.6}
+  a{color:var(--accent)}
+  header{padding:16px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:12px}
+  .logo{font-size:20px;font-weight:800;letter-spacing:-.3px;display:flex;align-items:center;gap:8px;text-decoration:none;color:var(--text)}
+  .logo .wm span{color:var(--accent)}
+  .wrap{max-width:1080px;margin:0 auto;padding:34px 24px 80px}
+  h1{font-size:30px;letter-spacing:-.6px;margin-bottom:10px}
+  h1 em{color:var(--green);font-style:normal}
+  .lede{color:var(--muted);max-width:680px;font-size:16px}
+  .panel{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:18px 20px}
+  .grid-top{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin:26px 0}
+  .meter b{font-size:30px;color:var(--green);font-weight:800;display:block;line-height:1.1}
+  .meter span{color:var(--muted);font-size:13px}
+  .steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin:8px 0 26px}
+  .step h3{font-size:14px;margin-bottom:4px}
+  .step p{font-size:13px;color:var(--muted)}
+  .step .n{display:inline-flex;width:22px;height:22px;border-radius:6px;background:var(--bg);border:1px solid var(--border);align-items:center;justify-content:center;font-size:12px;color:var(--green);font-weight:700;margin-bottom:8px}
+  h2{font-size:20px;margin:30px 0 6px}
+  .sub{color:var(--muted);font-size:14px;margin-bottom:16px}
+  .legend{display:flex;gap:18px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-bottom:14px}
+  .legend i{display:inline-block;width:9px;height:9px;border-radius:2px;vertical-align:1px;margin-right:5px}
+  .collection{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px}
+  .cell{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:9px 4px 7px;display:flex;flex-direction:column;align-items:center;gap:5px;position:relative}
+  .cell.hol{border-color:rgba(210,153,34,.55)}
+  .cell.claimed{border-color:rgba(63,185,80,.55)}
+  .cell .dot{position:absolute;top:7px;right:7px;width:8px;height:8px;border-radius:2px;background:#484f58}
+  .cell.hol .dot{background:var(--gold)} .cell.claimed .dot{background:var(--green)}
+  .cell .sp{line-height:0}
+  .cell .id{font-size:11px;color:var(--muted)} .cell .dt{font-size:10px;color:#586069}
+  .cell .nm{font-size:10px;color:var(--gold);text-align:center;line-height:1.15;max-width:100%}
+  .cell .cr{font-size:10px;color:var(--green);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .cta{display:inline-block;margin-top:14px;background:var(--green);color:#06210f;font-weight:700;text-decoration:none;padding:10px 18px;border-radius:9px}
+  .sg{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;font-size:13px}
+  .sg div b{color:var(--text)} .sg div{color:var(--muted)}
+  .ex{display:flex;gap:14px;flex-wrap:wrap}
+  .ex .card{flex:1;min-width:230px;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:12px;display:flex;gap:12px;align-items:flex-start}
+  .ex .frame{flex:none;background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:5px;line-height:0}
+  .ex .tag{display:inline-block;font-size:11px;padding:2px 8px;border-radius:20px;border:1px solid var(--border);color:var(--muted);margin-bottom:6px}
+  .ex .tag.art{color:var(--green);border-color:rgba(63,185,80,.4)}
+  .ex .h{font-size:14px;font-weight:700;margin-bottom:3px} .ex .s{font-size:12px;color:var(--muted)}
+  .foot{margin-top:34px;font-size:12px;color:#586069}
+</style>
+</head>
+<body>
+<header>
+  <a class="logo" href="/"><svg width="22" height="22" viewBox="0 0 32 32" aria-hidden="true"><rect x="1" y="1" width="8" height="8" rx="2" fill="var(--accent)"/><rect x="12" y="1" width="8" height="8" rx="2" fill="#2d333b"/><rect x="23" y="1" width="8" height="8" rx="2" fill="#2d333b"/><rect x="1" y="12" width="8" height="8" rx="2" fill="#2d333b"/><rect x="12" y="12" width="8" height="8" rx="2" fill="var(--accent)"/><rect x="23" y="12" width="8" height="8" rx="2" fill="#2d333b"/><rect x="1" y="23" width="8" height="8" rx="2" fill="#2d333b"/><rect x="12" y="23" width="8" height="8" rx="2" fill="#2d333b"/><rect x="23" y="23" width="8" height="8" rx="2" fill="var(--accent)"/></svg><span class="wm">Dev<span>Quest</span></span><span id="dqd-mount"></span></a>
+  <a href="/" style="font-size:13px;color:var(--muted);text-decoration:none;border:1px solid var(--border);padding:7px 13px;border-radius:7px">← Back to jobs</a>
+</header>
+
+<div class="wrap">
+  <h1>The Sprite Collection. <em>Made by humans, over time.</em></h1>
+  <p class="lede">DevQuest has a little pixel companion for every day of the year. Just 365 slots, ever. Each one starts as a code-generated placeholder, then gets replaced by a real game artist: one slot per artist, paid and credited, with a link back to your work.</p>
+
+  <div class="grid-top">
+    <div class="panel meter"><b id="mWeek">Open</b><span id="mWeekSub">accepting submissions this week</span></div>
+    <div class="panel meter"><b id="mClaimed">0</b><span>placeholders replaced by artists so far</span></div>
+    <div class="panel meter"><b id="mPay">$10 USD</b><span>per sprite · stated up front · one per artist</span></div>
+  </div>
+
+  <div class="steps">
+    <div class="panel step"><span class="n">1</span><h3>Pick an open day</h3><p>Find a slot you like below. Holidays are marked in gold. Each is a 32×32 pixel sprite.</p></div>
+    <div class="panel step"><span class="n">2</span><h3>Make it yours</h3><p>Follow the quick style guide so it sits with the family. Send it over and we review, pay, and post it.</p></div>
+    <div class="panel step"><span class="n">3</span><h3>Get credited</h3><p>Your name and a link to your portfolio live on that slot. Only 365 slots will ever exist, so it's a limited spot.</p></div>
+  </div>
+
+  <a class="cta" id="claimCta" href="#">Claim a slot →</a>
+
+  <h2>What the two states look like</h2>
+  <p class="sub">A grey placeholder invites an artist; a green slot credits the maker.</p>
+  <div class="ex" id="ex"></div>
+
+  <h2>Quick style guide</h2>
+  <p class="sub">The essentials below, or <a href="DOODLE_STYLE_GUIDE.pdf" download style="color:var(--accent)">download the full brief (PDF)</a>.</p>
+  <div class="panel sg">
+    <div><b>Canvas:</b> 32 × 32 px, transparent background.</div>
+    <div><b>Subject:</b> ~24 px tall, centered, a couple px of padding.</div>
+    <div><b>Style:</b> chunky-friendly: keep features ≥2 px so it reads at header size.</div>
+    <div><b>Palette:</b> the DevQuest set (greens, gold, teal, purple, coral) on the dark UI.</div>
+    <div><b>Outline:</b> dark, near-black (#0b0e13), all the way around.</div>
+    <div><b>Format:</b> PNG (indexed is fine). No animation for v1.</div>
+  </div>
+
+  <h2 style="margin-top:34px">What we can and can't accept</h2>
+  <p class="sub">A few firm rules. Submissions that break these can't be used.</p>
+  <div class="panel sg">
+    <div><b>Original work only.</b> You made it yourself, by hand, for this.</div>
+    <div><b>No existing characters or IP.</b> No Mario, Pokémon, Sonic, and so on, not even "your own take." Invent something new.</div>
+    <div><b>No AI art.</b> The whole point is human-made. Hand-drawn only.</div>
+    <div><b>All-ages and kind.</b> Nothing explicit, gory, hateful, or demeaning to any group.</div>
+    <div><b>No tracing or plagiarism.</b> By submitting, you confirm it's yours and copies no one.</div>
+  </div>
+
+  <h2 style="margin-top:34px">The collection</h2>
+  <p class="sub">Every day of the year. Click any sprite on the site to see this page. <span id="cToday"></span></p>
+  <div class="legend">
+    <span><i style="background:#484f58"></i>code placeholder</span>
+    <span><i style="background:var(--gold)"></i>holiday slot</span>
+    <span><i style="background:var(--green)"></i>claimed by an artist</span>
+  </div>
+  <div class="collection" id="collection"></div>
+
+  <p class="foot">These placeholders are generated by code (a small random-number routine, no dataset, no image model). They exist only to keep the calendar full until human artists replace them. Artists keep all rights to their work; DevQuest buys the right to display the sprite on the site. Questions? <a id="footMail" href="#">Email us</a>.</p>
+</div>
+
+<script src="doodle.js"></script>
+<script>
+(function(){
+  var D = window.DQDoodle; if(!D) return;
+  var C = D.config;
+  document.getElementById("mPay").textContent = "$" + C.payPerSprite + " USD";
+  document.getElementById("claimCta").href = C.claimPage || "claim.html";
+  document.getElementById("footMail").href = "mailto:" + C.contactEmail;
+
+  // today marker
+  var todaySlot = D.dayOfYear(new Date());
+  document.getElementById("cToday").textContent = "Today is slot #" + String(todaySlot).padStart(3,"0") + ".";
+
+  // two-state example
+  var ex = document.getElementById("ex");
+  var ph = document.createElement("div"); ph.className="card";
+  var pf = document.createElement("div"); pf.className="frame"; pf.appendChild(D.renderCanvas(77,3,null));
+  var pb = document.createElement("div");
+  pb.innerHTML='<span class="tag">AI placeholder</span><div class="h">A stand-in, for now</div><div class="s">Generated by code. Claim it and a real sprite takes its place: paid, one per artist, credited.</div>';
+  ph.appendChild(pf); ph.appendChild(pb); ex.appendChild(ph);
+
+  var ar = document.createElement("div"); ar.className="card";
+  var af = document.createElement("div"); af.className="frame"; af.appendChild(D.renderCanvas(142,3,"valentine"));
+  var ab = document.createElement("div");
+  ab.innerHTML='<span class="tag art">Community art</span><div class="h">Art by @your-handle</div><div class="s">Your name + a link to your portfolio live right here. (Example. Yours could be next.)</div>';
+  ar.appendChild(af); ar.appendChild(ab); ex.appendChild(ar);
+
+  // Week status, count, and grid reflect posted sprites from the live feed.
+  D.claimsReady.then(function(){
+    var full = D.slotsOpenThisWeek() <= 0;
+    var mw = document.getElementById("mWeek"), mws = document.getElementById("mWeekSub");
+    mw.textContent = full ? "Full" : "Open";
+    mw.style.color = full ? "var(--gold)" : "var(--green)";
+    mws.textContent = full ? ("this week's " + C.weeklyCap + " are claimed. New slots open Monday") : "accepting submissions this week";
+
+    var col = document.getElementById("collection");
+    var frag = document.createDocumentFragment();
+    var claimedCount = 0;
+    for(var slot=1; slot<=365; slot++){
+      var hol = D.holidayForSlot(slot);
+      var claim = D.liveClaimFor(slot);
+      if(claim) claimedCount++;
+      var cell = document.createElement("div");
+      cell.className = "cell" + (claim ? " claimed" : (hol ? " hol" : ""));
+      var dot = document.createElement("div"); dot.className="dot"; cell.appendChild(dot);
+      var sp = document.createElement("div"); sp.className="sp";
+      if(claim && claim.png){ var im=new Image(); im.src=claim.png; im.width=51; im.height=51; im.style.cssText="image-rendering:pixelated;display:block;width:51px;height:51px"; sp.appendChild(im); }
+      else { sp.appendChild(D.renderCanvas(slot, 1.6, hol ? hol.theme : null)); }
+      cell.appendChild(sp);
+      var id = document.createElement("div"); id.className="id"; id.textContent = "#"+String(slot).padStart(3,"0"); cell.appendChild(id);
+      if(claim){ var cr=document.createElement("div"); cr.className="cr"; cr.textContent=claim.artist; cell.appendChild(cr); }
+      else if(hol){ var nm=document.createElement("div"); nm.className="nm"; nm.textContent=hol.name; cell.appendChild(nm); }
+      else { var dt=document.createElement("div"); dt.className="dt"; dt.textContent=D.slotDateLabel(slot); cell.appendChild(dt); }
+      frag.appendChild(cell);
+    }
+    col.appendChild(frag);
+    document.getElementById("mClaimed").textContent = claimedCount;
+  });
+})();
+</script>
+</body>
+</html>
