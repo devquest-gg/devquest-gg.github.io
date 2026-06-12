@@ -207,6 +207,7 @@
       "border:2px solid var(--gold,#d29922);border-top:none;border-radius:0 0 8px 8px;padding:8px 12px 10px;" +
       "box-shadow:inset 0 0 0 2px rgba(18,14,6,.55),inset 0 0 0 3px rgba(240,199,94,.4),0 8px 18px rgba(0,0,0,.45),0 0 16px rgba(210,153,34,.2)}" +
       ".dqd-fav.empty{display:none}" +
+      ".dqd-fav.hid{display:none}" +
       ".dqd-favimg{width:34px;height:34px;image-rendering:pixelated;display:block;user-select:none;-webkit-user-drag:none;transition:transform .15s}" +
       ".dqd-favslot{width:34px;height:34px;box-sizing:border-box;display:flex;align-items:center;justify-content:center;border:1px dashed var(--gold,#d29922);border-radius:6px;color:var(--gold,#d29922);font-size:14px;animation:dqd-favpulse 1.8s ease-in-out infinite}" +
       "@keyframes dqd-favpulse{0%,100%{opacity:.45}50%{opacity:1}}" +
@@ -232,7 +233,9 @@
       ".dqd-shelf.folded .dqd-imgwrap,.dqd-shelf.folded .dqd-cap,.dqd-shelf.folded .dqd-badge,.dqd-shelf.folded .dqd-x{display:none}" +
       ".dqd-shelf.folded .dqd-handle{display:block}" +
       // Gold "all caught" finale state.
-      ".dqd-shelf.done{border-color:var(--gold,#d29922)}" +
+      ".dqd-shelf.done{border-color:var(--gold,#d29922);box-shadow:0 6px 14px rgba(0,0,0,.35),0 0 16px rgba(210,153,34,.3)}" +
+      ".dqd-shelf.done .dqd-capl{color:var(--gold,#d29922)}" +
+      ".dqd-soon{color:var(--muted,#8b949e);font-weight:400}" +
       ".dqd-shelf.done::after{border-top-color:var(--gold,#d29922)}" +
       ".dqd-shelf.done .dqd-capn{color:var(--gold,#d29922)}" +
       ".dqd-shelf.done .dqd-bar>span{background:var(--gold,#d29922)}" +
@@ -287,7 +290,7 @@
 
     function updateCap() {
       if (allDone) {
-        capl.textContent = "All packs · 🏆";
+        capl.innerHTML = "🏆 You caught 'em all!<br><span class='dqd-soon'>more packs coming soon</span>";
         capn.textContent = grandCaught() + " / " + grandTotal();
         barFill.style.width = "100%";
         shelf.classList.add("done");
@@ -355,10 +358,12 @@
         clearTimeout(flashT); flashT = setTimeout(function () { shelf.classList.remove("show"); }, 1800);
       } else {
         allDone = true; updateCap();
-        showBadge("All caught! 🏆", "lvl");
+        showBadge("🏆 You caught 'em all!", "lvl");
         shelf.classList.add("show", "flash"); fanfare();
         try { window.dqTrack && window.dqTrack("doodle_complete", {}); } catch (e) {}
-        clearTimeout(flashT); flashT = setTimeout(function () { shelf.classList.remove("show", "flash"); }, 2200);
+        clearTimeout(flashT);
+        setTimeout(function () { showBadge("More packs coming soon ✦", "lvl"); }, 1700);
+        flashT = setTimeout(function () { shelf.classList.remove("show", "flash"); }, 2500);
       }
     }
 
@@ -409,7 +414,7 @@
     function startPress() { didLong = false; clearTimeout(pressT); pressT = setTimeout(function () { didLong = true; reset(); }, LONGPRESS); }
     function endPress() { clearTimeout(pressT); }
 
-    function setFold(v) { shelf.classList.toggle("folded", v); try { localStorage.setItem(FOLDKEY, v ? "1" : "0"); } catch (e) {} }
+    function setFold(v) { shelf.classList.toggle("folded", v); fav.classList.toggle("hid", v); try { localStorage.setItem(FOLDKEY, v ? "1" : "0"); } catch (e) {} }
 
     // Collection modal — every pack as a grid: caught sprites in colour, missing ones as silhouettes,
     // future packs shown locked. Pure front-end; reads the same localStorage collection.
@@ -518,7 +523,7 @@
     header.appendChild(shelf);
     header.appendChild(fav); renderFav();   // the pinned-favourites shelf, left of the mascot
 
-    try { if (localStorage.getItem(FOLDKEY) === "1") shelf.classList.add("folded"); } catch (e) {}
+    try { if (localStorage.getItem(FOLDKEY) === "1") { shelf.classList.add("folded"); fav.classList.add("hid"); } } catch (e) {}
 
     // ---- One-time "discover" nudge — gated on real engagement so the jobs grid earns attention first.
     var nudgeDone = false;
