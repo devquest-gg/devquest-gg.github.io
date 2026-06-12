@@ -61,6 +61,7 @@ const DIRECTORY = [
   // batch 3 (2026-06-08): self-hosted / no-API boards — browse directly
   { name: "Void Interactive", url: "https://voidinteractive.net/careers/", note: "Ready or Not · custom board (Dublin)", city: "Dublin, Ireland" },
   { name: "Grip Studios", url: "https://grip-studios.com/hiring.php", note: "Co-dev: Indiana Jones, Civ VII · self-hosted (Prague)", city: "Prague, Czechia" },
+  { name: "Mad Head Games", url: "https://careers.madheadgames.com/", note: "Scars Above, Pavilion — TalentLyft board (Serbia/Bosnia)", city: "Novi Sad, Serbia" },
   { name: "Mad Mushroom", url: "https://apply.workable.com/otk-media/", note: "Indie publisher · OTK Network board (Austin)", city: "Austin, TX" },
   // batch 4 (2026-06-09): notable + mobile studios on custom / region-specific ATS — browse directly
   { name: "Kojima Productions", url: "https://www.kojimaproductions.jp/en/careers", note: "Death Stranding · HRMOS board (Tokyo)", city: "Tokyo, Japan" },
@@ -664,10 +665,10 @@ function strongTitleDiscipline(t) {
   if (/developer (relations|engagement|evangelis|advocat|marketing|outreach|experience rep)|\bdev ?rel\b|community developer|content developer|video content|publisher developer relations/.test(t)) return "Marketing";
   if (/\baudio\b|sound design|\bcomposer\b|music design|\bsonore\b|conception sonore/.test(t)) return "Audio";
   if (/\bqa\b|quality assurance|\btester\b|\bsdet\b|test (engineer|analyst|lead|automation|specialist)|quality (engineer|analyst|specialist)|assurance qualit/.test(t)) return "QA";
-  if (/art director|\bartist\b|\bartiste\b|direct(eur|rice|ion) artistique|\bart lead\b|lead artist|concept art|\bvfx\b|lighting (artist|lead)|environment artist|character artist|technical artist/.test(t)) return "Art";
+  if (/art director|\bartist\b|\bartiste\b|direct(eur|rice|ion) artistique|\bart lead\b|lead artist|concept art|\bvfx\b|lighting (artist|lead)|environment artist|character artist|technical artist|technical art\b/.test(t)) return "Art";
   if (/\banimator\b|animation (director|lead|manager|supervisor)|\brigging\b|cinematics? (director|lead|supervisor|manager|animator|designer)/.test(t)) return "Animation";
   if (/game design|level design|systems? design|narrative design|\bwriter\b|\bscénariste\b|encounter design|combat design|content design|economy design|quality design|gameplay design|ux design|ui design|concepteur|conceptrice|conception de jeu|world build|world design|environment design/.test(t)) return "Design";
-  if ((/(engineer|programmer|developer|architect)\b|architecte|ingénieur|programmeur|développeur|technical director/.test(t)) && !/\bsales\b|customer success|account exec|solutions? consultant/.test(t)) return "Engineering";
+  if ((/(engineer|programmer|programming|developer|architect)\b|architecte|ingénieur|programmeur|développeur|technical director/.test(t)) && !/\bsales\b|customer success|account exec|solutions? consultant/.test(t)) return "Engineering";
   if (/machine learning|\bml\b ?(scientist|researcher|ops)|data scien|data analytics|deep learning|\bnlp\b|artificial intelligence|\bai (scientist|researcher|research)|\bof ai\b/.test(t)) return "Data & Analytics";
   if (/\b(project|programme?|delivery|release|portfolio)\s+(manager|management|coordinator|lead|director|assistant)\b|technical (program|project) manager|scrum master|agile coach|\bpmo\b|\bproducer\b|production (coordinator|manager|director|assistant)|product (manager|owner|management|director|lead)|director,? of product|(vp|head) of product|game (director|lead|manager)|producteur|productrice|réalisat(eur|rice)|gestionnaire de (projet|programme)|chef de (projet|produit)|coordonnateur de projet/.test(t)) return "Production";
   return null;

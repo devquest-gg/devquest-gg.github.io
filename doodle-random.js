@@ -1,569 +1,398 @@
 /* =====================================================================
-   DevQuest Doodle — header "bookmark" pixel mascot + staged catch-'em-all
+   DevQuest mascot — ACHIEVEMENT edition
    ---------------------------------------------------------------------
-   A little ribbon-bookmark tab hangs off the bottom-right of the header,
-   holding a pixel sprite. Click it to catch a random one (with a short
-   cooldown shown as an RPG-style overlay that climbs the sprite, then
-   fades when you can click again). Each click says "new!" or "already
-   caught" so the count never feels stuck.
+   Sprites are unlocked by *doing things* on DevQuest, not by clicking a
+   mascot. Open jobs, follow studios, share the site, come back on
+   different days → achievements unlock, each revealing one sprite.
 
-   The collection is STAGED into levels (one sprite pack per level). Catch
-   every sprite in the active pack and it "graduates": a level-up fanfare
-   plays, gold flash, and the next pack unlocks. Finish them all for a
-   "caught 'em all" finale, after which the mascot free-roams every pack.
+   Discovery: nothing shows in the header until you unlock your first
+   sprite. Then a small icon appears next to the logo with a gold flash
+   and a one-time hint; from then on it shows your latest unlock + a
+   count, flashes on each new unlock, and opens your collection on click.
 
-   Progress is tracked per pack in localStorage; the "Lvl N · Name · X / N"
-   readout shows on hover/focus. A new catch flashes gold and plays a soft
-   chime; a completed level plays a happy ascending fanfare instead.
+   100% client-side (localStorage) — no accounts, no backend. We reward
+   exploration and loyalty, never applying.
 
-   Press-and-hold the sprite ~0.7s to reset the whole collection. Click the
-   "×" to fold into a tiny handle (remembered across visits); click the
-   handle to bring it back.
+   Detection: we wrap window.dqTrack (the site's own cookieless event
+   tracker) and tally real actions. Adding/▾editing achievements = edit
+   the ACH array below.
 
-   --- ADDING A PACK LATER (extensible) ------------------------------
-   1. Drop the pack's icons in  doodle-sprites/packs/<your-id>/1.png .. N.png
-   2. Add one line to the PACKS array below: { id:"<your-id>", name:"Display Name", count:N }
-   That's it — a new level appears at the end. No other code changes.
-
-   Belongs to the sticky <header>, so it travels with the bar as you scroll
-   and never changes the header's height.
-
-   Art: CraftPix free pixel-icon packs (see doodle-sprites/SOURCE-LICENSE-craftpix.txt).
-
-   TO REMOVE: delete the <!-- DOODLE:START --> ... <!-- DOODLE:END --> block
-   in index.html, plus this file and the doodle-sprites/ folder.
+   Art: CraftPix free pixel-icon packs (doodle-sprites/packs/<id>/N.png).
+   TO REMOVE: delete the <!-- DOODLE:START --> block in index.html, this
+   file, and the doodle-sprites/ folder.
    ===================================================================== */
 (function () {
   "use strict";
 
-  // ---- Level config (order = play order). Add packs here; see header note. ----
-  var PACKS = [
-    { id: "low-monsters", name: "Critters",        count: 48 },
-    { id: "goblin",       name: "Goblin Loot",     count: 48 },
-    { id: "potions",      name: "Potions",         count: 48 },
-    { id: "pirate",       name: "Pirate's Bounty",  count: 48 },
-    { id: "bow",          name: "Bows & Bolts",    count: 48 },
-    { id: "paint",        name: "Paint Pots",      count: 48 },
-    { id: "chaos",        name: "Chaos Monsters",  count: 48 }
-  ];
-
-  var BASE = "doodle-sprites/packs/";  // sprite path = BASE + pack.id + "/" + n + ".png"
-  var COLLECT_KEY = "dq-collect";      // { packId: [caught indices] }
-  var FOLDKEY = "dq-monsters-fold";    // folded state (kept from prior version)
-  var OLD_KEY = "dq-monsters-seen";    // legacy flat collection -> migrates to low-monsters
-  var COOLDOWN = 1200;                 // ms between catches (also the overlay climb time)
-  var NEW_BIAS = 0;                    // 0 = pure random within the level; raise toward 1 to favor unseen
-  var SOUND = true;                    // chime on new catch + fanfare on level-up; false to mute
-  var PITY = 10;                       // bad-luck protection: after this many duplicates in a row, the
-                                       // next catch is GUARANTEED to be one you're still missing. Lower
-                                       // = kinder (shorter worst-case grind), higher = stricter. The tell
-                                       // ("so close…") starts ~2 misses before the guarantee fires.
-
-  var NUDGE_KEY = "dq-nudge";          // "1" once the discover-nudge has shown (or the visitor already plays)
-  var NUDGE_AT = 5;                    // show the nudge after this many meaningful site interactions
-  var FAVKEY = "dq-favs";              // { packId: spriteIndex } — one pinned favourite per pack
-
+  var BASE = "doodle-sprites/packs/";
+  var SOUND = true;
   var reduce = !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion:reduce)").matches);
 
-  // ---- Collection storage (one object, all packs) ----
-  var collect = {};
-  var favs = {};   // pinned favourites: { packId: spriteIndex }
-  function loadFavs() { try { return JSON.parse(localStorage.getItem(FAVKEY) || "{}") || {}; } catch (e) { return {}; } }
-  function saveFavs() { try { localStorage.setItem(FAVKEY, JSON.stringify(favs)); } catch (e) {} }
-  function loadCollect() {
-    var obj = {};
-    try {
-      var raw = JSON.parse(localStorage.getItem(COLLECT_KEY) || "{}");
-      for (var k in raw) if (raw.hasOwnProperty(k)) obj[k] = new Set(raw[k]);
-    } catch (e) {}
-    // Migrate the old flat monsters collection into the first pack.
-    if (!obj["low-monsters"]) {
-      try {
-        var old = JSON.parse(localStorage.getItem(OLD_KEY) || "[]");
-        if (old && old.length) obj["low-monsters"] = new Set(old);
-      } catch (e) {}
-    }
-    return obj;
+  // ---- Tiers (each draws its art from one pack) ----
+  var TIERS = [
+    { id: "explorer",  name: "Explorer",  pack: "low-monsters" },
+    { id: "collector", name: "Collector", pack: "goblin" },
+    { id: "champion",  name: "Champion",  pack: "pirate" }
+  ];
+  function packOf(tier) { for (var i = 0; i < TIERS.length; i++) if (TIERS[i].id === tier) return TIERS[i].pack; return "low-monsters"; }
+  function tierName(tier) { for (var i = 0; i < TIERS.length; i++) if (TIERS[i].id === tier) return TIERS[i].name; return tier; }
+
+  // ---- Achievements. Each carries its own hand-picked sprite: pack + n (index
+  //      1..48 in doodle-sprites/packs/<pack>/). test(s) -> unlocked? ----
+  var ACH = [
+    // Explorer — browse & discover
+    { id: "open1",   tier: "explorer", pack: "pirate", n: 12, name: "Window Shopper", hint: "Open your first job",          test: function (s) { return s.jobs >= 1; } },     // compass
+    { id: "search",  tier: "explorer", pack: "bow",    n: 2,  name: "On the Hunt",    hint: "Run a search",                 test: function (s) { return s.search >= 1; } },   // bow
+    { id: "filter",  tier: "explorer", pack: "pirate", n: 20, name: "Picky",          hint: "Apply a filter",               test: function (s) { return s.filter >= 1; } },   // dividers
+    { id: "open25",  tier: "explorer", pack: "pirate", n: 19, name: "Deep Diver",     hint: "Open 25 jobs",                 test: function (s) { return s.jobs >= 25; } },    // map
+    { id: "open100", tier: "explorer", pack: "pirate", n: 8,  name: "Job Scholar",    hint: "Open 100 jobs",                test: function (s) { return s.jobs >= 100; } },   // scroll
+    { id: "map",     tier: "explorer", pack: "pirate", n: 4,  name: "Cartographer",   hint: "Explore the studio map",       test: function (s) { return s.map >= 1; } },      // treasure map
+    { id: "grid",    tier: "explorer", pack: "pirate", n: 32, name: "Number Cruncher",hint: "Use the discipline grid",      test: function (s) { return s.grid >= 1; } },     // coins
+    { id: "bestfit", tier: "explorer", pack: "pirate", n: 14, name: "Matchmaker",     hint: "Use the Best-Fit finder",      test: function (s) { return s.bestfit >= 1; } },  // key that fits
+    // Collector — curate your hunt
+    { id: "follow1", tier: "collector", pack: "goblin", n: 23, name: "First Crush",   hint: "Follow a studio",              test: function (s) { return s.follow >= 1; } },   // heart
+    { id: "follow5", tier: "collector", pack: "bow",    n: 32, name: "Talent Scout",  hint: "Follow 5 studios",             test: function (s) { return s.follow >= 5; } },   // crossbow
+    { id: "save1",   tier: "collector", pack: "goblin", n: 18, name: "Squirrel",      hint: "Save a job",                   test: function (s) { return s.save >= 1; } },     // backpack
+    { id: "save10",  tier: "collector", pack: "pirate", n: 10, name: "Hoarder",       hint: "Save 10 jobs",                 test: function (s) { return s.save >= 10; } },    // open chest
+    { id: "alert",   tier: "collector", pack: "goblin", n: 33, name: "On Alert",      hint: "Set up a job alert",           test: function (s) { return s.alert >= 1; } },    // torch beacon
+    { id: "track",   tier: "collector", pack: "goblin", n: 20, name: "Organiser",     hint: "Track a job's status",         test: function (s) { return s.track >= 1; } },    // scroll/list
+    { id: "know",    tier: "collector", pack: "goblin", n: 42, name: "Connector",     hint: "Use “Who do I know?”",         test: function (s) { return s.know >= 1; } },     // bead necklace
+    { id: "pin",     tier: "collector", pack: "pirate", n: 43, name: "Curator",       hint: "Pin a favourite",              test: function (s) { return s.pin >= 1; } },      // goblet
+    // Champion — share & stick around
+    { id: "share1",  tier: "champion", pack: "pirate", n: 23, name: "Herald",         hint: "Share DevQuest",               test: function (s) { return s.shareP.length >= 1; } }, // flag
+    { id: "share3",  tier: "champion", pack: "pirate", n: 24, name: "Town Crier",     hint: "Share on 3 platforms",         test: function (s) { return s.shareP.length >= 3; } }, // big flag
+    { id: "copy",    tier: "champion", pack: "pirate", n: 25, name: "Link Wizard",    hint: "Copy the site link",           test: function (s) { return s.copy >= 1; } },     // key
+    { id: "day3",    tier: "champion", pack: "pirate", n: 47, name: "Regular",        hint: "Visit on 3 different days",    test: function (s) { return s.days >= 3; } },     // ship wheel
+    { id: "day7",    tier: "champion", pack: "pirate", n: 44, name: "Devoted",        hint: "Visit on 7 different days",    test: function (s) { return s.days >= 7; } },     // anchor
+    { id: "day30",   tier: "champion", pack: "pirate", n: 31, name: "Lifer",          hint: "Visit on 30 different days",   test: function (s) { return s.days >= 30; } },    // gold medallion
+    { id: "complete",tier: "champion", pack: "pirate", n: 13, name: "Completionist",  hint: "Unlock all Explorer + Collector", test: function () { return explorerCollectorDone(); } }, // ornate chest
+    { id: "legend",  tier: "champion", pack: "chaos",  n: 13, name: "DevQuest Legend",hint: "Unlock everything else",       test: function () { return allButLegendDone(); } }   // golden naga
+  ];
+  var ACH_BY_ID = {}; for (var _i = 0; _i < ACH.length; _i++) ACH_BY_ID[ACH[_i].id] = ACH[_i];
+  function spriteFor(a) { return BASE + (a.pack || packOf(a.tier)) + "/" + a.n + ".png"; }
+  var TOTAL = ACH.length;
+
+  // ---- Persistent state ----
+  var STATS_KEY = "dq-ach-stats", UNLOCK_KEY = "dq-ach", DAYS_KEY = "dq-ach-days", HINT_KEY = "dq-ach-hint", FAV_KEY = "dq-ach-fav";
+  var stats = { jobs: 0, search: 0, filter: 0, map: 0, grid: 0, bestfit: 0, save: 0, alert: 0, track: 0, know: 0, pin: 0, copy: 0, follows: [], shareP: [] };
+  var unlocked = [];   // ordered achievement ids (unlock order; last = latest)
+  var favs = [];       // pinned achievement ids
+  var days = [];       // distinct YYYY-MM-DD strings
+
+  function loadJSON(k, d) { try { var v = JSON.parse(localStorage.getItem(k)); return v == null ? d : v; } catch (e) { return d; } }
+  function saveJSON(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+  function loadAll() {
+    var st = loadJSON(STATS_KEY, null); if (st) for (var k in stats) if (st[k] != null) stats[k] = st[k];
+    if (!stats.follows) stats.follows = []; if (!stats.shareP) stats.shareP = [];
+    unlocked = loadJSON(UNLOCK_KEY, []); favs = loadJSON(FAV_KEY, []); days = loadJSON(DAYS_KEY, []);
   }
-  function collectFor(id) { if (!collect[id]) collect[id] = new Set(); return collect[id]; }
-  function saveCollect() {
-    try {
-      var o = {};
-      for (var k in collect) if (collect.hasOwnProperty(k)) o[k] = Array.from(collect[k]);
-      localStorage.setItem(COLLECT_KEY, JSON.stringify(o));
-    } catch (e) {}
+  function saveStats() { saveJSON(STATS_KEY, stats); }
+  function saveUnlocked() { saveJSON(UNLOCK_KEY, unlocked); }
+
+  function view() {
+    return { jobs: stats.jobs, search: stats.search, filter: stats.filter, map: stats.map, grid: stats.grid, bestfit: stats.bestfit,
+      save: stats.save, alert: stats.alert, track: stats.track, know: stats.know, pin: stats.pin, copy: stats.copy,
+      follow: stats.follows.length, shareP: stats.shareP, days: days.length };
   }
-  function firstIncomplete() {
-    for (var i = 0; i < PACKS.length; i++) if (collectFor(PACKS[i].id).size < PACKS[i].count) return i;
-    return PACKS.length - 1;
-  }
-  function allComplete() {
-    for (var i = 0; i < PACKS.length; i++) if (collectFor(PACKS[i].id).size < PACKS[i].count) return false;
-    return true;
-  }
-  function grandTotal() { var t = 0; for (var i = 0; i < PACKS.length; i++) t += PACKS[i].count; return t; }
-  function grandCaught() { var t = 0; for (var i = 0; i < PACKS.length; i++) t += collectFor(PACKS[i].id).size; return t; }
+  function has(id) { return unlocked.indexOf(id) >= 0; }
+  function explorerCollectorDone() { for (var i = 0; i < ACH.length; i++) { var a = ACH[i]; if ((a.tier === "explorer" || a.tier === "collector") && !has(a.id)) return false; } return true; }
+  function allButLegendDone() { for (var i = 0; i < ACH.length; i++) if (ACH[i].id !== "legend" && !has(ACH[i].id)) return false; return true; }
 
   // ---- Audio ----
   var actx;
   function ac() { actx = actx || new (window.AudioContext || window.webkitAudioContext)(); return actx; }
-  function chime() {                  // soft blip on a NEW catch
+  function chime() {
     if (!SOUND) return;
-    try {
-      var c = ac(), o = c.createOscillator(), g = c.createGain(), t = c.currentTime;
+    try { var c = ac(), o = c.createOscillator(), g = c.createGain(), t = c.currentTime;
       o.type = "triangle"; o.frequency.setValueAtTime(660, t); o.frequency.exponentialRampToValueAtTime(990, t + 0.12);
-      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.05, t + 0.012); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.18);
-      o.connect(g); g.connect(c.destination); o.start(t); o.stop(t + 0.2);
-    } catch (e) {}
+      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.06, t + 0.012); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.2);
+      o.connect(g); g.connect(c.destination); o.start(t); o.stop(t + 0.22); } catch (e) {}
   }
-  function fanfare() {                // happy ascending arpeggio on a LEVEL-UP
+  function fanfare() {
     if (!SOUND) return;
-    try {
-      var c = ac(), t0 = c.currentTime, notes = [523.25, 659.25, 783.99, 1046.5]; // C5 E5 G5 C6
-      notes.forEach(function (f, i) {
-        var o = c.createOscillator(), g = c.createGain(), t = t0 + i * 0.10;
+    try { var c = ac(), t0 = c.currentTime, notes = [523.25, 659.25, 783.99, 1046.5];
+      notes.forEach(function (f, i) { var o = c.createOscillator(), g = c.createGain(), t = t0 + i * 0.10;
         o.type = "triangle"; o.frequency.setValueAtTime(f, t);
-        g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.075, t + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.24);
-        o.connect(g); g.connect(c.destination); o.start(t); o.stop(t + 0.28);
-      });
-      var o2 = c.createOscillator(), g2 = c.createGain(), t2 = t0 + 0.42;   // sparkle
-      o2.type = "sine"; o2.frequency.setValueAtTime(1318.5, t2);
-      g2.gain.setValueAtTime(0.0001, t2); g2.gain.exponentialRampToValueAtTime(0.05, t2 + 0.02); g2.gain.exponentialRampToValueAtTime(0.0001, t2 + 0.32);
-      o2.connect(g2); g2.connect(c.destination); o2.start(t2); o2.stop(t2 + 0.36);
-    } catch (e) {}
+        g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.08, t + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.26);
+        o.connect(g); g.connect(c.destination); o.start(t); o.stop(t + 0.3); }); } catch (e) {}
   }
 
+  // ---- Styles ----
   function injectStyle() {
-    if (document.getElementById("dqd-style")) return;
-    var s = document.createElement("style");
-    s.id = "dqd-style";
+    if (document.getElementById("dqa-style")) return;
+    var s = document.createElement("style"); s.id = "dqa-style";
     s.textContent =
-      ".dqd-shelf{position:absolute;top:calc(100% - 1px);right:24px;display:flex;flex-direction:column;" +
-      "align-items:center;background:var(--panel,#161b22);border:1px solid var(--border,#30363d);" +
-      "border-top:none;border-radius:0 0 5px 5px;padding:5px 10px 8px;box-shadow:0 6px 14px rgba(0,0,0,.35);transition:border-color .2s}" +
-      // Ribbon-bookmark tail (downward point) under the pocket.
-      ".dqd-shelf::after{content:'';position:absolute;left:50%;bottom:-8px;transform:translateX(-50%);width:0;height:0;" +
-      "border-left:9px solid transparent;border-right:9px solid transparent;border-top:9px solid var(--panel,#161b22);" +
-      "filter:drop-shadow(0 2px 1px rgba(0,0,0,.25))}" +
-      // Image + its cooldown overlay live in a wrapper so the overlay tracks the sprite (incl. bob).
-      ".dqd-imgwrap{position:relative;width:64px;height:64px;animation:dqd-bob 3s ease-in-out infinite}" +
-      ".dqd-img{display:block;width:64px;height:64px;cursor:pointer;image-rendering:pixelated;" +
-      "user-select:none;-webkit-user-select:none;-webkit-user-drag:none;transition:filter .15s}" +
-      ".dqd-img.cooling{cursor:default}" +
-      "@media(hover:hover){.dqd-img:not(.cooling):hover{filter:brightness(1.18)}}" +
-      ".dqd-img:focus-visible{outline:2px solid var(--green,#3fb950);outline-offset:2px;border-radius:6px}" +
-      // RPG cooldown overlay: a dark shade that climbs over the WHOLE bookmark (not just the art), then fades.
-      ".dqd-cool{position:absolute;left:0;right:0;bottom:0;height:0;border-radius:0 0 5px 5px;pointer-events:none;opacity:1;z-index:4;" +
-      "background:linear-gradient(to top,rgba(8,11,16,.85),rgba(8,11,16,.55))}" +
-      // Catch badge (new / duplicate / level), floats out to the left so it never overlaps the header.
-      ".dqd-badge{position:absolute;top:calc(100% + 12px);left:50%;transform:translateX(-50%);font-size:10px;font-weight:700;padding:2px 7px;" +
-      "border-radius:999px;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .15s}" +
-      ".dqd-badge.show{opacity:1}" +
-      ".dqd-badge.new{background:var(--green,#3fb950);color:#06210f}" +
-      ".dqd-badge.dupe{background:var(--border,#30363d);color:var(--text,#e6edf3)}" +
-      ".dqd-badge.lvl{background:var(--gold,#d29922);color:#231a05}" +
-      ".dqd-badge.luck{background:var(--gold,#d29922);color:#231a05;box-shadow:0 0 0 2px rgba(210,153,34,.4)}" +
-      // One-time "discover" nudge bubble: sits to the left of the bookmark, arrow points right at it.
-      ".dqd-nudge{position:absolute;right:calc(100% + 12px);top:4px;width:max-content;max-width:190px;background:var(--panel,#161b22);" +
+      ".dqa-ico{position:relative;display:none;align-items:center;gap:5px;margin-left:10px;padding:3px 7px 3px 4px;cursor:pointer;" +
+      "background:var(--panel,#161b22);border:1px solid var(--border,#30363d);border-radius:9px;vertical-align:middle;transition:border-color .2s,box-shadow .2s}" +
+      ".dqa-ico.on{display:inline-flex}" +
+      ".dqa-ico:hover{border-color:var(--gold,#d29922)}" +
+      ".dqa-ico img{width:26px;height:26px;image-rendering:pixelated;display:block}" +
+      ".dqa-ico .dqa-n{font-size:11px;font-weight:700;color:var(--muted,#8b949e);font-family:-apple-system,'Segoe UI',Roboto,sans-serif}" +
+      ".dqa-ico.flash{animation:dqa-flash 1s ease}" +
+      "@keyframes dqa-flash{0%,100%{box-shadow:0 0 0 0 rgba(210,153,34,0)}30%{box-shadow:0 0 0 3px rgba(210,153,34,.6),0 0 14px rgba(210,153,34,.5);border-color:var(--gold,#d29922)}}" +
+      // First-unlock hint bubble
+      ".dqa-hint{position:absolute;top:calc(100% + 9px);right:0;width:max-content;max-width:210px;background:var(--panel,#161b22);" +
       "border:1px solid var(--accent,#58a6ff);color:var(--text,#e6edf3);font-size:12px;line-height:1.4;padding:8px 11px;border-radius:9px;" +
-      "box-shadow:0 8px 20px rgba(0,0,0,.45);opacity:0;transform:translateX(6px);transition:opacity .25s,transform .25s;cursor:pointer;z-index:6;" +
-      "text-align:left;font-family:-apple-system,'Segoe UI',Roboto,sans-serif}" +
-      ".dqd-nudge.show{opacity:1;transform:translateX(0)}" +
-      ".dqd-nudge::after{content:'';position:absolute;left:100%;top:13px;border:6px solid transparent;border-left-color:var(--accent,#58a6ff)}" +
-      ".dqd-nudge b{color:var(--accent,#58a6ff);font-weight:700}" +
-      "@media(prefers-reduced-motion:reduce){.dqd-nudge{transition:none;transform:none}}" +
-      // Collection icon (top-left of the bookmark) + the Pokedex-style modal it opens.
-      ".dqd-coll{position:absolute;top:1px;left:5px;line-height:0;color:var(--muted,#8b949e);cursor:pointer;opacity:.5;transition:opacity .15s,color .15s;z-index:5}" +
-      ".dqd-coll:hover{opacity:1;color:var(--accent,#58a6ff)}" +
-      ".dqd-shelf.folded .dqd-coll{display:none}" +
-      ".dqd-cmodal{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9998;display:flex;align-items:flex-start;justify-content:center;padding:6vh 16px;overflow:auto;opacity:0;transition:opacity .2s}" +
-      ".dqd-cmodal.show{opacity:1}" +
-      ".dqd-cbox{background:var(--panel,#161b22);border:1px solid var(--border,#30363d);border-radius:14px;max-width:560px;width:100%;box-shadow:0 24px 60px rgba(0,0,0,.55);font-family:-apple-system,'Segoe UI',Roboto,sans-serif}" +
-      ".dqd-chead{display:flex;align-items:center;justify-content:space-between;padding:15px 18px;border-bottom:1px solid var(--border,#30363d)}" +
-      ".dqd-ctitle{font-size:16px;font-weight:800;color:var(--text,#e6edf3)}" +
-      ".dqd-csub{font-size:12px;color:var(--muted,#8b949e);margin-top:2px}" +
-      ".dqd-cx{background:transparent;border:none;color:var(--muted,#8b949e);font-size:22px;line-height:1;cursor:pointer;padding:0 4px}" +
-      ".dqd-cx:hover{color:var(--text,#e6edf3)}" +
-      ".dqd-cbody{padding:14px 18px 18px;max-height:70vh;overflow:auto}" +
-      ".dqd-cpack{margin-bottom:18px}" +
-      ".dqd-cpack.locked{opacity:.55}" +
-      ".dqd-cph{font-size:13px;font-weight:700;color:var(--text,#e6edf3);margin-bottom:8px}" +
-      ".dqd-cpc{color:var(--muted,#8b949e);font-weight:600;font-size:12px;margin-left:4px}" +
-      ".dqd-clock{font-size:12px;color:var(--muted,#8b949e)}" +
-      ".dqd-cgrid{display:grid;grid-template-columns:repeat(8,1fr);gap:6px}" +
-      ".dqd-ctile{position:relative;aspect-ratio:1;background:var(--bg,#0d1117);border:1px solid var(--border,#30363d);border-radius:6px;display:flex;align-items:center;justify-content:center;padding:3px}" +
-      ".dqd-ctile.favable{cursor:pointer}" +
-      ".dqd-ctile.favable:hover{border-color:var(--gold,#d29922)}" +
-      ".dqd-cdone{color:var(--gold,#d29922);font-weight:600;font-size:11px;margin-left:6px}" +
-      ".dqd-ctile img{width:100%;height:100%;object-fit:contain;image-rendering:pixelated;display:block}" +
-      ".dqd-ctile.have{border-color:var(--green,#3fb950)}" +
-      ".dqd-ctile.faved{border-color:var(--gold,#d29922);box-shadow:0 0 0 1px var(--gold,#d29922),0 0 9px rgba(210,153,34,.5)}" +
-      ".dqd-ctile.faved::after{content:'★';position:absolute;top:0;right:3px;font-size:11px;line-height:1.1;color:var(--gold,#d29922);text-shadow:0 1px 2px rgba(0,0,0,.7)}" +
-      ".dqd-ctile.miss img{filter:brightness(0);opacity:.22}" +
-      "@media(max-width:520px){.dqd-cgrid{grid-template-columns:repeat(6,1fr)}}" +
-      // Pinned-favourites shelf — a matching little bookmark to the left of the mascot.
-      ".dqd-fav{position:absolute;top:calc(100% - 1px);right:118px;display:flex;gap:7px;align-items:center;cursor:pointer;" +
-      "background:linear-gradient(180deg,rgba(210,153,34,.15),rgba(210,153,34,0)),var(--panel,#161b22);" +
-      "border:2px solid var(--gold,#d29922);border-top:none;border-radius:0 0 8px 8px;padding:8px 12px 10px;" +
-      "box-shadow:inset 0 0 0 2px rgba(18,14,6,.55),inset 0 0 0 3px rgba(240,199,94,.4),0 8px 18px rgba(0,0,0,.45),0 0 16px rgba(210,153,34,.2)}" +
-      ".dqd-fav.empty{display:none}" +
-      ".dqd-fav.hid{display:none}" +
-      ".dqd-favimg{width:34px;height:34px;image-rendering:pixelated;display:block;user-select:none;-webkit-user-drag:none;transition:transform .15s}" +
-      ".dqd-favslot{width:34px;height:34px;box-sizing:border-box;display:flex;align-items:center;justify-content:center;border:1px dashed var(--gold,#d29922);border-radius:6px;color:var(--gold,#d29922);font-size:14px;animation:dqd-favpulse 1.8s ease-in-out infinite}" +
-      "@keyframes dqd-favpulse{0%,100%{opacity:.45}50%{opacity:1}}" +
-      "@media(prefers-reduced-motion:reduce){.dqd-favslot{animation:none;opacity:.75}}" +
-      ".dqd-fav:hover .dqd-favimg{transform:translateY(-1px)}" +
-      "@media(max-width:1300px){.dqd-fav{display:none}}" +
-      // Progress caption: only on hover / focus.
-      ".dqd-cap{display:none;width:64px;margin-top:5px;text-align:center;overflow:visible}" +
-      ".dqd-shelf:hover .dqd-cap,.dqd-shelf:focus-within .dqd-cap,.dqd-shelf.show .dqd-cap{display:block}" +
-      ".dqd-capl{font-size:9.5px;line-height:1.25;color:var(--muted,#8b949e);white-space:normal;overflow-wrap:break-word;" +
-      "font-family:-apple-system,'Segoe UI',Roboto,sans-serif;letter-spacing:.02em}" +
-      ".dqd-capn{font-size:11px;line-height:1.35;color:var(--text,#e6edf3);white-space:nowrap;font-weight:700;" +
-      "font-family:-apple-system,'Segoe UI',Roboto,sans-serif}" +
-      ".dqd-bar{height:4px;width:100%;background:var(--bg,#0d1117);border-radius:999px;margin-top:3px;overflow:hidden}" +
-      ".dqd-bar>span{display:block;height:100%;width:0;background:var(--green,#3fb950);border-radius:999px;transition:width .35s ease}" +
-      // Fold control + folded handle.
-      ".dqd-x{position:absolute;top:1px;right:5px;font-size:13px;line-height:1;color:var(--muted,#8b949e);cursor:pointer;opacity:0;transition:opacity .15s}" +
-      ".dqd-shelf:hover .dqd-x,.dqd-shelf:focus-within .dqd-x{opacity:.65}" +
-      ".dqd-x:hover{opacity:1}" +
-      ".dqd-handle{display:none;font-size:12px;line-height:1;color:var(--muted,#8b949e);cursor:pointer;user-select:none}" +
-      ".dqd-shelf.folded{padding:3px 11px 4px;border-radius:0 0 8px 8px}" +
-      ".dqd-shelf.folded::after{display:none}" +
-      ".dqd-shelf.folded .dqd-imgwrap,.dqd-shelf.folded .dqd-cap,.dqd-shelf.folded .dqd-badge,.dqd-shelf.folded .dqd-x{display:none}" +
-      ".dqd-shelf.folded .dqd-handle{display:block}" +
-      // Gold "all caught" finale state.
-      ".dqd-shelf.done{border-color:var(--gold,#d29922);box-shadow:0 6px 14px rgba(0,0,0,.35),0 0 16px rgba(210,153,34,.3)}" +
-      ".dqd-shelf.done .dqd-capl{color:var(--gold,#d29922)}" +
-      ".dqd-soon{color:var(--muted,#8b949e);font-weight:400}" +
-      ".dqd-shelf.done::after{border-top-color:var(--gold,#d29922)}" +
-      ".dqd-shelf.done .dqd-capn{color:var(--gold,#d29922)}" +
-      ".dqd-shelf.done .dqd-bar>span{background:var(--gold,#d29922)}" +
-      ".dqd-shelf.flash{animation:dqd-flash .7s ease}" +
-      "@media(max-width:1300px){.dqd-shelf{display:none}}" +
-      "@media(prefers-reduced-motion:reduce){.dqd-imgwrap{animation:none}.dqd-shelf.flash{animation:none}}" +
-      "@keyframes dqd-bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-2px)}}" +
-      "@keyframes dqd-flash{0%,100%{box-shadow:0 6px 14px rgba(0,0,0,.35)}40%{box-shadow:0 0 0 2px var(--gold,#d29922),0 6px 14px rgba(0,0,0,.35)}}";
+      "box-shadow:0 8px 20px rgba(0,0,0,.45);z-index:30;text-align:left;font-family:-apple-system,'Segoe UI',Roboto,sans-serif}" +
+      ".dqa-hint::after{content:'';position:absolute;bottom:100%;right:14px;border:6px solid transparent;border-bottom-color:var(--accent,#58a6ff)}" +
+      ".dqa-hint b{color:var(--accent,#58a6ff)}" +
+      // Unlock toast
+      ".dqa-toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(8px);display:flex;align-items:center;gap:10px;" +
+      "background:var(--panel,#161b22);border:1px solid var(--gold,#d29922);border-radius:12px;padding:9px 14px 9px 10px;z-index:9999;" +
+      "box-shadow:0 10px 30px rgba(0,0,0,.5),0 0 16px rgba(210,153,34,.25);opacity:0;transition:opacity .25s,transform .25s;" +
+      "font-family:-apple-system,'Segoe UI',Roboto,sans-serif;max-width:90vw}" +
+      ".dqa-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}" +
+      ".dqa-toast img{width:40px;height:40px;image-rendering:pixelated;flex:none}" +
+      ".dqa-toast .t1{font-size:11px;font-weight:700;color:var(--gold,#d29922);letter-spacing:.4px;text-transform:uppercase}" +
+      ".dqa-toast .t2{font-size:14px;font-weight:700;color:var(--text,#e6edf3)}" +
+      // Collection modal
+      ".dqa-modal{position:fixed;inset:0;background:rgba(0,0,0,.62);z-index:9998;display:flex;align-items:flex-start;justify-content:center;" +
+      "padding:5vh 14px;overflow:auto;opacity:0;transition:opacity .2s}" +
+      ".dqa-modal.show{opacity:1}" +
+      ".dqa-box{background:var(--panel,#161b22);border:1px solid var(--border,#30363d);border-radius:16px;max-width:640px;width:100%;" +
+      "box-shadow:0 24px 60px rgba(0,0,0,.55);font-family:-apple-system,'Segoe UI',Roboto,sans-serif;overflow:hidden}" +
+      ".dqa-head{display:flex;align-items:center;justify-content:space-between;padding:18px 20px;border-bottom:1px solid var(--border,#30363d)}" +
+      ".dqa-title{font-size:17px;font-weight:800;color:var(--text,#e6edf3);letter-spacing:.2px}" +
+      ".dqa-sub{font-size:12px;color:var(--muted,#8b949e);margin-top:3px}" +
+      ".dqa-x{background:transparent;border:none;color:var(--muted,#8b949e);font-size:24px;line-height:1;cursor:pointer;padding:2px 6px;border-radius:8px;transition:background .15s,color .15s}" +
+      ".dqa-x:hover{color:var(--text,#e6edf3);background:var(--bg,#0d1117)}" +
+      ".dqa-body{padding:20px;max-height:74vh;overflow:auto}" +
+      ".dqa-favwrap{background:linear-gradient(180deg,rgba(210,153,34,.12),rgba(210,153,34,0)),var(--bg,#0d1117);" +
+      "border:1px solid var(--gold,#d29922);border-radius:12px;padding:12px 14px;margin-bottom:22px}" +
+      ".dqa-favrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}" +
+      ".dqa-favrow img{width:36px;height:36px;image-rendering:pixelated}" +
+      ".dqa-tier{font-size:12px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:#58a6ff;margin:24px 0 12px;border-bottom:1px solid var(--border,#30363d);padding-bottom:8px}" +
+      ".dqa-tier:first-child{margin-top:2px}" +
+      ".dqa-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}" +
+      ".dqa-cell{display:flex;gap:10px;align-items:center;min-height:64px;box-sizing:border-box;background:var(--bg,#0d1117);border:1px solid var(--border,#30363d);border-radius:10px;padding:10px;transition:border-color .15s,transform .1s,box-shadow .15s}" +
+      ".dqa-cell .pic{width:42px;height:42px;flex:none;display:flex;align-items:center;justify-content:center;border-radius:9px;background:rgba(255,255,255,.03)}" +
+      ".dqa-cell img{width:38px;height:38px;image-rendering:pixelated;display:block}" +
+      ".dqa-cell.locked img{filter:brightness(0);opacity:.22}" +
+      ".dqa-cell.locked .pic{background:rgba(255,255,255,.015)}" +
+      ".dqa-cell.unlocked{cursor:pointer}" +
+      ".dqa-cell.unlocked:hover{border-color:var(--gold,#d29922);transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.3)}" +
+      ".dqa-cell.faved{border-color:var(--gold,#d29922);box-shadow:0 0 0 1px var(--gold,#d29922)}" +
+      ".dqa-nm{font-size:12.5px;font-weight:700;color:var(--text,#e6edf3);line-height:1.25}" +
+      ".dqa-cell.locked .dqa-nm{color:var(--muted,#8b949e)}" +
+      ".dqa-hn{font-size:11px;color:var(--muted,#8b949e);line-height:1.3;margin-top:3px}" +
+      ".dqa-star{margin-left:auto;align-self:flex-start;color:var(--gold,#d29922);font-size:12px;opacity:0}" +
+      ".dqa-cell.faved .dqa-star{opacity:1}" +
+      "@media(prefers-reduced-motion:reduce){.dqa-ico.flash{animation:none}.dqa-toast{transition:none}}" +
+      "@media(max-width:560px){.dqa-grid{grid-template-columns:repeat(2,1fr)}.dqa-ico .dqa-n{display:none}}";
     document.head.appendChild(s);
   }
 
-  function mount() {
+  // ---- DOM refs ----
+  var icoEl, icoImg, icoNum, hintEl, toastEl, toastT;
+
+  function buildIcon() {
     var header = document.querySelector("header");
-    if (!header || header.querySelector(".dqd-shelf")) return;
+    if (!header || document.querySelector(".dqa-ico")) return;
     injectStyle();
+    icoEl = document.createElement("span"); icoEl.className = "dqa-ico"; icoEl.title = "Your collection";
+    icoEl.setAttribute("role", "button"); icoEl.setAttribute("aria-label", "Open your collection"); icoEl.tabIndex = 0;
+    icoImg = document.createElement("img"); icoImg.alt = ""; icoImg.draggable = false;
+    icoNum = document.createElement("span"); icoNum.className = "dqa-n";
+    icoEl.appendChild(icoImg); icoEl.appendChild(icoNum);
+    // Click opens the collection — unless a long-press just fired the hidden reset.
+    icoEl.addEventListener("click", function () { if (longFired) { longFired = false; return; } openCollection(); });
+    icoEl.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openCollection(); } });
+    // Hidden reset: press & hold the icon for ~1.1s.
+    icoEl.addEventListener("mousedown", startPress);
+    icoEl.addEventListener("mouseup", cancelPress);
+    icoEl.addEventListener("mouseleave", cancelPress);
+    icoEl.addEventListener("touchstart", startPress, { passive: true });
+    icoEl.addEventListener("touchend", cancelPress);
+    icoEl.addEventListener("touchcancel", cancelPress);
+    icoEl.addEventListener("contextmenu", function (e) { e.preventDefault(); }); // suppress mobile long-press menu
+    var logo = header.querySelector(".logo");
+    (logo || header).appendChild(icoEl);
+  }
 
-    collect = loadCollect();
-    favs = loadFavs();
-    var lvl = firstIncomplete();
-    var allDone = allComplete();
-
-    var shelf = document.createElement("div"); shelf.className = "dqd-shelf";
-
-    var imgwrap = document.createElement("div"); imgwrap.className = "dqd-imgwrap";
-    var img = document.createElement("img");
-    img.className = "dqd-img"; img.alt = "Pixel art mascot"; img.title = "Click to catch another";
-    img.setAttribute("role", "button"); img.tabIndex = 0; img.draggable = false;
-    var cool = document.createElement("div"); cool.className = "dqd-cool";
-    imgwrap.appendChild(img);
-
-    var badge = document.createElement("div"); badge.className = "dqd-badge";
-
-    var cap = document.createElement("div"); cap.className = "dqd-cap";
-    var capl = document.createElement("div"); capl.className = "dqd-capl";
-    var capn = document.createElement("div"); capn.className = "dqd-capn";
-    var bar = document.createElement("div"); bar.className = "dqd-bar";
-    var barFill = document.createElement("span"); bar.appendChild(barFill);
-    cap.appendChild(capl); cap.appendChild(capn); cap.appendChild(bar);
-
-    var x = document.createElement("div"); x.className = "dqd-x"; x.textContent = "×"; x.title = "Hide";
-    var handle = document.createElement("div"); handle.className = "dqd-handle"; handle.textContent = "▾"; handle.title = "Show mascot";
-    var coll = document.createElement("div"); coll.className = "dqd-coll"; coll.title = "Your collection";
-    coll.setAttribute("role", "button"); coll.setAttribute("aria-label", "View your collection"); coll.tabIndex = 0;
-    coll.innerHTML = '<svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><rect x="1" y="1" width="6" height="6" rx="1" fill="currentColor"/><rect x="9" y="1" width="6" height="6" rx="1" fill="currentColor"/><rect x="1" y="9" width="6" height="6" rx="1" fill="currentColor"/><rect x="9" y="9" width="6" height="6" rx="1" fill="currentColor"/></svg>';
-    var fav = document.createElement("div"); fav.className = "dqd-fav empty";
-    fav.title = "Your favourites — heart a sprite in the collection to pin it here";
-    fav.setAttribute("role", "button"); fav.setAttribute("aria-label", "Your pinned favourites — open collection");
-
-    var cur = -1, curPack = "", busy = false, dupeStreak = 0, coolT, coolT2, flashT, badgeT;
-
-    function spritePath(packId, n) { return BASE + packId + "/" + n + ".png"; }
-
-    function updateCap() {
-      if (allDone) {
-        capl.innerHTML = "🏆 You caught 'em all!<br><span class='dqd-soon'>more packs coming soon</span>";
-        capn.textContent = grandCaught() + " / " + grandTotal();
-        barFill.style.width = "100%";
-        shelf.classList.add("done");
-        return;
-      }
-      var pack = PACKS[lvl], c = collectFor(pack.id).size;
-      capl.textContent = "Lvl " + (lvl + 1) + " · " + pack.name;
-      capn.textContent = c + " / " + pack.count;
-      barFill.style.width = Math.round((c / pack.count) * 100) + "%";
-      shelf.classList.remove("done");
+  // ---- Hidden reset (long-press the header icon) ----
+  var pressTimer = null, longFired = false;
+  function startPress() { longFired = false; cancelPress(); pressTimer = setTimeout(function () { longFired = true; doReset(); }, 1100); }
+  function cancelPress() { if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; } }
+  function doReset() {
+    if (!window.confirm("Reset your DevQuest collection?\n\nThis permanently clears every unlocked achievement and favourite on this device.")) { longFired = false; return; }
+    try { [STATS_KEY, UNLOCK_KEY, DAYS_KEY, HINT_KEY, FAV_KEY].forEach(function (k) { localStorage.removeItem(k); }); } catch (e) {}
+    try { location.reload(); } catch (e) {
+      stats = { jobs: 0, search: 0, filter: 0, map: 0, grid: 0, bestfit: 0, save: 0, alert: 0, track: 0, know: 0, pin: 0, copy: 0, follows: [], shareP: [] };
+      unlocked = []; favs = []; days = []; refreshIcon();
     }
+  }
 
-    // Returns { pack, n, forced }. `forced` = the pick was handed to you by bad-luck protection.
-    function pick() {
-      if (allDone) {                          // free-roam every pack
-        var p = PACKS[Math.floor(Math.random() * PACKS.length)], m;
-        do { m = Math.floor(Math.random() * p.count) + 1; } while (p.id === curPack && m === cur && p.count > 1);
-        return { pack: p, n: m, forced: false };
-      }
-      var pack = PACKS[lvl], set = collectFor(pack.id);
-      var unseen = [];
-      for (var i = 1; i <= pack.count; i++) if (!set.has(i)) unseen.push(i);
-      // Pity / bad-luck protection: after PITY duplicates in a row, guarantee one you're still missing.
-      if (unseen.length && dupeStreak >= PITY) return { pack: pack, n: unseen[Math.floor(Math.random() * unseen.length)], forced: true };
-      if (NEW_BIAS > 0 && unseen.length && Math.random() < NEW_BIAS) return { pack: pack, n: unseen[Math.floor(Math.random() * unseen.length)], forced: false };
-      var n;
-      do { n = Math.floor(Math.random() * pack.count) + 1; } while (n === cur && pack.count > 1);
-      return { pack: pack, n: n, forced: false };
-    }
+  function refreshIcon() {
+    if (!icoEl) return;
+    if (!unlocked.length) { icoEl.classList.remove("on"); return; }
+    var latest = ACH_BY_ID[unlocked[unlocked.length - 1]];
+    if (latest) icoImg.src = spriteFor(latest);
+    icoNum.textContent = unlocked.length + " / " + TOTAL;
+    icoEl.classList.add("on");
+  }
 
-    function showBadge(txt, kind) {
-      badge.textContent = txt;
-      badge.className = "dqd-badge " + kind + " show";
-      clearTimeout(badgeT);
-      badgeT = setTimeout(function () { badge.className = "dqd-badge " + kind; }, 1400);
-    }
+  function flashIcon() {
+    if (!icoEl) return;
+    icoEl.classList.remove("flash"); void icoEl.offsetWidth; icoEl.classList.add("flash");
+  }
 
-    function startCooldown() {
-      busy = true; img.classList.add("cooling");
-      clearTimeout(coolT); clearTimeout(coolT2);
-      if (reduce) {                            // no climb for reduced-motion: flat dim that clears
-        cool.style.transition = "none"; cool.style.opacity = "0.5"; cool.style.height = "100%";
-      } else {
-        cool.style.transition = "none"; cool.style.opacity = "1"; cool.style.height = "0%";
-        void cool.offsetHeight;                // reflow so the climb animates from 0
-        cool.style.transition = "height " + COOLDOWN + "ms linear";
-        cool.style.height = "100%";
-      }
-      coolT = setTimeout(function () {
-        busy = false; img.classList.remove("cooling");
-        cool.style.transition = "opacity .28s ease";
-        cool.style.opacity = "0";              // reached the top -> fade away
-        coolT2 = setTimeout(function () { cool.style.transition = "none"; cool.style.height = "0%"; cool.style.opacity = "1"; }, 320);
-      }, COOLDOWN);
-    }
+  function showFirstHint() {
+    try { if (localStorage.getItem(HINT_KEY) === "1") return; localStorage.setItem(HINT_KEY, "1"); } catch (e) {}
+    if (!icoEl) return;
+    hintEl = document.createElement("div"); hintEl.className = "dqa-hint";
+    hintEl.innerHTML = "<b>Your first sprite!</b> Click here anytime to see your collection.";
+    icoEl.appendChild(hintEl);
+    setTimeout(function () { if (hintEl && hintEl.parentNode) hintEl.parentNode.removeChild(hintEl); }, 9000);
+  }
 
-    function advance() {
-      if (lvl < PACKS.length - 1) {
-        lvl++;
-        var np = PACKS[lvl], prev = Math.floor(Math.random() * np.count) + 1;
-        cur = prev; curPack = np.id; img.src = spritePath(np.id, prev);  // tease the new pack (not counted)
-        updateCap();
-        showBadge("Lvl " + (lvl + 1) + " · " + np.name, "lvl");
-        shelf.classList.add("show");
-        clearTimeout(flashT); flashT = setTimeout(function () { shelf.classList.remove("show"); }, 1800);
-      } else {
-        allDone = true; updateCap();
-        showBadge("🏆 You caught 'em all!", "lvl");
-        shelf.classList.add("show", "flash"); fanfare();
-        try { window.dqTrack && window.dqTrack("doodle_complete", {}); } catch (e) {}
-        clearTimeout(flashT);
-        setTimeout(function () { showBadge("More packs coming soon ✦", "lvl"); }, 1700);
-        flashT = setTimeout(function () { shelf.classList.remove("show", "flash"); }, 2500);
+  // ---- Unlock + celebrate ----
+  function checkUnlocks(announce) {
+    var newly = [], changed = true, s = view();
+    while (changed) {
+      changed = false;
+      for (var i = 0; i < ACH.length; i++) {
+        var a = ACH[i];
+        if (!has(a.id) && a.test(s)) { unlocked.push(a.id); newly.push(a); changed = true; }
       }
     }
+    if (newly.length) { saveUnlocked(); if (announce) celebrate(newly); else refreshIcon(); }
+    return newly;
+  }
 
-    function catchOne() {
-      if (busy) return;
-      if (!nudgeDone) { markNudgeDone(); hideNudge(); }   // clicking the mascot = discovered it
-      var r = pick(), pack = r.pack, n = r.n, forced = r.forced, set = collectFor(pack.id), isNew = !set.has(n);
-      cur = n; curPack = pack.id; img.src = spritePath(pack.id, n);
-      if (isNew) { set.add(n); saveCollect(); dupeStreak = 0; } else { dupeStreak++; }
-      var levelDone = isNew && !allDone && set.size >= pack.count;
-      var stillMissing = !allDone && collectFor(pack.id).size < pack.count;
-      updateCap();
+  var firstEver;
+  function celebrate(newly) {
+    try { firstEver = (unlocked.length === newly.length); } catch (e) { firstEver = false; }
+    refreshIcon(); flashIcon();
+    var bigOne = false;
+    for (var i = 0; i < newly.length; i++) if (newly[i].id === "complete" || newly[i].id === "legend") bigOne = true;
+    if (bigOne) fanfare(); else chime();
+    queueToasts(newly.slice());
+    if (firstEver) setTimeout(showFirstHint, 400);
+  }
 
-      if (levelDone) {
-        showBadge("Level complete! ✦", "lvl");
-        shelf.classList.add("show", "flash"); fanfare();
-        renderFav();   // pack just completed — pop its gold trophy slot into the shelf
-        try { window.dqTrack && window.dqTrack("doodle_levelup", { lvl: lvl + 1, pack: pack.id }); } catch (e) {}
-        clearTimeout(flashT);
-        flashT = setTimeout(function () { shelf.classList.remove("show", "flash"); advance(); }, 1900);
-      } else {
-        if (isNew) {
-          showBadge(forced ? "lucky find! ✦" : "new! ✦", forced ? "luck" : "new");
-          shelf.classList.add("show", "flash"); chime();
-        } else {
-          var near = stillMissing && dupeStreak >= (PITY - 2);   // subtle tell as the guarantee nears
-          showBadge(near ? "so close… ✦" : "already caught", "dupe");
-          shelf.classList.add("show");
-        }
-        clearTimeout(flashT);
-        flashT = setTimeout(function () { shelf.classList.remove("show", "flash"); }, 1400);
-      }
-      startCooldown();
-      try { window.dqTrack && window.dqTrack(isNew ? "doodle_new" : "doodle_dupe", { pack: pack.id, n: n, lvl: lvl, caught: grandCaught() }); } catch (e) {}
+  var toastQueue = [];
+  function queueToasts(list) { toastQueue = toastQueue.concat(list); if (!toastEl || !toastEl._busy) nextToast(); }
+  function nextToast() {
+    if (!toastQueue.length) return;
+    var a = toastQueue.shift();
+    if (!toastEl) {
+      toastEl = document.createElement("div"); toastEl.className = "dqa-toast";
+      toastEl.innerHTML = '<img alt=""><div><div class="t1">Achievement unlocked</div><div class="t2"></div></div>';
+      document.body.appendChild(toastEl);
     }
+    toastEl._busy = true;
+    toastEl.querySelector("img").src = spriteFor(a);
+    toastEl.querySelector(".t2").textContent = a.name;
+    void toastEl.offsetWidth; toastEl.classList.add("show");
+    setTimeout(function () {
+      toastEl.classList.remove("show");
+      setTimeout(function () { toastEl._busy = false; nextToast(); }, 280);
+    }, toastQueue.length ? 1500 : 2400);
+  }
 
-    // Hidden reset: press-and-hold ~0.7s. Wipes the whole collection back to Level 1.
-    var LONGPRESS = 700, pressT, didLong = false;
-    function reset() {
-      collect = {}; allDone = false; lvl = 0;
-      favs = {}; try { localStorage.removeItem(COLLECT_KEY); localStorage.removeItem(OLD_KEY); localStorage.removeItem(FAVKEY); } catch (e) {}
-      renderFav();
-      var np = PACKS[0], p0 = Math.floor(Math.random() * np.count) + 1;
-      cur = p0; curPack = np.id; img.src = spritePath(np.id, p0);
-      updateCap(); capl.textContent = "↺ reset!"; shelf.classList.add("show");
-      clearTimeout(flashT); flashT = setTimeout(function () { shelf.classList.remove("show"); updateCap(); }, 1600);
+  // ---- Collection modal ----
+  function escC(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+  function openCollection() {
+    if (document.querySelector(".dqa-modal")) return;
+    if (hintEl && hintEl.parentNode) hintEl.parentNode.removeChild(hintEl);
+    var html = '<div class="dqa-head"><div><div class="dqa-title">Your collection</div>'
+      + '<div class="dqa-sub">' + unlocked.length + ' / ' + TOTAL + ' unlocked</div></div>'
+      + '<button class="dqa-x" type="button" aria-label="Close">×</button></div><div class="dqa-body">';
+    // Favourites
+    if (favs.length) {
+      html += '<div class="dqa-favwrap"><div style="font-size:12px;font-weight:800;color:var(--gold,#d29922)">★ Favourites</div><div class="dqa-favrow">';
+      for (var f = 0; f < favs.length; f++) { var fa = ACH_BY_ID[favs[f]]; if (fa && has(fa.id)) html += '<img loading="lazy" src="' + spriteFor(fa) + '" alt="" title="' + escC(fa.name) + '">'; }
+      html += '</div></div>';
     }
-    function startPress() { didLong = false; clearTimeout(pressT); pressT = setTimeout(function () { didLong = true; reset(); }, LONGPRESS); }
-    function endPress() { clearTimeout(pressT); }
-
-    function setFold(v) { shelf.classList.toggle("folded", v); fav.classList.toggle("hid", v); try { localStorage.setItem(FOLDKEY, v ? "1" : "0"); } catch (e) {} }
-
-    // Collection modal — every pack as a grid: caught sprites in colour, missing ones as silhouettes,
-    // future packs shown locked. Pure front-end; reads the same localStorage collection.
-    function escC(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
-    function openCollection() {
-      if (document.querySelector(".dqd-cmodal")) return;
-      var caught = grandCaught(), total = grandTotal();
-      var html = '<div class="dqd-chead"><div><div class="dqd-ctitle">Your collection</div>'
-        + '<div class="dqd-csub">' + caught + ' / ' + total + ' found</div></div>'
-        + '<button class="dqd-cx" type="button" aria-label="Close">×</button></div><div class="dqd-cbody">';
-      for (var i = 0; i < PACKS.length; i++) {
-        var p = PACKS[i], set = collectFor(p.id);
-        if (!allDone && i > lvl) {
-          html += '<div class="dqd-cpack locked"><div class="dqd-cph">🔒 Lvl ' + (i + 1) + ' · ' + escC(p.name) + '</div>'
-            + '<div class="dqd-clock">Finish the set before it to unlock this one.</div></div>';
-          continue;
-        }
-        var done = set.size >= p.count;
-        html += '<div class="dqd-cpack"><div class="dqd-cph">Lvl ' + (i + 1) + ' · ' + escC(p.name)
-          + ' <span class="dqd-cpc">' + set.size + ' / ' + p.count + '</span>'
-          + (done ? '<span class="dqd-cdone">★ complete — pick one to pin</span>' : '') + '</div><div class="dqd-cgrid">';
-        for (var nn = 1; nn <= p.count; nn++) {
-          var have = set.has(nn), pin = done && have;
-          var cls = "dqd-ctile " + (have ? "have" : "miss") + (pin ? (favs[p.id] === nn ? " favable faved" : " favable") : "");
-          html += '<div class="' + cls + '"' + (pin ? ' data-pack="' + p.id + '" data-n="' + nn + '" role="button" tabindex="0" title="Click to pin / unpin to your favourites"' : '')
-            + '><img loading="lazy" src="' + spritePath(p.id, nn) + '" alt=""></div>';
-        }
-        html += '</div></div>';
+    // Tiers
+    for (var t = 0; t < TIERS.length; t++) {
+      var tier = TIERS[t];
+      var got = 0, total = 0;
+      for (var c = 0; c < ACH.length; c++) if (ACH[c].tier === tier.id) { total++; if (has(ACH[c].id)) got++; }
+      html += '<div class="dqa-tier">' + escC(tier.name) + ' · ' + got + ' / ' + total + '</div><div class="dqa-grid">';
+      for (var i = 0; i < ACH.length; i++) {
+        var a = ACH[i]; if (a.tier !== tier.id) continue;
+        var u = has(a.id), fav = favs.indexOf(a.id) >= 0;
+        html += '<div class="dqa-cell ' + (u ? "unlocked" : "locked") + (fav ? " faved" : "") + '"'
+          + (u ? ' data-id="' + a.id + '" role="button" tabindex="0" title="Click to pin / unpin"' : '') + '>'
+          + '<div class="pic"><img loading="lazy" src="' + spriteFor(a) + '" alt=""></div>'
+          + '<div><div class="dqa-nm">' + escC(a.name) + '</div><div class="dqa-hn">' + (u ? "Unlocked" : escC(a.hint)) + '</div></div>'
+          + '<div class="dqa-star">★</div></div>';
       }
       html += '</div>';
-      var ov = document.createElement("div"); ov.className = "dqd-cmodal";
-      var box = document.createElement("div"); box.className = "dqd-cbox"; box.innerHTML = html;
-      ov.appendChild(box); document.body.appendChild(ov);
-      function close() { ov.classList.remove("show"); document.removeEventListener("keydown", onkey); setTimeout(function () { if (ov.parentNode) ov.parentNode.removeChild(ov); }, 200); }
-      function onkey(e) { if (e.key === "Escape") close(); }
-      ov.addEventListener("click", function (e) { if (e.target === ov) close(); });
-      box.querySelector(".dqd-cx").addEventListener("click", close);
-      function bindPin(tile) {
-        function toggle() {
-          var pk = tile.getAttribute("data-pack"), fn = parseInt(tile.getAttribute("data-n"), 10);
-          var nowOn = toggleFav(pk, fn);
-          var sib = box.querySelectorAll('.dqd-ctile.favable[data-pack="' + pk + '"]');
-          for (var si = 0; si < sib.length; si++) sib[si].classList.remove("faved");
-          if (nowOn) tile.classList.add("faved");
-        }
-        tile.addEventListener("click", toggle);
-        tile.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggle(); } });
-      }
-      var pins = box.querySelectorAll(".dqd-ctile.favable");
-      for (var pi = 0; pi < pins.length; pi++) bindPin(pins[pi]);
-      document.addEventListener("keydown", onkey);
-      void ov.offsetWidth; ov.classList.add("show");
     }
-    function renderFav() {
-      fav.innerHTML = "";
-      var any = false;
-      for (var i = 0; i < PACKS.length; i++) {
-        var p = PACKS[i];
-        if (collectFor(p.id).size < p.count) continue;   // a slot appears for each COMPLETED pack
-        any = true;
-        var fn = favs[p.id];
-        if (fn) {
-          var im = document.createElement("img");
-          im.className = "dqd-favimg"; im.src = spritePath(p.id, fn); im.alt = ""; im.loading = "lazy"; im.draggable = false;
-          fav.appendChild(im);
-        } else {
-          var slot = document.createElement("div");
-          slot.className = "dqd-favslot"; slot.textContent = "★";
-          slot.title = "Pick a favourite from " + p.name;
-          fav.appendChild(slot);
-        }
-      }
-      fav.classList.toggle("empty", !any);
+    html += '</div>';
+    var ov = document.createElement("div"); ov.className = "dqa-modal";
+    var box = document.createElement("div"); box.className = "dqa-box"; box.innerHTML = html;
+    ov.appendChild(box); document.body.appendChild(ov);
+    function close() { ov.classList.remove("show"); document.removeEventListener("keydown", onkey); setTimeout(function () { if (ov.parentNode) ov.parentNode.removeChild(ov); }, 200); }
+    function onkey(e) { if (e.key === "Escape") close(); }
+    ov.addEventListener("click", function (e) { if (e.target === ov) close(); });
+    box.querySelector(".dqa-x").addEventListener("click", close);
+    document.addEventListener("keydown", onkey);
+    var cells = box.querySelectorAll(".dqa-cell.unlocked");
+    for (var k = 0; k < cells.length; k++) bindPin(cells[k]);
+    void ov.offsetWidth; ov.classList.add("show");
+    try { window.dqTrack && window.dqTrack("ach_open", { n: unlocked.length }); } catch (e) {}
+  }
+  function bindPin(cell) {
+    function toggle() {
+      var id = cell.getAttribute("data-id"), at = favs.indexOf(id);
+      if (at >= 0) { favs.splice(at, 1); cell.classList.remove("faved"); }
+      else { favs.push(id); cell.classList.add("faved"); stats.pin = (stats.pin || 0) + 1; saveStats(); checkUnlocks(true); }
+      saveJSON(FAV_KEY, favs);
     }
-    function toggleFav(packId, n) {
-      var nowOn;
-      if (favs[packId] === n) { delete favs[packId]; nowOn = false; }
-      else { favs[packId] = n; nowOn = true; }
-      saveFavs(); renderFav();
-      return nowOn;
-    }
+    cell.addEventListener("click", toggle);
+    cell.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggle(); } });
+  }
 
-    // Initial reveal — show the active pack + current progress, no free catch.
-    (function revealInitial() {
-      var pack = PACKS[lvl], n = Math.floor(Math.random() * pack.count) + 1;
-      cur = n; curPack = pack.id; img.src = spritePath(pack.id, n);
-      updateCap();
-    })();
-
-    img.addEventListener("mousedown", startPress);
-    img.addEventListener("mouseup", endPress);
-    img.addEventListener("mouseleave", endPress);
-    img.addEventListener("touchstart", startPress, { passive: true });
-    img.addEventListener("touchend", endPress);
-    img.addEventListener("click", function () { if (didLong) { didLong = false; return; } catchOne(); });
-    img.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); catchOne(); } });
-    x.addEventListener("click", function (e) { e.stopPropagation(); setFold(true); });
-    handle.addEventListener("click", function () { setFold(false); });
-    function openColl(e) { if (e) e.stopPropagation(); if (!nudgeDone) { markNudgeDone(); hideNudge(); } openCollection(); }
-    coll.addEventListener("click", openColl);
-    coll.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openColl(e); } });
-    fav.addEventListener("click", function () { openCollection(); });
-
-    shelf.appendChild(imgwrap); shelf.appendChild(badge); shelf.appendChild(cap); shelf.appendChild(x); shelf.appendChild(handle); shelf.appendChild(coll);
-    shelf.appendChild(cool);   // overlay last so the cooldown shade sits above the whole bookmark
-    header.appendChild(shelf);
-    header.appendChild(fav); renderFav();   // the pinned-favourites shelf, left of the mascot
-
-    try { if (localStorage.getItem(FOLDKEY) === "1") { shelf.classList.add("folded"); fav.classList.add("hid"); } } catch (e) {}
-
-    // ---- One-time "discover" nudge — gated on real engagement so the jobs grid earns attention first.
-    var nudgeDone = false;
-    try { nudgeDone = localStorage.getItem(NUDGE_KEY) === "1"; } catch (e) {}
-    if (grandCaught() > 0) { nudgeDone = true; try { localStorage.setItem(NUDGE_KEY, "1"); } catch (e) {} }  // already plays
-    var nudgeEl = null;
-    function markNudgeDone() { nudgeDone = true; try { localStorage.setItem(NUDGE_KEY, "1"); } catch (e) {} }
-    function hideNudge() {
-      if (!nudgeEl) return;
-      var el = nudgeEl; nudgeEl = null; el.classList.remove("show");
-      setTimeout(function () { if (el.parentNode) el.parentNode.removeChild(el); }, 300);
+  // ---- Event tracking: tally real actions from the site's dqTrack ----
+  function bump(name, props) {
+    props = props || {};
+    switch (name) {
+      case "apply_click": stats.jobs++; break;            // clicking through to view a job posting
+      case "search":      stats.search++; break;
+      case "filter":      stats.filter++; break;
+      case "directory_click": case "moon_click": case "pulse_studio_click": stats.map++; break;
+      case "grid_cell":   stats.grid++; break;
+      case "bestfit_filter": case "bestfit_pick": stats.bestfit++; break;
+      case "save_job":    stats.save++; break;
+      case "track_job":   stats.track++; break;
+      case "alert_signup": stats.alert++; break;
+      case "who_do_i_know": stats.know++; break;
+      case "studio_follow":
+        if (props.on === false) { var ix = stats.follows.indexOf(props.st); if (ix >= 0) stats.follows.splice(ix, 1); }
+        else if (props.st && stats.follows.indexOf(props.st) < 0) stats.follows.push(props.st);
+        break;
+      case "share_click":
+        if (props.p && stats.shareP.indexOf(props.p) < 0) stats.shareP.push(props.p);
+        if (props.p === "copy") stats.copy++;
+        break;
+      default: return false;
     }
-    function showNudge() {
-      if (nudgeDone || nudgeEl || shelf.classList.contains("folded")) return;
-      markNudgeDone();
-      nudgeEl = document.createElement("div"); nudgeEl.className = "dqd-nudge";
-      nudgeEl.innerHTML = "<b>Psst…</b> there's a tiny game up here — click the critter to catch 'em all.";
-      nudgeEl.addEventListener("click", function (e) { e.stopPropagation(); hideNudge(); });
-      shelf.appendChild(nudgeEl);
-      void nudgeEl.offsetWidth; nudgeEl.classList.add("show");
-      setTimeout(hideNudge, 10000);
-    }
-    // Count real engagement by wrapping the site's tracker; meaningful actions tick toward the nudge.
-    if (!nudgeDone) {
-      var MEANINGFUL = { search: 1, filter: 1, apply_click: 1, track_job: 1, save_job: 1, dismiss_job: 1, who_do_i_know: 1, directory_click: 1, moon_click: 1, grid_cell: 1, studio_follow: 1, bestfit_filter: 1, bestfit_pick: 1 };
-      var origTrack = window.dqTrack;
-      window.dqTrack = function (name, props) {
-        try {
-          if (!nudgeDone && MEANINGFUL[name]) {
-            var c = 0; try { c = parseInt(localStorage.getItem("dq-engage") || "0", 10) || 0; } catch (e) {}
-            c++; try { localStorage.setItem("dq-engage", String(c)); } catch (e) {}
-            if (c >= NUDGE_AT) showNudge();
-          }
-        } catch (e) {}
-        if (typeof origTrack === "function") return origTrack(name, props);
-      };
-    }
+    return true;
+  }
+
+  function hookTracker() {
+    var orig = window.dqTrack;
+    window.dqTrack = function (name, props) {
+      try { if (bump(name, props)) { saveStats(); checkUnlocks(true); } } catch (e) {}
+      if (typeof orig === "function") return orig(name, props);
+    };
+  }
+
+  // ---- Boot ----
+  function mount() {
+    loadAll();
+    // Mark today's visit (distinct days).
+    try { var today = new Date().toISOString().slice(0, 10); if (days.indexOf(today) < 0) { days.push(today); saveJSON(DAYS_KEY, days); } } catch (e) {}
+    buildIcon();
+    checkUnlocks(false);   // restore prior unlocks silently
+    refreshIcon();
+    var dayWins = checkUnlocks(true);   // a day milestone reached just by visiting today celebrates
+    hookTracker();
   }
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", mount);
   else mount();
 })();
-/* v11 staged */
