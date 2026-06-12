@@ -161,8 +161,15 @@
       ".dqa-prog{height:100%;background:linear-gradient(90deg,#58a6ff,#3fb950 55%,#e3b341);border-radius:6px;transition:width .5s ease}" +
       ".dqa-favwrap{background:linear-gradient(180deg,rgba(210,153,34,.12),rgba(210,153,34,0)),var(--bg,#0d1117);" +
       "border:1px solid var(--gold,#d29922);border-radius:10px;padding:10px 12px;margin-bottom:18px}" +
+      ".dqa-favhd{font-size:12px;font-weight:800;color:var(--gold,#d29922)}" +
+      ".dqa-favsub{font-weight:600;color:var(--muted,#8b949e);font-size:11px}" +
+      ".dqa-favhint{font-size:11px;color:var(--muted,#8b949e);line-height:1.45;margin-top:5px}" +
+      ".dqa-favhint b{color:var(--gold,#d29922)}" +
       ".dqa-favrow{display:flex;gap:7px;flex-wrap:wrap;margin-top:9px}" +
-      ".dqa-favrow img{width:36px;height:36px;image-rendering:pixelated;background:var(--bg,#0d1117);border-radius:7px;padding:2px}" +
+      ".dqa-fav{padding:3px;background:var(--bg,#0d1117);border:1px solid var(--border,#30363d);border-radius:8px;cursor:pointer;line-height:0;transition:border-color .15s,box-shadow .15s,transform .1s}" +
+      ".dqa-fav:hover{border-color:var(--gold,#d29922);transform:translateY(-1px)}" +
+      ".dqa-fav.active{border-color:var(--gold,#d29922);box-shadow:0 0 0 1px var(--gold,#d29922),0 0 12px rgba(210,153,34,.3)}" +
+      ".dqa-fav img{width:36px;height:36px;image-rendering:pixelated;display:block}" +
       ".dqa-tier{font-size:11px;font-weight:800;letter-spacing:1.4px;text-transform:uppercase;color:#58a6ff;margin:18px 0 10px;border-bottom:1px solid var(--border,#30363d);padding-bottom:7px}" +
       ".dqa-tier:first-child{margin-top:2px}" +
       ".dqa-tier.t-explorer{color:#58a6ff;border-color:rgba(88,166,255,.35)}" +
@@ -234,11 +241,17 @@
     }
   }
 
+  // The header mascot = your active (most-recently-pinned) favourite, if any;
+  // otherwise it falls back to your latest unlock.
+  function mascotId() {
+    for (var i = favs.length - 1; i >= 0; i--) if (has(favs[i])) return favs[i];
+    return unlocked.length ? unlocked[unlocked.length - 1] : null;
+  }
   function refreshIcon() {
     if (!icoEl) return;
     if (!unlocked.length) { icoEl.classList.remove("on"); return; }
-    var latest = ACH_BY_ID[unlocked[unlocked.length - 1]];
-    if (latest) icoImg.src = spriteFor(latest);
+    var m = ACH_BY_ID[mascotId()];
+    if (m) icoImg.src = spriteFor(m);
     icoNum.textContent = unlocked.length + " / " + TOTAL;
     icoEl.classList.add("on");
   }
@@ -311,13 +324,8 @@
     var html = '<div class="dqa-head"><div><div class="dqa-title">Your collection</div>'
       + '<div class="dqa-sub">' + unlocked.length + ' / ' + TOTAL + ' unlocked</div></div>'
       + '<button class="dqa-x" type="button" aria-label="Close">×</button></div><div class="dqa-body">'
-      + '<div class="dqa-progwrap"><div class="dqa-prog" style="width:' + pct + '%"></div></div>';
-    // Favourites
-    if (favs.length) {
-      html += '<div class="dqa-favwrap"><div style="font-size:12px;font-weight:800;color:var(--gold,#d29922)">★ Favourites</div><div class="dqa-favrow">';
-      for (var f = 0; f < favs.length; f++) { var fa = ACH_BY_ID[favs[f]]; if (fa && has(fa.id)) html += '<img loading="lazy" src="' + spriteFor(fa) + '" alt="" title="' + escC(fa.name) + '">'; }
-      html += '</div></div>';
-    }
+      + '<div class="dqa-progwrap"><div class="dqa-prog" style="width:' + pct + '%"></div></div>'
+      + '<div class="dqa-favhost"></div>';   // populated live by renderFavs()
     // Tiers
     for (var t = 0; t < TIERS.length; t++) {
       var tier = TIERS[t];
@@ -328,7 +336,7 @@
         var a = ACH[i]; if (a.tier !== tier.id) continue;
         var u = has(a.id), fav = favs.indexOf(a.id) >= 0;
         html += '<div class="dqa-cell ' + (u ? "unlocked" : "locked") + (fav ? " faved" : "") + '"'
-          + (u ? ' data-id="' + a.id + '" role="button" tabindex="0" title="' + escC(a.name) + ' — click to pin / unpin"' : ' title="' + escC(a.name) + ' — ' + escC(a.hint) + '"') + '>'
+          + (u ? ' data-id="' + a.id + '" role="button" tabindex="0" title="' + escC(a.name) + ' — pin as your mascot (click again to unpin)"' : ' title="' + escC(a.name) + ' — ' + escC(a.hint) + '"') + '>'
           + '<div class="pic"><img loading="lazy" src="' + spriteFor(a) + '" alt=""></div>'
           + '<div class="dqa-nm">' + escC(a.name) + '</div>'
           + '<div class="dqa-hn">' + (u ? (fav ? "★ Pinned" : "★ Pin") : escC(a.hint)) + '</div>'
@@ -346,16 +354,52 @@
     box.querySelector(".dqa-x").addEventListener("click", close);
     document.addEventListener("keydown", onkey);
     var cells = box.querySelectorAll(".dqa-cell.unlocked");
-    for (var k = 0; k < cells.length; k++) bindPin(cells[k]);
+    for (var k = 0; k < cells.length; k++) bindPin(cells[k], box);
+    renderFavs(box);
     void ov.offsetWidth; ov.classList.add("show");
     try { window.dqTrack && window.dqTrack("ach_open", { n: unlocked.length }); } catch (e) {}
   }
-  function bindPin(cell) {
+
+  // Live-render the Favourites box. The last pinned favourite is the active
+  // mascot (highlighted). When nothing is pinned, show a one-line how-to.
+  function renderFavs(box) {
+    var host = box.querySelector(".dqa-favhost");
+    if (!host) return;
+    var pinned = favs.filter(function (id) { return has(id) && ACH_BY_ID[id]; });
+    if (!pinned.length) {
+      host.innerHTML = '<div class="dqa-favwrap"><div class="dqa-favhd">★ Favourites</div>'
+        + '<div class="dqa-favhint">Click any unlocked sprite below to pin it as your <b>mascot</b> — the sprite that floats beside the logo.</div></div>';
+      return;
+    }
+    var mascot = pinned[pinned.length - 1];
+    var h = '<div class="dqa-favwrap"><div class="dqa-favhd">★ Favourites <span class="dqa-favsub">— tap one to make it your mascot</span></div><div class="dqa-favrow">';
+    for (var f = 0; f < pinned.length; f++) {
+      var fa = ACH_BY_ID[pinned[f]], on = pinned[f] === mascot;
+      h += '<button type="button" class="dqa-fav' + (on ? " active" : "") + '" data-id="' + pinned[f] + '" title="' + escC(fa.name) + (on ? " — your mascot" : " — tap to set as mascot") + '"><img loading="lazy" src="' + spriteFor(fa) + '" alt=""></button>';
+    }
+    h += '</div></div>';
+    host.innerHTML = h;
+    var fbtns = host.querySelectorAll(".dqa-fav");
+    for (var b = 0; b < fbtns.length; b++) bindFavPick(fbtns[b], box);
+  }
+  function bindFavPick(btn, box) {
+    btn.addEventListener("click", function () {
+      var id = btn.getAttribute("data-id"), at = favs.indexOf(id);
+      if (at < 0) return;
+      favs.splice(at, 1); favs.push(id);           // move to end = active mascot
+      saveJSON(FAV_KEY, favs); refreshIcon(); renderFavs(box);
+    });
+  }
+
+  function bindPin(cell, box) {
     function toggle() {
       var id = cell.getAttribute("data-id"), at = favs.indexOf(id);
       if (at >= 0) { favs.splice(at, 1); cell.classList.remove("faved"); }
       else { favs.push(id); cell.classList.add("faved"); stats.pin = (stats.pin || 0) + 1; saveStats(); checkUnlocks(true); }
       saveJSON(FAV_KEY, favs);
+      var hn = cell.querySelector(".dqa-hn"); if (hn) hn.textContent = (favs.indexOf(id) >= 0) ? "★ Pinned" : "★ Pin";
+      refreshIcon();
+      if (box) renderFavs(box);
     }
     cell.addEventListener("click", toggle);
     cell.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggle(); } });
