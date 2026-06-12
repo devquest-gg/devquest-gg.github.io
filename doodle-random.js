@@ -44,7 +44,7 @@
   var TOTAL = SPRITES.length;
 
   // ---- Persistent state ----
-  var DAYS_KEY = "dq-days", PIN_KEY = "dq-pin", HINT_KEY = "dq-col-hint", SEED_KEY = "dq-seed";
+  var DAYS_KEY = "dq-days", PIN_KEY = "dq-pin", HINT_KEY = "dq-col-hint", SEED_KEY = "dq-seed", SOUND_KEY = "dq-sound";
   function loadJSON(k, d) { try { var v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } }
   function saveJSON(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
   function loadStr(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
@@ -67,6 +67,25 @@
 
   var days = loadJSON(DAYS_KEY, []);   // distinct "YYYY-MM-DD" visit days
   var pin = loadStr(PIN_KEY);          // pinned sprite index (as a string) or null
+
+  // ---- Sound cues (music box on unlock, soft tick on collection click) ----
+  // Low volume, preloaded. Muteable via DQ.mute()/the test panel (stored in dq-sound).
+  // Note: the unlock cue rides the welcome-back toast, which fires on page load; some
+  // browsers block audio until the user has interacted with the site, so the very first
+  // cue may be silent until then (clicks always work, as they follow a user gesture).
+  var SND_UNLOCK = null, SND_CLICK = null;
+  function soundsOn() { return loadStr(SOUND_KEY) !== "off"; }
+  function initSounds() {
+    if (SND_UNLOCK) return;
+    try {
+      SND_UNLOCK = new Audio(BASE + "sounds/unlock.wav"); SND_UNLOCK.preload = "auto"; SND_UNLOCK.volume = 0.55;
+      SND_CLICK  = new Audio(BASE + "sounds/click.wav");  SND_CLICK.preload  = "auto"; SND_CLICK.volume  = 0.55;
+    } catch (e) {}
+  }
+  function playSound(a) {
+    if (!a || !soundsOn()) return;
+    try { a.currentTime = 0; var pr = a.play(); if (pr && pr.catch) pr.catch(function () {}); } catch (e) {}
+  }
 
   function unlockedCount() { return Math.min(days.length, TOTAL); }
   function isUnlocked(i) { return i >= 0 && i < TOTAL && RANK[i] < unlockedCount(); }
@@ -207,6 +226,7 @@
     }
     toastEl.querySelector("img").src = SPRITES[idx];
     toastEl.querySelector(".t2").textContent = "New sprite unlocked!";
+    playSound(SND_UNLOCK);
     void toastEl.offsetWidth; toastEl.classList.add("show");
     clearTimeout(toastEl._t); toastEl._t = setTimeout(hideToast, 5500);
   }
@@ -250,6 +270,7 @@
     function toggle() {
       var i = cell.getAttribute("data-i");
       if (!isUnlocked(parseInt(i, 10))) return;
+      playSound(SND_CLICK);
       if (pin === i) { pin = null; saveStr(PIN_KEY, null); }   // clicking the pinned one again un-pins it
       else { pin = i; saveStr(PIN_KEY, i); }
       applyPins(box); refreshIcon();
@@ -265,6 +286,7 @@
   // ---- Boot ----
   function mount() {
     injectStyle();
+    initSounds();
     var today = todayStr();
     var isNewDay = days.indexOf(today) < 0;
     var before = unlockedCount();
@@ -306,12 +328,16 @@
         "color:#e6edf3;background:#0d1117;border:1px solid #30363d;border-radius:7px;cursor:pointer";
       b.addEventListener("click", function () { fn(); updateStat(); });
       p.appendChild(b);
+      return b;
     }
     mk("+1 day (return visit)", function () { window.DQ.addDay(1); });
     mk("+7 days", function () { window.DQ.addDay(7); });
     mk("Open collection", function () { openCollection(); });
     mk("Jump to 50 unlocked", function () { window.DQ.setDays(50); });
     mk("Jump to 150 unlocked", function () { window.DQ.setDays(150); });
+    mk("▶ Test sounds", function () { window.DQ.testSound(); });
+    var sb = mk("", function () { if (soundsOn()) window.DQ.mute(); else window.DQ.unmute(); sb.textContent = "Sound: " + (soundsOn() ? "on" : "off"); });
+    sb.textContent = "Sound: " + (soundsOn() ? "on" : "off");
     mk("Reset + reload", function () { window.DQ.reset(); try { location.reload(); } catch (e) {} });
     var x = document.createElement("button");
     x.type = "button"; x.textContent = "× close panel";
@@ -349,15 +375,20 @@
       console.log("[DQ] reset — visit history, pin & hint cleared. Reload for a clean first visit.");
     },
     status: function () {
-      console.log("[DQ] " + unlockedCount() + "/" + TOTAL + " unlocked · " + days.length + " day(s) · pin=" + pin + " · mascot=" + SPRITES[mascotIndex()]);
-      return { unlocked: unlockedCount(), days: days.length, pin: pin };
+      console.log("[DQ] " + unlockedCount() + "/" + TOTAL + " unlocked · " + days.length + " day(s) · pin=" + pin + " · sound=" + (soundsOn() ? "on" : "off") + " · mascot=" + SPRITES[mascotIndex()]);
+      return { unlocked: unlockedCount(), days: days.length, pin: pin, sound: soundsOn() };
     },
+    mute: function () { saveStr(SOUND_KEY, "off"); console.log("[DQ] sounds muted."); },
+    unmute: function () { saveStr(SOUND_KEY, null); console.log("[DQ] sounds on."); },
+    testSound: function () { initSounds(); playSound(SND_UNLOCK); setTimeout(function () { playSound(SND_CLICK); }, 750); },
     help: function () {
       console.log("DevQuest collection — test controls:");
       console.log("  DQ.addDay(n)   simulate n return-day visits (default 1)");
       console.log("  DQ.setDays(n)  jump straight to n unlocked sprites");
       console.log("  DQ.reset()     wipe visit history, pin & hint (reload after for a clean first visit)");
       console.log("  DQ.status()    print current state");
+      console.log("  DQ.testSound() play the unlock + click cues now");
+      console.log("  DQ.mute() / DQ.unmute()  toggle sound");
     }
   };
   try { console.log("%c[DQ]%c collection test controls ready — type %cDQ.help()", "color:#d29922;font-weight:700", "", "font-family:monospace"); } catch (e) {}
