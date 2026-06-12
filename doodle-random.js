@@ -65,8 +65,8 @@
     { id: "day3",    tier: "champion", pack: "pirate", n: 47, name: "Regular",        hint: "Visit on 3 different days",    test: function (s) { return s.days >= 3; } },     // ship wheel
     { id: "day7",    tier: "champion", pack: "pirate", n: 44, name: "Devoted",        hint: "Visit on 7 different days",    test: function (s) { return s.days >= 7; } },     // anchor
     { id: "day30",   tier: "champion", pack: "pirate", n: 31, name: "Lifer",          hint: "Visit on 30 different days",   test: function (s) { return s.days >= 30; } },    // gold medallion
-    { id: "complete",tier: "champion", pack: "pirate", n: 13, name: "Completionist",  hint: "Unlock all Explorer + Collector", test: function () { return explorerCollectorDone(); } }, // ornate chest
-    { id: "legend",  tier: "champion", pack: "chaos",  n: 13, name: "DevQuest Legend",hint: "Unlock everything else",       test: function () { return allButLegendDone(); } }   // golden naga
+    { id: "complete",tier: "champion", pack: "pirate", n: 13, name: "Completionist",  hint: "Earn every Explorer & Collector award", test: function () { return explorerCollectorDone(); } }, // ornate chest
+    { id: "legend",  tier: "champion", pack: "chaos",  n: 13, name: "DevQuest Legend",hint: "Earn all 23 other achievements", test: function () { return allButLegendDone(); } }   // golden naga
   ];
   var ACH_BY_ID = {}; for (var _i = 0; _i < ACH.length; _i++) ACH_BY_ID[ACH[_i].id] = ACH[_i];
   function spriteFor(a) { return BASE + (a.pack || packOf(a.tier)) + "/" + a.n + ".png"; }
@@ -368,12 +368,13 @@
       case "apply_click": stats.jobs++; break;            // clicking through to view a job posting
       case "search":      stats.search++; break;
       case "filter":      stats.filter++; break;
+      case "view":        if (props.tab !== "map") return false; stats.map++; break;  // opened the Map tab
       case "directory_click": case "moon_click": case "pulse_studio_click": stats.map++; break;
       case "grid_cell":   stats.grid++; break;
       case "bestfit_filter": case "bestfit_pick": stats.bestfit++; break;
       case "save_job":    stats.save++; break;
       case "track_job":   stats.track++; break;
-      case "alert_signup": stats.alert++; break;
+      case "alert_signup": case "digest_signup": stats.alert++; break;
       case "who_do_i_know": stats.know++; break;
       case "studio_follow":
         if (props.on === false) { var ix = stats.follows.indexOf(props.st); if (ix >= 0) stats.follows.splice(ix, 1); }
@@ -388,12 +389,15 @@
     return true;
   }
 
+  function tally(name, props) {
+    try { if (bump(name, props)) { saveStats(); checkUnlocks(true); } } catch (e) {}
+  }
   function hookTracker() {
-    var orig = window.dqTrack;
-    window.dqTrack = function (name, props) {
-      try { if (bump(name, props)) { saveStats(); checkUnlocks(true); } } catch (e) {}
-      if (typeof orig === "function") return orig(name, props);
-    };
+    // index.html's track() calls window.__dqAch(name, props) for EVERY event.
+    // The site fires most events via its local track(...) (not the global dqTrack),
+    // so wrapping window.dqTrack alone misses them. Tapping track() catches all of
+    // them, exactly once. (Requires the matching one-line hook in index.html.)
+    window.__dqAch = tally;
   }
 
   // ---- Boot ----
