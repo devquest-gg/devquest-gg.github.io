@@ -665,11 +665,11 @@ function strongTitleDiscipline(t) {
   if (/\baudio\b|sound design|\bcomposer\b|music design|\bsonore\b|conception sonore/.test(t)) return "Audio";
   if (/\bqa\b|quality assurance|\btester\b|\bsdet\b|test (engineer|analyst|lead|automation|specialist)|quality (engineer|analyst|specialist)|assurance qualit/.test(t)) return "QA";
   if (/art director|\bartist\b|\bartiste\b|direct(eur|rice|ion) artistique|\bart lead\b|lead artist|concept art|\bvfx\b|lighting (artist|lead)|environment artist|character artist|technical artist/.test(t)) return "Art";
-  if (/\banimator\b|animation (director|lead|manager|supervisor)|\brigging\b/.test(t)) return "Animation";
-  if (/game design|level design|systems? design|narrative design|\bwriter\b|\bscénariste\b|encounter design|combat design|content design|economy design|quality design|gameplay design|ux design|ui design|concepteur|conceptrice|conception de jeu/.test(t)) return "Design";
-  if ((/(engineer|programmer|developer|architect)\b|architecte|ingénieur|programmeur|développeur/.test(t)) && !/\bsales\b|customer success|account exec|solutions? consultant/.test(t)) return "Engineering";
-  if (/machine learning|\bml\b ?(scientist|researcher|ops)|data scien|data analytics|deep learning|\bnlp\b/.test(t)) return "Data & Analytics";
-  if (/\b(project|programme?|delivery|release|portfolio)\s+(manager|management|coordinator|lead|director|assistant)\b|technical (program|project) manager|scrum master|agile coach|\bpmo\b|\bproducer\b|production (coordinator|manager|director|assistant)|product (manager|owner|management)|head of product|producteur|productrice|réalisat(eur|rice)|gestionnaire de (projet|programme)|chef de (projet|produit)|coordonnateur de projet/.test(t)) return "Production";
+  if (/\banimator\b|animation (director|lead|manager|supervisor)|\brigging\b|cinematics? (director|lead|supervisor|manager|animator|designer)/.test(t)) return "Animation";
+  if (/game design|level design|systems? design|narrative design|\bwriter\b|\bscénariste\b|encounter design|combat design|content design|economy design|quality design|gameplay design|ux design|ui design|concepteur|conceptrice|conception de jeu|world build|world design|environment design/.test(t)) return "Design";
+  if ((/(engineer|programmer|developer|architect)\b|architecte|ingénieur|programmeur|développeur|technical director/.test(t)) && !/\bsales\b|customer success|account exec|solutions? consultant/.test(t)) return "Engineering";
+  if (/machine learning|\bml\b ?(scientist|researcher|ops)|data scien|data analytics|deep learning|\bnlp\b|artificial intelligence|\bai (scientist|researcher|research)|\bof ai\b/.test(t)) return "Data & Analytics";
+  if (/\b(project|programme?|delivery|release|portfolio)\s+(manager|management|coordinator|lead|director|assistant)\b|technical (program|project) manager|scrum master|agile coach|\bpmo\b|\bproducer\b|production (coordinator|manager|director|assistant)|product (manager|owner|management|director|lead)|director,? of product|(vp|head) of product|game director|producteur|productrice|réalisat(eur|rice)|gestionnaire de (projet|programme)|chef de (projet|produit)|coordonnateur de projet/.test(t)) return "Production";
   return null;
 }
 
@@ -702,7 +702,10 @@ function mapDiscipline(raw, title) {
   if (/esports/.test(t)) return "Esports";
   if (/player support|customer support|community support/.test(t)) return "Player Support";
   if (/market|\bbrand\b|public relations|\bpr\b|social media|communit|influencer|communication/.test(t)) return "Marketing";
-  return raw || "Other";
+  // Final fallback: a recognized department was already mapped above, so anything left is unknown.
+  // Return the canonical catch-all — never the raw ATS string (that leaked junk like a studio or
+  // status label into the discipline field, e.g. "Ubisoft" / "Currently Hiring").
+  return "Other";
 }
 
 function inferSeniority(title) {
