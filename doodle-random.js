@@ -282,6 +282,44 @@
       // Returning on a new day → welcome-back pop-up with the newly unlocked sprite.
       flashIcon(); welcomeToast(ORDER[after - 1]);
     }
+    try { if (/[?&]dqtest\b/.test(location.search)) buildTestPanel(); } catch (e) {}
+  }
+
+  // ---- On-screen test panel (only when the URL has ?dqtest — e.g. devquest.gg/?dqtest) ----
+  function buildTestPanel() {
+    if (document.getElementById("dq-testpanel")) return;
+    var p = document.createElement("div");
+    p.id = "dq-testpanel";
+    p.style.cssText = "position:fixed;right:12px;bottom:12px;z-index:100000;background:#161b22;border:1px solid #30363d;" +
+      "border-radius:10px;padding:10px;width:178px;font-family:-apple-system,'Segoe UI',Roboto,sans-serif;box-shadow:0 10px 30px rgba(0,0,0,.55)";
+    var head = document.createElement("div");
+    head.style.cssText = "font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:#d29922;margin-bottom:7px";
+    head.textContent = "DQ test panel";
+    var stat = document.createElement("div");
+    stat.style.cssText = "font-size:11px;color:#8b949e;line-height:1.4;margin-bottom:8px";
+    p.appendChild(head); p.appendChild(stat);
+    function updateStat() { stat.textContent = unlockedCount() + " / " + TOTAL + " unlocked · " + days.length + " day(s)"; }
+    function mk(label, fn) {
+      var b = document.createElement("button");
+      b.type = "button"; b.textContent = label;
+      b.style.cssText = "display:block;width:100%;margin:4px 0;padding:6px 8px;font-size:12px;font-weight:600;text-align:left;" +
+        "color:#e6edf3;background:#0d1117;border:1px solid #30363d;border-radius:7px;cursor:pointer";
+      b.addEventListener("click", function () { fn(); updateStat(); });
+      p.appendChild(b);
+    }
+    mk("+1 day (return visit)", function () { window.DQ.addDay(1); });
+    mk("+7 days", function () { window.DQ.addDay(7); });
+    mk("Open collection", function () { openCollection(); });
+    mk("Jump to 50 unlocked", function () { window.DQ.setDays(50); });
+    mk("Jump to 150 unlocked", function () { window.DQ.setDays(150); });
+    mk("Reset + reload", function () { window.DQ.reset(); try { location.reload(); } catch (e) {} });
+    var x = document.createElement("button");
+    x.type = "button"; x.textContent = "× close panel";
+    x.style.cssText = "display:block;width:100%;margin-top:6px;padding:4px;font-size:11px;color:#8b949e;background:transparent;border:none;cursor:pointer";
+    x.addEventListener("click", function () { if (p.parentNode) p.parentNode.removeChild(p); });
+    p.appendChild(x);
+    document.body.appendChild(p);
+    updateStat();
   }
 
   // ---- Dev / test controls (browser console) ----
