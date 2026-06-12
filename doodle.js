@@ -313,7 +313,7 @@
         '<div class="dqd-sub">Sprite #' + String(state.slot).padStart(3, "0") +
         (holName ? ' &middot; ' + esc(holName) : '') + ' in the DevQuest collection.</div>' +
         '<div class="dqd-btns">' +
-        '<a class="dqd-btn pri" href="' + esc(state.claim.url) + '" target="_blank" rel="noopener">View portfolio →</a>' +
+        '<a class="dqd-btn pri" href="' + esc(extUrl(state.claim.url)) + '" target="_blank" rel="noopener">View portfolio →</a>' +
         '<a class="dqd-btn" href="' + CONFIG.galleryUrl + '">Browse the collection →</a>' +
         '</div>';
     } else {
@@ -340,6 +340,13 @@
     return String(s == null ? "" : s).replace(/[&<>"']/g, function (m) {
       return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[m];
     });
+  }
+  // Make a user-entered URL safe to link: add https:// if no scheme, so "devquest.gg" isn't relative.
+  function extUrl(u) {
+    u = String(u == null ? "" : u).trim();
+    if (!u) return "";
+    if (!/^https?:\/\//i.test(u)) u = "https://" + u;
+    return u;
   }
 
   /* ------------------------------------------------------------------ *
