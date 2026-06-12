@@ -69,6 +69,10 @@
       </ul>
     </div>
 
+    <div class="rules" id="queueBox">
+      <b>How payment works:</b> we review and pay up to <b id="qCap">5</b> sprites a week, and we curate for fit, so not every submission is accepted. <span id="qLine">During busy stretches, payment can take a few weeks.</span> Either way, we email you.
+    </div>
+
     <label>Day / slot number <span class="req">*</span></label>
     <input type="number" id="slot" min="1" max="365" placeholder="1–365">
     <div class="hint" id="slotHint"></div>
@@ -122,6 +126,16 @@
   var TURNSTILE_SITEKEY = "0x4AAAAAADgYBtcO1AW8_rq_";
   var D = window.DQDoodle;
   var spriteDataUri = "";
+
+  // Live review-queue indicator: how many sprites are waiting, and a rough wait at the weekly pace.
+  fetch(ALERTS_BASE + "/sprite-claims.json").then(function(r){ return r.json(); }).then(function(d){
+    if (!d) return;
+    var cap = d.weeklyCap || 5, pending = d.pending || 0;
+    var capEl = document.getElementById("qCap"); if (capEl) capEl.textContent = cap;
+    var line = document.getElementById("qLine"); if (!line) return;
+    if (pending <= 0) { line.textContent = "There's no queue right now, so accepted sprites are usually paid within about a week."; }
+    else { var weeks = Math.max(1, Math.ceil((pending + 1) / cap)); line.innerHTML = "Right now there are <b>" + pending + "</b> in the review queue, so a new submission could take roughly <b>" + weeks + " week" + (weeks > 1 ? "s" : "") + "</b> to reach payment."; }
+  }).catch(function(){});
 
   function qs(k){ try { return new URLSearchParams(location.search).get(k); } catch(e){ return null; } }
   function renderSlotCard(slot){
