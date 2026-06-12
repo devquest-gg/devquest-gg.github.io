@@ -149,36 +149,48 @@
       ".dqa-modal{position:fixed;inset:0;background:rgba(0,0,0,.62);z-index:9998;display:flex;align-items:flex-start;justify-content:center;" +
       "padding:5vh 14px;overflow:auto;opacity:0;transition:opacity .2s}" +
       ".dqa-modal.show{opacity:1}" +
-      ".dqa-box{background:var(--panel,#161b22);border:1px solid var(--border,#30363d);border-radius:16px;max-width:640px;width:100%;" +
+      ".dqa-box{background:var(--panel,#161b22);border:1px solid var(--border,#30363d);border-radius:16px;max-width:660px;width:100%;" +
       "box-shadow:0 24px 60px rgba(0,0,0,.55);font-family:-apple-system,'Segoe UI',Roboto,sans-serif;overflow:hidden}" +
       ".dqa-head{display:flex;align-items:center;justify-content:space-between;padding:18px 20px;border-bottom:1px solid var(--border,#30363d)}" +
       ".dqa-title{font-size:17px;font-weight:800;color:var(--text,#e6edf3);letter-spacing:.2px}" +
       ".dqa-sub{font-size:12px;color:var(--muted,#8b949e);margin-top:3px}" +
       ".dqa-x{background:transparent;border:none;color:var(--muted,#8b949e);font-size:24px;line-height:1;cursor:pointer;padding:2px 6px;border-radius:8px;transition:background .15s,color .15s}" +
       ".dqa-x:hover{color:var(--text,#e6edf3);background:var(--bg,#0d1117)}" +
-      ".dqa-body{padding:20px;max-height:74vh;overflow:auto}" +
+      ".dqa-body{padding:18px 20px 22px;max-height:74vh;overflow:auto}" +
+      ".dqa-progwrap{height:7px;border-radius:7px;background:var(--bg,#0d1117);border:1px solid var(--border,#30363d);overflow:hidden;margin:0 0 20px}" +
+      ".dqa-prog{height:100%;background:linear-gradient(90deg,#58a6ff,#3fb950 55%,#e3b341);border-radius:7px;transition:width .5s ease}" +
       ".dqa-favwrap{background:linear-gradient(180deg,rgba(210,153,34,.12),rgba(210,153,34,0)),var(--bg,#0d1117);" +
       "border:1px solid var(--gold,#d29922);border-radius:12px;padding:12px 14px;margin-bottom:22px}" +
       ".dqa-favrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}" +
-      ".dqa-favrow img{width:36px;height:36px;image-rendering:pixelated}" +
-      ".dqa-tier{font-size:12px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:#58a6ff;margin:24px 0 12px;border-bottom:1px solid var(--border,#30363d);padding-bottom:8px}" +
+      ".dqa-favrow img{width:42px;height:42px;image-rendering:pixelated;background:var(--bg,#0d1117);border-radius:8px;padding:2px}" +
+      ".dqa-tier{font-size:12px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:#58a6ff;margin:22px 0 12px;border-bottom:1px solid var(--border,#30363d);padding-bottom:8px}" +
       ".dqa-tier:first-child{margin-top:2px}" +
-      ".dqa-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}" +
-      ".dqa-cell{display:flex;gap:10px;align-items:center;min-height:64px;box-sizing:border-box;background:var(--bg,#0d1117);border:1px solid var(--border,#30363d);border-radius:10px;padding:10px;transition:border-color .15s,transform .1s,box-shadow .15s}" +
-      ".dqa-cell .pic{width:42px;height:42px;flex:none;display:flex;align-items:center;justify-content:center;border-radius:9px;background:rgba(255,255,255,.03)}" +
-      ".dqa-cell img{width:38px;height:38px;image-rendering:pixelated;display:block}" +
-      ".dqa-cell.locked img{filter:brightness(0);opacity:.22}" +
-      ".dqa-cell.locked .pic{background:rgba(255,255,255,.015)}" +
-      ".dqa-cell.unlocked{cursor:pointer}" +
-      ".dqa-cell.unlocked:hover{border-color:var(--gold,#d29922);transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.3)}" +
-      ".dqa-cell.faved{border-color:var(--gold,#d29922);box-shadow:0 0 0 1px var(--gold,#d29922)}" +
-      ".dqa-nm{font-size:12.5px;font-weight:700;color:var(--text,#e6edf3);line-height:1.25}" +
+      ".dqa-tier.t-explorer{color:#58a6ff;border-color:rgba(88,166,255,.35)}" +
+      ".dqa-tier.t-collector{color:#3fb950;border-color:rgba(63,185,80,.35)}" +
+      ".dqa-tier.t-champion{color:#e3b341;border-color:rgba(210,153,34,.4)}" +
+      ".dqa-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:10px}" +
+      ".dqa-cell{position:relative;min-width:0;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;gap:7px;" +
+      "padding:11px 6px 9px;background:var(--bg,#0d1117);border:1px solid var(--border,#30363d);border-radius:12px;overflow:hidden;" +
+      "transition:border-color .15s,transform .1s,box-shadow .15s}" +
+      ".dqa-cell .pic{width:62px;height:62px;flex:none;display:flex;align-items:center;justify-content:center}" +
+      ".dqa-cell img{width:58px;height:58px;image-rendering:pixelated;display:block;transition:filter .2s,opacity .2s}" +
+      ".dqa-cell.locked img{filter:saturate(.6) brightness(.62);opacity:.62}" +
+      ".dqa-cell.unlocked img{filter:none;opacity:1}" +
+      ".dqa-cell.unlocked{border-color:rgba(210,153,34,.45);box-shadow:0 0 14px rgba(210,153,34,.10)}" +
+      ".dqa-cell.unlocked:hover{border-color:var(--gold,#d29922);transform:translateY(-2px);cursor:pointer;" +
+      "box-shadow:0 6px 16px rgba(0,0,0,.4),0 0 16px rgba(210,153,34,.22)}" +
+      ".dqa-cell.locked:hover{border-color:var(--muted,#8b949e)}" +
+      ".dqa-cell.faved{border-color:var(--gold,#d29922);box-shadow:0 0 0 2px var(--gold,#d29922),0 0 16px rgba(210,153,34,.25)}" +
+      ".dqa-nm{font-size:10.5px;font-weight:700;color:var(--text,#e6edf3);line-height:1.2;text-align:center;width:100%;overflow-wrap:anywhere}" +
       ".dqa-cell.locked .dqa-nm{color:var(--muted,#8b949e)}" +
-      ".dqa-hn{font-size:11px;color:var(--muted,#8b949e);line-height:1.3;margin-top:3px}" +
-      ".dqa-star{margin-left:auto;align-self:flex-start;color:var(--gold,#d29922);font-size:12px;opacity:0}" +
+      ".dqa-hn{position:absolute;left:0;right:0;bottom:0;padding:7px 6px 6px;font-size:10px;font-weight:600;line-height:1.25;" +
+      "color:var(--text,#e6edf3);text-align:center;background:linear-gradient(180deg,rgba(13,17,23,0),rgba(13,17,23,.97) 42%);" +
+      "opacity:0;transform:translateY(6px);transition:opacity .15s,transform .15s;pointer-events:none}" +
+      ".dqa-cell:hover .dqa-hn{opacity:1;transform:none}" +
+      ".dqa-star{position:absolute;top:5px;right:6px;color:var(--gold,#d29922);font-size:12px;opacity:0;text-shadow:0 1px 2px rgba(0,0,0,.6)}" +
       ".dqa-cell.faved .dqa-star{opacity:1}" +
-      "@media(prefers-reduced-motion:reduce){.dqa-ico.flash{animation:none}.dqa-toast{transition:none}}" +
-      "@media(max-width:560px){.dqa-grid{grid-template-columns:repeat(2,1fr)}.dqa-ico .dqa-n{display:none}}";
+      "@media(prefers-reduced-motion:reduce){.dqa-ico.flash{animation:none}.dqa-toast{transition:none}.dqa-cell,.dqa-cell img,.dqa-hn,.dqa-prog{transition:none}}" +
+      "@media(max-width:560px){.dqa-grid{grid-template-columns:repeat(auto-fill,minmax(76px,1fr))}.dqa-ico .dqa-n{display:none}}";
     document.head.appendChild(s);
   }
 
@@ -295,9 +307,11 @@
   function openCollection() {
     if (document.querySelector(".dqa-modal")) return;
     if (hintEl && hintEl.parentNode) hintEl.parentNode.removeChild(hintEl);
+    var pct = TOTAL ? Math.round(unlocked.length / TOTAL * 100) : 0;
     var html = '<div class="dqa-head"><div><div class="dqa-title">Your collection</div>'
       + '<div class="dqa-sub">' + unlocked.length + ' / ' + TOTAL + ' unlocked</div></div>'
-      + '<button class="dqa-x" type="button" aria-label="Close">×</button></div><div class="dqa-body">';
+      + '<button class="dqa-x" type="button" aria-label="Close">×</button></div><div class="dqa-body">'
+      + '<div class="dqa-progwrap"><div class="dqa-prog" style="width:' + pct + '%"></div></div>';
     // Favourites
     if (favs.length) {
       html += '<div class="dqa-favwrap"><div style="font-size:12px;font-weight:800;color:var(--gold,#d29922)">★ Favourites</div><div class="dqa-favrow">';
@@ -309,14 +323,15 @@
       var tier = TIERS[t];
       var got = 0, total = 0;
       for (var c = 0; c < ACH.length; c++) if (ACH[c].tier === tier.id) { total++; if (has(ACH[c].id)) got++; }
-      html += '<div class="dqa-tier">' + escC(tier.name) + ' · ' + got + ' / ' + total + '</div><div class="dqa-grid">';
+      html += '<div class="dqa-tier t-' + tier.id + '">' + escC(tier.name) + ' · ' + got + ' / ' + total + '</div><div class="dqa-grid">';
       for (var i = 0; i < ACH.length; i++) {
         var a = ACH[i]; if (a.tier !== tier.id) continue;
         var u = has(a.id), fav = favs.indexOf(a.id) >= 0;
         html += '<div class="dqa-cell ' + (u ? "unlocked" : "locked") + (fav ? " faved" : "") + '"'
-          + (u ? ' data-id="' + a.id + '" role="button" tabindex="0" title="Click to pin / unpin"' : '') + '>'
+          + (u ? ' data-id="' + a.id + '" role="button" tabindex="0" title="' + escC(a.name) + ' — click to pin / unpin"' : ' title="' + escC(a.name) + ' — ' + escC(a.hint) + '"') + '>'
           + '<div class="pic"><img loading="lazy" src="' + spriteFor(a) + '" alt=""></div>'
-          + '<div><div class="dqa-nm">' + escC(a.name) + '</div><div class="dqa-hn">' + (u ? "Unlocked" : escC(a.hint)) + '</div></div>'
+          + '<div class="dqa-nm">' + escC(a.name) + '</div>'
+          + '<div class="dqa-hn">' + (u ? (fav ? "★ Pinned" : "★ Pin") : escC(a.hint)) + '</div>'
           + '<div class="dqa-star">★</div></div>';
       }
       html += '</div>';
