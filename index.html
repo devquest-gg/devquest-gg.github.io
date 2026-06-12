@@ -404,10 +404,40 @@
     <div class="pulse">⟳ Last sync: <b id="syncTime"></b> · refreshes hourly</div>
   </div>
   <div style="display:flex;gap:10px;align-items:center">
+    <!-- SHARE:START (header share buttons — delete this group + the SHARE block after </header> to remove) -->
+    <div class="dqshare" aria-label="Share DevQuest">
+      <a class="dqsh dqsh-li" href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fdevquest.gg" target="_blank" rel="noopener" title="Share on LinkedIn" aria-label="Share on LinkedIn" onclick="try{window.dqTrack&&window.dqTrack('share_click',{p:'linkedin'})}catch(e){}"><svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path fill="currentColor" d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.225 0z"/></svg></a>
+      <a class="dqsh dqsh-x" href="https://twitter.com/intent/tweet?text=DevQuest%20%E2%80%94%20real%2C%20current%20game-dev%20jobs%2C%20fresh%20and%20honest.&url=https%3A%2F%2Fdevquest.gg" target="_blank" rel="noopener" title="Share on X" aria-label="Share on X" onclick="try{window.dqTrack&&window.dqTrack('share_click',{p:'x'})}catch(e){}"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path fill="currentColor" d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></a>
+      <a class="dqsh dqsh-bs" href="https://bsky.app/intent/compose?text=DevQuest%20%E2%80%94%20real%2C%20current%20game-dev%20jobs%2C%20fresh%20and%20honest.%20https%3A%2F%2Fdevquest.gg" target="_blank" rel="noopener" title="Share on Bluesky" aria-label="Share on Bluesky" onclick="try{window.dqTrack&&window.dqTrack('share_click',{p:'bluesky'})}catch(e){}"><svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path fill="currentColor" d="M12 10.8c-1.087-2.114-4.046-6.053-6.798-7.995C2.566.944 1.561 1.266.902 1.565.139 1.908 0 3.08 0 3.768c0 .69.378 5.65.624 6.479.815 2.736 3.713 3.66 6.383 3.364.136-.02.275-.039.415-.056-.138.022-.276.04-.415.056-3.912.58-7.387 2.005-2.83 7.078 5.013 5.19 6.87-1.113 7.823-4.308.953 3.195 2.05 9.271 7.733 4.308 4.267-4.308 1.172-6.498-2.74-7.078a8.741 8.741 0 01-.415-.056c.14.017.279.036.415.056 2.67.296 5.568-.628 6.383-3.364.246-.829.624-5.79.624-6.479 0-.688-.139-1.86-.902-2.203-.659-.299-1.664-.621-4.3 1.24C16.046 4.748 13.087 8.687 12 10.8z"/></svg></a>
+      <button type="button" class="dqsh dqsh-cp" title="Copy link" aria-label="Copy link" onclick="dqCopyLink(this)"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"/></svg></button>
+    </div>
+    <!-- SHARE:END -->
     <a class="aboutbtn" href="/about" title="Our mission: what DevQuest is, and what it isn't" onclick="try{window.dqTrack&&window.dqTrack('about_click',{})}catch(e){}" style="color:var(--muted);font-size:13px;font-weight:600;text-decoration:none;border:1px solid var(--border);padding:7px 13px;border-radius:7px;white-space:nowrap">Our mission</a>
     <a class="feedbackbtn" href="mailto:studios@devquest.gg?subject=DevQuest%20feedback&body=Bug%2C%20idea%2C%20or%20just%20a%20thought%3A%0A%0A%0AWhat%20page%20or%20filter%20were%20you%20on%20(optional)%3A%0A" title="Report a bug or share an idea (opens your email)" onclick="try{window.dqTrack&&window.dqTrack('feedback_click',{})}catch(e){}" style="color:var(--accent);font-size:13px;font-weight:600;text-decoration:none;border:1px solid var(--border);padding:7px 13px;border-radius:7px;white-space:nowrap">💬 Feedback</a>
   </div>
 </header>
+
+<!-- SHARE:START (styles + copy-link behavior; remove this block and the .dqshare group in <header> to undo) -->
+<style>
+.dqshare{display:flex;gap:5px;align-items:center}
+.dqshare .dqsh{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;padding:0;border:1px solid var(--border);border-radius:7px;background:transparent;color:var(--muted);cursor:pointer;text-decoration:none;transition:color .15s,border-color .15s,background .15s}
+.dqshare .dqsh:hover{background:var(--panel,#161b22)}
+.dqshare .dqsh-li:hover{color:#0a66c2;border-color:#0a66c2}
+.dqshare .dqsh-x:hover{color:var(--text,#e6edf3);border-color:var(--text,#e6edf3)}
+.dqshare .dqsh-bs:hover{color:#1185fe;border-color:#1185fe}
+.dqshare .dqsh-cp:hover{color:var(--accent,#58a6ff);border-color:var(--accent,#58a6ff)}
+.dqshare .dqsh.copied{color:#3fb950;border-color:#3fb950}
+@media(max-width:560px){.dqshare{display:none}}
+</style>
+<script>
+function dqCopyLink(btn){
+  var url="https://devquest.gg";
+  function done(){ btn.classList.add("copied"); var t=btn.getAttribute("title"); btn.setAttribute("title","Copied!"); setTimeout(function(){ btn.classList.remove("copied"); btn.setAttribute("title", t||"Copy link"); },1500); try{window.dqTrack&&window.dqTrack("share_click",{p:"copy"});}catch(e){} }
+  function fb(){ try{ var ta=document.createElement("textarea"); ta.value=url; ta.style.position="fixed"; ta.style.opacity="0"; document.body.appendChild(ta); ta.focus(); ta.select(); document.execCommand("copy"); document.body.removeChild(ta); }catch(e){} done(); }
+  try{ if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(url).then(done, fb); } else { fb(); } }catch(e){ fb(); }
+}
+</script>
+<!-- SHARE:END -->
 
 <div class="hero">
   <div class="herobrand">
@@ -2651,7 +2681,7 @@ try {
 </script>
 
 <!-- DOODLE:START -->
-<script defer src="doodle-random.js?v=14"></script>
+<script defer src="doodle-random.js?v=15"></script>
 <!-- DOODLE:END -->
 
 </body>
