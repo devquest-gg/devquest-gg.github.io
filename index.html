@@ -2483,10 +2483,6 @@ try {
   };
 
   function track(name, props){
-    // Notify the achievements module (doodle-random.js). Every event — whether
-    // fired as track(...) or dqTrack(...) — funnels through here, so this is the
-    // single, reliable tap point. Guarded so the site works fine without it.
-    try { if (window.__dqAch) window.__dqAch(name, props); } catch(e){}
     try{
       var payload = JSON.stringify({ name:name, props:props||{} });
       if (navigator.sendBeacon) navigator.sendBeacon(ALERTS_API+"/event", payload);
@@ -2685,7 +2681,7 @@ try {
 </script>
 
 <!-- DOODLE:START -->
-<script defer src="doodle-random.js?v=28"></script>
+<script defer src="doodle-random.js?v=29"></script>
 <!-- DOODLE:END -->
 
 </body>

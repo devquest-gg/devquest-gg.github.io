@@ -1,148 +1,91 @@
 /* =====================================================================
-   DevQuest mascot — ACHIEVEMENT edition
+   DevQuest collection — RETURNING-DAYS tracker
    ---------------------------------------------------------------------
-   Sprites are unlocked by *doing things* on DevQuest, not by clicking a
-   mascot. Open jobs, follow studios, share the site, come back on
-   different days → achievements unlock, each revealing one sprite.
+   Not an achievement system. Each distinct DAY you visit unlocks the next
+   sprite in the collection (days need NOT be consecutive). Day 1 unlocks the
+   goblet, which is also the default floating header icon. Click the floating
+   sprite to open your collection; click any unlocked sprite to pin it as your
+   mascot. Returning on a new day shows a brief "welcome back" pop-up.
 
-   Discovery: nothing shows in the header until you unlock your first
-   sprite. Then a small icon appears next to the logo with a gold flash
-   and a one-time hint; from then on it shows your latest unlock + a
-   count, flashes on each new unlock, and opens your collection on click.
-
-   100% client-side (localStorage) — no accounts, no backend. We reward
-   exploration and loyalty, never applying.
-
-   Detection: we wrap window.dqTrack (the site's own cookieless event
-   tracker) and tally real actions. Adding/▾editing achievements = edit
-   the ACH array below.
+   100% client-side (localStorage) — no accounts, no backend, no tracking.
 
    Art: CraftPix free pixel-icon packs (doodle-sprites/packs/<id>/N.png).
-   TO REMOVE: delete the <!-- DOODLE:START --> block in index.html, this
-   file, and the doodle-sprites/ folder.
+   TO REMOVE: delete the <!-- DOODLE:START --> block in index.html, this file,
+   and the doodle-sprites/ folder.
    ===================================================================== */
 (function () {
   "use strict";
 
-  var BASE = "doodle-sprites/packs/";
-  var SOUND = true;
+  var BASE = "doodle-sprites/";
   var reduce = !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion:reduce)").matches);
 
-  // ---- Tiers (each draws its art from one pack) ----
-  var TIERS = [
-    { id: "explorer",  name: "Explorer",  pack: "low-monsters" },
-    { id: "collector", name: "Collector", pack: "goblin" },
-    { id: "champion",  name: "Champion",  pack: "pirate" }
+  // ---- Master collection. Day N unlocks SPRITES[N-1]. Sections = packs. ----
+  // Pirate's Hoard leads, and its goblet (sprite 43) is moved to the very front
+  // so Day 1 unlocks the goblet (also the default floating icon).
+  var SECTIONS = [
+    { name: "Pirate's Hoard", dir: "packs/pirate/",      first: 43 },
+    { name: "Goblin Loot",    dir: "packs/goblin/" },
+    { name: "Potions",        dir: "packs/potions/" },
+    { name: "Critters",       dir: "packs/low-monsters/" },
+    { name: "Archery",        dir: "packs/bow/" },
+    { name: "Chaos",          dir: "packs/chaos/" },
+    { name: "Palette",        dir: "packs/paint/" }
   ];
-  function packOf(tier) { for (var i = 0; i < TIERS.length; i++) if (TIERS[i].id === tier) return TIERS[i].pack; return "low-monsters"; }
-  function tierName(tier) { for (var i = 0; i < TIERS.length; i++) if (TIERS[i].id === tier) return TIERS[i].name; return tier; }
-
-  // ---- Achievements. Each carries its own hand-picked sprite: pack + n (index
-  //      1..48 in doodle-sprites/packs/<pack>/). test(s) -> unlocked? ----
-  var ACH = [
-    // Explorer — browse & discover
-    { id: "open1",   tier: "explorer", pack: "pirate", n: 12, name: "Window Shopper", hint: "Open your first job",          test: function (s) { return s.jobs >= 1; } },     // compass
-    { id: "search",  tier: "explorer", pack: "bow",    n: 2,  name: "On the Hunt",    hint: "Run a search",                 test: function (s) { return s.search >= 1; } },   // bow
-    { id: "filter",  tier: "explorer", pack: "pirate", n: 20, name: "Picky",          hint: "Apply a filter",               test: function (s) { return s.filter >= 1; } },   // dividers
-    { id: "open25",  tier: "explorer", pack: "pirate", n: 19, name: "Deep Diver",     hint: "Open 25 jobs",                 test: function (s) { return s.jobs >= 25; } },    // map
-    { id: "open100", tier: "explorer", pack: "pirate", n: 8,  name: "Job Scholar",    hint: "Open 100 jobs",                test: function (s) { return s.jobs >= 100; } },   // scroll
-    { id: "map",     tier: "explorer", pack: "pirate", n: 4,  name: "Cartographer",   hint: "Explore the studio map",       test: function (s) { return s.map >= 1; } },      // treasure map
-    { id: "grid",    tier: "explorer", pack: "pirate", n: 32, name: "Number Cruncher",hint: "Use the discipline grid",      test: function (s) { return s.grid >= 1; } },     // coins
-    { id: "bestfit", tier: "explorer", pack: "pirate", n: 14, name: "Matchmaker",     hint: "Use the Best-Fit finder",      test: function (s) { return s.bestfit >= 1; } },  // key that fits
-    // Collector — curate your hunt
-    { id: "follow1", tier: "collector", pack: "goblin", n: 23, name: "First Crush",   hint: "Follow a studio",              test: function (s) { return s.follow >= 1; } },   // heart
-    { id: "follow5", tier: "collector", pack: "bow",    n: 32, name: "Talent Scout",  hint: "Follow 5 studios",             test: function (s) { return s.follow >= 5; } },   // crossbow
-    { id: "save1",   tier: "collector", pack: "goblin", n: 18, name: "Squirrel",      hint: "Save a job",                   test: function (s) { return s.save >= 1; } },     // backpack
-    { id: "save10",  tier: "collector", pack: "pirate", n: 10, name: "Hoarder",       hint: "Save 10 jobs",                 test: function (s) { return s.save >= 10; } },    // open chest
-    { id: "alert",   tier: "collector", pack: "goblin", n: 33, name: "On Alert",      hint: "Set up a job alert",           test: function (s) { return s.alert >= 1; } },    // torch beacon
-    { id: "track",   tier: "collector", pack: "goblin", n: 20, name: "Organiser",     hint: "Track a job's status",         test: function (s) { return s.track >= 1; } },    // scroll/list
-    { id: "know",    tier: "collector", pack: "goblin", n: 42, name: "Connector",     hint: "Use “Who do I know?”",         test: function (s) { return s.know >= 1; } },     // bead necklace
-    { id: "pin",     tier: "collector", pack: "pirate", n: 43, name: "Curator",       hint: "Pin a favourite",              test: function (s) { return s.pin >= 1; } },      // goblet
-    // Champion — share & stick around
-    { id: "share1",  tier: "champion", pack: "pirate", n: 23, name: "Herald",         hint: "Share DevQuest",               test: function (s) { return s.shareP.length >= 1; } }, // flag
-    { id: "share3",  tier: "champion", pack: "pirate", n: 24, name: "Town Crier",     hint: "Share on 3 platforms",         test: function (s) { return s.shareP.length >= 3; } }, // big flag
-    { id: "copy",    tier: "champion", pack: "pirate", n: 25, name: "Link Wizard",    hint: "Copy the site link",           test: function (s) { return s.copy >= 1; } },     // key
-    { id: "day3",    tier: "champion", pack: "pirate", n: 47, name: "Regular",        hint: "Visit on 3 different days",    test: function (s) { return s.days >= 3; } },     // ship wheel
-    { id: "day7",    tier: "champion", pack: "pirate", n: 44, name: "Devoted",        hint: "Visit on 7 different days",    test: function (s) { return s.days >= 7; } },     // anchor
-    { id: "day30",   tier: "champion", pack: "pirate", n: 31, name: "Lifer",          hint: "Visit on 30 different days",   test: function (s) { return s.days >= 30; } },    // gold medallion
-    { id: "complete",tier: "champion", pack: "pirate", n: 13, name: "Completionist",  hint: "Earn every Explorer & Collector award", test: function () { return explorerCollectorDone(); } }, // ornate chest
-    { id: "legend",  tier: "champion", pack: "chaos",  n: 13, name: "DevQuest Legend",hint: "Earn all 23 other achievements", test: function () { return allButLegendDone(); } }   // golden naga
-  ];
-  var ACH_BY_ID = {}; for (var _i = 0; _i < ACH.length; _i++) ACH_BY_ID[ACH[_i].id] = ACH[_i];
-  function spriteFor(a) { return BASE + (a.pack || packOf(a.tier)) + "/" + a.n + ".png"; }
-  var TOTAL = ACH.length;
+  var PACK_N = 48;
+  var SPRITES = [];
+  for (var _s = 0; _s < SECTIONS.length; _s++) {
+    var _sec = SECTIONS[_s], _order = [];
+    if (_sec.first) _order.push(_sec.first);
+    for (var _i = 1; _i <= PACK_N; _i++) if (_i !== _sec.first) _order.push(_i);
+    _sec.start = SPRITES.length;
+    _sec.count = _order.length;
+    for (var _k = 0; _k < _order.length; _k++) SPRITES.push(BASE + _sec.dir + _order[_k] + ".png");
+  }
+  var TOTAL = SPRITES.length;
 
   // ---- Persistent state ----
-  var STATS_KEY = "dq-ach-stats", UNLOCK_KEY = "dq-ach", DAYS_KEY = "dq-ach-days", HINT_KEY = "dq-ach-hint", FAV_KEY = "dq-ach-fav";
-  var stats = { jobs: 0, search: 0, filter: 0, map: 0, grid: 0, bestfit: 0, save: 0, alert: 0, track: 0, know: 0, pin: 0, copy: 0, follows: [], shareP: [] };
-  var unlocked = [];   // ordered achievement ids (unlock order; last = latest)
-  var favs = [];       // pinned achievement ids
-  var days = [];       // distinct YYYY-MM-DD strings
-
-  function loadJSON(k, d) { try { var v = JSON.parse(localStorage.getItem(k)); return v == null ? d : v; } catch (e) { return d; } }
+  var DAYS_KEY = "dq-days", PIN_KEY = "dq-pin", HINT_KEY = "dq-col-hint";
+  function loadJSON(k, d) { try { var v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } }
   function saveJSON(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
-  function loadAll() {
-    var st = loadJSON(STATS_KEY, null); if (st) for (var k in stats) if (st[k] != null) stats[k] = st[k];
-    if (!stats.follows) stats.follows = []; if (!stats.shareP) stats.shareP = [];
-    unlocked = loadJSON(UNLOCK_KEY, []); favs = loadJSON(FAV_KEY, []); days = loadJSON(DAYS_KEY, []);
-  }
-  function saveStats() { saveJSON(STATS_KEY, stats); }
-  function saveUnlocked() { saveJSON(UNLOCK_KEY, unlocked); }
+  function loadStr(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+  function saveStr(k, v) { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (e) {} }
 
-  function view() {
-    return { jobs: stats.jobs, search: stats.search, filter: stats.filter, map: stats.map, grid: stats.grid, bestfit: stats.bestfit,
-      save: stats.save, alert: stats.alert, track: stats.track, know: stats.know, pin: stats.pin, copy: stats.copy,
-      follow: stats.follows.length, shareP: stats.shareP, days: days.length };
-  }
-  function has(id) { return unlocked.indexOf(id) >= 0; }
-  function explorerCollectorDone() { for (var i = 0; i < ACH.length; i++) { var a = ACH[i]; if ((a.tier === "explorer" || a.tier === "collector") && !has(a.id)) return false; } return true; }
-  function allButLegendDone() { for (var i = 0; i < ACH.length; i++) if (ACH[i].id !== "legend" && !has(ACH[i].id)) return false; return true; }
+  var days = loadJSON(DAYS_KEY, []);   // distinct "YYYY-MM-DD" visit days
+  var pin = loadStr(PIN_KEY);          // pinned sprite index (as a string) or null
 
-  // ---- Audio ----
-  var actx;
-  function ac() { actx = actx || new (window.AudioContext || window.webkitAudioContext)(); return actx; }
-  function chime() {
-    if (!SOUND) return;
-    try { var c = ac(), o = c.createOscillator(), g = c.createGain(), t = c.currentTime;
-      o.type = "triangle"; o.frequency.setValueAtTime(660, t); o.frequency.exponentialRampToValueAtTime(990, t + 0.12);
-      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.06, t + 0.012); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.2);
-      o.connect(g); g.connect(c.destination); o.start(t); o.stop(t + 0.22); } catch (e) {}
-  }
-  function fanfare() {
-    if (!SOUND) return;
-    try { var c = ac(), t0 = c.currentTime, notes = [523.25, 659.25, 783.99, 1046.5];
-      notes.forEach(function (f, i) { var o = c.createOscillator(), g = c.createGain(), t = t0 + i * 0.10;
-        o.type = "triangle"; o.frequency.setValueAtTime(f, t);
-        g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.08, t + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.26);
-        o.connect(g); g.connect(c.destination); o.start(t); o.stop(t + 0.3); }); } catch (e) {}
-  }
+  function unlockedCount() { return Math.min(days.length, TOTAL); }
+  function isUnlocked(i) { return i >= 0 && i < unlockedCount(); }
+  function pinnedIndex() { var p = pin == null ? -1 : parseInt(pin, 10); return (!isNaN(p) && isUnlocked(p)) ? p : -1; }
+  function mascotIndex() { var p = pinnedIndex(); return p >= 0 ? p : Math.max(0, unlockedCount() - 1); }
+  function todayStr() { var d = new Date(), p = function (n) { return (n < 10 ? "0" : "") + n; }; return d.getFullYear() + "-" + p(d.getMonth() + 1) + "-" + p(d.getDate()); }
+  function escC(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
 
   // ---- Styles ----
   function injectStyle() {
     if (document.getElementById("dqa-style")) return;
     var s = document.createElement("style"); s.id = "dqa-style";
     s.textContent =
+      // Floating header icon (bare art, gently bobbing)
       ".dqa-ico{position:relative;display:none;align-items:center;margin-left:8px;padding:0;cursor:pointer;background:transparent;border:none;vertical-align:middle}" +
       ".dqa-ico.on{display:inline-flex}" +
       ".dqa-ico img{width:30px;height:30px;image-rendering:pixelated;display:block;animation:dqa-bob 3s ease-in-out infinite;filter:drop-shadow(0 2px 3px rgba(0,0,0,.45))}" +
       ".dqa-ico:hover img{filter:drop-shadow(0 0 7px rgba(210,153,34,.75))}" +
-      ".dqa-ico .dqa-n{display:none}" +
       ".dqa-ico.flash{animation:dqa-flash 1s ease}" +
       "@keyframes dqa-flash{0%,100%{filter:drop-shadow(0 0 0 rgba(210,153,34,0))}30%{filter:drop-shadow(0 0 11px rgba(210,153,34,.95))}}" +
       "@keyframes dqa-bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}" +
-      // First-unlock hint bubble
-      ".dqa-hint{position:absolute;top:calc(100% + 9px);right:0;width:max-content;max-width:210px;background:var(--panel,#161b22);" +
+      // First-time discovery hint bubble
+      ".dqa-hint{position:absolute;top:calc(100% + 9px);right:0;width:max-content;max-width:220px;background:var(--panel,#161b22);" +
       "border:1px solid var(--accent,#58a6ff);color:var(--text,#e6edf3);font-size:12px;line-height:1.4;padding:8px 11px;border-radius:9px;" +
       "box-shadow:0 8px 20px rgba(0,0,0,.45);z-index:30;text-align:left;font-family:-apple-system,'Segoe UI',Roboto,sans-serif}" +
       ".dqa-hint::after{content:'';position:absolute;bottom:100%;right:14px;border:6px solid transparent;border-bottom-color:var(--accent,#58a6ff)}" +
       ".dqa-hint b{color:var(--accent,#58a6ff)}" +
-      // Unlock toast
-      ".dqa-toast{position:fixed;left:50%;top:16px;transform:translateX(-50%) translateY(-10px);display:flex;align-items:center;gap:9px;" +
-      "background:var(--panel,#161b22);border:1px solid var(--gold,#d29922);border-radius:11px;padding:8px 13px 8px 9px;z-index:9999;" +
+      // Welcome-back toast (top of screen)
+      ".dqa-toast{position:fixed;left:50%;top:16px;transform:translateX(-50%) translateY(-10px);display:flex;align-items:center;gap:10px;" +
+      "background:var(--panel,#161b22);border:1px solid var(--gold,#d29922);border-radius:11px;padding:9px 14px 9px 10px;z-index:9999;" +
       "box-shadow:0 10px 30px rgba(0,0,0,.5),0 0 16px rgba(210,153,34,.25);opacity:0;transition:opacity .25s,transform .25s;" +
-      "font-family:-apple-system,'Segoe UI',Roboto,sans-serif;max-width:90vw}" +
+      "font-family:-apple-system,'Segoe UI',Roboto,sans-serif;max-width:90vw;cursor:pointer}" +
       ".dqa-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}" +
-      ".dqa-toast img{width:36px;height:36px;image-rendering:pixelated;flex:none}" +
+      ".dqa-toast img{width:44px;height:44px;image-rendering:pixelated;flex:none}" +
       ".dqa-toast .t1{font-size:10px;font-weight:700;color:var(--gold,#d29922);letter-spacing:.4px;text-transform:uppercase}" +
       ".dqa-toast .t2{font-size:13px;font-weight:700;color:var(--text,#e6edf3)}" +
       // Collection modal
@@ -152,57 +95,34 @@
       ".dqa-box{background:var(--panel,#161b22);border:1px solid var(--border,#30363d);border-radius:14px;max-width:560px;width:100%;" +
       "box-shadow:0 24px 60px rgba(0,0,0,.55);font-family:-apple-system,'Segoe UI',Roboto,sans-serif;overflow:hidden}" +
       ".dqa-head{display:flex;align-items:center;justify-content:space-between;padding:14px 17px;border-bottom:1px solid var(--border,#30363d)}" +
-      ".dqa-title{font-size:15px;font-weight:800;color:var(--text,#e6edf3);letter-spacing:.2px}" +
+      ".dqa-title{font-size:15px;font-weight:800;color:var(--text,#e6edf3)}" +
       ".dqa-sub{font-size:11px;color:var(--muted,#8b949e);margin-top:2px}" +
       ".dqa-x{background:transparent;border:none;color:var(--muted,#8b949e);font-size:22px;line-height:1;cursor:pointer;padding:2px 6px;border-radius:8px;transition:background .15s,color .15s}" +
       ".dqa-x:hover{color:var(--text,#e6edf3);background:var(--bg,#0d1117)}" +
-      ".dqa-body{padding:14px 16px 18px;max-height:74vh;overflow:auto}" +
-      ".dqa-progwrap{height:6px;border-radius:6px;background:var(--bg,#0d1117);border:1px solid var(--border,#30363d);overflow:hidden;margin:0 0 16px}" +
+      ".dqa-body{padding:14px 16px 18px;max-height:78vh;overflow:auto}" +
+      ".dqa-progwrap{height:6px;border-radius:6px;background:var(--bg,#0d1117);border:1px solid var(--border,#30363d);overflow:hidden;margin:0 0 8px}" +
       ".dqa-prog{height:100%;background:linear-gradient(90deg,#58a6ff,#3fb950 55%,#e3b341);border-radius:6px;transition:width .5s ease}" +
-      ".dqa-favwrap{background:linear-gradient(180deg,rgba(210,153,34,.12),rgba(210,153,34,0)),var(--bg,#0d1117);" +
-      "border:1px solid var(--gold,#d29922);border-radius:10px;padding:10px 12px;margin-bottom:18px}" +
-      ".dqa-favhd{font-size:12px;font-weight:800;color:var(--gold,#d29922)}" +
-      ".dqa-favsub{font-weight:600;color:var(--muted,#8b949e);font-size:11px}" +
-      ".dqa-favhint{font-size:11px;color:var(--muted,#8b949e);line-height:1.45;margin-top:5px}" +
-      ".dqa-favhint b{color:var(--gold,#d29922)}" +
-      ".dqa-favrow{display:flex;gap:7px;flex-wrap:wrap;margin-top:9px}" +
-      ".dqa-fav{padding:3px;background:var(--bg,#0d1117);border:1px solid var(--border,#30363d);border-radius:8px;cursor:pointer;line-height:0;transition:border-color .15s,box-shadow .15s,transform .1s}" +
-      ".dqa-fav:hover{border-color:var(--gold,#d29922);transform:translateY(-1px)}" +
-      ".dqa-fav.active{border-color:var(--gold,#d29922);box-shadow:0 0 0 1px var(--gold,#d29922),0 0 12px rgba(210,153,34,.3)}" +
-      ".dqa-fav img{width:36px;height:36px;image-rendering:pixelated;display:block}" +
-      ".dqa-tier{font-size:11px;font-weight:800;letter-spacing:1.4px;text-transform:uppercase;color:#58a6ff;margin:18px 0 10px;border-bottom:1px solid var(--border,#30363d);padding-bottom:7px}" +
-      ".dqa-tier:first-child{margin-top:2px}" +
-      ".dqa-tier.t-explorer{color:#58a6ff;border-color:rgba(88,166,255,.35)}" +
-      ".dqa-tier.t-collector{color:#3fb950;border-color:rgba(63,185,80,.35)}" +
-      ".dqa-tier.t-champion{color:#e3b341;border-color:rgba(210,153,34,.4)}" +
-      ".dqa-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(78px,1fr));gap:9px}" +
-      ".dqa-cell{position:relative;min-width:0;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;gap:6px;" +
-      "padding:9px 5px 8px;background:var(--bg,#0d1117);border:1px solid var(--border,#30363d);border-radius:10px;overflow:hidden;" +
-      "transition:border-color .15s,transform .1s,box-shadow .15s}" +
-      ".dqa-cell .pic{width:52px;height:52px;flex:none;display:flex;align-items:center;justify-content:center}" +
-      ".dqa-cell img{width:48px;height:48px;image-rendering:pixelated;display:block;transition:filter .2s,opacity .2s}" +
-      ".dqa-cell.locked img{filter:saturate(.6) brightness(.62);opacity:.62}" +
-      ".dqa-cell.unlocked img{filter:none;opacity:1}" +
-      ".dqa-cell.unlocked{border-color:rgba(210,153,34,.45);box-shadow:0 0 14px rgba(210,153,34,.10)}" +
-      ".dqa-cell.unlocked:hover{border-color:var(--gold,#d29922);transform:translateY(-2px);cursor:pointer;" +
-      "box-shadow:0 6px 16px rgba(0,0,0,.4),0 0 16px rgba(210,153,34,.22)}" +
-      ".dqa-cell.locked:hover{border-color:var(--muted,#8b949e)}" +
-      ".dqa-cell.faved{border-color:var(--gold,#d29922);box-shadow:0 0 0 2px var(--gold,#d29922),0 0 16px rgba(210,153,34,.25)}" +
-      ".dqa-nm{font-size:10px;font-weight:700;color:var(--text,#e6edf3);line-height:1.2;text-align:center;width:100%;overflow-wrap:anywhere}" +
-      ".dqa-cell.locked .dqa-nm{color:var(--muted,#8b949e)}" +
-      ".dqa-hn{position:absolute;left:0;right:0;bottom:0;padding:7px 6px 6px;font-size:10px;font-weight:600;line-height:1.25;" +
-      "color:var(--text,#e6edf3);text-align:center;background:linear-gradient(180deg,rgba(13,17,23,0),rgba(13,17,23,.97) 42%);" +
-      "opacity:0;transform:translateY(6px);transition:opacity .15s,transform .15s;pointer-events:none}" +
-      ".dqa-cell:hover .dqa-hn{opacity:1;transform:none}" +
-      ".dqa-star{position:absolute;top:5px;right:6px;color:var(--gold,#d29922);font-size:12px;opacity:0;text-shadow:0 1px 2px rgba(0,0,0,.6)}" +
-      ".dqa-cell.faved .dqa-star{opacity:1}" +
-      "@media(prefers-reduced-motion:reduce){.dqa-ico.flash{animation:none}.dqa-ico img{animation:none}.dqa-toast{transition:none}.dqa-cell,.dqa-cell img,.dqa-hn,.dqa-prog{transition:none}}" +
-      "@media(max-width:560px){.dqa-grid{grid-template-columns:repeat(auto-fill,minmax(76px,1fr))}.dqa-ico .dqa-n{display:none}}";
+      ".dqa-tip{font-size:11px;color:var(--muted,#8b949e);line-height:1.45;margin:0 0 14px}" +
+      ".dqa-sec{display:flex;align-items:baseline;justify-content:space-between;gap:8px;font-size:11px;font-weight:800;letter-spacing:1.2px;" +
+      "text-transform:uppercase;color:#e3b341;margin:18px 0 10px;border-bottom:1px solid rgba(210,153,34,.3);padding-bottom:7px}" +
+      ".dqa-sec:first-of-type{margin-top:2px}" +
+      ".dqa-sec .c{color:var(--muted,#8b949e);font-weight:700;letter-spacing:.5px}" +
+      ".dqa-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(56px,1fr));gap:8px}" +
+      ".dqa-cell{position:relative;aspect-ratio:1/1;display:flex;align-items:center;justify-content:center;background:var(--bg,#0d1117);" +
+      "border:1px solid var(--border,#30363d);border-radius:9px;overflow:hidden;transition:border-color .15s,transform .1s,box-shadow .15s}" +
+      ".dqa-cell img{width:78%;height:78%;object-fit:contain;image-rendering:pixelated;display:block;transition:filter .2s,opacity .2s}" +
+      ".dqa-cell.locked img{filter:saturate(.55) brightness(.5);opacity:.5}" +
+      ".dqa-cell.unlocked{cursor:pointer}" +
+      ".dqa-cell.unlocked:hover{border-color:var(--gold,#d29922);transform:translateY(-2px);box-shadow:0 5px 14px rgba(0,0,0,.4)}" +
+      ".dqa-cell.pinned{border-color:var(--gold,#d29922);box-shadow:0 0 0 2px var(--gold,#d29922),0 0 14px rgba(210,153,34,.3)}" +
+      ".dqa-star{position:absolute;top:3px;right:4px;color:var(--gold,#d29922);font-size:11px;opacity:0;text-shadow:0 1px 2px rgba(0,0,0,.7)}" +
+      ".dqa-cell.pinned .dqa-star{opacity:1}" +
+      "@media(prefers-reduced-motion:reduce){.dqa-ico.flash{animation:none}.dqa-ico img{animation:none}.dqa-toast{transition:none}.dqa-cell,.dqa-cell img,.dqa-prog{transition:none}}";
     document.head.appendChild(s);
   }
 
   // ---- DOM refs ----
-  var icoEl, icoImg, icoNum, hintEl, toastEl, toastT;
+  var icoEl, icoImg, hintEl, toastEl;
 
   function buildIcon() {
     var header = document.querySelector("header");
@@ -211,136 +131,88 @@
     icoEl = document.createElement("span"); icoEl.className = "dqa-ico"; icoEl.title = "Your collection";
     icoEl.setAttribute("role", "button"); icoEl.setAttribute("aria-label", "Open your collection"); icoEl.tabIndex = 0;
     icoImg = document.createElement("img"); icoImg.alt = ""; icoImg.draggable = false;
-    icoNum = document.createElement("span"); icoNum.className = "dqa-n";
-    icoEl.appendChild(icoImg); icoEl.appendChild(icoNum);
-    // Click opens the collection — unless a long-press just fired the hidden reset.
+    icoEl.appendChild(icoImg);
     icoEl.addEventListener("click", function () { if (longFired) { longFired = false; return; } openCollection(); });
     icoEl.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openCollection(); } });
-    // Hidden reset: press & hold the icon for ~1.1s.
+    // Hidden reset: press & hold ~1.1s.
     icoEl.addEventListener("mousedown", startPress);
     icoEl.addEventListener("mouseup", cancelPress);
     icoEl.addEventListener("mouseleave", cancelPress);
     icoEl.addEventListener("touchstart", startPress, { passive: true });
     icoEl.addEventListener("touchend", cancelPress);
     icoEl.addEventListener("touchcancel", cancelPress);
-    icoEl.addEventListener("contextmenu", function (e) { e.preventDefault(); }); // suppress mobile long-press menu
+    icoEl.addEventListener("contextmenu", function (e) { e.preventDefault(); });
     var logo = header.querySelector(".logo");
     (logo || header).appendChild(icoEl);
   }
 
-  // ---- Hidden reset (long-press the header icon) ----
+  // ---- Hidden reset (long-press the icon) ----
   var pressTimer = null, longFired = false;
   function startPress() { longFired = false; cancelPress(); pressTimer = setTimeout(function () { longFired = true; doReset(); }, 1100); }
   function cancelPress() { if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; } }
   function doReset() {
-    if (!window.confirm("Reset your DevQuest collection?\n\nThis permanently clears every unlocked achievement and favourite on this device.")) { longFired = false; return; }
-    try { [STATS_KEY, UNLOCK_KEY, DAYS_KEY, HINT_KEY, FAV_KEY].forEach(function (k) { localStorage.removeItem(k); }); } catch (e) {}
-    try { location.reload(); } catch (e) {
-      stats = { jobs: 0, search: 0, filter: 0, map: 0, grid: 0, bestfit: 0, save: 0, alert: 0, track: 0, know: 0, pin: 0, copy: 0, follows: [], shareP: [] };
-      unlocked = []; favs = []; days = []; refreshIcon();
-    }
+    if (!window.confirm("Reset your DevQuest collection?\n\nThis clears your visit history, unlocked sprites, and pin on this device.")) { longFired = false; return; }
+    saveStr(PIN_KEY, null);
+    try { localStorage.removeItem(DAYS_KEY); localStorage.removeItem(HINT_KEY); } catch (e) {}
+    try { location.reload(); } catch (e) { days = []; pin = null; refreshIcon(); }
   }
 
-  // The header mascot = your active (most-recently-pinned) favourite, if any;
-  // otherwise it falls back to your latest unlock.
-  function mascotId() {
-    for (var i = favs.length - 1; i >= 0; i--) if (has(favs[i])) return favs[i];
-    return unlocked.length ? unlocked[unlocked.length - 1] : null;
-  }
   function refreshIcon() {
     if (!icoEl) return;
-    if (!unlocked.length) { icoEl.classList.remove("on"); return; }
-    var m = ACH_BY_ID[mascotId()];
-    if (m) icoImg.src = spriteFor(m);
-    icoNum.textContent = unlocked.length + " / " + TOTAL;
+    if (unlockedCount() < 1) { icoEl.classList.remove("on"); return; }
+    icoImg.src = SPRITES[mascotIndex()];
     icoEl.classList.add("on");
   }
-
   function flashIcon() {
-    if (!icoEl) return;
+    if (!icoEl || reduce) return;
     icoEl.classList.remove("flash"); void icoEl.offsetWidth; icoEl.classList.add("flash");
   }
 
-  function showFirstHint() {
+  // ---- First-time discovery hint ----
+  function maybeHint() {
     try { if (localStorage.getItem(HINT_KEY) === "1") return; localStorage.setItem(HINT_KEY, "1"); } catch (e) {}
     if (!icoEl) return;
     hintEl = document.createElement("div"); hintEl.className = "dqa-hint";
-    hintEl.innerHTML = "<b>Your first sprite!</b> Click here anytime to see your collection.";
+    hintEl.innerHTML = "<b>Your collection!</b> Come back each day to unlock a new sprite. Click to open it.";
     icoEl.appendChild(hintEl);
     setTimeout(function () { if (hintEl && hintEl.parentNode) hintEl.parentNode.removeChild(hintEl); }, 9000);
   }
 
-  // ---- Unlock + celebrate ----
-  function checkUnlocks(announce) {
-    var newly = [], changed = true, s = view();
-    while (changed) {
-      changed = false;
-      for (var i = 0; i < ACH.length; i++) {
-        var a = ACH[i];
-        if (!has(a.id) && a.test(s)) { unlocked.push(a.id); newly.push(a); changed = true; }
-      }
-    }
-    if (newly.length) { saveUnlocked(); if (announce) celebrate(newly); else refreshIcon(); }
-    return newly;
-  }
-
-  var firstEver;
-  function celebrate(newly) {
-    try { firstEver = (unlocked.length === newly.length); } catch (e) { firstEver = false; }
-    refreshIcon(); flashIcon();
-    var bigOne = false;
-    for (var i = 0; i < newly.length; i++) if (newly[i].id === "complete" || newly[i].id === "legend") bigOne = true;
-    if (bigOne) fanfare(); else chime();
-    queueToasts(newly.slice());
-    if (firstEver) setTimeout(showFirstHint, 400);
-  }
-
-  var toastQueue = [];
-  function queueToasts(list) { toastQueue = toastQueue.concat(list); if (!toastEl || !toastEl._busy) nextToast(); }
-  function nextToast() {
-    if (!toastQueue.length) return;
-    var a = toastQueue.shift();
+  // ---- Welcome-back toast ----
+  function hideToast() { if (toastEl) toastEl.classList.remove("show"); }
+  function welcomeToast(idx) {
+    if (hintEl && hintEl.parentNode) hintEl.parentNode.removeChild(hintEl);
     if (!toastEl) {
       toastEl = document.createElement("div"); toastEl.className = "dqa-toast";
-      toastEl.innerHTML = '<img alt=""><div><div class="t1">Achievement unlocked</div><div class="t2"></div></div>';
+      toastEl.innerHTML = '<img alt=""><div><div class="t1">Welcome back</div><div class="t2"></div></div>';
+      toastEl.addEventListener("click", function () { hideToast(); openCollection(); });
       document.body.appendChild(toastEl);
     }
-    toastEl._busy = true;
-    toastEl.querySelector("img").src = spriteFor(a);
-    toastEl.querySelector(".t2").textContent = a.name;
+    toastEl.querySelector("img").src = SPRITES[idx];
+    toastEl.querySelector(".t2").textContent = "New sprite unlocked!";
     void toastEl.offsetWidth; toastEl.classList.add("show");
-    setTimeout(function () {
-      toastEl.classList.remove("show");
-      setTimeout(function () { toastEl._busy = false; nextToast(); }, 280);
-    }, toastQueue.length ? 1500 : 2400);
+    clearTimeout(toastEl._t); toastEl._t = setTimeout(hideToast, 5500);
   }
 
   // ---- Collection modal ----
-  function escC(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
   function openCollection() {
     if (document.querySelector(".dqa-modal")) return;
     if (hintEl && hintEl.parentNode) hintEl.parentNode.removeChild(hintEl);
-    var pct = TOTAL ? Math.round(unlocked.length / TOTAL * 100) : 0;
+    var uc = unlockedCount(), pct = TOTAL ? Math.round(uc / TOTAL * 100) : 0;
     var html = '<div class="dqa-head"><div><div class="dqa-title">Your collection</div>'
-      + '<div class="dqa-sub">' + unlocked.length + ' / ' + TOTAL + ' unlocked</div></div>'
+      + '<div class="dqa-sub">' + uc + ' / ' + TOTAL + ' unlocked · ' + days.length + ' day' + (days.length === 1 ? '' : 's') + ' visited</div></div>'
       + '<button class="dqa-x" type="button" aria-label="Close">×</button></div><div class="dqa-body">'
       + '<div class="dqa-progwrap"><div class="dqa-prog" style="width:' + pct + '%"></div></div>'
-      + '<div class="dqa-favhost"></div>';   // populated live by renderFavs()
-    // Tiers
-    for (var t = 0; t < TIERS.length; t++) {
-      var tier = TIERS[t];
-      var got = 0, total = 0;
-      for (var c = 0; c < ACH.length; c++) if (ACH[c].tier === tier.id) { total++; if (has(ACH[c].id)) got++; }
-      html += '<div class="dqa-tier t-' + tier.id + '">' + escC(tier.name) + ' · ' + got + ' / ' + total + '</div><div class="dqa-grid">';
-      for (var i = 0; i < ACH.length; i++) {
-        var a = ACH[i]; if (a.tier !== tier.id) continue;
-        var u = has(a.id), fav = favs.indexOf(a.id) >= 0;
-        html += '<div class="dqa-cell ' + (u ? "unlocked" : "locked") + (fav ? " faved" : "") + '"'
-          + (u ? ' data-id="' + a.id + '" role="button" tabindex="0" title="' + escC(a.name) + ' — pin as your mascot (click again to unpin)"' : ' title="' + escC(a.name) + ' — ' + escC(a.hint) + '"') + '>'
-          + '<div class="pic"><img loading="lazy" src="' + spriteFor(a) + '" alt=""></div>'
-          + '<div class="dqa-nm">' + escC(a.name) + '</div>'
-          + '<div class="dqa-hn">' + (u ? (fav ? "★ Pinned" : "★ Pin") : escC(a.hint)) + '</div>'
-          + '<div class="dqa-star">★</div></div>';
+      + '<div class="dqa-tip">A new sprite unlocks every day you visit (they don’t have to be in a row). Click any unlocked sprite to pin it as your floating mascot.</div>';
+    for (var s = 0; s < SECTIONS.length; s++) {
+      var sec = SECTIONS[s];
+      var got = Math.max(0, Math.min(sec.count, uc - sec.start));
+      html += '<div class="dqa-sec"><span>' + escC(sec.name) + '</span><span class="c">' + got + ' / ' + sec.count + '</span></div><div class="dqa-grid">';
+      for (var j = 0; j < sec.count; j++) {
+        var gi = sec.start + j, u = isUnlocked(gi), isPin = (pin != null && parseInt(pin, 10) === gi);
+        html += '<div class="dqa-cell ' + (u ? "unlocked" : "locked") + (isPin ? " pinned" : "") + '" data-i="' + gi + '"'
+          + (u ? ' role="button" tabindex="0" title="Click to pin as your mascot"' : ' title="Locked — keep visiting!"') + '>'
+          + '<img loading="lazy" src="' + SPRITES[gi] + '" alt=""><div class="dqa-star">★</div></div>';
       }
       html += '</div>';
     }
@@ -354,106 +226,39 @@
     box.querySelector(".dqa-x").addEventListener("click", close);
     document.addEventListener("keydown", onkey);
     var cells = box.querySelectorAll(".dqa-cell.unlocked");
-    for (var k = 0; k < cells.length; k++) bindPin(cells[k], box);
-    renderFavs(box);
+    for (var k = 0; k < cells.length; k++) bindTile(cells[k], box);
     void ov.offsetWidth; ov.classList.add("show");
-    try { window.dqTrack && window.dqTrack("ach_open", { n: unlocked.length }); } catch (e) {}
   }
-
-  // Live-render the Favourites box. The last pinned favourite is the active
-  // mascot (highlighted). When nothing is pinned, show a one-line how-to.
-  function renderFavs(box) {
-    var host = box.querySelector(".dqa-favhost");
-    if (!host) return;
-    var pinned = favs.filter(function (id) { return has(id) && ACH_BY_ID[id]; });
-    if (!pinned.length) {
-      host.innerHTML = '<div class="dqa-favwrap"><div class="dqa-favhd">★ Favourites</div>'
-        + '<div class="dqa-favhint">Click any unlocked sprite below to pin it as your <b>mascot</b> — the sprite that floats beside the logo.</div></div>';
-      return;
-    }
-    var mascot = pinned[pinned.length - 1];
-    var h = '<div class="dqa-favwrap"><div class="dqa-favhd">★ Favourites <span class="dqa-favsub">— tap one to make it your mascot</span></div><div class="dqa-favrow">';
-    for (var f = 0; f < pinned.length; f++) {
-      var fa = ACH_BY_ID[pinned[f]], on = pinned[f] === mascot;
-      h += '<button type="button" class="dqa-fav' + (on ? " active" : "") + '" data-id="' + pinned[f] + '" title="' + escC(fa.name) + (on ? " — your mascot" : " — tap to set as mascot") + '"><img loading="lazy" src="' + spriteFor(fa) + '" alt=""></button>';
-    }
-    h += '</div></div>';
-    host.innerHTML = h;
-    var fbtns = host.querySelectorAll(".dqa-fav");
-    for (var b = 0; b < fbtns.length; b++) bindFavPick(fbtns[b], box);
-  }
-  function bindFavPick(btn, box) {
-    btn.addEventListener("click", function () {
-      var id = btn.getAttribute("data-id"), at = favs.indexOf(id);
-      if (at < 0) return;
-      favs.splice(at, 1); favs.push(id);           // move to end = active mascot
-      saveJSON(FAV_KEY, favs); refreshIcon(); renderFavs(box);
-    });
-  }
-
-  function bindPin(cell, box) {
+  function bindTile(cell, box) {
     function toggle() {
-      var id = cell.getAttribute("data-id"), at = favs.indexOf(id);
-      if (at >= 0) { favs.splice(at, 1); cell.classList.remove("faved"); }
-      else { favs.push(id); cell.classList.add("faved"); stats.pin = (stats.pin || 0) + 1; saveStats(); checkUnlocks(true); }
-      saveJSON(FAV_KEY, favs);
-      var hn = cell.querySelector(".dqa-hn"); if (hn) hn.textContent = (favs.indexOf(id) >= 0) ? "★ Pinned" : "★ Pin";
-      refreshIcon();
-      if (box) renderFavs(box);
+      var i = cell.getAttribute("data-i");
+      if (!isUnlocked(parseInt(i, 10))) return;
+      if (pin === i) { pin = null; saveStr(PIN_KEY, null); }   // clicking the pinned one again un-pins it
+      else { pin = i; saveStr(PIN_KEY, i); }
+      applyPins(box); refreshIcon();
     }
     cell.addEventListener("click", toggle);
     cell.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggle(); } });
   }
-
-  // ---- Event tracking: tally real actions from the site's dqTrack ----
-  function bump(name, props) {
-    props = props || {};
-    switch (name) {
-      case "apply_click": stats.jobs++; break;            // clicking through to view a job posting
-      case "search":      stats.search++; break;
-      case "filter":      stats.filter++; break;
-      case "view":        if (props.tab !== "map") return false; stats.map++; break;  // opened the Map tab
-      case "directory_click": case "moon_click": case "pulse_studio_click": stats.map++; break;
-      case "grid_cell":   stats.grid++; break;
-      case "bestfit_filter": case "bestfit_pick": stats.bestfit++; break;
-      case "save_job":    stats.save++; break;
-      case "track_job":   stats.track++; break;
-      case "alert_signup": case "digest_signup": stats.alert++; break;
-      case "who_do_i_know": stats.know++; break;
-      case "studio_follow":
-        if (props.on === false) { var ix = stats.follows.indexOf(props.st); if (ix >= 0) stats.follows.splice(ix, 1); }
-        else if (props.st && stats.follows.indexOf(props.st) < 0) stats.follows.push(props.st);
-        break;
-      case "share_click":
-        if (props.p && stats.shareP.indexOf(props.p) < 0) stats.shareP.push(props.p);
-        if (props.p === "copy") stats.copy++;
-        break;
-      default: return false;
-    }
-    return true;
-  }
-
-  function tally(name, props) {
-    try { if (bump(name, props)) { saveStats(); checkUnlocks(true); } } catch (e) {}
-  }
-  function hookTracker() {
-    // index.html's track() calls window.__dqAch(name, props) for EVERY event.
-    // The site fires most events via its local track(...) (not the global dqTrack),
-    // so wrapping window.dqTrack alone misses them. Tapping track() catches all of
-    // them, exactly once. (Requires the matching one-line hook in index.html.)
-    window.__dqAch = tally;
+  function applyPins(box) {
+    var cells = box.querySelectorAll(".dqa-cell");
+    for (var i = 0; i < cells.length; i++) cells[i].classList.toggle("pinned", pin != null && cells[i].getAttribute("data-i") === pin);
   }
 
   // ---- Boot ----
   function mount() {
-    loadAll();
-    // Mark today's visit (distinct days).
-    try { var today = new Date().toISOString().slice(0, 10); if (days.indexOf(today) < 0) { days.push(today); saveJSON(DAYS_KEY, days); } } catch (e) {}
+    injectStyle();
+    var today = todayStr();
+    var isNewDay = days.indexOf(today) < 0;
+    var before = unlockedCount();
+    if (isNewDay) { days.push(today); saveJSON(DAYS_KEY, days); }
     buildIcon();
-    checkUnlocks(false);   // restore prior unlocks silently
     refreshIcon();
-    var dayWins = checkUnlocks(true);   // a day milestone reached just by visiting today celebrates
-    hookTracker();
+    var after = unlockedCount();
+    // Returning on a new day (2nd+ visit-day) → welcome-back pop-up with the new sprite.
+    if (isNewDay && after > before && after > 1) { flashIcon(); welcomeToast(after - 1); }
+    // First time the icon ever appears → one-time discovery hint.
+    if (after >= 1) maybeHint();
   }
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", mount);
