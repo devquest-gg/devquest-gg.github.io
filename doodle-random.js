@@ -59,10 +59,17 @@
                                        // = kinder (shorter worst-case grind), higher = stricter. The tell
                                        // ("so close…") starts ~2 misses before the guarantee fires.
 
+  var NUDGE_KEY = "dq-nudge";          // "1" once the discover-nudge has shown (or the visitor already plays)
+  var NUDGE_AT = 5;                    // show the nudge after this many meaningful site interactions
+  var FAVKEY = "dq-favs";              // { packId: spriteIndex } — one pinned favourite per pack
+
   var reduce = !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion:reduce)").matches);
 
   // ---- Collection storage (one object, all packs) ----
   var collect = {};
+  var favs = {};   // pinned favourites: { packId: spriteIndex }
+  function loadFavs() { try { return JSON.parse(localStorage.getItem(FAVKEY) || "{}") || {}; } catch (e) { return {}; } }
+  function saveFavs() { try { localStorage.setItem(FAVKEY, JSON.stringify(favs)); } catch (e) {} }
   function loadCollect() {
     var obj = {};
     try {
@@ -149,13 +156,63 @@
       ".dqd-cool{position:absolute;left:0;right:0;bottom:0;height:0;border-radius:0 0 5px 5px;pointer-events:none;opacity:1;z-index:4;" +
       "background:linear-gradient(to top,rgba(8,11,16,.85),rgba(8,11,16,.55))}" +
       // Catch badge (new / duplicate / level), floats out to the left so it never overlaps the header.
-      ".dqd-badge{position:absolute;right:calc(100% + 8px);top:18px;font-size:10px;font-weight:700;padding:2px 7px;" +
+      ".dqd-badge{position:absolute;top:calc(100% + 12px);left:50%;transform:translateX(-50%);font-size:10px;font-weight:700;padding:2px 7px;" +
       "border-radius:999px;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .15s}" +
       ".dqd-badge.show{opacity:1}" +
       ".dqd-badge.new{background:var(--green,#3fb950);color:#06210f}" +
       ".dqd-badge.dupe{background:var(--border,#30363d);color:var(--text,#e6edf3)}" +
       ".dqd-badge.lvl{background:var(--gold,#d29922);color:#231a05}" +
       ".dqd-badge.luck{background:var(--gold,#d29922);color:#231a05;box-shadow:0 0 0 2px rgba(210,153,34,.4)}" +
+      // One-time "discover" nudge bubble: sits to the left of the bookmark, arrow points right at it.
+      ".dqd-nudge{position:absolute;right:calc(100% + 12px);top:4px;width:max-content;max-width:190px;background:var(--panel,#161b22);" +
+      "border:1px solid var(--accent,#58a6ff);color:var(--text,#e6edf3);font-size:12px;line-height:1.4;padding:8px 11px;border-radius:9px;" +
+      "box-shadow:0 8px 20px rgba(0,0,0,.45);opacity:0;transform:translateX(6px);transition:opacity .25s,transform .25s;cursor:pointer;z-index:6;" +
+      "text-align:left;font-family:-apple-system,'Segoe UI',Roboto,sans-serif}" +
+      ".dqd-nudge.show{opacity:1;transform:translateX(0)}" +
+      ".dqd-nudge::after{content:'';position:absolute;left:100%;top:13px;border:6px solid transparent;border-left-color:var(--accent,#58a6ff)}" +
+      ".dqd-nudge b{color:var(--accent,#58a6ff);font-weight:700}" +
+      "@media(prefers-reduced-motion:reduce){.dqd-nudge{transition:none;transform:none}}" +
+      // Collection icon (top-left of the bookmark) + the Pokedex-style modal it opens.
+      ".dqd-coll{position:absolute;top:1px;left:5px;line-height:0;color:var(--muted,#8b949e);cursor:pointer;opacity:.5;transition:opacity .15s,color .15s;z-index:5}" +
+      ".dqd-coll:hover{opacity:1;color:var(--accent,#58a6ff)}" +
+      ".dqd-shelf.folded .dqd-coll{display:none}" +
+      ".dqd-cmodal{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9998;display:flex;align-items:flex-start;justify-content:center;padding:6vh 16px;overflow:auto;opacity:0;transition:opacity .2s}" +
+      ".dqd-cmodal.show{opacity:1}" +
+      ".dqd-cbox{background:var(--panel,#161b22);border:1px solid var(--border,#30363d);border-radius:14px;max-width:560px;width:100%;box-shadow:0 24px 60px rgba(0,0,0,.55);font-family:-apple-system,'Segoe UI',Roboto,sans-serif}" +
+      ".dqd-chead{display:flex;align-items:center;justify-content:space-between;padding:15px 18px;border-bottom:1px solid var(--border,#30363d)}" +
+      ".dqd-ctitle{font-size:16px;font-weight:800;color:var(--text,#e6edf3)}" +
+      ".dqd-csub{font-size:12px;color:var(--muted,#8b949e);margin-top:2px}" +
+      ".dqd-cx{background:transparent;border:none;color:var(--muted,#8b949e);font-size:22px;line-height:1;cursor:pointer;padding:0 4px}" +
+      ".dqd-cx:hover{color:var(--text,#e6edf3)}" +
+      ".dqd-cbody{padding:14px 18px 18px;max-height:70vh;overflow:auto}" +
+      ".dqd-cpack{margin-bottom:18px}" +
+      ".dqd-cpack.locked{opacity:.55}" +
+      ".dqd-cph{font-size:13px;font-weight:700;color:var(--text,#e6edf3);margin-bottom:8px}" +
+      ".dqd-cpc{color:var(--muted,#8b949e);font-weight:600;font-size:12px;margin-left:4px}" +
+      ".dqd-clock{font-size:12px;color:var(--muted,#8b949e)}" +
+      ".dqd-cgrid{display:grid;grid-template-columns:repeat(8,1fr);gap:6px}" +
+      ".dqd-ctile{position:relative;aspect-ratio:1;background:var(--bg,#0d1117);border:1px solid var(--border,#30363d);border-radius:6px;display:flex;align-items:center;justify-content:center;padding:3px}" +
+      ".dqd-ctile.favable{cursor:pointer}" +
+      ".dqd-ctile.favable:hover{border-color:var(--gold,#d29922)}" +
+      ".dqd-cdone{color:var(--gold,#d29922);font-weight:600;font-size:11px;margin-left:6px}" +
+      ".dqd-ctile img{width:100%;height:100%;object-fit:contain;image-rendering:pixelated;display:block}" +
+      ".dqd-ctile.have{border-color:var(--green,#3fb950)}" +
+      ".dqd-ctile.faved{border-color:var(--gold,#d29922);box-shadow:0 0 0 1px var(--gold,#d29922),0 0 9px rgba(210,153,34,.5)}" +
+      ".dqd-ctile.faved::after{content:'★';position:absolute;top:0;right:3px;font-size:11px;line-height:1.1;color:var(--gold,#d29922);text-shadow:0 1px 2px rgba(0,0,0,.7)}" +
+      ".dqd-ctile.miss img{filter:brightness(0);opacity:.22}" +
+      "@media(max-width:520px){.dqd-cgrid{grid-template-columns:repeat(6,1fr)}}" +
+      // Pinned-favourites shelf — a matching little bookmark to the left of the mascot.
+      ".dqd-fav{position:absolute;top:calc(100% - 1px);right:118px;display:flex;gap:7px;align-items:center;cursor:pointer;" +
+      "background:linear-gradient(180deg,rgba(210,153,34,.15),rgba(210,153,34,0)),var(--panel,#161b22);" +
+      "border:2px solid var(--gold,#d29922);border-top:none;border-radius:0 0 8px 8px;padding:8px 12px 10px;" +
+      "box-shadow:inset 0 0 0 2px rgba(18,14,6,.55),inset 0 0 0 3px rgba(240,199,94,.4),0 8px 18px rgba(0,0,0,.45),0 0 16px rgba(210,153,34,.2)}" +
+      ".dqd-fav.empty{display:none}" +
+      ".dqd-favimg{width:34px;height:34px;image-rendering:pixelated;display:block;user-select:none;-webkit-user-drag:none;transition:transform .15s}" +
+      ".dqd-favslot{width:34px;height:34px;box-sizing:border-box;display:flex;align-items:center;justify-content:center;border:1px dashed var(--gold,#d29922);border-radius:6px;color:var(--gold,#d29922);font-size:14px;animation:dqd-favpulse 1.8s ease-in-out infinite}" +
+      "@keyframes dqd-favpulse{0%,100%{opacity:.45}50%{opacity:1}}" +
+      "@media(prefers-reduced-motion:reduce){.dqd-favslot{animation:none;opacity:.75}}" +
+      ".dqd-fav:hover .dqd-favimg{transform:translateY(-1px)}" +
+      "@media(max-width:1300px){.dqd-fav{display:none}}" +
       // Progress caption: only on hover / focus.
       ".dqd-cap{display:none;width:64px;margin-top:5px;text-align:center;overflow:visible}" +
       ".dqd-shelf:hover .dqd-cap,.dqd-shelf:focus-within .dqd-cap,.dqd-shelf.show .dqd-cap{display:block}" +
@@ -193,6 +250,7 @@
     injectStyle();
 
     collect = loadCollect();
+    favs = loadFavs();
     var lvl = firstIncomplete();
     var allDone = allComplete();
 
@@ -216,6 +274,12 @@
 
     var x = document.createElement("div"); x.className = "dqd-x"; x.textContent = "×"; x.title = "Hide";
     var handle = document.createElement("div"); handle.className = "dqd-handle"; handle.textContent = "▾"; handle.title = "Show mascot";
+    var coll = document.createElement("div"); coll.className = "dqd-coll"; coll.title = "Your collection";
+    coll.setAttribute("role", "button"); coll.setAttribute("aria-label", "View your collection"); coll.tabIndex = 0;
+    coll.innerHTML = '<svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><rect x="1" y="1" width="6" height="6" rx="1" fill="currentColor"/><rect x="9" y="1" width="6" height="6" rx="1" fill="currentColor"/><rect x="1" y="9" width="6" height="6" rx="1" fill="currentColor"/><rect x="9" y="9" width="6" height="6" rx="1" fill="currentColor"/></svg>';
+    var fav = document.createElement("div"); fav.className = "dqd-fav empty";
+    fav.title = "Your favourites — heart a sprite in the collection to pin it here";
+    fav.setAttribute("role", "button"); fav.setAttribute("aria-label", "Your pinned favourites — open collection");
 
     var cur = -1, curPack = "", busy = false, dupeStreak = 0, coolT, coolT2, flashT, badgeT;
 
@@ -300,6 +364,7 @@
 
     function catchOne() {
       if (busy) return;
+      if (!nudgeDone) { markNudgeDone(); hideNudge(); }   // clicking the mascot = discovered it
       var r = pick(), pack = r.pack, n = r.n, forced = r.forced, set = collectFor(pack.id), isNew = !set.has(n);
       cur = n; curPack = pack.id; img.src = spritePath(pack.id, n);
       if (isNew) { set.add(n); saveCollect(); dupeStreak = 0; } else { dupeStreak++; }
@@ -310,6 +375,7 @@
       if (levelDone) {
         showBadge("Level complete! ✦", "lvl");
         shelf.classList.add("show", "flash"); fanfare();
+        renderFav();   // pack just completed — pop its gold trophy slot into the shelf
         try { window.dqTrack && window.dqTrack("doodle_levelup", { lvl: lvl + 1, pack: pack.id }); } catch (e) {}
         clearTimeout(flashT);
         flashT = setTimeout(function () { shelf.classList.remove("show", "flash"); advance(); }, 1900);
@@ -333,7 +399,8 @@
     var LONGPRESS = 700, pressT, didLong = false;
     function reset() {
       collect = {}; allDone = false; lvl = 0;
-      try { localStorage.removeItem(COLLECT_KEY); localStorage.removeItem(OLD_KEY); } catch (e) {}
+      favs = {}; try { localStorage.removeItem(COLLECT_KEY); localStorage.removeItem(OLD_KEY); localStorage.removeItem(FAVKEY); } catch (e) {}
+      renderFav();
       var np = PACKS[0], p0 = Math.floor(Math.random() * np.count) + 1;
       cur = p0; curPack = np.id; img.src = spritePath(np.id, p0);
       updateCap(); capl.textContent = "↺ reset!"; shelf.classList.add("show");
@@ -343,6 +410,87 @@
     function endPress() { clearTimeout(pressT); }
 
     function setFold(v) { shelf.classList.toggle("folded", v); try { localStorage.setItem(FOLDKEY, v ? "1" : "0"); } catch (e) {} }
+
+    // Collection modal — every pack as a grid: caught sprites in colour, missing ones as silhouettes,
+    // future packs shown locked. Pure front-end; reads the same localStorage collection.
+    function escC(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+    function openCollection() {
+      if (document.querySelector(".dqd-cmodal")) return;
+      var caught = grandCaught(), total = grandTotal();
+      var html = '<div class="dqd-chead"><div><div class="dqd-ctitle">Your collection</div>'
+        + '<div class="dqd-csub">' + caught + ' / ' + total + ' found</div></div>'
+        + '<button class="dqd-cx" type="button" aria-label="Close">×</button></div><div class="dqd-cbody">';
+      for (var i = 0; i < PACKS.length; i++) {
+        var p = PACKS[i], set = collectFor(p.id);
+        if (!allDone && i > lvl) {
+          html += '<div class="dqd-cpack locked"><div class="dqd-cph">🔒 Lvl ' + (i + 1) + ' · ' + escC(p.name) + '</div>'
+            + '<div class="dqd-clock">Finish the set before it to unlock this one.</div></div>';
+          continue;
+        }
+        var done = set.size >= p.count;
+        html += '<div class="dqd-cpack"><div class="dqd-cph">Lvl ' + (i + 1) + ' · ' + escC(p.name)
+          + ' <span class="dqd-cpc">' + set.size + ' / ' + p.count + '</span>'
+          + (done ? '<span class="dqd-cdone">★ complete — pick one to pin</span>' : '') + '</div><div class="dqd-cgrid">';
+        for (var nn = 1; nn <= p.count; nn++) {
+          var have = set.has(nn), pin = done && have;
+          var cls = "dqd-ctile " + (have ? "have" : "miss") + (pin ? (favs[p.id] === nn ? " favable faved" : " favable") : "");
+          html += '<div class="' + cls + '"' + (pin ? ' data-pack="' + p.id + '" data-n="' + nn + '" role="button" tabindex="0" title="Click to pin / unpin to your favourites"' : '')
+            + '><img loading="lazy" src="' + spritePath(p.id, nn) + '" alt=""></div>';
+        }
+        html += '</div></div>';
+      }
+      html += '</div>';
+      var ov = document.createElement("div"); ov.className = "dqd-cmodal";
+      var box = document.createElement("div"); box.className = "dqd-cbox"; box.innerHTML = html;
+      ov.appendChild(box); document.body.appendChild(ov);
+      function close() { ov.classList.remove("show"); document.removeEventListener("keydown", onkey); setTimeout(function () { if (ov.parentNode) ov.parentNode.removeChild(ov); }, 200); }
+      function onkey(e) { if (e.key === "Escape") close(); }
+      ov.addEventListener("click", function (e) { if (e.target === ov) close(); });
+      box.querySelector(".dqd-cx").addEventListener("click", close);
+      function bindPin(tile) {
+        function toggle() {
+          var pk = tile.getAttribute("data-pack"), fn = parseInt(tile.getAttribute("data-n"), 10);
+          var nowOn = toggleFav(pk, fn);
+          var sib = box.querySelectorAll('.dqd-ctile.favable[data-pack="' + pk + '"]');
+          for (var si = 0; si < sib.length; si++) sib[si].classList.remove("faved");
+          if (nowOn) tile.classList.add("faved");
+        }
+        tile.addEventListener("click", toggle);
+        tile.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggle(); } });
+      }
+      var pins = box.querySelectorAll(".dqd-ctile.favable");
+      for (var pi = 0; pi < pins.length; pi++) bindPin(pins[pi]);
+      document.addEventListener("keydown", onkey);
+      void ov.offsetWidth; ov.classList.add("show");
+    }
+    function renderFav() {
+      fav.innerHTML = "";
+      var any = false;
+      for (var i = 0; i < PACKS.length; i++) {
+        var p = PACKS[i];
+        if (collectFor(p.id).size < p.count) continue;   // a slot appears for each COMPLETED pack
+        any = true;
+        var fn = favs[p.id];
+        if (fn) {
+          var im = document.createElement("img");
+          im.className = "dqd-favimg"; im.src = spritePath(p.id, fn); im.alt = ""; im.loading = "lazy"; im.draggable = false;
+          fav.appendChild(im);
+        } else {
+          var slot = document.createElement("div");
+          slot.className = "dqd-favslot"; slot.textContent = "★";
+          slot.title = "Pick a favourite from " + p.name;
+          fav.appendChild(slot);
+        }
+      }
+      fav.classList.toggle("empty", !any);
+    }
+    function toggleFav(packId, n) {
+      var nowOn;
+      if (favs[packId] === n) { delete favs[packId]; nowOn = false; }
+      else { favs[packId] = n; nowOn = true; }
+      saveFavs(); renderFav();
+      return nowOn;
+    }
 
     // Initial reveal — show the active pack + current progress, no free catch.
     (function revealInitial() {
@@ -360,12 +508,54 @@
     img.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); catchOne(); } });
     x.addEventListener("click", function (e) { e.stopPropagation(); setFold(true); });
     handle.addEventListener("click", function () { setFold(false); });
+    function openColl(e) { if (e) e.stopPropagation(); if (!nudgeDone) { markNudgeDone(); hideNudge(); } openCollection(); }
+    coll.addEventListener("click", openColl);
+    coll.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openColl(e); } });
+    fav.addEventListener("click", function () { openCollection(); });
 
-    shelf.appendChild(imgwrap); shelf.appendChild(badge); shelf.appendChild(cap); shelf.appendChild(x); shelf.appendChild(handle);
+    shelf.appendChild(imgwrap); shelf.appendChild(badge); shelf.appendChild(cap); shelf.appendChild(x); shelf.appendChild(handle); shelf.appendChild(coll);
     shelf.appendChild(cool);   // overlay last so the cooldown shade sits above the whole bookmark
     header.appendChild(shelf);
+    header.appendChild(fav); renderFav();   // the pinned-favourites shelf, left of the mascot
 
     try { if (localStorage.getItem(FOLDKEY) === "1") shelf.classList.add("folded"); } catch (e) {}
+
+    // ---- One-time "discover" nudge — gated on real engagement so the jobs grid earns attention first.
+    var nudgeDone = false;
+    try { nudgeDone = localStorage.getItem(NUDGE_KEY) === "1"; } catch (e) {}
+    if (grandCaught() > 0) { nudgeDone = true; try { localStorage.setItem(NUDGE_KEY, "1"); } catch (e) {} }  // already plays
+    var nudgeEl = null;
+    function markNudgeDone() { nudgeDone = true; try { localStorage.setItem(NUDGE_KEY, "1"); } catch (e) {} }
+    function hideNudge() {
+      if (!nudgeEl) return;
+      var el = nudgeEl; nudgeEl = null; el.classList.remove("show");
+      setTimeout(function () { if (el.parentNode) el.parentNode.removeChild(el); }, 300);
+    }
+    function showNudge() {
+      if (nudgeDone || nudgeEl || shelf.classList.contains("folded")) return;
+      markNudgeDone();
+      nudgeEl = document.createElement("div"); nudgeEl.className = "dqd-nudge";
+      nudgeEl.innerHTML = "<b>Psst…</b> there's a tiny game up here — click the critter to catch 'em all.";
+      nudgeEl.addEventListener("click", function (e) { e.stopPropagation(); hideNudge(); });
+      shelf.appendChild(nudgeEl);
+      void nudgeEl.offsetWidth; nudgeEl.classList.add("show");
+      setTimeout(hideNudge, 10000);
+    }
+    // Count real engagement by wrapping the site's tracker; meaningful actions tick toward the nudge.
+    if (!nudgeDone) {
+      var MEANINGFUL = { search: 1, filter: 1, apply_click: 1, track_job: 1, save_job: 1, dismiss_job: 1, who_do_i_know: 1, directory_click: 1, moon_click: 1, grid_cell: 1, studio_follow: 1, bestfit_filter: 1, bestfit_pick: 1 };
+      var origTrack = window.dqTrack;
+      window.dqTrack = function (name, props) {
+        try {
+          if (!nudgeDone && MEANINGFUL[name]) {
+            var c = 0; try { c = parseInt(localStorage.getItem("dq-engage") || "0", 10) || 0; } catch (e) {}
+            c++; try { localStorage.setItem("dq-engage", String(c)); } catch (e) {}
+            if (c >= NUDGE_AT) showNudge();
+          }
+        } catch (e) {}
+        if (typeof origTrack === "function") return origTrack(name, props);
+      };
+    }
   }
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", mount);
