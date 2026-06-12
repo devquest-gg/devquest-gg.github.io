@@ -145,9 +145,9 @@
       ".dqd-img.cooling{cursor:default}" +
       "@media(hover:hover){.dqd-img:not(.cooling):hover{filter:brightness(1.18)}}" +
       ".dqd-img:focus-visible{outline:2px solid var(--green,#3fb950);outline-offset:2px;border-radius:6px}" +
-      // RPG cooldown overlay: a dark shade that climbs from the bottom to the top, then fades.
-      ".dqd-cool{position:absolute;left:0;bottom:0;width:100%;height:0;border-radius:4px;pointer-events:none;opacity:1;" +
-      "background:linear-gradient(to top,rgba(8,11,16,.82),rgba(8,11,16,.5))}" +
+      // RPG cooldown overlay: a dark shade that climbs over the WHOLE bookmark (not just the art), then fades.
+      ".dqd-cool{position:absolute;left:0;right:0;bottom:0;height:0;border-radius:0 0 5px 5px;pointer-events:none;opacity:1;z-index:4;" +
+      "background:linear-gradient(to top,rgba(8,11,16,.85),rgba(8,11,16,.55))}" +
       // Catch badge (new / duplicate / level), floats out to the left so it never overlaps the header.
       ".dqd-badge{position:absolute;right:calc(100% + 8px);top:18px;font-size:10px;font-weight:700;padding:2px 7px;" +
       "border-radius:999px;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .15s}" +
@@ -203,7 +203,7 @@
     img.className = "dqd-img"; img.alt = "Pixel art mascot"; img.title = "Click to catch another";
     img.setAttribute("role", "button"); img.tabIndex = 0; img.draggable = false;
     var cool = document.createElement("div"); cool.className = "dqd-cool";
-    imgwrap.appendChild(img); imgwrap.appendChild(cool);
+    imgwrap.appendChild(img);
 
     var badge = document.createElement("div"); badge.className = "dqd-badge";
 
@@ -362,6 +362,7 @@
     handle.addEventListener("click", function () { setFold(false); });
 
     shelf.appendChild(imgwrap); shelf.appendChild(badge); shelf.appendChild(cap); shelf.appendChild(x); shelf.appendChild(handle);
+    shelf.appendChild(cool);   // overlay last so the cooldown shade sits above the whole bookmark
     header.appendChild(shelf);
 
     try { if (localStorage.getItem(FOLDKEY) === "1") shelf.classList.add("folded"); } catch (e) {}
