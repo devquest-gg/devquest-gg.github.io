@@ -91,6 +91,10 @@ const DIRECTORY = [
   { name: "Devolver Digital", url: "https://www.devolverdigital.com/jobs", note: "Indie publisher (Cult of the Lamb, Cuphead) — custom board", city: "Austin, TX" },
   { name: "Klei Entertainment", url: "https://www.klei.com/careers", note: "Don't Starve, Oxygen Not Included — custom site (Vancouver)", city: "Vancouver, BC" },
   { name: "Thunderful Games", url: "https://career.thunderfulgames.com/", note: "SteamWorld — HaileyHR board (Sweden)", city: "Gothenburg, Sweden" },
+  { name: "Electric Square", url: "https://electricsquare.com/come-join-us/open-positions/", note: "Co-dev (Lively, Hot Wheels Unleashed) — Keywords Studios; static SSR board, promote when hiring", city: "Brighton, UK" },
+  { name: "Sports Interactive", url: "https://careers.sega.co.uk/studios/sports-interactive", note: "Football Manager — SEGA (no clean per-studio feed; SEGA careers portal)", city: "London, UK" },
+  { name: "Two Point Studios", url: "https://careers.sega.co.uk/studios/two-point-studios", note: "Two Point Hospital/Campus — SEGA", city: "Farnham, UK" },
+  { name: "Archetype Entertainment", url: "https://www.archetype-entertainment.com/en-US", note: "AAA sci-fi RPG (ex-BioWare) — Wizards of the Coast / Hasbro", city: "Austin, TX" },
 ];
 
 // ---- "The Moon": smaller / indie studios, often ones who reached out to be listed.
@@ -372,6 +376,7 @@ const STUDIOS = [
   { name: "Obsidian Entertainment", type: "obsidian", token: "obsidian", city: "Irvine, CA" }, // Avowed, Pillars of Eternity — own SSR board
   { name: "Undead Labs", type: "greenhouse", token: "undeadlabsllc" },                         // State of Decay — Greenhouse
   { name: "inXile Entertainment", type: "bamboohr", token: "inxile" },                         // Wasteland, Clockwork Revolution — BambooHR
+  { name: "Sperasoft", type: "workable", token: "sperasoft" },                                 // AAA co-dev (Halo, Battlefield, AC) — Keywords Studios
 ];
 
 // ---- Studio type tags (Michelle's idea) ------------------------------------
