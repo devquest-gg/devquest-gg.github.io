@@ -39,6 +39,8 @@ const CASES = [
   // --- Art (incl. outsourcing) ---
   ["Character Outsource Lead", "Art"],
   ["Environment Outsource Lead", "Art"],
+  ["3D Character Art internship", "Art"],
+  ["3D Environment art internship", "Art"],
   ["Art Director", "Art"],
 
   // --- Data analysts ---

@@ -2178,6 +2178,12 @@ module.exports = { mapDiscipline, strongTitleDiscipline, normDisc };
   let droppedNonGame = 0;
   for (let i = all.length - 1; i >= 0; i--) { if (NON_GAME_TITLE.test(all[i].title || "")) { all.splice(i, 1); droppedNonGame++; } }
   if (droppedNonGame) console.log(`Filtered out ${droppedNonGame} non-game facility/service role(s).`);
+  // Junk titles: some feeds emit a button/placeholder label instead of a real title (e.g. "Apply
+  // Here", "View job", an empty string). Drop anything whose WHOLE title is a generic CTA/placeholder.
+  const JUNK_TITLE = /^(apply( (here|now|today|online|link))?|view (job|details|role|opening|posting)|learn more|click here|see (more|all|details|jobs?)|read more|submit( (application|cv|resume))?|join (us|our team)|open (roles|positions)|explore (roles|opportunities)|details|more info|n\/?a|tbd|untitled)\.?$/i;
+  let droppedJunk = 0;
+  for (let i = all.length - 1; i >= 0; i--) { const tt = (all[i].title || "").trim(); if (!tt || JUNK_TITLE.test(tt)) { all.splice(i, 1); droppedJunk++; } }
+  if (droppedJunk) console.log(`Filtered out ${droppedJunk} junk/placeholder-title role(s).`);
   // Tabletop fix: at card / board / physical-game publishers, "Developer" means game *design*, not
   // software — e.g. a "Principal Game Developer" at Exploding Kittens is a tabletop designer. Their
   // real software roles are titled Engineer / Software / Full-Stack and are left as Engineering; we
