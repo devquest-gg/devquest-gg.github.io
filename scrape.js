@@ -52,7 +52,6 @@ const DIRECTORY = [
   { name: "inXile Entertainment", url: "https://www.inxile-entertainment.com/careers", note: "Wasteland, Clockwork Revolution — Xbox", city: "Newport Beach, CA" },
   { name: "Atlus", url: "https://atlus.com/careers", note: "Persona, Shin Megami Tensei — SEGA West", city: "Tokyo, Japan" },
   { name: "Uppercut Games", url: "https://www.uppercut-games.com/jobs", note: "City of Brass, Submerged — Canberra indie", city: "Canberra, Australia" },
-  { name: "Pipeworks Studios", url: "https://pipeworks.pinpointhq.com/", note: "Eugene, OR — Pinpoint board (fetcher later)", city: "Eugene, OR" },
   // Custom / first-party / unsupported-ATS boards — link-outs (June 2026 batch).
   { name: "Owlcat Games", url: "https://owlcat.games/careers", note: "Pathfinder, Rogue Trader — CRPG, custom board (Cyprus)", city: "Nicosia, Cyprus" },
   { name: "Sucker Punch Productions", url: "https://jobs.suckerpunch.com/", note: "Ghost of Tsushima/Yōtei — Sony first-party (Bellevue, WA)", city: "Bellevue, WA" },
@@ -93,16 +92,13 @@ const DIRECTORY = [
   { name: "Smilegate", url: "https://careers.smilegate.com/en/", note: "Lost Ark, CrossFire — Korea (EN board)", city: "Seongnam, South Korea" },
   { name: "Shift Up", url: "https://shiftup.co.kr/recruit/", note: "Stellar Blade — Korea, custom site (also makes NIKKE, a gacha title)", city: "Seoul, South Korea" },
   { name: "Supergiant Games", url: "https://www.supergiantgames.com/jobs/", note: "Hades — small SF studio (apply by email)", city: "San Francisco, CA" },
-  { name: "Hazelight Studios", url: "https://careers.hazelight.se/", note: "It Takes Two, Split Fiction — Teamtailor board (Sweden)", city: "Stockholm, Sweden" },
   { name: "Moon Studios", url: "https://www.moongamestudios.com/", note: "Ori, No Rest for the Wicked — fully remote (apply via jobs@)", city: "Vienna, Austria" },
   { name: "Iron Gate Studio", url: "https://irongate.se/", note: "Valheim — small Swedish studio", city: "Skövde, Sweden" },
-  { name: "10 Chambers", url: "https://careers.10chambers.com/", note: "GTFO, Den of Wolves — Teamtailor board (Sweden)", city: "Stockholm, Sweden" },
   { name: "Devolver Digital", url: "https://www.devolverdigital.com/jobs", note: "Indie publisher (Cult of the Lamb, Cuphead) — custom board", city: "Austin, TX" },
   { name: "tinyBuild", url: "https://www.tinybuild.com/jobs", note: "Hello Neighbor — global; careers-page.com board", city: "Bellevue, WA" },
   { name: "Klei Entertainment", url: "https://www.klei.com/careers", note: "Don't Starve, Oxygen Not Included — custom site (Vancouver)", city: "Vancouver, BC" },
   { name: "Thunderful Games", url: "https://career.thunderfulgames.com/", note: "SteamWorld — HaileyHR board (Sweden)", city: "Gothenburg, Sweden" },
   { name: "Hi-Rez Studios", url: "https://hirezstudios.applytojob.com/", note: "SMITE, Paladins — JazzHR board (Atlanta)", city: "Alpharetta, GA" },
-  { name: "Build A Rocket Boy", url: "https://buildarocketboy.pinpointhq.com/", note: "MindsEye — Pinpoint board (Edinburgh)", city: "Edinburgh, UK" },
 ];
 
 // ---- "The Moon": smaller / indie studios, often ones who reached out to be listed.
@@ -368,6 +364,12 @@ const STUDIOS = [
   { name: "Counterplay Games", type: "breezy", token: "counterplay-games-inc" },   // Godfall, Duelyst — fully remote (board may sit at 0)
   { name: "Thought Pennies", type: "manatal", token: "thought-pennies" },          // story-first RPG, fully remote (first community request)
   { name: "PikPok", type: "workable", token: "pikpok" },                           // mobile (Wellington, NZ) — promoted from directory; Workable already supported
+  // ---- Promoted from the Island 2026-06-13 (Hitmarker gap batch) — existing + new fetchers ----
+  { name: "Netmarble", type: "workable", token: "netmarbleus" },                   // Marvel Future Fight, Seven Knights — US office board (KR parent)
+  { name: "Hazelight Studios", type: "teamtailor", token: "hazelight", host: "careers.hazelight.se" }, // It Takes Two, Split Fiction (Stockholm)
+  { name: "10 Chambers", type: "teamtailor", token: "10chambers", host: "careers.10chambers.com" },    // GTFO, Den of Wolves (Stockholm)
+  { name: "Build A Rocket Boy", type: "pinpoint", token: "buildarocketboy" },       // MindsEye (Edinburgh) — new Pinpoint fetcher
+  { name: "Pipeworks Studios", type: "pinpoint", token: "pipeworks" },              // co-dev/porting (Eugene, OR) — new Pinpoint fetcher
 ];
 
 // ---- Studio type tags (Michelle's idea) ------------------------------------
@@ -1915,7 +1917,56 @@ async function fetchManatal(studio) {
   return out;
 }
 
-const FETCHERS = { greenhouse: fetchGreenhouse, lever: fetchLever, workday: fetchWorkday, avature: fetchAvature, smartrecruiters: fetchSmartRecruiters, workable: fetchWorkable, phenom: fetchPhenom, teamtailor: fetchTeamtailor, eightfold: fetchEightfold, amazonjobs: fetchAmazonJobs, ashby: fetchAshby, zenimax: fetchZenimax, bamboohr: fetchBambooHr, jobscore: fetchJobScore, jazzhr: fetchJazzHr, jobvite: fetchJobvite, recruitee: fetchRecruitee, breezy: fetchBreezy, manatal: fetchManatal, sumodigital: fetchSumoDigital };
+// ---- Pinpoint (pinpointhq.com) ----------------------------------------------
+// Public, no-auth JSON feed: GET https://<token>.pinpointhq.com/postings.json
+// → { data: [ { id, title, url, employment_type, workplace_type, compensation_*,
+//   job:{ department:{ name } }, location:{ city, province, name } } ] }.
+// No posted date is provided, so first-seen tracking (seen.json) handles freshness.
+async function fetchPinpoint(studio) {
+  let rows = [];
+  if (SAMPLE_FILE) {
+    const data = loadSample(studio);
+    if (!data) return [];
+    rows = data.data || data.jobs || [];
+  } else {
+    const data = await fetchJson(`https://${studio.token}.pinpointhq.com/postings.json`);
+    rows = (data && data.data) || [];
+  }
+  return rows.map(p => {
+    const loc = p.location || {};
+    const location = loc.city
+      ? (loc.province && loc.province !== loc.city ? `${loc.city}, ${loc.province}` : loc.city)
+      : (loc.name || "Unlisted");
+    const dept = (p.department && p.department.name)
+      || (p.job && p.job.department && p.job.department.name) || "";
+    const wt = String(p.workplace_type || "").toLowerCase();
+    const workType = wt.includes("remote") ? "Remote" : wt.includes("hybrid") ? "Hybrid"
+      : wt ? "Onsite" : inferWorkType(p.title || "", location, []);
+    let salary = null;
+    if (p.compensation_visible) {
+      if (p.compensation_currency === "USD" && p.compensation_frequency === "year"
+          && p.compensation_minimum && p.compensation_maximum)
+        salary = `$${Math.round(p.compensation_minimum/1000)}K–$${Math.round(p.compensation_maximum/1000)}K`;
+      else if (p.compensation) salary = p.compensation;
+    }
+    return {
+      id: `pp-${studio.token}-${p.id}`,
+      title: p.title,
+      studio: studio.name,
+      discipline: mapDiscipline(dept, p.title || ""),
+      workType,
+      location,
+      region: inferRegion(location),
+      seniority: inferSeniority(p.title || ""),
+      salary,
+      yoe: null,
+      postedAt: null,
+      url: p.url || (p.path ? `https://${studio.token}.pinpointhq.com${p.path}` : ""),
+    };
+  });
+}
+
+const FETCHERS = { greenhouse: fetchGreenhouse, lever: fetchLever, workday: fetchWorkday, avature: fetchAvature, smartrecruiters: fetchSmartRecruiters, workable: fetchWorkable, phenom: fetchPhenom, teamtailor: fetchTeamtailor, eightfold: fetchEightfold, amazonjobs: fetchAmazonJobs, ashby: fetchAshby, zenimax: fetchZenimax, bamboohr: fetchBambooHr, jobscore: fetchJobScore, jazzhr: fetchJazzHr, jobvite: fetchJobvite, recruitee: fetchRecruitee, breezy: fetchBreezy, manatal: fetchManatal, sumodigital: fetchSumoDigital, pinpoint: fetchPinpoint };
 
 // ---- Ghost-job tracking -----------------------------------------------------
 // Because we scrape on a schedule, we can see how long a listing has REALLY been
