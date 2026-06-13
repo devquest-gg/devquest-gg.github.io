@@ -734,6 +734,87 @@ for (const j of RAW) {
 const JOBS = Object.values(byKey);
 JOBS.forEach(j => { j.locs = j.places.map(p=>p.l); }); // keep .locs for search/map
 const JOB_BY_ID = {}; JOBS.forEach(j => { JOB_BY_ID[j.id] = j; });
+
+// ---- On-device interest profile ("hot for you") -------------------------------
+// A privacy-friendly affinity profile, built entirely from local signals and never
+// sent anywhere: saved/tracked jobs + followed studios (strong), matrix-cell and
+// job-posting clicks banked over time, minus dismissed (negative). Powers the
+// "🔥 Hot jobs for you" group on the List view and reorders the Trends hero.
+const AFF_KEY = "dq-affinity";   // banked click-stream signals (matrix + job clicks)
+const HOT_MIN_SIGNAL = 4;        // returning-visitor threshold before we personalize
+let hotOpen = true;              // "Hot jobs for you" group expand state (session)
+function affLoad(){ try { return store.get(AFF_KEY, {}) || {}; } catch(e){ return {}; } }
+function affBump(bucket, key, w){
+  if (!key || !w) return;
+  try {
+    const a = affLoad(); const b = a[bucket] = a[bucket] || {};
+    b[key] = Math.min(60, (b[key]||0) + w);   // cap so one dimension can't run away
+    a.ts = Date.now(); store.set(AFF_KEY, a);
+  } catch(e){}
+}
+// record an opened/clicked job's attributes; weight w scales the signal
+function affRecordJob(j, w){
+  if (!j) return; w = w || 1;
+  affBump("disc", j.d, w); affBump("studio", j.s, w); affBump("sen", j.sen, w*0.7);
+  (j.tech||[]).slice(0,6).forEach(t=>affBump("tech", t, w*0.5));
+  (j.regions||[]).forEach(r=>affBump("region", r, w*0.4));
+}
+function affRecordCell(disc, sen){ affBump("disc", disc, 1); affBump("sen", sen, 0.8); }
+// Merge banked clicks with the live saved/followed/tracked/dismissed sets into one
+// weighted profile. saved/tracked/follows are authoritative (read live every build);
+// only the ephemeral click-stream is persisted in AFF_KEY.
+function buildProfile(){
+  const a = affLoad();
+  const P = { disc:{}, studio:{}, sen:{}, tech:{}, region:{}, negStudio:{}, negDisc:{}, signal:0 };
+  const add = (buk,k,w) => { if(!k) return; P[buk][k] = (P[buk][k]||0) + w; };
+  const addJob = (j,w) => { add("disc",j.d,w); add("studio",j.s,w); add("sen",j.sen,w*0.7);
+    (j.tech||[]).slice(0,6).forEach(t=>add("tech",t,w*0.5)); (j.regions||[]).forEach(r=>add("region",r,w*0.4)); };
+  for (const buk of ["disc","studio","sen","tech","region"])
+    if (a[buk]) for (const k in a[buk]){ add(buk,k,a[buk][k]); if(buk==="disc"||buk==="studio") P.signal += a[buk][k]; }
+  try { saved.forEach(id => { const j=JOB_BY_ID[id]; if(j){ addJob(j,4); P.signal+=2; } }); } catch(e){}
+  try { Object.keys(appStatus).forEach(id => { const j=JOB_BY_ID[id]; if(j){ addJob(j,3); P.signal+=2; } }); } catch(e){}
+  try { FOLLOWS.forEach(s => { add("studio", s, 5); P.signal+=2; }); } catch(e){}
+  try { dismissed.forEach(id => { const j=JOB_BY_ID[id]; if(j){ P.negStudio[j.s]=(P.negStudio[j.s]||0)+1; P.negDisc[j.d]=(P.negDisc[j.d]||0)+0.5; } }); } catch(e){}
+  return P;
+}
+// Rank a pool of jobs by match to the profile. Skips already-acted-on jobs (saved /
+// tracked / dismissed) so "hot" is always fresh suggestions. Returns top n job objects.
+function hotJobs(pool, P, n){
+  if (!P || P.signal < HOT_MIN_SIGNAL) return [];
+  const mx = buk => Math.max(1, ...Object.values(P[buk]||{}));
+  const mD=mx("disc"), mS=mx("studio"), mSn=mx("sen"), mT=mx("tech"), mR=mx("region");
+  const W = { disc:3, studio:3.5, sen:1.2, tech:2, region:1 };
+  const out = [];
+  for (const j of pool){
+    if (saved.has(j.id) || appStatus[j.id] || dismissed.has(j.id)) continue;
+    let s = W.disc*((P.disc[j.d]||0)/mD) + W.studio*((P.studio[j.s]||0)/mS) + W.sen*((P.sen[j.sen]||0)/mSn);
+    if (j.tech && j.tech.length){ let tb=0; for(const t of j.tech){ const v=(P.tech[t]||0)/mT; if(v>tb)tb=v; } s += W.tech*tb; }
+    if (j.regions && j.regions.length){ let rb=0; for(const r of j.regions){ const v=(P.region[r]||0)/mR; if(v>rb)rb=v; } s += W.region*rb; }
+    if (P.negStudio[j.s]) s -= 2.5;
+    if (P.negDisc[j.d])   s -= 0.8;
+    if (s > 0) out.push({ j, s });
+  }
+  out.sort((a,b)=> b.s - a.s || (b.j.ts||0) - (a.j.ts||0));
+  return out.slice(0, n).map(x=>x.j);
+}
+function hotWhy(P){
+  const top = buk => { let bk=null,bv=0; for(const k in P[buk]) if(P[buk][k]>bv){ bv=P[buk][k]; bk=k; } return bk; };
+  const bits = [top("disc"), top("studio")].filter(Boolean);
+  return bits.length ? "based on your interest in " + bits.join(" · ") : "";
+}
+function renderHotSection(hot, P){
+  const why = hotWhy(P);
+  return `<div class="group" style="border:1px solid rgba(255,138,61,.35);border-radius:12px;background:linear-gradient(180deg,rgba(255,138,61,.07),transparent);margin-bottom:14px">
+      <div class="group-header" onclick="toggleHot()" style="cursor:pointer">
+        <span class="arrow ${hotOpen?'open':''}">▸</span>
+        <span style="color:#ff8a3d;font-weight:800;letter-spacing:.2px">🔥 Hot jobs for you</span>
+        <span class="gcount">${hot.length}</span>
+        ${why?`<span style="color:var(--muted);font-weight:400;font-size:12px;margin-left:8px">${why}</span>`:""}
+      </div>
+      ${hotOpen ? hot.map(rowHtml).join("") : ""}
+    </div>`;
+}
+function toggleHot(){ hotOpen = !hotOpen; render(); }
 // apply-intent telemetry: clicking a job (or a location chip) sends an apply_click carrying the
 // job's studio, discipline, seniority, posting-age bucket and whether it lists salary — so the
 // owner dashboard can break apply intent down by studio / discipline / freshness. Cookieless.
@@ -743,6 +824,7 @@ const _applyProps = j => ({ st: j.s, d: j.d, sn: j.sen||'', age: _ageBucket(j), 
 function openApply(id, url){
   var j = JOB_BY_ID[id];
   try { window.dqTrack && window.dqTrack('apply_click', j ? _applyProps(j) : {}); } catch(e){}
+  try { if (j) affRecordJob(j, 1.5); } catch(e){}   // bank as an interest signal for "hot for you"
   if (url) window.open(url, '_blank');
   try { if (j) showApplyNudge(j.s, j.d); } catch(e){}
 }
@@ -1279,7 +1361,23 @@ function render(){
     : (list.length + " roles shown (" + JOBS.length + " total)" + cellNote +
        (newCount ? " · " + newCount + " new since your last visit" : ""));
 
-  document.getElementById("jobs").innerHTML = list.length ? GROUPS.map((dn,gi)=>{
+  // "🔥 Hot jobs for you": a personalized highlight atop the *default* browse state, for returning
+  // visitors with enough on-device signal. Any active filter / search / selection hides it so the
+  // normal grouped results take over (and first-timers always get the standard default view).
+  let hotHtml = "";
+  try {
+    const defaultBrowse = view === "list" && !showDismissed && !savedOnly && !quickNew && !quickRemote
+      && !q && !qExc.length && !selCells.size && !selStudios.size && !selSubs.size && !selCountries.size
+      && !selKinds.size && !selHubs.size && !selRegionsQuick.size && !d.length && !w.length && !s.length
+      && !r && !maxDays;
+    if (defaultBrowse && list.length) {
+      const P = buildProfile();
+      const hot = hotJobs(list, P, 12);
+      if (hot.length >= 4) hotHtml = renderHotSection(hot, P);
+    }
+  } catch(e){}
+
+  document.getElementById("jobs").innerHTML = list.length ? hotHtml + GROUPS.map((dn,gi)=>{
     const jobs = groups[dn];
     const open = !collapsed.has(dn);
     const n = shown[dn] || SHOW_STEP;
@@ -1416,7 +1514,7 @@ function renderHubbar(availHubs){
     keys.map(h=>`<button class="qchip hub ${selHubs.has(h)?'on':''}" onclick="toggleHub('${h.replace(/'/g,"\\'")}')">${h} <span class="subn">${availHubs[h]}</span></button>`).join("");
 }
 
-function toggleCell(dn, sn){ const k = dn+"|"+sn; selCells.has(k) ? selCells.delete(k) : selCells.add(k); try{ window.dqTrack && window.dqTrack("grid_cell", { d: dn, s: sn }); }catch(e){} render(); }
+function toggleCell(dn, sn){ const k = dn+"|"+sn; const adding = !selCells.has(k); adding ? selCells.add(k) : selCells.delete(k); try{ window.dqTrack && window.dqTrack("grid_cell", { d: dn, s: sn }); }catch(e){} if (adding) try{ affRecordCell(dn, sn); }catch(e){} render(); }
 function toggleSub(s){ selSubs.has(s) ? selSubs.delete(s) : selSubs.add(s); render(); }
 function toggleHub(h){ selHubs.has(h) ? selHubs.delete(h) : selHubs.add(h); render(); }
 function toggleQuickRemote(){ quickRemote = !quickRemote; render(); }
@@ -2202,6 +2300,23 @@ function renderStats(){
     ["Salary by seniority", heroSlide(heroSalRows, "Not enough roles list pay in this view.")],
     ["What's moving this week", heroSlide(momRows, "Momentum builds as we track studios over the coming days.")],
   ];
+  // Personalize the hero for returning visitors: lead with the slide matching their strongest
+  // on-device interest (discipline / skills / seniority / studio momentum). First-timers and
+  // anyone below the signal threshold keep the default rotation order.
+  try {
+    const P = buildProfile();
+    if (P.signal >= HOT_MIN_SIGNAL) {
+      const sum = b => Object.values(P[b]||{}).reduce((x,v)=>x+v,0);
+      // heroData index -> profile dimension it reflects
+      const dims = [["disc",0],["tech",1],["sen",2],["studio",3]].sort((a,b)=>sum(b[0])-sum(a[0]));
+      const lead = dims[0][1];
+      if (lead > 0 && sum(dims[0][0]) > 0) {
+        const led = heroData.splice(lead,1)[0];
+        led[0] = "🔥 " + led[0];   // flag the personalized lead slide
+        heroData.unshift(led);
+      }
+    }
+  } catch(e){}
   window.__heroTitles = heroData.map(s=>s[0]);
   const heroDots = heroData.map((s,i)=>`<button type="button" class="herodot${i?'':' on'}" data-i="${i}" onclick="heroGo(${i})" aria-label="${s[0]}"></button>`).join("");
   const heroCss = `<style>.herowrap{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:14px 16px;margin:0 0 16px}.herohead{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}.herotitle{font-size:16px;font-weight:800;color:var(--text)}.heroctrl{display:flex;align-items:center;gap:6px}.herobtn{background:none;border:1px solid var(--border);color:var(--muted);width:28px;height:28px;border-radius:7px;cursor:pointer;font-size:15px;line-height:1;display:inline-flex;align-items:center;justify-content:center}.herobtn:hover{color:var(--text);border-color:var(--muted)}.herodots{display:inline-flex;gap:5px;margin:0 4px}.herodot{width:8px;height:8px;border-radius:50%;border:none;background:var(--border);cursor:pointer;padding:0}.herodot.on{background:var(--accent)}.heroslides{min-height:292px}.herobar{display:flex;align-items:center;gap:10px;margin:7px 0;font-size:14px}.herobar .hblabel{width:150px;flex-shrink:0;color:var(--muted);text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.herobar .hbtrack{flex:1;min-width:0;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:999px;height:18px;overflow:hidden}.herobar .hbfill{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,#1f6feb,#58a6ff);min-width:3px}.herobar .hbnum{flex-shrink:0;text-align:right;font-weight:600;color:var(--text);white-space:nowrap}.herobar.clickable{cursor:pointer;border-radius:6px}.herobar.clickable:hover .hbfill{filter:brightness(1.15)}.herobar.clickable:hover .hblabel{color:var(--text)}.heroempty{color:var(--muted);font-size:14px;padding:48px 0;text-align:center}.herohint{color:var(--muted);font-size:12px;margin-top:10px;text-align:center}</style>`;
