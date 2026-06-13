@@ -812,9 +812,12 @@ function hotJobs(pool, P, n){
       && (ageOf(j) == null || ageOf(j) <= HOT_MAX_DAYS));
   const newer    = j => { const a = ageOf(j); return a != null && a <= HOT_NEW_DAYS; };
   const inRegion = j => regionSet.size && (j.regions||[]).some(r => regionSet.has(r));
-  const byNew    = (a,b) => (b.ts||b.fseen||0) - (a.ts||a.fseen||0);   // newest first
+  // Location is a soft preference *throughout*: a role in your region (or remote) ranks above an
+  // out-of-region one, then newest first. With no region signal yet, geo is neutral (pure recency).
+  const local    = j => !regionSet.size || j.w === "Remote" || (j.regions||[]).some(r => regionSet.has(r));
+  const cmp      = (a,b) => (local(b)?1:0) - (local(a)?1:0) || (b.ts||b.fseen||0) - (a.ts||a.fseen||0);
   const used = new Set(), out = [];
-  const take = arr => { arr.sort(byNew); for (const j of arr){ if (out.length>=n) break; if (!used.has(j.id)){ used.add(j.id); out.push(j); } } };
+  const take = arr => { arr.sort(cmp); for (const j of arr){ if (out.length>=n) break; if (!used.has(j.id)){ used.add(j.id); out.push(j); } } };
   take(cand.filter(j => studioSet.has(j.s)));   // tier 1: discipline + their companies
   take(cand.filter(inRegion));                  // tier 2: discipline + their region
   take(cand.filter(newer));                     // tier 3: discipline + newly posted, anywhere
