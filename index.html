@@ -2332,13 +2332,20 @@ function renderStats(){
   try {
     const P = buildProfile();
     if (P.signal >= HOT_MIN_SIGNAL) {
-      const myMatches = hotJobs(list, P, 500);                 // matched, not-yet-acted roles in view
-      const byStudio = tally(myMatches, j=>j.s).slice(0,8);
-      if (myMatches.length >= 4 && byStudio.length) {
-        const _fM = Math.max(1, ...byStudio.map(e=>e[1]));
-        const forRows = byStudio.map(([k,n])=>({ label:k, barText:n+" role"+(n===1?"":"s"),
-          pct:Math.max(2,Math.round(n/_fM*100)), act:{type:"studio",val:k} }));
-        heroData.unshift(["🔥 For you — your matched roles", heroSlide(forRows, "")]);
+      const myMatches = hotJobs(list, P, 500);                 // matched, discipline-locked roles in view
+      // "Where your field is hiring": group your matches by studio, surfacing fresh activity first —
+      // total open roles + how many were newly posted (≤14d). Trends-forward, not a static snapshot.
+      const _byS = {};
+      myMatches.forEach(j => { const e = _byS[j.s] || (_byS[j.s] = {n:0,nw:0}); e.n++; const ag=_ageDays(j); if (ag!=null && ag<=HOT_NEW_DAYS) e.nw++; });
+      const _studios = Object.keys(_byS).map(s => ({ s, n:_byS[s].n, nw:_byS[s].nw }))
+        .sort((a,b)=> b.nw - a.nw || b.n - a.n).slice(0,8);
+      if (myMatches.length >= 4 && _studios.length) {
+        const _fM = Math.max(1, ..._studios.map(e=>e.n));
+        const forRows = _studios.map(e => ({ label:e.s,
+          barText: e.nw ? e.n+" roles · "+e.nw+" new" : e.n+" role"+(e.n===1?"":"s"),
+          pct:Math.max(2,Math.round(e.n/_fM*100)), act:{type:"studio",val:e.s} }));
+        const _foDisc = topKeys(P.disc,0.6)[0];
+        heroData.unshift([(_foDisc ? "🔥 For you — where "+_foDisc+" is hiring" : "🔥 For you — your matched roles"), heroSlide(forRows, "")]);
         _heroForYou = true;
       } else {
         // thin matches → fall back to reordering the generic slides so their interest leads
@@ -2351,9 +2358,10 @@ function renderStats(){
   } catch(e){}
   // Per-slide dwell (ms): the dedicated "For you" lead sits twice as long so it can't be missed.
   _heroDur = heroData.map((s,i)=> (_heroForYou && i===0) ? 12000 : 6000);
+  window.__heroForYouIdx = _heroForYou ? 0 : -1;   // which slide gets the orange "for you" treatment
   window.__heroTitles = heroData.map(s=>s[0]);
   const heroDots = heroData.map((s,i)=>`<button type="button" class="herodot${i?'':' on'}" data-i="${i}" onclick="heroGo(${i})" aria-label="${s[0]}"></button>`).join("");
-  const heroCss = `<style>.herowrap{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:14px 16px;margin:0 0 16px}.herohead{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}.herotitle{font-size:16px;font-weight:800;color:var(--text)}.heroctrl{display:flex;align-items:center;gap:6px}.herobtn{background:none;border:1px solid var(--border);color:var(--muted);width:28px;height:28px;border-radius:7px;cursor:pointer;font-size:15px;line-height:1;display:inline-flex;align-items:center;justify-content:center}.herobtn:hover{color:var(--text);border-color:var(--muted)}.herodots{display:inline-flex;gap:5px;margin:0 4px}.herodot{width:8px;height:8px;border-radius:50%;border:none;background:var(--border);cursor:pointer;padding:0}.herodot.on{background:var(--accent)}.heroslides{min-height:292px}.herobar{display:flex;align-items:center;gap:10px;margin:7px 0;font-size:14px}.herobar .hblabel{width:150px;flex-shrink:0;color:var(--muted);text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.herobar .hbtrack{flex:1;min-width:0;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:999px;height:18px;overflow:hidden}.herobar .hbfill{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,#1f6feb,#58a6ff);min-width:3px}.herobar .hbnum{flex-shrink:0;text-align:right;font-weight:600;color:var(--text);white-space:nowrap}.herobar.clickable{cursor:pointer;border-radius:6px}.herobar.clickable:hover .hbfill{filter:brightness(1.15)}.herobar.clickable:hover .hblabel{color:var(--text)}.heroempty{color:var(--muted);font-size:14px;padding:48px 0;text-align:center}.herohint{color:var(--muted);font-size:12px;margin-top:10px;text-align:center}</style>`;
+  const heroCss = `<style>.herowrap{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:14px 16px;margin:0 0 16px}.herohead{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}.herotitle{font-size:16px;font-weight:800;color:var(--text)}.heroctrl{display:flex;align-items:center;gap:6px}.herobtn{background:none;border:1px solid var(--border);color:var(--muted);width:28px;height:28px;border-radius:7px;cursor:pointer;font-size:15px;line-height:1;display:inline-flex;align-items:center;justify-content:center}.herobtn:hover{color:var(--text);border-color:var(--muted)}.herodots{display:inline-flex;gap:5px;margin:0 4px}.herodot{width:8px;height:8px;border-radius:50%;border:none;background:var(--border);cursor:pointer;padding:0}.herodot.on{background:var(--accent)}.heroslides{min-height:292px}.herobar{display:flex;align-items:center;gap:10px;margin:7px 0;font-size:14px}.herobar .hblabel{width:150px;flex-shrink:0;color:var(--muted);text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.herobar .hbtrack{flex:1;min-width:0;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:999px;height:18px;overflow:hidden}.herobar .hbfill{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,#1f6feb,#58a6ff);min-width:3px}.herobar .hbnum{flex-shrink:0;text-align:right;font-weight:600;color:var(--text);white-space:nowrap}.herobar.clickable{cursor:pointer;border-radius:6px}.herobar.clickable:hover .hbfill{filter:brightness(1.15)}.herobar.clickable:hover .hblabel{color:var(--text)}.heroempty{color:var(--muted);font-size:14px;padding:48px 0;text-align:center}.herohint{color:var(--muted);font-size:12px;margin-top:10px;text-align:center}.herowrap.foryou{border-color:rgba(255,138,61,.45);background:linear-gradient(180deg,rgba(255,138,61,.08),var(--panel))}.herowrap.foryou .herotitle{color:#ff8a3d}.herowrap.foryou .herodot.on{background:#ff8a3d}.herowrap.foryou .hbfill{background:linear-gradient(90deg,#e8722e,#ff8a3d)}</style>`;
   const heroHtml = `<div class="herowrap" id="heroWrap"><div class="herohead"><span class="herotitle" id="heroTitle">${heroData[0][0]}</span>`
     + `<span class="heroctrl"><button type="button" class="herobtn" onclick="heroStep(-1)" aria-label="Previous">‹</button>`
     + `<span class="herodots">${heroDots}</span>`
@@ -2417,6 +2425,7 @@ function heroGo(i){
   slides.forEach(function(s){ s.hidden = (+s.getAttribute("data-i") !== _heroI); });
   wrap.querySelectorAll(".herodot").forEach(function(d){ d.classList.toggle("on", +d.getAttribute("data-i") === _heroI); });
   var t = document.getElementById("heroTitle"); if (t && window.__heroTitles) t.textContent = window.__heroTitles[_heroI] || "";
+  try { wrap.classList.toggle("foryou", _heroI === (window.__heroForYouIdx == null ? -1 : window.__heroForYouIdx)); } catch(e){}
   if (_heroPlaying) heroTimerStart();   // (re)arm with the dwell of the slide we just landed on
 }
 function heroStep(d){ heroGo(_heroI + d); heroPause(); }
