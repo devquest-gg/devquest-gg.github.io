@@ -1953,6 +1953,20 @@ function renderStats(){
       if (h<24) buckets[0][1]++; else if (h<168) buckets[1][1]++;
       else if (h<720) buckets[2][1]++; else buckets[3][1]++; }
   }
+  // years of experience asked (only roles that state a minimum, e.g. "5+ years")
+  const yoeBkt = { "1-2": 0, "3-5": 0, "6-9": 0, "10+": 0 };
+  let yoeN = 0, yoeSum = 0;
+  for (const j of list) { const y = j.yoe; if (typeof y === "number" && y > 0) { yoeN++; yoeSum += y; const k = y <= 2 ? "1-2" : y <= 5 ? "3-5" : y <= 9 ? "6-9" : "10+"; yoeBkt[k]++; } }
+  const yoeAvg = yoeN ? (yoeSum / yoeN).toFixed(1) : null;
+  const yoeEntries = Object.entries(yoeBkt).filter(([,c]) => c > 0);
+  const yoeMax = Math.max(1, ...yoeEntries.map(e => e[1]));
+  const yoeCard = `<div class="statcard"><h3>Experience asked${yoeAvg ? ` — ~${yoeAvg} yrs avg` : ""} (${yoeN} role${yoeN === 1 ? "" : "s"} state it)</h3>`
+    + (yoeEntries.length ? yoeEntries.map(([k,n]) =>
+        `<div class="barrow"><span class="blabel">${k} yrs</span>
+         <span class="btrack"><span class="bfill" style="width:${Math.round(100*n/yoeMax)}%"></span></span>
+         <span class="bnum">${n}</span></div>`).join("")
+      : `<div class="hmuted" style="color:var(--muted);font-size:13px">No roles state required experience in this selection.</div>`)
+    + `<div class="xhint">Counts only roles that explicitly state a minimum (e.g. "5+ years") — many don't.</div></div>`;
   // salary ranges by discipline (jobs with parsed salary)
   const sal = {};
   for (const j of list) {
@@ -1972,6 +1986,51 @@ function renderStats(){
        <span class="salrange"><span class="salbar" style="left:${Math.round(100*r.lo/salMax)}%; width:${Math.max(2,Math.round(100*(r.hi-r.lo)/salMax))}%"></span></span>
        <span class="bnum" style="width:110px">$${r.lo}K–$${r.hi}K</span></div>`).join("")
     : `<div class="hmuted" style="color:var(--muted);font-size:13px">No salary data in the current selection.</div>`) + `</div>`;
+
+  // salary ranges by seniority (same parse as by-discipline; ordered Entry → Director+)
+  const salS = {};
+  for (const j of list) {
+    const m = j.salary && j.salary.match(/\$(\d+)K–\$(\d+)K/);
+    if (!m) continue;
+    (salS[j.sen] = salS[j.sen] || []).push([+m[1], +m[2]]);
+  }
+  const SEN_ORD = ["Entry","Mid","Senior","Lead","Director+"];
+  const senIdx = s => { const i = SEN_ORD.indexOf(s); return i < 0 ? 99 : i; };
+  const salSRows = Object.entries(salS).filter(([,v])=>v.length>=2)
+    .map(([s,v])=>({ s, n: v.length,
+      lo: Math.round(v.reduce((a,x)=>a+x[0],0)/v.length),
+      hi: Math.round(v.reduce((a,x)=>a+x[1],0)/v.length) }))
+    .sort((a,b)=> senIdx(a.s)-senIdx(b.s));
+  const salSMax = Math.max(100, ...salSRows.map(r=>r.hi));
+  const salSenCard = `<div class="statcard"><h3>Avg salary range by seniority (${salSRows.reduce((s,r)=>s+r.n,0)} postings with pay data)</h3>`
+    + (salSRows.length ? salSRows.map(r =>
+      `<div class="barrow"><span class="blabel">${r.s} (${r.n})</span>
+       <span class="salrange"><span class="salbar" style="left:${Math.round(100*r.lo/salSMax)}%; width:${Math.max(2,Math.round(100*(r.hi-r.lo)/salSMax))}%"></span></span>
+       <span class="bnum" style="width:110px">$${r.lo}K–$${r.hi}K</span></div>`).join("")
+    : `<div class="hmuted" style="color:var(--muted);font-size:13px">No salary data in the current selection.</div>`) + `</div>`;
+
+  // salary ranges by region (same parse; ordered by top of range). Note: pay-listed roles skew
+  // heavily to North America (US pay-transparency laws), so other regions can be small samples.
+  const salRg = {};
+  for (const j of list) {
+    const m = j.salary && j.salary.match(/\$(\d+)K–\$(\d+)K/);
+    if (!m) continue;
+    const reg = j.r || "Other";
+    (salRg[reg] = salRg[reg] || []).push([+m[1], +m[2]]);
+  }
+  const salRgRows = Object.entries(salRg).filter(([,v])=>v.length>=2)
+    .map(([reg,v])=>({ reg, n: v.length,
+      lo: Math.round(v.reduce((a,x)=>a+x[0],0)/v.length),
+      hi: Math.round(v.reduce((a,x)=>a+x[1],0)/v.length) }))
+    .sort((a,b)=> b.hi-a.hi);
+  const salRgMax = Math.max(100, ...salRgRows.map(r=>r.hi));
+  const salRegCard = `<div class="statcard"><h3>Avg salary range by region (${salRgRows.reduce((s,r)=>s+r.n,0)} postings with pay data)</h3>`
+    + (salRgRows.length ? salRgRows.map(r =>
+      `<div class="barrow"><span class="blabel">${r.reg} (${r.n})</span>
+       <span class="salrange"><span class="salbar" style="left:${Math.round(100*r.lo/salRgMax)}%; width:${Math.max(2,Math.round(100*(r.hi-r.lo)/salRgMax))}%"></span></span>
+       <span class="bnum" style="width:110px">$${r.lo}K–$${r.hi}K</span></div>`).join("")
+    : `<div class="hmuted" style="color:var(--muted);font-size:13px">No salary data in the current selection.</div>`)
+    + `<div class="xhint">Most pay-listed roles are in North America (US pay-transparency laws), so other regions may show smaller samples.</div></div>`;
 
   // --- Salary transparency leaderboard: share of each studio's CURRENT listings that publish pay.
   // Eligibility floor (15+ listings) so tiny samples can't game it, ranked by the Wilson lower bound
@@ -2066,6 +2125,22 @@ function renderStats(){
     + (ghRepCount ? `<div class="xhint">${ghRepCount} listing${ghRepCount===1?"":"s"} in this view ${ghRepCount===1?"has":"have"} had the posted date refreshed at least once (↻).</div>` : "")
     + `</div>`;
 
+  // Listing freshness summary — board churn / ghost-job signal from current listings (pools excluded).
+  const _fresh = list.filter(j => !j.pool);
+  const _medianOf = a => { if (!a.length) return null; const s = [...a].sort((x,y)=>x-y); const m = Math.floor(s.length/2); return s.length%2 ? s[m] : Math.round((s[m-1]+s[m])/2); };
+  const _medAge = _medianOf(_fresh.map(daysListed).filter(d => d != null));
+  const _relistedN = _fresh.filter(j => (j.relistCount||0) > 0).length;
+  const _relistPct = _fresh.length ? Math.round(100*_relistedN/_fresh.length) : 0;
+  const _over30 = _fresh.filter(j => (daysListed(j)||0) >= 30).length;
+  const _over60 = _fresh.filter(j => (daysListed(j)||0) >= 60).length;
+  const freshCard = `<div class="statcard"><h3>Listing freshness</h3>`
+    + `<div style="font-size:14px;color:var(--text);line-height:2">`
+    + `Median time open: <b>${_medAge==null?"—":_medAge+" day"+(_medAge===1?"":"s")}</b><br>`
+    + `Refreshed at least once (↻): <b>${_relistPct}%</b> <span style="color:var(--muted)">(${_relistedN} of ${_fresh.length})</span><br>`
+    + `Open 30+ days: <b>${_over30}</b> · 60+ days: <b>${_over60}</b>`
+    + `</div>`
+    + `<div class="xhint">"Refreshed" = the posted date jumped while we kept seeing the role — a re-listing signal. A long-open role may be hard to fill, not fake — facts, not accusations.</div></div>`;
+
   const mp = marketPulse();
   // Salary-transparency trend: % listing pay now vs ~30d ago (from trends.json salary history).
   const _st = (window.JOBS_DATA && window.JOBS_DATA.trends && window.JOBS_DATA.trends.salary) || null;
@@ -2110,9 +2185,10 @@ function renderStats(){
     + barChart("Roles by country", tallyMulti(list, j=>j.countries), 14)
     + barChart("Roles by gaming hub", tallyMulti(list, j=>j.hubs), 14)
     + barChart("Roles by seniority", tally(list, j=>j.sen))
+    + yoeCard
     + barChart("Posting age", buckets.filter(b=>b[1]>0))
-    + salCard + transparencyCard
-    + ghStudioCard + ghListCard
+    + salCard + salSenCard + salRegCard + transparencyCard
+    + freshCard + ghStudioCard + ghListCard
     + hiringCard + remoteCard
     + `</div>`;
   try { window.dqDigestForm && window.dqDigestForm("digestSignup"); } catch(e){}
