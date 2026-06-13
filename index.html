@@ -2354,7 +2354,7 @@ function renderStats(){
         // (2) Salary by discipline — your discipline highlighted, the rest dimmed for context
         if (salRows.length){
           const _sdM = Math.max(100, ...salRows.map(r=>r.hi));
-          custom.push(["🔥 For you — salary by discipline", heroSlide(salRows.map(r=>({ label:r.d+(discLock.has(r.d)?" — you":""),
+          custom.push(["🔥 For you — salary by discipline", heroSlide(salRows.map(r=>({ label:r.d,
             barText:"$"+r.lo+"–$"+r.hi+"K", pct:Math.max(2,Math.round(r.hi/_sdM*100)),
             hi:discLock.has(r.d), dim:!discLock.has(r.d), act:{type:"disc",val:r.d} })), "")]);
         }
