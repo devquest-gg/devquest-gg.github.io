@@ -95,10 +95,8 @@ const DIRECTORY = [
   { name: "Moon Studios", url: "https://www.moongamestudios.com/", note: "Ori, No Rest for the Wicked — fully remote (apply via jobs@)", city: "Vienna, Austria" },
   { name: "Iron Gate Studio", url: "https://irongate.se/", note: "Valheim — small Swedish studio", city: "Skövde, Sweden" },
   { name: "Devolver Digital", url: "https://www.devolverdigital.com/jobs", note: "Indie publisher (Cult of the Lamb, Cuphead) — custom board", city: "Austin, TX" },
-  { name: "tinyBuild", url: "https://www.tinybuild.com/jobs", note: "Hello Neighbor — global; careers-page.com board", city: "Bellevue, WA" },
   { name: "Klei Entertainment", url: "https://www.klei.com/careers", note: "Don't Starve, Oxygen Not Included — custom site (Vancouver)", city: "Vancouver, BC" },
   { name: "Thunderful Games", url: "https://career.thunderfulgames.com/", note: "SteamWorld — HaileyHR board (Sweden)", city: "Gothenburg, Sweden" },
-  { name: "Hi-Rez Studios", url: "https://hirezstudios.applytojob.com/", note: "SMITE, Paladins — JazzHR board (Atlanta)", city: "Alpharetta, GA" },
 ];
 
 // ---- "The Moon": smaller / indie studios, often ones who reached out to be listed.
@@ -370,6 +368,9 @@ const STUDIOS = [
   { name: "10 Chambers", type: "teamtailor", token: "10chambers", host: "careers.10chambers.com" },    // GTFO, Den of Wolves (Stockholm)
   { name: "Build A Rocket Boy", type: "pinpoint", token: "buildarocketboy" },       // MindsEye (Edinburgh) — new Pinpoint fetcher
   { name: "Pipeworks Studios", type: "pinpoint", token: "pipeworks" },              // co-dev/porting (Eugene, OR) — new Pinpoint fetcher
+  // ---- Promoted from the Island 2026-06-13 (big-studio dig) — already-supported ATS ----
+  { name: "tinyBuild", type: "manatal", token: "tinybuild" },                       // Hello Neighbor — careers-page.com/Manatal (verified 6 roles)
+  { name: "Hi-Rez Studios", type: "jazzhr", token: "hirezstudios" },               // SMITE, Paladins — JazzHR
 ];
 
 // ---- Studio type tags (Michelle's idea) ------------------------------------
