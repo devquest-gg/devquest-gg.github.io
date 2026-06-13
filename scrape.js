@@ -82,6 +82,27 @@ const DIRECTORY = [
   // From the Grackle HQ comparison (2026-06-11): notable studios on custom careers sites.
   { name: "FromSoftware", url: "https://careers.fromsoftware.jp/en/openpositions.html", note: "Elden Ring, Dark Souls — custom JP recruiting site", city: "Tokyo, Japan" },
   { name: "Robot Entertainment", url: "https://robotentertainment.com/careers", note: "Orcs Must Die! — fully remote (US Central)", city: "Plano, TX" },
+  // batch 6 (2026-06-13): Hitmarker gap analysis — notable independents + JP/KR studios on
+  // boutique/custom ATS (Teamtailor, Pinpoint, JazzHR, regional). Link-outs for now; several
+  // cluster onto the same ATS, so a single Teamtailor or Pinpoint fetcher could promote a batch.
+  { name: "Konami", url: "https://www.konami.com/games/us/en/jobs/", note: "Metal Gear, Silent Hill, Castlevania — Konami Digital Entertainment (US board)", city: "Tokyo, Japan" },
+  { name: "PlatinumGames", url: "https://www.platinumgames.com/recruit/mid-career/", note: "Bayonetta, NieR: Automata — custom JP recruiting site", city: "Osaka, Japan" },
+  { name: "Level-5", url: "https://www.level5.co.jp/", note: "Professor Layton, Ni no Kuni — Japanese-language site", city: "Fukuoka, Japan" },
+  { name: "Koei Tecmo", url: "https://www.koeitecmo.com.sg/index.php/careers/", note: "Dynasty Warriors, Nioh, Atelier — JP studio (Singapore EN board)", city: "Yokohama, Japan" },
+  { name: "Pearl Abyss", url: "https://www.pearlabyss.com/en-US/Company/Careers/List", note: "Black Desert, Crimson Desert — Korea (EN board)", city: "Anyang, South Korea" },
+  { name: "Smilegate", url: "https://careers.smilegate.com/en/", note: "Lost Ark, CrossFire — Korea (EN board)", city: "Seongnam, South Korea" },
+  { name: "Shift Up", url: "https://shiftup.co.kr/recruit/", note: "Stellar Blade — Korea, custom site (also makes NIKKE, a gacha title)", city: "Seoul, South Korea" },
+  { name: "Supergiant Games", url: "https://www.supergiantgames.com/jobs/", note: "Hades — small SF studio (apply by email)", city: "San Francisco, CA" },
+  { name: "Hazelight Studios", url: "https://careers.hazelight.se/", note: "It Takes Two, Split Fiction — Teamtailor board (Sweden)", city: "Stockholm, Sweden" },
+  { name: "Moon Studios", url: "https://www.moongamestudios.com/", note: "Ori, No Rest for the Wicked — fully remote (apply via jobs@)", city: "Vienna, Austria" },
+  { name: "Iron Gate Studio", url: "https://irongate.se/", note: "Valheim — small Swedish studio", city: "Skövde, Sweden" },
+  { name: "10 Chambers", url: "https://careers.10chambers.com/", note: "GTFO, Den of Wolves — Teamtailor board (Sweden)", city: "Stockholm, Sweden" },
+  { name: "Devolver Digital", url: "https://www.devolverdigital.com/jobs", note: "Indie publisher (Cult of the Lamb, Cuphead) — custom board", city: "Austin, TX" },
+  { name: "tinyBuild", url: "https://www.tinybuild.com/jobs", note: "Hello Neighbor — global; careers-page.com board", city: "Bellevue, WA" },
+  { name: "Klei Entertainment", url: "https://www.klei.com/careers", note: "Don't Starve, Oxygen Not Included — custom site (Vancouver)", city: "Vancouver, BC" },
+  { name: "Thunderful Games", url: "https://career.thunderfulgames.com/", note: "SteamWorld — HaileyHR board (Sweden)", city: "Gothenburg, Sweden" },
+  { name: "Hi-Rez Studios", url: "https://hirezstudios.applytojob.com/", note: "SMITE, Paladins — JazzHR board (Atlanta)", city: "Alpharetta, GA" },
+  { name: "Build A Rocket Boy", url: "https://buildarocketboy.pinpointhq.com/", note: "MindsEye — Pinpoint board (Edinburgh)", city: "Edinburgh, UK" },
 ];
 
 // ---- "The Moon": smaller / indie studios, often ones who reached out to be listed.
