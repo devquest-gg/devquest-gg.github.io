@@ -2067,6 +2067,20 @@ function renderStats(){
     + `</div>`;
 
   const mp = marketPulse();
+  // Salary-transparency trend: % listing pay now vs ~30d ago (from trends.json salary history).
+  const _st = (window.JOBS_DATA && window.JOBS_DATA.trends && window.JOBS_DATA.trends.salary) || null;
+  let salTrend = "";
+  if (_st && (_st.d30 != null || _st.d7 != null)) {
+    const base = _st.d30 != null ? _st.d30 : _st.d7;
+    const now = _st.now != null ? _st.now : mp.salPct;
+    const dlt = now - base;
+    const cls = dlt > 0 ? 'p-up' : dlt < 0 ? 'p-down' : 'p-flat';
+    const sp = sparkline(_st.series, 64, 18);
+    salTrend = `<div style="margin-top:5px;display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap">`
+      + `<span class="pdelta ${cls}" style="font-size:12px" title="vs ~30 days ago">${dlt>0?'+':''}${dlt} pts</span>`
+      + (sp ? `<span style="line-height:0">${sp}</span>` : '')
+      + `</div>`;
+  }
   const trendHead = `<div class="trendhead"><h2>Game-dev hiring trends</h2>`
     + `<p class="dirsub">Live across ${mp.studios} studios, refreshed hourly. Every figure here is a real, current opening — no estimated dates, no padding.</p></div>`
     + `<div class="pulsestats">`
@@ -2074,7 +2088,7 @@ function renderStats(){
     + `<div class="ptile"><div class="pnum">${mp.studios}</div><div class="plabelt">studios hiring</div></div>`
     + `<div class="ptile"><div class="pnum">${mp.newWk.toLocaleString()}</div><div class="plabelt">new this week</div></div>`
     + `<div class="ptile"><div class="pnum">${mp.medianAge==null?"—":mp.medianAge}${mp.medianAge==null?"":`<span style="font-size:14px;font-weight:600;color:var(--muted)"> days</span>`}</div><div class="plabelt">median posting age</div></div>`
-    + `<div class="ptile"><div class="pnum">${mp.salPct}%</div><div class="plabelt">list a salary</div></div>`
+    + `<div class="ptile"><div class="pnum">${mp.salPct}%</div><div class="plabelt">list a salary</div>${salTrend}</div>`
     + `<div class="ptile"><div class="pnum">${mp.remotePct}%</div><div class="plabelt">remote</div></div>`
     + `<div class="ptile"><div class="pnum" style="font-size:18px;line-height:1.5">${mp.topStudio}</div><div class="plabelt">most active studio</div></div>`
     + `</div>`;
@@ -2161,10 +2175,10 @@ function buildMomentum(){
 }
 
 // ---- Pulse: hiring momentum from our own listing history ---------------------
-function sparkline(series){
+function sparkline(series, W, H){
   const pts = (series||[]).filter(v=>v!=null);
   if (pts.length < 2) return "";
-  const w=120,h=22, max=Math.max(...pts), min=Math.min(...pts), rng=(max-min)||1, step=w/(pts.length-1);
+  const w=W||120,h=H||22, max=Math.max(...pts), min=Math.min(...pts), rng=(max-min)||1, step=w/(pts.length-1);
   const d = pts.map((v,i)=>`${i?'L':'M'}${(i*step).toFixed(1)},${(h-2-((v-min)/rng)*(h-4)).toFixed(1)}`).join(" ");
   const up = pts[pts.length-1] >= pts[0];
   return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}"><path d="${d}" fill="none" stroke="${up?'var(--green)':'var(--pink)'}" stroke-width="1.5" stroke-linejoin="round"/></svg>`;
