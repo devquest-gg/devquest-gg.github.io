@@ -2150,77 +2150,147 @@ function renderStats(){
     + `<div class="xhint">"Refreshed" = the posted date jumped while we kept seeing the role — a re-listing signal. A long-open role may be hard to fill, not fake — facts, not accusations.</div></div>`;
 
   const mp = marketPulse();
-  // Salary-transparency trend: % listing pay now vs ~30d ago (from trends.json salary history).
-  const _st = (window.JOBS_DATA && window.JOBS_DATA.trends && window.JOBS_DATA.trends.salary) || null;
-  let salTrend = "";
-  if (_st && (_st.d30 != null || _st.d7 != null)) {
-    const base = _st.d30 != null ? _st.d30 : _st.d7;
-    const now = _st.now != null ? _st.now : mp.salPct;
-    const dlt = now - base;
-    const cls = dlt > 0 ? 'p-up' : dlt < 0 ? 'p-down' : 'p-flat';
-    const sp = sparkline(_st.series, 64, 18);
-    salTrend = `<div style="margin-top:5px;display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap">`
-      + `<span class="pdelta ${cls}" style="font-size:12px" title="vs ~30 days ago">${dlt>0?'+':''}${dlt} pts</span>`
-      + (sp ? `<span style="line-height:0">${sp}</span>` : '')
-      + `</div>`;
-  }
-  // One-line takeaway above the dashboard — the few facts most people want at a glance.
-  const _topD = (tally(list, j=>j.d)[0]||[])[0];
-  const _topSk = tallyMulti(list, j=>j.tech).slice(0,2).map(e=>e[0]);
-  const _salDelta = (_st && (_st.d30!=null||_st.d7!=null)) ? (function(){ const b=_st.d30!=null?_st.d30:_st.d7; const d=(_st.now!=null?_st.now:mp.salPct)-b; return d>0?` (up ${d} pts this month)`:d<0?` (down ${-d} pts this month)`:""; })() : "";
-  const _tlParts = [];
-  if (_topD) _tlParts.push(`<b>${_topD}</b> leads demand`);
-  if (_topSk.length) _tlParts.push(`${_topSk.map(s=>`<b>${s}</b>`).join(" & ")} ${_topSk.length>1?"are":"is"} the most-asked skill${_topSk.length>1?"s":""}`);
-  _tlParts.push(`<b>${mp.salPct}%</b> list pay${_salDelta}`);
-  const tldr = `<div style="font-size:15px;line-height:1.6;color:var(--text);margin:0 0 14px;padding:12px 14px;background:var(--panel);border:1px solid var(--border);border-radius:10px"><b style="color:var(--accent)">${mp.open.toLocaleString()}</b> open roles across <b>${mp.studios}</b> studios — ${_tlParts.join(", ")}.</div>`;
-  // small uppercase subhead for grouping the board cards
-  const grp = t => `<div style="font-size:13px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin:22px 0 8px">${t}</div>`;
-  const trendHead = `<div class="trendhead"><h2>Game-dev hiring trends</h2>`
-    + `<p class="dirsub">Live across ${mp.studios} studios, refreshed hourly. Every figure here is a real, current opening — no estimated dates, no padding.</p></div>`
-    + `<div class="pulsestats">`
-    + `<div class="ptile"><div class="pnum">${mp.open.toLocaleString()}</div><div class="plabelt">open roles</div></div>`
-    + `<div class="ptile"><div class="pnum">${mp.studios}</div><div class="plabelt">studios hiring</div></div>`
-    + `<div class="ptile"><div class="pnum">${mp.newWk.toLocaleString()}</div><div class="plabelt">new this week</div></div>`
-    + `<div class="ptile"><div class="pnum">${mp.medianAge==null?"—":mp.medianAge}${mp.medianAge==null?"":`<span style="font-size:14px;font-weight:600;color:var(--muted)"> days</span>`}</div><div class="plabelt">median posting age</div></div>`
-    + `<div class="ptile"><div class="pnum">${mp.salPct}%</div><div class="plabelt">list a salary</div>${salTrend}</div>`
-    + `<div class="ptile"><div class="pnum">${mp.remotePct}%</div><div class="plabelt">remote</div></div>`
-    + `<div class="ptile"><div class="pnum" style="font-size:18px;line-height:1.5">${mp.topStudio}</div><div class="plabelt">most active studio</div></div>`
+  // (Header title/subtitle, TL;DR bar, and the old group subhead were removed — the thin strip
+  //  + hero now lead the Trends view, mirroring the List view's strip → matrix rhythm.)
+  // Thin stat strip (same chip format as the List view's pulse strip), replacing the chunky tiles.
+  const _chip = (num,label,color) => `<span class="psitem"><b${color?` style="color:${color}"`:""}>${num}</b>${label}</span>`;
+  const statStrip = `<div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px 18px;padding:10px 18px;margin:0 0 14px;background:var(--panel);border:1px solid var(--border);border-radius:12px">`
+    + _chip(mp.open.toLocaleString(),"open roles","var(--accent)")
+    + _chip(mp.studios,"studios hiring")
+    + _chip(mp.newWk.toLocaleString(),"new this week","var(--green)")
+    + _chip(mp.salPct+"%","list salary","var(--gold)")
+    + _chip(mp.medianAge==null?"—":mp.medianAge+"d","median age")
+    + _chip(mp.remotePct+"%","remote")
     + `</div>`;
   const mo = buildMomentum();
-  const digestCard = `<div class="statcard" style="border-color:rgba(88,166,255,.4);margin-bottom:14px"><h3 style="color:var(--accent);text-transform:none;letter-spacing:0;font-size:15px;font-weight:700">📬 Weekly market digest</h3><div style="font-size:14px;color:var(--text);margin:2px 0 12px">Get “what changed this week” in one email every Thursday — new roles, studio movers, salary transparency. Separate from job alerts; unsubscribe anytime.</div><div id="digestSignup"></div></div>`;
+  const digestCard = `<div class="statcard" style="border-color:rgba(88,166,255,.3);margin-top:16px;padding:12px 14px">`
+    + `<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">`
+    + `<span style="font-size:13px;color:var(--text);flex:1;min-width:200px">📬 <b>Weekly market digest</b> — what changed each Thursday, in one email. Separate from job alerts.</span>`
+    + `<button type="button" onclick="dqDigestToggle(this)" style="background:none;border:1px solid var(--accent);color:var(--accent);font-size:12px;font-weight:600;padding:6px 12px;border-radius:7px;cursor:pointer;white-space:nowrap">Subscribe ▸</button>`
+    + `</div><div id="digestSignup" hidden style="margin-top:10px"></div></div>`;
   const openedLine = `<div style="font-size:14px;color:var(--muted);margin:2px 0 12px"><b style="color:var(--text)">${mp.newWk.toLocaleString()}</b> roles opened in the last 7 days across the board.</div>`;
-  const boardHead = `<h2 class="pulsehead" style="margin-top:6px">The board right now</h2><p class="dirsub">A live snapshot of every open role — current state, not change.${list.length!==mp.open?` Reflects your current filter (${list.length.toLocaleString()} of ${mp.open.toLocaleString()} roles).`:""}</p>`;
-  document.getElementById("statsWrap").innerHTML = trendHead + tldr + digestCard
-    // ---- What changed this week ----
-    + (mo.head ? `<div class="mhead">` + mo.head + `</div>` : "")
-    + openedLine
-    + `<div class="statgrid">` + mo.cards + `</div>`
-    // ---- The board right now (grouped into themed clusters) ----
-    + boardHead
-    + grp("Where the jobs are")
-    + `<div class="statgrid">`
-    + barChart(`Roles by studio`, tally(list, j=>j.s), 14)
-    + barChart("Roles by discipline", tally(list, j=>j.d))
-    + barChart("Roles by country", tallyMulti(list, j=>j.countries), 14)
-    + barChart("Roles by gaming hub", tallyMulti(list, j=>j.hubs), 14)
-    + hiringCard + remoteCard
-    + `</div>`
-    + grp("Who studios want")
-    + `<div class="statgrid">`
-    + barChart("Roles by seniority", tally(list, j=>j.sen))
-    + yoeCard
-    + barChart("Most in-demand skills", tallyMulti(list, j=>j.tech), 14)
-    + `</div>`
-    + grp("What they pay")
-    + `<div class="statgrid">`
-    + salCard + salSenCard + salRegCard + transparencyCard
-    + `</div>`
-    + grp("Freshness & churn")
-    + `<div class="statgrid">`
-    + freshCard + ghStudioCard + ghListCard
-    + barChart("Posting age", buckets.filter(b=>b[1]>0))
-    + `</div>`;
-  try { window.dqDigestForm && window.dqDigestForm("digestSignup"); } catch(e){}
+  // Segmented control: one always-visible header (tiles + TL;DR) over five switchable sub-views.
+  const segCss = `<style>.dqseg{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 16px;border-bottom:1px solid var(--border);padding:8px 0 10px;position:sticky;top:0;background:var(--bg);z-index:6}.dqseg-btn{background:none;border:1px solid var(--border);color:var(--muted);font-size:13px;font-weight:600;padding:7px 14px;border-radius:8px;cursor:pointer;white-space:nowrap}.dqseg-btn:hover{color:var(--text);border-color:var(--muted)}.dqseg-btn.on{background:var(--accent);color:#0d1117;border-color:var(--accent)}.dqsub[hidden]{display:none}</style>`;
+  const SUBS = [["overview","Overview"],["demand","Demand"],["pay","Pay"],["fresh","Freshness"],["changed","What changed"]];
+  const segBar = `<div class="dqseg">` + SUBS.map(([k,l])=>`<button type="button" class="dqseg-btn" data-sub="${k}" onclick="dqSubTab('${k}')">${l}</button>`).join("") + `</div>`;
+  const pane = (k, inner) => `<div class="dqsub" data-sub="${k}"${k==="overview"?"":" hidden"}>${inner}</div>`;
+  const filterNote = list.length!==mp.open ? `<p class="dirsub" style="margin:0 0 4px">Reflects your current filter (${list.length.toLocaleString()} of ${mp.open.toLocaleString()} roles).</p>` : "";
+  // ---- Hero carousel slides: discipline · skills · salary by seniority · momentum ----
+  const _dT = tally(list, j=>j.d).slice(0,8), _dM = Math.max(1, ..._dT.map(e=>e[1]));
+  const discRows = _dT.map(([k,n])=>({label:k, barText:String(n), pct:Math.max(2,Math.round(n/_dM*100)), act:{type:"disc",val:k}}));
+  const _sT = tallyMulti(list, j=>j.tech).slice(0,8), _sM = Math.max(1, ..._sT.map(e=>e[1]));
+  const skillRows = _sT.map(([k,n])=>({label:k, barText:String(n), pct:Math.max(2,Math.round(n/_sM*100)), act:{type:"skill",val:k}}));
+  const _salM = Math.max(1, ...salSRows.map(r=>r.hi));
+  const heroSalRows = salSRows.map(r=>({label:`${r.s} (${r.n})`, barText:`$${r.lo}–$${r.hi}K`, pct:Math.max(2,Math.round(r.hi/_salM*100)), act:{type:"sen",val:r.s}}));
+  let momRows = [];
+  const _HT = (window.JOBS_DATA && window.JOBS_DATA.trends) || null;
+  if (_HT && _HT.studios){
+    const _ma = Object.keys(_HT.studios).map(name=>Object.assign({name}, _HT.studios[name]))
+      .map(s=>{ const base=s.d30!=null?s.d30:(s.d7!=null?s.d7:s.now); return {name:s.name, delta:s.now-base}; })
+      .filter(r=>r.delta!==0).sort((a,b)=>Math.abs(b.delta)-Math.abs(a.delta)).slice(0,8);
+    const _mM = Math.max(1, ..._ma.map(r=>Math.abs(r.delta)));
+    momRows = _ma.map(r=>({label:r.name, barText:`${r.delta>0?"+":""}${r.delta}`, pct:Math.max(2,Math.round(Math.abs(r.delta)/_mM*100)), act:{type:"studio",val:r.name}}));
+  }
+  const heroData = [
+    ["Roles by discipline", heroSlide(discRows, "No roles in this view.")],
+    ["In-demand skills", heroSlide(skillRows, "No skill tags in this view.")],
+    ["Salary by seniority", heroSlide(heroSalRows, "Not enough roles list pay in this view.")],
+    ["What's moving this week", heroSlide(momRows, "Momentum builds as we track studios over the coming days.")],
+  ];
+  window.__heroTitles = heroData.map(s=>s[0]);
+  const heroDots = heroData.map((s,i)=>`<button type="button" class="herodot${i?'':' on'}" data-i="${i}" onclick="heroGo(${i})" aria-label="${s[0]}"></button>`).join("");
+  const heroCss = `<style>.herowrap{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:14px 16px;margin:0 0 16px}.herohead{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}.herotitle{font-size:16px;font-weight:800;color:var(--text)}.heroctrl{display:flex;align-items:center;gap:6px}.herobtn{background:none;border:1px solid var(--border);color:var(--muted);width:28px;height:28px;border-radius:7px;cursor:pointer;font-size:15px;line-height:1;display:inline-flex;align-items:center;justify-content:center}.herobtn:hover{color:var(--text);border-color:var(--muted)}.herodots{display:inline-flex;gap:5px;margin:0 4px}.herodot{width:8px;height:8px;border-radius:50%;border:none;background:var(--border);cursor:pointer;padding:0}.herodot.on{background:var(--accent)}.heroslides{min-height:292px}.herobar{display:flex;align-items:center;gap:10px;margin:7px 0;font-size:14px}.herobar .hblabel{width:150px;color:var(--muted);text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.herobar .hbtrack{flex:1;background:var(--bg);border-radius:5px;overflow:hidden}.herobar .hbfill{display:block;height:22px;border-radius:5px;background:var(--accent)}.herobar .hbnum{width:104px;text-align:right;color:var(--text)}.herobar.clickable{cursor:pointer;border-radius:6px}.herobar.clickable:hover .hbfill{filter:brightness(1.15)}.herobar.clickable:hover .hblabel{color:var(--text)}.heroempty{color:var(--muted);font-size:14px;padding:48px 0;text-align:center}.herohint{color:var(--muted);font-size:12px;margin-top:10px;text-align:center}</style>`;
+  const heroHtml = `<div class="herowrap" id="heroWrap"><div class="herohead"><span class="herotitle" id="heroTitle">${heroData[0][0]}</span>`
+    + `<span class="heroctrl"><button type="button" class="herobtn" onclick="heroStep(-1)" aria-label="Previous">‹</button>`
+    + `<span class="herodots">${heroDots}</span>`
+    + `<button type="button" class="herobtn" onclick="heroStep(1)" aria-label="Next">›</button>`
+    + `<button type="button" class="herobtn" id="heroPlay" onclick="heroToggle()" aria-label="Pause">⏸</button></span></div>`
+    + `<div class="heroslides">` + heroData.map((s,i)=>`<div class="heroslide" data-i="${i}"${i?' hidden':''}>${s[1]}</div>`).join("") + `</div>`
+    + `<div class="herohint">Tap a bar to see those roles in the list →</div></div>`;
+  document.getElementById("statsWrap").innerHTML = statStrip + heroCss + heroHtml + filterNote + segCss + segBar
+    + pane("overview", `<div class="statgrid">`
+        + barChart(`Roles by studio`, tally(list, j=>j.s), 14)
+        + barChart("Roles by discipline", tally(list, j=>j.d))
+        + barChart("Roles by country", tallyMulti(list, j=>j.countries), 14)
+        + barChart("Roles by gaming hub", tallyMulti(list, j=>j.hubs), 14)
+        + hiringCard + remoteCard
+        + `</div>`)
+    + pane("demand", `<div class="statgrid">`
+        + barChart("Roles by seniority", tally(list, j=>j.sen))
+        + yoeCard
+        + barChart("Most in-demand skills", tallyMulti(list, j=>j.tech), 14)
+        + `</div>`)
+    + pane("pay", `<div class="statgrid">` + salCard + salSenCard + salRegCard + transparencyCard + `</div>`)
+    + pane("fresh", `<div class="statgrid">` + freshCard + ghStudioCard + ghListCard + barChart("Posting age", buckets.filter(b=>b[1]>0)) + `</div>`)
+    + pane("changed", (mo.head ? `<div class="mhead">` + mo.head + `</div>` : "") + openedLine + `<div class="statgrid">` + mo.cards + `</div>`)
+    + digestCard;
+  // pin the sub-tab bar just below the sticky site header
+  try { var _hdr = document.querySelector("header"); var _seg = document.querySelector("#statsWrap .dqseg"); if (_hdr && _seg) _seg.style.top = _hdr.offsetHeight + "px"; } catch(e){}
+  try { heroInit(); } catch(e){}
+  try { var _stab = localStorage.getItem("dqTrendsTab"); dqSubTab(["overview","demand","pay","fresh","changed"].indexOf(_stab)>=0 ? _stab : "overview"); } catch(e){ try { dqSubTab("overview"); } catch(_e){} }
+  // digest form is built lazily when the user expands it (see dqDigestToggle)
+}
+
+// Trends sub-tabs (segmented control inside the Trends view; selection persists per device).
+function dqSubTab(name){
+  // Swap panes in place (no scrolling) — same gentle feel as the main view nav. The bar is sticky
+  // so it stays reachable while you scroll a tab's content.
+  var w = document.getElementById("statsWrap"); if (!w) return;
+  w.querySelectorAll(".dqsub").forEach(function(p){ p.hidden = p.getAttribute("data-sub") !== name; });
+  w.querySelectorAll(".dqseg-btn").forEach(function(b){ b.classList.toggle("on", b.getAttribute("data-sub") === name); });
+  try { localStorage.setItem("dqTrendsTab", name); } catch(e){}
+}
+
+// ---- Trends hero carousel: a rotating focal graph (mirrors the List matrix). Auto-advances with
+// controls, pauses on hover/focus, honors reduced-motion, and each bar is click-to-filter. ----
+var _heroI = 0, _heroTimer = null, _heroPlaying = true;
+var _heroReduce = !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion:reduce)").matches);
+function escAttr(s){ return String(s==null?"":s).replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;"); }
+function heroSlide(rows, emptyMsg){
+  if (!rows || !rows.length) return '<div class="heroempty">' + (emptyMsg||"No data in this view yet.") + '</div>';
+  return rows.map(function(r){
+    var act = r.act ? (' data-act="'+r.act.type+'" data-val="'+escAttr(r.act.val)+'" role="button" tabindex="0"') : "";
+    return '<div class="herobar'+(r.act?' clickable':'')+'"'+act+'>'
+      + '<span class="hblabel" title="'+escAttr(r.label)+'">'+r.label+'</span>'
+      + '<span class="hbtrack"><span class="hbfill" style="width:'+r.pct+'%"></span></span>'
+      + '<span class="hbnum">'+r.barText+'</span></div>';
+  }).join("");
+}
+function heroGo(i){
+  var wrap = document.getElementById("heroWrap"); if (!wrap) return;
+  var slides = wrap.querySelectorAll(".heroslide"); var n = slides.length; if (!n) return;
+  _heroI = ((i % n) + n) % n;
+  slides.forEach(function(s){ s.hidden = (+s.getAttribute("data-i") !== _heroI); });
+  wrap.querySelectorAll(".herodot").forEach(function(d){ d.classList.toggle("on", +d.getAttribute("data-i") === _heroI); });
+  var t = document.getElementById("heroTitle"); if (t && window.__heroTitles) t.textContent = window.__heroTitles[_heroI] || "";
+}
+function heroStep(d){ heroGo(_heroI + d); heroPause(); }
+function heroToggle(){ _heroPlaying ? heroPause() : heroPlay(); }
+function heroPlay(){ _heroPlaying = true; var b = document.getElementById("heroPlay"); if (b){ b.textContent = "⏸"; b.setAttribute("aria-label","Pause"); } heroTimerStart(); }
+function heroPause(){ _heroPlaying = false; var b = document.getElementById("heroPlay"); if (b){ b.textContent = "▶"; b.setAttribute("aria-label","Play"); } heroTimerStop(); }
+function heroTimerStop(){ if (_heroTimer){ clearInterval(_heroTimer); _heroTimer = null; } }
+function heroTimerStart(){ heroTimerStop(); if (_heroReduce || !_heroPlaying) return; _heroTimer = setInterval(function(){ heroGo(_heroI + 1); }, 6000); }
+function heroFilter(type, value){
+  if (!value) return;
+  if (type === "studio"){ filterToStudio(value); return; }
+  try {
+    clearAllFilters();
+    if (type === "disc"){ new Set(JOBS.map(function(j){return j.sen;}).filter(Boolean)).forEach(function(s){ selCells.add(value+"|"+s); }); }
+    else if (type === "sen"){ new Set(JOBS.map(function(j){return j.d;}).filter(Boolean)).forEach(function(d){ selCells.add(d+"|"+value); }); }
+    else if (type === "skill"){ var qel = document.getElementById("q"); if (qel) qel.value = value; }
+    setView("list"); render();
+  } catch(e){}
+}
+function heroInit(){
+  var wrap = document.getElementById("heroWrap"); if (!wrap) return;
+  wrap.addEventListener("mouseenter", heroTimerStop);
+  wrap.addEventListener("mouseleave", function(){ if (_heroPlaying) heroTimerStart(); });
+  wrap.addEventListener("focusin", heroTimerStop);
+  wrap.addEventListener("focusout", function(){ if (_heroPlaying) heroTimerStart(); });
+  wrap.addEventListener("click", function(e){ var b = e.target.closest && e.target.closest(".herobar.clickable"); if (b) heroFilter(b.getAttribute("data-act"), b.getAttribute("data-val")); });
+  wrap.addEventListener("keydown", function(e){ if (e.key === "Enter" || e.key === " "){ var b = e.target.closest && e.target.closest(".herobar.clickable"); if (b){ e.preventDefault(); heroFilter(b.getAttribute("data-act"), b.getAttribute("data-val")); } } });
+  heroGo(0);
+  if (_heroReduce) { heroPause(); } else { _heroPlaying = true; heroTimerStart(); }
 }
 
 // ---- "What's moving this week": momentum block, folded into the Trends tab ----
@@ -2580,6 +2650,16 @@ try {
         .then(function(res){ if (res.ok && res.j && res.j.ok){ el.innerHTML = '<div style="color:var(--accent);font-size:14px">✓ Almost there — check your inbox and click the link to confirm your weekly digest.</div>'; } else { msg.textContent = "That didn’t go through. Please try again."; msg.style.color = "#f778ba"; } })
         .catch(function(){ msg.textContent = "Network hiccup. Please try again."; msg.style.color = "#f778ba"; });
     };
+  };
+
+  // Slim digest CTA: reveal the form on demand (and build it only then, so Turnstile renders visibly).
+  window.dqDigestToggle = function(btn){
+    var box = document.getElementById("digestSignup"); if (!box) return;
+    if (box.hidden){
+      box.hidden = false;   // reveal first so the form/Turnstile render in a visible container
+      if (!box.dataset.built){ try { window.dqDigestForm && window.dqDigestForm("digestSignup"); box.dataset.built = "1"; } catch(e){} }
+      btn.textContent = "Close ✕";
+    } else { box.hidden = true; btn.textContent = "Subscribe ▸"; }
   };
 
   // Watchlist email bridge: a weekly job alert pre-filled with the visitor's followed studios.
