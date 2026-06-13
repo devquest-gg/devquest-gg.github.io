@@ -665,12 +665,15 @@ function strongTitleDiscipline(t) {
   if (/developer (relations|engagement|evangelis|advocat|marketing|outreach|experience rep|support|solutions?)|\bdev ?rel\b|community developer|content developer|video content|publisher developer relations/.test(t)) return "Marketing";
   if (/\baudio\b|sound design|\bcomposer\b|music design|\bsonore\b|conception sonore/.test(t)) return "Audio";
   if (/\bqa\b|quality assurance|\btester\b|\bsdet\b|test (engineer|analyst|lead|automation|specialist)|quality (engineer|analyst|specialist)|assurance qualit/.test(t)) return "QA";
-  if (/art director|\bartist\b|\bartiste\b|direct(eur|rice|ion) artistique|\bart lead\b|lead artist|concept art|\bvfx\b|lighting (artist|lead)|environment artist|character artist|technical artist|technical art\b/.test(t)) return "Art";
-  if (/\banimator\b|animation (director|lead|manager|supervisor)|\brigging\b|cinematics? (director|lead|supervisor|manager|animator|designer)/.test(t)) return "Animation";
-  if (/game design|level design|systems? design|narrative design|\bwriter\b|\bscénariste\b|encounter design|combat design|content design|economy design|quality design|gameplay design|ux design|ui design|concepteur|conceptrice|conception de jeu|world build|world design|environment design/.test(t)) return "Design";
-  if ((/(engineer|programmer|programming|developer|architect)\b|architecte|ingénieur|programmeur|développeur|technical director/.test(t)) && !/\bsales\b|customer success|account exec|solutions? consultant|product developer|developer (program|programme|community|ecosystem|partnership)|business develop(er|ment)|analytics developer/.test(t)) return "Engineering";
+  if (/art director|\bartist\b|\bartiste\b|direct(eur|rice|ion) artistique|\bart lead\b|lead artist|concept art|\bvfx\b|lighting (artist|lead)|environment artist|character artist|technical artist|technical art\b|(character|environment|prop|vehicle|weapon|texture) (artist|art|outsourc)/.test(t)) return "Art";
+  if (/\banimator\b|animation (director|lead|manager|supervisor)|\brigging\b|cinematics? (director|lead|supervisor|manager|animator|designer)|\bmocap\b|motion[ -]?capture/.test(t)) return "Animation";
+  if (/game design|level design|systems? design|narrative design|\bwriter\b|\bscénariste\b|encounter design|combat design|content design|economy design|quality design|gameplay design|ux design|ui design|concepteur|conceptrice|conception de jeu|world build|world design|environment design|creative director|directeur (créatif|creatif)|directrice (créative|creative)/.test(t)) return "Design";
+  if ((/(engineer|programmer|programming|developer|architect)\b|architecte|ingénieur|programmeur|développeur|technical (director|lead)/.test(t)) && !/\bsales\b|customer success|account exec|solutions? consultant|product developer|developer (program|programme|community|ecosystem|partnership)|business develop(er|ment)|analytics developer/.test(t)) return "Engineering";
   if (/machine learning|\bml\b ?(scientist|researcher|ops)|data scien|data analy(st|tics|sis)|business intelligence|\bbi analyst\b|insights? analyst|analytics developer|deep learning|\bnlp\b|artificial intelligence|\bai (scientist|researcher|research)|\bof ai\b/.test(t)) return "Data & Analytics";
-  if (/\b(project|programme?|delivery|release|portfolio)\s+(manager|management|coordinator|lead|director|assistant)\b|technical (program|project) manager|scrum master|agile coach|\bpmo\b|\bproducer\b|production (coordinator|manager|director|assistant)|product (manager|owner|management|director|lead)|director,? of product|(vp|head) of product|game (director|lead|manager)|producteur|productrice|réalisat(eur|rice)|gestionnaire de (projet|programme)|chef de (projet|produit)|coordonnateur de projet/.test(t)) return "Production";
+  // "Development Director/Manager/Lead" = game-production leadership — but NOT HR "Learning & Development"
+  // or "Business Development" (sales). Guarded so those stay out of Production.
+  if (/\bdevelopment (director|manager|lead)\b/.test(t) && !/business|learning|talent|\bl&d\b|\bpeople\b|organi[sz]ation/.test(t)) return "Production";
+  if (/\b(project|programme?|delivery|release|portfolio)\s+(manager|management|coordinator|lead|director|assistant)\b|technical (program|project) manager|scrum master|agile coach|\bpmo\b|\bproducer\b|production (coordinator|manager|director|assistant)|product (manager|owner|management|director|lead)|director,? of product|director,?\s+product|(vp|head) of product|game (director|lead|manager)|producteur|productrice|réalisat(eur|rice)|gestionnaire de (projet|programme)|chef de (projet|produit)|coordonnateur de projet/.test(t)) return "Production";
   return null;
 }
 
@@ -688,7 +691,7 @@ function mapDiscipline(raw, title) {
   // evangelism, community & content developers, developer marketing. Catch those first so they
   // don't fall into the Engineering bucket below (they're really Marketing / DevRel roles).
   if (/developer (relations|engagement|evangelis|advocat|marketing|outreach|experience rep|support|solutions?)|\bdev ?rel\b|community developer|content developer|video content|publisher developer relations/.test(t)) return "Marketing";
-  if (/engineer|programmer|\bdeveloper|software|\bsre\b|devops|\bsdet\b/.test(t)) return "Engineering";
+  if (/engineer|programmer|\bdeveloper|software|\bsre\b|devops|\bsdet\b/.test(t) && !/\bsales\b|customer success|account exec|solutions? consultant|product developer|developer (program|programme|community|ecosystem|partnership)|business develop(er|ment)|analytics developer/.test(t)) return "Engineering";
   if (/product (manager|owner|management)|head of product/.test(t)) return "Production"; // PMs grouped with Production
   if (/artist|concept|\bvfx\b|lighting|illustrat|sculpt/.test(t)) return "Art";
   if (/animator|animation|rigging/.test(t)) return "Animation";
@@ -2139,7 +2142,11 @@ function buildTrends(runCounts, okSet, discCounts, healthy, salInfo, skillCounts
 
 // ---- Main -------------------------------------------------------------------
 
+// Expose the classifier for the test fixture (test-classify.js). When this file is `require()`d
+// instead of run directly, skip the actual scrape and just export the pure functions.
+module.exports = { mapDiscipline, strongTitleDiscipline, normDisc };
 (async () => {
+  if (require.main !== module) return;   // required for tests → don't run the scrape
   const all = [];
   const errors = [];
   const runCounts = {};      // studio name -> open roles this run (successful fetches only)
