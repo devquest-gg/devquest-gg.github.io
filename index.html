@@ -2321,50 +2321,70 @@ function renderStats(){
     const _mM = Math.max(1, ..._ma.map(r=>Math.abs(r.delta)));
     momRows = _ma.map(r=>({label:r.name, barText:`${r.delta>0?"+":""}${r.delta}`, pct:Math.max(2,Math.round(Math.abs(r.delta)/_mM*100)), act:{type:"studio",val:r.name}}));
   }
-  const heroData = [
+  let heroData = [
     ["Roles by discipline", heroSlide(discRows, "No roles in this view.")],
     ["In-demand skills", heroSlide(skillRows, "No skill tags in this view.")],
     ["Salary by seniority", heroSlide(heroSalRows, "Not enough roles list pay in this view.")],
     ["What's moving this week", heroSlide(momRows, "Momentum builds as we track studios over the coming days.")],
   ];
-  // Personalize the hero for returning visitors. Best case: a dedicated "🔥 For you" slide of the
-  // live roles that match their on-device profile, grouped by studio (click a bar → that studio's
-  // roles). If their matches are too thin for a good slide, fall back to simply reordering the
-  // generic slides so their strongest interest leads. First-timers keep the default rotation.
+  // Personalize the hero for returning visitors. With enough on-device signal we REPLACE the whole
+  // carousel with up to three custom, discipline-locked slides — where your field is hiring (by
+  // studio), how its pay compares (your discipline highlighted), and your roles by seniority — each
+  // bar click-to-filters into the list. Thin-signal returnees get the generic slides reordered to
+  // their interest; first-timers keep the default rotation untouched.
   let _heroForYou = false;
   try {
     const P = buildProfile();
     if (P.signal >= HOT_MIN_SIGNAL) {
-      const myMatches = hotJobs(list, P, 500);                 // matched, discipline-locked roles in view
-      // "Where your field is hiring": group your matches by studio, surfacing fresh activity first —
-      // total open roles + how many were newly posted (≤14d). Trends-forward, not a static snapshot.
-      const _byS = {};
-      myMatches.forEach(j => { const e = _byS[j.s] || (_byS[j.s] = {n:0,nw:0}); e.n++; const ag=_ageDays(j); if (ag!=null && ag<=HOT_NEW_DAYS) e.nw++; });
-      const _studios = Object.keys(_byS).map(s => ({ s, n:_byS[s].n, nw:_byS[s].nw }))
-        .sort((a,b)=> b.nw - a.nw || b.n - a.n).slice(0,8);
-      if (myMatches.length >= 4 && _studios.length) {
-        const _fM = Math.max(1, ..._studios.map(e=>e.n));
-        const forRows = _studios.map(e => ({ label:e.s,
-          barText: e.nw ? e.n+" roles · "+e.nw+" new" : e.n+" role"+(e.n===1?"":"s"),
-          pct:Math.max(2,Math.round(e.n/_fM*100)), act:{type:"studio",val:e.s} }));
-        const _foDisc = topKeys(P.disc,0.6)[0];
-        heroData.unshift([(_foDisc ? "🔥 For you — where "+_foDisc+" is hiring" : "🔥 For you — your matched roles"), heroSlide(forRows, "")]);
-        _heroForYou = true;
+      const discLock = new Set(topKeys(P.disc, 0.6));
+      const disc = [...discLock][0];
+      const myMatches = hotJobs(list, P, 500);
+      if (disc && myMatches.length >= 4) {
+        const custom = [];
+        // (1) Where your field is hiring — matched roles by studio, freshest activity first
+        const _byS = {};
+        myMatches.forEach(j => { const e = _byS[j.s] || (_byS[j.s] = {n:0,nw:0}); e.n++; const ag=_ageDays(j); if (ag!=null && ag<=HOT_NEW_DAYS) e.nw++; });
+        const _studios = Object.keys(_byS).map(s => ({ s, n:_byS[s].n, nw:_byS[s].nw })).sort((a,b)=> b.nw - a.nw || b.n - a.n).slice(0,8);
+        if (_studios.length){
+          const _fM = Math.max(1, ..._studios.map(e=>e.n));
+          custom.push(["🔥 For you — where "+disc+" is hiring", heroSlide(_studios.map(e=>({ label:e.s,
+            barText: e.nw ? e.n+" roles · "+e.nw+" new" : e.n+" role"+(e.n===1?"":"s"),
+            pct:Math.max(2,Math.round(e.n/_fM*100)), act:{type:"studio",val:e.s} })), "")]);
+        }
+        // (2) Salary by discipline — your discipline highlighted, the rest dimmed for context
+        if (salRows.length){
+          const _sdM = Math.max(100, ...salRows.map(r=>r.hi));
+          custom.push(["🔥 For you — salary by discipline", heroSlide(salRows.map(r=>({ label:r.d+(discLock.has(r.d)?" — you":""),
+            barText:"$"+r.lo+"–$"+r.hi+"K", pct:Math.max(2,Math.round(r.hi/_sdM*100)),
+            hi:discLock.has(r.d), dim:!discLock.has(r.d), act:{type:"disc",val:r.d} })), "")]);
+        }
+        // (3) Your discipline's roles by seniority — click a bar for that level's roles
+        const _sc = {};
+        list.forEach(j => { if (discLock.has(j.d) && j.sen) _sc[j.sen] = (_sc[j.sen]||0)+1; });
+        const _senRows = SEN_ORD.filter(s=>_sc[s]).map(s=>({ s, n:_sc[s] }));
+        if (_senRows.length){
+          const _snM = Math.max(1, ..._senRows.map(r=>r.n));
+          const _cellVal = s => [...discLock].map(d=>d+"|"+s).join(";");
+          custom.push(["🔥 For you — "+disc+" roles by seniority", heroSlide(_senRows.map(r=>({ label:r.s,
+            barText:r.n+" role"+(r.n===1?"":"s"), pct:Math.max(2,Math.round(r.n/_snM*100)),
+            act:{type:"cell",val:_cellVal(r.s)} })), "")]);
+        }
+        if (custom.length){ heroData = custom; _heroForYou = true; }
       } else {
-        // thin matches → fall back to reordering the generic slides so their interest leads
+        // thin signal → reorder the generic slides so the strongest interest leads
         const sum = b => Object.values(P[b]||{}).reduce((x,v)=>x+v,0);
-        const dims = [["disc",0],["tech",1],["sen",2],["studio",3]].sort((a,b)=>sum(b[0])-sum(a[0]));
+        const dims = [["disc",0],["studio",3],["sen",2]].sort((a,b)=>sum(b[0])-sum(a[0]));
         const lead = dims[0][1];
         if (lead > 0 && sum(dims[0][0]) > 0) { const led = heroData.splice(lead,1)[0]; led[0] = "🔥 " + led[0]; heroData.unshift(led); }
       }
     }
   } catch(e){}
-  // Per-slide dwell (ms): the dedicated "For you" lead sits twice as long so it can't be missed.
-  _heroDur = heroData.map((s,i)=> (_heroForYou && i===0) ? 12000 : 6000);
-  window.__heroForYouIdx = _heroForYou ? 0 : -1;   // which slide gets the orange "for you" treatment
+  // Dwell (ms): custom "for you" slides get a touch longer to read; the generic rotation stays 6s.
+  _heroDur = heroData.map(()=> _heroForYou ? 8000 : 6000);
+  window.__heroForYouAll = _heroForYou;   // orange "for you" treatment across the whole custom carousel
   window.__heroTitles = heroData.map(s=>s[0]);
   const heroDots = heroData.map((s,i)=>`<button type="button" class="herodot${i?'':' on'}" data-i="${i}" onclick="heroGo(${i})" aria-label="${s[0]}"></button>`).join("");
-  const heroCss = `<style>.herowrap{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:14px 16px;margin:0 0 16px}.herohead{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}.herotitle{font-size:16px;font-weight:800;color:var(--text)}.heroctrl{display:flex;align-items:center;gap:6px}.herobtn{background:none;border:1px solid var(--border);color:var(--muted);width:28px;height:28px;border-radius:7px;cursor:pointer;font-size:15px;line-height:1;display:inline-flex;align-items:center;justify-content:center}.herobtn:hover{color:var(--text);border-color:var(--muted)}.herodots{display:inline-flex;gap:5px;margin:0 4px}.herodot{width:8px;height:8px;border-radius:50%;border:none;background:var(--border);cursor:pointer;padding:0}.herodot.on{background:var(--accent)}.heroslides{min-height:292px}.herobar{display:flex;align-items:center;gap:10px;margin:7px 0;font-size:14px}.herobar .hblabel{width:150px;flex-shrink:0;color:var(--muted);text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.herobar .hbtrack{flex:1;min-width:0;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:999px;height:18px;overflow:hidden}.herobar .hbfill{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,#1f6feb,#58a6ff);min-width:3px}.herobar .hbnum{flex-shrink:0;text-align:right;font-weight:600;color:var(--text);white-space:nowrap}.herobar.clickable{cursor:pointer;border-radius:6px}.herobar.clickable:hover .hbfill{filter:brightness(1.15)}.herobar.clickable:hover .hblabel{color:var(--text)}.heroempty{color:var(--muted);font-size:14px;padding:48px 0;text-align:center}.herohint{color:var(--muted);font-size:12px;margin-top:10px;text-align:center}.herowrap.foryou{border-color:rgba(255,138,61,.45);background:linear-gradient(180deg,rgba(255,138,61,.08),var(--panel))}.herowrap.foryou .herotitle{color:#ff8a3d}.herowrap.foryou .herodot.on{background:#ff8a3d}.herowrap.foryou .hbfill{background:linear-gradient(90deg,#e8722e,#ff8a3d)}</style>`;
+  const heroCss = `<style>.herowrap{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:14px 16px;margin:0 0 16px}.herohead{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}.herotitle{font-size:16px;font-weight:800;color:var(--text)}.heroctrl{display:flex;align-items:center;gap:6px}.herobtn{background:none;border:1px solid var(--border);color:var(--muted);width:28px;height:28px;border-radius:7px;cursor:pointer;font-size:15px;line-height:1;display:inline-flex;align-items:center;justify-content:center}.herobtn:hover{color:var(--text);border-color:var(--muted)}.herodots{display:inline-flex;gap:5px;margin:0 4px}.herodot{width:8px;height:8px;border-radius:50%;border:none;background:var(--border);cursor:pointer;padding:0}.herodot.on{background:var(--accent)}.heroslides{min-height:292px}.herobar{display:flex;align-items:center;gap:10px;margin:7px 0;font-size:14px}.herobar .hblabel{width:150px;flex-shrink:0;color:var(--muted);text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.herobar .hbtrack{flex:1;min-width:0;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:999px;height:18px;overflow:hidden}.herobar .hbfill{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,#1f6feb,#58a6ff);min-width:3px}.herobar .hbnum{flex-shrink:0;text-align:right;font-weight:600;color:var(--text);white-space:nowrap}.herobar.clickable{cursor:pointer;border-radius:6px}.herobar.clickable:hover .hbfill{filter:brightness(1.15)}.herobar.clickable:hover .hblabel{color:var(--text)}.heroempty{color:var(--muted);font-size:14px;padding:48px 0;text-align:center}.herohint{color:var(--muted);font-size:12px;margin-top:10px;text-align:center}.herowrap.foryou{border-color:rgba(255,138,61,.45);background:linear-gradient(180deg,rgba(255,138,61,.08),var(--panel))}.herowrap.foryou .herotitle{color:#ff8a3d}.herowrap.foryou .herodot.on{background:#ff8a3d}.herowrap.foryou .hbfill{background:linear-gradient(90deg,#e8722e,#ff8a3d)}.herobar.dim{opacity:.42}.herobar.hi .hblabel{color:#ff8a3d;font-weight:800}</style>`;
   const heroHtml = `<div class="herowrap" id="heroWrap"><div class="herohead"><span class="herotitle" id="heroTitle">${heroData[0][0]}</span>`
     + `<span class="heroctrl"><button type="button" class="herobtn" onclick="heroStep(-1)" aria-label="Previous">‹</button>`
     + `<span class="herodots">${heroDots}</span>`
@@ -2415,7 +2435,8 @@ function heroSlide(rows, emptyMsg){
   if (!rows || !rows.length) return '<div class="heroempty">' + (emptyMsg||"No data in this view yet.") + '</div>';
   return rows.map(function(r){
     var act = r.act ? (' data-act="'+r.act.type+'" data-val="'+escAttr(r.act.val)+'" role="button" tabindex="0"') : "";
-    return '<div class="herobar'+(r.act?' clickable':'')+'"'+act+'>'
+    var cls = 'herobar'+(r.act?' clickable':'')+(r.hi?' hi':'')+(r.dim?' dim':'');
+    return '<div class="'+cls+'"'+act+'>'
       + '<span class="hblabel" title="'+escAttr(r.label)+'">'+r.label+'</span>'
       + '<span class="hbtrack"><span class="hbfill" style="width:'+r.pct+'%"></span></span>'
       + '<span class="hbnum">'+r.barText+'</span></div>';
@@ -2428,7 +2449,7 @@ function heroGo(i){
   slides.forEach(function(s){ s.hidden = (+s.getAttribute("data-i") !== _heroI); });
   wrap.querySelectorAll(".herodot").forEach(function(d){ d.classList.toggle("on", +d.getAttribute("data-i") === _heroI); });
   var t = document.getElementById("heroTitle"); if (t && window.__heroTitles) t.textContent = window.__heroTitles[_heroI] || "";
-  try { wrap.classList.toggle("foryou", _heroI === (window.__heroForYouIdx == null ? -1 : window.__heroForYouIdx)); } catch(e){}
+  try { wrap.classList.toggle("foryou", !!window.__heroForYouAll); } catch(e){}
   if (_heroPlaying) heroTimerStart();   // (re)arm with the dwell of the slide we just landed on
 }
 function heroStep(d){ heroGo(_heroI + d); heroPause(); }
@@ -2445,6 +2466,7 @@ function heroFilter(type, value){
     if (type === "disc"){ new Set(JOBS.map(function(j){return j.sen;}).filter(Boolean)).forEach(function(s){ selCells.add(value+"|"+s); }); }
     else if (type === "sen"){ new Set(JOBS.map(function(j){return j.d;}).filter(Boolean)).forEach(function(d){ selCells.add(d+"|"+value); }); }
     else if (type === "skill"){ var qel = document.getElementById("q"); if (qel) qel.value = value; }
+    else if (type === "cell"){ value.split(";").forEach(function(c){ if (c) selCells.add(c); }); }
     setView("list"); render();
   } catch(e){}
 }
