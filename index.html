@@ -2300,23 +2300,33 @@ function renderStats(){
     ["Salary by seniority", heroSlide(heroSalRows, "Not enough roles list pay in this view.")],
     ["What's moving this week", heroSlide(momRows, "Momentum builds as we track studios over the coming days.")],
   ];
-  // Personalize the hero for returning visitors: lead with the slide matching their strongest
-  // on-device interest (discipline / skills / seniority / studio momentum). First-timers and
-  // anyone below the signal threshold keep the default rotation order.
+  // Personalize the hero for returning visitors. Best case: a dedicated "🔥 For you" slide of the
+  // live roles that match their on-device profile, grouped by studio (click a bar → that studio's
+  // roles). If their matches are too thin for a good slide, fall back to simply reordering the
+  // generic slides so their strongest interest leads. First-timers keep the default rotation.
+  let _heroForYou = false;
   try {
     const P = buildProfile();
     if (P.signal >= HOT_MIN_SIGNAL) {
-      const sum = b => Object.values(P[b]||{}).reduce((x,v)=>x+v,0);
-      // heroData index -> profile dimension it reflects
-      const dims = [["disc",0],["tech",1],["sen",2],["studio",3]].sort((a,b)=>sum(b[0])-sum(a[0]));
-      const lead = dims[0][1];
-      if (lead > 0 && sum(dims[0][0]) > 0) {
-        const led = heroData.splice(lead,1)[0];
-        led[0] = "🔥 " + led[0];   // flag the personalized lead slide
-        heroData.unshift(led);
+      const myMatches = hotJobs(list, P, 500);                 // matched, not-yet-acted roles in view
+      const byStudio = tally(myMatches, j=>j.s).slice(0,8);
+      if (myMatches.length >= 4 && byStudio.length) {
+        const _fM = Math.max(1, ...byStudio.map(e=>e[1]));
+        const forRows = byStudio.map(([k,n])=>({ label:k, barText:n+" role"+(n===1?"":"s"),
+          pct:Math.max(2,Math.round(n/_fM*100)), act:{type:"studio",val:k} }));
+        heroData.unshift(["🔥 For you — your matched roles", heroSlide(forRows, "")]);
+        _heroForYou = true;
+      } else {
+        // thin matches → fall back to reordering the generic slides so their interest leads
+        const sum = b => Object.values(P[b]||{}).reduce((x,v)=>x+v,0);
+        const dims = [["disc",0],["tech",1],["sen",2],["studio",3]].sort((a,b)=>sum(b[0])-sum(a[0]));
+        const lead = dims[0][1];
+        if (lead > 0 && sum(dims[0][0]) > 0) { const led = heroData.splice(lead,1)[0]; led[0] = "🔥 " + led[0]; heroData.unshift(led); }
       }
     }
   } catch(e){}
+  // Per-slide dwell (ms): the dedicated "For you" lead sits twice as long so it can't be missed.
+  _heroDur = heroData.map((s,i)=> (_heroForYou && i===0) ? 12000 : 6000);
   window.__heroTitles = heroData.map(s=>s[0]);
   const heroDots = heroData.map((s,i)=>`<button type="button" class="herodot${i?'':' on'}" data-i="${i}" onclick="heroGo(${i})" aria-label="${s[0]}"></button>`).join("");
   const heroCss = `<style>.herowrap{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:14px 16px;margin:0 0 16px}.herohead{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}.herotitle{font-size:16px;font-weight:800;color:var(--text)}.heroctrl{display:flex;align-items:center;gap:6px}.herobtn{background:none;border:1px solid var(--border);color:var(--muted);width:28px;height:28px;border-radius:7px;cursor:pointer;font-size:15px;line-height:1;display:inline-flex;align-items:center;justify-content:center}.herobtn:hover{color:var(--text);border-color:var(--muted)}.herodots{display:inline-flex;gap:5px;margin:0 4px}.herodot{width:8px;height:8px;border-radius:50%;border:none;background:var(--border);cursor:pointer;padding:0}.herodot.on{background:var(--accent)}.heroslides{min-height:292px}.herobar{display:flex;align-items:center;gap:10px;margin:7px 0;font-size:14px}.herobar .hblabel{width:150px;flex-shrink:0;color:var(--muted);text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.herobar .hbtrack{flex:1;min-width:0;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:999px;height:18px;overflow:hidden}.herobar .hbfill{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,#1f6feb,#58a6ff);min-width:3px}.herobar .hbnum{flex-shrink:0;text-align:right;font-weight:600;color:var(--text);white-space:nowrap}.herobar.clickable{cursor:pointer;border-radius:6px}.herobar.clickable:hover .hbfill{filter:brightness(1.15)}.herobar.clickable:hover .hblabel{color:var(--text)}.heroempty{color:var(--muted);font-size:14px;padding:48px 0;text-align:center}.herohint{color:var(--muted);font-size:12px;margin-top:10px;text-align:center}</style>`;
@@ -2363,7 +2373,7 @@ function dqSubTab(name){
 
 // ---- Trends hero carousel: a rotating focal graph (mirrors the List matrix). Auto-advances with
 // controls, pauses on hover/focus, honors reduced-motion, and each bar is click-to-filter. ----
-var _heroI = 0, _heroTimer = null, _heroPlaying = true;
+var _heroI = 0, _heroTimer = null, _heroPlaying = true, _heroDur = [];
 var _heroReduce = !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion:reduce)").matches);
 function escAttr(s){ return String(s==null?"":s).replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;"); }
 function heroSlide(rows, emptyMsg){
@@ -2383,13 +2393,14 @@ function heroGo(i){
   slides.forEach(function(s){ s.hidden = (+s.getAttribute("data-i") !== _heroI); });
   wrap.querySelectorAll(".herodot").forEach(function(d){ d.classList.toggle("on", +d.getAttribute("data-i") === _heroI); });
   var t = document.getElementById("heroTitle"); if (t && window.__heroTitles) t.textContent = window.__heroTitles[_heroI] || "";
+  if (_heroPlaying) heroTimerStart();   // (re)arm with the dwell of the slide we just landed on
 }
 function heroStep(d){ heroGo(_heroI + d); heroPause(); }
 function heroToggle(){ _heroPlaying ? heroPause() : heroPlay(); }
 function heroPlay(){ _heroPlaying = true; var b = document.getElementById("heroPlay"); if (b){ b.textContent = "⏸"; b.setAttribute("aria-label","Pause"); } heroTimerStart(); }
 function heroPause(){ _heroPlaying = false; var b = document.getElementById("heroPlay"); if (b){ b.textContent = "▶"; b.setAttribute("aria-label","Play"); } heroTimerStop(); }
-function heroTimerStop(){ if (_heroTimer){ clearInterval(_heroTimer); _heroTimer = null; } }
-function heroTimerStart(){ heroTimerStop(); if (_heroReduce || !_heroPlaying) return; _heroTimer = setInterval(function(){ heroGo(_heroI + 1); }, 6000); }
+function heroTimerStop(){ if (_heroTimer){ clearTimeout(_heroTimer); _heroTimer = null; } }
+function heroTimerStart(){ heroTimerStop(); if (_heroReduce || !_heroPlaying) return; _heroTimer = setTimeout(function(){ heroGo(_heroI + 1); }, (_heroDur[_heroI] || 6000)); }
 function heroFilter(type, value){
   if (!value) return;
   if (type === "studio"){ filterToStudio(value); return; }
