@@ -2092,6 +2092,7 @@ function renderStats(){
     + `<div class="statgrid">`
     + barChart(`Roles by studio`, tally(list, j=>j.s), 14)
     + barChart("Roles by discipline", tally(list, j=>j.d))
+    + barChart("Most in-demand skills", tallyMulti(list, j=>j.tech), 14)
     + barChart("Roles by country", tallyMulti(list, j=>j.countries), 14)
     + barChart("Roles by gaming hub", tallyMulti(list, j=>j.hubs), 14)
     + barChart("Roles by seniority", tally(list, j=>j.sen))
@@ -2128,6 +2129,12 @@ function buildMomentum(){
   const cool=dRows.filter(r=>r.delta<0).sort((a,b)=>a.delta-b.delta).slice(0,6);
   const drow=(r,sgn)=>`<div class="pulserow"><span class="plabel">${r.name}</span><span class="spark">${sparkline(r.series)}</span><span class="pulsenum">${r.now}<span class="pdelta p-${sgn}">${r.delta>0?'+':''}${r.delta}</span></span></div>`;
   const fresh=enough?sArr.filter(s=>s.d7==null && (s.now||0)>0).sort((a,b)=>b.now-a.now).slice(0,12):[];
+  // Skills heating up / cooling — same momentum treatment as disciplines, from trends.json skills
+  // (now vs ~30d ago). No per-skill series is banked, so these rows show no sparkline.
+  const kArr = T.skills ? Object.keys(T.skills).map(name=>Object.assign({name}, T.skills[name])) : [];
+  const kRows = kArr.map(s=>{ const base=s.d30!=null?s.d30:(s.d7!=null?s.d7:s.now); return {name:s.name, now:s.now, delta:s.now-base, series:s.series}; });
+  const skHot = kRows.filter(r=>r.delta>0).sort((a,b)=>b.delta-a.delta).slice(0,6);
+  const skCool = kRows.filter(r=>r.delta<0).sort((a,b)=>a.delta-b.delta).slice(0,6);
   const card=(t,inner)=>`<div class="statcard"><h3>${t}</h3>${inner}</div>`;
   const tM=(num,label,c)=>`<div class="ptile"><div class="pnum ${c||''}">${num}</div><div class="plabelt">${label}</div></div>`;
   const tilesRow = enough
@@ -2147,6 +2154,8 @@ function buildMomentum(){
     + card('📉 Pulling back / quiet', down.length?down.map(srow).join(''):moverHint)
     + card('🔥 Disciplines heating up', hot.length?hot.map(r=>drow(r,'up')).join(''):discHint)
     + card('🧊 Disciplines cooling', cool.length?cool.map(r=>drow(r,'down')).join(''):'<div class="xhint">Nothing clearly cooling yet.</div>')
+    + card('🔥 Skills heating up', skHot.length?skHot.map(r=>drow(r,'up')).join(''):'<div class="xhint">Skill history is just starting to bank — check back in a few days.</div>')
+    + card('🧊 Skills cooling', skCool.length?skCool.map(r=>drow(r,'down')).join(''):'<div class="xhint">Nothing clearly cooling yet.</div>')
     + card('✨ New studios this week', fresh.length?fresh.map(r=>`<div class="pulserow"><span class="plabel">${r.name}</span><span class="pulsenum">${r.now} role${r.now===1?'':'s'}</span></div>`).join(''):(enough?'<div class="xhint">No studios newly added in the last week.</div>':'<div class="xhint">Starts once we have a full week of history.</div>'));
   return { head, cards };
 }
