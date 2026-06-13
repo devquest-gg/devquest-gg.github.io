@@ -1879,10 +1879,18 @@ function tallyMulti(list, fn){
 function barChart(title, entries, limit){
   const top = entries.slice(0, limit || 12);
   const max = Math.max(1, ...top.map(e=>e[1]));
-  return `<div class="statcard"><h3>${title}</h3>` + top.map(([k,n]) =>
+  const VIS = 5;   // show top few; rest behind a one-tap "show all" to keep the page skimmable
+  const row = ([k,n]) =>
     `<div class="barrow"><span class="blabel" title="${k}">${k}</span>
      <span class="btrack"><span class="bfill" style="width:${Math.round(100*n/max)}%"></span></span>
-     <span class="bnum">${n}</span></div>`).join("") + `</div>`;
+     <span class="bnum">${n}</span></div>`;
+  const head = top.slice(0, VIS).map(row).join("");
+  const rest = top.slice(VIS);
+  const more = rest.length
+    ? `<div hidden>${rest.map(row).join("")}</div>`
+      + `<button type="button" onclick="this.previousElementSibling.hidden=false;this.remove()" style="margin-top:6px;background:none;border:none;color:var(--accent);font-size:12px;font-weight:600;cursor:pointer;padding:4px 0">Show all ${top.length} ↓</button>`
+    : "";
+  return `<div class="statcard"><h3>${title}</h3>${head}${more}</div>`;
 }
 
 // Market-pulse headline numbers (whole board, not the filtered view) — shared by the
@@ -2156,6 +2164,17 @@ function renderStats(){
       + (sp ? `<span style="line-height:0">${sp}</span>` : '')
       + `</div>`;
   }
+  // One-line takeaway above the dashboard — the few facts most people want at a glance.
+  const _topD = (tally(list, j=>j.d)[0]||[])[0];
+  const _topSk = tallyMulti(list, j=>j.tech).slice(0,2).map(e=>e[0]);
+  const _salDelta = (_st && (_st.d30!=null||_st.d7!=null)) ? (function(){ const b=_st.d30!=null?_st.d30:_st.d7; const d=(_st.now!=null?_st.now:mp.salPct)-b; return d>0?` (up ${d} pts this month)`:d<0?` (down ${-d} pts this month)`:""; })() : "";
+  const _tlParts = [];
+  if (_topD) _tlParts.push(`<b>${_topD}</b> leads demand`);
+  if (_topSk.length) _tlParts.push(`${_topSk.map(s=>`<b>${s}</b>`).join(" & ")} ${_topSk.length>1?"are":"is"} the most-asked skill${_topSk.length>1?"s":""}`);
+  _tlParts.push(`<b>${mp.salPct}%</b> list pay${_salDelta}`);
+  const tldr = `<div style="font-size:15px;line-height:1.6;color:var(--text);margin:0 0 14px;padding:12px 14px;background:var(--panel);border:1px solid var(--border);border-radius:10px"><b style="color:var(--accent)">${mp.open.toLocaleString()}</b> open roles across <b>${mp.studios}</b> studios — ${_tlParts.join(", ")}.</div>`;
+  // small uppercase subhead for grouping the board cards
+  const grp = t => `<div style="font-size:13px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin:22px 0 8px">${t}</div>`;
   const trendHead = `<div class="trendhead"><h2>Game-dev hiring trends</h2>`
     + `<p class="dirsub">Live across ${mp.studios} studios, refreshed hourly. Every figure here is a real, current opening — no estimated dates, no padding.</p></div>`
     + `<div class="pulsestats">`
@@ -2171,25 +2190,35 @@ function renderStats(){
   const digestCard = `<div class="statcard" style="border-color:rgba(88,166,255,.4);margin-bottom:14px"><h3 style="color:var(--accent);text-transform:none;letter-spacing:0;font-size:15px;font-weight:700">📬 Weekly market digest</h3><div style="font-size:14px;color:var(--text);margin:2px 0 12px">Get “what changed this week” in one email every Thursday — new roles, studio movers, salary transparency. Separate from job alerts; unsubscribe anytime.</div><div id="digestSignup"></div></div>`;
   const openedLine = `<div style="font-size:14px;color:var(--muted);margin:2px 0 12px"><b style="color:var(--text)">${mp.newWk.toLocaleString()}</b> roles opened in the last 7 days across the board.</div>`;
   const boardHead = `<h2 class="pulsehead" style="margin-top:6px">The board right now</h2><p class="dirsub">A live snapshot of every open role — current state, not change.${list.length!==mp.open?` Reflects your current filter (${list.length.toLocaleString()} of ${mp.open.toLocaleString()} roles).`:""}</p>`;
-  document.getElementById("statsWrap").innerHTML = trendHead + digestCard
+  document.getElementById("statsWrap").innerHTML = trendHead + tldr + digestCard
     // ---- What changed this week ----
     + (mo.head ? `<div class="mhead">` + mo.head + `</div>` : "")
     + openedLine
     + `<div class="statgrid">` + mo.cards + `</div>`
-    // ---- The board right now ----
+    // ---- The board right now (grouped into themed clusters) ----
     + boardHead
+    + grp("Where the jobs are")
     + `<div class="statgrid">`
     + barChart(`Roles by studio`, tally(list, j=>j.s), 14)
     + barChart("Roles by discipline", tally(list, j=>j.d))
-    + barChart("Most in-demand skills", tallyMulti(list, j=>j.tech), 14)
     + barChart("Roles by country", tallyMulti(list, j=>j.countries), 14)
     + barChart("Roles by gaming hub", tallyMulti(list, j=>j.hubs), 14)
+    + hiringCard + remoteCard
+    + `</div>`
+    + grp("Who studios want")
+    + `<div class="statgrid">`
     + barChart("Roles by seniority", tally(list, j=>j.sen))
     + yoeCard
-    + barChart("Posting age", buckets.filter(b=>b[1]>0))
+    + barChart("Most in-demand skills", tallyMulti(list, j=>j.tech), 14)
+    + `</div>`
+    + grp("What they pay")
+    + `<div class="statgrid">`
     + salCard + salSenCard + salRegCard + transparencyCard
+    + `</div>`
+    + grp("Freshness & churn")
+    + `<div class="statgrid">`
     + freshCard + ghStudioCard + ghListCard
-    + hiringCard + remoteCard
+    + barChart("Posting age", buckets.filter(b=>b[1]>0))
     + `</div>`;
   try { window.dqDigestForm && window.dqDigestForm("digestSignup"); } catch(e){}
 }
