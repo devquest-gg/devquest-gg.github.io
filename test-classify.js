@@ -57,15 +57,30 @@ const CASES = [
   // --- QA ---
   ["Senior QA Engineer", "QA"],
   ["QA Analyst", "QA"],
+
+  // --- Creative direction = Design (title beats department) ---
+  ["Senior Manager, Creative Direction - Wild Rift", "Design", "Art"],
+
+  // --- Department word-boundary: a substring must not hijack the discipline ---
+  // (3rd element is the department.) "partner" must not match "art", "digital" must not match "it".
+  ["Brand Partnerships Specialist", "!Art", "Brand Partnerships"],
+  ["Business Development Manager", "!Art", "Product – AdTech: Partner Network"],
+  ["Office Coordinator", "!Art", "Partner Network"],
+  ["Systems Admin", "!IT & Security", "Digital Marketing"],
+  ["HR Manager", "People & Ops", "Human Resources – HR Business Partners"],
+  // ...while legit multi-word departments still map correctly
+  ["Some Role", "Engineering", "Software Engineering"],
+  ["Some Role", "Data & Analytics", "Data Science"],
+  ["Some Role", "People & Ops", "Human Resources"],
 ];
 
 let pass = 0, fail = 0;
-for (const [title, exp] of CASES) {
-  const got = mapDiscipline(null, title);
+for (const [title, exp, dept] of CASES) {
+  const got = mapDiscipline(dept || null, title);
   const neg = exp[0] === "!";
   const ok = neg ? got !== exp.slice(1) : got === exp;
   if (ok) pass++;
-  else { fail++; console.log(`FAIL  "${title}"  =>  ${got}  (expected ${exp})`); }
+  else { fail++; console.log(`FAIL  "${title}"${dept ? " [dept: " + dept + "]" : ""}  =>  ${got}  (expected ${exp})`); }
 }
 console.log(`\n${pass}/${CASES.length} passed${fail ? `  —  ${fail} FAILED` : "  ✓"}`);
 process.exit(fail ? 1 : 0);

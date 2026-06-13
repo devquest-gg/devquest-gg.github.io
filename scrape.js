@@ -650,7 +650,7 @@ const DISCIPLINE_MAP = {
   marketing: "Marketing", communications: "Marketing", publishing: "Marketing",
   data: "Data & Analytics", analytics: "Data & Analytics", research: "Data & Analytics",
   esports: "Esports", "player support": "Player Support",
-  hr: "People & Ops", people: "People & Ops", finance: "People & Ops",
+  hr: "People & Ops", "human resources": "People & Ops", people: "People & Ops", finance: "People & Ops",
   legal: "People & Ops", facilities: "People & Ops", security: "IT & Security",
   it: "IT & Security", "information technology": "IT & Security",
 };
@@ -667,7 +667,7 @@ function strongTitleDiscipline(t) {
   if (/\bqa\b|quality assurance|\btester\b|\bsdet\b|test (engineer|analyst|lead|automation|specialist)|quality (engineer|analyst|specialist)|assurance qualit/.test(t)) return "QA";
   if (/art director|\bartist\b|\bartiste\b|direct(eur|rice|ion) artistique|\bart lead\b|lead artist|concept art|\bvfx\b|lighting (artist|lead)|environment artist|character artist|technical artist|technical art\b|(character|environment|prop|vehicle|weapon|texture) (artist|art|outsourc)/.test(t)) return "Art";
   if (/\banimator\b|animation (director|lead|manager|supervisor)|\brigging\b|cinematics? (director|lead|supervisor|manager|animator|designer)|\bmocap\b|motion[ -]?capture/.test(t)) return "Animation";
-  if (/game design|level design|systems? design|narrative design|\bwriter\b|\bscénariste\b|encounter design|combat design|content design|economy design|quality design|gameplay design|ux design|ui design|concepteur|conceptrice|conception de jeu|world build|world design|environment design|creative director|directeur (créatif|creatif)|directrice (créative|creative)/.test(t)) return "Design";
+  if (/game design|level design|systems? design|narrative design|\bwriter\b|\bscénariste\b|encounter design|combat design|content design|economy design|quality design|gameplay design|ux design|ui design|concepteur|conceptrice|conception de jeu|world build|world design|environment design|creative direct(or|ion)|directeur (créatif|creatif)|directrice (créative|creative)/.test(t)) return "Design";
   if ((/(engineer|programmer|programming|developer|architect)\b|architecte|ingénieur|programmeur|développeur|technical (director|lead)/.test(t)) && !/\bsales\b|customer success|account exec|solutions? consultant|product developer|developer (program|programme|community|ecosystem|partnership)|business develop(er|ment)|analytics developer/.test(t)) return "Engineering";
   if (/machine learning|\bml\b ?(scientist|researcher|ops)|data scien|data analy(st|tics|sis)|business intelligence|\bbi analyst\b|insights? analyst|analytics developer|deep learning|\bnlp\b|artificial intelligence|\bai (scientist|researcher|research)|\bof ai\b/.test(t)) return "Data & Analytics";
   // "Development Director/Manager/Lead" = game-production leadership — but NOT HR "Learning & Development"
@@ -685,7 +685,10 @@ function mapDiscipline(raw, title) {
   // 2) Department mapping.
   const key = (raw || "").toLowerCase().trim();
   if (DISCIPLINE_MAP[key]) return DISCIPLINE_MAP[key];
-  for (const [k, v] of Object.entries(DISCIPLINE_MAP)) if (key.includes(k)) return v;
+  // Whole-word match only — a raw substring includes() wrongly mapped "partner"→art, "security"/
+  // "digital"→it, "department"→art, etc. Word boundaries keep multi-word departments working
+  // ("Software Engineering", "Data Science") without the false hits.
+  for (const [k, v] of Object.entries(DISCIPLINE_MAP)) if (new RegExp("\\b" + k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "\\b").test(key)) return v;
   // 3) Broader, less-specific title fallback (bare "designer", "ux", "analytics"…).
   // "Developer" shows up in many NON-engineering titles — developer relations / advocacy /
   // evangelism, community & content developers, developer marketing. Catch those first so they
