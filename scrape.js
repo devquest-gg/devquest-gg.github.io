@@ -27,7 +27,6 @@ const DIRECTORY = [
   { name: "Valve", url: "https://www.valvesoftware.com/en/jobs", note: "Steam, Half-Life, Dota 2 — custom site", city: "Bellevue, WA" },
   { name: "Remedy Entertainment", url: "https://www.remedygames.com/careers", note: "Control, Alan Wake — Finland", city: "Espoo, Finland" },
   { name: "Virtuos", url: "https://www.virtuosgames.com/careers", note: "AAA co-dev / outsourcing — global", city: "Singapore" },
-  { name: "Playground Games", url: "https://www.playground-games.com/careers", note: "Forza Horizon, Fable — Xbox", city: "Leamington Spa, UK" },
   { name: "Creative Assembly", url: "https://www.creative-assembly.com/careers", note: "Total War, Alien — Sega", city: "Horsham, UK" },
   { name: "Fuse Games", url: "https://fusegames.com/careers", note: "ex-Criterion devs — UK", city: "Guildford, UK" },
   { name: "Undead Labs", url: "https://www.undeadlabs.com/careers", note: "State of Decay — Xbox", city: "Seattle, WA" },
@@ -371,6 +370,8 @@ const STUDIOS = [
   { name: "Hi-Rez Studios", type: "jazzhr", token: "hirezstudios" },               // SMITE, Paladins — JazzHR
   // Re-promoted 2026-06-13 with the Workday User-Agent fix (was demoted when Workday began 422'ing).
   { name: "Cloud Imperium Games", type: "workday", host: "cloudimperiumgames.wd1.myworkdayjobs.com", tenant: "cloudimperiumgames", site: "CIG_Global_Careers", token: "cig" }, // Star Citizen, Squadron 42
+  // Xbox first-party studio on its own SSR careers site (Microsoft's central board can't attribute studios).
+  { name: "Playground Games", type: "playground", token: "playground", city: "Leamington Spa, UK" }, // Fable, Forza Horizon
 ];
 
 // ---- Studio type tags (Michelle's idea) ------------------------------------
@@ -1970,7 +1971,39 @@ async function fetchPinpoint(studio) {
   });
 }
 
-const FETCHERS = { greenhouse: fetchGreenhouse, lever: fetchLever, workday: fetchWorkday, avature: fetchAvature, smartrecruiters: fetchSmartRecruiters, workable: fetchWorkable, phenom: fetchPhenom, teamtailor: fetchTeamtailor, eightfold: fetchEightfold, amazonjobs: fetchAmazonJobs, ashby: fetchAshby, zenimax: fetchZenimax, bamboohr: fetchBambooHr, jobscore: fetchJobScore, jazzhr: fetchJazzHr, jobvite: fetchJobvite, recruitee: fetchRecruitee, breezy: fetchBreezy, manatal: fetchManatal, sumodigital: fetchSumoDigital, pinpoint: fetchPinpoint };
+// ---- Playground Games (Fable, Forza Horizon) — own SSR careers site --------
+// Xbox first-party studios run independent careers boards, NOT Microsoft's central
+// Eightfold board (which exposes no studio attribution — location is contaminated by
+// MS Cloud/Research/Windows roles and there is no company/studio facet, so it can't be
+// cleanly scraped per-studio). Playground's Next.js page server-renders each opening as
+// a <a aria-label="Navigate to vacancy: TITLE" href="/vacancy/ID"> row with discipline +
+// game columns. The studio is in Leamington Spa, UK.
+async function fetchPlayground(studio) {
+  let html;
+  if (SAMPLE_FILE) { const d = loadSample(studio); if (!d) return []; html = typeof d === "string" ? d : (d.html || ""); }
+  else { html = await fetchText("https://www.playground-games.com/careers"); }
+  const re = /aria-label="Navigate to vacancy: ([^"]+)"\s+href="(\/vacancy\/(\d+))"([\s\S]*?)<\/a>/g;
+  const out = []; let m;
+  while ((m = re.exec(html))) {
+    const title = decodeEnt(m[1].trim());
+    const disc = (m[4].match(/VacancyRow_col--type__\w+">([^<]+)</) || [])[1] || "";
+    const location = studio.city || "Leamington Spa, UK";
+    if (!title) continue;
+    out.push({
+      id: `pg-${studio.token}-${m[3]}`,
+      title, studio: studio.name,
+      discipline: mapDiscipline(disc, title),
+      workType: inferWorkType(title, location, []),
+      location, region: inferRegion(location),
+      seniority: inferSeniority(title),
+      salary: null, yoe: null, postedAt: null,
+      url: "https://www.playground-games.com" + m[2],
+    });
+  }
+  return out;
+}
+
+const FETCHERS = { greenhouse: fetchGreenhouse, lever: fetchLever, workday: fetchWorkday, avature: fetchAvature, smartrecruiters: fetchSmartRecruiters, workable: fetchWorkable, phenom: fetchPhenom, teamtailor: fetchTeamtailor, eightfold: fetchEightfold, amazonjobs: fetchAmazonJobs, ashby: fetchAshby, zenimax: fetchZenimax, bamboohr: fetchBambooHr, jobscore: fetchJobScore, jazzhr: fetchJazzHr, jobvite: fetchJobvite, recruitee: fetchRecruitee, breezy: fetchBreezy, manatal: fetchManatal, sumodigital: fetchSumoDigital, pinpoint: fetchPinpoint, playground: fetchPlayground };
 
 // ---- Ghost-job tracking -----------------------------------------------------
 // Because we scrape on a schedule, we can see how long a listing has REALLY been
