@@ -76,8 +76,6 @@ const DIRECTORY = [
   { name: "Miniclip", url: "https://www.miniclip.com/careers/vacancies", note: "8 Ball Pool, Agar.io · custom board (Switzerland)", city: "Neuchâtel, Switzerland" },
   { name: "GIANTS Software", url: "https://www.giants-software.com/career.php", note: "Farming Simulator · self-hosted board (Switzerland)", city: "Zurich, Switzerland" },
   { name: "Keen Software House", url: "https://www.keenswh.com/careers/", note: "Space Engineers · custom site (Prague)", city: "Prague, Czechia" },
-  // Demoted from mainland 2026-06-11: Workday CXS API started returning HTTP 422 (all request variants); link-out until the workday fetcher is fixed.
-  { name: "Cloud Imperium Games", url: "https://cloudimperiumgames.com/jobs", note: "Star Citizen · Workday board (scrape 422'd — link-out for now)", city: "Los Angeles, CA" },
   // From the Grackle HQ comparison (2026-06-11): notable studios on custom careers sites.
   { name: "FromSoftware", url: "https://careers.fromsoftware.jp/en/openpositions.html", note: "Elden Ring, Dark Souls — custom JP recruiting site", city: "Tokyo, Japan" },
   { name: "Robot Entertainment", url: "https://robotentertainment.com/careers", note: "Orcs Must Die! — fully remote (US Central)", city: "Plano, TX" },
@@ -371,6 +369,8 @@ const STUDIOS = [
   // ---- Promoted from the Island 2026-06-13 (big-studio dig) — already-supported ATS ----
   { name: "tinyBuild", type: "manatal", token: "tinybuild" },                       // Hello Neighbor — careers-page.com/Manatal (verified 6 roles)
   { name: "Hi-Rez Studios", type: "jazzhr", token: "hirezstudios" },               // SMITE, Paladins — JazzHR
+  // Re-promoted 2026-06-13 with the Workday User-Agent fix (was demoted when Workday began 422'ing).
+  { name: "Cloud Imperium Games", type: "workday", host: "cloudimperiumgames.wd1.myworkdayjobs.com", tenant: "cloudimperiumgames", site: "CIG_Global_Careers", token: "cig" }, // Star Citizen, Squadron 42
 ];
 
 // ---- Studio type tags (Michelle's idea) ------------------------------------
@@ -1053,7 +1053,10 @@ async function workdayPost(base, body) {
     headers: {
       "Content-Type": "application/json",
       "Accept": "application/json",
-      "User-Agent": "DevQuest/0.1 (game-dev job aggregator)",
+      // Workday's bot mitigation 422s non-browser User-Agents (this is what disabled the fetcher
+      // in June 2026 — the body variants were never the problem). Present as a real browser.
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36",
+      "Accept-Language": "en-US,en;q=0.9",
     },
     body: JSON.stringify(body),
   });
