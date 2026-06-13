@@ -29,14 +29,12 @@ const DIRECTORY = [
   { name: "Virtuos", url: "https://www.virtuosgames.com/careers", note: "AAA co-dev / outsourcing — global", city: "Singapore" },
   { name: "Creative Assembly", url: "https://www.creative-assembly.com/careers", note: "Total War, Alien — Sega", city: "Horsham, UK" },
   { name: "Fuse Games", url: "https://fusegames.com/careers", note: "ex-Criterion devs — UK", city: "Guildford, UK" },
-  { name: "Undead Labs", url: "https://www.undeadlabs.com/careers", note: "State of Decay — Xbox", city: "Seattle, WA" },
   { name: "Saber Interactive", url: "https://saber.games/careers/", note: "World War Z, Space Marine 2", city: "Fort Lauderdale, FL" },
   { name: "Supermassive Games", url: "https://www.supermassivegames.com/careers", note: "Until Dawn, The Quarry — UK", city: "Guildford, UK" },
   { name: "The Coalition", url: "https://www.thecoalitionstudio.com/careers", note: "Gears of War — Xbox", city: "Vancouver, BC" },
   { name: "Hello Games", url: "https://hellogames.org/join-us/", note: "No Man's Sky — Guildford, UK", city: "Guildford, UK" },
   { name: "Telltale Games", url: "https://telltale.com/careers/", note: "The Wolf Among Us — revived studio", city: "Malibu, CA" },
   // Notable studios we can't cleanly scrape yet (Xbox first-party / custom corporate portals) — link-outs for now.
-  { name: "Obsidian Entertainment", url: "https://www.obsidian.net/careers", note: "Pillars of Eternity, Avowed — Xbox Game Studios", city: "Irvine, CA" },
   { name: "Square Enix", url: "https://www.square-enix-games.com/en_us/careers", note: "Final Fantasy, Dragon Quest — JP publisher", city: "Tokyo, Japan" },
   { name: "LightSpeed Studios", url: "https://www.lightspeed-studios.com/join-us.html", note: "PUBG Mobile — Tencent", city: "Los Angeles, CA" },
   // ---- June 2026: requested / community additions (link-outs; no clean scrapeable feed yet) ----
@@ -48,7 +46,6 @@ const DIRECTORY = [
   // Can't cleanly scrape (Xbox first-party portals, custom sites, or a Pinpoint board) — link-outs.
   { name: "Retro Studios", url: "https://careers.nintendo.com/studios/retro-studios/", note: "Metroid Prime, Donkey Kong — Nintendo (Austin)", city: "Austin, TX" },
   { name: "Rare", url: "https://www.rare.co.uk/careers", note: "Sea of Thieves — Xbox Game Studios (UK)", city: "Twycross, UK" },
-  { name: "inXile Entertainment", url: "https://www.inxile-entertainment.com/careers", note: "Wasteland, Clockwork Revolution — Xbox", city: "Newport Beach, CA" },
   { name: "Atlus", url: "https://atlus.com/careers", note: "Persona, Shin Megami Tensei — SEGA West", city: "Tokyo, Japan" },
   { name: "Uppercut Games", url: "https://www.uppercut-games.com/jobs", note: "City of Brass, Submerged — Canberra indie", city: "Canberra, Australia" },
   // Custom / first-party / unsupported-ATS boards — link-outs (June 2026 batch).
@@ -372,6 +369,9 @@ const STUDIOS = [
   { name: "Cloud Imperium Games", type: "workday", host: "cloudimperiumgames.wd1.myworkdayjobs.com", tenant: "cloudimperiumgames", site: "CIG_Global_Careers", token: "cig" }, // Star Citizen, Squadron 42
   // Xbox first-party studio on its own SSR careers site (Microsoft's central board can't attribute studios).
   { name: "Playground Games", type: "playground", token: "playground", city: "Leamington Spa, UK" }, // Fable, Forza Horizon
+  { name: "Obsidian Entertainment", type: "obsidian", token: "obsidian", city: "Irvine, CA" }, // Avowed, Pillars of Eternity — own SSR board
+  { name: "Undead Labs", type: "greenhouse", token: "undeadlabsllc" },                         // State of Decay — Greenhouse
+  { name: "inXile Entertainment", type: "bamboohr", token: "inxile" },                         // Wasteland, Clockwork Revolution — BambooHR
 ];
 
 // ---- Studio type tags (Michelle's idea) ------------------------------------
@@ -2003,7 +2003,37 @@ async function fetchPlayground(studio) {
   return out;
 }
 
-const FETCHERS = { greenhouse: fetchGreenhouse, lever: fetchLever, workday: fetchWorkday, avature: fetchAvature, smartrecruiters: fetchSmartRecruiters, workable: fetchWorkable, phenom: fetchPhenom, teamtailor: fetchTeamtailor, eightfold: fetchEightfold, amazonjobs: fetchAmazonJobs, ashby: fetchAshby, zenimax: fetchZenimax, bamboohr: fetchBambooHr, jobscore: fetchJobScore, jazzhr: fetchJazzHr, jobvite: fetchJobvite, recruitee: fetchRecruitee, breezy: fetchBreezy, manatal: fetchManatal, sumodigital: fetchSumoDigital, pinpoint: fetchPinpoint, playground: fetchPlayground };
+// ---- Obsidian Entertainment (Avowed, Pillars of Eternity) — own SSR careers site ----
+// Xbox first-party studio with an independent server-rendered board. Each opening is an
+// <a href=".../careers/open-positions/<dept>/<slug>"> whose visible text leads with the title.
+async function fetchObsidian(studio) {
+  let html;
+  if (SAMPLE_FILE) { const d = loadSample(studio); if (!d) return []; html = typeof d === "string" ? d : (d.html || ""); }
+  else { html = await fetchText("https://www.obsidian.net/careers"); }
+  const re = /<a[^>]+href="(https:\/\/www\.obsidian\.net\/careers\/open-positions\/([^\/"]+)\/[^"]+)"[^>]*>([\s\S]*?)<\/a>/g;
+  const out = []; const seen = new Set(); let m;
+  while ((m = re.exec(html))) {
+    const url = m[1], dept = m[2];
+    const parts = m[3].replace(/<[^>]+>/g, "|").split("|").map(x => decodeEnt(x).trim()).filter(Boolean);
+    const title = parts[0] || "";
+    const slug = url.split("/").pop() || title;
+    if (!title || seen.has(slug)) continue;
+    seen.add(slug);
+    const location = studio.city || "Irvine, CA";
+    out.push({
+      id: `ob-${studio.token}-${slug}`,
+      title, studio: studio.name,
+      discipline: mapDiscipline(dept, title),
+      workType: inferWorkType(title, location, []),
+      location, region: inferRegion(location),
+      seniority: inferSeniority(title),
+      salary: null, yoe: null, postedAt: null, url,
+    });
+  }
+  return out;
+}
+
+const FETCHERS = { greenhouse: fetchGreenhouse, lever: fetchLever, workday: fetchWorkday, avature: fetchAvature, smartrecruiters: fetchSmartRecruiters, workable: fetchWorkable, phenom: fetchPhenom, teamtailor: fetchTeamtailor, eightfold: fetchEightfold, amazonjobs: fetchAmazonJobs, ashby: fetchAshby, zenimax: fetchZenimax, bamboohr: fetchBambooHr, jobscore: fetchJobScore, jazzhr: fetchJazzHr, jobvite: fetchJobvite, recruitee: fetchRecruitee, breezy: fetchBreezy, manatal: fetchManatal, sumodigital: fetchSumoDigital, pinpoint: fetchPinpoint, playground: fetchPlayground, obsidian: fetchObsidian };
 
 // ---- Ghost-job tracking -----------------------------------------------------
 // Because we scrape on a schedule, we can see how long a listing has REALLY been
@@ -2292,7 +2322,7 @@ module.exports = { mapDiscipline, strongTitleDiscipline, normDisc };
   if (droppedNonGame) console.log(`Filtered out ${droppedNonGame} non-game facility/service role(s).`);
   // Junk titles: some feeds emit a button/placeholder label instead of a real title (e.g. "Apply
   // Here", "View job", an empty string). Drop anything whose WHOLE title is a generic CTA/placeholder.
-  const JUNK_TITLE = /^(apply( (here|now|today|online|link))?|view (job|details|role|opening|posting)|learn more|click here|see (more|all|details|jobs?)|read more|submit( (application|cv|resume))?|join (us|our team)|open (roles|positions)|explore (roles|opportunities)|details|more info|n\/?a|tbd|untitled)\.?$/i;
+  const JUNK_TITLE = /^(apply( (here|now|today|online|link))?|view (job|details|role|opening|posting)|learn more|click here|see (more|all|details|jobs?)|read more|submit( (application|cv|resume))?|join (us|our team)|open (roles|positions)|explore (roles|opportunities)|details|more info|n\/?a|tbd|untitled|.*\bscams?\b.*)\.?$/i;
   let droppedJunk = 0;
   for (let i = all.length - 1; i >= 0; i--) { const tt = (all[i].title || "").trim(); if (!tt || JUNK_TITLE.test(tt)) { all.splice(i, 1); droppedJunk++; } }
   if (droppedJunk) console.log(`Filtered out ${droppedJunk} junk/placeholder-title role(s).`);
