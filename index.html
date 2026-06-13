@@ -775,6 +775,15 @@ function buildProfile(){
     (e.rg||[]).forEach(r => add("region", r, w*0.8));
     P.signal += w;
   });
+  // Back-compat: a returning visitor's pre-event-log profile (legacy {disc,studio,…} buckets) folds
+  // in as a *decaying* baseline anchored to their last legacy interaction — so changing the storage
+  // format never blanks their hot jobs, yet it ages out as fresh event-log clicks accumulate.
+  if (a.disc || a.studio || a.sen || a.region) {
+    const legW = 0.5 * Math.pow(0.5, (now - (a.ts || now)) / AFF_HALFLIFE);
+    ["disc","studio","sen","region"].forEach(buk => {
+      if (a[buk]) for (const k in a[buk]){ add(buk, k, a[buk][k]*legW); if (buk==="disc"||buk==="studio") P.signal += a[buk][k]*legW; }
+    });
+  }
   const addJob = (j,wd,wr) => { add("disc",j.d,wd); add("studio",j.s,wd); add("sen",j.sen,wd*0.7);
     (j.regions||[]).forEach(r=>add("region",r,wr)); };
   try { saved.forEach(id => { const j=JOB_BY_ID[id]; if(j){ addJob(j,1.5,1.4); P.signal+=1.5; } }); } catch(e){}
