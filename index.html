@@ -740,67 +740,82 @@ const JOB_BY_ID = {}; JOBS.forEach(j => { JOB_BY_ID[j.id] = j; });
 // sent anywhere: saved/tracked jobs + followed studios (strong), matrix-cell and
 // job-posting clicks banked over time, minus dismissed (negative). Powers the
 // "🔥 Hot jobs for you" group on the List view and reorders the Trends hero.
-const AFF_KEY = "dq-affinity";   // banked click-stream signals (matrix + job clicks)
+const AFF_KEY = "dq-affinity";   // recent interaction events (matrix + job clicks), timestamped
+const AFF_MAX = 60;              // keep only the most recent N events
+const AFF_HALFLIFE = 7*864e5;    // signal half-life: a click's weight halves every 7 days
 const HOT_MIN_SIGNAL = 4;        // returning-visitor threshold before we personalize
+const HOT_NEW_DAYS = 14;         // "newly posted" window for the priority tiers
+const HOT_MAX_DAYS = 60;         // never surface a role older than this as "hot"
 let hotOpen = true;              // "Hot jobs for you" group expand state (session)
 function affLoad(){ try { return store.get(AFF_KEY, {}) || {}; } catch(e){ return {}; } }
-function affBump(bucket, key, w){
-  if (!key || !w) return;
-  try {
-    const a = affLoad(); const b = a[bucket] = a[bucket] || {};
-    b[key] = Math.min(60, (b[key]||0) + w);   // cap so one dimension can't run away
-    a.ts = Date.now(); store.set(AFF_KEY, a);
-  } catch(e){}
+// Append a timestamped interaction event (recency-weighted later); keep the most recent AFF_MAX.
+function affPush(ev){
+  try { const a = affLoad(); const list = a.ev || []; ev.t = Date.now(); list.push(ev);
+    a.ev = list.slice(-AFF_MAX); store.set(AFF_KEY, a); } catch(e){}
 }
-// record an opened/clicked job's attributes; weight w scales the signal
-function affRecordJob(j, w){
-  if (!j) return; w = w || 1;
-  affBump("disc", j.d, w); affBump("studio", j.s, w); affBump("sen", j.sen, w*0.7);
-  (j.tech||[]).slice(0,6).forEach(t=>affBump("tech", t, w*0.5));
-  (j.regions||[]).forEach(r=>affBump("region", r, w*0.4));
+function affRecordJob(j, w){ if (!j) return; affPush({ w:w||1, d:j.d, s:j.s, sn:j.sen, rg:(j.regions||[]).slice(0,3) }); }
+function affRecordCell(disc, sen){ affPush({ w:1, d:disc, sn:sen }); }
+// pick the dominant key(s) of a tally: the top one plus any within `frac` of it
+function topKeys(obj, frac){
+  const e = Object.entries(obj||{}).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1]);
+  if (!e.length) return [];
+  const max = e[0][1];
+  return e.filter(([,v])=>v >= max*frac).map(([k])=>k);
 }
-function affRecordCell(disc, sen){ affBump("disc", disc, 1); affBump("sen", sen, 0.8); }
-// Merge banked clicks with the live saved/followed/tracked/dismissed sets into one
-// weighted profile. saved/tracked/follows are authoritative (read live every build);
-// only the ephemeral click-stream is persisted in AFF_KEY.
+// Build a recency-weighted interest profile. Recent clicks dominate (exponential time-decay),
+// so the picture follows what the visitor is doing *now*, not just their first session. Deliberate
+// signals (saved / tracked / followed) add a steady, undecayed vote. All on-device, sent nowhere.
 function buildProfile(){
-  const a = affLoad();
-  const P = { disc:{}, studio:{}, sen:{}, tech:{}, region:{}, negStudio:{}, negDisc:{}, signal:0 };
-  const add = (buk,k,w) => { if(!k) return; P[buk][k] = (P[buk][k]||0) + w; };
-  const addJob = (j,w) => { add("disc",j.d,w); add("studio",j.s,w); add("sen",j.sen,w*0.7);
-    (j.tech||[]).slice(0,6).forEach(t=>add("tech",t,w*0.5)); (j.regions||[]).forEach(r=>add("region",r,w*0.4)); };
-  for (const buk of ["disc","studio","sen","tech","region"])
-    if (a[buk]) for (const k in a[buk]){ add(buk,k,a[buk][k]); if(buk==="disc"||buk==="studio") P.signal += a[buk][k]; }
-  try { saved.forEach(id => { const j=JOB_BY_ID[id]; if(j){ addJob(j,4); P.signal+=2; } }); } catch(e){}
-  try { Object.keys(appStatus).forEach(id => { const j=JOB_BY_ID[id]; if(j){ addJob(j,3); P.signal+=2; } }); } catch(e){}
-  try { FOLLOWS.forEach(s => { add("studio", s, 5); P.signal+=2; }); } catch(e){}
+  const a = affLoad(); const now = Date.now();
+  const P = { disc:{}, studio:{}, sen:{}, region:{}, negStudio:{}, negDisc:{}, signal:0 };
+  const add = (buk,k,w) => { if(!k||!w) return; P[buk][k] = (P[buk][k]||0) + w; };
+  (a.ev || []).forEach(e => {
+    const w = (e.w||1) * Math.pow(0.5, (now - (e.t||now)) / AFF_HALFLIFE);   // decayed by age
+    add("disc", e.d, w); add("studio", e.s, w); add("sen", e.sn, w*0.6);
+    (e.rg||[]).forEach(r => add("region", r, w*0.8));
+    P.signal += w;
+  });
+  const addJob = (j,wd,wr) => { add("disc",j.d,wd); add("studio",j.s,wd); add("sen",j.sen,wd*0.7);
+    (j.regions||[]).forEach(r=>add("region",r,wr)); };
+  try { saved.forEach(id => { const j=JOB_BY_ID[id]; if(j){ addJob(j,1.5,1.4); P.signal+=1.5; } }); } catch(e){}
+  try { Object.keys(appStatus).forEach(id => { const j=JOB_BY_ID[id]; if(j){ addJob(j,1.5,1.2); P.signal+=1.5; } }); } catch(e){}
+  try { FOLLOWS.forEach(s => { add("studio", s, 2.5); P.signal+=1; }); } catch(e){}
   try { dismissed.forEach(id => { const j=JOB_BY_ID[id]; if(j){ P.negStudio[j.s]=(P.negStudio[j.s]||0)+1; P.negDisc[j.d]=(P.negDisc[j.d]||0)+0.5; } }); } catch(e){}
   return P;
 }
-// Rank a pool of jobs by match to the profile. Skips already-acted-on jobs (saved /
-// tracked / dismissed) so "hot" is always fresh suggestions. Returns top n job objects.
+// Rank jobs into "hot for you" using a strict priority ladder. The discipline is LOCKED to the
+// visitor's dominant interest(s) — we never mix in unrelated disciplines. Within that, newest-first:
+//   1) their discipline at the companies they engage with
+//   2) their discipline at other companies in their region
+//   3) their discipline, newly posted (≤14d), anywhere
+//   4) their discipline, anything else still ≤60 days
+// Acted-on roles (saved/applied/dismissed) and roles older than 60 days are never shown.
 function hotJobs(pool, P, n){
   if (!P || P.signal < HOT_MIN_SIGNAL) return [];
-  const mx = buk => Math.max(1, ...Object.values(P[buk]||{}));
-  const mD=mx("disc"), mS=mx("studio"), mSn=mx("sen"), mT=mx("tech"), mR=mx("region");
-  const W = { disc:3, studio:3.5, sen:1.2, tech:2, region:1 };
-  const out = [];
-  for (const j of pool){
-    if (saved.has(j.id) || appStatus[j.id] || dismissed.has(j.id)) continue;
-    let s = W.disc*((P.disc[j.d]||0)/mD) + W.studio*((P.studio[j.s]||0)/mS) + W.sen*((P.sen[j.sen]||0)/mSn);
-    if (j.tech && j.tech.length){ let tb=0; for(const t of j.tech){ const v=(P.tech[t]||0)/mT; if(v>tb)tb=v; } s += W.tech*tb; }
-    if (j.regions && j.regions.length){ let rb=0; for(const r of j.regions){ const v=(P.region[r]||0)/mR; if(v>rb)rb=v; } s += W.region*rb; }
-    if (P.negStudio[j.s]) s -= 2.5;
-    if (P.negDisc[j.d])   s -= 0.8;
-    if (s > 0) out.push({ j, s });
-  }
-  out.sort((a,b)=> b.s - a.s || (b.j.ts||0) - (a.j.ts||0));
-  return out.slice(0, n).map(x=>x.j);
+  const discSet = new Set(topKeys(P.disc, 0.6));        // locked discipline(s)
+  if (!discSet.size) return [];
+  const studioSet = new Set(topKeys(P.studio, 0.35));   // companies they engage with
+  const regionSet = new Set(topKeys(P.region, 0.35));   // their geographic region(s)
+  const ageOf = j => _ageDays(j);
+  const cand = pool.filter(j => discSet.has(j.d)
+      && !saved.has(j.id) && !appStatus[j.id] && !dismissed.has(j.id)
+      && !P.negStudio[j.s]
+      && (ageOf(j) == null || ageOf(j) <= HOT_MAX_DAYS));
+  const newer    = j => { const a = ageOf(j); return a != null && a <= HOT_NEW_DAYS; };
+  const inRegion = j => regionSet.size && (j.regions||[]).some(r => regionSet.has(r));
+  const byNew    = (a,b) => (b.ts||b.fseen||0) - (a.ts||a.fseen||0);   // newest first
+  const used = new Set(), out = [];
+  const take = arr => { arr.sort(byNew); for (const j of arr){ if (out.length>=n) break; if (!used.has(j.id)){ used.add(j.id); out.push(j); } } };
+  take(cand.filter(j => studioSet.has(j.s)));   // tier 1: discipline + their companies
+  take(cand.filter(inRegion));                  // tier 2: discipline + their region
+  take(cand.filter(newer));                     // tier 3: discipline + newly posted, anywhere
+  take(cand);                                   // tier 4: discipline, anything else ≤60d
+  return out.slice(0, n);
 }
 function hotWhy(P){
-  const top = buk => { let bk=null,bv=0; for(const k in P[buk]) if(P[buk][k]>bv){ bv=P[buk][k]; bk=k; } return bk; };
-  const bits = [top("disc"), top("studio")].filter(Boolean);
-  return bits.length ? "based on your interest in " + bits.join(" · ") : "";
+  const d = topKeys(P.disc, 0.6)[0]; if (!d) return "";
+  const s = topKeys(P.studio, 0.35)[0];
+  return s ? `${d} roles · ${s} & similar` : `based on your ${d} activity`;
 }
 function renderHotSection(hot, P){
   const why = hotWhy(P);
