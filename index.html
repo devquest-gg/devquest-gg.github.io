@@ -842,6 +842,27 @@ function renderHotSection(hot, P){
     </div>`;
 }
 function toggleHot(){ hotOpen = !hotOpen; render(); }
+
+// ---- Email-ask budget: one calm, well-timed prompt; quiet for two weeks after any dismissal -----
+// Every email surface (the alert bar's discipline pitch, the filter ask, the apply nudge) consults
+// this so a returning visitor is never peppered. Subscribe anywhere → all go silent for good.
+const EMAILASK_KEY = "dq-emailask", EMAILASK_COOLDOWN = 14*864e5, EMAILASK_MAX = 3;
+function emailSubscribed(){ try { return !!store.get("luj-subscribed", 0); } catch(e){ return false; } }
+function canAskEmail(){
+  if (emailSubscribed()) return false;
+  try {
+    const raw = store.get(EMAILASK_KEY, null);
+    const n  = (raw && typeof raw === "object") ? (raw.n||0) : (raw ? 1 : 0);
+    const ts = (raw && typeof raw === "object") ? (raw.ts||0) : 0;
+    if (n >= EMAILASK_MAX) return false;                          // capped out — stop asking
+    if (ts && (Date.now() - ts) < EMAILASK_COOLDOWN) return false; // still in the quiet window
+  } catch(e){}
+  return true;
+}
+function dismissEmailAsk(){
+  try { const raw = store.get(EMAILASK_KEY, null); const n = (raw && typeof raw === "object") ? (raw.n||0) : (raw ? 1 : 0);
+    store.set(EMAILASK_KEY, { n: n+1, ts: Date.now() }); } catch(e){}
+}
 // apply-intent telemetry: clicking a job (or a location chip) sends an apply_click carrying the
 // job's studio, discipline, seniority, posting-age bucket and whether it lists salary — so the
 // owner dashboard can break apply intent down by studio / discipline / freshness. Cookieless.
@@ -864,17 +885,8 @@ var APPLY_NUDGE_MAX = 3, APPLY_NUDGE_COOLDOWN = 7*864e5; // up to 3 declines, a 
 function _h(s){ return String(s==null?"":s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];}); }
 function showApplyNudge(studio, disc){
   if (_applyNudgeShown) return;
-  try { if (store.get("luj-subscribed", 0)) return; } catch(e){} // already a subscriber: never nudge
-  // Dismissal state { n: times declined, ts: last dismissed }. Re-ask weekly, capped at 3 declines,
-  // then permanent. Legacy boolean value (old "1") counts as a single prior decline.
-  var raw; try { raw = store.get("luj-applynudge", null); } catch(e){ raw = null; }
-  var strikes = (raw && typeof raw === "object") ? (raw.n||0) : (raw ? 1 : 0);
-  var lastTs  = (raw && typeof raw === "object") ? (raw.ts||0) : 0;
-  if (strikes >= APPLY_NUDGE_MAX) return;                            // three strikes -> permanent
-  if (lastTs && (Date.now() - lastTs) < APPLY_NUDGE_COOLDOWN) return; // still inside the weekly cooldown
-  // Never stack two email asks: if the filter bar is already offering email, don't add a nudge.
-  var ab = document.getElementById("alertBar");
-  if (ab && ab.getAttribute("data-state") && ab.style.display !== "none") return;
+  if (!canAskEmail()) return;             // shared budget: subscribed / in cooldown / capped -> never nudge
+  if (window.__emailAskActive) return;    // the alert bar is already asking -> don't stack a second prompt
   _applyNudgeShown = true;
   var jobsEl = document.getElementById("jobs");
   if (!jobsEl || !jobsEl.parentNode) return;
@@ -882,14 +894,13 @@ function showApplyNudge(studio, disc){
   if (!bar){ bar = document.createElement("div"); bar.id = "applyNudge"; bar.style.cssText = "margin:10px 0 8px;padding:11px 14px;border:1px solid #2a3a28;border-radius:8px;background:#141816"; jobsEl.parentNode.insertBefore(bar, jobsEl); }
   var d = disc || "matching";
   bar.innerHTML = '<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;color:#d0dcc8">'
-    + '<span style="font-size:14px">Checking out roles at <b>'+_h(studio)+'</b>? Want alerts for new <b>'+_h(d)+'</b> roles?</span>'
-    + '<button id="anYes" style="margin-left:auto;background:#1f6feb;color:#fff;border:0;border-radius:6px;padding:7px 14px;font-weight:600;cursor:pointer">Email me</button>'
+    + '<span style="font-size:14px">Applying at <b>'+_h(studio)+'</b>? Get new <b>'+_h(d)+'</b> roles in one email a week — never miss one.</span>'
+    + '<button id="anYes" style="margin-left:auto;background:#1f6feb;color:#fff;border:0;border-radius:6px;padding:7px 14px;font-weight:600;cursor:pointer">Email me weekly</button>'
     + '<button id="anNo" style="background:transparent;color:#6e7681;border:0;font-size:13px;cursor:pointer">No thanks</button></div>';
   bar.style.display = "block";
-  // "No thanks" counts as a strike; "Email me" just resets the weekly clock (engagement, not a no).
-  function record(declined){ try{ store.set("luj-applynudge", { n: strikes + (declined?1:0), ts: Date.now() }); }catch(e){} bar.style.display = "none"; }
-  document.getElementById("anYes").onclick = function(){ record(false); try{ window.dqAlertForm && window.dqAlertForm(d+" roles", { disc: (disc?[disc]:[]) }); }catch(e){} };
-  document.getElementById("anNo").onclick = function(){ record(true); };
+  // "No thanks" spends a strike + starts the shared quiet window; "Email me" opens the pre-filled form.
+  document.getElementById("anYes").onclick = function(){ bar.style.display="none"; try{ window.dqAlertForm && window.dqAlertForm(d, { disc: (disc?[disc]:[]) }, "apply"); }catch(e){} };
+  document.getElementById("anNo").onclick = function(){ try{ dismissEmailAsk(); }catch(e){} bar.style.display = "none"; };
 }
 
 // ---- sub-discipline tagging (derived from the title, client-side so no re-scrape) ----
@@ -1392,6 +1403,7 @@ function render(){
   // visitors with enough on-device signal. Any active filter / search / selection hides it so the
   // normal grouped results take over (and first-timers always get the standard default view).
   let hotHtml = "";
+  window.__hotDisc = null;   // discipline the email-ask bar can pre-target (set when hot jobs show)
   try {
     const defaultBrowse = view === "list" && !showDismissed && !savedOnly && !quickNew && !quickRemote
       && !q && !qExc.length && !selCells.size && !selStudios.size && !selSubs.size && !selCountries.size
@@ -1400,7 +1412,13 @@ function render(){
     if (defaultBrowse && list.length) {
       const P = buildProfile();
       const hot = hotJobs(list, P, 12);
-      if (hot.length >= 4) hotHtml = renderHotSection(hot, P);
+      if (hot.length >= 4) {
+        hotHtml = renderHotSection(hot, P);
+        const _hd = topKeys(P.disc, 0.6);
+        window.__hotDisc = _hd[0] || null;
+        window.__hotDiscs = _hd;
+        window.__hotDiscNew = list.filter(j => _hd.includes(j.d) && j.ts && (Date.now()-j.ts) <= 7*864e5).length;
+      }
     }
   } catch(e){}
 
@@ -2894,7 +2912,7 @@ try {
   }
   window.dqTrack = track;
   // let the after-apply nudge (top-level) open the same alert form, pre-set to a discipline.
-  window.dqAlertForm = function(label, c){ try{ openForm(label, c||{}); }catch(e){} };
+  window.dqAlertForm = function(label, c, src){ try{ openForm(label, c||{}, src||"apply"); }catch(e){} };
   // one-time visitor-source capture: referrer host + any UTM tags on the URL (cookieless).
   try {
     var _host = location.hostname.replace(/^www\./,"");
@@ -2983,9 +3001,11 @@ try {
   var jobsEl=document.getElementById("jobs");
   if(jobsEl&&jobsEl.parentNode) jobsEl.parentNode.insertBefore(bar, jobsEl);
 
-  function buildCta(label, c, n){
-    bar.setAttribute("data-state","cta"); bar.style.display="block";
+  function buildCta(label, c, n, fresh){
     var subbed=false; try{ subbed=!!store.get("luj-subscribed",0); }catch(e){}
+    // The shared one-ask budget: hide entirely if not subscribed and we're in the quiet window / capped.
+    if(!subbed && !canAskEmail()){ bar.style.display="none"; bar.removeAttribute("data-state"); window.__emailAskActive=false; return; }
+    bar.setAttribute("data-state","cta"); bar.style.display="block";
     if(subbed){
       // Already subscribed on this device: go quiet, but stay available so they can add an
       // alert for a NEW search. Muted styling, low-key "+ Add alert" instead of the loud prompt.
@@ -2995,23 +3015,31 @@ try {
       bar.innerHTML='<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;color:#7a8878;font-size:13px">'+
         '<span>'+qmsg+'</span>'+
         '<button id="alertCta" style="margin-left:auto;background:transparent;color:#58a6ff;border:0;font-size:13px;font-weight:600;cursor:pointer;padding:2px 4px">'+(n===0?'+ Notify me':'+ Add alert')+'</button></div>';
-      var qbtn=document.getElementById("alertCta"); if(qbtn) qbtn.onclick=function(){ openForm(label, c); };
+      var qbtn=document.getElementById("alertCta"); if(qbtn) qbtn.onclick=function(){ openForm(label, c, "readd"); };
+      window.__emailAskActive=false;
       return;
     }
     var msg, btnLabel;
     if(n===0){
-      msg='🔔 No <b>'+escapeH(label)+'</b> roles open right now. We\'ll email you when one opens.';
-      btnLabel='Notify me';
+      msg = fresh
+        ? '📬 Get new <b>'+escapeH(label)+'</b> roles in one email a week — be first when they open.'
+        : '🔔 No <b>'+escapeH(label)+'</b> roles open right now — we\'ll email you, one a week, when they do.';
+      btnLabel='Email me weekly';
     } else {
-      msg='🔔 <b style="color:#fff">'+n+' role'+(n===1?'':'s')+'</b> '+(n===1?'matches':'match')+' <b>'+escapeH(label)+'</b>. Get them emailed to you now, then weekly as new ones open.';
-      btnLabel='Email me these';
+      msg = fresh
+        ? '📬 <b style="color:#fff">'+n+' new '+escapeH(label)+'</b> role'+(n===1?'':'s')+' this week. Get fresh matches in one email a week — never miss one.'
+        : '🔔 <b style="color:#fff">'+n+' '+escapeH(label)+'</b> role'+(n===1?'':'s')+' '+(n===1?'matches':'match')+'. One email a week as new ones open.';
+      btnLabel='Email me weekly';
     }
     bar.innerHTML='<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;color:#d0dcc8">'+
-      '<span style="font-size:14px">'+msg+'</span>'+
-      '<button id="alertCta" style="margin-left:auto;background:#1f6feb;color:#fff;border:0;border-radius:6px;padding:7px 14px;font-weight:600;cursor:pointer">'+btnLabel+'</button></div>';
-    var btn=document.getElementById("alertCta"); if(btn) btn.onclick=function(){ openForm(label, c); };
+      '<span style="font-size:14px;flex:1;min-width:180px">'+msg+'</span>'+
+      '<button id="alertCta" style="background:#1f6feb;color:#fff;border:0;border-radius:6px;padding:7px 14px;font-weight:600;cursor:pointer">'+btnLabel+'</button>'+
+      '<button id="alertDismiss" title="Not now" aria-label="Dismiss" style="background:transparent;color:#6e7681;border:0;font-size:16px;line-height:1;cursor:pointer;padding:2px 6px">×</button></div>';
+    var btn=document.getElementById("alertCta"); if(btn) btn.onclick=function(){ openForm(label, c, fresh ? "hotjobs" : "filter"); };
+    var dis=document.getElementById("alertDismiss"); if(dis) dis.onclick=function(){ try{dismissEmailAsk();}catch(e){} bar.style.display="none"; bar.removeAttribute("data-state"); window.__emailAskActive=false; };
+    window.__emailAskActive=true;
   }
-  function openForm(label, c){
+  function openForm(label, c, src){
     bar.setAttribute("data-state","form");
     bar.innerHTML='<form id="alertForm" style="display:flex;flex-direction:column;gap:8px;color:#d0dcc8">'+
       '<div style="font-size:14px">🔔 Weekly email of new <b>'+escapeH(label)+'</b> roles:</div>'+
@@ -3036,7 +3064,7 @@ try {
         if(!tsToken){ msg.textContent="Just a sec — finishing a quick security check. Tap again."; msg.style.color="#c87878"; return; }
       }
       msg.textContent="Sending…"; msg.style.color="#7a8878";
-      track("alert_signup",{});
+      track("alert_signup",{ src: src || "filter" });
       fetch(ALERTS_API+"/subscribe",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email:email,criteria:c,label:label,token:tsToken})})
         .then(function(r){ return r.json().catch(function(){return{};}).then(function(j){ return {ok:r.ok,j:j}; }); })
         .then(function(res){
@@ -3073,8 +3101,15 @@ try {
     var n=(typeof window.__dqCount==="number"?window.__dqCount:null);
     // No filters, or a free-text-only search that found nothing -> no email ask (the in-list
     // "no roles match" helper covers the typo case). Structured filters at zero DO get the ask.
-    if(!hasFilters(c) || (n===0 && !hasStructured(c))){ bar.style.display="none"; bar.removeAttribute("data-state"); return; }
-    buildCta(labelFor(c), c, n);
+    if(!hasFilters(c) || (n===0 && !hasStructured(c))){
+      // No active filter (or a fruitless free-text search): offer a discipline-targeted ask to the
+      // engaged hot-jobs crowd; otherwise stay hidden. The shared budget/cooldown is enforced in buildCta.
+      var hd = window.__hotDisc;
+      if (hd) { buildCta(hd, { disc: (window.__hotDiscs||[hd]) }, (window.__hotDiscNew||0), true); }
+      else { bar.style.display="none"; bar.removeAttribute("data-state"); window.__emailAskActive=false; }
+      return;
+    }
+    buildCta(labelFor(c), c, n, false);
   }
 
   // update the bar whenever the job list re-renders (i.e. filters changed)
