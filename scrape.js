@@ -2051,7 +2051,7 @@ async function backfillSalaries(jobs) {
 // for a studio going dark.
 const TRENDS_FILE = path.join(__dirname, "trends.json");
 
-function buildTrends(runCounts, okSet, discCounts, healthy, salInfo, skillCounts) {
+function buildTrends(runCounts, okSet, discCounts, healthy, salInfo, skillCounts, workCounts, yoeInfo, salSen) {
   let store = { days: [] };
   try { store = JSON.parse(fs.readFileSync(TRENDS_FILE, "utf8")); } catch (e) { store = { days: [] }; }
   const days = store.days || [];
@@ -2071,9 +2071,16 @@ function buildTrends(runCounts, okSet, discCounts, healthy, salInfo, skillCounts
   const sal = (healthy || !days.length) ? (salInfo || prevSal || null) : (prevSal || salInfo || null);
   const prevSkills = days.length ? (days[days.length - 1].skills || {}) : {};
   const skills = (healthy || !days.length) ? (skillCounts || {}) : prevSkills;
+  // Phase-0 banked fields (carry forward on a degraded run, same as the others above).
+  const prevWork = days.length ? (days[days.length - 1].work || {}) : {};
+  const work = (healthy || !days.length) ? (workCounts || {}) : prevWork;
+  const prevYoe = days.length ? (days[days.length - 1].yoe || null) : null;
+  const yoe = (healthy || !days.length) ? (yoeInfo || prevYoe || null) : (prevYoe || yoeInfo || null);
+  const prevSalSen = days.length ? (days[days.length - 1].salSen || {}) : {};
+  const salSenSnap = (healthy || !days.length) ? (salSen || {}) : prevSalSen;
 
-  if (days.length && days[days.length - 1].date === today) days[days.length - 1] = { date: today, counts, disc, sal, skills };
-  else days.push({ date: today, counts, disc, sal, skills });
+  if (days.length && days[days.length - 1].date === today) days[days.length - 1] = { date: today, counts, disc, sal, skills, work, yoe, salSen: salSenSnap };
+  else days.push({ date: today, counts, disc, sal, skills, work, yoe, salSen: salSenSnap });
   while (days.length > 120) days.shift();           // keep ~4 months
   store.days = days;
   try { fs.writeFileSync(TRENDS_FILE, JSON.stringify(store)); }
@@ -2192,8 +2199,21 @@ function buildTrends(runCounts, okSet, discCounts, healthy, salInfo, skillCounts
   const salN = all.filter(j => j.salary).length;
   const salInfo = { n: salN, total: all.length, pct: all.length ? Math.round(100 * salN / all.length) : 0 };
   const skillCounts = {}; for (const j of all) for (const t of (j.tech || [])) if (t) skillCounts[t] = (skillCounts[t] || 0) + 1;
+  // ---- Phase-0 snapshot fields: work-type mix, years-of-experience distribution, and salary by
+  // seniority — banked daily so trend history accrues for future public cards (remote trend, pay
+  // bands over time). Salaries are normalized to "$120K–$160K" form, so parse the K figures out. ----
+  const salToK = (s) => { if (!s) return null; const ks = []; const re = /(\d[\d,]*(?:\.\d+)?)\s*[kK]/g; let m; while ((m = re.exec(String(s)))) ks.push(Math.round(parseFloat(m[1].replace(/,/g, "")))); if (!ks.length) { const re2 = /(\d[\d,]{4,})/g; let m2; while ((m2 = re2.exec(String(s)))) { const n = parseInt(m2[1].replace(/,/g, ""), 10); if (n >= 10000) ks.push(Math.round(n / 1000)); } } return ks.length ? [ks[0], ks[ks.length - 1]] : null; };
+  const medOf = (a) => { if (!a.length) return null; const s = a.slice().sort((x, y) => x - y); const i = Math.floor(s.length / 2); return s.length % 2 ? s[i] : Math.round((s[i - 1] + s[i]) / 2); };
+  const workCounts = {};
+  for (const j of all) { const w = j.workType || "Unknown"; workCounts[w] = (workCounts[w] || 0) + 1; }
+  const yoeInfo = { n: 0, sum: 0, b: { "1-2": 0, "3-5": 0, "6-9": 0, "10+": 0 } };
+  for (const j of all) { const y = j.yoe; if (typeof y === "number" && y > 0) { yoeInfo.n++; yoeInfo.sum += y; const k = y <= 2 ? "1-2" : y <= 5 ? "3-5" : y <= 9 ? "6-9" : "10+"; yoeInfo.b[k]++; } }
+  const _salSenAgg = {};
+  for (const j of all) { const sen = j.seniority || "Unknown"; if (!_salSenAgg[sen]) _salSenAgg[sen] = { n: 0, total: 0, lo: [], hi: [] }; _salSenAgg[sen].total++; const ks = salToK(j.salary); if (ks) { _salSenAgg[sen].n++; _salSenAgg[sen].lo.push(ks[0]); _salSenAgg[sen].hi.push(ks[1]); } }
+  const salSen = {};
+  for (const k in _salSenAgg) { const o = _salSenAgg[k]; salSen[k] = { n: o.n, total: o.total, lo: medOf(o.lo), hi: medOf(o.hi) }; }
   const healthy = okSet.size >= STUDIOS.length * 0.8; // skip recording disc on a badly-degraded run
-  const trends = buildTrends(runCounts, okSet, discCounts, healthy, salInfo, skillCounts); // per-studio + per-discipline + salary + skills momentum (writes trends.json)
+  const trends = buildTrends(runCounts, okSet, discCounts, healthy, salInfo, skillCounts, workCounts, yoeInfo, salSen); // per-studio + per-discipline + salary + skills momentum (writes trends.json)
   all.sort((a, b) => new Date(b.postedAt) - new Date(a.postedAt));
 
   const out = {
