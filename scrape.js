@@ -662,14 +662,14 @@ const DISCIPLINE_MAP = {
 // "Technical Artist" map to their craft; Engineering runs before Data so an "ML Engineer" is
 // Engineering while an "ML Scientist/Researcher" stays Data. Returns a canonical discipline or null.
 function strongTitleDiscipline(t) {
-  if (/developer (relations|engagement|evangelis|advocat|marketing|outreach|experience rep)|\bdev ?rel\b|community developer|content developer|video content|publisher developer relations/.test(t)) return "Marketing";
+  if (/developer (relations|engagement|evangelis|advocat|marketing|outreach|experience rep|support|solutions?)|\bdev ?rel\b|community developer|content developer|video content|publisher developer relations/.test(t)) return "Marketing";
   if (/\baudio\b|sound design|\bcomposer\b|music design|\bsonore\b|conception sonore/.test(t)) return "Audio";
   if (/\bqa\b|quality assurance|\btester\b|\bsdet\b|test (engineer|analyst|lead|automation|specialist)|quality (engineer|analyst|specialist)|assurance qualit/.test(t)) return "QA";
   if (/art director|\bartist\b|\bartiste\b|direct(eur|rice|ion) artistique|\bart lead\b|lead artist|concept art|\bvfx\b|lighting (artist|lead)|environment artist|character artist|technical artist|technical art\b/.test(t)) return "Art";
   if (/\banimator\b|animation (director|lead|manager|supervisor)|\brigging\b|cinematics? (director|lead|supervisor|manager|animator|designer)/.test(t)) return "Animation";
   if (/game design|level design|systems? design|narrative design|\bwriter\b|\bscénariste\b|encounter design|combat design|content design|economy design|quality design|gameplay design|ux design|ui design|concepteur|conceptrice|conception de jeu|world build|world design|environment design/.test(t)) return "Design";
-  if ((/(engineer|programmer|programming|developer|architect)\b|architecte|ingénieur|programmeur|développeur|technical director/.test(t)) && !/\bsales\b|customer success|account exec|solutions? consultant|product developer|developer (program|programme|community|ecosystem|partnership)|business develop(er|ment)/.test(t)) return "Engineering";
-  if (/machine learning|\bml\b ?(scientist|researcher|ops)|data scien|data analy(st|tics|sis)|business intelligence|\bbi analyst\b|insights? analyst|deep learning|\bnlp\b|artificial intelligence|\bai (scientist|researcher|research)|\bof ai\b/.test(t)) return "Data & Analytics";
+  if ((/(engineer|programmer|programming|developer|architect)\b|architecte|ingénieur|programmeur|développeur|technical director/.test(t)) && !/\bsales\b|customer success|account exec|solutions? consultant|product developer|developer (program|programme|community|ecosystem|partnership)|business develop(er|ment)|analytics developer/.test(t)) return "Engineering";
+  if (/machine learning|\bml\b ?(scientist|researcher|ops)|data scien|data analy(st|tics|sis)|business intelligence|\bbi analyst\b|insights? analyst|analytics developer|deep learning|\bnlp\b|artificial intelligence|\bai (scientist|researcher|research)|\bof ai\b/.test(t)) return "Data & Analytics";
   if (/\b(project|programme?|delivery|release|portfolio)\s+(manager|management|coordinator|lead|director|assistant)\b|technical (program|project) manager|scrum master|agile coach|\bpmo\b|\bproducer\b|production (coordinator|manager|director|assistant)|product (manager|owner|management|director|lead)|director,? of product|(vp|head) of product|game (director|lead|manager)|producteur|productrice|réalisat(eur|rice)|gestionnaire de (projet|programme)|chef de (projet|produit)|coordonnateur de projet/.test(t)) return "Production";
   return null;
 }
@@ -687,7 +687,7 @@ function mapDiscipline(raw, title) {
   // "Developer" shows up in many NON-engineering titles — developer relations / advocacy /
   // evangelism, community & content developers, developer marketing. Catch those first so they
   // don't fall into the Engineering bucket below (they're really Marketing / DevRel roles).
-  if (/developer (relations|engagement|evangelis|advocat|marketing|outreach|experience rep)|\bdev ?rel\b|community developer|content developer|video content|publisher developer relations/.test(t)) return "Marketing";
+  if (/developer (relations|engagement|evangelis|advocat|marketing|outreach|experience rep|support|solutions?)|\bdev ?rel\b|community developer|content developer|video content|publisher developer relations/.test(t)) return "Marketing";
   if (/engineer|programmer|\bdeveloper|software|\bsre\b|devops|\bsdet\b/.test(t)) return "Engineering";
   if (/product (manager|owner|management)|head of product/.test(t)) return "Production"; // PMs grouped with Production
   if (/artist|concept|\bvfx\b|lighting|illustrat|sculpt/.test(t)) return "Art";
@@ -2164,6 +2164,21 @@ function buildTrends(runCounts, okSet, discCounts, healthy, salInfo, skillCounts
   let droppedNonGame = 0;
   for (let i = all.length - 1; i >= 0; i--) { if (NON_GAME_TITLE.test(all[i].title || "")) { all.splice(i, 1); droppedNonGame++; } }
   if (droppedNonGame) console.log(`Filtered out ${droppedNonGame} non-game facility/service role(s).`);
+  // Tabletop fix: at card / board / physical-game publishers, "Developer" means game *design*, not
+  // software — e.g. a "Principal Game Developer" at Exploding Kittens is a tabletop designer. Their
+  // real software roles are titled Engineer / Software / Full-Stack and are left as Engineering; we
+  // only move bare "developer" titles (no engineering signal) from Engineering to Design. Add a
+  // studio name here to extend.
+  const TABLETOP_STUDIOS = new Set(["Exploding Kittens"]);
+  const TT_SW_SIGNAL = /engineer|ingénieur|programmer|programmeur|software|architect|architecte|full ?stack|back ?end|front ?end|dev ?ops|\bsre\b|technical|unity|unreal|\bc\+\+|\bc#|\.net/i;
+  let ttMoved = 0;
+  for (const j of all) {
+    if (j.discipline === "Engineering" && TABLETOP_STUDIOS.has(j.studio)
+        && /\bdeveloper\b|développeur/i.test(j.title || "") && !TT_SW_SIGNAL.test(j.title || "")) {
+      j.discipline = "Design"; ttMoved++;
+    }
+  }
+  if (ttMoved) console.log(`Reassigned ${ttMoved} tabletop "developer" role(s) to Design.`);
   // Tech tags: fetchers with full descriptions already set j.tech; for the rest (SmartRecruiters,
   // Workday, Teamtailor, Workable…) fall back to title-based tagging so every job has the field.
   for (const j of all) if (!j.tech) j.tech = extractTech(j.title || "");
