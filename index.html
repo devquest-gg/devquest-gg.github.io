@@ -1919,18 +1919,18 @@ function setView(v){
   document.getElementById("pulseWrap").style.display = v==="pulse" ? "block" : "none";
   document.getElementById("bestfitWrap").style.display = v==="bestfit" ? "block" : "none";
   if (v === "follow") renderFollowView();
-  if (listish) render();          // re-filter the job list (Following = only your studios)
-  if (v === "map") renderMap();
+  // render() recomputes LAST_LIST for the CURRENT view's filters and, at its end, dispatches to
+  // renderMap()/renderStats(). Running it for map & stats (not just list/follow) means they never read
+  // a stale subset another view left behind — e.g. My Jobs narrows LAST_LIST to your followed studios,
+  // which is what made the Map's blue city circles vanish when cycling tabs. (Follow-only narrowing
+  // applies just when view==="follow", so for map/stats this gives the full sidebar-filtered set.)
+  if (listish || v === "map" || v === "stats") { try { render(); } catch(e){ console.error("render error", e); } }
+  if (v !== "stats") { try { heroTimerStop(); } catch(e){} }   // leaving Trends: stop the hero auto-rotate timer
   if (v === "stats") {
-    // Trends reads LAST_LIST (the filtered set), which only render() populates. If we landed here
-    // without a prior successful list render (e.g. reload/deep-link onto this tab, or the "N sources
-    // delayed" link), LAST_LIST is still [] and every chart shows "0 of N". Re-run render() to fill it.
-    if (!LAST_LIST.length) { try { render(); } catch(e){ console.error("render error", e); } }
-    try { renderStats(); } catch(e){ console.error("renderStats error", e); }
-    // self-heal: if a transient state (e.g. fast tab-switching) left it blank, re-render next tick
+    // self-heal: if a transient state (e.g. fast tab-switching) left the panel blank, re-render next tick
     var _sw = document.getElementById("statsWrap");
     if (_sw && !_sw.innerHTML.trim()) setTimeout(function(){ try { renderStats(); } catch(e){ console.error(e); } }, 30);
-  } else { try { heroTimerStop(); } catch(e){} }   // leaving Trends: stop the hero auto-rotate timer
+  }
   if (v === "bestfit") renderBestFit();
 }
 
