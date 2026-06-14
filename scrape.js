@@ -1602,6 +1602,19 @@ async function fetchAmazonJobs(studio) {
 // Public posting API: GET https://api.ashbyhq.com/posting-api/job-board/<token>
 // Returns { jobs: [{ id, title, department, team, location, isRemote, employmentType,
 // publishedAt/updatedAt, jobUrl, applyUrl }] }.
+// Some Ashby customers disable the public jobs.ashbyhq.com board and host postings on their own
+// site (the Ashby API still serves the data, but its jobUrl 404s). For those we build the on-site
+// deep link from the title slug — an exact slug opens the role; a near-miss degrades gracefully to
+// the studio's own careers list (a working page), never the dead Ashby URL.
+const ASHBY_SITE = {
+  supercell: { base: "https://supercell.com/en/careers/", suffix: "/?source=Supercell.com" }, // public Ashby board disabled
+};
+function _ashbySlug(s){ return String(s||"").toLowerCase().normalize("NFKD").replace(/[̀-ͯ]/g,"").replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,""); }
+function ashbyJobUrl(studio, j){
+  const cfg = ASHBY_SITE[studio.token];
+  if (cfg) return cfg.base + _ashbySlug(j.title) + "/" + j.id + (cfg.suffix || "");
+  return j.jobUrl || j.applyUrl || `https://jobs.ashbyhq.com/${studio.token}/${j.id}`;
+}
 async function fetchAshby(studio) {
   const data = SAMPLE_FILE ? loadSample(studio)
     : await fetchJson(`https://api.ashbyhq.com/posting-api/job-board/${studio.token}?includeCompensation=true`);
@@ -1628,7 +1641,7 @@ async function fetchAshby(studio) {
       salary: extractSalary(desc),
       yoe: extractYoe(desc),
       postedAt: j.publishedAt || j.updatedAt || null,
-      url: j.jobUrl || j.applyUrl || `https://jobs.ashbyhq.com/${studio.token}/${j.id}`,
+      url: ashbyJobUrl(studio, j),
     };
   });
 }
