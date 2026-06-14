@@ -2300,6 +2300,64 @@ function buildTrends(runCounts, okSet, discCounts, healthy, salInfo, skillCounts
   return out;
 }
 
+// ---- Apply-link health probe ------------------------------------------------
+// We scrape the API, but the *links* can rot independently — a studio restructures its careers URLs,
+// or (like Supercell) disables its public ATS board while the API keeps serving jobs. This samples a
+// few of each studio's live URLs (throttled to ~once/day per studio, hard-capped + time-bounded per
+// run) and flags a studio ONLY when every sampled link is dead by a server-visible signal — so normal
+// single-job staleness never trips it. Fully isolated: any failure here is swallowed and can never
+// affect jobs.json. Blind spot: pure JS-rendered "page not found" SPAs (e.g. jobs.ashbyhq.com) return
+// HTTP 200, so they can't be caught server-side — for that class we move the studio to on-site deep
+// links instead (see ASHBY_SITE).
+const LINKHEALTH_FILE = path.join(__dirname, "linkhealth.json");
+const SOFT404_RE = /page not found|position not found|no longer (available|accepting|open|exists)|this (?:job|position|role|posting) (?:is |has been )?(?:closed|expired|filled|removed)|job (?:not found|has expired)|position_not_found/i;
+async function probeUrl(url) {
+  const ctrl = new AbortController();
+  const to = setTimeout(() => ctrl.abort(), 7000);
+  try {
+    const res = await fetch(url, { redirect: "follow", signal: ctrl.signal,
+      headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36", "Accept": "text/html" } });
+    if (res.status === 404 || res.status === 410) return "dead";
+    if (res.status === 403 || res.status === 429 || res.status >= 500) return "blocked"; // bot-wall / outage, not a real break
+    if (/not[-_]?found|position_not_found|job-not-found|expired/i.test(res.url || "")) return "dead"; // redirected to a not-found page
+    if (res.status >= 200 && res.status < 300) {
+      let body = ""; try { body = (await res.text()).slice(0, 60000); } catch (e) {}
+      return SOFT404_RE.test(body) ? "dead" : "ok";
+    }
+    return "blocked";
+  } catch (e) { return "error"; }   // timeout / network error — never treated as broken
+  finally { clearTimeout(to); }
+}
+async function checkLinkHealth(all) {
+  let state = {};
+  try { state = JSON.parse(fs.readFileSync(LINKHEALTH_FILE, "utf8")); } catch (e) { state = {}; }
+  const byStudio = {};
+  for (const j of all) { if (j && j.url && /^https?:/i.test(j.url)) (byStudio[j.studio] = byStudio[j.studio] || []).push(j); }
+  const COOLDOWN = 20 * 3600 * 1000, CAP = 12, DEADLINE = Date.now() + 90000;
+  const eligible = Object.keys(byStudio)
+    .filter(s => !(state[s] && state[s].ts && (Date.now() - state[s].ts) < COOLDOWN))
+    .sort((a, b) => ((state[a] && state[a].ts) || 0) - ((state[b] && state[b].ts) || 0))
+    .slice(0, CAP);
+  for (const studio of eligible) {
+    if (Date.now() > DEADLINE) break;
+    const sorted = byStudio[studio].slice().sort((a, b) => (b.ts || 0) - (a.ts || 0));
+    const picks = [...new Set([sorted[0], sorted[Math.floor(sorted.length / 2)], sorted[sorted.length - 1]].filter(Boolean).map(j => j.url))].slice(0, 3);
+    const results = [];
+    for (const u of picks) { if (Date.now() > DEADLINE) break; results.push(await probeUrl(u)); await new Promise(r => setTimeout(r, 150)); }
+    const fetched = results.filter(r => r === "ok" || r === "dead");
+    let verdict = "unknown";
+    if (results.some(r => r === "ok")) verdict = "ok";
+    else if (fetched.length >= 2 && fetched.every(r => r === "dead")) verdict = "broken";  // every sample dead = systemic, not staleness
+    state[studio] = { ts: Date.now(), verdict, url: picks[0] || "" };
+  }
+  try { fs.writeFileSync(LINKHEALTH_FILE, JSON.stringify(state)); } catch (e) { console.error("Could not write linkhealth.json:", e.message); }
+  const broken = Object.keys(state)
+    .filter(s => state[s].verdict === "broken" && byStudio[s])
+    .map(s => ({ studio: s, jobs: byStudio[s].length, sample: state[s].url }));
+  if (broken.length) console.warn("Apply-link health: " + broken.length + " studio(s) with dead links — " + broken.map(b => b.studio).join(", "));
+  return broken;
+}
+
 // ---- Main -------------------------------------------------------------------
 
 // Expose the classifier for the test fixture (test-classify.js). When this file is `require()`d
@@ -2388,12 +2446,16 @@ module.exports = { mapDiscipline, strongTitleDiscipline, normDisc };
   const healthy = okSet.size >= STUDIOS.length * 0.8; // skip recording disc on a badly-degraded run
   const trends = buildTrends(runCounts, okSet, discCounts, healthy, salInfo, skillCounts, workCounts, yoeInfo, salSen); // per-studio + per-discipline + salary + skills momentum (writes trends.json)
   all.sort((a, b) => new Date(b.postedAt) - new Date(a.postedAt));
+  // Apply-link health (isolated; never blocks or breaks the scrape).
+  let linkHealth = [];
+  try { linkHealth = await checkLinkHealth(all); } catch (e) { console.error("Link-health check skipped:", e.message); }
 
   const out = {
     scrapedAt: new Date().toISOString(),
     studios: STUDIOS.length,
     jobCount: all.length,
     errors,
+    linkHealth,
     jobs: all,
     directory: DIRECTORY,
     moon: MOON,
