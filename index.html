@@ -6,8 +6,11 @@
 <title>DevQuest: Game Dev Jobs, Fresh and Filtered</title>
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <meta name="description" content="Live game-dev jobs from 100+ studios, synced hourly. Map view, salary data, ghost-job filters, and free weekly email alerts. No ads.">
+<!-- Let Google show large image previews + full-length snippets in results & Discover. -->
+<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
 <!-- Open Graph / social link previews (LinkedIn, Slack, Discord, iMessage, etc.) -->
 <meta property="og:type" content="website">
+<meta property="og:url" content="https://devquest.gg/">
 <meta property="og:site_name" content="DevQuest">
 <meta property="og:title" content="DevQuest: Game Dev Jobs, Fresh and Filtered">
 <meta property="og:description" content="Live game-dev jobs from 100+ studios, synced hourly. Map view, salary data, and free weekly alerts. No ads.">
@@ -46,6 +49,9 @@
   "description": "An independent, ad-free job board for the video game industry, aggregating openings directly from studio career pages."
 }
 </script>
+<!-- Warm up the map CDN connection early (small page-speed win; speed is a ranking signal). -->
+<link rel="preconnect" href="https://unpkg.com" crossorigin>
+<link rel="dns-prefetch" href="https://unpkg.com">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
