@@ -445,7 +445,7 @@
 </style>
 <script>
 function dqCopyLink(btn){
-  var url="https://devquest.gg";
+  var url = (typeof currentShareUrl === "function") ? currentShareUrl() : "https://devquest.gg";
   function done(){ btn.classList.add("copied"); var t=btn.getAttribute("title"); btn.setAttribute("title","Copied!"); setTimeout(function(){ btn.classList.remove("copied"); btn.setAttribute("title", t||"Copy link"); },1500); try{window.dqTrack&&window.dqTrack("share_click",{p:"copy"});}catch(e){} }
   function fb(){ try{ var ta=document.createElement("textarea"); ta.value=url; ta.style.position="fixed"; ta.style.opacity="0"; document.body.appendChild(ta); ta.focus(); ta.select(); document.execCommand("copy"); document.body.removeChild(ta); }catch(e){} done(); }
   try{ if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(url).then(done, fb); } else { fb(); } }catch(e){ fb(); }
@@ -1455,6 +1455,7 @@ function render(){
   renderHubbar(availHubs);
   renderSubbar(availSubs);
   renderActiveFilters();
+  try { updateShareLinks(); } catch(e){}   // keep header share buttons aimed at the current filtered view
 
   const groups = {};
   for (const j of list) (groups[j.d] = groups[j.d] || []).push(j);
@@ -1688,10 +1689,77 @@ function renderActiveFilters(){
   const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   el.innerHTML = '<span class="aflabel">Filters:</span>'
     + __af.map((f, i) => '<button class="afchip" onclick="rmActive(' + i + ')" title="Remove this filter">' + esc(f.label) + ' <span class="afx">✕</span></button>').join('')
+    + '<button class="afexport" onclick="copyShareLink(this)" title="Copy a link that reopens this exact filtered view">🔗 Copy link</button>'
     + '<button class="afexport" onclick="exportCsv()" title="Download these filtered results as a CSV spreadsheet">⤓ Export CSV</button>'
     + '<button class="afclear" onclick="clearAllFilters()">Clear all</button>';
 }
 function rmActive(i){ const f = __af[i]; if (f) { f.fn(); render(); } }
+// ---- Shareable filter links: encode the active filter set into the URL, and apply it on load -------
+function buildFilterQuery(){
+  const p = new URLSearchParams();
+  try {
+    const q = (document.getElementById('q').value||'').trim(); if (q) p.set('q', q);
+    const rg = document.getElementById('region'); if (rg && rg.value) p.set('region', rg.value);
+    const ag = document.getElementById('age'); if (ag && ag.value && ag.value!=='0') p.set('age', ag.value);
+    if (quickRemote) p.set('remote','1');
+    const hs = document.getElementById('hideStale'); if (hs && hs.checked) p.set('stale','1');
+    if (selCells.size)        p.set('cells', [...selCells].join(';'));
+    if (selSubs.size)         p.set('subs', [...selSubs].join(';'));
+    if (selStudios.size)      p.set('studios', [...selStudios].join(';'));
+    if (selCountries.size)    p.set('countries', [...selCountries].join(';'));
+    if (selRegionsQuick.size) p.set('rquick', [...selRegionsQuick].join(';'));
+    if (selHubs.size)         p.set('hubs', [...selHubs].join(';'));
+    if (selKinds.size)        p.set('kinds', [...selKinds].join(';'));
+    const d = checked('f-d'), w = checked('f-w'), s = checked('f-s');
+    if (d.length) p.set('disc', d.join(';'));
+    if (w.length) p.set('work', w.join(';'));
+    if (s.length) p.set('sen', s.join(';'));
+  } catch(e){}
+  return p.toString();
+}
+function currentShareUrl(){ const qs = buildFilterQuery(); return location.origin + '/' + (qs ? ('?'+qs) : ''); }
+function _dqFallbackCopy(text){ try{ const ta=document.createElement('textarea'); ta.value=text; ta.style.position='fixed'; ta.style.opacity='0'; document.body.appendChild(ta); ta.focus(); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); }catch(e){} }
+function _dqCopy(text, onDone){
+  try { if (navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(text).then(onDone, function(){ _dqFallbackCopy(text); onDone(); }); return; } } catch(e){}
+  _dqFallbackCopy(text); onDone();
+}
+function copyShareLink(btn){
+  const url = currentShareUrl(), label = btn.textContent;
+  _dqCopy(url, function(){ btn.textContent = '✓ Link copied'; setTimeout(function(){ btn.textContent = label; }, 1600); });
+  try{ window.dqTrack && window.dqTrack('share_filter', { n:(LAST_LIST||[]).length }); }catch(e){}
+}
+// Keep the header LinkedIn/X/Bluesky buttons pointed at the CURRENT filtered view (plain homepage when no filters).
+function updateShareLinks(){
+  try {
+    const u = currentShareUrl(), enc = encodeURIComponent(u);
+    const txt = encodeURIComponent('DevQuest — real, current game-dev jobs, fresh and honest.');
+    const li = document.querySelector('.dqsh-li'); if (li) li.href = 'https://www.linkedin.com/sharing/share-offsite/?url='+enc;
+    const x  = document.querySelector('.dqsh-x');  if (x)  x.href  = 'https://twitter.com/intent/tweet?text='+txt+'&url='+enc;
+    const bs = document.querySelector('.dqsh-bs'); if (bs) bs.href = 'https://bsky.app/intent/compose?text='+encodeURIComponent('DevQuest — real, current game-dev jobs, fresh and honest. '+u);
+  } catch(e){}
+}
+// Apply filters carried in the URL (?studios=…&cells=…&region=…) so a shared link reopens the same view.
+function applyFilterQuery(){
+  try {
+    const p = new URLSearchParams(location.search);
+    const KEYS = ['q','region','age','remote','stale','cells','subs','studios','countries','rquick','hubs','kinds','disc','work','sen'];
+    if (!KEYS.some(k => p.has(k))) return false;
+    const intoSet = (param, set) => { const v=p.get(param); if(v) v.split(';').forEach(x=>{ if(x) set.add(x); }); };
+    const qel=document.getElementById('q'); if (qel && p.get('q')) qel.value = p.get('q');
+    const rg=document.getElementById('region'); if (rg && p.get('region')) rg.value = p.get('region');
+    const ag=document.getElementById('age'); if (ag && p.get('age')) ag.value = p.get('age');
+    if (p.get('remote')==='1') quickRemote = true;
+    const hs=document.getElementById('hideStale'); if (hs && p.get('stale')==='1') hs.checked = true;
+    intoSet('cells', selCells); intoSet('subs', selSubs); intoSet('studios', selStudios);
+    intoSet('countries', selCountries); intoSet('rquick', selRegionsQuick); intoSet('hubs', selHubs);
+    const kv=p.get('kinds'); if (kv) kv.split(';').forEach(k=>{ if(k){ selKinds.add(k); const c=document.querySelector('.kindchip[data-k="'+k+'"]'); if(c) c.classList.add('on'); } });
+    const intoChk = (param, cls) => { const v=p.get(param); if(v){ const arr=v.split(';'); document.querySelectorAll('.'+cls).forEach(c=>{ if(arr.indexOf(c.value)>=0) c.checked=true; }); } };
+    intoChk('disc','f-d'); intoChk('work','f-w'); intoChk('sen','f-s');
+    try{ renderSearchGroup("studioFilters","studioSearch",STUDIO_COUNTS,selStudios,STUDIO_LABELS,DIR_STUDIOS); }catch(e){}
+    try{ renderSearchGroup("countryFilters","countrySearch",COUNTRY_COUNTS,selCountries,null); }catch(e){}
+    return true;
+  } catch(e){ return false; }
+}
 function clearAllFilters(){
   document.getElementById('q').value = '';
   document.getElementById('region').selectedIndex = 0;
@@ -2920,10 +2988,10 @@ render();
 renderPulseStrip();
 updateFollowTab();
 
-// Shareable search URLs + makes the JSON-LD SearchAction work: ?q=term pre-fills the search.
+// Shareable filter URLs (?studios=…&cells=…&region=…&q=…) reopen the exact view. Also makes the
+// JSON-LD SearchAction work (?q=term pre-fills the search). Applies all carried filters, then renders.
 try {
-  var _qparam = new URLSearchParams(location.search).get("q");
-  if (_qparam) { var _qel = document.getElementById("q"); if (_qel) { _qel.value = _qparam; render(); } }
+  if (applyFilterQuery()) render();
 } catch(e){}
 </script>
 <!-- Cloudflare Web Analytics --><script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "95619b0dc4cf4d5c897a9ccd91097d8c"}'></script><!-- End Cloudflare Web Analytics -->
