@@ -2427,8 +2427,22 @@ function renderStats(){
   let _heroForYou = false;
   try {
     const P = buildProfile();
-    if (P.signal >= HOT_MIN_SIGNAL) {
-      const discLock = new Set(topKeys(P.disc, 0.6));
+    // Discipline lock for the personalized hero: the visitor's LAST FILTERS win — the same primary
+    // signal that drives "Hot jobs for you" on the List — falling back to the recency-weighted
+    // affinity profile only when there's no recent filter. Keeps Trends in lockstep with the List:
+    // filter to Design and the hero shows Design, not whatever you happened to click weeks ago.
+    const _lfH = affLastFilters();
+    let _lockArr = [];
+    if (_lfH && lfHasFilters(_lfH)) {
+      const _ds = new Set();
+      (_lfH.cells||[]).forEach(c=>{ const d0=String(c).split("|")[0]; if(d0) _ds.add(d0); });
+      (_lfH.disc||[]).forEach(x=>_ds.add(x));
+      _lockArr = [..._ds];
+    }
+    if (!_lockArr.length) _lockArr = topKeys(P.disc, 0.6);
+    const _haveSignal = (_lfH && lfHasFilters(_lfH)) || P.signal >= HOT_MIN_SIGNAL;
+    if (_haveSignal) {
+      const discLock = new Set(_lockArr);
       const disc = [...discLock][0];
       const myMatches = hotJobs(list, P, 500);
       if (disc && myMatches.length >= 4) {
