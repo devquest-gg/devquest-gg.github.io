@@ -97,11 +97,7 @@
     document.addEventListener("pointerdown", fire, true);
     document.addEventListener("keydown", fire, true);
   }
-  function playSound(a) {
-    if (!a || !soundsOn()) return;
-    try { a.currentTime = 0; var pr = a.play(); if (pr && pr.catch) pr.catch(function () { _pendingCue = a; _armGesture(); }); }
-    catch (e) { _pendingCue = a; _armGesture(); }
-  }
+  function playSound() { /* sound removed */ }
 
   function unlockedCount() { return Math.min(days.length, TOTAL); }
   function isUnlocked(i) { return i >= 0 && i < TOTAL && RANK[i] < unlockedCount(); }
@@ -125,8 +121,8 @@
       ".dqa-ico.on{display:inline-flex}" +
       ".dqa-ico img{width:30px;height:30px;image-rendering:pixelated;display:block;animation:dqa-bob 3s ease-in-out infinite;filter:drop-shadow(0 2px 3px rgba(0,0,0,.45))}" +
       ".dqa-ico:hover img{filter:drop-shadow(0 0 7px rgba(210,153,34,.75))}" +
-      ".dqa-ico.flash{animation:dqa-flash 1s ease}" +
-      "@keyframes dqa-flash{0%,100%{filter:drop-shadow(0 0 0 rgba(210,153,34,0))}30%{filter:drop-shadow(0 0 11px rgba(210,153,34,.95))}}" +
+      ".dqa-ico.flash{animation:dqa-flash 1s ease-in-out 4}" +   /* 4 slow pulses (~4s total), then off */
+      "@keyframes dqa-flash{0%,100%{filter:drop-shadow(0 0 0 rgba(210,153,34,0))}50%{filter:drop-shadow(0 0 12px rgba(210,153,34,.95))}}" +
       "@keyframes dqa-bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}" +
       // First-time discovery hint bubble
       ".dqa-hint{position:absolute;top:calc(100% + 9px);right:0;width:max-content;max-width:220px;background:var(--panel,#161b22);" +
@@ -174,12 +170,17 @@
       // On phones the mascot sat ~16px off the wordmark (logo gap + its own margin) and
       // looked detached; tuck it closer and size it down so it nests into the logo lockup.
       "@media(max-width:560px){.dqa-ico{margin-left:2px}.dqa-ico img{width:26px;height:26px}}" +
-      "@media(prefers-reduced-motion:reduce){.dqa-ico.flash{animation:none}.dqa-ico img{animation:none}.dqa-toast{transition:none}.dqa-cell,.dqa-cell img,.dqa-prog{transition:none}}";
+      // Welcome-back card (desktop): a FIXED, overflow-clipped wrapper sits just above the Filters
+      // box; the card slides up out from behind the box's top edge, then retracts back down behind it.
+      // The clip is fixed on <body> (not a child of #sidebar) so the sidebar's overflow:auto can't hide it.
+      ".dqa-toast.anchored{position:absolute;left:8px;right:8px;bottom:6px;top:auto;max-width:none;opacity:1;pointer-events:auto;transform:translateY(140%);transition:transform .55s cubic-bezier(.22,1,.36,1)}" +
+      ".dqa-toast.anchored.show{transform:translateY(0)}" +
+      "@media(prefers-reduced-motion:reduce){.dqa-ico.flash{animation:none}.dqa-ico img{animation:none}.dqa-toast{transition:none}.dqa-toast.anchored{transition:none}.dqa-cell,.dqa-cell img,.dqa-prog{transition:none}}";
     document.head.appendChild(s);
   }
 
   // ---- DOM refs ----
-  var icoEl, icoImg, hintEl, toastEl;
+  var icoEl, icoImg, hintEl, toastEl, clipEl;
 
   function buildIcon() {
     var header = document.querySelector("header");
@@ -235,7 +236,9 @@
     setTimeout(function () { if (hintEl && hintEl.parentNode) hintEl.parentNode.removeChild(hintEl); }, 9000);
   }
 
-  // ---- Welcome-back toast ----
+  // ---- Welcome-back card ----
+  // Desktop: floats above the Filters box, sliding up from behind its top edge and back down.
+  // Mobile (off-canvas filters): falls back to the fixed top-of-screen toast.
   function hideToast() { if (toastEl) toastEl.classList.remove("show"); }
   function welcomeToast(idx) {
     if (hintEl && hintEl.parentNode) hintEl.parentNode.removeChild(hintEl);
@@ -243,10 +246,25 @@
       toastEl = document.createElement("div"); toastEl.className = "dqa-toast";
       toastEl.innerHTML = '<img alt=""><div><div class="t1">Welcome back</div><div class="t2"></div></div>';
       toastEl.addEventListener("click", function () { hideToast(); openCollection(); });
-      document.body.appendChild(toastEl);
     }
     toastEl.querySelector("img").src = SPRITES[idx];
     toastEl.querySelector(".t2").textContent = "New sprite unlocked!";
+    var sidebar = document.getElementById("sidebar");
+    var rect = sidebar ? sidebar.getBoundingClientRect() : null;
+    var anchor = rect && rect.width > 0 && window.matchMedia && window.matchMedia("(min-width:821px)").matches;
+    if (anchor) {                                   // float above the Filters box (slide-from-behind)
+      // Clip wrapper is FIXED on <body> and positioned from the box's live coords, so the
+      // sidebar's overflow:auto / sticky context can't clip or hide it.
+      if (!clipEl) { clipEl = document.createElement("div"); clipEl.className = "dqa-wbclip"; document.body.appendChild(clipEl); }
+      if (toastEl.parentNode !== clipEl) clipEl.appendChild(toastEl);
+      var H = 96, pad = 8;
+      clipEl.style.cssText = "position:fixed;left:" + (rect.left - pad) + "px;width:" + (rect.width + 2 * pad) +
+        "px;top:" + (rect.top - H) + "px;height:" + H + "px;overflow:hidden;pointer-events:none;z-index:9998";
+      toastEl.classList.add("anchored");
+    } else {                                        // mobile / narrow: fixed top-of-screen toast
+      toastEl.classList.remove("anchored");
+      if (toastEl.parentNode !== document.body) document.body.appendChild(toastEl);
+    }
     void toastEl.offsetWidth; toastEl.classList.add("show");
     clearTimeout(toastEl._t); toastEl._t = setTimeout(hideToast, 5500);
   }
@@ -291,7 +309,6 @@
     function toggle() {
       var i = cell.getAttribute("data-i");
       if (!isUnlocked(parseInt(i, 10))) return;
-      playSound(SND_CLICK);
       if (pin === i) { pin = null; saveStr(PIN_KEY, null); }   // clicking the pinned one again un-pins it
       else { pin = i; saveStr(PIN_KEY, i); track("collect_pin", { idx: parseInt(i, 10), pack: packOf(parseInt(i, 10)) }); }
       applyPins(box); refreshIcon();
@@ -307,7 +324,6 @@
   // ---- Boot ----
   function mount() {
     injectStyle();
-    initSounds();
     var today = todayStr();
     var isNewDay = days.indexOf(today) < 0;
     var before = unlockedCount();
@@ -319,7 +335,6 @@
     if (isNewDay && after > before && after > 1) {   // day 1 is not counted as an unlock (stat or sound)
       var ui = ORDER[after - 1];
       track("collect_unlock", { day: after, idx: ui, pack: packOf(ui) });
-      playSound(SND_UNLOCK);                          // new-sprite cue on every real (day 2+) unlock, hint day or not
       if (after >= TOTAL) track("collect_complete", { day: after });
     }
     // The intro pop-up now appears on day 2 (the first return), not day 1 — so a
@@ -363,9 +378,6 @@
     mk("Open collection", function () { openCollection(); });
     mk("Jump to 50 unlocked", function () { window.DQ.setDays(50); });
     mk("Jump to 150 unlocked", function () { window.DQ.setDays(150); });
-    mk("▶ Test sounds", function () { window.DQ.testSound(); });
-    var sb = mk("", function () { if (soundsOn()) window.DQ.mute(); else window.DQ.unmute(); sb.textContent = "Sound: " + (soundsOn() ? "on" : "off"); });
-    sb.textContent = "Sound: " + (soundsOn() ? "on" : "off");
     mk("Reset + reload", function () { window.DQ.reset(); try { location.reload(); } catch (e) {} });
     var x = document.createElement("button");
     x.type = "button"; x.textContent = "× close panel";
