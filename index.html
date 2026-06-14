@@ -139,6 +139,10 @@
     header .aboutbtn, header .feedbackbtn { padding: 6px 11px !important; font-size: 12px !important; }
   }
   aside { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 18px; height: fit-content; position: sticky; top: 80px; max-height: calc(100vh - 100px); overflow-y: auto; }
+  /* Drop the Filters box so its top lines up with the "Where are the jobs" card (below the tabs +
+     stat strip). Leaves room above it for the welcome-back sprite card to slide out. Desktop only —
+     on mobile the sidebar is an off-canvas drawer. */
+  @media (min-width: 821px) { #sidebar { margin-top: 104px; } }
   aside h3 { font-size: 13px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin: 16px 0 8px; }
   aside h3:first-child { margin-top: 0; }
   input[type=text], select { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 9px 10px; color: var(--text); font-size: 14px; }
@@ -1714,6 +1718,19 @@ function buildFilterQuery(){
   return p.toString();
 }
 function currentShareUrl(){ const qs = buildFilterQuery(); return location.origin + '/' + (qs ? ('?'+qs) : ''); }
+// Pixel-align the Filters box top with the matrix card (desktop), so it tracks the tabs+strip height
+// exactly instead of a guessed offset. Only measures when the matrix is laid out (List view).
+function alignFiltersTop(){
+  try {
+    const sb = document.getElementById('sidebar'), mx = document.getElementById('matrixWrap');
+    if (!sb) return;
+    if (!window.matchMedia('(min-width:821px)').matches){ sb.style.marginTop = ''; return; }
+    if (!mx || mx.offsetParent === null || !mx.offsetHeight) return;
+    sb.style.marginTop = '0px';
+    const d = mx.getBoundingClientRect().top - sb.getBoundingClientRect().top;
+    sb.style.marginTop = (d > 0 ? Math.round(d) : 0) + 'px';
+  } catch(e){}
+}
 function _dqFallbackCopy(text){ try{ const ta=document.createElement('textarea'); ta.value=text; ta.style.position='fixed'; ta.style.opacity='0'; document.body.appendChild(ta); ta.focus(); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); }catch(e){} }
 function _dqCopy(text, onDone){
   try { if (navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(text).then(onDone, function(){ _dqFallbackCopy(text); onDone(); }); return; } } catch(e){}
@@ -2986,6 +3003,13 @@ updateFollowTab();
 // JSON-LD SearchAction work (?q=term pre-fills the search). Applies all carried filters, then renders.
 try {
   if (applyFilterQuery()) render();
+} catch(e){}
+// Keep the Filters box top exactly level with the matrix card (re-measure after layout + on resize).
+try {
+  alignFiltersTop();
+  requestAnimationFrame(alignFiltersTop);
+  window.addEventListener('load', alignFiltersTop);
+  window.addEventListener('resize', function(){ clearTimeout(window.__afT); window.__afT = setTimeout(alignFiltersTop, 120); });
 } catch(e){}
 </script>
 <!-- Cloudflare Web Analytics --><script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "95619b0dc4cf4d5c897a9ccd91097d8c"}'></script><!-- End Cloudflare Web Analytics -->
