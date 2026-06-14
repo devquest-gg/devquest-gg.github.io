@@ -1915,6 +1915,10 @@ function setView(v){
   if (listish) render();          // re-filter the job list (Following = only your studios)
   if (v === "map") renderMap();
   if (v === "stats") {
+    // Trends reads LAST_LIST (the filtered set), which only render() populates. If we landed here
+    // without a prior successful list render (e.g. reload/deep-link onto this tab, or the "N sources
+    // delayed" link), LAST_LIST is still [] and every chart shows "0 of N". Re-run render() to fill it.
+    if (!LAST_LIST.length) { try { render(); } catch(e){ console.error("render error", e); } }
     try { renderStats(); } catch(e){ console.error("renderStats error", e); }
     // self-heal: if a transient state (e.g. fast tab-switching) left it blank, re-render next tick
     var _sw = document.getElementById("statsWrap");
