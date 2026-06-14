@@ -25,6 +25,8 @@ const CASES = [
   ["Directeur créatif", "Design"],
   ["Gameplay Designer", "Design"],
   ["Game Director", "Design"],          // creative/vision lead — Design, not Production
+  ["Game Lead", "Design"],              // owns the game's design/direction — Design, not Production
+  ["Game Lead - Flappy Dunk", "Design"],
   ["Game Manager", "Production"],       // live-ops / product management stays Production
 
   // --- Technical lead = Engineering; real software stays Engineering ---
