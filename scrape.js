@@ -517,6 +517,32 @@ const LANDING_PAGES = [
   { slug:"entry-level-game-jobs",        h1:"Entry-Level Game Dev Jobs",    noun:"entry-level and junior",             sen:"Entry" },
 ];
 
+// URL-safe slug. "C++"→"c-plus-plus", "Insomniac Games"→"insomniac-games".
+function slugify(s){
+  return String(s||"").toLowerCase()
+    .replace(/\+/g, "-plus").replace(/&/g, "-and-")
+    .replace(/['’.]/g, "")
+    .replace(/[^a-z0-9]+/g, "-").replace(/-{2,}/g, "-").replace(/^-+|-+$/g, "");
+}
+
+// Curated skill/engine/tool pages — one per high-intent search term ("unreal engine jobs",
+// "maya jobs games"). Only emitted when enough live roles carry the tag (see skillPageSpecs).
+const SKILL_PAGES = [
+  { tag:"Unreal",    slug:"unreal-engine-jobs",    h1:"Unreal Engine Jobs",       noun:"Unreal Engine" },
+  { tag:"Unity",     slug:"unity-developer-jobs",  h1:"Unity Developer Jobs",     noun:"Unity" },
+  { tag:"C++",       slug:"cpp-game-jobs",         h1:"C++ Game Programming Jobs", noun:"C++" },
+  { tag:"C#",        slug:"csharp-game-jobs",      h1:"C# Game Programming Jobs",  noun:"C#" },
+  { tag:"Python",    slug:"python-game-jobs",      h1:"Python Game Dev Jobs",     noun:"Python" },
+  { tag:"Maya",      slug:"maya-game-jobs",        h1:"Maya Jobs in Games",       noun:"Maya" },
+  { tag:"ZBrush",    slug:"zbrush-game-jobs",      h1:"ZBrush Jobs in Games",     noun:"ZBrush" },
+  { tag:"Houdini",   slug:"houdini-game-jobs",     h1:"Houdini Jobs in Games",    noun:"Houdini" },
+  { tag:"Blender",   slug:"blender-game-jobs",     h1:"Blender Jobs in Games",    noun:"Blender" },
+  { tag:"Substance", slug:"substance-painter-jobs",h1:"Substance Painter Jobs",   noun:"Substance" },
+  { tag:"Spine",     slug:"spine-animation-jobs",  h1:"Spine 2D Animation Jobs",  noun:"Spine 2D" },
+  { tag:"Wwise",     slug:"wwise-audio-jobs",      h1:"Wwise Audio Jobs",         noun:"Wwise" },
+  { tag:"FMOD",      slug:"fmod-audio-jobs",       h1:"FMOD Audio Jobs",          noun:"FMOD" },
+];
+
 // Evergreen "talent pool" / speculative reqs aren't real openings — keep them off the SEO pages.
 function isPool(title){
   return /\b(talent\s+)?(pool|pipeline)\b|general application|speculative|expression of interest|future opportunit|don'?t see (a|your)/i.test(title || "");
@@ -529,9 +555,12 @@ function landingMatches(cfg, jobs){
   const seen = new Set(), out = [];
   for (const j of jobs){
     if (isPool(j.title)) continue;
-    if (cfg.disc && normDisc(j.discipline) !== cfg.disc) continue;
-    if (cfg.remote && j.workType !== "Remote") continue;
-    if (cfg.sen && j.seniority !== cfg.sen) continue;
+    if (cfg.match) { if (!cfg.match(j)) continue; }    // spec-driven pages (studio / skill / combo)
+    else {                                             // legacy field-driven discipline pages
+      if (cfg.disc && normDisc(j.discipline) !== cfg.disc) continue;
+      if (cfg.remote && j.workType !== "Remote") continue;
+      if (cfg.sen && j.seniority !== cfg.sen) continue;
+    }
     const k = (j.studio||"") + "|" + (j.title||"");
     if (seen.has(k)) continue; seen.add(k);
     out.push(j);
@@ -554,14 +583,24 @@ function landingRoleRow(j){
     </a>`;
 }
 
-function renderLandingPage(cfg, all){
+function renderLandingPage(cfg, all, allSpecs){
   const matches = landingMatches(cfg, all);
   const total = matches.length;
   const studios = new Set(matches.map(m => m.studio)).size;
   const rows = matches.slice(0, 25).map(landingRoleRow).join("\n") || `<div style="padding:16px;color:#8b949e">No open ${escHtml(cfg.noun)} roles right this minute — check back soon or set an alert.</div>`;
   const url = "https://devquest.gg/" + cfg.slug;
-  const title = cfg.h1 + " · DevQuest";
+  const mon = new Date().toLocaleString("en-US", { month: "long", year: "numeric" });
+  // Count + month in the <title> lifts search click-through (numbers + recency stand out in the SERP).
+  const title = (total ? total + " " : "") + cfg.h1 + " (" + mon + ") · DevQuest";
   const desc = `${cfg.h1}, updated hourly. ${total} open ${cfg.noun} role${total===1?"":"s"} across ${studios} studios, pulled from studio career pages with salary shown when published and ghost-job filters. No ads.`;
+  // Optional studio/skill intro blurb (unique per page — keeps these from being thin doorway pages).
+  const blurbHtml = cfg.blurb ? `<p class="blurb">${escHtml(cfg.blurb)}</p>` : "";
+  // Internal "related searches" mesh + an FAQ block (with FAQPage structured data) for richer pages.
+  const relatedHtml = (typeof relatedLinksHtml === "function" && allSpecs) ? relatedLinksHtml(cfg, allSpecs) : "";
+  const faqPairs = faqFor(cfg, total, studios);
+  const faqHtml = `<h2>FAQ</h2><div class="faq">` + faqPairs.map(([q,a])=>`<details><summary>${escHtml(q)}</summary><p>${escHtml(a)}</p></details>`).join("") + `</div>`;
+  const faqLd = JSON.stringify({ "@context":"https://schema.org","@type":"FAQPage",
+    mainEntity: faqPairs.map(([q,a])=>({ "@type":"Question", name:q, acceptedAnswer:{ "@type":"Answer", text:a } })) });
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -586,6 +625,9 @@ function renderLandingPage(cfg, all){
 </script>
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"DevQuest","item":"https://devquest.gg/"},{"@type":"ListItem","position":2,"name":"${escHtml(cfg.h1)}","item":"${url}"}]}
+</script>
+<script type="application/ld+json">
+${faqLd}
 </script>
 <style>
   :root{--bg:#0d1117;--panel:#161b22;--border:#30363d;--text:#e6edf3;--muted:#8b949e;--accent:#58a6ff;--green:#3fb950;--pink:#f778ba;--gold:#d29922}
@@ -625,6 +667,17 @@ function renderLandingPage(cfg, all){
   .prose{color:#c9d1d9}.prose p{margin:12px 0}.prose h2{margin-top:30px}.prose strong{color:var(--text)}
   .alertbox{margin-top:30px;background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:22px 24px;text-align:center}
   .alertbox h2{margin:0 0 6px}.alertbox p{color:var(--muted);margin-bottom:16px}
+  .blurb{color:#c9d1d9;font-size:15px;margin-top:14px;max-width:680px}
+  .related{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+  .related .rel{font-size:13px;text-decoration:none;color:var(--text);background:var(--panel);border:1px solid var(--border);border-radius:999px;padding:6px 13px}
+  .related .rel:hover{border-color:var(--accent);color:var(--accent)}
+  .faq{margin-top:12px;border:1px solid var(--border);border-radius:12px;overflow:hidden}
+  .faq details{border-bottom:1px solid var(--border)}.faq details:last-child{border-bottom:none}
+  .faq summary{cursor:pointer;padding:13px 16px;font-weight:600;font-size:14.5px;list-style:none}
+  .faq summary::-webkit-details-marker{display:none}
+  .faq summary:hover{background:var(--panel)}
+  .faq details[open] summary{color:var(--accent)}
+  .faq p{color:#c9d1d9;padding:0 16px 14px;margin:0;font-size:14px}
   footer{border-top:1px solid var(--border);margin-top:50px;padding:22px 24px;text-align:center;color:var(--muted);font-size:13px}
   footer a{color:var(--muted)}footer a:hover{color:var(--accent)}
 </style>
@@ -639,6 +692,7 @@ function renderLandingPage(cfg, all){
   <div class="lede">
     <h1>${escHtml(cfg.h1)}</h1>
     <p class="sub">Every open <strong>${escHtml(cfg.noun)}</strong> role in the games industry, pulled straight from studios' own career pages and refreshed every hour. Salary shown when the studio publishes it, ghost-job listings flagged, and you apply on the studio's own site. No ads, no recruiters in the middle.</p>
+    ${blurbHtml}
     <div class="meta">
       <span class="chip"><b>${total}</b> open role${total===1?"":"s"}</span>
       <span class="chip"><b>${studios}</b> studio${studios===1?"":"s"}</span>
@@ -660,31 +714,209 @@ ${rows}
     <h2>Don't see your fit yet?</h2>
     <p>New ${escHtml(cfg.noun)} roles land every hour. Filter the full board by seniority, region, studio, and tech stack (search a skill like <em>C++</em> or <em>Unreal</em>), or set a free weekly email alert and let the new ones come to you.</p>
   </div>
+  ${relatedHtml}
+  ${faqHtml}
   <div class="alertbox">
     <h2>Get ${escHtml(cfg.noun)} roles emailed to you</h2>
     <p>A free weekly digest of new matching roles. One-click unsubscribe, no spam.</p>
     <a class="btn primary" href="/">Set up a free alert →</a>
   </div>
 </div>
-<footer>DevQuest.gg · Game dev jobs, fresh and honest · <a href="/">Browse all jobs</a> · <a href="/about">Our mission</a></footer>
+<footer>DevQuest.gg · Game dev jobs, fresh and honest · <a href="/">Browse all jobs</a> · <a href="/jobs">All categories</a> · <a href="/about">Our mission</a></footer>
+</body>
+</html>
+`;
+}
+
+// ---- Spec generators: turn the live data into per-studio / per-skill / combo page specs --------
+// Each spec is { slug, h1, noun, kind, breadcrumb, match(j), blurb? }. We gate on real inventory so
+// we never publish thin/empty "doorway" pages (which search engines penalize).
+function _uniqCount(all, match){
+  const seen = new Set();
+  for (const j of all){ if (isPool(j.title) || !match(j)) continue; seen.add((j.studio||"")+"|"+(j.title||"")); }
+  return seen.size;
+}
+
+// One page per studio (grouped by parent company) with >=3 live roles — captures branded searches
+// like "riot games careers". The blurb is built from live data, so every page is genuinely unique.
+function studioPageSpecs(all){
+  const by = {};
+  for (const j of all){ if (isPool(j.title)) continue; const name = j.parent || j.studio; if (!name) continue; (by[name] || (by[name] = [])).push(j); }
+  const specs = [];
+  for (const name of Object.keys(by)){
+    const jobs = by[name];
+    const n = new Set(jobs.map(j=>(j.studio||"")+"|"+(j.title||""))).size;
+    if (n < 3) continue;                                   // gate: skip thin studios
+    // Rank disciplines & locations by frequency (and drop the "Other" catch-all + unmapped one-offs)
+    // so the blurb leads with what the studio actually hires for, not arbitrary data order.
+    const dcount = {}; jobs.forEach(j=>{ if (j.discipline) dcount[j.discipline] = (dcount[j.discipline]||0)+1; });
+    const discs = Object.keys(dcount).filter(d => d && d !== "Other").sort((a,b)=> dcount[b]-dcount[a]);
+    const lcount = {}; jobs.forEach(j=>{ const L = j.workType==="Remote" ? "Remote" : (j.location||"").split(",")[0].trim(); if (L) lcount[L] = (lcount[L]||0)+1; });
+    const locs = Object.keys(lcount).sort((a,b)=> lcount[b]-lcount[a]).slice(0,4);
+    const blurb = `${name} currently has ${n} open role${n===1?"":"s"} across ${discs.slice(0,4).join(", ")}${discs.length>4?" and more":""}${locs.length?` — ${locs.join(", ")}`:""}. Browse every live ${name} opening below, pulled straight from their own careers page and refreshed hourly. You apply on ${name}'s own site — no middlemen, no ads.`;
+    specs.push({ slug: slugify(name) + "-jobs", h1: `${name} Jobs & Careers`, noun: name, kind: "studio",
+      breadcrumb: name, blurb, match: (j)=> (j.parent || j.studio) === name });
+  }
+  return specs.sort((a,b)=> a.h1.localeCompare(b.h1));
+}
+
+// One page per curated skill/engine/tool with >=5 live roles carrying the tag.
+function skillPageSpecs(all){
+  const specs = [];
+  for (const sp of SKILL_PAGES){
+    const match = (j)=> Array.isArray(j.tech) && j.tech.includes(sp.tag);
+    if (_uniqCount(all, match) < 5) continue;              // gate: enough inventory to be a real page
+    specs.push({ slug: sp.slug, h1: sp.h1, noun: sp.noun, kind: "skill", breadcrumb: sp.h1, match });
+  }
+  return specs;
+}
+
+// Discipline × {remote / senior / entry-level} combos with >=8 live roles. High-intent long-tail,
+// gated so we don't spawn near-empty duplicate pages (and skipping any slug already taken).
+function comboPageSpecs(all, existingSlugs){
+  const DISC = [
+    ["Engineering","Programming","programming","programming"],
+    ["Design","Design","game design","design"],
+    ["Art","Art","game art","art"],
+    ["Animation","Animation","animation","animation"],
+    ["Audio","Audio","game audio","audio"],
+    ["Production","Production","production","production"],
+    ["QA","QA & Tester","QA and testing","qa"],
+  ];
+  const specs = [];
+  const mk = (slug, h1, noun, match)=>{
+    if (existingSlugs.has(slug)) return;
+    if (_uniqCount(all, match) < 8) return;
+    existingSlugs.add(slug);
+    specs.push({ slug, h1, noun, kind:"combo", breadcrumb:h1, match });
+  };
+  for (const [d, label, base, tok] of DISC){
+    mk(`remote-game-${tok}-jobs`,      `Remote Game ${label} Jobs`,      `remote ${base}`,      j=> j.discipline===d && j.workType==="Remote");
+    mk(`senior-game-${tok}-jobs`,      `Senior Game ${label} Jobs`,      `senior ${base}`,      j=> j.discipline===d && j.seniority==="Senior");
+    mk(`entry-level-game-${tok}-jobs`, `Entry-Level Game ${label} Jobs`, `entry-level ${base}`, j=> j.discipline===d && j.seniority==="Entry");
+  }
+  return specs;
+}
+
+// Internal "related searches" mesh: link each page to a handful of siblings so they're crawlable and
+// share link equity. Prefer same kind, then fill from the rest. Caps at 8.
+function relatedLinksHtml(cfg, allSpecs){
+  const others = allSpecs.filter(s => s.slug !== cfg.slug);
+  const same = others.filter(s => s.kind === cfg.kind);
+  const rest = others.filter(s => s.kind !== cfg.kind);
+  const pick = same.concat(rest).slice(0, 8);
+  if (!pick.length) return "";
+  return `<h2>Related searches</h2><div class="related">`
+    + pick.map(s=>`<a class="rel" href="/${escHtml(s.slug)}">${escHtml(s.h1)}</a>`).join("")
+    + `</div>`;
+}
+
+// FAQ (rendered with FAQPage structured data). Woven with the page's noun + live counts so it isn't
+// boilerplate-identical across pages. Returns raw [question, answer] pairs (no HTML).
+function faqFor(cfg, total, studios){
+  return [
+    ["Is DevQuest free to use?",
+     "Yes — DevQuest is completely free, with no ads and no recruiters. You apply directly on each studio's own careers page."],
+    [`How often are ${cfg.noun} roles updated?`,
+     `Every hour. We pull ${cfg.noun} openings straight from studios' own career pages, so this list reflects what's live right now — currently ${total} role${total===1?"":"s"} across ${studios} studio${studios===1?"":"s"}.`],
+    ["Does DevQuest show salary?",
+     "When the studio publishes it, yes — we show the real figure and never invent a \"competitive\" range. Roles without published pay are shown without a salary tag."],
+    ["How does DevQuest handle stale or ghost jobs?",
+     "We show how long each role has been live, flag listings that keep getting re-posted, and drop links that go dead — so you don't waste time applying into the void."],
+  ];
+}
+
+// Standalone /jobs hub — an internal index of every category/studio/skill page, reachable from search
+// and giving crawlers one page that links to them all. Not part of the main app.
+function renderHubPage(allSpecs, all){
+  const group = (kind)=> allSpecs.filter(s=>s.kind===kind);
+  const sect = (title, specs)=> specs.length ? `<h2>${escHtml(title)}</h2><div class="related">`
+    + specs.map(s=>`<a class="rel" href="/${escHtml(s.slug)}">${escHtml(s.h1)}</a>`).join("") + `</div>` : "";
+  const total = new Set(all.filter(j=>!isPool(j.title)).map(j=>(j.studio||"")+"|"+(j.title||""))).size;
+  const url = "https://devquest.gg/jobs";
+  const title = "Browse Game Dev Jobs by Category, Studio & Skill · DevQuest";
+  const desc = `Every game-dev job category on DevQuest — by discipline, studio, game engine and skill. ${total} live roles, pulled from studio career pages and refreshed hourly. No ads.`;
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>${escHtml(title)}</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<meta name="description" content="${escHtml(desc)}">
+<link rel="canonical" href="${url}">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="DevQuest">
+<meta property="og:title" content="${escHtml(title)}">
+<meta property="og:description" content="${escHtml(desc)}">
+<meta property="og:image" content="https://devquest.gg/og-image-v4.png">
+<meta name="twitter:card" content="summary_large_image">
+<style>
+  :root{--bg:#0d1117;--panel:#161b22;--border:#30363d;--text:#e6edf3;--muted:#8b949e;--accent:#58a6ff}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:-apple-system,"Segoe UI",Roboto,sans-serif;line-height:1.6}
+  a{color:var(--accent)}
+  header{padding:16px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+  .logo{font-size:20px;font-weight:800;text-decoration:none;color:var(--text)}.logo span{color:var(--accent)}
+  .backbtn{color:var(--accent);font-size:13px;font-weight:600;text-decoration:none;border:1px solid var(--border);padding:7px 13px;border-radius:7px}
+  .wrap{max-width:900px;margin:0 auto;padding:24px 24px 80px}
+  h1{font-size:30px;font-weight:800;letter-spacing:-0.6px}
+  .sub{color:var(--muted);font-size:16px;margin:12px 0 8px;max-width:680px}
+  h2{font-size:18px;font-weight:800;margin:30px 0 4px}
+  .related{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+  .related .rel{font-size:13px;text-decoration:none;color:var(--text);background:var(--panel);border:1px solid var(--border);border-radius:999px;padding:6px 13px}
+  .related .rel:hover{border-color:var(--accent);color:var(--accent)}
+  footer{border-top:1px solid var(--border);margin-top:50px;padding:22px 24px;text-align:center;color:var(--muted);font-size:13px}
+</style>
+</head>
+<body>
+<header>
+  <a class="logo" href="/">Dev<span>Quest</span><span>.gg</span></a>
+  <a class="backbtn" href="/">Browse all jobs →</a>
+</header>
+<div class="wrap">
+  <h1>Browse game-dev jobs by category</h1>
+  <p class="sub">Every DevQuest category in one place — by discipline, studio, engine and skill. ${total} live roles, pulled straight from studios' own career pages and refreshed hourly.</p>
+  ${sect("By discipline", group("discipline"))}
+  ${sect("Remote & by seniority", group("combo"))}
+  ${sect("By engine & skill", group("skill"))}
+  ${sect("By studio", group("studio"))}
+</div>
+<footer>DevQuest.gg · Game dev jobs, fresh and honest · <a href="/">Browse all jobs</a> · <a href="/jobs">All categories</a> · <a href="/about">Our mission</a></footer>
 </body>
 </html>
 `;
 }
 
 function writeLandingPages(all, dir){
+  // Assemble every page spec: discipline (legacy configs) + skill + combo + studio.
+  const discSpecs  = LANDING_PAGES.map(c => Object.assign({ kind: "discipline", breadcrumb: c.h1 }, c));
+  const skillSpecs = skillPageSpecs(all);
+  const taken = new Set([...discSpecs, ...skillSpecs].map(s => s.slug));   // combos skip already-taken slugs
+  const comboSpecs  = comboPageSpecs(all, taken);
+  const studioSpecs = studioPageSpecs(all);
+  // Dedupe by slug (first wins: discipline > skill > combo > studio).
+  const bySlug = new Map();
+  for (const s of [...discSpecs, ...skillSpecs, ...comboSpecs, ...studioSpecs]) if (!bySlug.has(s.slug)) bySlug.set(s.slug, s);
+  const allSpecs = [...bySlug.values()];
+
   const slugs = [];
-  for (const cfg of LANDING_PAGES){
-    try { fs.writeFileSync(path.join(dir, cfg.slug + ".html"), renderLandingPage(cfg, all)); slugs.push(cfg.slug); }
-    catch(e){ console.error(`landing ${cfg.slug}: ${e.message}`); }
+  for (const spec of allSpecs){
+    try { fs.writeFileSync(path.join(dir, spec.slug + ".html"), renderLandingPage(spec, all, allSpecs)); slugs.push(spec.slug); }
+    catch(e){ console.error(`landing ${spec.slug}: ${e.message}`); }
   }
-  // Regenerate sitemap.xml (homepage + about + every landing page) so search engines find them all.
+  // Internal hub (/jobs) — one crawlable index that links to every category page above.
+  try { fs.writeFileSync(path.join(dir, "jobs.html"), renderHubPage(allSpecs, all)); slugs.push("jobs"); }
+  catch(e){ console.error(`hub: ${e.message}`); }
+
+  // Regenerate sitemap.xml with <lastmod> (Google uses lastmod; it now ignores changefreq/priority).
+  const today = new Date().toISOString().slice(0, 10);
   const urls = ["https://devquest.gg/", "https://devquest.gg/about"].concat(slugs.map(s => "https://devquest.gg/" + s));
   const sm = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`
-    + urls.map(u => `  <url><loc>${u}</loc><changefreq>${u.endsWith("/about") ? "monthly" : "hourly"}</changefreq></url>`).join("\n")
+    + urls.map(u => `  <url><loc>${u}</loc><lastmod>${today}</lastmod></url>`).join("\n")
     + `\n</urlset>\n`;
   fs.writeFileSync(path.join(dir, "sitemap.xml"), sm);
-  console.log(`Wrote ${slugs.length} SEO landing pages + sitemap.xml`);
+  console.log(`Wrote ${slugs.length} SEO pages (${studioSpecs.length} studio, ${skillSpecs.length} skill, ${comboSpecs.length} combo, +hub) + sitemap.xml`);
 }
 
 // ---- Normalization helpers -------------------------------------------------
