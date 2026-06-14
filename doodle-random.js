@@ -119,10 +119,12 @@
       // Floating header icon (bare art, gently bobbing)
       ".dqa-ico{position:relative;display:none;align-items:center;margin-left:8px;padding:0;cursor:pointer;background:transparent;border:none;vertical-align:middle}" +
       ".dqa-ico.on{display:inline-flex}" +
-      ".dqa-ico img{width:30px;height:30px;image-rendering:pixelated;display:block;animation:dqa-bob 3s ease-in-out infinite;filter:drop-shadow(0 2px 3px rgba(0,0,0,.45))}" +
-      ".dqa-ico:hover img{filter:drop-shadow(0 0 7px rgba(210,153,34,.75))}" +
-      ".dqa-ico.flash{animation:dqa-flash 1s ease-in-out 4}" +   /* 4 slow pulses (~4s total), then off */
-      "@keyframes dqa-flash{0%,100%{filter:drop-shadow(0 0 0 rgba(210,153,34,0))}50%{filter:drop-shadow(0 0 12px rgba(210,153,34,.95))}}" +
+      // Persistent GOLD glow so the sprite always stands out. Hover + the new-day flash switch to
+      // DevQuest BLUE to call attention. (A subtle dark depth shadow is kept underneath throughout.)
+      ".dqa-ico img{width:30px;height:30px;image-rendering:pixelated;display:block;animation:dqa-bob 3s ease-in-out infinite;filter:drop-shadow(0 0 6px rgba(210,153,34,.75)) drop-shadow(0 1px 2px rgba(0,0,0,.5))}" +
+      ".dqa-ico:hover img{filter:drop-shadow(0 0 9px rgba(88,166,255,.95)) drop-shadow(0 1px 2px rgba(0,0,0,.45))}" +
+      ".dqa-ico.flash img{animation:dqa-bob 3s ease-in-out infinite, dqa-flash 1s ease-in-out 4}" +   /* new day: 4 blue pulses, then back to the gold glow */
+      "@keyframes dqa-flash{0%,100%{filter:drop-shadow(0 0 6px rgba(210,153,34,.75)) drop-shadow(0 1px 2px rgba(0,0,0,.5))}50%{filter:drop-shadow(0 0 14px rgba(88,166,255,1)) drop-shadow(0 1px 2px rgba(0,0,0,.45))}}" +
       "@keyframes dqa-bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}" +
       // First-time discovery hint bubble
       ".dqa-hint{position:absolute;top:calc(100% + 9px);right:0;width:max-content;max-width:220px;background:var(--panel,#161b22);" +
@@ -175,7 +177,7 @@
       // The clip is fixed on <body> (not a child of #sidebar) so the sidebar's overflow:auto can't hide it.
       ".dqa-toast.anchored{position:absolute;left:8px;right:8px;bottom:6px;top:auto;max-width:none;opacity:1;pointer-events:auto;transform:translateY(140%);transition:transform .55s cubic-bezier(.22,1,.36,1)}" +
       ".dqa-toast.anchored.show{transform:translateY(0)}" +
-      "@media(prefers-reduced-motion:reduce){.dqa-ico.flash{animation:none}.dqa-ico img{animation:none}.dqa-toast{transition:none}.dqa-toast.anchored{transition:none}.dqa-cell,.dqa-cell img,.dqa-prog{transition:none}}";
+      "@media(prefers-reduced-motion:reduce){.dqa-ico.flash img{animation:none}.dqa-ico img{animation:none}.dqa-toast{transition:none}.dqa-toast.anchored{transition:none}.dqa-cell,.dqa-cell img,.dqa-prog{transition:none}}";
     document.head.appendChild(s);
   }
 
