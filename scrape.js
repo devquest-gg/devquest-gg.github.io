@@ -471,6 +471,22 @@ const TECH_VOCAB = [
   ["Substance", /\bsubstance\b/i],
   ["3ds Max", /\b3ds ?max\b/i],
   ["Photoshop", /\bphotoshop\b/i],
+  // --- Art / animation / VFX tools: artists care which software a role uses, just
+  //     as engineers care about the language. Keeps the skill Trends meaningful for Art. ---
+  ["Marmoset", /\bmarmoset\b/i],
+  ["Marvelous Designer", /\bmarvelous designer\b/i],
+  ["SpeedTree", /\bspeedtree\b/i],
+  ["Quixel", /\bquixel\b|\bmegascans\b/i],
+  ["Mudbox", /\bmudbox\b/i],
+  ["Krita", /\bkrita\b/i],
+  ["Procreate", /\bprocreate\b/i],
+  ["Clip Studio", /\bclip studio\b/i],
+  ["Spine", /\bspine ?2d\b|\bspine animation\b/i],   // require 2D/anim context so "spine of the team" never matches
+  ["After Effects", /\bafter ?effects\b/i],
+  ["Nuke", /\bnukex\b|\bnuke\b(?!\s+(?:the|it|that|this|everything|from|out)\b)/i],   // Foundry Nuke; skip the verb "nuke the cache"
+  ["Toon Boom", /\btoon ?boom\b/i],
+  ["MotionBuilder", /\bmotion ?builder\b/i],
+  ["Cascadeur", /\bcascadeur\b/i],
   ["Shaders", /\bhlsl\b|\bglsl\b|\bshader/i],
   ["Wwise", /\bwwise\b/i],
   ["FMOD", /\bfmod\b/i],
