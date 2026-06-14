@@ -74,6 +74,10 @@
   .logo .wordmark span { color: var(--accent); }
   .logo .logo-tld { color: var(--accent); }
   .logo svg { display: block; flex-shrink: 0; }
+  /* Tagline lives in the header's empty middle (replaces the old centered hero band). */
+  .herotag { font-size: 15px; font-weight: 700; color: var(--text); white-space: nowrap; letter-spacing: -0.2px; }
+  .herotag em { color: var(--pink); font-style: normal; }
+  @media (max-width: 1000px) { .herotag { display: none; } }
   .pulse { font-size: 12px; color: var(--muted); }
   .pulse b { color: var(--green); }
   .hero { text-align: center; padding: 8px 20px 6px; }
@@ -417,6 +421,7 @@
     <div class="logo"><a href="/" class="logohome" title="Back to DevQuest home" aria-label="DevQuest home" onclick="if(event.metaKey||event.ctrlKey||event.shiftKey)return true;var h=location.origin+'/';location.href===h?location.reload():location.assign(h);return false;"><svg width="24" height="24" viewBox="0 0 32 32" aria-hidden="true"><rect x="1" y="1" width="8" height="8" rx="2" fill="var(--accent)"/><rect x="12" y="1" width="8" height="8" rx="2" fill="#2d333b"/><rect x="23" y="1" width="8" height="8" rx="2" fill="#2d333b"/><rect x="1" y="12" width="8" height="8" rx="2" fill="#2d333b"/><rect x="12" y="12" width="8" height="8" rx="2" fill="var(--accent)"/><rect x="23" y="12" width="8" height="8" rx="2" fill="#2d333b"/><rect x="1" y="23" width="8" height="8" rx="2" fill="#2d333b"/><rect x="12" y="23" width="8" height="8" rx="2" fill="#2d333b"/><rect x="23" y="23" width="8" height="8" rx="2" fill="var(--accent)"/></svg><span class="wordmark">Dev<span>Quest</span><span class="logo-tld">.gg</span></span></a></div>
     <div class="pulse">⟳ Last sync: <b id="syncTime"></b> · refreshes hourly</div>
   </div>
+  <div class="herotag">Game dev jobs. <em>Fresh, honest, trackable.</em></div>
   <div class="headeractions" style="display:flex;gap:10px;align-items:center">
     <!-- SHARE:START (header share buttons — delete this group + the SHARE block after </header> to remove) -->
     <div class="dqshare" aria-label="Share DevQuest">
@@ -452,15 +457,6 @@ function dqCopyLink(btn){
 }
 </script>
 <!-- SHARE:END -->
-
-<div class="hero">
-  <div class="herobrand">
-    <svg class="hmark" viewBox="0 0 32 32" aria-hidden="true"><rect x="1" y="1" width="8" height="8" rx="2" fill="var(--accent)"/><rect x="12" y="1" width="8" height="8" rx="2" fill="#2d333b"/><rect x="23" y="1" width="8" height="8" rx="2" fill="#2d333b"/><rect x="1" y="12" width="8" height="8" rx="2" fill="#2d333b"/><rect x="12" y="12" width="8" height="8" rx="2" fill="var(--accent)"/><rect x="23" y="12" width="8" height="8" rx="2" fill="#2d333b"/><rect x="1" y="23" width="8" height="8" rx="2" fill="#2d333b"/><rect x="12" y="23" width="8" height="8" rx="2" fill="#2d333b"/><rect x="23" y="23" width="8" height="8" rx="2" fill="var(--accent)"/></svg>
-    <span class="hbword">Dev<span>Quest</span><span class="logo-tld">.gg</span></span>
-  </div>
-  <h1>Game dev jobs. <em>Fresh, honest, trackable.</em></h1>
-  <p id="heroSub">Synced hourly from studio career pages. We show posting age, salary when published, and say "Unknown" instead of guessing.</p>
-</div>
 
 <div class="layout">
   <div id="filterBackdrop" onclick="toggleFilters()"></div>
@@ -2978,9 +2974,7 @@ document.getElementById("syncTime").innerHTML = LIVE
     + (window.JOBS_DATA.errors && window.JOBS_DATA.errors.length
        ? ` · <a style="color:var(--muted);cursor:pointer" onclick="setView('stats')" title="One or more studio feeds are temporarily not updating — open Trends for details">${window.JOBS_DATA.errors.length} source${window.JOBS_DATA.errors.length===1?'':'s'} delayed</a>` : "")
   : "demo data";
-if (LIVE) document.getElementById("heroSub").textContent =
-  JOBS.length + " roles from " + new Set(JOBS.map(j=>j.s)).size + " studios (and growing), synced hourly. " +
-  "We show posting age, salary when published, and say \"Unknown\" instead of guessing.";
+// (The old hero subtext lived here; the role/studio counts now show in the stat strip under the tabs.)
 
 renderDirectory();
 renderMoon();
