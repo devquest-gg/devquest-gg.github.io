@@ -1490,7 +1490,12 @@ function render(){
     if (defaultBrowse && list.length) {
       const P = buildProfile();
       const hot = hotJobs(list, P, 12);
-      if (hot.length >= 4) {
+      // If the visitor set an explicit filter last time, honor it even with just a few matches.
+      // The stricter ≥4 bar only guards the IMPLICIT affinity guess (no recent filter), so a weak
+      // signal doesn't produce a thin section. Fixes: a single matrix cell / cell+studios not surfacing.
+      const _lfNow = affLastFilters();
+      const minHot = (_lfNow && lfHasFilters(_lfNow)) ? 1 : 4;
+      if (hot.length >= minHot) {
         hotHtml = renderHotSection(hot, P);
         // email-ask discipline target: from the last filters if present, else the affinity profile
         const _lf = affLastFilters();
@@ -2457,7 +2462,8 @@ function renderStats(){
       const discLock = new Set(_lockArr);
       const disc = [...discLock][0];
       const myMatches = hotJobs(list, P, 500);
-      if (disc && myMatches.length >= 4) {
+      // Explicit last-filter → show the "For you" hero even with a few matches; affinity-only guess → need ≥4.
+      if (disc && myMatches.length >= ((_lfH && lfHasFilters(_lfH)) ? 1 : 4)) {
         const custom = [];
         // (1) Where your field is hiring — matched roles by studio, freshest activity first
         const _byS = {};
