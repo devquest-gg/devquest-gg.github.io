@@ -762,6 +762,49 @@ function topKeys(obj, frac){
   const max = e[0][1];
   return e.filter(([,v])=>v >= max*frac).map(([k])=>k);
 }
+// ---- Last-filters: the search the visitor last ran is the strongest "hot for you" signal --------
+// We snapshot the active filter set (matrix discipline×seniority cells + sidebar facets) whenever the
+// visitor filters, and lead "Hot jobs for you" with fresh roles matching it on their next visit.
+function affLastFilters(){
+  try { const lf = store.get("dq-lastfilters", null);
+    if (!lf || !lf.ts || (Date.now() - lf.ts) > 30*864e5) return null;   // ignore very stale sets
+    return lf;
+  } catch(e){ return null; }
+}
+function lfHasFilters(lf){
+  return !!(lf && ((lf.cells&&lf.cells.length) || (lf.disc&&lf.disc.length) || (lf.sen&&lf.sen.length)
+    || (lf.studios&&lf.studios.length) || (lf.subs&&lf.subs.length) || (lf.countries&&lf.countries.length)
+    || (lf.regionsQuick&&lf.regionsQuick.length) || lf.region || lf.remote || lf.q));
+}
+function jobMatchesFilters(j, lf){
+  if (lf.cells && lf.cells.length && !lf.cells.includes(j.d+"|"+j.sen)) return false; // matrix: discipline×seniority
+  if (lf.disc && lf.disc.length && !lf.disc.includes(j.d)) return false;
+  if (lf.sen && lf.sen.length && !lf.sen.includes(j.sen)) return false;
+  if (lf.work && lf.work.length && !lf.work.includes(j.w)) return false;
+  if (lf.studios && lf.studios.length && !(lf.studios.includes(j.s) || lf.studios.includes("@"+j.p))) return false;
+  if (lf.subs && lf.subs.length && !lf.subs.includes(j.sub)) return false;
+  if (lf.countries && lf.countries.length && !(j.countries||[]).some(c=>lf.countries.includes(c))) return false;
+  if (lf.regionsQuick && lf.regionsQuick.length && !(j.regions||[]).some(x=>lf.regionsQuick.includes(x))) return false;
+  if (lf.region && !(j.regions||[]).includes(lf.region)) return false;
+  if (lf.remote && j.w !== "Remote") return false;
+  if (lf.q){ const hay=((j.t||"")+" "+(j.s||"")+" "+(j.d||"")).toLowerCase(); if(!hay.includes(lf.q)) return false; }
+  return true;
+}
+function hotFilterLabel(lf){
+  const discs=new Set(), sens=new Set();
+  (lf.cells||[]).forEach(c=>{ const x=String(c).split("|"); if(x[0])discs.add(x[0]); if(x[1])sens.add(x[1]); });
+  (lf.disc||[]).forEach(d=>discs.add(d)); (lf.sen||[]).forEach(s=>sens.add(s));
+  const parts=[];
+  if(discs.size) parts.push([...discs].slice(0,2).join(", "));
+  if(sens.size) parts.push([...sens].slice(0,2).join(", "));
+  const geo=[...(lf.regionsQuick||[]), ...(lf.region?[lf.region]:[])];
+  if(geo.length) parts.push(geo[0]);
+  if(lf.studios&&lf.studios.length) parts.push(String(lf.studios[0]).replace(/^@/,""));
+  if(lf.remote) parts.push("Remote");
+  if(lf.q) parts.push('"'+lf.q+'"');
+  const lab = parts.filter(Boolean).join(" · ");
+  return lab ? "your last filters · "+lab : "your last search";
+}
 // Build a recency-weighted interest profile. Recent clicks dominate (exponential time-decay),
 // so the picture follows what the visitor is doing *now*, not just their first session. Deliberate
 // signals (saved / tracked / followed) add a steady, undecayed vote. All on-device, sent nowhere.
@@ -800,6 +843,23 @@ function buildProfile(){
 //   4) their discipline, anything else still ≤60 days
 // Acted-on roles (saved/applied/dismissed) and roles older than 60 days are never shown.
 function hotJobs(pool, P, n){
+  // PRIMARY signal: the last filter set the visitor ran. Matrix cells carry discipline AND seniority,
+  // so a "Production · Director+" selection leads with fresh Director+ Production roles — not everything
+  // down to associate producer. Sidebar facets (studio, region, work type, search) are honored too.
+  const lf = affLastFilters();
+  if (lf && lfHasFilters(lf)) {
+    const regionPref = ((lf.regionsQuick&&lf.regionsQuick.length)||lf.region)
+      ? new Set([...(lf.regionsQuick||[]), ...(lf.region?[lf.region]:[])])
+      : new Set(topKeys((P&&P.region)||{}, 0.35));
+    const ageOf = j => _ageDays(j);
+    const local = j => !regionPref.size || j.w==="Remote" || (j.regions||[]).some(r=>regionPref.has(r));
+    const cmp   = (a,b)=> (local(b)?1:0)-(local(a)?1:0) || (b.ts||b.fseen||0)-(a.ts||a.fseen||0);
+    return pool.filter(j => jobMatchesFilters(j, lf)
+        && !saved.has(j.id) && !appStatus[j.id] && !dismissed.has(j.id)
+        && (ageOf(j)==null || ageOf(j)<=HOT_MAX_DAYS))
+      .sort(cmp).slice(0, n);
+  }
+  // FALLBACK: no recent filter — use the recency-weighted affinity profile, discipline-locked.
   if (!P || P.signal < HOT_MIN_SIGNAL) return [];
   const discSet = new Set(topKeys(P.disc, 0.6));        // locked discipline(s)
   if (!discSet.size) return [];
@@ -830,7 +890,8 @@ function hotWhy(P){
   return s ? `${d} roles · ${s} & similar` : `based on your ${d} activity`;
 }
 function renderHotSection(hot, P){
-  const why = hotWhy(P);
+  const _lf = affLastFilters();
+  const why = (_lf && lfHasFilters(_lf)) ? hotFilterLabel(_lf) : hotWhy(P);
   return `<div class="group" style="border:1px solid rgba(255,138,61,.35);border-radius:12px;background:linear-gradient(180deg,rgba(255,138,61,.07),transparent);margin-bottom:14px">
       <div class="group-header" onclick="toggleHot()" style="cursor:pointer">
         <span class="arrow ${hotOpen?'open':''}">▸</span>
@@ -1409,12 +1470,25 @@ function render(){
       && !q && !qExc.length && !selCells.size && !selStudios.size && !selSubs.size && !selCountries.size
       && !selKinds.size && !selHubs.size && !selRegionsQuick.size && !d.length && !w.length && !s.length
       && !r && !maxDays;
+    // Snapshot the active filter set so hot jobs can lead with it on the next visit (matrix cells
+    // carry discipline×seniority; sidebar facets too). Only saved when a real filter is set, so the
+    // last meaningful search persists after the visitor clears back to the default view.
+    if (!defaultBrowse && view === "list" && !showDismissed
+        && (selCells.size||selStudios.size||selSubs.size||selCountries.size||selRegionsQuick.size||d.length||w.length||s.length||r||quickRemote||q)) {
+      try { store.set("dq-lastfilters", { cells:[...selCells], studios:[...selStudios], subs:[...selSubs],
+        countries:[...selCountries], regionsQuick:[...selRegionsQuick], region:r||"", disc:d, sen:s, work:w,
+        remote:!!quickRemote, q:q||"", ts:Date.now() }); } catch(e){}
+    }
     if (defaultBrowse && list.length) {
       const P = buildProfile();
       const hot = hotJobs(list, P, 12);
       if (hot.length >= 4) {
         hotHtml = renderHotSection(hot, P);
-        const _hd = topKeys(P.disc, 0.6);
+        // email-ask discipline target: from the last filters if present, else the affinity profile
+        const _lf = affLastFilters();
+        let _hd = [];
+        if (_lf && lfHasFilters(_lf)) { const ds=new Set(); (_lf.cells||[]).forEach(c=>{const d0=String(c).split("|")[0]; if(d0)ds.add(d0);}); (_lf.disc||[]).forEach(x=>ds.add(x)); _hd=[...ds]; }
+        if (!_hd.length) _hd = topKeys(P.disc, 0.6);
         window.__hotDisc = _hd[0] || null;
         window.__hotDiscs = _hd;
         window.__hotDiscNew = list.filter(j => _hd.includes(j.d) && j.ts && (Date.now()-j.ts) <= 7*864e5).length;
