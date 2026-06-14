@@ -944,10 +944,16 @@ function strongTitleDiscipline(t) {
   if (/\baudio\b|sound design|\bcomposer\b|music design|\bsonore\b|conception sonore/.test(t)) return "Audio";
   if (/\bqa\b|quality assurance|\btester\b|\bsdet\b|test (engineer|analyst|lead|automation|specialist)|quality (engineer|analyst|specialist)|assurance qualit/.test(t)) return "QA";
   if (/art director|\bartist\b|\bartiste\b|direct(eur|rice|ion) artistique|\bart lead\b|lead artist|concept art|\bvfx\b|lighting (artist|lead)|environment artist|character artist|technical artist|technical art\b|(character|environment|prop|vehicle|weapon|texture) (artist|art|outsourc)/.test(t)) return "Art";
-  if (/\banimator\b|animation (director|lead|manager|supervisor)|\brigging\b|cinematics? (director|lead|supervisor|manager|animator|designer)|\bmocap\b|motion[ -]?capture/.test(t)) return "Animation";
+  // "Generalist" in games almost always means a 3D/art generalist (e.g. "3D Unreal Generalist") —
+  // EXCEPT corporate generalists (HR/People/Talent/etc.), which we guard out so they don't become Art.
+  if (/\bgeneralist\b/.test(t) && !/\b(hr|human resources|people|talent|recruit|payroll|benefits|office|business|marketing|finance|legal|it|sales|community|player support)\b/.test(t)) return "Art";
+  if (/\banimator\b|animation (director|lead|manager|supervisor)|\brigging\b|cinematics? (director|lead|supervisor|manager|animator|designer|editor|artist|coordinator)|\bcinematic editor\b|\bmocap\b|motion[ -]?capture/.test(t)) return "Animation";
   if (/game design|level design|systems? design|narrative design|\bwriter\b|\bscénariste\b|encounter design|combat design|content design|economy design|quality design|gameplay design|ux design|ui design|concepteur|conceptrice|conception de jeu|world build|world design|environment design|game (direct(or|ion)|lead)|creative direct(or|ion)|directeur (créatif|creatif)|directrice (créative|creative)/.test(t)) return "Design";
-  if ((/(engineer|programmer|programming|developer|architect)\b|architecte|ingénieur|programmeur|développeur|technical (director|lead)/.test(t)) && !/\bsales\b|customer success|account exec|solutions? consultant|product developer|developer (program|programme|community|ecosystem|partnership)|business develop(er|ment)|analytics developer/.test(t)) return "Engineering";
+  if ((/(engineers?|engineering|programmers?|programming|developers?|architects?)\b|architecte|ingénieur|programmeur|développeur|technical (director|lead)/.test(t)) && !/\bsales\b|customer success|account exec|solutions? consultant|product developer|developer (program|programme|community|ecosystem|partnership)|business develop(er|ment)|analytics developer/.test(t)) return "Engineering";
   if (/machine learning|\bml\b ?(scientist|researcher|ops)|data scien|data analy(st|tics|sis)|business intelligence|\bbi analyst\b|insights? analyst|analytics developer|deep learning|\bnlp\b|artificial intelligence|\bai (scientist|researcher|research)|\bof ai\b/.test(t)) return "Data & Analytics";
+  // Technical AI roles (transformation/enablement/platform/automation/etc.) → Engineering.
+  // Runs after the Data check so "AI Scientist/Researcher" still maps to Data & Analytics.
+  if (/\bai\b[ -](transformation|enablement|adoption|integration|automation|platform|infrastructure|tooling|engineer|developer|architect|ops|operations|solutions?|strategy|program|programme)\b/.test(t)) return "Engineering";
   // "Development Director/Manager/Lead" = game-production leadership — but NOT HR "Learning & Development"
   // or "Business Development" (sales). Guarded so those stay out of Production.
   if (/\bdevelopment (director|manager|lead)\b/.test(t) && !/business|learning|talent|\bl&d\b|\bpeople\b|organi[sz]ation/.test(t)) return "Production";
