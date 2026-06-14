@@ -82,9 +82,25 @@
       SND_CLICK  = new Audio(BASE + "packs/click.wav");  SND_CLICK.preload  = "auto"; SND_CLICK.volume  = 0.55;
     } catch (e) {}
   }
+  // Play a cue now; if the browser blocks it (autoplay policy on page load, before any gesture),
+  // queue it to fire on the visitor's very next click/keypress so the day-2 unlock is never silent.
+  var _pendingCue = null, _gestureArmed = false;
+  function _armGesture() {
+    if (_gestureArmed) return; _gestureArmed = true;
+    var fire = function () {
+      document.removeEventListener("pointerdown", fire, true);
+      document.removeEventListener("keydown", fire, true);
+      _gestureArmed = false;
+      var s = _pendingCue; _pendingCue = null;
+      if (s && soundsOn()) { try { s.currentTime = 0; var p = s.play(); if (p && p.catch) p.catch(function(){}); } catch (e) {} }
+    };
+    document.addEventListener("pointerdown", fire, true);
+    document.addEventListener("keydown", fire, true);
+  }
   function playSound(a) {
     if (!a || !soundsOn()) return;
-    try { a.currentTime = 0; var pr = a.play(); if (pr && pr.catch) pr.catch(function () {}); } catch (e) {}
+    try { a.currentTime = 0; var pr = a.play(); if (pr && pr.catch) pr.catch(function () { _pendingCue = a; _armGesture(); }); }
+    catch (e) { _pendingCue = a; _armGesture(); }
   }
 
   function unlockedCount() { return Math.min(days.length, TOTAL); }
@@ -231,7 +247,6 @@
     }
     toastEl.querySelector("img").src = SPRITES[idx];
     toastEl.querySelector(".t2").textContent = "New sprite unlocked!";
-    playSound(SND_UNLOCK);
     void toastEl.offsetWidth; toastEl.classList.add("show");
     clearTimeout(toastEl._t); toastEl._t = setTimeout(hideToast, 5500);
   }
@@ -301,9 +316,10 @@
     refreshIcon();
     var after = unlockedCount();
     // Real new-day unlock → analytics (day number rides the event; test tools never reach here).
-    if (isNewDay && after > before) {
+    if (isNewDay && after > before && after > 1) {   // day 1 is not counted as an unlock (stat or sound)
       var ui = ORDER[after - 1];
       track("collect_unlock", { day: after, idx: ui, pack: packOf(ui) });
+      playSound(SND_UNLOCK);                          // new-sprite cue on every real (day 2+) unlock, hint day or not
       if (after >= TOTAL) track("collect_complete", { day: after });
     }
     // The intro pop-up now appears on day 2 (the first return), not day 1 — so a
