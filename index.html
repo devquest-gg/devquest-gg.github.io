@@ -675,7 +675,7 @@ const saved = new Set(store.get("luj-saved", [])); // jobs the visitor stars to 
 let NOTEBOOKS = store.get("dq-notebooks", {}) || {};
 let MINE_VIEW = false;          // true only while rendering the My Jobs view (gates the notebook UI)
 const nbOpen = new Set();        // job ids whose notebook is currently expanded
-let nbHintActive = false, nbFlashedThisActivation = false;   // one-time "discover the notebook" nudge
+let nbHintActive = false, nbFlashedThisActivation = false, _nbTrackT = null;   // one-time "discover the notebook" nudge
 // ---- Dream Studio watchlist: studios the visitor follows (local only, no account) ----
 const FOLLOWS = new Set(store.get("dq-follows", []) || []);
 function isFollowed(s){ return FOLLOWS.has(s); }
@@ -1999,6 +1999,10 @@ function nbSync(id){
   store.set("dq-notebooks", NOTEBOOKS);
   const btn = document.querySelector('[data-nb-btn="'+id+'"]');
   if (btn) btn.classList.toggle("hasnotes", nbHas(id));
+  if (notes || dates.length || contacts.length || questions.length){   // a real edit (has content) → track, debounced
+    clearTimeout(_nbTrackT);
+    _nbTrackT = setTimeout(function(){ try { window.dqTrack && window.dqTrack("notebook_edit", {}); } catch(e){} }, 2500);
+  }
   dqUpdateUpcoming();
 }
 // Soonest upcoming dated entry across all notebooks (today or later) — feeds the My Jobs banner.
