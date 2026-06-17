@@ -537,6 +537,7 @@
   .coltag.up { color: #e06c5e; background: rgba(224,108,94,.12); }
   .coltag.dn { color: var(--green); background: rgba(63,185,80,.12); }
   .coltag.eq { color: var(--muted); background: rgba(139,148,158,.12); }
+  .minenudge { font-size: 13px; color: var(--gold); background: rgba(210,153,34,.10); border: 1px solid rgba(210,153,34,.35); border-radius: 8px; padding: 8px 12px; margin: 0 0 12px; }
   .mapcity { display: flex; align-items: flex-start; gap: 10px; background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; margin-bottom: 12px; }
   .mapcity .mc-ic { font-size: 18px; line-height: 1.4; }
   .mapcity .mc-body { flex: 1; min-width: 0; }
@@ -824,6 +825,8 @@ function renderFollowView(){
   if (nbHintActive) html += `<div class="nbhint"><span>New: every job here has a <b>Notebook</b> 📝. Open one to keep notes, interview dates &amp; contacts.</span><button class="x" onclick="nbDismissHint()">Got it</button></div>`;
   if (pipeN){
     let body = "";
+    const staleApplied = applied.filter(j => { var d = nbAppliedDays(j.id); return d != null && d >= 30; });
+    if (staleApplied.length) body += `<div class="minenudge">🔔 ${staleApplied.length} application${staleApplied.length===1?'':'s'} ${staleApplied.length===1?'has':'have'} gone quiet (30+ days) — consider a follow-up.</div>`;
     if (applied.length) body += `<div class="minesub">Applied · ${applied.length}</div>` + cards(applied);
     if (interviewing.length) body += `<div class="minesub">Interviewing · ${interviewing.length}</div>` + cards(interviewing);
     if (rejected.length) body += `<div class="minesub">Rejected · ${rejected.length}</div>` + cards(rejected);
@@ -1001,6 +1004,19 @@ function buildProfile(){
 //   4) their discipline, anything else still ≤60 days
 // Acted-on roles (saved/applied/dismissed) and roles older than 60 days are never shown.
 function hotJobs(pool, P, n){
+  // TOP priority: an explicitly pinned My-profile (target roles) overrides transient last-filters.
+  const _pinRoles = profPinnedRoles();
+  if (_pinRoles){
+    const discSet = new Set(_pinRoles);
+    const senG = profGet("sen"); const senPref = (senG.pinned && senG.v!=="__any") ? senG.v : null;
+    const remoteOnly = profGet("work").v === "remote";
+    const ageOf = j => _ageDays(j);
+    const cand = pool.filter(j => discSet.has(j.d) && (!remoteOnly || j.w==="Remote")
+        && !saved.has(j.id) && !appStatus[j.id] && !dismissed.has(j.id)
+        && (ageOf(j)==null || ageOf(j)<=HOT_MAX_DAYS));
+    const cmp = (a,b)=> (senPref?((b.sen===senPref?1:0)-(a.sen===senPref?1:0)):0) || (b.ts||b.fseen||0)-(a.ts||a.fseen||0);
+    return cand.sort(cmp).slice(0, n);
+  }
   // PRIMARY signal: the last filter set the visitor ran. Matrix cells carry discipline AND seniority,
   // so a "Production · Director+" selection leads with fresh Director+ Production roles — not everything
   // down to associate producer. Sidebar facets (studio, region, work type, search) are honored too.
@@ -1049,7 +1065,7 @@ function hotWhy(P){
 }
 function renderHotSection(hot, P){
   const _lf = affLastFilters();
-  const why = (_lf && lfHasFilters(_lf)) ? hotFilterLabel(_lf) : hotWhy(P);
+  const why = profPinnedRoles() ? profHotLabel() : (_lf && lfHasFilters(_lf)) ? hotFilterLabel(_lf) : hotWhy(P);
   return `<div class="group" style="border:1px solid rgba(255,138,61,.35);border-radius:12px;background:linear-gradient(180deg,rgba(255,138,61,.07),transparent);margin-bottom:14px">
       <div class="group-header" onclick="toggleHot()" style="cursor:pointer">
         <span class="arrow ${hotOpen?'open':''}">▸</span>
@@ -2038,6 +2054,31 @@ function nbAddDate(id){ const c = document.querySelector("#nb-"+id+" .nb-dates")
 function nbAddContact(id){ const c = document.querySelector("#nb-"+id+" .nb-contacts"); if (c){ c.insertAdjacentHTML("beforeend", nbContactRow(id, {n:"",e:""})); nbSync(id); } }
 function nbAddQuestion(id){ const c = document.querySelector("#nb-"+id+" .nb-qs"); if (c){ c.insertAdjacentHTML("beforeend", nbQuestionRow(id, "")); var inp = c.lastElementChild && c.lastElementChild.querySelector(".q-text"); if (inp) inp.focus(); nbSync(id); } }
 function nbRemoveRow(btn, id){ const r = btn.closest(".daterow, .nb-contact, .nb-q"); if (r) r.remove(); nbSync(id); }
+// ---- Applied-date timeline: the notebook's "Applied" key-date is the single source of truth ----
+function nbToday(){ var d=new Date(); return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+function nbSeedAppliedDate(id){
+  var d = NOTEBOOKS[id] || {}; var dates = (d.dates || []).slice();
+  if (dates.some(function(x){ return x.l==="Applied" && x.d; })) return false;   // keep an existing date
+  var empty = null; for (var i=0;i<dates.length;i++){ if (dates[i].l==="Applied" && !dates[i].d){ empty=dates[i]; break; } }
+  if (empty){ empty.d = nbToday(); } else { dates.push({ l:"Applied", d:nbToday(), t:"" }); }
+  d.dates = dates; NOTEBOOKS[id] = d; try { store.set("dq-notebooks", NOTEBOOKS); } catch(e){}
+  return true;
+}
+function nbAppliedDate(id){
+  var d = NOTEBOOKS[id]; if (!d || !d.dates) return null;
+  var ds = d.dates.filter(function(x){ return x.l==="Applied" && x.d; }).map(function(x){ return x.d; }).sort();
+  return ds.length ? ds[0] : null;
+}
+function nbAppliedDays(id){
+  var a = nbAppliedDate(id); if (!a) return null;
+  var t = new Date(a+"T00:00").getTime(); if (isNaN(t)) return null;
+  return Math.max(0, Math.floor((Date.now()-t)/864e5));
+}
+function nbAppliedChip(j){
+  if (!appStatus[j.id]) return "";
+  var dys = nbAppliedDays(j.id); if (dys==null) return "";
+  return '<span class="tag" title="When you marked this applied — from your notebook; edit it there.">✓ '+(dys===0?"applied today":("applied "+dys+"d ago"))+'</span>';
+}
 function nbSync(id){
   const p = document.getElementById("nb-"+id); if (!p) return;
   const notesEl = p.querySelector(".nb-notes");
@@ -2236,6 +2277,7 @@ function rowHtml(j){
       ${j.yoe?`<span class="tag">${j.yoe}+ yrs</span>`:""}
       ${longChip}
       ${relistChip}
+      ${MINE_VIEW?nbAppliedChip(j):``}
       ${ROW_COL?colChipForJob(j):``}
       <a class="tag knowbtn" href="${whoDoIKnowUrl(j.s)}" target="_blank" rel="noopener" onclick="event.stopPropagation()" aria-label="Who do I know at ${j.s.replace(/"/g,'')}?" title="Who do I know here? Opens LinkedIn and shows your 1st-degree connections at ${j.s.replace(/"/g,'')} — your warmest path to a referral. (You'll need to be logged into LinkedIn.)">🤝<span class="knowtext">Who do I know?</span></a>
     </div>
@@ -2332,7 +2374,8 @@ function setStatus(id, v){
   if (v) appStatus[id] = v; else delete appStatus[id];
   store.set("luj-status", appStatus);
   if (v) try { const j = JOB_BY_ID[id]; window.dqTrack && window.dqTrack('track_job', { status:v, st:j&&j.s, d:j&&j.d }); } catch(e){}
-  if (v) try { dqToast("Tracking as " + v + " · in My Jobs", dqSrcEl()); } catch(e){}
+  var _seededApplied = false; if (v) try { _seededApplied = nbSeedAppliedDate(id); } catch(e){}
+  if (v) try { dqToast(_seededApplied ? ("Marked "+v+" · applied date saved — edit in notebook") : ("Tracking as " + v + " · in My Jobs"), dqSrcEl()); } catch(e){}
   render(); updateFollowTab(); if (typeof view !== "undefined" && view === "follow") renderFollowView(); if (typeof view !== "undefined" && view === "bestfit") { try { bfCompute(); } catch(e){} }
 }
 // one-click status toggle for the per-row icon cluster: click a status to set it,
@@ -2548,7 +2591,7 @@ function colChipForJob(j){
   var d = Math.round((there/home - 1)*100);
   if (d > 5)  return '<span class="coltag up" title="Approx. cost of living vs '+bfEsc(loc)+' — a guide, not exact">↑ ~'+d+'% cost of living</span>';
   if (d < -5) return '<span class="coltag dn" title="Approx. cost of living vs '+bfEsc(loc)+' — a guide, not exact">↓ ~'+(-d)+'% cost of living</span>';
-  return '<span class="coltag eq" title="Approx. cost of living vs '+bfEsc(loc)+' — a guide, not exact">≈ cost of living</span>';
+  return '<span class="coltag eq" title="Approx. cost of living vs '+bfEsc(loc)+' — a guide, not exact">≈ similar cost of living</span>';
 }
 function profInferRoles(){ var t=Object.entries(DISC_COUNTS||{}).sort(function(a,b){return b[1]-a[1];})[0]; return t?[t[0]]:(DISC.length?[DISC[0]]:[]); }
 function profGet(f){
@@ -2560,6 +2603,10 @@ function profGet(f){
   if (f==="loc")  return { v: pinned && PROFILE.loc ? PROFILE.loc : "", pinned:pinned };
   return { v:"", pinned:false };
 }
+// Pinned target roles are an explicit, persistent signal — they take priority over transient
+// last-filters for the personalized "Hot jobs for you" + Trends hero. Returns null if not pinned.
+function profPinnedRoles(){ try { var r = profGet("roles"); return (r.pinned && r.v && r.v.length) ? r.v.slice() : null; } catch(e){ return null; } }
+function profHotLabel(){ var roles=profPinnedRoles(); if(!roles) return ""; var sen=profGet("sen"); var senL=(sen.pinned && sen.v!=="__any")?(sen.v+" "):""; return "your profile · "+senL+roles.join(", "); }
 function profSet(f, val){ PROFILE.pinned[f]=true; PROFILE[f]=val; profSave(); profMark(f,true); try{ window.dqTrack && window.dqTrack("profile_set", { f:f }); }catch(e){} }
 function profRevert(f){
   PROFILE.pinned[f]=false; delete PROFILE[f]; profSave(); profMark(f,false);
@@ -3108,20 +3155,22 @@ function renderStats(){
     // filter to Design and the hero shows Design, not whatever you happened to click weeks ago.
     const _lfH = affLastFilters();
     let _lockArr = [];
-    if (_lfH && lfHasFilters(_lfH)) {
+    const _pinH = profPinnedRoles();
+    if (_pinH) { _lockArr = _pinH; }
+    else if (_lfH && lfHasFilters(_lfH)) {
       const _ds = new Set();
       (_lfH.cells||[]).forEach(c=>{ const d0=String(c).split("|")[0]; if(d0) _ds.add(d0); });
       (_lfH.disc||[]).forEach(x=>_ds.add(x));
       _lockArr = [..._ds];
     }
     if (!_lockArr.length) _lockArr = topKeys(P.disc, 0.6);
-    const _haveSignal = (_lfH && lfHasFilters(_lfH)) || P.signal >= HOT_MIN_SIGNAL;
+    const _haveSignal = !!_pinH || (_lfH && lfHasFilters(_lfH)) || P.signal >= HOT_MIN_SIGNAL;
     if (_haveSignal) {
       const discLock = new Set(_lockArr);
       const disc = [...discLock][0];
       const myMatches = hotJobs(list, P, 500);
       // Explicit last-filter → show the "For you" hero even with a few matches; affinity-only guess → need ≥4.
-      if (disc && myMatches.length >= ((_lfH && lfHasFilters(_lfH)) ? 1 : 4)) {
+      if (disc && myMatches.length >= ((_pinH || (_lfH && lfHasFilters(_lfH))) ? 1 : 4)) {
         const custom = [];
         // (1) Where your field is hiring — matched roles by studio, freshest activity first
         const _byS = {};
