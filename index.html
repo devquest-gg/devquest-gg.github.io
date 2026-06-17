@@ -99,7 +99,7 @@
   /* mobile-only controls — hidden on desktop so the PC layout is unchanged */
   #filterToggle, #filterClose, #filterBackdrop, .swipehint { display: none; }
   @media (max-width: 820px) {
-    .layout { grid-template-columns: 1fr; gap: 14px; padding: 0 12px 48px; }
+    .layout { grid-template-columns: 1fr; gap: 14px; padding: 14px 12px 48px; }
     /* filters become an off-canvas drawer; content (matrix + jobs) comes first */
     #sidebar { position: fixed; top: 0; left: 0; width: 86%; max-width: 330px; z-index: 60;
       border-radius: 0; height: 100vh; height: 100dvh; max-height: none; overflow-y: auto;
@@ -116,7 +116,9 @@
     .hero .herobrand { font-size: 26px; gap: 8px; }
     .hero .hmark { width: 26px; height: 26px; }
     .hero h1 { font-size: 15px; }
-    header { padding: 12px 14px; }
+    header { padding: 12px 14px; flex-wrap: wrap; row-gap: 10px; }
+    /* buttons move to their own full-width row under the logo, wrapping if needed */
+    header .headeractions { width: 100%; flex-wrap: wrap; }
     /* show the "Who do I know?" label on touch (no hover to reveal it) */
     .knowtext { display: inline; }
     .row:not(:hover) .knowbtn { color: var(--accent); border-color: rgba(88,166,255,.5); background: rgba(88,166,255,.08); }
@@ -135,8 +137,8 @@
   @media (max-width: 560px) {
     /* share icons are hidden at this width, so give the two text buttons more
        breathing room and trim them slightly so the cluster isn't cramped */
-    header .headeractions { gap: 12px !important; }
-    header .aboutbtn, header .feedbackbtn { padding: 6px 11px !important; font-size: 12px !important; }
+    header .headeractions { gap: 10px !important; }
+    header .wnbtn, header .aboutbtn, header .feedbackbtn { padding: 6px 11px !important; font-size: 12px !important; }
   }
   aside { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 18px; height: fit-content; position: sticky; top: 80px; max-height: calc(100vh - 100px); overflow-y: auto; }
   /* Drop the Filters box so its top lines up with the "Where are the jobs" card (below the tabs +
