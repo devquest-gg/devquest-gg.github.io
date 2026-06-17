@@ -36,13 +36,10 @@ const DIRECTORY = [
   { name: "Telltale Games", url: "https://telltale.com/careers/", note: "The Wolf Among Us — revived studio", city: "Malibu, CA" },
   // Notable studios we can't cleanly scrape yet (Xbox first-party / custom corporate portals) — link-outs for now.
   { name: "Square Enix", url: "https://www.square-enix-games.com/en_us/careers", note: "Final Fantasy, Dragon Quest — JP publisher", city: "Tokyo, Japan" },
-  { name: "LightSpeed Studios", url: "https://www.lightspeed-studios.com/join-us.html", note: "PUBG Mobile — Tencent", city: "Los Angeles, CA" },
   // ---- June 2026: requested / community additions (link-outs; no clean scrapeable feed yet) ----
   { name: "PUBG Studios", url: "https://www.krafton.com/en/careers/jobs/", note: "PUBG: Battlegrounds — Krafton", city: "Seoul, South Korea" },
   // Self-hosted / non-standard boards — link-outs until a bespoke fetcher is worth building.
   { name: "Techland", url: "https://techland.net/job-offers", note: "Dying Light — self-hosted board, ~35 roles (PL)", city: "Wrocław, Poland" },
-  { name: "Warhorse Studios", url: "https://warhorsestudios.cz/kariera", note: "Kingdom Come: Deliverance — Embracer (CZ)", city: "Prague, Czechia" },
-  { name: "Playdead", url: "https://playdead.com/jobs/", note: "Limbo, Inside — Denmark", city: "Copenhagen, Denmark" },
   // Can't cleanly scrape (Xbox first-party portals, custom sites, or a Pinpoint board) — link-outs.
   { name: "Retro Studios", url: "https://careers.nintendo.com/studios/retro-studios/", note: "Metroid Prime, Donkey Kong — Nintendo (Austin)", city: "Austin, TX" },
   { name: "Rare", url: "https://www.rare.co.uk/careers", note: "Sea of Thieves — Xbox Game Studios (UK)", city: "Twycross, UK" },
@@ -57,20 +54,16 @@ const DIRECTORY = [
   { name: "Void Interactive", url: "https://voidinteractive.net/careers/", note: "Ready or Not · custom board (Dublin)", city: "Dublin, Ireland" },
   { name: "Grip Studios", url: "https://grip-studios.com/hiring.php", note: "Co-dev: Indiana Jones, Civ VII · self-hosted (Prague)", city: "Prague, Czechia" },
   { name: "Mad Head Games", url: "https://careers.madheadgames.com/", note: "Scars Above, Pavilion — TalentLyft board (Serbia/Bosnia)", city: "Novi Sad, Serbia" },
-  { name: "Mad Mushroom", url: "https://apply.workable.com/otk-media/", note: "Indie publisher · OTK Network board (Austin)", city: "Austin, TX" },
   // batch 4 (2026-06-09): notable + mobile studios on custom / region-specific ATS — browse directly
   { name: "Kojima Productions", url: "https://www.kojimaproductions.jp/en/careers", note: "Death Stranding · HRMOS board (Tokyo)", city: "Tokyo, Japan" },
   { name: "Cygames", url: "https://www.cygames.co.jp/en/recruit/", note: "Granblue Fantasy, Uma Musume · JP board (Tokyo)", city: "Tokyo, Japan" },
-  { name: "Fool's Theory", url: "https://careers.foolstheory.com/", note: "The Witcher Remake · ex-CDPR devs (Poland)", city: "Bielsko-Biała, Poland" },
   { name: "Garena", url: "https://careers.garena.com/", note: "Free Fire · Sea Ltd (Singapore)", city: "Singapore" },
   { name: "Plarium", url: "https://company.plarium.com/en/career/", note: "RAID: Shadow Legends · mobile (Israel)", city: "Herzliya, Israel" },
   { name: "SuperPlay", url: "https://www.superplay.co/careers", note: "Dice Dreams · casual mobile (Israel)", city: "Tel Aviv, Israel" },
   { name: "Playrix", url: "https://playrix.com/job/open/", note: "Gardenscapes, Township · custom portal (Dublin)", city: "Dublin, Ireland" },
   // batch 5 (2026-06-11): big names with custom / no-API careers sites (christran sweep holdouts) — browse directly.
-  { name: "Guerrilla Games", url: "https://www.guerrilla-games.com/join", note: "Horizon · Sony first-party, custom board (Amsterdam)", city: "Amsterdam, Netherlands" },
   { name: "CCP Games", url: "https://careers.fenriscreations.com/", note: "EVE Online · now Fenris Creations, custom site (Reykjavík)", city: "Reykjavík, Iceland" },
   { name: "Miniclip", url: "https://www.miniclip.com/careers/vacancies", note: "8 Ball Pool, Agar.io · custom board (Switzerland)", city: "Neuchâtel, Switzerland" },
-  { name: "GIANTS Software", url: "https://www.giants-software.com/career.php", note: "Farming Simulator · self-hosted board (Switzerland)", city: "Zurich, Switzerland" },
   { name: "Keen Software House", url: "https://www.keenswh.com/careers/", note: "Space Engineers · custom site (Prague)", city: "Prague, Czechia" },
   // From the Grackle HQ comparison (2026-06-11): notable studios on custom careers sites.
   { name: "FromSoftware", url: "https://careers.fromsoftware.jp/en/openpositions.html", note: "Elden Ring, Dark Souls — custom JP recruiting site", city: "Tokyo, Japan" },
@@ -90,7 +83,6 @@ const DIRECTORY = [
   { name: "Iron Gate Studio", url: "https://irongate.se/", note: "Valheim — small Swedish studio", city: "Skövde, Sweden" },
   { name: "Devolver Digital", url: "https://www.devolverdigital.com/jobs", note: "Indie publisher (Cult of the Lamb, Cuphead) — custom board", city: "Austin, TX" },
   { name: "Klei Entertainment", url: "https://www.klei.com/careers", note: "Don't Starve, Oxygen Not Included — custom site (Vancouver)", city: "Vancouver, BC" },
-  { name: "Thunderful Games", url: "https://career.thunderfulgames.com/", note: "SteamWorld — HaileyHR board (Sweden)", city: "Gothenburg, Sweden" },
   { name: "Electric Square", url: "https://electricsquare.com/come-join-us/open-positions/", note: "Co-dev (Lively, Hot Wheels Unleashed) — Keywords Studios; static SSR board, promote when hiring", city: "Brighton, UK" },
   { name: "Sports Interactive", url: "https://careers.sega.co.uk/studios/sports-interactive", note: "Football Manager — SEGA (no clean per-studio feed; SEGA careers portal)", city: "London, UK" },
   { name: "Two Point Studios", url: "https://careers.sega.co.uk/studios/two-point-studios", note: "Two Point Hospital/Campus — SEGA", city: "Farnham, UK" },
@@ -179,6 +171,15 @@ const STUDIOS = [
   { name: "Unity", type: "greenhouse", token: "unity3d" },
   { name: "Team17", type: "workable", token: "team-17-digital" },
   { name: "Kinetic Games", type: "rippling", token: "kinetic-games-careers", city: "Southampton, UK" }, // Phasmophobia · Rippling ATS (promoted from Island 2026-06-17)
+  // batch 8 (2026-06-17): promoted from Island — confirmed on a supported ATS.
+  { name: "Guerrilla Games", type: "greenhouse", token: "guerrilla-games", city: "Amsterdam, Netherlands" }, // Horizon
+  { name: "Playdead", type: "breezy", token: "playdead", city: "Copenhagen, Denmark" },
+  { name: "Warhorse Studios", type: "breezy", token: "warhorsestudios", city: "Prague, Czechia" }, // Kingdom Come: Deliverance
+  { name: "Fool's Theory", type: "teamtailor", token: "foolstheory", host: "careers.foolstheory.com", city: "Bielsko-Biała, Poland" }, // The Witcher Remake
+  { name: "Thunderful Games", type: "teamtailor", token: "thunderfulgames", host: "career.thunderfulgames.com", city: "Gothenburg, Sweden" }, // spot-check first scrape
+  { name: "GIANTS Software", type: "smartrecruiters", token: "GIANTSSoftwareGmbH", city: "Zurich, Switzerland" }, // Farming Simulator — spot-check first scrape
+  { name: "Mad Mushroom", type: "workable", token: "otk-media", city: "Austin, TX" }, // OTK Network — spot-check first scrape
+  { name: "LightSpeed Studios", type: "workday", host: "tencent.wd1.myworkdayjobs.com", tenant: "tencent", site: "Lightspeed", token: "lightspeed", city: "Los Angeles, CA" }, // PUBG Mobile (Tencent) — spot-check first scrape
   { name: "Rockstar Games", type: "greenhouse", token: "rockstargames" },
   { name: "People Can Fly", type: "smartrecruiters", token: "PeopleCanFly" },
   { name: "Kabam", type: "lever", token: "kabam" },
