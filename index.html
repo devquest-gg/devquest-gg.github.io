@@ -139,6 +139,10 @@
        breathing room and trim them slightly so the cluster isn't cramped */
     header .headeractions { gap: 10px !important; }
     header .wnbtn, header .aboutbtn, header .feedbackbtn { padding: 6px 11px !important; font-size: 12px !important; }
+    /* job cards: title takes its own line, then meta + action icons wrap to a second line so
+       nothing (notebook / ✓💬⊘ status / hide) falls off the right edge on phones */
+    .rtop { flex-wrap: wrap; }
+    .rmain { flex-basis: 100%; min-width: 0; }
   }
   aside { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 18px; height: fit-content; position: sticky; top: 80px; max-height: calc(100vh - 100px); overflow-y: auto; }
   /* Drop the Filters box so its top lines up with the "Where are the jobs" card (below the tabs +
