@@ -496,6 +496,57 @@
   .wn-title { font-size: 15px; font-weight: 700; margin: 2px 0 8px; }
   .wn-entry ul { margin: 0; padding-left: 18px; }
   .wn-entry li { font-size: 14px; color: var(--text); margin-bottom: 5px; line-height: 1.5; }
+  /* --- My profile panel (Best fit) --- */
+  .pbar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; background: linear-gradient(180deg,rgba(88,166,255,.06),var(--panel)); border: 1px solid rgba(88,166,255,.45); border-radius: 12px; padding: 11px 15px; cursor: pointer; user-select: none; }
+  .pbar .pnm { font-size: 14px; font-weight: 800; }
+  .pbar .psum { font-size: 13.5px; color: var(--muted); } .pbar .psum b { color: var(--text); font-weight: 600; }
+  .pbar .pedit { margin-left: auto; font-size: 12px; font-weight: 700; color: var(--accent); white-space: nowrap; }
+  .ppanel { display: none; background: var(--panel); border: 1px solid rgba(88,166,255,.45); border-top: none; border-radius: 0 0 12px 12px; padding: 16px 18px; margin: -4px 0 16px; }
+  .ppanel.open { display: block; }
+  .psub { font-size: 12.5px; color: var(--muted); margin-bottom: 14px; }
+  .pfield { min-width: 0; margin-bottom: 14px; }
+  .pfield2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 22px; }
+  @media (max-width: 600px) { .pfield2 { grid-template-columns: 1fr; } }
+  .pflabel { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .03em; margin-bottom: 7px; }
+  .ptag { font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 999px; white-space: nowrap; text-transform: none; letter-spacing: 0; }
+  .ptag.inf { color: var(--gold); background: rgba(210,153,34,.14); border: 1px solid rgba(210,153,34,.4); }
+  .ptag.pin { color: var(--accent); background: rgba(88,166,255,.14); border: 1px solid rgba(88,166,255,.4); }
+  .prev { margin-left: auto; font-size: 11px; color: var(--muted); background: none; border: none; cursor: pointer; }
+  .prev:hover { color: var(--text); }
+  .pseggrp { display: flex; flex-wrap: wrap; gap: 6px; }
+  .pseg { font-size: 13px; font-weight: 600; padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; }
+  .pseg:hover { color: var(--text); border-color: var(--muted); }
+  .pseg.on { background: var(--accent); color: #0d1117; border-color: var(--accent); }
+  .pchips { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+  .pchip { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; background: var(--bg); border: 1px solid var(--border); border-radius: 999px; padding: 5px 10px; }
+  .pchip .x { cursor: pointer; color: var(--muted); font-size: 12px; } .pchip .x:hover { color: var(--pink); }
+  .paddchip { font-size: 12px; color: var(--muted); background: transparent; border: 1px dashed var(--border); border-radius: 999px; padding: 5px 10px; cursor: pointer; }
+  .paddchip:hover { color: var(--text); border-color: var(--muted); }
+  .paddsel { font-size: 12px; color: var(--muted); background: transparent; border: 1px dashed var(--border); border-radius: 999px; padding: 5px 10px; cursor: pointer; }
+  .paddsel:hover { color: var(--text); border-color: var(--muted); }
+  .ptxt, .ppanel select { width: 100%; background: var(--bg); color: var(--text); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; font: inherit; font-size: 13px; }
+  .ptxt:focus, .ppanel select:focus { outline: none; border-color: var(--accent); }
+  .pnote { font-size: 11px; color: var(--muted); margin-top: 6px; line-height: 1.45; }
+  .bfdiscsw { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin: 0 0 12px; }
+  .bfdiscsw .bfswlbl { font-size: 13px; color: var(--muted); margin-right: 2px; }
+  .bfdiscsw .dbtn { font-size: 13px; font-weight: 600; padding: 5px 12px; border-radius: 999px; border: 1px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; }
+  .bfdiscsw .dbtn.on { background: var(--accent); color: #0d1117; border-color: var(--accent); }
+  .bfcardhead:hover { background: rgba(255,255,255,.02); }
+  .bfjobs { border-top: 1px solid var(--border); background: #0f141b; }
+  .coltag { font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 999px; white-space: nowrap; }
+  .coltag.up { color: #e06c5e; background: rgba(224,108,94,.12); }
+  .coltag.dn { color: var(--green); background: rgba(63,185,80,.12); }
+  .coltag.eq { color: var(--muted); background: rgba(139,148,158,.12); }
+  .mapcity { display: flex; align-items: flex-start; gap: 10px; background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; margin-bottom: 12px; }
+  .mapcity .mc-ic { font-size: 18px; line-height: 1.4; }
+  .mapcity .mc-body { flex: 1; min-width: 0; }
+  .mapcity .mc-lbl { display: block; font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 7px; }
+  .mapcity .mc-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .mapcity .mc-in { flex: 1; min-width: 160px; background: var(--bg); color: var(--text); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; font: inherit; font-size: 13px; }
+  .mapcity .mc-in:focus { outline: none; border-color: var(--accent); }
+  .mapcity .mc-clear { background: none; border: 1px solid var(--border); color: var(--muted); font-size: 12px; font-weight: 600; padding: 7px 12px; border-radius: 8px; cursor: pointer; }
+  .mapcity .mc-clear:hover { color: var(--text); border-color: var(--muted); }
+  .mapcity .mc-note { font-size: 11px; color: var(--muted); margin-top: 7px; }
 </style>
 </head>
 <body>
@@ -647,6 +698,7 @@ function dqCopyLink(btn){
     <div id="directory"></div>
     <div id="moon"></div>
     <div id="mapWrap">
+      <div id="mapCityBar"></div>
       <div id="map"></div>
       <div class="mapnote" id="mapNote"></div>
     </div>
@@ -767,7 +819,7 @@ function renderFollowView(){
   }
   const cards = jobs => `<div class="group">${jobs.map(rowHtml).join("")}</div>`;
   const sec = (title, count, body) => `<div class="minesec"><div class="minehead"><h2>${title}</h2><span class="minecount">${count}</span></div>${body}</div>`;
-  MINE_VIEW = true;                       // gate: notebook UI renders only inside My Jobs
+  MINE_VIEW = true; ROW_COL = true;       // gate: notebook UI + cost-of-living chip render inside My Jobs
   let html = `<div id="mineUpcoming"></div>`;
   if (nbHintActive) html += `<div class="nbhint"><span>New: every job here has a <b>Notebook</b> 📝. Open one to keep notes, interview dates &amp; contacts.</span><button class="x" onclick="nbDismissHint()">Got it</button></div>`;
   if (pipeN){
@@ -784,7 +836,7 @@ function renderFollowView(){
     html += `<div class="minesec"><div class="minehead" role="button" tabindex="0" style="cursor:pointer" title="Show or hide" onclick="window.__mineHiddenOpen=!window.__mineHiddenOpen;renderFollowView();"><h2 style="color:var(--muted)">🚫 Hidden ${op?'▾':'▸'}</h2><span class="minecount">${hiddenJobs.length}</span></div>${op?cards(hiddenJobs):''}</div>`;
   }
   html += `<div class="mineexport"><span>Everything in My Jobs lives only in this browser.</span><button class="exportbtn" onclick="dqExportData()">⬇ Export my data</button><button class="exportbtn" onclick="dqImportClick()">⬆ Import</button><input id="mineImportInput" type="file" accept="application/json,.json" style="display:none" onchange="dqImportFile(this)"></div>`;
-  MINE_VIEW = false;
+  MINE_VIEW = false; ROW_COL = false;
   el.innerHTML = html;
   dqUpdateUpcoming();
   if (nbHintActive && !nbFlashedThisActivation){
@@ -2092,6 +2144,11 @@ function dqImportFile(input){
 }
 // ---- "What's new" / patch notes (newest first) ------------------------------
 const WHATSNEW = [
+  { id: 20260618, date: "June 2026", title: "Personalize your matches", items: [
+      "Best fit now has a “My profile” you can edit — set your target roles, seniority, and where you can work. It tunes your matches and is saved on this device, no account.",
+      "Open any studio in Best fit to expand its actual jobs and save or track them right there.",
+      "Cost-of-living comparisons on jobs: add your city (in My profile, or on the Map) and your saved & best-fit jobs show how the cost of living compares. It’s never used to hide roles."
+  ]},
   { id: 20260617, date: "June 2026", title: "My Jobs gets a notebook", items: [
       "Every job in My Jobs now has a 📝 Notebook: jot notes, log interview dates, save contacts, and list questions to ask.",
       "A “Coming up” banner surfaces your next interview from those dates.",
@@ -2179,6 +2236,7 @@ function rowHtml(j){
       ${j.yoe?`<span class="tag">${j.yoe}+ yrs</span>`:""}
       ${longChip}
       ${relistChip}
+      ${ROW_COL?colChipForJob(j):``}
       <a class="tag knowbtn" href="${whoDoIKnowUrl(j.s)}" target="_blank" rel="noopener" onclick="event.stopPropagation()" aria-label="Who do I know at ${j.s.replace(/"/g,'')}?" title="Who do I know here? Opens LinkedIn and shows your 1st-degree connections at ${j.s.replace(/"/g,'')} — your warmest path to a referral. (You'll need to be logged into LinkedIn.)">🤝<span class="knowtext">Who do I know?</span></a>
     </div>
     ${MINE_VIEW?nbPanelHtml(j):``}
@@ -2275,7 +2333,7 @@ function setStatus(id, v){
   store.set("luj-status", appStatus);
   if (v) try { const j = JOB_BY_ID[id]; window.dqTrack && window.dqTrack('track_job', { status:v, st:j&&j.s, d:j&&j.d }); } catch(e){}
   if (v) try { dqToast("Tracking as " + v + " · in My Jobs", dqSrcEl()); } catch(e){}
-  render(); updateFollowTab(); if (typeof view !== "undefined" && view === "follow") renderFollowView();
+  render(); updateFollowTab(); if (typeof view !== "undefined" && view === "follow") renderFollowView(); if (typeof view !== "undefined" && view === "bestfit") { try { bfCompute(); } catch(e){} }
 }
 // one-click status toggle for the per-row icon cluster: click a status to set it,
 // click the active one again to clear it (mutually exclusive across the three).
@@ -2289,7 +2347,7 @@ function toggleDismiss(id){
     try { window.dqTrack && window.dqTrack("dismiss_undo", {}); } catch(e){}
     toggleDismiss(id);   // already dismissed, so this un-hides it (and shows no toast)
   } }); } catch(e){}
-  render(); if (typeof view !== "undefined" && view === "follow") renderFollowView();
+  render(); if (typeof view !== "undefined" && view === "follow") renderFollowView(); if (typeof view !== "undefined" && view === "bestfit") { try { bfCompute(); } catch(e){} }
 }
 function toggleSave(id){
   const adding = !saved.has(id);
@@ -2297,7 +2355,7 @@ function toggleSave(id){
   store.set("luj-saved", [...saved]);
   if (adding) try { const j = JOB_BY_ID[id]; window.dqTrack && window.dqTrack('save_job', { st:j&&j.s, d:j&&j.d, sn:j&&j.sen }); } catch(e){}
   if (adding) try { dqToast("Saved · in My Jobs", dqSrcEl()); } catch(e){}
-  render(); updateFollowTab(); if (typeof view !== "undefined" && view === "follow") renderFollowView();
+  render(); updateFollowTab(); if (typeof view !== "undefined" && view === "follow") renderFollowView(); if (typeof view !== "undefined" && view === "bestfit") { try { bfCompute(); } catch(e){} }
 }
 function toggleGroup(gi){ const d=GROUPS[gi]; collapsed.has(d)?collapsed.delete(d):collapsed.add(d); render(); }
 function showMore(gi){ const d=GROUPS[gi]; shown[d]=(shown[d]||SHOW_STEP)+SHOW_STEP; render(); }
@@ -2466,24 +2524,123 @@ function bfContChip(l){
   return `<span style="color:${c[0]};background:${c[1]};padding:1px 8px;border-radius:6px;font-size:12px">${l}</span>`;
 }
 function _bfDefaultDisc(){ var t = Object.entries(DISC_COUNTS).sort(function(a,b){return b[1]-a[1];})[0]; return t ? t[0] : (DISC[0]||""); }
+// ===== My profile — local, shared across the site; drives Best fit (Stage 1) =====
+const PROFILE = store.get("dq-profile", null) || { pinned:{} };
+if (!PROFILE.pinned) PROFILE.pinned = {};
+function profSave(){ try { store.set("dq-profile", PROFILE); } catch(e){} }
+// ===== Cost of living (Stage 3) — static index (≈ relative to San Francisco = 100), approximate.
+// Shown on SINGLE-location jobs in My Jobs + expanded Best fit only; never the front List. =====
+let ROW_COL = false;
+const COL_INDEX = {
+  "San Francisco":100,"San Jose":98,"Mountain View":96,"San Mateo":95,"Foster City":92,"New York":92,"Santa Monica":88,"Culver City":85,"Boston":85,"Seattle":83,"Bellevue":83,"Los Angeles":82,"Burbank":82,"Redmond":80,"Irvine":80,"Washington":80,"Washington DC":80,"Rockville":78,"San Diego":78,"Miami":74,"Boulder":74,"Chicago":72,"Portland":72,"Denver":72,"Sacramento":70,"Baltimore":70,"Austin":68,"Minneapolis":66,"Atlanta":64,"Las Vegas":63,"Phoenix":63,"Dallas":63,"Raleigh":63,"Cary":63,"Durham":62,"Houston":62,"Orlando":62,"Salt Lake":62,"Madison":62,"Detroit":58,
+  "Vancouver":72,"Toronto":70,"Ottawa":62,"Montréal":58,"Montreal":58,"Edmonton":56,"Quebec":54,
+  "London":85,"Guildford":78,"Farnham":70,"Oxford":76,"Cambridge":74,"Brighton":70,"Horsham":68,"Edinburgh":64,"Leamington":62,"Manchester":58,"Nottingham":55,"Twycross":55,"Liverpool":54,"Sheffield":54,"Newcastle":54,"Dundee":52,
+  "Zurich":110,"Geneva":108,"Reykjavík":88,"Reykjavik":88,"Oslo":80,"Copenhagen":80,"Paris":78,"Dublin":78,"Amsterdam":72,"Munich":72,"Vienna":66,"Espoo":66,"Helsinki":68,"Frankfurt":66,"Hamburg":64,"Brussels":64,"Cologne":62,"Stockholm":65,"Gothenburg":60,"Lyon":60,"Berlin":60,"Bordeaux":58,"Ghent":58,"Malmö":58,"Barcelona":58,"Madrid":56,"Montpellier":55,"Skövde":55,"Lisbon":54,"Prague":50,"Vilnius":48,"Brno":46,"Warsaw":45,"Nicosia":52,"Kraków":42,"Wrocław":42,"Bucharest":42,"Budapest":44,"Sofia":40,"Belgrade":40,"Novi Sad":38,"Bielsko-Biała":38,"Istanbul":45,
+  "Hong Kong":85,"Tel Aviv":85,"Herzliya":80,"Singapore":80,"Sydney":78,"Melbourne":72,"Auckland":70,"Brisbane":68,"Canberra":68,"Dubai":68,"Abu Dhabi":66,"Seoul":64,"Seongnam":62,"Tokyo":62,"Anyang":58,"Yokohama":58,"Osaka":56,"Riyadh":55,"Shanghai":55,"Kyoto":54,"Beijing":54,"Taipei":54,"Shenzhen":52,"Fukuoka":50,"Guangzhou":48,"Bangkok":42,"Kuala Lumpur":40,"Manila":40,"Cape Town":40,"Ho Chi Minh":38,"Bangalore":36,"Hyderabad":34,"Pune":34,"Cairo":32
+};
+const COL_KEYS = Object.keys(COL_INDEX).sort(function(a,b){ return b.length-a.length; });
+function colLookup(locStr){ if(!locStr) return null; var s=String(locStr).toLowerCase(); for (var i=0;i<COL_KEYS.length;i++){ if (s.indexOf(COL_KEYS[i].toLowerCase())>=0) return COL_INDEX[COL_KEYS[i]]; } return null; }
+function colChipForJob(j){
+  var loc = profGet("loc").v; if (!loc) return "";
+  var home = COL_INDEX[loc] || colLookup(loc); if (!home) return "";
+  if (!j.places || j.places.length !== 1) return "";   // single location only — multi-city jobs show nothing
+  var there = colLookup(j.places[0] && j.places[0].l); if (!there) return "";
+  var d = Math.round((there/home - 1)*100);
+  if (d > 5)  return '<span class="coltag up" title="Approx. cost of living vs '+bfEsc(loc)+' — a guide, not exact">↑ ~'+d+'% cost of living</span>';
+  if (d < -5) return '<span class="coltag dn" title="Approx. cost of living vs '+bfEsc(loc)+' — a guide, not exact">↓ ~'+(-d)+'% cost of living</span>';
+  return '<span class="coltag eq" title="Approx. cost of living vs '+bfEsc(loc)+' — a guide, not exact">≈ cost of living</span>';
+}
+function profInferRoles(){ var t=Object.entries(DISC_COUNTS||{}).sort(function(a,b){return b[1]-a[1];})[0]; return t?[t[0]]:(DISC.length?[DISC[0]]:[]); }
+function profGet(f){
+  var pinned = !!PROFILE.pinned[f];
+  if (f==="roles") return { v: pinned ? (Array.isArray(PROFILE.roles)?PROFILE.roles.slice():[]) : profInferRoles(), pinned:pinned };
+  if (f==="sen")  return { v: pinned && PROFILE.sen ? PROFILE.sen : "__any", pinned:pinned };
+  if (f==="work") return { v: pinned && PROFILE.work ? PROFILE.work : "relocate", pinned:pinned };
+  if (f==="yrs")  return { v: pinned && PROFILE.yrs ? PROFILE.yrs : "", pinned:pinned };
+  if (f==="loc")  return { v: pinned && PROFILE.loc ? PROFILE.loc : "", pinned:pinned };
+  return { v:"", pinned:false };
+}
+function profSet(f, val){ PROFILE.pinned[f]=true; PROFILE[f]=val; profSave(); profMark(f,true); try{ window.dqTrack && window.dqTrack("profile_set", { f:f }); }catch(e){} }
+function profRevert(f){
+  PROFILE.pinned[f]=false; delete PROFILE[f]; profSave(); profMark(f,false);
+  if (f==="roles"){ bfActiveDisc=profGet("roles").v[0]||null; profRenderRoles(); bfRenderDiscSw(); bfCompute(); }
+  if (f==="sen"){ profSegSet("senSeg", profGet("sen").v); bfCompute(); }
+  if (f==="work"){ profSegSet("workSeg", profGet("work").v); bfCompute(); }
+  if (f==="yrs"){ var y=document.getElementById("profYrs"); if(y) y.value=""; }
+  if (f==="loc"){ var l=document.getElementById("profLoc"); if(l) l.value=""; }
+  profSummary();
+}
+function profMark(f, pinned){
+  var t=document.getElementById("pt-"+f), r=document.getElementById("pr-"+f);
+  if (t){ t.className = "ptag "+(pinned?"pin":"inf"); t.textContent = pinned?"📌 pinned":"✨ from your activity"; }
+  if (r){ r.style.display = pinned?"inline":"none"; }
+}
+var bfActiveDisc = null, profPanelOpen = false;
+var PROF_SEN = [["__any","Any"],["Entry","Entry"],["Mid","Mid"],["Senior","Senior"],["Lead","Lead"],["Director+","Director+"]];
+var PROF_WORK = [["relocate","Open to relocating"],["remote","Remote only"],["nearby","Remote / near me"]];
+var PROF_YRS = ["","0–2 yrs","3–4 yrs","5+ yrs","8+ yrs","10+ yrs"];
+function profTagHtml(f){ var p=profGet(f).pinned;
+  return '<span class="ptag '+(p?"pin":"inf")+'" id="pt-'+f+'">'+(p?"📌 pinned":"✨ from your activity")+'</span>'
+    + '<button class="prev" id="pr-'+f+'" style="display:'+(p?"inline":"none")+'" onclick="profRevert(\''+f+'\')">↺ auto</button>'; }
+function profSegBtns(group, field, opts, cur){
+  return opts.map(function(o){ return '<button class="pseg'+(o[0]===cur?" on":"")+'" data-v="'+o[0]+'" onclick="profOnSeg(\''+group+'\',\''+field+'\',\''+o[0]+'\',this)">'+bfEsc(o[1])+'</button>'; }).join("");
+}
+function profPanelHtml(){
+  var sen=profGet("sen").v, work=profGet("work").v, yrs=profGet("yrs").v, loc=profGet("loc").v;
+  return ''
+   + '<div class="pbar" onclick="profToggle()"><span class="pnm">🎯 My profile</span><span class="psum" id="profSum"></span><span class="pedit" id="profEdit">'+(profPanelOpen?"Done ▾":"Edit ▸")+'</span></div>'
+   + '<div class="ppanel'+(profPanelOpen?" open":"")+'" id="profPanel">'
+     + '<div class="psub">Saved on this device — no account. Powers your matches across the site. Set anything to lock it; leave it and we keep learning from your activity.</div>'
+     + '<div class="pfield"><div class="pflabel">Target roles '+profTagHtml("roles")+'</div><div class="pchips" id="profRoles"></div></div>'
+     + '<div class="pfield"><div class="pflabel">Seniority '+profTagHtml("sen")+'</div><div class="pseggrp" id="senSeg">'+profSegBtns("senSeg","sen",PROF_SEN,sen)+'</div></div>'
+     + '<div class="pfield"><div class="pflabel">Where can you work? '+profTagHtml("work")+'</div><div class="pseggrp" id="workSeg">'+profSegBtns("workSeg","work",PROF_WORK,work)+'</div><div class="pnote">Pick "remote only" or "near me" only if it\'s a real constraint — otherwise we keep showing roles everywhere.</div></div>'
+     + '<div class="pfield2"><div class="pfield"><div class="pflabel">Experience '+profTagHtml("yrs")+'</div><select id="profYrs" onchange="profSet(\'yrs\', this.value); profSummary()">'+PROF_YRS.map(function(y){return '<option value="'+y+'"'+(y===yrs?" selected":"")+'>'+(y||"—")+'</option>';}).join("")+'</select></div>'
+       + '<div class="pfield"><div class="pflabel">Based in '+profTagHtml("loc")+'</div><input class="ptxt" id="profLoc" list="profCities" value="'+bfEsc(loc)+'" placeholder="Type your city…" oninput="profSet(\'loc\', this.value); profSummary()"><datalist id="profCities">'+COL_KEYS.slice().sort().map(function(c){return '<option value="'+bfEsc(c)+'"></option>';}).join("")+'</datalist><div class="pnote">🗺 Your city, used only for cost-of-living comparison on jobs — never to hide roles.</div></div></div>'
+   + '</div>';
+}
+function profToggle(){ profPanelOpen=!profPanelOpen; var p=document.getElementById("profPanel"); if(p)p.classList.toggle("open",profPanelOpen); var e=document.getElementById("profEdit"); if(e)e.textContent=profPanelOpen?"Done ▾":"Edit ▸"; }
+function profSummary(){
+  var roles=profGet("roles").v, sen=profGet("sen").v, work=profGet("work").v, loc=profGet("loc").v;
+  var senL = sen==="__any" ? "any level" : sen;
+  var wl = work==="remote" ? "remote only" : work==="nearby" ? ("remote / near "+(loc||"me")) : "open to relocating";
+  var locL = loc ? ("based in "+loc) : "add your city";
+  var rolesL = roles.length ? roles.join(", ") : "add a role";
+  var el=document.getElementById("profSum"); if(el) el.innerHTML='<b>'+bfEsc(senL)+'</b> · <b>'+bfEsc(rolesL)+'</b> · '+bfEsc(wl)+' · '+bfEsc(locL);
+}
+function profRenderRoles(){
+  var c=document.getElementById("profRoles"); if(!c) return; var roles=profGet("roles").v;
+  var chips=roles.map(function(r){ return '<span class="pchip">'+bfEsc(r)+' <span class="x" onclick="profRemoveRole(this.parentNode.firstChild.textContent.trim())">✕</span></span>'; }).join("");
+  var left=DISC.filter(function(d){ return roles.indexOf(d)<0; });
+  var addSel = left.length ? '<select class="paddsel" onchange="profAddRoleVal(this.value); this.selectedIndex=0;"><option value="">+ add role</option>'+left.map(function(d){ return '<option value="'+bfEsc(d)+'">'+bfEsc(d)+'</option>'; }).join("")+'</select>' : '';
+  c.innerHTML = chips + addSel;
+}
+function profAddRoleVal(d){
+  if(!d) return; var roles=profGet("roles").v.slice(); if(roles.indexOf(d)>=0) return;
+  roles.push(d); profSet("roles", roles); profRenderRoles(); bfRenderDiscSw(); bfCompute();
+}
+function profRemoveRole(r){
+  var roles=profGet("roles").v.filter(function(x){return x!==r;});
+  profSet("roles", roles); if(bfActiveDisc===r) bfActiveDisc=roles[0]||null; profRenderRoles(); bfRenderDiscSw(); bfCompute();
+}
+function profSegSet(group, val){ var g=document.getElementById(group); if(!g) return; [].forEach.call(g.children,function(b){ b.classList.toggle("on", b.getAttribute("data-v")===val); }); }
+function profOnSeg(group, field, val, btn){ profSet(field, val); var g=document.getElementById(group); [].forEach.call(g.children,function(b){ b.classList.toggle("on", b===btn); }); profSummary(); bfCompute(); }
+function bfRenderDiscSw(){
+  var d=document.getElementById("bfDiscSw"); if(!d) return; var roles=profGet("roles").v;
+  if (roles.length<2){ d.innerHTML=""; return; }
+  if (!bfActiveDisc || roles.indexOf(bfActiveDisc)<0) bfActiveDisc=roles[0];
+  d.innerHTML='<span class="bfswlbl">Show best fits for:</span>'+roles.map(function(r){ return '<button class="dbtn'+(r===bfActiveDisc?" on":"")+'" onclick="bfSetDisc(\''+bfEsc(r).replace(/'/g,"")+'\')">'+bfEsc(r)+'</button>'; }).join("");
+}
+function bfSetDisc(d){ bfActiveDisc=d; bfRenderDiscSw(); bfCompute(); }
 let _bfBuilt = false;
 function renderBestFit(){
   if (INTEREST === null) fetchInterest();
   const wrap = document.getElementById("bestfitWrap");
   if (!_bfBuilt){
-    const def = _bfDefaultDisc();
-    const discOpts = DISC.map(d=>`<option${d===def?" selected":""}>${bfEsc(d)}</option>`).join("");
-    const senOpts = `<option value="__any">any-level</option>` + SEN.map(s=>`<option value="${bfEsc(s)}">${bfEsc(s)}</option>`).join("");
     wrap.innerHTML = `
-      <div style="max-width:640px">
-        <div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px;font-size:15px;color:var(--muted);margin-bottom:16px">
-          <span>I want</span>
-          <select id="bfSen" aria-label="Seniority" style="width:auto">${senOpts}</select>
-          <select id="bfDisc" aria-label="Discipline" style="width:auto">${discOpts}</select>
-          <span>roles</span>
-          <label style="display:inline-flex;align-items:center;gap:6px;margin-left:4px;cursor:pointer"><input type="checkbox" id="bfRemote"> remote only</label>
-        </div>
-        <div style="font-size:16px;font-weight:600;color:var(--text);margin-bottom:12px">Best places to apply right now</div>
+      <div style="max-width:680px">
+        ${profPanelHtml()}
+        <div id="bfDiscSw" class="bfdiscsw"></div>
+        <div style="font-size:16px;font-weight:600;color:var(--text);margin:6px 0 12px">Best places to apply right now</div>
         <div id="bfResults"></div>
         <div id="bfGemsWrap" style="display:none">
           <div style="font-size:14px;font-weight:600;color:var(--text);margin:18px 0 10px">Better odds — more openings per applicant</div>
@@ -2491,26 +2648,24 @@ function renderBestFit(){
         </div>
         <div style="font-size:12px;color:var(--muted);margin-top:16px;line-height:1.6">Ranked by open roles, pay transparency and posting freshness. "Contested" reflects how many people on DevQuest are eyeing a studio per open role — not who's best. Studios can't pay for placement.</div>
       </div>`;
-    document.getElementById("bfDisc").addEventListener("change", bfOnChange);
-    document.getElementById("bfSen").addEventListener("change", bfOnChange);
-    document.getElementById("bfRemote").addEventListener("change", bfOnChange);
+    bfActiveDisc = profGet("roles").v[0] || _bfDefaultDisc();
     _bfBuilt = true;
   }
-  bfCompute();
+  profRenderRoles(); profSummary(); bfRenderDiscSw(); bfCompute();
 }
 function bfOnChange(){
   try { window.dqTrack && window.dqTrack("bestfit_filter", { disc: document.getElementById("bfDisc").value, sen: document.getElementById("bfSen").value, remote: document.getElementById("bfRemote").checked ? 1 : 0 }); } catch(e){}
   bfCompute();
 }
 function bfCompute(){
-  const disc = document.getElementById("bfDisc").value;
-  const sen = document.getElementById("bfSen").value;
-  const remote = document.getElementById("bfRemote").checked;
+  const disc = bfActiveDisc || profGet("roles").v[0] || _bfDefaultDisc();
+  const sen = profGet("sen").v;
+  const remote = profGet("work").v === "remote";
   const matched = JOBS.filter(j => j.d===disc && (sen==="__any" || j.sen===sen) && (!remote || j.w==="Remote"));
   const byS = {};
   for (const j of matched){
-    const o = byS[j.s] || (byS[j.s] = { n:j.s, roles:0, paid:0, ages:[] });
-    o.roles++; if (j.salary) o.paid++;
+    const o = byS[j.s] || (byS[j.s] = { n:j.s, roles:0, paid:0, ages:[], jobs:[] });
+    o.roles++; if (j.salary) o.paid++; o.jobs.push(j);
     const t = j.ts || j.fseen; if (t) o.ages.push(Math.max(0, Math.floor((Date.now()-t)/864e5)));
   }
   let rows = Object.values(byS);
@@ -2546,23 +2701,44 @@ function bfCompute(){
     gemsWrap.style.display = gems.length ? "" : "none";
   } else { gemsWrap.style.display = "none"; }
 }
+var bfOpenStudio = null;
 function bfCard(r,i,disc){
   const best = i===0, titles = STUDIO_TITLES[r.n] || "", fl = bfFreshLabel(r.medAge);
   const flColor = r.medAge==null ? "var(--muted)" : r.medAge<=21 ? "#3fb950" : r.medAge<=45 ? "#d6a531" : "#e06c5e";
-  return `<div class="bfcard" data-studio="${bfEsc(r.n)}" data-disc="${bfEsc(disc)}" style="display:flex;align-items:center;gap:14px;border:${best?"2px solid var(--accent)":"1px solid var(--border)"};border-radius:12px;padding:13px 15px;margin-bottom:10px;background:var(--panel);cursor:pointer">
-    <div style="font-size:15px;color:var(--muted);width:16px;text-align:center">${i+1}</div>
-    <div style="flex:1;min-width:0">
-      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-        <span style="font-size:15px;font-weight:600;color:var(--text)">${bfEsc(r.n)}</span>
-        ${best?`<span style="font-size:12px;color:#0d1117;background:var(--accent);padding:2px 8px;border-radius:6px;font-weight:600">Best match</span>`:""}
+  const isOpen = bfOpenStudio === r.n;
+  const nameJs = bfEsc(r.n).replace(/'/g,""), discJs = bfEsc(disc).replace(/'/g,"");
+  return `<div class="bfcard" data-studio="${bfEsc(r.n)}" data-disc="${bfEsc(disc)}" style="border:${best?"2px solid var(--accent)":"1px solid var(--border)"};border-radius:12px;margin-bottom:10px;background:var(--panel);overflow:hidden">
+    <div class="bfcardhead" onclick="bfToggleStudio('${nameJs}','${discJs}')" style="display:flex;align-items:center;gap:14px;padding:13px 15px;cursor:pointer">
+      <div style="font-size:15px;color:var(--muted);width:16px;text-align:center">${i+1}</div>
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <span style="font-size:15px;font-weight:600;color:var(--text)">${bfEsc(r.n)}</span>
+          ${best?`<span style="font-size:12px;color:#0d1117;background:var(--accent);padding:2px 8px;border-radius:6px;font-weight:600">Best match</span>`:""}
+        </div>
+        ${titles?`<div style="font-size:12px;color:var(--muted);margin-top:2px">${bfEsc(titles)}</div>`:""}
+        <div style="display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:6px;font-size:13px;color:var(--muted)">
+          <span>${r.roles} open</span><span>${r.payPct}% pay</span>${fl?`<span style="color:${flColor}">${fl}</span>`:""}${r.clabel?bfContChip(r.clabel):""}
+        </div>
       </div>
-      ${titles?`<div style="font-size:12px;color:var(--muted);margin-top:2px">${bfEsc(titles)}</div>`:""}
-      <div style="display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:6px;font-size:13px;color:var(--muted)">
-        <span>${r.roles} open</span><span>${r.payPct}% pay</span>${fl?`<span style="color:${flColor}">${fl}</span>`:""}${r.clabel?bfContChip(r.clabel):""}
-      </div>
+      <div style="text-align:right"><div style="font-size:20px;font-weight:700;color:var(--accent)">${r.score}</div><div style="font-size:11px;color:var(--muted)">match</div></div>
+      <span style="color:var(--muted);font-size:13px;margin-left:2px">${isOpen?"▾":"▸ jobs"}</span>
     </div>
-    <div style="text-align:right"><div style="font-size:20px;font-weight:700;color:var(--accent)">${r.score}</div><div style="font-size:11px;color:var(--muted)">match</div></div>
+    ${isOpen?`<div class="bfjobs">${bfStudioJobsHtml(r,disc)}</div>`:""}
   </div>`;
+}
+function bfStudioJobsHtml(r, disc){
+  const jobs = (r.jobs||[]).slice().sort((a,b)=>(b.ts||b.fseen||0)-(a.ts||a.fseen||0));
+  const shown = jobs.slice(0,12);
+  ROW_COL = true; const rows = shown.map(j=>rowHtml(j)).join(""); ROW_COL = false;
+  const nameJs = bfEsc(r.n).replace(/'/g,""), discJs = bfEsc(disc).replace(/'/g,"");
+  const more = jobs.length>shown.length ? `<div style="padding:6px 15px;font-size:12px;color:var(--muted)">+${jobs.length-shown.length} more not shown here</div>` : "";
+  const link = `<div style="padding:9px 15px;border-top:1px solid var(--border)"><a onclick="event.stopPropagation(); bestfitPick('${nameJs}','${discJs}')" style="color:var(--accent);cursor:pointer;font-size:13px;font-weight:600">Open all ${bfEsc(disc)} roles at ${bfEsc(r.n)} in List ↗</a></div>`;
+  return rows + more + link;
+}
+function bfToggleStudio(name, disc){
+  bfOpenStudio = (bfOpenStudio===name) ? null : name;
+  if (bfOpenStudio){ try { window.dqTrack && window.dqTrack("bestfit_expand", { st:name, disc:disc }); } catch(e){} }
+  bfCompute();
 }
 function bfGem(g,disc){
   return `<div class="bfcard" data-studio="${bfEsc(g.n)}" data-disc="${bfEsc(disc)}" style="display:flex;align-items:center;justify-content:space-between;gap:10px;border:1px solid var(--border);border-radius:8px;padding:9px 13px;margin-bottom:8px;background:var(--panel);cursor:pointer">
@@ -2580,8 +2756,8 @@ function bestfitPick(studio, disc){
   render();
 }
 document.addEventListener("click", function(e){
-  var card = e.target && e.target.closest && e.target.closest("#bestfitWrap .bfcard");
-  if (card) bestfitPick(card.getAttribute("data-studio"), card.getAttribute("data-disc"));
+  var gem = e.target && e.target.closest && e.target.closest("#bfGems .bfcard");
+  if (gem) bestfitPick(gem.getAttribute("data-studio"), gem.getAttribute("data-disc"));
 });
 
 // ---- stats dashboard + data health -------------------------------------------
@@ -3210,7 +3386,25 @@ function renderPulse(){
   el.innerHTML = `<h2 class="pulsehead">This week in hiring</h2>${summary}${note}${body}`;
 }
 
+// "Set your city" control on the Map — a second, low-friction way to set the profile's
+// based-in location (same shared value as Best fit's "Based in"; powers cost-of-living).
+function renderMapCityBar(){
+  var el=document.getElementById("mapCityBar"); if(!el) return;
+  var loc=profGet("loc").v;
+  el.innerHTML='<div class="mapcity"><span class="mc-ic">📍</span>'
+    + '<div class="mc-body"><label class="mc-lbl" for="mapCityInput">Your city — for cost-of-living comparisons on jobs</label>'
+    + '<div class="mc-row"><input class="mc-in" id="mapCityInput" list="mapCities" value="'+bfEsc(loc)+'" placeholder="Type your city…" oninput="profSet(\'loc\', this.value); renderMapCitySync()">'
+    + (loc?'<button class="mc-clear" onclick="profRevert(\'loc\'); renderMapCityBar(); renderMapCitySync()">Clear</button>':'')
+    + '</div><div class="mc-note">Optional · saved on this device · only used to show cost differences on saved &amp; best-fit jobs, never to filter or hide roles.</div></div>'
+    + '<datalist id="mapCities">'+COL_KEYS.slice().sort().map(function(c){return '<option value="'+bfEsc(c)+'"></option>';}).join("")+'</datalist></div>';
+}
+function renderMapCitySync(){
+  var pl=document.getElementById("profLoc"); if(pl) pl.value=profGet("loc").v;
+  try { profSummary(); } catch(e){}
+  try { profMark("loc", profGet("loc").pinned); } catch(e){}
+}
 function renderMap(){
+  renderMapCityBar();
   if (typeof L === "undefined") {
     document.getElementById("map").innerHTML = '<div class="empty">Map requires an internet connection (loads OpenStreetMap tiles).</div>';
     return;
