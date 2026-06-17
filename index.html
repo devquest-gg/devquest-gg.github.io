@@ -1984,12 +1984,12 @@ function nbSync(id){
 }
 // Soonest upcoming dated entry across all notebooks (today or later) — feeds the My Jobs banner.
 function nextUpcoming(){
-  const now = Date.now() - 36e5; let best = null;
+  const now = Date.now(); let best = null;
   for (const id in NOTEBOOKS){
     const j = JOB_BY_ID[id]; if (!j) continue;
     for (const dt of (NOTEBOOKS[id].dates||[])){
       if (!dt.d) continue;
-      const ts = new Date(dt.d + "T" + (dt.t || "12:00")).getTime();
+      const ts = new Date(dt.d + "T" + (dt.t || "23:59:59")).getTime();   // timed: until that time; date-only: until end of day
       if (!isNaN(ts) && ts >= now && (!best || ts < best.ts)) best = { ts, label: dt.l, hasTime: !!dt.t, studio: j.s, id: id };
     }
   }
