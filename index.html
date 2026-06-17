@@ -472,6 +472,24 @@
   .mineexport { display: flex; align-items: center; gap: 10px; margin-top: 22px; padding-top: 16px; border-top: 1px solid var(--border); font-size: 13px; color: var(--muted); flex-wrap: wrap; }
   .mineexport .exportbtn { background: transparent; border: 1px solid var(--border); color: var(--text); font-size: 13px; font-weight: 600; padding: 8px 13px; border-radius: 8px; cursor: pointer; }
   .mineexport .exportbtn:hover { border-color: var(--accent); color: var(--accent); }
+  /* "What's new" / patch notes */
+  .wnbtn { position: relative; color: var(--muted); font-size: 13px; font-weight: 600; background: none; border: 1px solid var(--border); padding: 7px 13px; border-radius: 7px; white-space: nowrap; cursor: pointer; }
+  .wnbtn:hover { color: var(--text); border-color: var(--muted); }
+  .wndot { display: none; width: 7px; height: 7px; border-radius: 50%; background: #ff8a3d; margin-left: 6px; vertical-align: 1px; }
+  .wndot.on { display: inline-block; }
+  .wn-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.55); z-index: 10000; display: flex; align-items: flex-start; justify-content: center; padding: 48px 16px; overflow-y: auto; }
+  .wn-modal { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; max-width: 540px; width: 100%; box-shadow: 0 16px 48px rgba(0,0,0,.5); }
+  .wn-head { display: flex; align-items: center; gap: 10px; padding: 16px 18px; border-bottom: 1px solid var(--border); }
+  .wn-head h2 { margin: 0; font-size: 17px; font-weight: 800; }
+  .wn-x { margin-left: auto; background: none; border: none; color: var(--muted); font-size: 16px; cursor: pointer; padding: 4px 8px; border-radius: 6px; }
+  .wn-x:hover { color: var(--text); }
+  .wn-body { padding: 6px 18px 18px; max-height: 70vh; overflow-y: auto; }
+  .wn-entry { padding: 14px 0; border-bottom: 1px solid var(--border); }
+  .wn-entry:last-child { border-bottom: none; }
+  .wn-date { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+  .wn-title { font-size: 15px; font-weight: 700; margin: 2px 0 8px; }
+  .wn-entry ul { margin: 0; padding-left: 18px; }
+  .wn-entry li { font-size: 14px; color: var(--text); margin-bottom: 5px; line-height: 1.5; }
 </style>
 </head>
 <body>
@@ -491,6 +509,7 @@
       <button type="button" class="dqsh dqsh-cp" title="Copy link" aria-label="Copy link" onclick="dqCopyLink(this)"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"/></svg></button>
     </div>
     <!-- SHARE:END -->
+    <button class="wnbtn" onclick="openWhatsNew()" title="What's new on DevQuest">✨ What's new<span class="wndot" id="wnDot"></span></button>
     <a class="aboutbtn" href="/about" title="Our mission: what DevQuest is, and what it isn't" onclick="try{window.dqTrack&&window.dqTrack('about_click',{})}catch(e){}" style="color:var(--muted);font-size:13px;font-weight:600;text-decoration:none;border:1px solid var(--border);padding:7px 13px;border-radius:7px;white-space:nowrap">Our mission</a>
     <a class="feedbackbtn" href="mailto:studios@devquest.gg?subject=DevQuest%20feedback&body=Bug%2C%20idea%2C%20or%20just%20a%20thought%3A%0A%0A%0AWhat%20page%20or%20filter%20were%20you%20on%20(optional)%3A%0A" title="Report a bug or share an idea (opens your email)" onclick="try{window.dqTrack&&window.dqTrack('feedback_click',{})}catch(e){}" style="color:var(--accent);font-size:13px;font-weight:600;text-decoration:none;border:1px solid var(--border);padding:7px 13px;border-radius:7px;white-space:nowrap">💬 Feedback</a>
   </div>
@@ -2061,6 +2080,47 @@ function dqImportFile(input){
   };
   r.readAsText(f);
 }
+// ---- "What's new" / patch notes (newest first) ------------------------------
+const WHATSNEW = [
+  { id: 20260617, date: "June 2026", title: "My Jobs gets a notebook", items: [
+      "Every job in My Jobs now has a 📝 Notebook: jot notes, log interview dates, save contacts, and list questions to ask.",
+      "A “Coming up” banner surfaces your next interview from those dates.",
+      "Export and import your My Jobs data so it is never stuck in one browser.",
+      "Saving, tracking, or hiding a job now shows a quick confirmation, with Undo when you hide one."
+  ]},
+  { id: 20260616, date: "June 2026", title: "Easier to get around", items: [
+      "The List / My Jobs / Best fit / Map / Trends bar now stays pinned at the top as you scroll."
+  ]},
+  { id: 20260615, date: "June 2026", title: "More studios, now live", items: [
+      "Promoted Kinetic Games (Phasmophobia), Guerrilla Games, Playdead, Warhorse Studios, Fool’s Theory and more from link-outs to full live listings."
+  ]},
+];
+function dqWhatsNewLatest(){ return WHATSNEW.length ? WHATSNEW[0].id : 0; }
+function dqUpdateWhatsNewDot(){
+  const dot = document.getElementById("wnDot"); if (!dot) return;
+  let seen = 0; try { seen = store.get("dq-whatsnew-seen", 0) || 0; } catch(e){}
+  dot.classList.toggle("on", dqWhatsNewLatest() > seen);
+}
+function openWhatsNew(){
+  let ov = document.getElementById("wnOverlay");
+  if (!ov){
+    ov = document.createElement("div"); ov.id = "wnOverlay"; ov.className = "wn-overlay"; ov.style.display = "none";
+    ov.addEventListener("click", function(e){ if (e.target === ov) closeWhatsNew(); });
+    ov.innerHTML = '<div class="wn-modal" role="dialog" aria-modal="true" aria-label="What\'s new">'
+      + '<div class="wn-head"><h2>✨ What’s new</h2><button class="wn-x" onclick="closeWhatsNew()" aria-label="Close">✕</button></div>'
+      + '<div class="wn-body">' + WHATSNEW.map(function(e){
+          return '<div class="wn-entry"><div class="wn-date">' + e.date + '</div><div class="wn-title">' + e.title + '</div><ul>'
+            + e.items.map(function(i){ return '<li>' + i + '</li>'; }).join("") + '</ul></div>';
+        }).join("") + '</div></div>';
+    document.body.appendChild(ov);
+  }
+  ov.style.display = "flex";
+  try { store.set("dq-whatsnew-seen", dqWhatsNewLatest()); } catch(e){}
+  dqUpdateWhatsNewDot();
+  try { window.dqTrack && window.dqTrack("whatsnew_open", {}); } catch(e){}
+}
+function closeWhatsNew(){ const ov = document.getElementById("wnOverlay"); if (ov) ov.style.display = "none"; }
+document.addEventListener("keydown", function(e){ if (e.key === "Escape") closeWhatsNew(); });
 function rowHtml(j){
   const h = hoursAgo(j);
   const noDate = !j.ts;
@@ -3329,6 +3389,7 @@ renderMoon();
 render();
 renderPulseStrip();
 updateFollowTab();
+dqUpdateWhatsNewDot();
 
 // Shareable filter URLs (?studios=…&cells=…&region=…&q=…) reopen the exact view. Also makes the
 // JSON-LD SearchAction work (?q=term pre-fills the search). Applies all carried filters, then renders.
