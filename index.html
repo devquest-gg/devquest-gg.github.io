@@ -318,6 +318,12 @@
   .viewtabs { display: inline-flex; gap: 4px; background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 3px; margin-bottom: 12px; }
   .viewtabs button { background: transparent; border: none; color: var(--muted); font-weight: 600; font-size: 13px; padding: 7px 16px; border-radius: 8px; cursor: pointer; }
   .viewtabs button.active { background: var(--accent); color: #0d1117; }
+  /* Sticky tab bar: stays pinned just under the (also-sticky) header so the tabs —
+     including the My Jobs badge that lights up — are always on screen. --headerH is
+     measured in JS (header height differs desktop vs mobile and can wrap). */
+  .viewtabsbar { position: sticky; top: var(--headerH, 80px); z-index: 9; background: var(--bg); padding: 10px 0; margin-bottom: 10px; border-bottom: 1px solid var(--border); }
+  .viewtabsbar .viewtabs { margin-bottom: 0; flex-wrap: wrap; }   /* wrap (never scroll) on narrow screens — no scrollbar flash */
+  @media (max-width: 820px) { .viewtabsbar { padding: 8px 0; } }
   #mapWrap { display: none; }
   #statsWrap { display: none; }
   /* Masonry-style columns: cards keep their natural height AND pack tightly, so short
@@ -416,6 +422,16 @@
   .mapnote { color: var(--muted); font-size: 13px; margin-top: 10px; }
   .leaflet-popup-content-wrapper, .leaflet-popup-tip { background: var(--panel); color: var(--text); }
   .leaflet-popup-content a { color: var(--accent); cursor: pointer; font-weight: 600; }
+  /* --- My Jobs nudges: confirmation toast + first-time fly-to-tab animation --- */
+  #dqToast { position: fixed; left: 50%; bottom: 26px; transform: translateX(-50%) translateY(20px); z-index: 9999; display: flex; align-items: center; gap: 11px; background: var(--panel); border: 1px solid var(--gold); border-radius: 12px; padding: 11px 14px; box-shadow: 0 8px 28px rgba(0,0,0,.45); font-size: 14px; color: var(--text); opacity: 0; pointer-events: none; transition: opacity .22s ease, transform .22s ease; max-width: calc(100vw - 32px); }
+  #dqToast.show { opacity: 1; transform: translateX(-50%) translateY(0); pointer-events: auto; }
+  #dqToast .dqtstar { color: var(--gold); flex-shrink: 0; }
+  #dqToast .dqtmsg { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #dqToast .dqtview { background: var(--gold); color: #0d1117; border: none; border-radius: 8px; padding: 6px 12px; font-size: 13px; font-weight: 700; cursor: pointer; white-space: nowrap; flex-shrink: 0; }
+  #dqToast .dqtview:hover { filter: brightness(1.08); }
+  @keyframes dqTabPulse { 0% { transform: scale(1); } 30% { transform: scale(1.32); } 60% { transform: scale(.95); } 100% { transform: scale(1); } }
+  #tabFollow.dqpulse { animation: dqTabPulse .6s ease; }
+  .dqfly { position: fixed; z-index: 9998; pointer-events: none; color: var(--gold); font-size: 18px; line-height: 1; will-change: transform, opacity; transition: transform .7s cubic-bezier(.5,-0.2,.3,1), opacity .7s ease; }
 </style>
 </head>
 <body>
@@ -455,7 +471,7 @@
 <script>
 function dqCopyLink(btn){
   var url = (typeof currentShareUrl === "function") ? currentShareUrl() : "https://devquest.gg";
-  function done(){ btn.classList.add("copied"); var t=btn.getAttribute("title"); btn.setAttribute("title","Copied!"); setTimeout(function(){ btn.classList.remove("copied"); btn.setAttribute("title", t||"Copy link"); },1500); try{window.dqTrack&&window.dqTrack("share_click",{p:"copy"});}catch(e){} }
+  function done(){ btn.classList.add("copied"); var t=btn.getAttribute("title"); btn.setAttribute("title","Copied!"); setTimeout(function(){ btn.classList.remove("copied"); btn.setAttribute("title", t||"Copy link"); },1500); try{window.dqTrack&&window.dqTrack("share_click",{p:"copy"});}catch(e){} try{ if(typeof dqToast==="function") dqToast("Link copied", null, { icon:"🔗", label:"", ms:2600 }); }catch(e){} }
   function fb(){ try{ var ta=document.createElement("textarea"); ta.value=url; ta.style.position="fixed"; ta.style.opacity="0"; document.body.appendChild(ta); ta.focus(); ta.select(); document.execCommand("copy"); document.body.removeChild(ta); }catch(e){} done(); }
   try{ if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(url).then(done, fb); } else { fb(); } }catch(e){ fb(); }
 }
@@ -545,12 +561,14 @@ function dqCopyLink(btn){
 
   <main>
     <button id="filterToggle" onclick="toggleFilters()">⚙ Filters</button>
+    <div class="viewtabsbar">
     <div class="viewtabs">
       <button id="tabList" class="active" onclick="setView('list')">☰ List</button>
       <button id="tabFollow" onclick="setView('follow')">★ My Jobs</button>
       <button id="tabBest" onclick="setView('bestfit')">🎯 Best fit</button>
       <button id="tabMap" onclick="setView('map')">🗺️ Map</button>
       <button id="tabStats" onclick="setView('stats')">📊 Trends</button>
+    </div>
     </div>
     <div id="pulseStrip"></div>
     <div id="followWrap"></div>
@@ -603,6 +621,7 @@ function toggleFollow(s, ev){
   on ? FOLLOWS.add(s) : FOLLOWS.delete(s);
   try { store.set("dq-follows", Array.from(FOLLOWS)); } catch(e){}
   try { window.dqTrack && window.dqTrack("studio_follow", { st: s, on: on }); } catch(e){}
+  if (on) try { dqToast("Following " + s + " · in My Jobs", dqSrcEl(ev)); } catch(e){}
   try { renderSearchGroup("studioFilters","studioSearch",STUDIO_COUNTS,selStudios,STUDIO_LABELS,DIR_STUDIOS); } catch(e){}
   updateFollowTab();
   refreshFollowStars();
@@ -1738,7 +1757,7 @@ function _dqCopy(text, onDone){
 }
 function copyShareLink(btn){
   const url = currentShareUrl(), label = btn.textContent;
-  _dqCopy(url, function(){ btn.textContent = '✓ Link copied'; setTimeout(function(){ btn.textContent = label; }, 1600); });
+  _dqCopy(url, function(){ btn.textContent = '✓ Link copied'; setTimeout(function(){ btn.textContent = label; }, 1600); try{ if(typeof dqToast==="function") dqToast("Filter link copied", null, { icon:"🔗", label:"", ms:2600 }); }catch(e){} });
   try{ window.dqTrack && window.dqTrack('share_filter', { n:(LAST_LIST||[]).length }); }catch(e){}
 }
 // Keep the header LinkedIn/X/Bluesky buttons pointed at the CURRENT filtered view (plain homepage when no filters).
@@ -1875,10 +1894,96 @@ function rowHtml(j){
   </div>`;
 }
 
+// ---- My Jobs nudges: a confirmation toast + a first-time fly-to-tab animation. ----
+// When someone saves/tracks/follows, this confirms the action AND points to where it
+// went (the My Jobs tab). The flying ★ only plays the first few times, so it teaches
+// the connection without becoming nagging; the tab badge gives a small pulse each time.
+let _dqToastTimer = null, _dqToastAction = null;
+function dqSrcEl(ev){
+  const e = ev || window.event;
+  return (e && (e.currentTarget || e.target)) || null;
+}
+function dqHideToast(){ const t = document.getElementById("dqToast"); if (t) t.classList.remove("show"); }
+// dqToast(msg, srcEl, action)
+//   action (optional) = { label, fn, icon, ms }. Omit it for the default "View → My Jobs"
+//   button + the fly-to-tab cue. Pass a custom action (e.g. Undo) for non-My-Jobs toasts;
+//   those skip the fly animation. label:"" hides the button (plain confirmation).
+function dqToast(msg, srcEl, action){
+  let t = document.getElementById("dqToast");
+  if (!t){
+    t = document.createElement("div"); t.id = "dqToast";
+    t.innerHTML = '<span class="dqtstar">★</span><span class="dqtmsg"></span>'
+      + '<button class="dqtview" type="button">View</button>';
+    document.body.appendChild(t);
+    t.querySelector(".dqtview").addEventListener("click", function(){
+      const a = _dqToastAction;
+      dqHideToast();
+      if (a && typeof a.fn === "function") { try { a.fn(); } catch(e){} }
+    });
+  }
+  _dqToastAction = action || { label: "View", icon: "★", fn: function(){
+    try { window.dqTrack && window.dqTrack("myjobs_toast_click", {}); } catch(e){}
+    if (typeof setView === "function") setView("follow");
+  } };
+  t.querySelector(".dqtstar").textContent = _dqToastAction.icon || "★";
+  t.querySelector(".dqtmsg").textContent = msg;
+  const btn = t.querySelector(".dqtview");
+  if (_dqToastAction.label){ btn.textContent = _dqToastAction.label; btn.style.display = ""; }
+  else { btn.style.display = "none"; }
+  void t.offsetWidth;            // reflow so a rapid re-trigger restarts the transition
+  t.classList.add("show");
+  clearTimeout(_dqToastTimer);
+  _dqToastTimer = setTimeout(dqHideToast, _dqToastAction.ms || 4200);
+  if (!action) dqFlyToTab(srcEl);   // fly/pulse only for the default My-Jobs add actions
+}
+function dqFlyToTab(srcEl){
+  const tab = document.getElementById("tabFollow"); if (!tab) return;
+  tab.classList.remove("dqpulse"); void tab.offsetWidth; tab.classList.add("dqpulse");  // badge pulse, every time
+  let plays = 0; try { plays = store.get("dq-flyseen", 0) || 0; } catch(e){}
+  if (plays >= 3) return;        // flying ★ is a first-times-only teaching cue
+  if (!srcEl || !srcEl.getBoundingClientRect) return;
+  try {
+    const a = srcEl.getBoundingClientRect(), b = tab.getBoundingClientRect();
+    if (!a.width && !a.height) return;
+    const chip = document.createElement("div"); chip.className = "dqfly"; chip.textContent = "★";
+    chip.style.left = (a.left + a.width/2) + "px";
+    chip.style.top  = (a.top + a.height/2) + "px";
+    document.body.appendChild(chip);
+    const dx = (b.left + b.width/2) - (a.left + a.width/2);
+    const dy = (b.top + b.height/2) - (a.top + a.height/2);
+    requestAnimationFrame(function(){ requestAnimationFrame(function(){
+      chip.style.transform = "translate(" + dx + "px," + dy + "px) scale(.5)";
+      chip.style.opacity = "0";
+    }); });
+    setTimeout(function(){ try { chip.remove(); } catch(e){} }, 820);
+    store.set("dq-flyseen", plays + 1);
+  } catch(e){}
+}
+// Keep the sticky tab bar (and the Trends sub-tab bar) pinned correctly: measure the
+// live header height and publish it as --headerH / --stickH. Header height varies between
+// desktop and mobile and can wrap, so we measure rather than hard-code.
+function dqSyncStick(){
+  try {
+    var h = document.querySelector("header");
+    var bar = document.querySelector(".viewtabsbar");
+    var hh = h ? Math.round(h.getBoundingClientRect().height) : 64;
+    var bh = bar ? Math.round(bar.getBoundingClientRect().height) : 0;
+    var rs = document.documentElement.style;
+    rs.setProperty("--headerH", hh + "px");
+    rs.setProperty("--stickH", (hh + bh) + "px");
+    var seg = document.querySelector("#statsWrap .dqseg");   // Trends sub-tabs sit below both
+    if (seg) seg.style.top = (hh + bh) + "px";
+  } catch(e){}
+}
+var _dqStickT = null;
+window.addEventListener("resize", function(){ clearTimeout(_dqStickT); _dqStickT = setTimeout(dqSyncStick, 120); });
+window.addEventListener("load", dqSyncStick);
+document.addEventListener("DOMContentLoaded", dqSyncStick);
 function setStatus(id, v){
   if (v) appStatus[id] = v; else delete appStatus[id];
   store.set("luj-status", appStatus);
   if (v) try { const j = JOB_BY_ID[id]; window.dqTrack && window.dqTrack('track_job', { status:v, st:j&&j.s, d:j&&j.d }); } catch(e){}
+  if (v) try { dqToast("Tracking as " + v + " · in My Jobs", dqSrcEl()); } catch(e){}
   render(); updateFollowTab(); if (typeof view !== "undefined" && view === "follow") renderFollowView();
 }
 // one-click status toggle for the per-row icon cluster: click a status to set it,
@@ -1889,6 +1994,10 @@ function toggleDismiss(id){
   adding ? dismissed.add(id) : dismissed.delete(id);
   store.set("luj-dismissed", [...dismissed]);
   if (adding) try { const j = JOB_BY_ID[id]; window.dqTrack && window.dqTrack('dismiss_job', { st:j&&j.s, d:j&&j.d }); } catch(e){}
+  if (adding) try { dqToast("Job hidden", null, { icon:"🙈", label:"Undo", ms:5500, fn:function(){
+    try { window.dqTrack && window.dqTrack("dismiss_undo", {}); } catch(e){}
+    toggleDismiss(id);   // already dismissed, so this un-hides it (and shows no toast)
+  } }); } catch(e){}
   render(); if (typeof view !== "undefined" && view === "follow") renderFollowView();
 }
 function toggleSave(id){
@@ -1896,6 +2005,7 @@ function toggleSave(id){
   adding ? saved.add(id) : saved.delete(id);
   store.set("luj-saved", [...saved]);
   if (adding) try { const j = JOB_BY_ID[id]; window.dqTrack && window.dqTrack('save_job', { st:j&&j.s, d:j&&j.d, sn:j&&j.sen }); } catch(e){}
+  if (adding) try { dqToast("Saved · in My Jobs", dqSrcEl()); } catch(e){}
   render(); updateFollowTab(); if (typeof view !== "undefined" && view === "follow") renderFollowView();
 }
 function toggleGroup(gi){ const d=GROUPS[gi]; collapsed.has(d)?collapsed.delete(d):collapsed.add(d); render(); }
@@ -2615,7 +2725,7 @@ function renderStats(){
     + pane("changed", (mo.head ? `<div class="mhead">` + mo.head + `</div>` : "") + openedLine + `<div class="statgrid">` + mo.cards + `</div>`)
     + digestCard;
   // pin the sub-tab bar just below the sticky site header
-  try { var _hdr = document.querySelector("header"); var _seg = document.querySelector("#statsWrap .dqseg"); if (_hdr && _seg) _seg.style.top = _hdr.offsetHeight + "px"; } catch(e){}
+  try { var _hdr = document.querySelector("header"); var _bar = document.querySelector(".viewtabsbar"); var _seg = document.querySelector("#statsWrap .dqseg"); if (_hdr && _seg) _seg.style.top = (_hdr.offsetHeight + (_bar ? _bar.offsetHeight : 0)) + "px"; } catch(e){}
   try { heroInit(); } catch(e){}
   try { var _stab = localStorage.getItem("dqTrendsTab"); dqSubTab(["overview","demand","pay","fresh","changed"].indexOf(_stab)>=0 ? _stab : "overview"); } catch(e){ try { dqSubTab("overview"); } catch(_e){} }
   // digest form is built lazily when the user expands it (see dqDigestToggle)
