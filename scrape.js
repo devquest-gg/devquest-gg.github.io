@@ -95,8 +95,6 @@ const DIRECTORY = [
   { name: "Sports Interactive", url: "https://careers.sega.co.uk/studios/sports-interactive", note: "Football Manager — SEGA (no clean per-studio feed; SEGA careers portal)", city: "London, UK" },
   { name: "Two Point Studios", url: "https://careers.sega.co.uk/studios/two-point-studios", note: "Two Point Hospital/Campus — SEGA", city: "Farnham, UK" },
   { name: "Archetype Entertainment", url: "https://www.archetype-entertainment.com/en-US", note: "AAA sci-fi RPG (ex-BioWare) — Wizards of the Coast / Hasbro", city: "Austin, TX" },
-  // batch 7 (2026-06-16): community request — custom first-party careers page, no scrapeable ATS feed.
-  { name: "Kinetic Games", url: "https://kineticgames.co.uk/careers", note: "Phasmophobia — custom careers page (apply by email)", city: "Southampton, UK" },
 ];
 
 // ---- "The Moon": smaller / indie studios, often ones who reached out to be listed.
@@ -180,6 +178,7 @@ const STUDIOS = [
   { name: "Xsolla", type: "lever", token: "xsolla" },   // game commerce / monetization / publishing platform (HQ LA); community-requested via search
   { name: "Unity", type: "greenhouse", token: "unity3d" },
   { name: "Team17", type: "workable", token: "team-17-digital" },
+  { name: "Kinetic Games", type: "rippling", token: "kinetic-games-careers", city: "Southampton, UK" }, // Phasmophobia · Rippling ATS (promoted from Island 2026-06-17)
   { name: "Rockstar Games", type: "greenhouse", token: "rockstargames" },
   { name: "People Can Fly", type: "smartrecruiters", token: "PeopleCanFly" },
   { name: "Kabam", type: "lever", token: "kabam" },
@@ -1266,6 +1265,36 @@ async function fetchRecruitee(studio) {
   });
 }
 
+async function fetchRippling(studio) {
+  // Rippling ATS public board feed (JSON). Minimal fields (no job description), so salary / yoe /
+  // posted-date stay honestly Unknown. Endpoint: api.rippling.com/platform/api/ats/v1/board/<token>/jobs
+  const data = SAMPLE_FILE ? loadSample(studio)
+    : await fetchJson(`https://api.rippling.com/platform/api/ats/v1/board/${studio.token}/jobs`);
+  if (!Array.isArray(data)) return [];
+  return data.map(o => {
+    const raw = (o.workLocation && o.workLocation.label) || "Unlisted";
+    const m = raw.match(/^Hybrid\s*\((.+)\)\s*$/i);   // "Hybrid (Southampton, England, GB)" -> city only
+    const location = (m ? m[1] : raw).trim();
+    const dept = (o.department && o.department.label) || "";
+    const title = (o.name || "").trim();
+    return {
+      id: `rip-${studio.token}-${o.uuid}`,
+      title,
+      tech: extractTech(title),
+      studio: studio.name,
+      discipline: mapDiscipline(dept, title),
+      workType: inferWorkType(title, raw, [], ""),
+      location,
+      region: inferRegion(location),
+      seniority: inferSeniority(title),
+      salary: "",
+      yoe: null,
+      postedAt: null,
+      url: o.url || `https://ats.rippling.com/${studio.token}/jobs/${o.uuid}`,
+    };
+  });
+}
+
 async function fetchLever(studio) {
   const data = SAMPLE_FILE ? loadSample(studio)
     : await fetchJson(`https://${studio.region === "eu" ? "api.eu.lever.co" : "api.lever.co"}/v0/postings/${studio.token}?mode=json`); // some studios (Frontier) post on Lever's EU host
@@ -2310,7 +2339,7 @@ async function fetchObsidian(studio) {
   return out;
 }
 
-const FETCHERS = { greenhouse: fetchGreenhouse, lever: fetchLever, workday: fetchWorkday, avature: fetchAvature, smartrecruiters: fetchSmartRecruiters, workable: fetchWorkable, phenom: fetchPhenom, teamtailor: fetchTeamtailor, eightfold: fetchEightfold, amazonjobs: fetchAmazonJobs, ashby: fetchAshby, zenimax: fetchZenimax, bamboohr: fetchBambooHr, jobscore: fetchJobScore, jazzhr: fetchJazzHr, jobvite: fetchJobvite, recruitee: fetchRecruitee, breezy: fetchBreezy, manatal: fetchManatal, sumodigital: fetchSumoDigital, pinpoint: fetchPinpoint, playground: fetchPlayground, obsidian: fetchObsidian };
+const FETCHERS = { greenhouse: fetchGreenhouse, lever: fetchLever, workday: fetchWorkday, avature: fetchAvature, smartrecruiters: fetchSmartRecruiters, workable: fetchWorkable, phenom: fetchPhenom, teamtailor: fetchTeamtailor, eightfold: fetchEightfold, amazonjobs: fetchAmazonJobs, ashby: fetchAshby, zenimax: fetchZenimax, bamboohr: fetchBambooHr, jobscore: fetchJobScore, jazzhr: fetchJazzHr, jobvite: fetchJobvite, recruitee: fetchRecruitee, rippling: fetchRippling, breezy: fetchBreezy, manatal: fetchManatal, sumodigital: fetchSumoDigital, pinpoint: fetchPinpoint, playground: fetchPlayground, obsidian: fetchObsidian };
 
 // ---- Ghost-job tracking -----------------------------------------------------
 // Because we scrape on a schedule, we can see how long a listing has REALLY been
