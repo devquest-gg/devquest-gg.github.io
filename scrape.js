@@ -1006,7 +1006,7 @@ function mapDiscipline(raw, title) {
 
 function inferSeniority(title) {
   const t = title.toLowerCase();
-  if (/\b(director|head of|vp|chief)\b/.test(t)) return "Director+";
+  if (/\b(director|head of|vp|chief|executive producer)\b/.test(t)) return "Director+";
   if (/\b(lead|principal|staff)\b/.test(t)) return "Lead";
   if (/\b(senior|sr\.?)\b/.test(t)) return "Senior";
   if (/\b(junior|jr\.?|associate|intern|entry|apprentice)\b/.test(t)) return "Entry";
