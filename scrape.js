@@ -95,6 +95,8 @@ const DIRECTORY = [
   { name: "Sports Interactive", url: "https://careers.sega.co.uk/studios/sports-interactive", note: "Football Manager — SEGA (no clean per-studio feed; SEGA careers portal)", city: "London, UK" },
   { name: "Two Point Studios", url: "https://careers.sega.co.uk/studios/two-point-studios", note: "Two Point Hospital/Campus — SEGA", city: "Farnham, UK" },
   { name: "Archetype Entertainment", url: "https://www.archetype-entertainment.com/en-US", note: "AAA sci-fi RPG (ex-BioWare) — Wizards of the Coast / Hasbro", city: "Austin, TX" },
+  // batch 7 (2026-06-16): community request — custom first-party careers page, no scrapeable ATS feed.
+  { name: "Kinetic Games", url: "https://kineticgames.co.uk/careers", note: "Phasmophobia — custom careers page (apply by email)", city: "Southampton, UK" },
 ];
 
 // ---- "The Moon": smaller / indie studios, often ones who reached out to be listed.
