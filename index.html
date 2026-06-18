@@ -2889,6 +2889,20 @@ function barChart(title, entries, limit){
     : "";
   return `<div class="statcard"><h3>${title}</h3>${head}${more}</div>`;
 }
+// "Game engines" — engine is one of the most decision-relevant facts for a game dev (many are
+// "Unreal devs" or "Unity devs"). We only know an engine when a posting names it, and that's
+// mostly in technical roles — so we report coverage honestly, scoped to Engineering roles.
+const ENGINE_SET = new Set(["Unreal","Unity","Godot","Frostbite","CryEngine","Source 2","id Tech","REDengine","RE Engine","Decima","Snowdrop","Anvil","Creation Engine","Luminous","Cocos","GameMaker","O3DE","PlayCanvas","Bevy","Stride"]);
+function engineCard(list){
+  const ent = tallyMulti(list, j => (j.tech||[]).filter(t => ENGINE_SET.has(t)));
+  const engRoles = list.filter(j => j.d === "Engineering");
+  const named = engRoles.filter(j => (j.tech||[]).some(t => ENGINE_SET.has(t))).length;
+  const pct = engRoles.length ? Math.round(100 * named / engRoles.length) : 0;
+  const cap = `<div style="font-size:11px;color:var(--muted);margin-top:9px;line-height:1.5">Named in <b style="color:var(--text)">${pct}%</b> of engineering roles shown. Not every posting states its engine, so this reflects roles that do — in-house engines are under-counted.</div>`;
+  if (!ent.length) return `<div class="statcard"><h3>Game engines</h3><div style="font-size:12px;color:var(--muted)">No engine named in the roles shown.</div>${cap}</div>`;
+  const html = barChart("Game engines", ent, 8);
+  return html.slice(0, html.lastIndexOf("</div>")) + cap + "</div>";
+}
 
 // Market-pulse headline numbers (whole board, not the filtered view) — shared by the
 // front-page strip and the Trends report header. No estimates: every figure is a live role.
@@ -3287,6 +3301,7 @@ function renderStats(){
     + pane("demand", `<div class="statgrid">`
         + barChart("Roles by seniority", tally(list, j=>j.sen))
         + yoeCard
+        + engineCard(list)
         + barChart("Most in-demand skills", tallyMulti(list, j=>j.tech), 14)
         + `</div>`)
     + pane("pay", `<div class="statgrid">` + salCard + salSenCard + salRegCard + transparencyCard + `</div>`)
