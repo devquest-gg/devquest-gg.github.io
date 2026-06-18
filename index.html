@@ -377,6 +377,9 @@
     .matrixhead .mh-toggle { display: inline-block; color: var(--muted); font-size: 15px; flex-shrink: 0; }
     #matrixWrap.mcollapsed .matrixbody { display: none; }
     #matrixWrap.mcollapsed .mhint { display: none; }
+    /* The 410px CLS reserve (desktop) must not apply on phones — the matrix is collapsed by
+       default here, so reserving 410px left a giant empty box under the header. */
+    #matrixWrap { min-height: 0; }
   }
   .xtab td.mcell[onclick] { cursor: pointer; transition: outline .1s; }
   .xtab td.mcell[onclick]:hover { outline: 2px solid var(--accent); outline-offset: -2px; }
@@ -1674,11 +1677,18 @@ function render(){
       const minHot = (_lfNow && lfHasFilters(_lfNow)) ? 1 : 4;
       if (hot.length >= minHot) {
         hotHtml = renderHotSection(hot, P);
-        // email-ask discipline target: from the last filters if present, else the affinity profile
-        const _lf = affLastFilters();
+        // email-ask discipline target. Mirror hotJobs()'s priority ladder so the alert matches the
+        // "your profile · …" header: an explicitly pinned My-profile wins over transient last-filters /
+        // affinity. (Previously this skipped the pinned profile, so the ask drifted to the affinity
+        // discipline — e.g. "67 new Art roles" while the profile said Production.)
         let _hd = [];
-        if (_lf && lfHasFilters(_lf)) { const ds=new Set(); (_lf.cells||[]).forEach(c=>{const d0=String(c).split("|")[0]; if(d0)ds.add(d0);}); (_lf.disc||[]).forEach(x=>ds.add(x)); _hd=[...ds]; }
-        if (!_hd.length) _hd = topKeys(P.disc, 0.6);
+        const _pin = profPinnedRoles();
+        if (_pin && _pin.length) { _hd = _pin.slice(); }
+        else {
+          const _lf = affLastFilters();
+          if (_lf && lfHasFilters(_lf)) { const ds=new Set(); (_lf.cells||[]).forEach(c=>{const d0=String(c).split("|")[0]; if(d0)ds.add(d0);}); (_lf.disc||[]).forEach(x=>ds.add(x)); _hd=[...ds]; }
+          if (!_hd.length) _hd = topKeys(P.disc, 0.6);
+        }
         window.__hotDisc = _hd[0] || null;
         window.__hotDiscs = _hd;
         window.__hotDiscNew = list.filter(j => _hd.includes(j.d) && j.ts && (Date.now()-j.ts) <= 7*864e5).length;
