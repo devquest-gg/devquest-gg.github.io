@@ -538,6 +538,7 @@
   .coltag.dn { color: var(--green); background: rgba(63,185,80,.12); }
   .coltag.eq { color: var(--muted); background: rgba(139,148,158,.12); }
   .minenudge { font-size: 13px; color: var(--gold); background: rgba(210,153,34,.10); border: 1px solid rgba(210,153,34,.35); border-radius: 8px; padding: 8px 12px; margin: 0 0 12px; }
+  .row.nbopen { background: rgba(88,166,255,.05); box-shadow: inset 3px 0 0 0 var(--accent); border-radius: 0 8px 8px 0; }
   .mapcity { display: flex; align-items: flex-start; gap: 10px; background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; margin-bottom: 12px; }
   .mapcity .mc-ic { font-size: 18px; line-height: 1.4; }
   .mapcity .mc-body { flex: 1; min-width: 0; }
@@ -2000,12 +2001,12 @@ function nbHas(id){
 function nbLabelSelect(sel, id){
   let opts = NB_DATE_LABELS.slice();
   if (sel && opts.indexOf(sel) === -1) opts.unshift(sel);   // preserve any custom label
-  return `<select class="lbl" onchange="nbSync('${id}')">` +
+  return `<select class="lbl" onchange="nbSync('${id}')"><option value="" ${!sel?'selected':''}>Choose…</option>` +
     opts.map(l=>`<option ${l===sel?'selected':''}>${nbEsc(l)}</option>`).join("") + `</select>`;
 }
 function nbDateRow(id, d){
-  d = d || { l:"Applied", d:"", t:"" };
-  return `<div class="daterow">${nbLabelSelect(d.l||"Applied", id)}`
+  d = d || { l:"", d:"", t:"" };
+  return `<div class="daterow">${nbLabelSelect(d.l||"", id)}`
     + `<input class="dt dt-date" type="date" value="${nbEsc(d.d)}" onchange="nbSync('${id}')">`
     + `<input class="dt dt-time" type="time" value="${nbEsc(d.t)}" onchange="nbSync('${id}')">`
     + `<button class="del" title="Remove" onclick="event.stopPropagation(); nbRemoveRow(this,'${id}')">✕</button></div>`;
@@ -2024,14 +2025,14 @@ function nbQuestionRow(id, q){
 }
 function nbPanelHtml(j){
   const id = j.id, d = nbData(id), isOpen = nbOpen.has(id);
-  const dates = d.dates.length ? d.dates.map(x=>nbDateRow(id,x)).join("") : nbDateRow(id, {l:"Applied",d:"",t:""});
+  const dates = d.dates.length ? d.dates.map(x=>nbDateRow(id,x)).join("") : nbDateRow(id, {l:"",d:"",t:""});
   const contacts = d.contacts.length ? d.contacts.map(x=>nbContactRow(id,x)).join("") : nbContactRow(id, {n:"",e:""});
   const questions = d.questions.map(x=>nbQuestionRow(id,x)).join("");
   return `<div class="notebook ${isOpen?'open':''}" id="nb-${id}" onclick="event.stopPropagation()">`
     + `<div class="nbgrid">`
       + `<div class="field"><label>Notes</label>`
         + `<textarea class="nb-notes" rows="5" placeholder="Jot anything — why it caught your eye, prep, recruiter replies…" oninput="nbSync('${id}')">${nbEsc(d.notes)}</textarea></div>`
-      + `<div class="field"><label>Key dates <span class="hint">— each caret opens the full list</span></label>`
+      + `<div class="field"><label>Key dates <span class="hint">— label each date (applied, interview, offer…)</span></label>`
         + `<div class="nb-dates">${dates}</div>`
         + `<button class="addbtn" onclick="event.stopPropagation(); nbAddDate('${id}')">+ Add date</button>`
         + `<div class="sub"><label>Contacts</label><div class="nb-contacts">${contacts}</div>`
@@ -2048,9 +2049,10 @@ function nbToggle(id, btn){
   p.classList.toggle("open", open);
   open ? nbOpen.add(id) : nbOpen.delete(id);
   if (btn) btn.classList.toggle("open", open);
+  var row = p.closest(".row"); if (row) row.classList.toggle("nbopen", open);
   try { window.dqTrack && window.dqTrack("notebook_open", { open: open }); } catch(e){}
 }
-function nbAddDate(id){ const c = document.querySelector("#nb-"+id+" .nb-dates"); if (c){ c.insertAdjacentHTML("beforeend", nbDateRow(id, {l:"Applied",d:"",t:""})); nbSync(id); } }
+function nbAddDate(id){ const c = document.querySelector("#nb-"+id+" .nb-dates"); if (c){ c.insertAdjacentHTML("beforeend", nbDateRow(id, {l:"",d:"",t:""})); nbSync(id); } }
 function nbAddContact(id){ const c = document.querySelector("#nb-"+id+" .nb-contacts"); if (c){ c.insertAdjacentHTML("beforeend", nbContactRow(id, {n:"",e:""})); nbSync(id); } }
 function nbAddQuestion(id){ const c = document.querySelector("#nb-"+id+" .nb-qs"); if (c){ c.insertAdjacentHTML("beforeend", nbQuestionRow(id, "")); var inp = c.lastElementChild && c.lastElementChild.querySelector(".q-text"); if (inp) inp.focus(); nbSync(id); } }
 function nbRemoveRow(btn, id){ const r = btn.closest(".daterow, .nb-contact, .nb-q"); if (r) r.remove(); nbSync(id); }
@@ -2249,7 +2251,7 @@ function rowHtml(j){
   const longChip = longClass ? `<span class="tag ${longClass}" title="We've seen this exact listing live for ${dl} days. Long-running posts are more likely to be stale or 'ghost' listings.">⏳ ${dl}d listed</span>` : "";
   const relistChip = relistedNow(j) ? `<span class="tag relist" title="This role has been live far longer than its shown posted date${j.relistCount>1?` (date refreshed ${j.relistCount}×)`:''} — re-posted/refreshed rather than newly open.">↻ re-listed${j.relistCount>1?` ${j.relistCount}×`:''}</span>` : "";
   const poolBadge = j.pool ? `<span class="poolbadge" title="A talent pool / general application — not a specific open role.">talent pool</span>` : "";
-  return `<div class="row ${status?'st-'+status:''} ${isDismissed?'dismissed':''}" ${rowClick}>
+  return `<div class="row ${status?'st-'+status:''} ${isDismissed?'dismissed':''} ${MINE_VIEW&&nbOpen.has(j.id)?'nbopen':''}" ${rowClick}>
     <div class="rtop">
       <div class="rmain">
         <span class="title">${j.t}</span><span class="studio">${j.s}</span><span class="cardstar${isFollowed(j.s)?' on':''}" data-st="${j.s.replace(/"/g,'')}" role="button" tabindex="0" title="${isFollowed(j.s)?'Following':'Follow'} ${j.s.replace(/"/g,'')}" onclick="toggleFollow(this.getAttribute('data-st'), event)">${isFollowed(j.s)?'★':'☆'}</span>
@@ -2261,6 +2263,7 @@ function rowHtml(j){
       <div class="posted">${noDate?'date n/a':`${h<=24&&!isNew?'<span class="new">● </span>':''}${ago(h)}`}</div>
       <button class="save ${isSaved?'on':''}" onclick="event.stopPropagation(); toggleSave('${j.id}')" title="${isSaved?'Saved for later':'Save for later'}" aria-label="${isSaved?'Remove from saved':'Save for later'}">${isSaved?'<svg width="13" height="15" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle" aria-hidden="true"><path d="M6 2a2 2 0 0 0-2 2v18l8-5 8 5V4a2 2 0 0 0-2-2H6z"/></svg>':'<svg width="13" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle" aria-hidden="true"><path d="M6 2a2 2 0 0 0-2 2v18l8-5 8 5V4a2 2 0 0 0-2-2H6z"/></svg>'}</button>
       ${MINE_VIEW?`<button class="nbicon ${nbHas(j.id)?'hasnotes':''} ${nbOpen.has(j.id)?'open':''}" data-nb-btn="${j.id}" onclick="event.stopPropagation(); nbToggle('${j.id}', this)" title="Notebook — notes, key dates, contacts &amp; questions" aria-label="Open notebook">📝</button>`:``}
+      <span class="actsep"></span>
       <span class="statusgrp" onclick="event.stopPropagation()">
         <button class="stbtn applied ${status==='applied'?'on':''}" onclick="event.stopPropagation(); setStatusToggle('${j.id}','applied')" title="Applied" aria-label="Mark as applied">✓</button>
         <button class="stbtn interview ${status==='interviewing'?'on':''}" onclick="event.stopPropagation(); setStatusToggle('${j.id}','interviewing')" title="Interviewing" aria-label="Mark as interviewing">💬</button>
