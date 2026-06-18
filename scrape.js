@@ -26,7 +26,6 @@ const DIRECTORY = [
   { name: "Eidos-Montréal", url: "https://www.eidosmontreal.com/careers/", note: "Deus Ex, Tomb Raider — part of Embracer", city: "Montréal, QC" },
   { name: "Valve", url: "https://www.valvesoftware.com/en/jobs", note: "Steam, Half-Life, Dota 2", city: "Bellevue, WA" },
   { name: "Remedy Entertainment", url: "https://www.remedygames.com/careers", note: "Control, Alan Wake — Finland", city: "Espoo, Finland" },
-  { name: "Virtuos", url: "https://www.virtuosgames.com/careers", note: "AAA co-development and outsourcing — global studio", city: "Singapore" },
   { name: "Creative Assembly", url: "https://www.creative-assembly.com/careers", note: "Total War, Alien — Sega", city: "Horsham, UK" },
   { name: "Fuse Games", url: "https://fusegames.com/careers", note: "ex-Criterion devs — UK", city: "Guildford, UK" },
   { name: "Saber Interactive", url: "https://saber.games/careers/", note: "World War Z, Space Marine 2", city: "Fort Lauderdale, FL" },
@@ -35,21 +34,17 @@ const DIRECTORY = [
   { name: "Hello Games", url: "https://hellogames.org/join-us/", note: "No Man's Sky — Guildford, UK", city: "Guildford, UK" },
   { name: "Telltale Games", url: "https://telltale.com/careers/", note: "The Wolf Among Us — revived studio", city: "Malibu, CA" },
   // Notable studios we can't cleanly scrape yet (Xbox first-party / custom corporate portals) — link-outs for now.
-  { name: "Square Enix", url: "https://www.square-enix-games.com/en_us/careers", note: "Final Fantasy, Dragon Quest — JP publisher", city: "Tokyo, Japan" },
+  { name: "Square Enix", url: "https://www.square-enix-games.com/en_GB/careers", note: "Final Fantasy, Dragon Quest — JP publisher", city: "Tokyo, Japan" },
   // ---- June 2026: requested / community additions (link-outs; no clean scrapeable feed yet) ----
   { name: "PUBG Studios", url: "https://www.krafton.com/en/careers/jobs/", note: "PUBG: Battlegrounds — Krafton", city: "Seoul, South Korea" },
-  // Self-hosted / non-standard boards — link-outs until a bespoke fetcher is worth building.
-  { name: "Techland", url: "https://techland.net/job-offers", note: "Dying Light — open-world action studio (Poland)", city: "Wrocław, Poland" },
   // Can't cleanly scrape (Xbox first-party portals, custom sites, or a Pinpoint board) — link-outs.
   { name: "Retro Studios", url: "https://careers.nintendo.com/studios/retro-studios/", note: "Metroid Prime, Donkey Kong — Nintendo (Austin)", city: "Austin, TX" },
   { name: "Rare", url: "https://www.rare.co.uk/careers", note: "Sea of Thieves — Xbox Game Studios (UK)", city: "Twycross, UK" },
   { name: "Atlus", url: "https://atlus.com/careers", note: "Persona, Shin Megami Tensei — SEGA West", city: "Tokyo, Japan" },
-  { name: "Uppercut Games", url: "https://www.uppercut-games.com/jobs", note: "City of Brass, Submerged — Canberra indie", city: "Canberra, Australia" },
   // Custom / first-party / unsupported-ATS boards — link-outs (June 2026 batch).
   { name: "Owlcat Games", url: "https://owlcat.games/careers", note: "Pathfinder, Rogue Trader — CRPG studio (Cyprus)", city: "Nicosia, Cyprus" },
   { name: "Sucker Punch Productions", url: "https://jobs.suckerpunch.com/", note: "Ghost of Tsushima/Yōtei — Sony first-party (Bellevue, WA)", city: "Bellevue, WA" },
   { name: "Grinding Gear Games", url: "https://www.grindinggear.com/?page=careers", note: "Path of Exile — Tencent (Auckland, NZ)", city: "Auckland, New Zealand" },
-  { name: "Halo Studios", url: "https://www.halowaypoint.com/en-us/343/careers", note: "Halo (ex-343 Industries) — Xbox Game Studios", city: "Redmond, WA" },
   // batch 3 (2026-06-08): self-hosted / no-API boards — browse directly
   { name: "Void Interactive", url: "https://voidinteractive.net/careers/", note: "Ready or Not (Dublin)", city: "Dublin, Ireland" },
   { name: "Grip Studios", url: "https://grip-studios.com/hiring.php", note: "Co-development on Indiana Jones and Civ VII (Prague)", city: "Prague, Czechia" },
@@ -78,7 +73,6 @@ const DIRECTORY = [
   { name: "Pearl Abyss", url: "https://www.pearlabyss.com/en-US/Company/Careers/List", note: "Black Desert, Crimson Desert (South Korea)", city: "Anyang, South Korea" },
   { name: "Smilegate", url: "https://careers.smilegate.com/en/", note: "Lost Ark, CrossFire (South Korea)", city: "Seongnam, South Korea" },
   { name: "Shift Up", url: "https://shiftup.co.kr/recruit/", note: "Stellar Blade, NIKKE (South Korea)", city: "Seoul, South Korea" },
-  { name: "Supergiant Games", url: "https://www.supergiantgames.com/jobs/", note: "Hades — small San Francisco studio", city: "San Francisco, CA" },
   { name: "Moon Studios", url: "https://www.moongamestudios.com/", note: "Ori, No Rest for the Wicked — fully remote", city: "Vienna, Austria" },
   { name: "Iron Gate Studio", url: "https://irongate.se/", note: "Valheim — small Swedish studio", city: "Skövde, Sweden" },
   { name: "Devolver Digital", url: "https://www.devolverdigital.com/jobs", note: "Indie publisher — Cult of the Lamb, Cuphead", city: "Austin, TX" },
@@ -104,6 +98,7 @@ const STUDIOS = [
   { name: "Bungie", type: "greenhouse", token: "bungie" },
   { name: "2K", type: "greenhouse", token: "2k" },
   { name: "Crystal Dynamics", type: "greenhouse", token: "crystaldynamics" },
+  { name: "Cloud Chamber Games", type: "greenhouse", token: "cloudchamberen" },   // next BioShock — 2K studio (Novato, CA + Montréal)
   { name: "Scopely", type: "greenhouse", token: "scopely" },
   { name: "Theorycraft Games", type: "lever", token: "theorycraftgames" },
   { name: "Naughty Dog", type: "greenhouse", token: "naughtydog" },
@@ -379,6 +374,8 @@ const STUDIOS = [
   { name: "Undead Labs", type: "greenhouse", token: "undeadlabsllc" },                         // State of Decay — Greenhouse
   { name: "inXile Entertainment", type: "bamboohr", token: "inxile" },                         // Wasteland, Clockwork Revolution — BambooHR
   { name: "Sperasoft", type: "workable", token: "sperasoft" },                                 // AAA co-dev (Halo, Battlefield, AC) — Keywords Studios
+  { name: "Virtuos", type: "oracle", token: "fa-exhj-saasfaprod1", site: "CX_1", city: "Singapore" }, // AAA co-dev/outsourcing — Oracle Recruiting Cloud (promoted from Island 2026-06-18)
+  { name: "Techland", type: "techland", token: "techland", city: "Wrocław, Poland" },           // Dying Light — own SSR board (promoted from Island 2026-06-18)
 ];
 
 // ---- Studio type tags (Michelle's idea) ------------------------------------
@@ -391,6 +388,7 @@ const STUDIOS = [
 // owned dev studios (Naughty Dog, Massive…) stay developers by default — only the umbrella
 // publisher names are tagged. To tag a new studio later, add one line here.
 const STUDIO_KIND = {
+  "Virtuos": ["codev"],
   "Take-Two Interactive": ["publisher"],
   "2K": ["publisher", "dev"],
   "Electronic Arts (HQ)": ["publisher", "dev"],
@@ -2364,7 +2362,80 @@ async function fetchObsidian(studio) {
   return out;
 }
 
-const FETCHERS = { greenhouse: fetchGreenhouse, lever: fetchLever, workday: fetchWorkday, avature: fetchAvature, smartrecruiters: fetchSmartRecruiters, workable: fetchWorkable, phenom: fetchPhenom, teamtailor: fetchTeamtailor, eightfold: fetchEightfold, amazonjobs: fetchAmazonJobs, ashby: fetchAshby, zenimax: fetchZenimax, bamboohr: fetchBambooHr, jobscore: fetchJobScore, jazzhr: fetchJazzHr, jobvite: fetchJobvite, recruitee: fetchRecruitee, rippling: fetchRippling, breezy: fetchBreezy, manatal: fetchManatal, sumodigital: fetchSumoDigital, pinpoint: fetchPinpoint, playground: fetchPlayground, obsidian: fetchObsidian };
+// ---- Techland (Dying Light) — own SSR careers site -------------------------
+// The /job-offers page server-renders every opening as an <a href=".../job-offers/<slug>">Title</a>
+// grouped by category. No dates/locations on the list page, so those stay Unknown; the studio is in
+// Wrocław, Poland. Discipline is inferred from the title (the title-rules classifier is strong).
+// Promoted from the Island 2026-06-18.
+async function fetchTechland(studio) {
+  let html;
+  if (SAMPLE_FILE) { const d = loadSample(studio); if (!d) return []; html = typeof d === "string" ? d : (d.html || ""); }
+  else { html = await fetchText("https://techland.net/job-offers"); }
+  const re = /<a\b[^>]*href="(?:https:\/\/techland\.net)?\/job-offers\/([a-z0-9][a-z0-9-]*)"[^>]*>([\s\S]*?)<\/a>/gi;
+  const out = []; const seen = new Set(); let m;
+  while ((m = re.exec(html))) {
+    const slug = m[1];
+    const title = decodeEnt(m[2].replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim());
+    if (!title || seen.has(slug)) continue;
+    seen.add(slug);
+    const location = studio.city || "Wrocław, Poland";
+    out.push({
+      id: `tl-${slug}`,
+      title,
+      tech: extractTech(title),
+      studio: studio.name,
+      discipline: mapDiscipline(null, title),
+      workType: inferWorkType(title, location, []),
+      location,
+      region: inferRegion(location),
+      seniority: inferSeniority(title),
+      salary: "",
+      yoe: null,
+      postedAt: null,
+      url: `https://techland.net/job-offers/${slug}`,
+    });
+  }
+  return out;
+}
+
+// ---- Oracle Recruiting Cloud (ORC) — e.g. Virtuos --------------------------
+// Oracle's hosted candidate experience exposes a public REST feed:
+//   https://<pod>.fa.ocs.oraclecloud.com/hcmRestApi/resources/latest/recruitingCEJobRequisitions
+//     ?finder=findReqs;siteNumber=<site>  ->  { items:[ { requisitionList:[ {Id,Title,…} ] } ] }
+// studio.token = pod (e.g. "fa-exhj-saasfaprod1"), studio.site = site number (e.g. "CX_1").
+// Reusable for any studio on Oracle ORC. Promoted from the Island 2026-06-18.
+async function fetchOracle(studio) {
+  const host = `https://${studio.token}.fa.ocs.oraclecloud.com`;
+  const site = studio.site || "CX_1";
+  const url = `${host}/hcmRestApi/resources/latest/recruitingCEJobRequisitions`
+    + `?onlyData=true&expand=requisitionList.secondaryLocations`
+    + `&finder=findReqs;siteNumber=${site},limit=200,sortBy=POSTING_DATES_DESC`;
+  const data = SAMPLE_FILE ? loadSample(studio) : await fetchJson(url);
+  const list = (data && data.items && data.items[0] && data.items[0].requisitionList) || [];
+  return list.map(r => {
+    const sec = (r.secondaryLocations || []).map(s => s && (s.Name || s.name)).filter(Boolean);
+    const location = r.PrimaryLocation || sec[0] || "Unlisted";
+    const title = (r.Title || "").trim();
+    const fam = r.JobFunction || r.JobFamily || "";
+    return {
+      id: `ora-${site}-${r.Id}`,
+      title,
+      tech: extractTech(title),
+      studio: studio.name,
+      discipline: mapDiscipline(fam, title),
+      workType: inferWorkType(title, location, []),
+      location,
+      region: inferRegion(location),
+      seniority: inferSeniority(title),
+      salary: "",
+      yoe: null,
+      postedAt: r.PostedDate || null,
+      url: `${host}/hcmUI/CandidateExperience/en/sites/${site}/job/${r.Id}`,
+    };
+  });
+}
+
+const FETCHERS = { greenhouse: fetchGreenhouse, lever: fetchLever, workday: fetchWorkday, avature: fetchAvature, smartrecruiters: fetchSmartRecruiters, workable: fetchWorkable, phenom: fetchPhenom, teamtailor: fetchTeamtailor, eightfold: fetchEightfold, amazonjobs: fetchAmazonJobs, ashby: fetchAshby, zenimax: fetchZenimax, bamboohr: fetchBambooHr, jobscore: fetchJobScore, jazzhr: fetchJazzHr, jobvite: fetchJobvite, recruitee: fetchRecruitee, rippling: fetchRippling, breezy: fetchBreezy, manatal: fetchManatal, sumodigital: fetchSumoDigital, pinpoint: fetchPinpoint, playground: fetchPlayground, obsidian: fetchObsidian, techland: fetchTechland, oracle: fetchOracle };
 
 // ---- Ghost-job tracking -----------------------------------------------------
 // Because we scrape on a schedule, we can see how long a listing has REALLY been

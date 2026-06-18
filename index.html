@@ -874,9 +874,10 @@ const prevVisit = store.get("luj-lastVisit", 0);
 store.set("luj-lastVisit", Date.now());
 
 // ---- discipline consolidation: keep dev crafts, fold corporate noise -------
-const CORE_DISC = ["Engineering","Art","Animation","Design","Audio","Production","QA","Data & Analytics","Esports","Player Support"];
+const CORE_DISC = ["Engineering","Art","Animation","Design","Audio","Production","QA","Data & Analytics","Esports"];
 function normDisc(d){
   if (CORE_DISC.includes(d)) return d;
+  if (d === "Player Support") return "Marketing & Comms";   // too few roles for its own row — folded into Marketing & Comms
   if (/marketing|comms|brand|communication|publishing|entertainment/i.test(d)) return "Marketing & Comms";
   return "Business & Ops";
 }
@@ -2237,6 +2238,10 @@ function dqImportFile(input){
 }
 // ---- "What's new" / patch notes (newest first) ------------------------------
 const WHATSNEW = [
+  { id: 20260619, date: "June 2026", title: "More studios, plus engine trends", items: [
+      "Three more studios are live: Cloud Chamber Games (the next BioShock) joins the board, and Virtuos and Techland (Dying Light) are promoted from link-outs to full listings.",
+      "Trends now has a “Game engines” breakdown — see how many roles call for Unreal, Unity, and others."
+  ]},
   { id: 20260618, date: "June 2026", title: "Personalize your matches", items: [
       "Best fit now has a “My profile” you can edit — set your target roles, seniority, and where you can work. It tunes your matches and is saved on this device, no account.",
       "Open any studio in Best fit to expand its actual jobs and save or track them right there.",
@@ -3282,15 +3287,20 @@ function renderStats(){
   window.__heroForYouAll = _heroForYou;   // orange "for you" treatment across the whole custom carousel
   window.__heroTitles = heroData.map(s=>s[0]);
   const heroDots = heroData.map((s,i)=>`<button type="button" class="herodot${i?'':' on'}" data-i="${i}" onclick="heroGo(${i})" aria-label="${s[0]}"></button>`).join("");
-  const heroCss = `<style>.herowrap{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:14px 16px;margin:0 0 16px}.herohead{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}.herotitle{font-size:16px;font-weight:800;color:var(--text)}.heroctrl{display:flex;align-items:center;gap:6px}.herobtn{background:none;border:1px solid var(--border);color:var(--muted);width:28px;height:28px;border-radius:7px;cursor:pointer;font-size:15px;line-height:1;display:inline-flex;align-items:center;justify-content:center}.herobtn:hover{color:var(--text);border-color:var(--muted)}.herodots{display:inline-flex;gap:5px;margin:0 4px}.herodot{width:8px;height:8px;border-radius:50%;border:none;background:var(--border);cursor:pointer;padding:0}.herodot.on{background:var(--accent)}.heroslides{min-height:292px}.herobar{display:flex;align-items:center;gap:10px;margin:7px 0;font-size:14px}.herobar .hblabel{width:150px;flex-shrink:0;color:var(--muted);text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.herobar .hbtrack{flex:1;min-width:0;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:999px;height:18px;overflow:hidden}.herobar .hbfill{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,#1f6feb,#58a6ff);min-width:3px}.herobar .hbnum{flex-shrink:0;text-align:right;font-weight:600;color:var(--text);white-space:nowrap}.herobar.clickable{cursor:pointer;border-radius:6px}.herobar.clickable:hover .hbfill{filter:brightness(1.15)}.herobar.clickable:hover .hblabel{color:var(--text)}.heroempty{color:var(--muted);font-size:14px;padding:48px 0;text-align:center}.herohint{color:var(--muted);font-size:12px;margin-top:10px;text-align:center}.herowrap.foryou{border-color:rgba(255,138,61,.45);background:linear-gradient(180deg,rgba(255,138,61,.08),var(--panel))}.herowrap.foryou .herotitle{color:#ff8a3d}.herowrap.foryou .herodot.on{background:#ff8a3d}.herowrap.foryou .hbfill{background:linear-gradient(90deg,#e8722e,#ff8a3d)}.herobar.dim{opacity:.42}.herobar.hi .hblabel{color:#ff8a3d;font-weight:800}</style>`;
-  const heroHtml = `<div class="herowrap" id="heroWrap"><div class="herohead"><span class="herotitle" id="heroTitle">${heroData[0][0]}</span>`
+  const heroCss = `<style>.herowrap{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:14px 16px;margin:0 0 16px}.herohead{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}.herotitle{font-size:16px;font-weight:800;color:var(--text)}.heroctrl{display:flex;align-items:center;gap:6px}.herobtn{background:none;border:1px solid var(--border);color:var(--muted);width:28px;height:28px;border-radius:7px;cursor:pointer;font-size:15px;line-height:1;display:inline-flex;align-items:center;justify-content:center}.herobtn:hover{color:var(--text);border-color:var(--muted)}.herodots{display:inline-flex;gap:5px;margin:0 4px}.herodot{width:8px;height:8px;border-radius:50%;border:none;background:var(--border);cursor:pointer;padding:0}.herodot.on{background:var(--accent)}.heroslides{min-height:292px}.herobar{display:flex;align-items:center;gap:10px;margin:7px 0;font-size:14px}.herobar .hblabel{width:150px;flex-shrink:0;color:var(--muted);text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.herobar .hbtrack{flex:1;min-width:0;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:999px;height:18px;overflow:hidden}.herobar .hbfill{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,#1f6feb,#58a6ff);min-width:3px}.herobar .hbnum{flex-shrink:0;text-align:right;font-weight:600;color:var(--text);white-space:nowrap}.herobar.clickable{cursor:pointer;border-radius:6px}.herobar.clickable:hover .hbfill{filter:brightness(1.15)}.herobar.clickable:hover .hblabel{color:var(--text)}.heroempty{color:var(--muted);font-size:14px;padding:48px 0;text-align:center}.herohint{color:var(--muted);font-size:12px;margin-top:10px;text-align:center}.herowrap.foryou{border-color:rgba(255,138,61,.45);background:linear-gradient(180deg,rgba(255,138,61,.08),var(--panel))}.herowrap.foryou .herotitle{color:#ff8a3d}.herowrap.foryou .herodot.on{background:#ff8a3d}.herowrap.foryou .hbfill{background:linear-gradient(90deg,#e8722e,#ff8a3d)}.herobar.dim{opacity:.42}.herobar.hi .hblabel{color:#ff8a3d;font-weight:800}.herohl{display:flex;align-items:center;gap:8px;min-width:0;flex-wrap:wrap}.herofilt{font:inherit;font-size:11px;font-weight:700;color:var(--accent);background:rgba(88,166,255,.12);border:1px solid rgba(88,166,255,.4);border-radius:999px;padding:3px 10px;cursor:pointer;white-space:nowrap}.herofilt:hover{background:rgba(88,166,255,.22);color:var(--text)}</style>`;
+  // When any filter/search narrows the board, say so right on the hero (it drives every Trends
+  // chart) so a small number never reads as "the whole market is tiny". Tap to clear and see all.
+  const heroFiltBadge = (list.length !== mp.open)
+    ? `<button type="button" class="herofilt" onclick="clearAllFilters()" title="These charts reflect your active filters — tap to clear and see the whole board.">Filtered · ${list.length.toLocaleString()} of ${mp.open.toLocaleString()} · clear ✕</button>`
+    : "";
+  const heroHtml = `<div class="herowrap" id="heroWrap"><div class="herohead"><span class="herohl"><span class="herotitle" id="heroTitle">${heroData[0][0]}</span>${heroFiltBadge}</span>`
     + `<span class="heroctrl"><button type="button" class="herobtn" onclick="heroStep(-1)" aria-label="Previous">‹</button>`
     + `<span class="herodots">${heroDots}</span>`
     + `<button type="button" class="herobtn" onclick="heroStep(1)" aria-label="Next">›</button>`
     + `<button type="button" class="herobtn" id="heroPlay" onclick="heroToggle()" aria-label="Pause">⏸</button></span></div>`
     + `<div class="heroslides">` + heroData.map((s,i)=>`<div class="heroslide" data-i="${i}"${i?' hidden':''}>${s[1]}</div>`).join("") + `</div>`
     + `<div class="herohint">Tap a bar to see those roles in the list →</div></div>`;
-  document.getElementById("statsWrap").innerHTML = statStrip + heroCss + heroHtml + filterNote + segCss + segBar
+  document.getElementById("statsWrap").innerHTML = statStrip + heroCss + heroHtml + segCss + segBar
     + pane("overview", `<div class="statgrid">`
         + barChart(`Roles by studio`, tally(list, j=>j.s), 14)
         + barChart("Roles by discipline", tally(list, j=>j.d))
