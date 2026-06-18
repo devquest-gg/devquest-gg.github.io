@@ -1794,7 +1794,10 @@ const DISC_COLOR = {
 };
 function discColor(d){ return DISC_COLOR[d] || "var(--muted)"; }
 
-function matrixCollapsed(){ try { var v = store.get("dq-mtx-collapsed", null); return v===null ? true : !!v; } catch(e){ return true; } }
+// Default to EXPANDED on mobile: the role×seniority matrix is the signature, fast way to find
+// relevant roles — far more useful to a first-timer than a generic top-of-list discipline. Once a
+// visitor explicitly collapses it, that choice is remembered (stored value wins over the default).
+function matrixCollapsed(){ try { var v = store.get("dq-mtx-collapsed", null); return v===null ? false : !!v; } catch(e){ return false; } }
 function matrixToggle(){
   if (window.innerWidth > 560) return;   // desktop: the matrix always stays open
   var collapsed = !matrixCollapsed();
