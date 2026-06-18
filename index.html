@@ -134,11 +134,21 @@
     .status-sel { font-size: 11px; }
     .blabel { width: 110px; }
   }
+  /* Mobile-declutter helpers (desktop defaults: mini chip + icon-only glyphs hidden) */
+  .bico-m, .pulse-mini { display: none; }
+  .livedot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--green); box-shadow: 0 0 6px var(--green); vertical-align: middle; }
   @media (max-width: 560px) {
-    /* share icons are hidden at this width, so give the two text buttons more
-       breathing room and trim them slightly so the cluster isn't cramped */
-    header .headeractions { gap: 10px !important; }
-    header .wnbtn, header .aboutbtn, header .feedbackbtn { padding: 6px 11px !important; font-size: 12px !important; }
+    /* ===== First-time mobile declutter: surface the job list sooner. Desktop is untouched. =====
+       1) sync line -> a short "live" chip; 2) secondary header buttons -> compact icons;
+       3) the 5-metric stat strip and the quick-filter row are dropped (region/remote live in
+       the Filters drawer), with the two useful numbers folded into the count line by JS. */
+    .pulse-full { display: none; }
+    .pulse-mini { display: inline-flex; align-items: center; gap: 5px; }
+    .bico-m { display: inline; }
+    .wnbtn .btxt, .aboutbtn .btxt, .feedbackbtn .btxt { display: none; }
+    header .headeractions { gap: 8px !important; justify-content: flex-end; }
+    header .wnbtn, header .aboutbtn, header .feedbackbtn { padding: 6px 10px !important; font-size: 15px !important; }
+    #pulseStrip, #quickbar { display: none !important; }
     /* job cards: title takes its own line, then meta + action icons wrap to a second line so
        nothing (notebook / ✓💬⊘ status / hide) falls off the right edge on phones */
     .rtop { flex-wrap: wrap; }
@@ -568,7 +578,7 @@
 <header>
   <div>
     <div class="logo"><a href="/" class="logohome" title="Back to DevQuest home" aria-label="DevQuest home" onclick="if(event.metaKey||event.ctrlKey||event.shiftKey)return true;var h=location.origin+'/';location.href===h?location.reload():location.assign(h);return false;"><svg width="24" height="24" viewBox="0 0 32 32" aria-hidden="true"><rect x="1" y="1" width="8" height="8" rx="2" fill="var(--accent)"/><rect x="12" y="1" width="8" height="8" rx="2" fill="#2d333b"/><rect x="23" y="1" width="8" height="8" rx="2" fill="#2d333b"/><rect x="1" y="12" width="8" height="8" rx="2" fill="#2d333b"/><rect x="12" y="12" width="8" height="8" rx="2" fill="var(--accent)"/><rect x="23" y="12" width="8" height="8" rx="2" fill="#2d333b"/><rect x="1" y="23" width="8" height="8" rx="2" fill="#2d333b"/><rect x="12" y="23" width="8" height="8" rx="2" fill="#2d333b"/><rect x="23" y="23" width="8" height="8" rx="2" fill="var(--accent)"/></svg><span class="wordmark">Dev<span>Quest</span><span class="logo-tld">.gg</span></span></a></div>
-    <div class="pulse">⟳ Last sync: <b id="syncTime"></b> · refreshes hourly</div>
+    <div class="pulse"><span class="pulse-full">⟳ Last sync: <b id="syncTime"></b> · refreshes hourly</span><span class="pulse-mini" id="syncMini"></span></div>
   </div>
   <div class="herotag">Game dev jobs. <em>Fresh, honest, trackable.</em></div>
   <div class="headeractions" style="display:flex;gap:10px;align-items:center">
@@ -580,9 +590,9 @@
       <button type="button" class="dqsh dqsh-cp" title="Copy link" aria-label="Copy link" onclick="dqCopyLink(this)"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"/></svg></button>
     </div>
     <!-- SHARE:END -->
-    <button class="wnbtn" onclick="openWhatsNew()" title="What's new on DevQuest">✨ What's new<span class="wndot" id="wnDot"></span></button>
-    <a class="aboutbtn" href="/about" title="Our mission: what DevQuest is, and what it isn't" onclick="try{window.dqTrack&&window.dqTrack('about_click',{})}catch(e){}" style="color:var(--muted);font-size:13px;font-weight:600;text-decoration:none;border:1px solid var(--border);padding:7px 13px;border-radius:7px;white-space:nowrap">Our mission</a>
-    <a class="feedbackbtn" href="mailto:studios@devquest.gg?subject=DevQuest%20feedback&body=Bug%2C%20idea%2C%20or%20just%20a%20thought%3A%0A%0A%0AWhat%20page%20or%20filter%20were%20you%20on%20(optional)%3A%0A" title="Report a bug or share an idea (opens your email)" onclick="try{window.dqTrack&&window.dqTrack('feedback_click',{})}catch(e){}" style="color:var(--accent);font-size:13px;font-weight:600;text-decoration:none;border:1px solid var(--border);padding:7px 13px;border-radius:7px;white-space:nowrap">💬 Feedback</a>
+    <button class="wnbtn" onclick="openWhatsNew()" title="What's new on DevQuest"><span class="bico-m" aria-hidden="true">✨</span><span class="btxt">✨ What's new</span><span class="wndot" id="wnDot"></span></button>
+    <a class="aboutbtn" href="/about" title="Our mission: what DevQuest is, and what it isn't" onclick="try{window.dqTrack&&window.dqTrack('about_click',{})}catch(e){}" style="color:var(--muted);font-size:13px;font-weight:600;text-decoration:none;border:1px solid var(--border);padding:7px 13px;border-radius:7px;white-space:nowrap"><span class="bico-m" aria-hidden="true">📖</span><span class="btxt">Our mission</span></a>
+    <a class="feedbackbtn" href="mailto:studios@devquest.gg?subject=DevQuest%20feedback&body=Bug%2C%20idea%2C%20or%20just%20a%20thought%3A%0A%0A%0AWhat%20page%20or%20filter%20were%20you%20on%20(optional)%3A%0A" title="Report a bug or share an idea (opens your email)" onclick="try{window.dqTrack&&window.dqTrack('feedback_click',{})}catch(e){}" style="color:var(--accent);font-size:13px;font-weight:600;text-decoration:none;border:1px solid var(--border);padding:7px 13px;border-radius:7px;white-space:nowrap"><span class="bico-m" aria-hidden="true">💬</span><span class="btxt">💬 Feedback</span></a>
   </div>
 </header>
 
@@ -1643,9 +1653,18 @@ function render(){
   const cellNote = (selCells.size ? " · " + selCells.size + " square" + (selCells.size>1?"s":"") + " selected" : "")
     + (selSubs.size ? " · " + [...selSubs].join(", ") : "")
     + (selHubs.size ? " · " + [...selHubs].join(", ") : "");
+  // On phones the stat strip is hidden, so fold its two most useful numbers into the count line.
+  var _mpMini = "";
+  try {
+    if (window.matchMedia && window.matchMedia("(max-width: 560px)").matches && typeof marketPulse === "function") {
+      if (!window.__mpCache) window.__mpCache = marketPulse();
+      var _mp = window.__mpCache;
+      _mpMini = " · " + _mp.studios + " studios · " + _mp.newWk + " new this week";
+    }
+  } catch(e){}
   document.getElementById("count").textContent = showDismissed
     ? (list.length + " dismissed job" + (list.length!==1?"s":"") + " — click ↩ on a row to restore it")
-    : (list.length + " roles shown (" + JOBS.length + " total)" + cellNote +
+    : (list.length + " roles shown (" + JOBS.length + " total)" + cellNote + _mpMini +
        (newCount ? " · " + newCount + " new since your last visit" : ""));
 
   // "🔥 Hot jobs for you": a personalized highlight atop the *default* browse state, for returning
@@ -3666,6 +3685,13 @@ document.getElementById("syncTime").innerHTML = LIVE
     + (window.JOBS_DATA.errors && window.JOBS_DATA.errors.length
        ? ` · <a style="color:var(--muted);cursor:pointer" onclick="setView('stats')" title="One or more studio feeds are temporarily not updating — open Trends for details">${window.JOBS_DATA.errors.length} source${window.JOBS_DATA.errors.length===1?'':'s'} delayed</a>` : "")
   : "demo data";
+// Mobile: a short "live" chip stands in for the verbose sync line (set above for desktop).
+try {
+  var _sm = document.getElementById("syncMini");
+  if (_sm) _sm.innerHTML = LIVE
+    ? '<span class="livedot"></span> Live · updated ' + new Date(window.JOBS_DATA.scrapedAt).toLocaleString([], {hour:'numeric', minute:'2-digit'})
+    : 'demo data';
+} catch(e){}
 // (The old hero subtext lived here; the role/studio counts now show in the stat strip under the tabs.)
 
 renderDirectory();
