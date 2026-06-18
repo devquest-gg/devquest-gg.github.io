@@ -62,6 +62,29 @@ const CASES = [
   ["Senior QA Engineer", "QA"],
   ["QA Analyst", "QA"],
 
+  // --- Program management = Production (sibling of project management) ---
+  ["Program Manager", "Production"],
+  ["Staff Program Manager", "Production"],
+  ["Senior Technical Program Manager", "Production"],
+  ["Developer Program Manager, Compliance", "!Production"],   // DevRel/ops, not Production
+  ["Marketing Program Manager", "!Production"],               // marketing, not Production
+  // --- Localization = Production (but localization QA stays QA) ---
+  ["Localization Manager", "Production"],
+  ["Localization Specialist", "Production"],
+  ["Localization QA Tester", "QA"],
+
+  // --- Product management = Production, but product ANALYST = Data, economist = Data ---
+  ["Director of Product", "Production"],
+  ["Senior Manager, Product - Creator Platform", "Production"],
+  ["Senior Director, Product - Live Game", "Production"],
+  ["Senior Product Analyst", "Data & Analytics"],
+  ["Senior Product Analyst - Monopoly GO!", "Data & Analytics"],
+  ["Principal Game Economist", "Data & Analytics"],
+  ["Product Marketing Manager", "Marketing"],          // product marketing stays Marketing, not Production
+  // --- LiveOps stays in the Business & Ops catch-all (maps to "Other") ---
+  ["LiveOps Specialist - MONOPOLY GO!", "Other"],
+  ["LiveOps Configuration Manager - Scrabble", "Other"],
+
   // --- Creative direction = Design (title beats department) ---
   ["Senior Manager, Creative Direction - Wild Rift", "Design", "Art"],
 

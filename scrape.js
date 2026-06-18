@@ -955,13 +955,15 @@ function strongTitleDiscipline(t) {
   // Technical R&D leadership (e.g. "Director, Technology Research", "R&D Manager") → Engineering.
   // Scoped to technology/technical research so it won't grab user/market/player research.
   if (/\b(technology|technical) research\b|research (and|&) development|\br ?& ?d\b/.test(t)) return "Engineering";
-  if (/machine learning|\bml\b ?(scientist|researcher|ops)|data scien|data analy(st|tics|sis)|business intelligence|\bbi analyst\b|insights? analyst|analytics developer|deep learning|\bnlp\b|artificial intelligence|\bai (scientist|researcher|research)|\bof ai\b/.test(t)) return "Data & Analytics";
+  if (/machine learning|\bml\b ?(scientist|researcher|ops)|data scien|data analy(st|tics|sis)|business intelligence|\bbi analyst\b|insights? analyst|product analyst|\beconomist\b|analytics developer|deep learning|\bnlp\b|artificial intelligence|\bai (scientist|researcher|research)|\bof ai\b/.test(t)) return "Data & Analytics"; // product analysts & (game) economists are analytics, not product/finance
   // Technical AI roles (transformation/enablement/platform/automation/etc.) → Engineering.
   // Runs after the Data check so "AI Scientist/Researcher" still maps to Data & Analytics.
   if (/\bai\b[ -](transformation|enablement|adoption|integration|automation|platform|infrastructure|tooling|engineer|developer|architect|ops|operations|solutions?|strategy|program|programme)\b/.test(t)) return "Engineering";
   // "Development Director/Manager/Lead" = game-production leadership — but NOT HR "Learning & Development"
   // or "Business Development" (sales). Guarded so those stay out of Production.
   if (/\bdevelopment (director|manager|lead)\b/.test(t) && !/business|learning|talent|\bl&d\b|\bpeople\b|organi[sz]ation/.test(t)) return "Production";
+  // Reversed-order product leadership ("Senior Manager, Product"), but not product MARKETING.
+  if (/\b(manager|director|lead|owner|vp),?\s+product\b/.test(t) && !/marketing/.test(t)) return "Production";
   if (/\b(project|programme?|delivery|release|portfolio)\s+(manager|management|coordinator|lead|director|assistant)\b|technical (program|project) manager|scrum master|agile coach|\bpmo\b|\bproducer\b|production (coordinator|manager|director|assistant)|product (manager|owner|management|director|lead)|director,? of product|director,?\s+product|(vp|head) of product|game manager|producteur|productrice|réalisat(eur|rice)|gestionnaire de (projet|programme)|chef de (projet|produit)|coordonnateur de projet/.test(t)) return "Production";
   return null;
 }
@@ -985,6 +987,7 @@ function mapDiscipline(raw, title) {
   if (/developer (relations|engagement|evangelis|advocat|marketing|outreach|experience rep|support|solutions?)|\bdev ?rel\b|community developer|content developer|video content|publisher developer relations/.test(t)) return "Marketing";
   if (/engineer|programmer|\bdeveloper|software|\bsre\b|devops|\bsdet\b/.test(t) && !/\bsales\b|customer success|account exec|solutions? consultant|product developer|developer (program|programme|community|ecosystem|partnership)|business develop(er|ment)|analytics developer/.test(t)) return "Engineering";
   if (/product (manager|owner|management)|head of product/.test(t)) return "Production"; // PMs grouped with Production
+  if (/\bprogram manager\b/.test(t) && !/developer|marketing|\bbrand\b|communit|trust|compliance/.test(t)) return "Production"; // technical/dev program management (not DevRel/marketing/T&S/compliance PMs)
   if (/artist|concept|\bvfx\b|lighting|illustrat|sculpt/.test(t)) return "Art";
   if (/animator|animation|rigging/.test(t)) return "Animation";
   if (/\bux\b|\bui\b|user experience|user research/.test(t)) return "Design";
@@ -992,6 +995,7 @@ function mapDiscipline(raw, title) {
   if (/producer|production/.test(t)) return "Production";
   if (/audio|sound|composer|\bmusic\b/.test(t)) return "Audio";
   if (/\bqa\b|quality|tester|\btest\b/.test(t)) return "QA";
+  if (/locali[sz]ation\b/.test(t)) return "Production"; // localization folds into Production (LQA already caught by QA above)
   if (/writer|narrative/.test(t)) return "Design";
   // data: only clear data signals (NOT bare "analyst", which catches finance/business analysts)
   if (/\bdata\b|data scien|\banalytics\b|business intelligence|\bbi\b|insights/.test(t)) return "Data & Analytics";
