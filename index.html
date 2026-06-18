@@ -366,9 +366,18 @@
   table.xtab td[onclick]:hover { outline: 2px solid var(--accent); outline-offset: -2px; }
   .xhint { color: var(--muted); font-size: 12px; margin-top: 8px; }
   #matrixWrap { margin-bottom: 14px; padding: 16px; background: var(--panel); border: 1px solid var(--border); border-radius: 12px; }
-  .matrixhead { margin-bottom: 10px; }
+  .matrixhead { margin-bottom: 10px; display: flex; align-items: center; gap: 10px; }
+  .matrixhead .mh-text { flex: 1; min-width: 0; }
   .matrixhead .mh-title { display: block; font-size: 18px; font-weight: 700; color: var(--text); letter-spacing: 0; text-transform: none; }
   .matrixhead .mhint { display: block; margin-top: 3px; text-transform: none; letter-spacing: 0; font-size: 12px; color: var(--muted); }
+  .matrixhead .mh-toggle { display: none; }
+  .matrixbody { display: block; }
+  @media (max-width: 560px) {
+    .matrixhead { cursor: pointer; }
+    .matrixhead .mh-toggle { display: inline-block; color: var(--muted); font-size: 15px; flex-shrink: 0; }
+    #matrixWrap.mcollapsed .matrixbody { display: none; }
+    #matrixWrap.mcollapsed .mhint { display: none; }
+  }
   .xtab td.mcell[onclick] { cursor: pointer; transition: outline .1s; }
   .xtab td.mcell[onclick]:hover { outline: 2px solid var(--accent); outline-offset: -2px; }
   .xtab td.xsel { background: var(--accent) !important; color: #0d1117; font-weight: 800; }
@@ -1756,6 +1765,15 @@ const DISC_COLOR = {
 };
 function discColor(d){ return DISC_COLOR[d] || "var(--muted)"; }
 
+function matrixCollapsed(){ try { var v = store.get("dq-mtx-collapsed", null); return v===null ? true : !!v; } catch(e){ return true; } }
+function matrixToggle(){
+  if (window.innerWidth > 560) return;   // desktop: the matrix always stays open
+  var collapsed = !matrixCollapsed();
+  try { store.set("dq-mtx-collapsed", collapsed); } catch(e){}
+  var mw = document.getElementById("matrixWrap"); if (mw) mw.classList.toggle("mcollapsed", collapsed);
+  var ch = document.getElementById("mhToggle"); if (ch) ch.textContent = collapsed ? "▸" : "▾";
+  try { window.dqTrack && window.dqTrack("matrix_toggle", { open: !collapsed }); } catch(e){}
+}
 function renderMatrix(base){
   const SEN_ORDER = ["Entry","Mid","Senior","Lead","Director+"];
   const seniorities = SEN_ORDER.filter(sn => base.some(j=>j.sen===sn));
@@ -1764,9 +1782,9 @@ function renderMatrix(base){
   const cell = {}; for (const j of base) cell[j.d+"|"+j.sen] = (cell[j.d+"|"+j.sen]||0)+1;
   const cmax = Math.max(1, ...Object.values(cell));
   const heat = n => n===0 ? "transparent" : `rgba(88,166,255,${0.10 + 0.6*Math.sqrt(n/cmax)})`;
-  let h = `<div class="matrixhead"><span class="mh-title">Where are the jobs right now?</span><span class="mhint">Tap any role × seniority cell to filter · brighter = more roles · hover a label<span class="swipehint"> · swipe →</span></span></div>`;
+  let h = `<div class="matrixhead" onclick="matrixToggle()"><div class="mh-text"><span class="mh-title">Where are the jobs right now?</span><span class="mhint">Tap any role × seniority cell to filter · brighter = more roles · hover a label<span class="swipehint"> · swipe →</span></span></div><span class="mh-toggle" id="mhToggle" aria-hidden="true">${matrixCollapsed()?"▸":"▾"}</span></div>`;
   if (!discOrder.length) { document.getElementById("matrixWrap").innerHTML = h + `<div class="xhint">No roles in the current filters.</div>`; return; }
-  h += `<div style="overflow-x:auto"><table class="xtab"><tr><th></th>${seniorities.map(sn=>{
+  h += `<div class="matrixbody"><div style="overflow-x:auto"><table class="xtab"><tr><th></th>${seniorities.map(sn=>{
     const info = SEN_INFO[sn];
     return info ? `<th class="senh" data-tip="${escTip(info)}"><span>${sn}</span></th>` : `<th>${sn}</th>`;
   }).join("")}<th>Total</th></tr>`;
@@ -1779,8 +1797,8 @@ function renderMatrix(base){
       return `<td class="mcell ${sel?'xsel':''}" style="background:${sel?'':heat(n)}" ${n?`onclick="toggleCell('${dn.replace(/'/g,"\\'")}','${sn}')"`:''}>${n||""}</td>`;
     }).join("") + `<td class="xtot">${rowTotal}</td></tr>`;
   }
-  h += `</table></div>`;
-  document.getElementById("matrixWrap").innerHTML = h;
+  h += `</table></div></div>`;
+  var _mw = document.getElementById("matrixWrap"); _mw.innerHTML = h; _mw.classList.toggle("mcollapsed", matrixCollapsed());
 }
 
 function renderQuickbar(newCount){
