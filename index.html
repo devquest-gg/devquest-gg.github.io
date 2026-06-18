@@ -2240,10 +2240,10 @@ function dqImportFile(input){
 const WHATSNEW = [
   { id: 20260619, date: "June 2026", title: "More studios, plus engine trends", items: [
       "Three more studios are live: Cloud Chamber Games (the next BioShock) joins the board, and Virtuos and Techland (Dying Light) are promoted from link-outs to full listings.",
-      "Trends now has a “Game engines” breakdown — see how many roles call for Unreal, Unity, and others."
+      "Trends now has a “Game engines” breakdown showing how many roles call for Unreal, Unity, and others."
   ]},
   { id: 20260618, date: "June 2026", title: "Personalize your matches", items: [
-      "Best fit now has a “My profile” you can edit — set your target roles, seniority, and where you can work. It tunes your matches and is saved on this device, no account.",
+      "Best fit now has a “My profile” you can edit. Set your target roles, seniority, and where you can work. It tunes your matches and is saved on this device, no account.",
       "Open any studio in Best fit to expand its actual jobs and save or track them right there.",
       "Cost-of-living comparisons on jobs: add your city (in My profile, or on the Map) and your saved & best-fit jobs show how the cost of living compares. It’s never used to hide roles."
   ]},
@@ -3179,12 +3179,7 @@ function renderStats(){
     + _chip(mp.remotePct+"%","remote")
     + `</div>`;
   const mo = buildMomentum();
-  const digestCard = `<div class="statcard" style="border-color:rgba(88,166,255,.3);margin-top:16px;padding:12px 14px">`
-    + `<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">`
-    + `<span style="font-size:13px;color:var(--text);flex:1;min-width:200px">📬 <b>Weekly market digest</b> — what changed each Thursday, in one email. Separate from job alerts.</span>`
-    + `<button type="button" onclick="dqDigestToggle(this)" style="background:none;border:1px solid var(--accent);color:var(--accent);font-size:12px;font-weight:600;padding:6px 12px;border-radius:7px;cursor:pointer;white-space:nowrap">Subscribe ▸</button>`
-    + `</div><div id="digestSignup" hidden style="margin-top:10px"></div></div>`;
-  const openedLine = `<div style="font-size:14px;color:var(--muted);margin:2px 0 12px"><b style="color:var(--text)">${mp.newWk.toLocaleString()}</b> roles opened in the last 7 days across the board.</div>`;
+  const openedLine =`<div style="font-size:14px;color:var(--muted);margin:2px 0 12px"><b style="color:var(--text)">${mp.newWk.toLocaleString()}</b> roles opened in the last 7 days across the board.</div>`;
   // Segmented control: one always-visible header (tiles + TL;DR) over five switchable sub-views.
   const segCss = `<style>.dqseg{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 16px;border-bottom:1px solid var(--border);padding:8px 0 10px;position:sticky;top:0;background:var(--bg);z-index:6}.dqseg-btn{background:none;border:1px solid var(--border);color:var(--muted);font-size:13px;font-weight:600;padding:7px 14px;border-radius:8px;cursor:pointer;white-space:nowrap}.dqseg-btn:hover{color:var(--text);border-color:var(--muted)}.dqseg-btn.on{background:var(--accent);color:#0d1117;border-color:var(--accent)}.dqsub[hidden]{display:none}</style>`;
   const SUBS = [["overview","Overview"],["demand","Demand"],["pay","Pay"],["fresh","Freshness"],["changed","What changed"]];
@@ -3316,13 +3311,11 @@ function renderStats(){
         + `</div>`)
     + pane("pay", `<div class="statgrid">` + salCard + salSenCard + salRegCard + transparencyCard + `</div>`)
     + pane("fresh", `<div class="statgrid">` + freshCard + ghStudioCard + ghListCard + barChart("Posting age", buckets.filter(b=>b[1]>0)) + `</div>`)
-    + pane("changed", (mo.head ? `<div class="mhead">` + mo.head + `</div>` : "") + openedLine + `<div class="statgrid">` + mo.cards + `</div>`)
-    + digestCard;
+    + pane("changed", (mo.head ? `<div class="mhead">` + mo.head + `</div>` : "") + openedLine + `<div class="statgrid">` + mo.cards + `</div>`);
   // pin the sub-tab bar just below the sticky site header
   try { var _hdr = document.querySelector("header"); var _bar = document.querySelector(".viewtabsbar"); var _seg = document.querySelector("#statsWrap .dqseg"); if (_hdr && _seg) _seg.style.top = (_hdr.offsetHeight + (_bar ? _bar.offsetHeight : 0)) + "px"; } catch(e){}
   try { heroInit(); } catch(e){}
   try { var _stab = localStorage.getItem("dqTrendsTab"); dqSubTab(["overview","demand","pay","fresh","changed"].indexOf(_stab)>=0 ? _stab : "overview"); } catch(e){ try { dqSubTab("overview"); } catch(_e){} }
-  // digest form is built lazily when the user expands it (see dqDigestToggle)
 }
 
 // Trends sub-tabs (segmented control inside the Trends view; selection persists per device).
@@ -3753,43 +3746,6 @@ try {
   // Leave "" to keep the signup working with no challenge until you're ready.
   var TURNSTILE_SITEKEY = "0x4AAAAAADgYBtcO1AW8_rq_";
   var _tsWidget = null;
-
-  // Standalone weekly-market-digest signup (rendered on the Trends tab). Decoupled from job
-  // alerts: subscribes with criteria {digest:true, digestOnly:true} so it never enters the job send.
-  window.dqDigestForm = function(cid){
-    var el = document.getElementById(cid); if(!el) return;
-    el.innerHTML = '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">'
-      + '<input id="digestEmail" type="email" placeholder="you@email.com" style="flex:1;min-width:200px;padding:8px 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text)">'
-      + '<button id="digestBtn" style="background:var(--accent);color:#0d1117;border:0;border-radius:6px;padding:8px 16px;font-weight:700;cursor:pointer">Get the digest</button></div>'
-      + (TURNSTILE_SITEKEY ? '<div id="digestTurnstile" style="margin-top:8px"></div>' : '')
-      + '<div id="digestMsg" style="font-size:13px;min-height:16px;margin-top:6px;color:var(--muted)"></div>';
-    var dts = null;
-    if (TURNSTILE_SITEKEY && window.turnstile){ try { dts = window.turnstile.render("#digestTurnstile", { sitekey: TURNSTILE_SITEKEY, theme: "dark", appearance: "interaction-only", retry: "auto", "retry-interval": 3000, "refresh-expired": "auto", "error-callback": function(){ var m=document.getElementById("digestMsg"); if(m){ m.textContent="Verification hiccup — it'll retry automatically. Give it a moment, then try again."; m.style.color="#8b949e"; } return true; } }); } catch(e){} }
-    var btn = document.getElementById("digestBtn");
-    if (btn) btn.onclick = function(){
-      var email = (document.getElementById("digestEmail").value || "").trim();
-      var msg = document.getElementById("digestMsg");
-      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){ msg.textContent = "Enter a valid email."; msg.style.color = "#f778ba"; return; }
-      var tok = "";
-      if (TURNSTILE_SITEKEY){ try { tok = window.turnstile ? window.turnstile.getResponse(dts) : ""; } catch(e){} if (!tok){ msg.textContent = "Just a sec — finishing a quick security check. Tap again."; msg.style.color = "#f778ba"; return; } }
-      msg.textContent = "Sending…"; msg.style.color = "var(--muted)";
-      try { track("digest_signup", {}); } catch(e){}
-      fetch(ALERTS_API + "/subscribe", { method:"POST", headers:{ "Content-Type":"application/json" }, body: JSON.stringify({ email: email, criteria: { digest:true, digestOnly:true }, label: "Weekly market digest", token: tok }) })
-        .then(function(r){ return r.json().catch(function(){ return {}; }).then(function(j){ return { ok:r.ok, j:j }; }); })
-        .then(function(res){ if (res.ok && res.j && res.j.ok){ el.innerHTML = '<div style="color:var(--accent);font-size:14px">✓ Almost there — check your inbox and click the link to confirm your weekly digest.</div>'; } else { msg.textContent = "That didn’t go through. Please try again."; msg.style.color = "#f778ba"; } })
-        .catch(function(){ msg.textContent = "Network hiccup. Please try again."; msg.style.color = "#f778ba"; });
-    };
-  };
-
-  // Slim digest CTA: reveal the form on demand (and build it only then, so Turnstile renders visibly).
-  window.dqDigestToggle = function(btn){
-    var box = document.getElementById("digestSignup"); if (!box) return;
-    if (box.hidden){
-      box.hidden = false;   // reveal first so the form/Turnstile render in a visible container
-      if (!box.dataset.built){ try { window.dqDigestForm && window.dqDigestForm("digestSignup"); box.dataset.built = "1"; } catch(e){} }
-      btn.textContent = "Close ✕";
-    } else { box.hidden = true; btn.textContent = "Subscribe ▸"; }
-  };
 
   // Watchlist email bridge: a weekly job alert pre-filled with the visitor's followed studios.
   window.dqStudioAlertForm = function(cid, studios){
