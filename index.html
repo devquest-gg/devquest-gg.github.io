@@ -253,6 +253,16 @@
   .chk:not(.tgl) input[type=checkbox]:checked { background: var(--accent); border-color: var(--accent); }
   .chk:not(.tgl) input[type=checkbox]:checked::after { content: ""; position: absolute; left: 4.5px; top: 1.5px; width: 4px; height: 8px; border: solid #0d1117; border-width: 0 2px 2px 0; transform: rotate(45deg); }
   @media (max-width: 820px) { .rtop .save, .rtop .stbtn, .rtop .dismiss, .rtop .nbicon, .tag.knowbtn { opacity: 1; } }
+  @media (max-width: 400px) { .tabwide { display: none; } }  /* "Hiring Trends" -> "Trends" on tight phones */
+  /* List -> For You contextual nudge */
+  .fynudge { display: none; align-items: center; gap: 12px; background: linear-gradient(180deg,rgba(88,166,255,.10),rgba(88,166,255,.02)); border: 1px solid rgba(88,166,255,.45); border-radius: 11px; padding: 12px 14px; margin: 10px 0 8px; }
+  .fynudge .fyic { font-size: 20px; line-height: 1; }
+  .fynudge .fybody { flex: 1; min-width: 0; }
+  .fynudge .fyh { font-size: 14px; font-weight: 700; color: var(--text); }
+  .fynudge .fys { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .fynudge .fycta { font-size: 13px; font-weight: 700; color: #0d1117; background: var(--accent); border: none; border-radius: 8px; padding: 8px 13px; cursor: pointer; white-space: nowrap; }
+  .fynudge .fyx { color: var(--muted); font-size: 16px; cursor: pointer; border: none; background: none; padding: 0 2px; align-self: flex-start; }
+  @media (max-width: 560px) { .fynudge { flex-wrap: wrap; } .fynudge .fycta { flex: 1; } }
   .pulsehead { font-size: 18px; font-weight: 700; margin: 4px 0 10px; }
   .pconf { font-size: 11px; margin-right: 5px; }
   .pconf.mod, .pconf.st { color: var(--muted); }
@@ -847,9 +857,9 @@ function dqCopyLink(btn){
     <div class="viewtabs">
       <button id="tabList" class="active" onclick="setView('list')">☰ List</button>
       <button id="tabFollow" onclick="setView('follow')">★ My Jobs</button>
-      <button id="tabBest" onclick="setView('bestfit')">🎯 Best fit</button>
+      <button id="tabBest" onclick="setView('bestfit')">🎯 For You</button>
       <button id="tabMap" onclick="setView('map')">🗺️ Map</button>
-      <button id="tabStats" onclick="setView('stats')">📊 Trends</button>
+      <button id="tabStats" onclick="setView('stats')">📈 <span class="tabwide">Hiring </span>Trends</button>
     </div>
     </div>
     <div id="pulseStrip"></div>
@@ -1389,6 +1399,59 @@ function showApplyNudge(studio, disc){
   // "No thanks" spends a strike + starts the shared quiet window; "Email me" opens the pre-filled form.
   document.getElementById("anYes").onclick = function(){ bar.style.display="none"; try{ window.dqAlertForm && window.dqAlertForm(d, { disc: (disc?[disc]:[]) }, "apply"); }catch(e){} };
   document.getElementById("anNo").onclick = function(){ try{ dismissEmailAsk(); }catch(e){} bar.style.display = "none"; };
+}
+// ---- List -> "For You" (Best Fit) contextual nudge --------------------------------
+// Fires after the visitor has actively filtered discipline/seniority a couple of times AND has
+// never opened Best Fit. Deep-links into Best Fit pre-set to that discipline. EMAIL ASK HAS
+// PRIORITY: this only shows when the email ask won't fire (subscribed / cooldown / capped) and
+// isn't on screen, so it never competes for signups. Once-per-session; dismiss = gone for good.
+// EASY REVERT: BESTFIT_NUDGE = false.
+var BESTFIT_NUDGE = true;
+var _fyCount = 0, _fyShown = false;
+function _fyOff(){ try { return localStorage.getItem("dq-fynudge-off") === "1"; } catch(e){ return false; } }
+function _fySeenBest(){ try { return localStorage.getItem("dq-seen-bestfit") === "1"; } catch(e){ return false; } }
+function _fyDisc(c){
+  if (c && c.disc && c.disc.length) return c.disc[0];
+  if (c && c.cells && c.cells.length){ var p = String(c.cells[0]).split("|"); if (p[0]) return p[0]; }
+  return "";
+}
+function _fyQualifies(c){ return !!(c && ((c.disc && c.disc.length) || (c.sen && c.sen.length) || (c.cells && c.cells.length))); }
+window.__fyOnFilter = function(c){
+  if (!BESTFIT_NUDGE || _fyShown || _fyOff() || _fySeenBest()) return;
+  if (typeof view !== "undefined" && view !== "list") return;
+  if (!_fyQualifies(c)) return;
+  _fyCount++;
+  if (_fyCount < 2) return;
+  try { if (window.__emailAskActive) return; } catch(e){}                 // email bar is up -> defer
+  try { if (typeof canAskEmail === "function" && canAskEmail()) return; } catch(e){} // email ask still eligible -> let it go first
+  showForYouNudge(_fyDisc(c));
+};
+function showForYouNudge(disc){
+  if (_fyShown) return;
+  _fyShown = true;
+  var jobsEl = document.getElementById("jobs");
+  if (!jobsEl || !jobsEl.parentNode) return;
+  var bar = document.getElementById("forYouNudge");
+  if (!bar){ bar = document.createElement("div"); bar.id = "forYouNudge"; bar.className = "fynudge"; jobsEl.parentNode.insertBefore(bar, jobsEl); }
+  var label = disc ? disc : "your search";
+  bar.innerHTML = '<span class="fyic">⭐</span>'
+    + '<div class="fybody"><div class="fyh">See the best studios to apply to for <b>' + _h(label) + '</b></div>'
+    + '<div class="fys">Ranked by openings, pay transparency and freshness — built from what you’re filtering.</div></div>'
+    + '<button class="fycta" id="fyGo">Show my matches →</button>'
+    + '<button class="fyx" id="fyDismiss" title="Dismiss">✕</button>';
+  bar.style.display = "flex";
+  try { window.dqTrack && window.dqTrack("foryou_nudge_show", { disc: disc || "" }); } catch(e){}
+  document.getElementById("fyGo").onclick = function(){
+    try { window.dqTrack && window.dqTrack("foryou_nudge_click", { disc: disc || "" }); } catch(e){}
+    bar.style.display = "none";
+    setView("bestfit");
+    try { if (disc) bfSetDisc(disc); } catch(e){}
+  };
+  document.getElementById("fyDismiss").onclick = function(){
+    try { localStorage.setItem("dq-fynudge-off","1"); } catch(e){}
+    try { window.dqTrack && window.dqTrack("foryou_nudge_dismiss", {}); } catch(e){}
+    bar.style.display = "none";
+  };
 }
 
 // ---- sub-discipline tagging (derived from the title, client-side so no re-scrape) ----
@@ -2939,7 +3002,7 @@ function setView(v){
     var _sw = document.getElementById("statsWrap");
     if (_sw && !_sw.innerHTML.trim()) setTimeout(function(){ try { renderStats(); } catch(e){ console.error(e); } }, 30);
   }
-  if (v === "bestfit") renderBestFit();
+  if (v === "bestfit"){ try { localStorage.setItem("dq-seen-bestfit","1"); } catch(e){} renderBestFit(); }
 }
 
 // ---- "Best fit — where should I apply?" view --------------------------------
@@ -4599,7 +4662,7 @@ try {
     var c=readCriteria();
     var sig=""; try{ sig=JSON.stringify(c); }catch(e){}
     var changed=(sig!==lastSig);
-    if(changed){ lastSig=sig; if(hasFilters(c)){ try{ track("filter", filterSummary(c)); }catch(e){} } }
+    if(changed){ lastSig=sig; if(hasFilters(c)){ try{ track("filter", filterSummary(c)); }catch(e){} try{ window.__fyOnFilter && window.__fyOnFilter(c); }catch(e){} } }
     var state=bar.getAttribute("data-state");
     // Keep an open or just-submitted form while the filters are unchanged. The moment the
     // filters change, clear it so a subscriber can set up an alert for the NEW search.
