@@ -401,6 +401,13 @@
   .xtab td.mcell[onclick] { cursor: pointer; transition: outline .1s; }
   .xtab td.mcell[onclick]:hover { outline: 2px solid var(--accent); outline-offset: -2px; }
   .xtab td.xsel { background: var(--accent) !important; color: #0d1117; font-weight: 800; }
+  /* Mobile: keep the discipline-name column pinned while you scroll the grid sideways, so you never
+     lose track of which row you're tapping. */
+  @media (max-width: 560px) {
+    #matrixWrap table.xtab td.xname, #matrixWrap table.xtab tr > th:first-child {
+      position: sticky; left: 0; z-index: 2; background: var(--panel);
+    }
+  }
   /* ===== Matrix dashboard: lens toggle + refreshed grid. Scoped to .mtx-dash, which is only
      added when MATRIX_DASH is on — so flipping that flag off restores the original look exactly. ===== */
   /* lens lives in the matrix title row, demoted (a quiet "view-as" control for this chart only) */
@@ -1981,7 +1988,7 @@ function renderMatrixDash(base){
   // table-layout:fixed → seniority columns are equal AND fill the width (so a long "Director+" header
   // can't stretch one column), with a tight name column and no dead space. min-width keeps the grid
   // horizontally scrollable on phones instead of squeezing the cells.
-  h += `<div style="overflow-x:auto"><table class="xtab" style="table-layout:fixed;width:100%;min-width:540px"><tr><th style="width:156px"></th>${seniorities.map(sn=>{
+  h += `<div class="mxscroll" style="overflow-x:auto"><table class="xtab" style="table-layout:fixed;width:100%;min-width:540px"><tr><th style="width:156px"></th>${seniorities.map(sn=>{
     const info = SEN_INFO[sn];
     return info ? `<th class="senh" data-tip="${escTip(info)}"><span>${sn}</span></th>` : `<th>${sn}</th>`;
   }).join("")}<th style="width:56px">Total</th></tr>`;
@@ -2002,7 +2009,11 @@ function renderMatrixDash(base){
     }).join("") + `<td class="xtot">${discCount[dn]}</td></tr>`;
   }
   h += `</table></div></div>`;
+  // Preserve the horizontal scroll position across the re-render (tapping a cell calls render(),
+  // which rebuilds this innerHTML — without this the grid snaps back to the left, very jarring on mobile).
+  const _prevScroll = (function(){ var s = _mw.querySelector(".mxscroll"); return s ? s.scrollLeft : 0; })();
   _mw.innerHTML = h; _mw.classList.toggle("mcollapsed", matrixCollapsed());
+  if (_prevScroll){ var _ns = _mw.querySelector(".mxscroll"); if (_ns) _ns.scrollLeft = _prevScroll; }
 }
 
 function renderQuickbar(newCount){
