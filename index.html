@@ -2573,6 +2573,18 @@ function dqImportFile(input){
 }
 // ---- "What's new" / patch notes (newest first) ------------------------------
 const WHATSNEW = [
+  { id: 20260623, date: "June 2026", title: "Plan your next move on the Map", items: [
+      "The Map now leads with a Top cities leaderboard, so the busiest hiring cities are obvious without panning around.",
+      "Click any city for a full snapshot: open roles, studios hiring, top disciplines, salary coverage, and how many are new this week.",
+      "New Affordability view: set your home base and cities color by cost of living, cheaper, similar, or pricier, with median salary for context.",
+      "Dream Move ranks the best cities to relocate for your profile by matching roles and cost of living, and remote roles finally get their own card."
+  ]},
+  { id: 20260622, date: "June 2026", title: "Best fit shows its work", items: [
+      "Every studio match now explains itself, with chips for matching roles, your seniority, salary transparency, and roles added this week.",
+      "Scores get plain-language context (Strong, Good, or Partial match), and a Market snapshot up top reads your whole discipline at a glance.",
+      "A “Don’t overlook” section surfaces strong studios just outside the top list, and a “hiring up this month” tag flags studios that are growing.",
+      "Your profile now reads as a career profile card, and clicking any studio, including the don’t-overlook picks, expands its real jobs in place."
+  ]},
   { id: 20260621, date: "June 2026", title: "Your job tracker, upgraded", items: [
       "My Jobs is now a visual pipeline: every saved or tracked role shows its stage (Saved, Applied, Interviewing, Offer, Rejected) in color, so you can see where everything stands at a glance.",
       "Applied jobs show a health dot (active, follow up, or quiet) based on how long it’s been since you applied, so nothing slips through the cracks.",
@@ -3086,17 +3098,26 @@ function profPanelHtml(){
 }
 function profToggle(){ profPanelOpen=!profPanelOpen; var p=document.getElementById("profPanel"); if(p)p.classList.toggle("open",profPanelOpen); var e=document.getElementById("profEdit"); if(e)e.textContent=profPanelOpen?"Done editing ▾":"Edit profile ▸"; }
 function profSummary(){
-  var roles=profGet("roles").v, work=profGet("work").v, yrs=profGet("yrs").v, loc=profGet("loc").v;
+  var rolesG=profGet("roles"), roles=rolesG.v, work=profGet("work").v, yrs=profGet("yrs").v, loc=profGet("loc").v;
   var senG=profGet("sen"), senV=senG.v;
+  var t=document.getElementById("profCardTitle"), c=document.getElementById("profCardChips");
+  // Brand-new visitor with no pinned role and no browsing signal: the role is only a global
+  // fallback (the most active discipline), so don't present it as their declared profile.
+  var behav=false; try { var b=bfBehaviorRoles(); behav = !!(b && b.length); } catch(e){}
+  if (!rolesG.pinned && !behav){
+    if (t) t.textContent = "Not set yet";
+    if (c) c.innerHTML = '<span class="psumchip">Tap “Edit profile” to set your target role and personalize your matches</span>';
+    return;
+  }
   var roleTxt = roles.length ? roles.join(", ") : "Add your target role";
   var title = (senG.pinned && senV && senV!=="__any" && roles.length) ? (senV.replace(/\+$/,"")+", "+roleTxt) : roleTxt;
-  var t=document.getElementById("profCardTitle"); if(t) t.textContent=title;
+  if (t) t.textContent=title;
   var chips=[];
   if (senG.pinned && senV && senV!=="__any") chips.push(senV);
   if (yrs) chips.push(yrs);
   chips.push(work==="remote" ? "Remote only" : work==="nearby" ? ("Remote / near "+(loc||"me")) : "Open to relocating");
   if (loc) chips.push("Based in "+loc);
-  var c=document.getElementById("profCardChips"); if(c) c.innerHTML=chips.map(function(x){ return '<span class="psumchip">'+bfEsc(x)+'</span>'; }).join("");
+  if (c) c.innerHTML=chips.map(function(x){ return '<span class="psumchip">'+bfEsc(x)+'</span>'; }).join("");
 }
 function profRenderRoles(){
   var c=document.getElementById("profRoles"); if(!c) return; var roles=profGet("roles").v;
