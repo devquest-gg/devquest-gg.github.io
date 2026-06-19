@@ -383,8 +383,13 @@
   .matrixhead .mh-toggle { display: none; }
   .matrixbody { display: block; }
   @media (max-width: 560px) {
-    .matrixhead { cursor: pointer; }
-    .matrixhead .mh-toggle { display: inline-block; color: var(--muted); font-size: 15px; flex-shrink: 0; }
+    .matrixhead { cursor: pointer; position: relative; }
+    /* phones: title takes the full first row (so it doesn't get squeezed into a tall narrow column
+       by the lens), the lens drops to its own row below, and the collapse caret pins top-right. */
+    .matrixhead .mh-text { flex-basis: 100%; padding-right: 26px; }
+    .matrixhead .mh-toggle { display: inline-block; position: absolute; top: 0; right: 0; color: var(--muted); font-size: 15px; }
+    .mtx-lensbar { margin-left: 0; margin-top: 2px; }
+    .hoverhint { display: none; }   /* no hover on touch — drop that part of the hint on phones */
     #matrixWrap.mcollapsed .matrixbody { display: none; }
     #matrixWrap.mcollapsed .mhint, #matrixWrap.mcollapsed .mtx-lensbar { display: none; }
     /* The 410px CLS reserve (desktop) must not apply on phones — the matrix is collapsed by
@@ -1917,7 +1922,7 @@ function renderMatrixDash(base){
   const lensBar = `<div class="mtx-lensbar" onclick="event.stopPropagation()"><span class="mtx-lens-label">View by</span><span class="mtx-lenses">`
     + lenses.map(([m,l])=>`<button type="button" class="mtx-lens ${matrixMetric===m?'on':''}" onclick="setMatrixMetric('${m}')">${l}</button>`).join("")
     + `</span></div>`;
-  let h = `<div class="matrixhead" onclick="matrixToggle()"><div class="mh-text"><span class="mh-title">Where are the jobs right now?</span><span class="mhint">Tap cells to filter · hover any cell for detail<span class="swipehint"> · swipe →</span></span></div>${lensBar}<span class="mh-toggle" id="mhToggle" aria-hidden="true">${matrixCollapsed()?"▸":"▾"}</span></div>`;
+  let h = `<div class="matrixhead" onclick="matrixToggle()"><div class="mh-text"><span class="mh-title">Where are the jobs right now?</span><span class="mhint">Tap cells to filter<span class="hoverhint"> · hover any cell for detail</span><span class="swipehint"> · swipe →</span></span></div>${lensBar}<span class="mh-toggle" id="mhToggle" aria-hidden="true">${matrixCollapsed()?"▸":"▾"}</span></div>`;
   const _mw = document.getElementById("matrixWrap");
   _mw.classList.toggle("mtx-dash", MATRIX_RESTYLE);
   if (!discOrder.length){ _mw.innerHTML = h + `<div class="xhint">No roles in the current filters.</div>`; _mw.classList.toggle("mcollapsed", matrixCollapsed()); return; }
