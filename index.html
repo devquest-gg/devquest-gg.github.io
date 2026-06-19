@@ -449,6 +449,7 @@
   .mjhealth.ok { color: var(--green); } .mjhealth.ok .hd { background: var(--green); box-shadow: 0 0 6px var(--green); }
   .mjhealth.warn { color: var(--gold); } .mjhealth.warn .hd { background: var(--gold); box-shadow: 0 0 6px var(--gold); }
   .mjhealth.cold { color: var(--pink); } .mjhealth.cold .hd { background: var(--pink); }
+  .mjhealth.none { color: var(--muted); } .mjhealth.none .hd { background: var(--muted); }
   .row.mjp.s-applied { box-shadow: inset 3px 0 0 var(--accent); }
   .row.mjp.s-interviewing { box-shadow: inset 3px 0 0 #a371f7; }
   .row.mjp.s-saved { box-shadow: inset 3px 0 0 var(--gold); }
@@ -906,6 +907,8 @@ function mjBarHtml(j, stage){
       const cls = d < 7 ? "ok" : d < 30 ? "warn" : "cold";
       const txt = d < 7 ? `Active · ${d}d` : d < 30 ? `Follow up · ${d}d` : `Quiet · ${d}d`;
       health = `<span class="mjhealth ${cls}" title="Based on days since you applied — not recruiter activity"><span class="hd"></span>${txt}</span>`;
+    } else {
+      health = `<span class="mjhealth none" title="No applied date saved — open the notebook (📝) to add one"><span class="hd"></span>No date</span>`;
     }
   }
   return `<div class="mjbar"><span class="mjpill ${stage}">${L[stage]||stage}</span>${health}</div>`;
@@ -922,6 +925,8 @@ function mjSummaryHtml(j, stage){
       const c = d < 7 ? "ok" : d < 30 ? "warn" : "cold";
       const t = d < 7 ? `Active · ${d}d` : d < 30 ? `Follow up · ${d}d` : `Quiet · ${d}d`;
       health = `<span class="mjhealth ${c}"><span class="hd"></span>${t}</span>`;
+    } else {
+      health = `<span class="mjhealth none" title="No applied date saved — expand the card and set it in the notebook"><span class="hd"></span>No date</span>`;
     }
   }
   const key = j.salary ? `<span class="mjkey">${j.salary}</span>` : "";
@@ -2388,10 +2393,13 @@ function nbSync(id){
 // Soonest upcoming dated entry across all notebooks (today or later) — feeds the My Jobs banner.
 function nextUpcoming(){
   const now = Date.now(); let best = null;
+  // "Applied" / "Offer received" are records of things that already happened, not upcoming steps —
+  // never surface them in the "Coming up" banner (only forward-looking dates: interviews, deadlines…).
+  const SKIP = { "Applied": 1, "Offer received": 1 };
   for (const id in NOTEBOOKS){
     const j = JOB_BY_ID[id]; if (!j) continue;
     for (const dt of (NOTEBOOKS[id].dates||[])){
-      if (!dt.d) continue;
+      if (!dt.d || SKIP[dt.l]) continue;
       const ts = new Date(dt.d + "T" + (dt.t || "23:59:59")).getTime();   // timed: until that time; date-only: until end of day
       if (!isNaN(ts) && ts >= now && (!best || ts < best.ts)) best = { ts, label: dt.l, hasTime: !!dt.t, studio: j.s, id: id };
     }
