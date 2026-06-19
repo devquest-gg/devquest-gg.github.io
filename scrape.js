@@ -376,6 +376,7 @@ const STUDIOS = [
   { name: "Sperasoft", type: "workable", token: "sperasoft" },                                 // AAA co-dev (Halo, Battlefield, AC) — Keywords Studios
   { name: "Virtuos", type: "oracle", token: "fa-exhj-saasfaprod1", site: "CX_1", city: "Singapore" }, // AAA co-dev/outsourcing — Oracle Recruiting Cloud (promoted from Island 2026-06-18)
   { name: "Techland", type: "techland", token: "techland", city: "Wrocław, Poland" },           // Dying Light — own SSR board (promoted from Island 2026-06-18)
+  { name: "Lighthouse Games", type: "workable", token: "lighthousegames" },                     // ex-Codemasters AAA studio (Leamington Spa, UK) — Workable
 ];
 
 // ---- Studio type tags (Michelle's idea) ------------------------------------
