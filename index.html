@@ -254,6 +254,12 @@
   .chk:not(.tgl) input[type=checkbox]:checked::after { content: ""; position: absolute; left: 4.5px; top: 1.5px; width: 4px; height: 8px; border: solid #0d1117; border-width: 0 2px 2px 0; transform: rotate(45deg); }
   @media (max-width: 820px) { .rtop .save, .rtop .stbtn, .rtop .dismiss, .rtop .nbicon, .tag.knowbtn { opacity: 1; } }
   .pulsehead { font-size: 18px; font-weight: 700; margin: 4px 0 10px; }
+  .pconf { font-size: 11px; margin-right: 5px; }
+  .pconf.mod, .pconf.st { color: var(--muted); }
+  .trshare { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; background: linear-gradient(180deg,rgba(88,166,255,.07),transparent); border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px; margin-top: 12px; }
+  .trshare .tt { font-size: 13px; color: var(--text); flex: 1; min-width: 200px; } .trshare .tt b { color: var(--accent); }
+  .trshare a, .trshare .shbtn { font-size: 12px; font-weight: 700; padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border); background: transparent; color: var(--accent); cursor: pointer; text-decoration: none; white-space: nowrap; }
+  .trshare a:hover, .trshare .shbtn:hover { border-color: var(--accent); }
   .pulsestats { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 14px; }
   .ptile { flex: 1; min-width: 120px; background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; text-align: center; }
   .ptile .pnum { font-size: 26px; font-weight: 800; color: var(--text); }
@@ -3911,12 +3917,14 @@ function buildMomentum(){
   const sRows=sArr.map(s=>{ const base=s.d30!=null?s.d30:(s.d7!=null?s.d7:s.now); return {name:s.name, now:s.now, delta:s.now-base, c:klass(s.now,base), series:s.series}; });
   const up=sRows.filter(r=>r.c==="up").sort((a,b)=>b.delta-a.delta);
   const down=sRows.filter(r=>r.c==="down"||r.c==="dark").sort((a,b)=>a.delta-b.delta);
-  const srow=r=>`<div class="pulserow"><span class="plabel" title="${r.name}">${r.name}${r.c==="dark"?' <span class="darktag">board quiet</span>':''}</span><span class="spark">${sparkline(r.series)}</span><span class="pulsenum">${r.now}<span class="pdelta p-${r.c}">${r.delta>0?'+':''}${r.delta}</span></span></div>`;
+  // Confidence: how meaningful is the move? major (>=10), moderate (>=4), or small/stable.
+  const conf=d=>{const a=Math.abs(d);return a>=10?'<span class="pconf maj" title="Major move">🔥</span>':a>=4?('<span class="pconf mod" title="Moderate move">'+(d>0?'↑':'↓')+'</span>'):'<span class="pconf st" title="Small move">→</span>';};
+  const srow=r=>`<div class="pulserow"><span class="plabel" title="${r.name}">${r.name}${r.c==="dark"?' <span class="darktag">board quiet</span>':''}</span><span class="spark">${sparkline(r.series)}</span><span class="pulsenum">${conf(r.delta)}${r.now}<span class="pdelta p-${r.c}">${r.delta>0?'+':''}${r.delta}</span></span></div>`;
   const dArr=T.disc?Object.keys(T.disc).map(name=>Object.assign({name}, T.disc[name])):[];
   const dRows=dArr.map(s=>{ const base=s.d30!=null?s.d30:(s.d7!=null?s.d7:s.now); return {name:s.name, now:s.now, delta:s.now-base, series:s.series}; });
   const hot=dRows.filter(r=>r.delta>0).sort((a,b)=>b.delta-a.delta).slice(0,6);
   const cool=dRows.filter(r=>r.delta<0).sort((a,b)=>a.delta-b.delta).slice(0,6);
-  const drow=(r,sgn)=>`<div class="pulserow"><span class="plabel">${r.name}</span><span class="spark">${sparkline(r.series)}</span><span class="pulsenum">${r.now}<span class="pdelta p-${sgn}">${r.delta>0?'+':''}${r.delta}</span></span></div>`;
+  const drow=(r,sgn)=>`<div class="pulserow"><span class="plabel">${r.name}</span><span class="spark">${sparkline(r.series)}</span><span class="pulsenum">${conf(r.delta)}${r.now}<span class="pdelta p-${sgn}">${r.delta>0?'+':''}${r.delta}</span></span></div>`;
   const fresh=enough?sArr.filter(s=>s.d7==null && (s.now||0)>0).sort((a,b)=>b.now-a.now).slice(0,12):[];
   // Skills heating up / cooling — same momentum treatment as disciplines, from trends.json skills
   // (now vs ~30d ago). No per-skill series is banked, so these rows show no sparkline.
@@ -3926,6 +3934,31 @@ function buildMomentum(){
   const skCool = kRows.filter(r=>r.delta<0).sort((a,b)=>a.delta-b.delta).slice(0,6);
   const card=(t,inner)=>`<div class="statcard"><h3>${t}</h3>${inner}</div>`;
   const tM=(num,label,c)=>`<div class="ptile"><div class="pnum ${c||''}">${num}</div><div class="plabelt">${label}</div></div>`;
+  // ----- Discoveries, rankings, emerging skills, and a shareable weekly summary -----
+  const surge = up[0], drop = down.find(r=>r.delta<0), skillUp = skHot[0];
+  let discInner = "";
+  if (surge)   discInner += `<div class="pulserow"><span class="plabel">🔥 Biggest surge</span><span class="pulsenum">${surge.name}<span class="pdelta p-up">+${surge.delta}</span></span></div>`;
+  if (drop)    discInner += `<div class="pulserow"><span class="plabel">🔻 Biggest drop</span><span class="pulsenum">${drop.name}<span class="pdelta p-down">${drop.delta}</span></span></div>`;
+  if (skillUp) discInner += `<div class="pulserow"><span class="plabel">💡 Skill to watch</span><span class="pulsenum">${skillUp.name}<span class="pdelta p-up">+${skillUp.delta}</span></span></div>`;
+  const discCard = (enough && discInner) ? card('✨ Discoveries', discInner) : "";
+  // Highest-paid disciplines: current medians from listed salaries (needs a sample to be stable)
+  const _dp = {}; for (const j of JOBS){ if (!j.d || !j.salary) continue; const pv = mtxParsePay(j.salary); if (pv){ (_dp[j.d] = _dp[j.d] || []).push(pv); } }
+  const payRank = Object.keys(_dp).filter(d=>_dp[d].length>=5).map(d=>({name:d, med:mtxMedian(_dp[d])})).sort((a,b)=>b.med-a.med).slice(0,5);
+  const payCard = payRank.length ? card('💰 Highest-paid disciplines', payRank.map((r,i)=>`<div class="pulserow"><span class="plabel">#${i+1} ${r.name}</span><span class="pulsenum">~$${r.med}K</span></div>`).join('')) : "";
+  // Emerging skills: on the board now, absent from the ~30-day-ago baseline
+  const newSkills = enough ? kArr.filter(s => s.d30==null && (s.now||0)>0).sort((a,b)=>b.now-a.now).slice(0,8) : [];
+  const newSkillsCard = card('🌱 New skills appearing', newSkills.length ? newSkills.map(r=>`<div class="pulserow"><span class="plabel">${r.name}</span><span class="pulsenum">${r.now} role${r.now===1?'':'s'}</span></div>`).join('') : '<div class="xhint">Tracked as skills first appear on the board — fills in as history builds.</div>');
+  // Shareable weekly summary
+  const _sp = [(netWeek>=0?'+':'')+netWeek+' net roles'];
+  if (surge)   _sp.push(surge.name+' +'+surge.delta);
+  if (skillUp) _sp.push(skillUp.name+' +'+skillUp.delta);
+  const shareDisp = _sp.join(' · ');
+  const shareText = 'This week in game hiring (devquest.gg): ' + shareDisp;
+  const shareEnc = encodeURIComponent(shareText);
+  const shareBanner = enough ? `<div class="trshare"><span class="tt">📣 <b>Share this week:</b> ${shareDisp}</span>`
+    + `<button class="shbtn" data-t="${escAttr(shareText)}" onclick="try{navigator.clipboard.writeText(this.getAttribute('data-t'));window.dqToast&&dqToast('Copied weekly summary')}catch(e){}">Copy</button>`
+    + `<a href="https://twitter.com/intent/tweet?text=${shareEnc}&url=https%3A%2F%2Fdevquest.gg" target="_blank" rel="noopener">Share on X</a>`
+    + `<a href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fdevquest.gg" target="_blank" rel="noopener">LinkedIn</a></div>` : "";
   const tilesRow = enough
     ? `<div class="pulsestats">`
       + tM((netWeek>0?'+':'')+netWeek.toLocaleString(),'net roles vs last week', netWeek>0?'p-up':netWeek<0?'p-down':'p-flat')
@@ -3938,13 +3971,16 @@ function buildMomentum(){
   const discHint='<div class="xhint">Per-discipline history is just starting to bank. Check back in a few days.</div>';
   const head = `<h2 class="pulsehead">What changed this week</h2>`
     + `<div class="dirsub">${enough?'Change vs ~30 days ago, from how many roles each studio lists over time. Momentum, not official layoff news.':'<b>Momentum is still building.</b> The week-over-week totals appear once we have about 8 days of history; the movers below are live as soon as a studio shifts.'}</div>`
-    + tilesRow;
-  const cards = card('📈 Ramping up', up.length?up.map(srow).join(''):moverHint)
+    + tilesRow + shareBanner;
+  const cards = discCard
+    + card('📈 Ramping up', up.length?up.map(srow).join(''):moverHint)
     + card('📉 Pulling back / quiet', down.length?down.map(srow).join(''):moverHint)
     + card('🔥 Disciplines heating up', hot.length?hot.map(r=>drow(r,'up')).join(''):discHint)
     + card('🧊 Disciplines cooling', cool.length?cool.map(r=>drow(r,'down')).join(''):'<div class="xhint">Nothing clearly cooling yet.</div>')
+    + payCard
     + card('🔥 Skills heating up', skHot.length?skHot.map(r=>drow(r,'up')).join(''):'<div class="xhint">Skill history is just starting to bank — check back in a few days.</div>')
     + card('🧊 Skills cooling', skCool.length?skCool.map(r=>drow(r,'down')).join(''):'<div class="xhint">Nothing clearly cooling yet.</div>')
+    + newSkillsCard
     + card('✨ New studios this week', fresh.length?fresh.map(r=>`<div class="pulserow"><span class="plabel">${r.name}</span><span class="pulsenum">${r.now} role${r.now===1?'':'s'}</span></div>`).join(''):(enough?'<div class="xhint">No studios newly added in the last week.</div>':'<div class="xhint">Starts once we have a full week of history.</div>'));
   return { head, cards };
 }

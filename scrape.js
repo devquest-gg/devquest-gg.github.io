@@ -2649,7 +2649,7 @@ async function backfillSalaries(jobs) {
 // for a studio going dark.
 const TRENDS_FILE = path.join(__dirname, "trends.json");
 
-function buildTrends(runCounts, okSet, discCounts, healthy, salInfo, skillCounts, workCounts, yoeInfo, salSen) {
+function buildTrends(runCounts, okSet, discCounts, healthy, salInfo, skillCounts, workCounts, yoeInfo, salSen, discSal, cityCounts) {
   let store = { days: [] };
   try { store = JSON.parse(fs.readFileSync(TRENDS_FILE, "utf8")); } catch (e) { store = { days: [] }; }
   const days = store.days || [];
@@ -2676,9 +2676,13 @@ function buildTrends(runCounts, okSet, discCounts, healthy, salInfo, skillCounts
   const yoe = (healthy || !days.length) ? (yoeInfo || prevYoe || null) : (prevYoe || yoeInfo || null);
   const prevSalSen = days.length ? (days[days.length - 1].salSen || {}) : {};
   const salSenSnap = (healthy || !days.length) ? (salSen || {}) : prevSalSen;
+  const prevDiscSal = days.length ? (days[days.length - 1].discSal || {}) : {};
+  const discSalSnap = (healthy || !days.length) ? (discSal || {}) : prevDiscSal;
+  const prevCities = days.length ? (days[days.length - 1].cities || {}) : {};
+  const citiesSnap = (healthy || !days.length) ? (cityCounts || {}) : prevCities;
 
-  if (days.length && days[days.length - 1].date === today) days[days.length - 1] = { date: today, counts, disc, sal, skills, work, yoe, salSen: salSenSnap };
-  else days.push({ date: today, counts, disc, sal, skills, work, yoe, salSen: salSenSnap });
+  if (days.length && days[days.length - 1].date === today) days[days.length - 1] = { date: today, counts, disc, sal, skills, work, yoe, salSen: salSenSnap, discSal: discSalSnap, cities: citiesSnap };
+  else days.push({ date: today, counts, disc, sal, skills, work, yoe, salSen: salSenSnap, discSal: discSalSnap, cities: citiesSnap });
   while (days.length > 120) days.shift();           // keep ~4 months
   store.days = days;
   try { fs.writeFileSync(TRENDS_FILE, JSON.stringify(store)); }
@@ -2878,8 +2882,19 @@ module.exports = { mapDiscipline, strongTitleDiscipline, normDisc };
   for (const j of all) { const sen = j.seniority || "Unknown"; if (!_salSenAgg[sen]) _salSenAgg[sen] = { n: 0, total: 0, lo: [], hi: [] }; _salSenAgg[sen].total++; const ks = salToK(j.salary); if (ks) { _salSenAgg[sen].n++; _salSenAgg[sen].lo.push(ks[0]); _salSenAgg[sen].hi.push(ks[1]); } }
   const salSen = {};
   for (const k in _salSenAgg) { const o = _salSenAgg[k]; salSen[k] = { n: o.n, total: o.total, lo: medOf(o.lo), hi: medOf(o.hi) }; }
+  // Forward-investment: bank per-discipline salary medians and per-city counts daily so that
+  // "fastest-growing compensation" and city-momentum features can be built once history accrues.
+  // (Banked only — not surfaced to the client yet; no jobs.json payload change.)
+  const _discSalAgg = {};
+  for (const j of all) { const d = j.discipline || "Other"; if (!_discSalAgg[d]) _discSalAgg[d] = { n: 0, total: 0, lo: [], hi: [] }; _discSalAgg[d].total++; const ks = salToK(j.salary); if (ks) { _discSalAgg[d].n++; _discSalAgg[d].lo.push(ks[0]); _discSalAgg[d].hi.push(ks[1]); } }
+  const discSal = {};
+  for (const k in _discSalAgg) { const o = _discSalAgg[k]; discSal[k] = { n: o.n, total: o.total, lo: medOf(o.lo), hi: medOf(o.hi) }; }
+  const _cityAgg = {};
+  for (const j of all) { const loc = j.location || ""; if (!loc || /remote/i.test(loc)) continue; const city = loc.split(",")[0].trim(); if (city) _cityAgg[city] = (_cityAgg[city] || 0) + 1; }
+  const cityCounts = {};                          // keep the day's snapshot bounded: top 80 cities
+  Object.entries(_cityAgg).sort((a, b) => b[1] - a[1]).slice(0, 80).forEach(([c, n]) => { cityCounts[c] = n; });
   const healthy = okSet.size >= STUDIOS.length * 0.8; // skip recording disc on a badly-degraded run
-  const trends = buildTrends(runCounts, okSet, discCounts, healthy, salInfo, skillCounts, workCounts, yoeInfo, salSen); // per-studio + per-discipline + salary + skills momentum (writes trends.json)
+  const trends = buildTrends(runCounts, okSet, discCounts, healthy, salInfo, skillCounts, workCounts, yoeInfo, salSen, discSal, cityCounts); // per-studio + per-discipline + salary + skills momentum (writes trends.json)
   all.sort((a, b) => new Date(b.postedAt) - new Date(a.postedAt));
   // Apply-link health (isolated; never blocks or breaks the scrape).
   let linkHealth = [];
