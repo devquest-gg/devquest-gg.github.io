@@ -117,8 +117,9 @@
     .hero .hmark { width: 26px; height: 26px; }
     .hero h1 { font-size: 15px; }
     header { padding: 12px 14px; flex-wrap: wrap; row-gap: 10px; }
-    /* buttons move to their own full-width row under the logo, wrapping if needed */
-    header .headeractions { width: 100%; flex-wrap: wrap; }
+    /* compact icon buttons sit top-right next to the logo (fills the dead space there);
+       they wrap to their own row only if they genuinely don't fit */
+    header .headeractions { flex-wrap: wrap; justify-content: flex-end; }
     /* show the "Who do I know?" label on touch (no hover to reveal it) */
     .knowtext { display: inline; }
     .row:not(:hover) .knowbtn { color: var(--accent); border-color: rgba(88,166,255,.5); background: rgba(88,166,255,.08); }
@@ -343,6 +344,12 @@
   .viewtabsbar { position: sticky; top: var(--headerH, 80px); z-index: 9; background: var(--bg); padding: 10px 0; margin-bottom: 10px; border-bottom: 1px solid var(--border); }
   .viewtabsbar .viewtabs { margin-bottom: 0; flex-wrap: wrap; }   /* wrap (never scroll) on narrow screens — no scrollbar flash */
   @media (max-width: 820px) { .viewtabsbar { padding: 8px 0; } }
+  @media (max-width: 560px) {
+    /* use the full width: Filters spans the row; the 5 tabs share one even row instead of wrapping */
+    #filterToggle { width: 100%; justify-content: center; }
+    .viewtabsbar .viewtabs { display: flex; width: 100%; gap: 3px; }
+    .viewtabsbar .viewtabs button { flex: 1; min-width: 0; padding: 8px 2px; font-size: 11px; letter-spacing: -.2px; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  }
   #mapWrap { display: none; }
   #statsWrap { display: none; }
   /* Masonry-style columns: cards keep their natural height AND pack tightly, so short
