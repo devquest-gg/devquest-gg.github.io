@@ -3083,35 +3083,37 @@ function bfBehaviorRoles(){
 }
 function _bfDefaultDisc(){ var b = bfBehaviorRoles(); if (b && b[0]) return b[0]; var t = Object.entries(DISC_COUNTS).sort(function(a,b){return b[1]-a[1];})[0]; return t ? t[0] : (DISC[0]||""); }
 var _bfSenCache = null, _bfSenAt = 0;
-// Behavioral seniority, mirroring bfBehaviorRoles: prefer the seniority in the visitor's last filter
-// (e.g. they clicked the Director+ × Production cell), else the dominant weighted signal. null if unclear.
-function bfBehaviorSen(){
-  if (!BF_BEHAVIOR_DEFAULT) return null;
+const _SEN_ORDER = ["Entry","Mid","Senior","Lead","Director+"];
+// The seniorities the visitor is actually filtering, from their last search (matrix cells + sidebar).
+// Returns an ordered, de-duped array — so picking Production at Lead AND Director shows BOTH, rather
+// than us guessing one. Falls back to the dominant weighted level only if nothing was just filtered.
+function bfBehaviorSenSet(){
+  if (!BF_BEHAVIOR_DEFAULT) return [];
   const now = Date.now();
-  if (_bfSenCache !== null && (now - _bfSenAt) < 1500) return _bfSenCache || null;
-  let res = null;
+  if (_bfSenCache !== null && (now - _bfSenAt) < 1500) return _bfSenCache || [];
+  let set = new Set();
   try {
     const lf = affLastFilters();
     if (lf && typeof lfHasFilters === "function" && lfHasFilters(lf)){
-      const ss = new Set();
-      (lf.cells||[]).forEach(c=>{ const s0 = String(c).split("|")[1]; if (s0) ss.add(s0); });
-      (lf.sen||[]).forEach(x=>{ if (x) ss.add(x); });
-      if (ss.size === 1) res = [...ss][0];   // confident only when one seniority dominates the last search
+      (lf.cells||[]).forEach(c=>{ const s0 = String(c).split("|")[1]; if (s0) set.add(s0); });
+      (lf.sen||[]).forEach(x=>{ if (x) set.add(x); });
     }
   } catch(e){}
-  if (!res) try {
+  if (!set.size) try {
     const t = topKeys(buildProfile().sen, 0.6);
-    if (t && t.length && t[0] && t[0] !== "Unknown") res = t[0];
+    (t||[]).forEach(s=>{ if (s && s !== "Unknown") set.add(s); });
   } catch(e){}
-  _bfSenCache = res || false; _bfSenAt = now;
-  return res;
+  const arr = [...set].sort((a,b)=> _SEN_ORDER.indexOf(a) - _SEN_ORDER.indexOf(b));
+  _bfSenCache = arr; _bfSenAt = now;
+  return arr;
 }
-// Effective seniority for display + why-chips: an explicit pin wins; otherwise the behavioral guess.
+// A single effective seniority for the title prefix + "N at X" why-chip: a pin wins; otherwise only
+// when behavior points to exactly ONE level (we don't claim a level when the visitor spans several).
 function profSenEffective(){
   var g = profGet("sen");
-  if (g.pinned && g.v && g.v !== "__any") return { v: g.v, pinned: true, inferred: false };
-  var b = null; try { b = bfBehaviorSen(); } catch(e){}
-  return { v: b || "__any", pinned: false, inferred: !!b };
+  if (g.pinned && g.v && g.v !== "__any") return { v: g.v, pinned: true };
+  var set = bfBehaviorSenSet();
+  return { v: (set.length === 1 ? set[0] : "__any"), pinned: false };
 }
 // ===== My profile — local, shared across the site; drives Best fit (Stage 1) =====
 const PROFILE = store.get("dq-profile", null) || { pinned:{} };
@@ -3199,7 +3201,8 @@ function profPanelHtml(){
 function profToggle(){ profPanelOpen=!profPanelOpen; var p=document.getElementById("profPanel"); if(p)p.classList.toggle("open",profPanelOpen); var e=document.getElementById("profEdit"); if(e)e.textContent=profPanelOpen?"Done editing ▾":"Edit profile ▸"; }
 function profSummary(){
   var rolesG=profGet("roles"), roles=rolesG.v, work=profGet("work").v, yrs=profGet("yrs").v, loc=profGet("loc").v;
-  var senShowE=profSenEffective(); var senShow=(senShowE.v && senShowE.v!=="__any")?senShowE.v:"";
+  var senPin=profGet("sen"); var senSet=(senPin.pinned && senPin.v && senPin.v!=="__any")?[senPin.v]:bfBehaviorSenSet();
+  var onlySen=(senSet.length===1)?senSet[0]:"";
   var t=document.getElementById("profCardTitle"), c=document.getElementById("profCardChips");
   // Brand-new visitor with no pinned role and no browsing signal: the role is only a global
   // fallback (the most active discipline), so don't present it as their declared profile.
@@ -3210,10 +3213,11 @@ function profSummary(){
     return;
   }
   var roleTxt = roles.length ? roles.join(", ") : "Add your target role";
-  var title = (senShow && roles.length) ? (senShow.replace(/\+$/,"")+", "+roleTxt) : roleTxt;
+  var title = (onlySen && roles.length===1) ? (onlySen.replace(/\+$/,"")+", "+roleTxt) : roleTxt;
   if (t) t.textContent=title;
   var chips=[];
-  if (senShow) chips.push(senShow);
+  senSet.slice(0,2).forEach(function(s){ chips.push(s); });
+  if (senSet.length>2) chips.push("+"+(senSet.length-2));
   if (yrs) chips.push(yrs);
   chips.push(work==="remote" ? "Remote only" : work==="nearby" ? ("Remote / near "+(loc||"me")) : "Open to relocating");
   if (loc) chips.push("Based in "+loc);
