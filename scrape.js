@@ -366,8 +366,8 @@ const STUDIOS = [
   // ---- Promoted from the Island 2026-06-13 (big-studio dig) — already-supported ATS ----
   { name: "tinyBuild", type: "manatal", token: "tinybuild" },                       // Hello Neighbor — careers-page.com/Manatal (verified 6 roles)
   { name: "Hi-Rez Studios", type: "jazzhr", token: "hirezstudios" },               // SMITE, Paladins — JazzHR
-  // Re-promoted 2026-06-13 with the Workday User-Agent fix (was demoted when Workday began 422'ing).
-  { name: "Cloud Imperium Games", type: "workday", host: "cloudimperiumgames.wd1.myworkdayjobs.com", tenant: "cloudimperiumgames", site: "CIG_Global_Careers", token: "cig" }, // Star Citizen, Squadron 42
+  // CIG left Workday for a self-hosted GraphQL board (2026-06-18); see fetchCig.
+  { name: "Cloud Imperium Games", type: "cig", token: "cig" }, // Star Citizen, Squadron 42
   // Xbox first-party studio on its own SSR careers site (Microsoft's central board can't attribute studios).
   { name: "Playground Games", type: "playground", token: "playground", city: "Leamington Spa, UK" }, // Fable, Forza Horizon
   { name: "Obsidian Entertainment", type: "obsidian", token: "obsidian", city: "Irvine, CA" }, // Avowed, Pillars of Eternity — own SSR board
@@ -972,6 +972,9 @@ function strongTitleDiscipline(t) {
   // Scoped to technology/technical research so it won't grab user/market/player research.
   if (/\b(technology|technical) research\b|research (and|&) development|\br ?& ?d\b/.test(t)) return "Engineering";
   if (/machine learning|\bml\b ?(scientist|researcher|ops)|data scien|data analy(st|tics|sis)|business intelligence|\bbi analyst\b|insights? analyst|product analyst|\beconomist\b|analytics developer|deep learning|\bnlp\b|artificial intelligence|\bai (scientist|researcher|research)|\bof ai\b/.test(t)) return "Data & Analytics"; // product analysts & (game) economists are analytics, not product/finance
+  // 3D/character/environment modelers are artists (FR "modeleur/modeleuse", "modéliste"). Title beats
+  // the department. Guard the non-art "modeler" roles (data / financial / threat / risk modeler).
+  if (/\bmodel(l)?er\b|\bmodeleu(r|se)\b|mod[ée]liste/.test(t) && !/\bdata\b|threat|financial|business|risk|econom|pricing|3d print/.test(t)) return "Art";
   // Technical AI roles (transformation/enablement/platform/automation/etc.) → Engineering.
   // Runs after the Data check so "AI Scientist/Researcher" still maps to Data & Analytics.
   if (/\bai\b[ -](transformation|enablement|adoption|integration|automation|platform|infrastructure|tooling|engineer|developer|architect|ops|operations|solutions?|strategy|program|programme)\b/.test(t)) return "Engineering";
@@ -2435,7 +2438,54 @@ async function fetchOracle(studio) {
   });
 }
 
-const FETCHERS = { greenhouse: fetchGreenhouse, lever: fetchLever, workday: fetchWorkday, avature: fetchAvature, smartrecruiters: fetchSmartRecruiters, workable: fetchWorkable, phenom: fetchPhenom, teamtailor: fetchTeamtailor, eightfold: fetchEightfold, amazonjobs: fetchAmazonJobs, ashby: fetchAshby, zenimax: fetchZenimax, bamboohr: fetchBambooHr, jobscore: fetchJobScore, jazzhr: fetchJazzHr, jobvite: fetchJobvite, recruitee: fetchRecruitee, rippling: fetchRippling, breezy: fetchBreezy, manatal: fetchManatal, sumodigital: fetchSumoDigital, pinpoint: fetchPinpoint, playground: fetchPlayground, obsidian: fetchObsidian, techland: fetchTechland, oracle: fetchOracle };
+// ---- Cloud Imperium Games (Star Citizen, Squadron 42) — self-hosted GraphQL --
+// CIG left Workday for a Strapi-style GraphQL API at cloudimperiumgames.com/graphql. One POST
+// returns every job (with studio + discipline + full description, so salary & engine tags too).
+// Query captured from the live site's GetJobs operation. Promoted from Workday 2026-06-18.
+const CIG_QUERY = "query GetJobs($limit: Int, $start: Int, $sort: String, $where: JSON) { jobs(limit: $limit, start: $start, sort: $sort, where: $where) { createdAt updatedAt _id title description slug publishedAt seoTitle seoDescription studio { _id name location slug __typename } discipline { _id name slug __typename } subdiscipline { _id name slug __typename } __typename } studios { _id name location slug __typename } disciplines { _id name slug title description asset { _id url width height __typename } subdisciplines { _id name slug __typename } __typename } }";
+async function fetchCig(studio) {
+  let jobs = [];
+  if (SAMPLE_FILE) { const d = loadSample(studio); jobs = (d && ((d.data && d.data.jobs) || d.jobs)) || []; }
+  else {
+    const res = await fetch("https://cloudimperiumgames.com/graphql", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        "Origin": "https://cloudimperiumgames.com",
+        "Referer": "https://cloudimperiumgames.com/jobs",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36",
+      },
+      body: JSON.stringify({ operationName: "GetJobs", query: CIG_QUERY, variables: { where: {}, limit: 200, sort: "title" } }),
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    jobs = (data && data.data && data.data.jobs) || [];
+  }
+  return jobs.map(j => {
+    const st = j.studio || {};
+    const location = st.location || st.name || "Unlisted";
+    const desc = stripHtml(j.description || "");
+    const url = st.slug ? `https://cloudimperiumgames.com/jobs/${st.slug}/${j.slug}` : `https://cloudimperiumgames.com/jobs/${j.slug}`;
+    return {
+      id: `cig-${j._id || j.slug}`,
+      title: j.title,
+      tech: extractTech((j.title || "") + " " + desc),
+      studio: studio.name,
+      discipline: mapDiscipline(j.discipline && j.discipline.name, j.title || ""),
+      workType: inferWorkType(j.title || "", location, [], desc.slice(0, 1200)),
+      location,
+      region: inferRegion(location),
+      seniority: inferSeniority(j.title || ""),
+      salary: extractSalary(desc),
+      yoe: extractYoe(desc),
+      postedAt: j.publishedAt || j.createdAt || null,
+      url,
+    };
+  });
+}
+
+const FETCHERS = { greenhouse: fetchGreenhouse, lever: fetchLever, workday: fetchWorkday, avature: fetchAvature, smartrecruiters: fetchSmartRecruiters, workable: fetchWorkable, phenom: fetchPhenom, teamtailor: fetchTeamtailor, eightfold: fetchEightfold, amazonjobs: fetchAmazonJobs, ashby: fetchAshby, zenimax: fetchZenimax, bamboohr: fetchBambooHr, jobscore: fetchJobScore, jazzhr: fetchJazzHr, jobvite: fetchJobvite, recruitee: fetchRecruitee, rippling: fetchRippling, breezy: fetchBreezy, manatal: fetchManatal, sumodigital: fetchSumoDigital, pinpoint: fetchPinpoint, playground: fetchPlayground, obsidian: fetchObsidian, techland: fetchTechland, oracle: fetchOracle, cig: fetchCig };
 
 // ---- Ghost-job tracking -----------------------------------------------------
 // Because we scrape on a schedule, we can see how long a listing has REALLY been
