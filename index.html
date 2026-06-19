@@ -213,6 +213,7 @@
   .row.st-applied { border-left: 3px solid var(--accent); }
   .row.st-interviewing { border-left: 3px solid var(--green); }
   .row.st-rejected { border-left: 3px solid var(--pink); opacity: .55; }
+  .row.st-offer { border-left: 3px solid var(--green); }
   .rmain { flex: 1; min-width: 200px; }
   .rmain .title { font-weight: 700; font-size: 15.5px; color: var(--text); }
   .rmain .studio { color: var(--accent); font-size: 13px; font-weight: 400; margin-left: 8px; }
@@ -325,6 +326,7 @@
   .stbtn.applied.on { background: rgba(88,166,255,.16); color: var(--accent); }
   .stbtn.interview.on { background: rgba(63,185,80,.16); color: var(--green); }
   .stbtn.reject.on { background: rgba(247,120,186,.16); color: var(--pink); }
+  .stbtn.offer.on { background: rgba(63,185,80,.2); color: var(--green); }
   .actsep { display: inline-block; width: 1px; height: 18px; background: var(--border); margin: 0 3px; vertical-align: middle; }
   .chk .fname { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .chk .fcount { margin-left: auto; color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
@@ -434,6 +436,7 @@
   .mjpill.applied { background: rgba(88,166,255,.16); color: var(--accent); }
   .mjpill.interviewing { background: rgba(163,113,247,.18); color: #a371f7; }
   .mjpill.rejected { background: rgba(247,120,186,.14); color: var(--pink); }
+  .mjpill.offer { background: rgba(63,185,80,.18); color: var(--green); }
   .mjhealth { font-size: 11.5px; font-weight: 700; display: inline-flex; align-items: center; gap: 5px; }
   .mjhealth .hd { width: 8px; height: 8px; border-radius: 50%; }
   .mjhealth.ok { color: var(--green); } .mjhealth.ok .hd { background: var(--green); box-shadow: 0 0 6px var(--green); }
@@ -443,6 +446,7 @@
   .row.mjp.s-interviewing { box-shadow: inset 3px 0 0 #a371f7; }
   .row.mjp.s-saved { box-shadow: inset 3px 0 0 var(--gold); }
   .row.mjp.s-rejected { box-shadow: inset 3px 0 0 var(--pink); opacity: .62; }
+  .row.mjp.s-offer { box-shadow: inset 3px 0 0 var(--green); }
   .qchip.on { background: var(--accent); color: #0d1117; border-color: var(--accent); }
   .qchip.clear { color: var(--pink); border-color: var(--pink); background: transparent; }
   .qchip.new { border-color: rgba(63,185,80,.55); color: var(--green); }
@@ -867,7 +871,7 @@ function buildStudioDash(){
 // EASY REVERT: set MYJOBS_PIPELINE = false to restore the plain grouped list.
 const MYJOBS_PIPELINE = true;
 function mjBarHtml(j, stage){
-  const L = { applied:"Applied", interviewing:"Interviewing", rejected:"Rejected", saved:"Saved" };
+  const L = { offer:"Offer", applied:"Applied", interviewing:"Interviewing", rejected:"Rejected", saved:"Saved" };
   let health = "";
   if (stage === "applied"){
     const d = nbAppliedDays(j.id);   // days since you marked it applied (null if unknown)
@@ -883,10 +887,11 @@ function renderFollowView(){
   const el = document.getElementById("followWrap"); if (!el) return;
   const lookup = ids => ids.map(id => JOB_BY_ID[id]).filter(Boolean);
   const ids = Object.keys(appStatus);
+  const offer = lookup(ids.filter(id => appStatus[id] === "offer"));
   const applied = lookup(ids.filter(id => appStatus[id] === "applied"));
   const interviewing = lookup(ids.filter(id => appStatus[id] === "interviewing"));
   const rejected = lookup(ids.filter(id => appStatus[id] === "rejected"));
-  const pipeN = applied.length + interviewing.length + rejected.length;
+  const pipeN = offer.length + applied.length + interviewing.length + rejected.length;
   const savedJobs = lookup([...saved]);
   const hiddenJobs = lookup([...dismissed]);
   const followN = FOLLOWS.size;
@@ -900,16 +905,18 @@ function renderFollowView(){
   MINE_VIEW = true; ROW_COL = true;       // gate: notebook UI + cost-of-living chip render inside My Jobs
   let html = `<div id="mineUpcoming"></div>`;
   if (nbHintActive) html += `<div class="nbhint"><span>New: every job here has a <b>Notebook</b> 📝. Open one to keep notes, interview dates &amp; contacts.</span><button class="x" onclick="nbDismissHint()">Got it</button></div>`;
-  const activeN = applied.length + interviewing.length;
+  const activeN = offer.length + applied.length + interviewing.length;
   if (PIPE ? activeN > 0 : pipeN > 0){
     let body = "";
     const staleApplied = applied.filter(j => { var d = nbAppliedDays(j.id); return d != null && d >= 30; });
     if (staleApplied.length) body += `<div class="minenudge">🔔 ${staleApplied.length} application${staleApplied.length===1?'':'s'} ${staleApplied.length===1?'has':'have'} gone quiet (30+ days) — consider a follow-up.</div>`;
     if (PIPE){
-      // active stages first; rejected gets its own dimmed section lower down
+      // active stages first (offer = the win), then interviewing, then applied; rejected sits in its own dimmed section below
+      if (offer.length) body += `<div class="minesub">🏆 Offer · ${offer.length}</div>` + cards(offer, "offer");
       if (interviewing.length) body += `<div class="minesub">Interviewing · ${interviewing.length}</div>` + cards(interviewing, "interviewing");
       if (applied.length) body += `<div class="minesub">Applied · ${applied.length}</div>` + cards(applied, "applied");
     } else {
+      if (offer.length) body += `<div class="minesub">Offer · ${offer.length}</div>` + cards(offer);
       if (applied.length) body += `<div class="minesub">Applied · ${applied.length}</div>` + cards(applied);
       if (interviewing.length) body += `<div class="minesub">Interviewing · ${interviewing.length}</div>` + cards(interviewing);
       if (rejected.length) body += `<div class="minesub">Rejected · ${rejected.length}</div>` + cards(rejected);
@@ -2488,6 +2495,7 @@ function rowHtml(j, mjStage){
       <span class="statusgrp" onclick="event.stopPropagation()">
         <button class="stbtn applied ${status==='applied'?'on':''}" onclick="event.stopPropagation(); setStatusToggle('${j.id}','applied')" title="Applied" aria-label="Mark as applied">✓</button>
         <button class="stbtn interview ${status==='interviewing'?'on':''}" onclick="event.stopPropagation(); setStatusToggle('${j.id}','interviewing')" title="Interviewing" aria-label="Mark as interviewing">💬</button>
+        <button class="stbtn offer ${status==='offer'?'on':''}" onclick="event.stopPropagation(); setStatusToggle('${j.id}','offer')" title="Got an offer" aria-label="Mark as offer">🏆</button>
         <button class="stbtn reject ${status==='rejected'?'on':''}" onclick="event.stopPropagation(); setStatusToggle('${j.id}','rejected')" title="Rejected" aria-label="Mark as rejected">⊘</button>
       </span>
       <span class="actsep"></span>
