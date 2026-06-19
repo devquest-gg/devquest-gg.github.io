@@ -81,6 +81,14 @@ const CASES = [
   ["Senior Product Analyst - Monopoly GO!", "Data & Analytics"],
   ["Principal Game Economist", "Data & Analytics"],
   ["Product Marketing Manager", "Marketing"],          // product marketing stays Marketing, not Production
+  // --- 3D modelers are artists (incl. FR forms); data/financial modelers are NOT art ---
+  ["Modeleur.se - Modeler - Iron Man", "Art"],
+  ["3D Modeler", "Art"],
+  ["Character Modeler", "Art"],
+  ["Senior Environment Modeller", "Art"],
+  ["Data Modeler", "Data & Analytics"],
+  ["Financial Modeling Analyst", "!Art"],
+
   // --- LiveOps stays in the Business & Ops catch-all (maps to "Other") ---
   ["LiveOps Specialist - MONOPOLY GO!", "Other"],
   ["LiveOps Configuration Manager - Scrabble", "Other"],
