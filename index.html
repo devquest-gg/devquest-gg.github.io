@@ -467,6 +467,7 @@
   .bfwchip { font-size: 11.5px; color: var(--muted); background: rgba(255,255,255,.04); border: 1px solid var(--border); border-radius: 999px; padding: 2px 9px; }
   .bfwchip .ck { color: var(--green); font-weight: 800; margin-right: 4px; }
   .bfwchip.new { color: #a371f7; border-color: rgba(163,113,247,.4); }
+  .bfwchip.mom { color: var(--green); border-color: rgba(63,185,80,.4); }
   .bfband { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .03em; margin-top: 3px; }
   .bfband.strong { color: var(--green); } .bfband.good { color: var(--accent); } .bfband.partial { color: var(--gold); }
   .bfsnap { background: linear-gradient(180deg, rgba(88,166,255,.08), var(--panel)); border: 1px solid rgba(88,166,255,.4); border-radius: 12px; padding: 13px 16px; margin: 0 0 16px; }
@@ -3205,6 +3206,13 @@ function bfRenderSnapshot(disc, matched){
 }
 var bfOpenStudio = null;
 const BF_INTEL = true;   // Best Fit: explainable "why" chips + honest score bands. Set false to revert to the plain signal line.
+// "Why now?" momentum: 30-day delta in a studio's open-role count from trends.json. Only a true d30
+// baseline counts (so the "this month" label is accurate); returns 0 when flat or no baseline.
+function bfMomentum(name){
+  try { const T = window.JOBS_DATA && window.JOBS_DATA.trends; const s = T && T.studios && T.studios[name];
+    if (s && s.now != null && s.d30 != null) return s.now - s.d30; } catch(e){}
+  return 0;
+}
 function bfCard(r,i,disc){
   const best = i===0, titles = STUDIO_TITLES[r.n] || "", fl = bfFreshLabel(r.medAge);
   const flColor = r.medAge==null ? "var(--muted)" : r.medAge<=21 ? "#3fb950" : r.medAge<=45 ? "#d6a531" : "#e06c5e";
@@ -3215,11 +3223,13 @@ function bfCard(r,i,disc){
   const senN = senPref ? (r.jobs||[]).filter(j => j.sen === senPref).length : 0;
   const newN = (r.jobs||[]).filter(j => (j.fseen || j.ts || 0) >= Date.now() - 7*864e5).length;
   const band = r.score >= 80 ? ["strong","Strong match"] : r.score >= 65 ? ["good","Good match"] : ["partial","Partial match"];
+  const mom = bfMomentum(r.n);
   const why = `<div class="bfwhy">`
     + `<span class="bfwchip"><span class="ck">✓</span>${r.roles} ${bfEsc(disc)} role${r.roles===1?'':'s'}</span>`
     + (senN > 0 ? `<span class="bfwchip"><span class="ck">✓</span>${senN} at ${bfEsc(senPref)}</span>` : "")
     + `<span class="bfwchip"><span class="ck">✓</span>${r.payPct}% list salary</span>`
     + (newN > 0 ? `<span class="bfwchip new">+${newN} new this week</span>` : (fl ? `<span class="bfwchip">${fl}</span>` : ""))
+    + (mom > 0 ? `<span class="bfwchip mom">▲ hiring up this month</span>` : "")
     + `</div>`;
   const signalOld = `<div style="display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:6px;font-size:13px;color:var(--muted)"><span>${r.roles} open</span><span>${r.payPct}% pay</span>${fl?`<span style="color:${flColor}">${fl}</span>`:""}${r.clabel?bfContChip(r.clabel):""}</div>`;
   return `<div class="bfcard" data-studio="${bfEsc(r.n)}" data-disc="${bfEsc(disc)}" style="border:${best?"2px solid var(--accent)":"1px solid var(--border)"};border-radius:12px;margin-bottom:10px;background:var(--panel);overflow:hidden">
@@ -3257,25 +3267,30 @@ function bfOverlook(g,disc){
   const senG = profGet("sen"); const senPref = (senG.pinned && senG.v && senG.v !== "__any") ? senG.v : null;
   const senN = senPref ? (g.jobs||[]).filter(j => j.sen === senPref).length : 0;
   const newN = (g.jobs||[]).filter(j => (j.fseen || j.ts || 0) >= Date.now() - 7*864e5).length;
+  const mom = bfMomentum(g.n);
+  const isOpen = bfOpenStudio === g.n;
+  const nameJs = bfEsc(g.n).replace(/'/g,""), discJs = bfEsc(disc).replace(/'/g,"");
   const why = `<div class="bfwhy">`
     + `<span class="bfwchip"><span class="ck">✓</span>${g.roles} ${bfEsc(disc)} role${g.roles===1?'':'s'}</span>`
     + (senN > 0 ? `<span class="bfwchip"><span class="ck">✓</span>${senN} at ${bfEsc(senPref)}</span>` : "")
     + (g.payPct > 0 ? `<span class="bfwchip"><span class="ck">✓</span>${g.payPct}% list salary</span>` : "")
     + (newN > 0 ? `<span class="bfwchip new">+${newN} new this week</span>` : (fl ? `<span class="bfwchip">${fl}</span>` : ""))
+    + (mom > 0 ? `<span class="bfwchip mom">▲ hiring up this month</span>` : "")
     + (g.clabel === "less crowded" ? `<span class="bfwchip"><span class="ck">✓</span>less crowded</span>` : "")
     + `</div>`;
-  return `<div class="bfcard" data-studio="${bfEsc(g.n)}" data-disc="${bfEsc(disc)}" style="border:1px solid rgba(163,113,247,.45);border-radius:12px;margin-bottom:10px;background:linear-gradient(180deg,rgba(163,113,247,.06),var(--panel));overflow:hidden;cursor:pointer">
-    <div style="display:flex;align-items:center;gap:14px;padding:13px 15px">
+  return `<div class="bfcard bfovc" data-studio="${bfEsc(g.n)}" data-disc="${bfEsc(disc)}" style="border:1px solid rgba(163,113,247,.45);border-radius:12px;margin-bottom:10px;background:linear-gradient(180deg,rgba(163,113,247,.06),var(--panel));overflow:hidden">
+    <div class="bfcardhead" onclick="bfToggleStudio('${nameJs}','${discJs}')" style="display:flex;align-items:center;gap:14px;padding:14px 16px;cursor:pointer">
       <div style="flex:1;min-width:0">
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-          <span style="font-size:15px;font-weight:600;color:var(--text)">${bfEsc(g.n)}</span>
+          <span style="font-size:16px;font-weight:700;color:var(--text)">${bfEsc(g.n)}</span>
           <span class="bfobadge">Don't overlook</span>
         </div>
         ${STUDIO_TITLES[g.n]?`<div style="font-size:12px;color:var(--muted);margin-top:2px">${bfEsc(STUDIO_TITLES[g.n])}</div>`:""}
         ${why}
       </div>
-      <span style="color:var(--muted);font-size:13px;margin-left:2px">view ▸</span>
+      <span style="color:var(--muted);font-size:13px;margin-left:2px">${isOpen?"▾":"▸ jobs"}</span>
     </div>
+    ${isOpen?`<div class="bfjobs">${bfStudioJobsHtml(g,disc)}</div>`:""}
   </div>`;
 }
 function bfGem(g,disc){
@@ -3294,8 +3309,10 @@ function bestfitPick(studio, disc){
   render();
 }
 document.addEventListener("click", function(e){
+  // Old "Better odds" gem cards jump to the List; the new "Don't overlook" cards (.bfovc) expand
+  // inline via their own bfToggleStudio handler, so skip them here.
   var gem = e.target && e.target.closest && e.target.closest("#bfGems .bfcard");
-  if (gem) bestfitPick(gem.getAttribute("data-studio"), gem.getAttribute("data-disc"));
+  if (gem && !gem.classList.contains("bfovc")) bestfitPick(gem.getAttribute("data-studio"), gem.getAttribute("data-disc"));
 });
 
 // ---- stats dashboard + data health -------------------------------------------
