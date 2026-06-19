@@ -427,6 +427,22 @@
   .qchip { cursor: pointer; border: 1px solid var(--border); background: var(--panel); color: var(--muted); border-radius: 999px; padding: 6px 13px; font-size: 13px; font-weight: 600; }
   .qchip:hover { border-color: var(--accent); color: var(--text); }
   .qchip .qx { opacity: .8; font-size: 11px; margin-left: 1px; }
+  /* My Jobs pipeline: stage pills + health dots + colored card bars (scoped via .mjp; flag MYJOBS_PIPELINE) */
+  .mjbar { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; padding: 10px 15px 0; }
+  .mjpill { font-size: 11px; font-weight: 800; padding: 2px 9px; border-radius: 999px; text-transform: uppercase; letter-spacing: .03em; }
+  .mjpill.saved { background: rgba(210,153,34,.16); color: var(--gold); }
+  .mjpill.applied { background: rgba(88,166,255,.16); color: var(--accent); }
+  .mjpill.interviewing { background: rgba(163,113,247,.18); color: #a371f7; }
+  .mjpill.rejected { background: rgba(247,120,186,.14); color: var(--pink); }
+  .mjhealth { font-size: 11.5px; font-weight: 700; display: inline-flex; align-items: center; gap: 5px; }
+  .mjhealth .hd { width: 8px; height: 8px; border-radius: 50%; }
+  .mjhealth.ok { color: var(--green); } .mjhealth.ok .hd { background: var(--green); box-shadow: 0 0 6px var(--green); }
+  .mjhealth.warn { color: var(--gold); } .mjhealth.warn .hd { background: var(--gold); box-shadow: 0 0 6px var(--gold); }
+  .mjhealth.cold { color: var(--pink); } .mjhealth.cold .hd { background: var(--pink); }
+  .row.mjp.s-applied { box-shadow: inset 3px 0 0 var(--accent); }
+  .row.mjp.s-interviewing { box-shadow: inset 3px 0 0 #a371f7; }
+  .row.mjp.s-saved { box-shadow: inset 3px 0 0 var(--gold); }
+  .row.mjp.s-rejected { box-shadow: inset 3px 0 0 var(--pink); opacity: .62; }
   .qchip.on { background: var(--accent); color: #0d1117; border-color: var(--accent); }
   .qchip.clear { color: var(--pink); border-color: var(--pink); background: transparent; }
   .qchip.new { border-color: rgba(63,185,80,.55); color: var(--green); }
@@ -847,6 +863,22 @@ function buildStudioDash(){
     + `</div>`;
 }
 // "My Jobs" — the personal dashboard: pipeline, saved, followed studios, and hidden.
+// ===== My Jobs visual pipeline (stage pills + colored bars + health dots) =====
+// EASY REVERT: set MYJOBS_PIPELINE = false to restore the plain grouped list.
+const MYJOBS_PIPELINE = true;
+function mjBarHtml(j, stage){
+  const L = { applied:"Applied", interviewing:"Interviewing", rejected:"Rejected", saved:"Saved" };
+  let health = "";
+  if (stage === "applied"){
+    const d = nbAppliedDays(j.id);   // days since you marked it applied (null if unknown)
+    if (d != null){
+      const cls = d < 7 ? "ok" : d < 30 ? "warn" : "cold";
+      const txt = d < 7 ? `Active · ${d}d` : d < 30 ? `Follow up · ${d}d` : `Quiet · ${d}d`;
+      health = `<span class="mjhealth ${cls}" title="Based on days since you applied — not recruiter activity"><span class="hd"></span>${txt}</span>`;
+    }
+  }
+  return `<div class="mjbar"><span class="mjpill ${stage}">${L[stage]||stage}</span>${health}</div>`;
+}
 function renderFollowView(){
   const el = document.getElementById("followWrap"); if (!el) return;
   const lookup = ids => ids.map(id => JOB_BY_ID[id]).filter(Boolean);
@@ -862,21 +894,30 @@ function renderFollowView(){
     el.innerHTML = `<div class="wlpanel empty" style="text-align:center;padding:28px 40px"><div style="font-size:16px;color:var(--text);margin-bottom:8px">★ <b>Your personal job tracker</b></div><div style="font-size:14px;color:var(--muted);max-width:620px;margin:0 auto;line-height:1.6">As you use DevQuest this becomes your dashboard. <b>Bookmark</b> roles to revisit (🔖), mark what you've <b>applied</b> to (✓ 💬 ⊘), <b>follow</b> studios (★), and <b>hide</b> roles you're not interested in (✕). Everything is saved on this device — no account needed.</div></div>`;
     return;
   }
-  const cards = jobs => `<div class="group">${jobs.map(rowHtml).join("")}</div>`;
+  const PIPE = (typeof MYJOBS_PIPELINE !== "undefined" && MYJOBS_PIPELINE);
+  const cards = (jobs, stage) => `<div class="group">${jobs.map(j=>rowHtml(j, PIPE?stage:undefined)).join("")}</div>`;
   const sec = (title, count, body) => `<div class="minesec"><div class="minehead"><h2>${title}</h2><span class="minecount">${count}</span></div>${body}</div>`;
   MINE_VIEW = true; ROW_COL = true;       // gate: notebook UI + cost-of-living chip render inside My Jobs
   let html = `<div id="mineUpcoming"></div>`;
   if (nbHintActive) html += `<div class="nbhint"><span>New: every job here has a <b>Notebook</b> 📝. Open one to keep notes, interview dates &amp; contacts.</span><button class="x" onclick="nbDismissHint()">Got it</button></div>`;
-  if (pipeN){
+  const activeN = applied.length + interviewing.length;
+  if (PIPE ? activeN > 0 : pipeN > 0){
     let body = "";
     const staleApplied = applied.filter(j => { var d = nbAppliedDays(j.id); return d != null && d >= 30; });
     if (staleApplied.length) body += `<div class="minenudge">🔔 ${staleApplied.length} application${staleApplied.length===1?'':'s'} ${staleApplied.length===1?'has':'have'} gone quiet (30+ days) — consider a follow-up.</div>`;
-    if (applied.length) body += `<div class="minesub">Applied · ${applied.length}</div>` + cards(applied);
-    if (interviewing.length) body += `<div class="minesub">Interviewing · ${interviewing.length}</div>` + cards(interviewing);
-    if (rejected.length) body += `<div class="minesub">Rejected · ${rejected.length}</div>` + cards(rejected);
-    html += sec("📋 My pipeline", pipeN, body);
+    if (PIPE){
+      // active stages first; rejected gets its own dimmed section lower down
+      if (interviewing.length) body += `<div class="minesub">Interviewing · ${interviewing.length}</div>` + cards(interviewing, "interviewing");
+      if (applied.length) body += `<div class="minesub">Applied · ${applied.length}</div>` + cards(applied, "applied");
+    } else {
+      if (applied.length) body += `<div class="minesub">Applied · ${applied.length}</div>` + cards(applied);
+      if (interviewing.length) body += `<div class="minesub">Interviewing · ${interviewing.length}</div>` + cards(interviewing);
+      if (rejected.length) body += `<div class="minesub">Rejected · ${rejected.length}</div>` + cards(rejected);
+    }
+    html += sec("📋 My pipeline", PIPE ? activeN : pipeN, body);
   }
-  if (savedJobs.length) html += sec("🔖 Saved", savedJobs.length, cards(savedJobs));
+  if (savedJobs.length) html += sec("🔖 Saved", savedJobs.length, cards(savedJobs, "saved"));
+  if (PIPE && rejected.length) html += sec("⊘ Rejected", rejected.length, cards(rejected, "rejected"));
   if (followN) html += sec("★ Followed studios", followN, buildStudioDash());
   if (hiddenJobs.length){
     const op = !!window.__mineHiddenOpen;
@@ -2409,10 +2450,11 @@ function openWhatsNew(){
 }
 function closeWhatsNew(){ const ov = document.getElementById("wnOverlay"); if (ov) ov.style.display = "none"; }
 document.addEventListener("keydown", function(e){ if (e.key === "Escape") closeWhatsNew(); });
-function rowHtml(j){
+function rowHtml(j, mjStage){
   const h = hoursAgo(j);
   const noDate = !j.ts;
   const status = appStatus[j.id] || "";
+  const mj = (mjStage && typeof MYJOBS_PIPELINE !== "undefined" && MYJOBS_PIPELINE) ? mjStage : "";
   const isNew = isNewForYou(j);
   const isDismissed = dismissed.has(j.id);
   const isSaved = saved.has(j.id);
@@ -2429,7 +2471,8 @@ function rowHtml(j){
   const longChip = longClass ? `<span class="tag ${longClass}" title="We've seen this exact listing live for ${dl} days. Long-running posts are more likely to be stale or 'ghost' listings.">⏳ ${dl}d listed</span>` : "";
   const relistChip = relistedNow(j) ? `<span class="tag relist" title="This role has been live far longer than its shown posted date${j.relistCount>1?` (date refreshed ${j.relistCount}×)`:''} — re-posted/refreshed rather than newly open.">↻ re-listed${j.relistCount>1?` ${j.relistCount}×`:''}</span>` : "";
   const poolBadge = j.pool ? `<span class="poolbadge" title="A talent pool / general application — not a specific open role.">talent pool</span>` : "";
-  return `<div class="row ${status?'st-'+status:''} ${isDismissed?'dismissed':''} ${MINE_VIEW&&nbOpen.has(j.id)?'nbopen':''}" ${rowClick}>
+  return `<div class="row ${status?'st-'+status:''} ${mj?'mjp s-'+mj:''} ${isDismissed?'dismissed':''} ${MINE_VIEW&&nbOpen.has(j.id)?'nbopen':''}" ${rowClick}>
+    ${mj?mjBarHtml(j, mj):''}
     <div class="rtop">
       <div class="rmain">
         <span class="title">${j.t}</span><span class="studio">${j.s}</span><span class="cardstar${isFollowed(j.s)?' on':''}" data-st="${j.s.replace(/"/g,'')}" role="button" tabindex="0" title="${isFollowed(j.s)?'Following':'Follow'} ${j.s.replace(/"/g,'')}" onclick="toggleFollow(this.getAttribute('data-st'), event)">${isFollowed(j.s)?'★':'☆'}</span>
