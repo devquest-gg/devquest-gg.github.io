@@ -3082,6 +3082,37 @@ function bfBehaviorRoles(){
   return res;
 }
 function _bfDefaultDisc(){ var b = bfBehaviorRoles(); if (b && b[0]) return b[0]; var t = Object.entries(DISC_COUNTS).sort(function(a,b){return b[1]-a[1];})[0]; return t ? t[0] : (DISC[0]||""); }
+var _bfSenCache = null, _bfSenAt = 0;
+// Behavioral seniority, mirroring bfBehaviorRoles: prefer the seniority in the visitor's last filter
+// (e.g. they clicked the Director+ × Production cell), else the dominant weighted signal. null if unclear.
+function bfBehaviorSen(){
+  if (!BF_BEHAVIOR_DEFAULT) return null;
+  const now = Date.now();
+  if (_bfSenCache !== null && (now - _bfSenAt) < 1500) return _bfSenCache || null;
+  let res = null;
+  try {
+    const lf = affLastFilters();
+    if (lf && typeof lfHasFilters === "function" && lfHasFilters(lf)){
+      const ss = new Set();
+      (lf.cells||[]).forEach(c=>{ const s0 = String(c).split("|")[1]; if (s0) ss.add(s0); });
+      (lf.sen||[]).forEach(x=>{ if (x) ss.add(x); });
+      if (ss.size === 1) res = [...ss][0];   // confident only when one seniority dominates the last search
+    }
+  } catch(e){}
+  if (!res) try {
+    const t = topKeys(buildProfile().sen, 0.6);
+    if (t && t.length && t[0] && t[0] !== "Unknown") res = t[0];
+  } catch(e){}
+  _bfSenCache = res || false; _bfSenAt = now;
+  return res;
+}
+// Effective seniority for display + why-chips: an explicit pin wins; otherwise the behavioral guess.
+function profSenEffective(){
+  var g = profGet("sen");
+  if (g.pinned && g.v && g.v !== "__any") return { v: g.v, pinned: true, inferred: false };
+  var b = null; try { b = bfBehaviorSen(); } catch(e){}
+  return { v: b || "__any", pinned: false, inferred: !!b };
+}
 // ===== My profile — local, shared across the site; drives Best fit (Stage 1) =====
 const PROFILE = store.get("dq-profile", null) || { pinned:{} };
 if (!PROFILE.pinned) PROFILE.pinned = {};
@@ -3168,7 +3199,7 @@ function profPanelHtml(){
 function profToggle(){ profPanelOpen=!profPanelOpen; var p=document.getElementById("profPanel"); if(p)p.classList.toggle("open",profPanelOpen); var e=document.getElementById("profEdit"); if(e)e.textContent=profPanelOpen?"Done editing ▾":"Edit profile ▸"; }
 function profSummary(){
   var rolesG=profGet("roles"), roles=rolesG.v, work=profGet("work").v, yrs=profGet("yrs").v, loc=profGet("loc").v;
-  var senG=profGet("sen"), senV=senG.v;
+  var senShowE=profSenEffective(); var senShow=(senShowE.v && senShowE.v!=="__any")?senShowE.v:"";
   var t=document.getElementById("profCardTitle"), c=document.getElementById("profCardChips");
   // Brand-new visitor with no pinned role and no browsing signal: the role is only a global
   // fallback (the most active discipline), so don't present it as their declared profile.
@@ -3179,10 +3210,10 @@ function profSummary(){
     return;
   }
   var roleTxt = roles.length ? roles.join(", ") : "Add your target role";
-  var title = (senG.pinned && senV && senV!=="__any" && roles.length) ? (senV.replace(/\+$/,"")+", "+roleTxt) : roleTxt;
+  var title = (senShow && roles.length) ? (senShow.replace(/\+$/,"")+", "+roleTxt) : roleTxt;
   if (t) t.textContent=title;
   var chips=[];
-  if (senG.pinned && senV && senV!=="__any") chips.push(senV);
+  if (senShow) chips.push(senShow);
   if (yrs) chips.push(yrs);
   chips.push(work==="remote" ? "Remote only" : work==="nearby" ? ("Remote / near "+(loc||"me")) : "Open to relocating");
   if (loc) chips.push("Based in "+loc);
@@ -3343,7 +3374,7 @@ function bfCard(r,i,disc){
   const isOpen = bfOpenStudio === r.n;
   const nameJs = bfEsc(r.n).replace(/'/g,""), discJs = bfEsc(disc).replace(/'/g,"");
   // explainable signals (all from data already on the row): seniority matches, fresh count, score band
-  const senG = profGet("sen"); const senPref = (senG.pinned && senG.v && senG.v !== "__any") ? senG.v : null;
+  const senE = profSenEffective(); const senPref = (senE.v && senE.v !== "__any") ? senE.v : null;
   const senN = senPref ? (r.jobs||[]).filter(j => j.sen === senPref).length : 0;
   const newN = (r.jobs||[]).filter(j => (j.fseen || j.ts || 0) >= Date.now() - 7*864e5).length;
   const band = r.score >= 80 ? ["strong","Strong match"] : r.score >= 65 ? ["good","Good match"] : ["partial","Partial match"];
@@ -3388,7 +3419,7 @@ function bfToggleStudio(name, disc){
 }
 function bfOverlook(g,disc){
   const fl = bfFreshLabel(g.medAge);
-  const senG = profGet("sen"); const senPref = (senG.pinned && senG.v && senG.v !== "__any") ? senG.v : null;
+  const senE = profSenEffective(); const senPref = (senE.v && senE.v !== "__any") ? senE.v : null;
   const senN = senPref ? (g.jobs||[]).filter(j => j.sen === senPref).length : 0;
   const newN = (g.jobs||[]).filter(j => (j.fseen || j.ts || 0) >= Date.now() - 7*864e5).length;
   const mom = bfMomentum(g.n);
