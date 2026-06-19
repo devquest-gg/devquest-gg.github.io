@@ -58,7 +58,7 @@
   :root {
     --bg: #0d1117; --panel: #161b22; --border: #30363d; --text: #e6edf3;
     --muted: #8b949e; --accent: #58a6ff; --green: #3fb950; --pink: #f778ba;
-    --gold: #d29922;
+    --gold: #d29922; --purple: #a371f7;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; scrollbar-width: thin; scrollbar-color: #30363d transparent; }
   ::-webkit-scrollbar { width: 8px; height: 8px; }
@@ -252,7 +252,7 @@
   .chk:not(.tgl) input[type=checkbox]:checked { background: var(--accent); border-color: var(--accent); }
   .chk:not(.tgl) input[type=checkbox]:checked::after { content: ""; position: absolute; left: 4.5px; top: 1.5px; width: 4px; height: 8px; border: solid #0d1117; border-width: 0 2px 2px 0; transform: rotate(45deg); }
   @media (max-width: 820px) { .rtop .save, .rtop .stbtn, .rtop .dismiss, .rtop .nbicon, .tag.knowbtn { opacity: 1; } }
-  .pulsehead { font-size: 18px; font-weight: 600; margin: 4px 0 10px; }
+  .pulsehead { font-size: 18px; font-weight: 700; margin: 4px 0 10px; }
   .pulsestats { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 14px; }
   .ptile { flex: 1; min-width: 120px; background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; text-align: center; }
   .ptile .pnum { font-size: 26px; font-weight: 800; color: var(--text); }
@@ -271,7 +271,7 @@
   /* "My Jobs" dashboard sections */
   .minesec { margin: 0 0 24px; }
   .minehead { display: flex; align-items: center; gap: 10px; margin: 0 0 10px; }
-  .minehead h2 { font-size: 18px; font-weight: 800; margin: 0; }
+  .minehead h2 { font-size: 18px; font-weight: 700; margin: 0; }
   .minecount { background: var(--panel2, #1c2230); border: 1px solid var(--border); color: var(--muted); border-radius: 999px; padding: 1px 10px; font-size: 13px; font-weight: 700; }
   .minesub { font-size: 11px; text-transform: uppercase; letter-spacing: .6px; color: var(--muted); font-weight: 700; margin: 14px 0 6px; }
   .minesub:first-child { margin-top: 0; }
@@ -474,6 +474,7 @@
   .bfsnap ul { margin: 0; padding: 0; list-style: none; font-size: 13.5px; }
   .bfsnap li { padding: 3px 0; } .bfsnap li b { color: var(--accent); } .bfsnap li b.g { color: var(--green); }
   .bfsnap .src { font-size: 11px; color: var(--muted); margin-top: 9px; }
+  .bfobadge { font-size: 10px; font-weight: 800; color: var(--purple); background: rgba(163,113,247,.16); border-radius: 999px; padding: 1px 8px; }
   .row.mjp.s-applied { box-shadow: inset 3px 0 0 var(--accent); }
   .row.mjp.s-interviewing { box-shadow: inset 3px 0 0 #a371f7; }
   .row.mjp.s-saved { box-shadow: inset 3px 0 0 var(--gold); }
@@ -616,8 +617,17 @@
   .pbar .pnm { font-size: 14px; font-weight: 800; }
   .pbar .psum { font-size: 13.5px; color: var(--muted); } .pbar .psum b { color: var(--text); font-weight: 600; }
   .pbar .pedit { margin-left: auto; font-size: 12px; font-weight: 700; color: var(--accent); white-space: nowrap; }
-  .ppanel { display: none; background: var(--panel); border: 1px solid rgba(88,166,255,.45); border-top: none; border-radius: 0 0 12px 12px; padding: 16px 18px; margin: -4px 0 16px; }
+  .ppanel { display: none; background: var(--panel); border: 1px solid rgba(88,166,255,.45); border-radius: 12px; padding: 16px 18px; margin: 10px 0 16px; }
   .ppanel.open { display: block; }
+  /* Best fit — career profile summary card */
+  .profcard { background: linear-gradient(180deg,rgba(88,166,255,.06),var(--panel)); border: 1px solid rgba(88,166,255,.45); border-radius: 12px; padding: 14px 16px; margin-bottom: 12px; }
+  .profcard .pcap { font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); }
+  .profcard .prole { font-size: 19px; font-weight: 800; margin: 3px 0 9px; color: var(--text); }
+  .profcard .psumchips { display: flex; gap: 6px; flex-wrap: wrap; }
+  .profcard .psumchip { font-size: 12px; color: var(--text); background: var(--bg); border: 1px solid var(--border); border-radius: 999px; padding: 3px 11px; }
+  .profcard .pfoot { font-size: 11.5px; color: var(--muted); margin-top: 10px; }
+  .profcard .pfoot a { color: var(--accent); cursor: pointer; }
+  .profcard .pfoot a:hover { text-decoration: underline; }
   .psub { font-size: 12.5px; color: var(--muted); margin-bottom: 14px; }
   .pfield { min-width: 0; margin-bottom: 14px; }
   .pfield2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 22px; }
@@ -3024,7 +3034,12 @@ function profSegBtns(group, field, opts, cur){
 function profPanelHtml(){
   var sen=profGet("sen").v, work=profGet("work").v, yrs=profGet("yrs").v, loc=profGet("loc").v;
   return ''
-   + '<div class="pbar" onclick="profToggle()"><span class="pnm">🎯 My profile</span><span class="psum" id="profSum"></span><span class="pedit" id="profEdit">'+(profPanelOpen?"Done ▾":"Edit ▸")+'</span></div>'
+   + '<div class="profcard">'
+       + '<div class="pcap">Your career profile</div>'
+       + '<div class="prole" id="profCardTitle"></div>'
+       + '<div class="psumchips" id="profCardChips"></div>'
+       + '<div class="pfoot">Saved on this device. No account. <a id="profEdit" onclick="profToggle()">'+(profPanelOpen?"Done editing ▾":"Edit profile ▸")+'</a></div>'
+     + '</div>'
    + '<div class="ppanel'+(profPanelOpen?" open":"")+'" id="profPanel">'
      + '<div class="psub">Saved on this device — no account. Powers your matches across the site. Set anything to lock it; leave it and we keep learning from your activity.</div>'
      + '<div class="pfield"><div class="pflabel">Target roles '+profTagHtml("roles")+'</div><div class="pchips" id="profRoles"></div></div>'
@@ -3034,14 +3049,19 @@ function profPanelHtml(){
        + '<div class="pfield"><div class="pflabel">Based in '+profTagHtml("loc")+'</div><input class="ptxt" id="profLoc" list="profCities" value="'+bfEsc(loc)+'" placeholder="Type your city…" oninput="profSet(\'loc\', this.value); profSummary()"><datalist id="profCities">'+COL_KEYS.slice().sort().map(function(c){return '<option value="'+bfEsc(c)+'"></option>';}).join("")+'</datalist><div class="pnote">🗺 Your city, used only for cost-of-living comparison on jobs — never to hide roles.</div></div></div>'
    + '</div>';
 }
-function profToggle(){ profPanelOpen=!profPanelOpen; var p=document.getElementById("profPanel"); if(p)p.classList.toggle("open",profPanelOpen); var e=document.getElementById("profEdit"); if(e)e.textContent=profPanelOpen?"Done ▾":"Edit ▸"; }
+function profToggle(){ profPanelOpen=!profPanelOpen; var p=document.getElementById("profPanel"); if(p)p.classList.toggle("open",profPanelOpen); var e=document.getElementById("profEdit"); if(e)e.textContent=profPanelOpen?"Done editing ▾":"Edit profile ▸"; }
 function profSummary(){
-  var roles=profGet("roles").v, sen=profGet("sen").v, work=profGet("work").v, loc=profGet("loc").v;
-  var senL = sen==="__any" ? "any level" : sen;
-  var wl = work==="remote" ? "remote only" : work==="nearby" ? ("remote / near "+(loc||"me")) : "open to relocating";
-  var locL = loc ? ("based in "+loc) : "add your city";
-  var rolesL = roles.length ? roles.join(", ") : "add a role";
-  var el=document.getElementById("profSum"); if(el) el.innerHTML='<b>'+bfEsc(senL)+'</b> · <b>'+bfEsc(rolesL)+'</b> · '+bfEsc(wl)+' · '+bfEsc(locL);
+  var roles=profGet("roles").v, work=profGet("work").v, yrs=profGet("yrs").v, loc=profGet("loc").v;
+  var senG=profGet("sen"), senV=senG.v;
+  var roleTxt = roles.length ? roles.join(", ") : "Add your target role";
+  var title = (senG.pinned && senV && senV!=="__any" && roles.length) ? (senV.replace(/\+$/,"")+", "+roleTxt) : roleTxt;
+  var t=document.getElementById("profCardTitle"); if(t) t.textContent=title;
+  var chips=[];
+  if (senG.pinned && senV && senV!=="__any") chips.push(senV);
+  if (yrs) chips.push(yrs);
+  chips.push(work==="remote" ? "Remote only" : work==="nearby" ? ("Remote / near "+(loc||"me")) : "Open to relocating");
+  if (loc) chips.push("Based in "+loc);
+  var c=document.getElementById("profCardChips"); if(c) c.innerHTML=chips.map(function(x){ return '<span class="psumchip">'+bfEsc(x)+'</span>'; }).join("");
 }
 function profRenderRoles(){
   var c=document.getElementById("profRoles"); if(!c) return; var roles=profGet("roles").v;
@@ -3052,11 +3072,11 @@ function profRenderRoles(){
 }
 function profAddRoleVal(d){
   if(!d) return; var roles=profGet("roles").v.slice(); if(roles.indexOf(d)>=0) return;
-  roles.push(d); profSet("roles", roles); profRenderRoles(); bfRenderDiscSw(); bfCompute();
+  roles.push(d); profSet("roles", roles); profRenderRoles(); profSummary(); bfRenderDiscSw(); bfCompute();
 }
 function profRemoveRole(r){
   var roles=profGet("roles").v.filter(function(x){return x!==r;});
-  profSet("roles", roles); if(bfActiveDisc===r) bfActiveDisc=roles[0]||null; profRenderRoles(); bfRenderDiscSw(); bfCompute();
+  profSet("roles", roles); if(bfActiveDisc===r) bfActiveDisc=roles[0]||null; profRenderRoles(); profSummary(); bfRenderDiscSw(); bfCompute();
 }
 function profSegSet(group, val){ var g=document.getElementById(group); if(!g) return; [].forEach.call(g.children,function(b){ b.classList.toggle("on", b.getAttribute("data-v")===val); }); }
 function profOnSeg(group, field, val, btn){ profSet(field, val); var g=document.getElementById(group); [].forEach.call(g.children,function(b){ b.classList.toggle("on", b===btn); }); profSummary(); bfCompute(); }
@@ -3077,10 +3097,12 @@ function renderBestFit(){
         ${profPanelHtml()}
         <div id="bfDiscSw" class="bfdiscsw"></div>
         <div id="bfSnapshot"></div>
-        <div style="font-size:16px;font-weight:600;color:var(--text);margin:6px 0 12px">Best places to apply right now</div>
+        <div style="font-size:18px;font-weight:700;color:var(--text);margin:6px 0 12px">Best places to apply right now</div>
         <div id="bfResults"></div>
         <div id="bfGemsWrap" style="display:none">
-          <div style="font-size:14px;font-weight:600;color:var(--text);margin:18px 0 10px">Better odds — more openings per applicant</div>
+          ${BF_INTEL
+            ? `<div style="font-size:14px;font-weight:700;color:var(--text);margin:18px 0 4px">Don't overlook</div><div style="font-size:12px;color:var(--muted);margin:0 0 10px">Strong on pay and freshness — just outside the top list.</div>`
+            : `<div style="font-size:14px;font-weight:700;color:var(--text);margin:18px 0 10px">Better odds — more openings per applicant</div>`}
           <div id="bfGems"></div>
         </div>
         <div style="font-size:12px;color:var(--muted);margin-top:16px;line-height:1.6">Ranked by open roles, pay transparency and posting freshness. "Contested" reflects how many people on DevQuest are eyeing a studio per open role — not who's best. Studios can't pay for placement.</div>
@@ -3132,7 +3154,19 @@ function bfCompute(){
   const top = ranked.slice(0,6);
   resEl.innerHTML = top.map((r,i)=>bfCard(r,i,disc)).join("");
   bfRenderSnapshot(disc, matched);
-  if (haveInterest){
+  if (BF_INTEL){
+    // "Don't overlook" — studios buried by the volume-weighted ranking that are still strong on the
+    // signals we actually have: salary transparency + freshness. No contention/"competition" claim.
+    const topNames = new Set(top.map(r=>r.n));
+    const overlooked = rows
+      .filter(r => !topNames.has(r.n) && r.payPct > 0 && r.medAge != null && r.medAge <= 45)
+      .sort((a,b) => (0.5*b.freshScore + 0.5*b.payPct) - (0.5*a.freshScore + 0.5*a.payPct))
+      .slice(0,3);
+    if (overlooked.length){
+      document.getElementById("bfGems").innerHTML = overlooked.map(g=>bfOverlook(g,disc)).join("");
+      gemsWrap.style.display = "";
+    } else { gemsWrap.style.display = "none"; }
+  } else if (haveInterest){
     const topNames = new Set(top.slice(0,3).map(r=>r.n));
     const gems = rows.filter(r=>r.cont!=null && !topNames.has(r.n) && r.roles>=2).sort((a,b)=>a.cont-b.cont).slice(0,3);
     document.getElementById("bfGems").innerHTML = gems.map(g=>bfGem(g,disc)).join("");
@@ -3189,11 +3223,10 @@ function bfCard(r,i,disc){
     + `</div>`;
   const signalOld = `<div style="display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:6px;font-size:13px;color:var(--muted)"><span>${r.roles} open</span><span>${r.payPct}% pay</span>${fl?`<span style="color:${flColor}">${fl}</span>`:""}${r.clabel?bfContChip(r.clabel):""}</div>`;
   return `<div class="bfcard" data-studio="${bfEsc(r.n)}" data-disc="${bfEsc(disc)}" style="border:${best?"2px solid var(--accent)":"1px solid var(--border)"};border-radius:12px;margin-bottom:10px;background:var(--panel);overflow:hidden">
-    <div class="bfcardhead" onclick="bfToggleStudio('${nameJs}','${discJs}')" style="display:flex;align-items:center;gap:14px;padding:13px 15px;cursor:pointer">
-      <div style="font-size:15px;color:var(--muted);width:16px;text-align:center">${i+1}</div>
+    <div class="bfcardhead" onclick="bfToggleStudio('${nameJs}','${discJs}')" style="display:flex;align-items:center;gap:14px;padding:14px 16px;cursor:pointer">
       <div style="flex:1;min-width:0">
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-          <span style="font-size:15px;font-weight:600;color:var(--text)">${bfEsc(r.n)}</span>
+          <span style="font-size:16px;font-weight:700;color:var(--text)">${bfEsc(r.n)}</span>
           ${best?`<span style="font-size:12px;color:#0d1117;background:var(--accent);padding:2px 8px;border-radius:6px;font-weight:600">Best match</span>`:""}
         </div>
         ${titles?`<div style="font-size:12px;color:var(--muted);margin-top:2px">${bfEsc(titles)}</div>`:""}
@@ -3218,6 +3251,32 @@ function bfToggleStudio(name, disc){
   bfOpenStudio = (bfOpenStudio===name) ? null : name;
   if (bfOpenStudio){ try { window.dqTrack && window.dqTrack("bestfit_expand", { st:name, disc:disc }); } catch(e){} }
   bfCompute();
+}
+function bfOverlook(g,disc){
+  const fl = bfFreshLabel(g.medAge);
+  const senG = profGet("sen"); const senPref = (senG.pinned && senG.v && senG.v !== "__any") ? senG.v : null;
+  const senN = senPref ? (g.jobs||[]).filter(j => j.sen === senPref).length : 0;
+  const newN = (g.jobs||[]).filter(j => (j.fseen || j.ts || 0) >= Date.now() - 7*864e5).length;
+  const why = `<div class="bfwhy">`
+    + `<span class="bfwchip"><span class="ck">✓</span>${g.roles} ${bfEsc(disc)} role${g.roles===1?'':'s'}</span>`
+    + (senN > 0 ? `<span class="bfwchip"><span class="ck">✓</span>${senN} at ${bfEsc(senPref)}</span>` : "")
+    + (g.payPct > 0 ? `<span class="bfwchip"><span class="ck">✓</span>${g.payPct}% list salary</span>` : "")
+    + (newN > 0 ? `<span class="bfwchip new">+${newN} new this week</span>` : (fl ? `<span class="bfwchip">${fl}</span>` : ""))
+    + (g.clabel === "less crowded" ? `<span class="bfwchip"><span class="ck">✓</span>less crowded</span>` : "")
+    + `</div>`;
+  return `<div class="bfcard" data-studio="${bfEsc(g.n)}" data-disc="${bfEsc(disc)}" style="border:1px solid rgba(163,113,247,.45);border-radius:12px;margin-bottom:10px;background:linear-gradient(180deg,rgba(163,113,247,.06),var(--panel));overflow:hidden;cursor:pointer">
+    <div style="display:flex;align-items:center;gap:14px;padding:13px 15px">
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <span style="font-size:15px;font-weight:600;color:var(--text)">${bfEsc(g.n)}</span>
+          <span class="bfobadge">Don't overlook</span>
+        </div>
+        ${STUDIO_TITLES[g.n]?`<div style="font-size:12px;color:var(--muted);margin-top:2px">${bfEsc(STUDIO_TITLES[g.n])}</div>`:""}
+        ${why}
+      </div>
+      <span style="color:var(--muted);font-size:13px;margin-left:2px">view ▸</span>
+    </div>
+  </div>`;
 }
 function bfGem(g,disc){
   return `<div class="bfcard" data-studio="${bfEsc(g.n)}" data-disc="${bfEsc(disc)}" style="display:flex;align-items:center;justify-content:space-between;gap:10px;border:1px solid var(--border);border-radius:8px;padding:9px 13px;margin-bottom:8px;background:var(--panel);cursor:pointer">
@@ -3660,7 +3719,7 @@ function renderStats(){
   window.__heroForYouAll = _heroForYou;   // orange "for you" treatment across the whole custom carousel
   window.__heroTitles = heroData.map(s=>s[0]);
   const heroDots = heroData.map((s,i)=>`<button type="button" class="herodot${i?'':' on'}" data-i="${i}" onclick="heroGo(${i})" aria-label="${s[0]}"></button>`).join("");
-  const heroCss = `<style>.herowrap{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:14px 16px;margin:0 0 16px}.herohead{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}.herotitle{font-size:16px;font-weight:800;color:var(--text)}.heroctrl{display:flex;align-items:center;gap:6px}.herobtn{background:none;border:1px solid var(--border);color:var(--muted);width:28px;height:28px;border-radius:7px;cursor:pointer;font-size:15px;line-height:1;display:inline-flex;align-items:center;justify-content:center}.herobtn:hover{color:var(--text);border-color:var(--muted)}.herodots{display:inline-flex;gap:5px;margin:0 4px}.herodot{width:8px;height:8px;border-radius:50%;border:none;background:var(--border);cursor:pointer;padding:0}.herodot.on{background:var(--accent)}.heroslides{min-height:292px}.herobar{display:flex;align-items:center;gap:10px;margin:7px 0;font-size:14px}.herobar .hblabel{width:150px;flex-shrink:0;color:var(--muted);text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.herobar .hbtrack{flex:1;min-width:0;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:999px;height:18px;overflow:hidden}.herobar .hbfill{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,#1f6feb,#58a6ff);min-width:3px}.herobar .hbnum{flex-shrink:0;text-align:right;font-weight:600;color:var(--text);white-space:nowrap}.herobar.clickable{cursor:pointer;border-radius:6px}.herobar.clickable:hover .hbfill{filter:brightness(1.15)}.herobar.clickable:hover .hblabel{color:var(--text)}.heroempty{color:var(--muted);font-size:14px;padding:48px 0;text-align:center}.herohint{color:var(--muted);font-size:12px;margin-top:10px;text-align:center}.herowrap.foryou{border-color:rgba(255,138,61,.45);background:linear-gradient(180deg,rgba(255,138,61,.08),var(--panel))}.herowrap.foryou .herotitle{color:#ff8a3d}.herowrap.foryou .herodot.on{background:#ff8a3d}.herowrap.foryou .hbfill{background:linear-gradient(90deg,#e8722e,#ff8a3d)}.herobar.dim{opacity:.42}.herobar.hi .hblabel{color:#ff8a3d;font-weight:800}.herohl{display:flex;align-items:center;gap:8px;min-width:0;flex-wrap:wrap}.herofilt{font:inherit;font-size:11px;font-weight:700;color:var(--accent);background:rgba(88,166,255,.12);border:1px solid rgba(88,166,255,.4);border-radius:999px;padding:3px 10px;cursor:pointer;white-space:nowrap}.herofilt:hover{background:rgba(88,166,255,.22);color:var(--text)}</style>`;
+  const heroCss = `<style>.herowrap{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:14px 16px;margin:0 0 16px}.herohead{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}.herotitle{font-size:18px;font-weight:700;color:var(--text)}.heroctrl{display:flex;align-items:center;gap:6px}.herobtn{background:none;border:1px solid var(--border);color:var(--muted);width:28px;height:28px;border-radius:7px;cursor:pointer;font-size:15px;line-height:1;display:inline-flex;align-items:center;justify-content:center}.herobtn:hover{color:var(--text);border-color:var(--muted)}.herodots{display:inline-flex;gap:5px;margin:0 4px}.herodot{width:8px;height:8px;border-radius:50%;border:none;background:var(--border);cursor:pointer;padding:0}.herodot.on{background:var(--accent)}.heroslides{min-height:292px}.herobar{display:flex;align-items:center;gap:10px;margin:7px 0;font-size:14px}.herobar .hblabel{width:150px;flex-shrink:0;color:var(--muted);text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.herobar .hbtrack{flex:1;min-width:0;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:999px;height:18px;overflow:hidden}.herobar .hbfill{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,#1f6feb,#58a6ff);min-width:3px}.herobar .hbnum{flex-shrink:0;text-align:right;font-weight:600;color:var(--text);white-space:nowrap}.herobar.clickable{cursor:pointer;border-radius:6px}.herobar.clickable:hover .hbfill{filter:brightness(1.15)}.herobar.clickable:hover .hblabel{color:var(--text)}.heroempty{color:var(--muted);font-size:14px;padding:48px 0;text-align:center}.herohint{color:var(--muted);font-size:12px;margin-top:10px;text-align:center}.herowrap.foryou{border-color:rgba(255,138,61,.45);background:linear-gradient(180deg,rgba(255,138,61,.08),var(--panel))}.herowrap.foryou .herotitle{color:#ff8a3d}.herowrap.foryou .herodot.on{background:#ff8a3d}.herowrap.foryou .hbfill{background:linear-gradient(90deg,#e8722e,#ff8a3d)}.herobar.dim{opacity:.42}.herobar.hi .hblabel{color:#ff8a3d;font-weight:800}.herohl{display:flex;align-items:center;gap:8px;min-width:0;flex-wrap:wrap}.herofilt{font:inherit;font-size:11px;font-weight:700;color:var(--accent);background:rgba(88,166,255,.12);border:1px solid rgba(88,166,255,.4);border-radius:999px;padding:3px 10px;cursor:pointer;white-space:nowrap}.herofilt:hover{background:rgba(88,166,255,.22);color:var(--text)}</style>`;
   // When any filter/search narrows the board, say so right on the hero (it drives every Trends
   // chart) so a small number never reads as "the whole market is tiny". Tap to clear and see all.
   const heroFiltBadge = (list.length !== mp.open)
