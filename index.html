@@ -454,6 +454,26 @@
   .row.mjp.s-saved { box-shadow: inset 3px 0 0 var(--gold); }
   .row.mjp.s-rejected { box-shadow: inset 3px 0 0 var(--pink); opacity: .62; }
   .row.mjp.s-offer { box-shadow: inset 3px 0 0 var(--green); }
+  /* My Jobs compact cards: collapsed summary + expand-for-detail (flag MYJOBS_COMPACT) */
+  .mjc { background: var(--panel); border: 1px solid var(--border); border-radius: 11px; margin-bottom: 8px; overflow: hidden; }
+  .mjc.s-offer { box-shadow: inset 3px 0 0 var(--green); }
+  .mjc.s-interviewing { box-shadow: inset 3px 0 0 #a371f7; }
+  .mjc.s-applied { box-shadow: inset 3px 0 0 var(--accent); }
+  .mjc.s-saved { box-shadow: inset 3px 0 0 var(--gold); }
+  .mjc.s-rejected { box-shadow: inset 3px 0 0 var(--pink); opacity: .66; }
+  .mjc-sum { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; background: none; border: none; color: var(--text); padding: 11px 14px; cursor: pointer; font: inherit; }
+  .mjc-sum:hover { background: rgba(255,255,255,.025); }
+  .mjc-title { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 700; font-size: 14px; }
+  .mjc-studio { color: var(--accent); font-weight: 600; font-size: 12.5px; margin-left: 6px; }
+  .mjkey { flex-shrink: 0; font-size: 12px; font-weight: 700; color: var(--green); }
+  .mjc-chev { flex-shrink: 0; color: var(--muted); font-size: 12px; }
+  .mjc-full { display: none; }
+  .mjc.open .mjc-full { display: block; }
+  .mjc.open .mjc-sum { display: none; }
+  .mjc-collapse { display: block; width: 100%; text-align: left; background: none; border: none; border-bottom: 1px solid var(--border); color: var(--muted); font-size: 12px; font-weight: 600; padding: 8px 14px; cursor: pointer; }
+  .mjc-collapse:hover { color: var(--text); }
+  .mjc .mjc-full .row { border: 0; border-radius: 0; margin: 0; box-shadow: none; }
+  .mjc .mjc-full .mjbar { display: none; }
   .qchip.on { background: var(--accent); color: #0d1117; border-color: var(--accent); }
   .qchip.clear { color: var(--pink); border-color: var(--pink); background: transparent; }
   .qchip.new { border-color: rgba(63,185,80,.55); color: var(--green); }
@@ -890,6 +910,23 @@ function mjBarHtml(j, stage){
   }
   return `<div class="mjbar"><span class="mjpill ${stage}">${L[stage]||stage}</span>${health}</div>`;
 }
+// Compact My Jobs cards: collapse each to a one-line summary; the existing full card is the expanded body.
+// EASY REVERT: set MYJOBS_COMPACT = false to show full cards (as before).
+const MYJOBS_COMPACT = true;
+function mjSummaryHtml(j, stage){
+  const L = { offer:"Offer", applied:"Applied", interviewing:"Interviewing", rejected:"Rejected", saved:"Saved" };
+  let health = "";
+  if (stage === "applied"){
+    const d = nbAppliedDays(j.id);
+    if (d != null){
+      const c = d < 7 ? "ok" : d < 30 ? "warn" : "cold";
+      const t = d < 7 ? `Active · ${d}d` : d < 30 ? `Follow up · ${d}d` : `Quiet · ${d}d`;
+      health = `<span class="mjhealth ${c}"><span class="hd"></span>${t}</span>`;
+    }
+  }
+  const key = j.salary ? `<span class="mjkey">${j.salary}</span>` : "";
+  return `<span class="mjpill ${stage}">${L[stage]||stage}</span>${health}<span class="mjc-title">${j.t} <span class="mjc-studio">${j.s}</span></span>${key}<span class="mjc-chev">▾</span>`;
+}
 function renderFollowView(){
   const el = document.getElementById("followWrap"); if (!el) return;
   const lookup = ids => ids.map(id => JOB_BY_ID[id]).filter(Boolean);
@@ -907,7 +944,13 @@ function renderFollowView(){
     return;
   }
   const PIPE = (typeof MYJOBS_PIPELINE !== "undefined" && MYJOBS_PIPELINE);
-  const cards = (jobs, stage) => `<div class="group">${jobs.map(j=>rowHtml(j, PIPE?stage:undefined)).join("")}</div>`;
+  const COMPACT = PIPE && (typeof MYJOBS_COMPACT !== "undefined" && MYJOBS_COMPACT);
+  // Compact: a summary button (collapsed view) wrapping the existing full card (expanded view).
+  const card1 = (j, stage) => (COMPACT && stage)
+    ? `<div class="mjc s-${stage}"><button type="button" class="mjc-sum" onclick="this.parentNode.classList.toggle('open')">${mjSummaryHtml(j, stage)}</button>`
+      + `<div class="mjc-full"><button type="button" class="mjc-collapse" onclick="this.closest('.mjc').classList.remove('open')">▴ Collapse</button>${rowHtml(j, stage)}</div></div>`
+    : rowHtml(j, PIPE ? stage : undefined);
+  const cards = (jobs, stage) => `<div class="group">${jobs.map(j=>card1(j, stage)).join("")}</div>`;
   const sec = (title, count, body) => `<div class="minesec"><div class="minehead"><h2>${title}</h2><span class="minecount">${count}</span></div>${body}</div>`;
   MINE_VIEW = true; ROW_COL = true;       // gate: notebook UI + cost-of-living chip render inside My Jobs
   let html = `<div id="mineUpcoming"></div>`;
