@@ -1834,6 +1834,9 @@ const SEN_INFO = {
 // single floating tooltip, appended to <body> so the matrix's horizontal scroll can't clip it
 const gridTip = document.createElement("div"); gridTip.id = "gridTip"; document.body.appendChild(gridTip);
 function showGridTip(el){
+  // Touch devices fire mouseover on tap but never mouseout, so the tip would stick. Hover tooltips
+  // are desktop-only; on touch, tapping a cell just filters (and the lens shows the metrics).
+  if (window.matchMedia && window.matchMedia("(hover: none)").matches) return;
   const tip = el.getAttribute("data-tip"); if (!tip) return;
   gridTip.innerHTML = tip; gridTip.classList.add("show");
   const r = el.getBoundingClientRect();
