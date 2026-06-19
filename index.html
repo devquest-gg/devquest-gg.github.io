@@ -293,6 +293,7 @@
   .wlbtn.primary { background: var(--accent); border-color: var(--accent); color: #0d1117; }
   .wlbtn.on { background: var(--accent); border-color: var(--accent); color: #0d1117; }
   .wlnote { font-size: 12px; color: var(--muted); margin-top: 10px; }
+  .psvp { font-size: 13px; font-weight: 700; color: var(--text); white-space: nowrap; margin-right: 2px; }
   .psitem { font-size: 13px; color: var(--muted); white-space: nowrap; }
   .psitem b { color: var(--text); font-size: 15px; font-weight: 800; margin-right: 5px; }
   .psitem.top b { color: var(--text); font-size: 14px; font-weight: 600; }
@@ -2864,7 +2865,34 @@ function bfContChip(l){
   var c = m[l] || ["var(--muted)","transparent"];
   return `<span style="color:${c[0]};background:${c[1]};padding:1px 8px;border-radius:6px;font-size:12px">${l}</span>`;
 }
-function _bfDefaultDisc(){ var t = Object.entries(DISC_COUNTS).sort(function(a,b){return b[1]-a[1];})[0]; return t ? t[0] : (DISC[0]||""); }
+// Best Fit's default discipline(s) when the visitor hasn't pinned a profile: prefer their OWN behavior
+// (last filters → click/save/apply affinity) over the global top discipline — the same signal that
+// "Hot jobs for you" already uses. Briefly memoized so repeated profGet() calls in one render don't
+// rebuild the affinity profile. EASY REVERT: set BF_BEHAVIOR_DEFAULT = false.
+const BF_BEHAVIOR_DEFAULT = true;
+let _bfBehavCache = null, _bfBehavAt = 0;
+function bfBehaviorRoles(){
+  if (!BF_BEHAVIOR_DEFAULT) return null;
+  const now = Date.now();
+  if (_bfBehavCache !== null && (now - _bfBehavAt) < 1500) return _bfBehavCache || null;
+  let res = null;
+  try {
+    const lf = affLastFilters();
+    if (lf && typeof lfHasFilters === "function" && lfHasFilters(lf)){
+      const ds = new Set();
+      (lf.cells||[]).forEach(c=>{ const d0 = String(c).split("|")[0]; if (d0) ds.add(d0); });
+      (lf.disc||[]).forEach(x=>ds.add(x));
+      if (ds.size) res = [...ds];
+    }
+  } catch(e){}
+  if (!res) try {
+    const t = topKeys(buildProfile().disc, 0.6);
+    if (t && t.length) res = t;
+  } catch(e){}
+  _bfBehavCache = res || false; _bfBehavAt = now;
+  return res;
+}
+function _bfDefaultDisc(){ var b = bfBehaviorRoles(); if (b && b[0]) return b[0]; var t = Object.entries(DISC_COUNTS).sort(function(a,b){return b[1]-a[1];})[0]; return t ? t[0] : (DISC[0]||""); }
 // ===== My profile — local, shared across the site; drives Best fit (Stage 1) =====
 const PROFILE = store.get("dq-profile", null) || { pinned:{} };
 if (!PROFILE.pinned) PROFILE.pinned = {};
@@ -2891,7 +2919,7 @@ function colChipForJob(j){
   if (d < -5) return '<span class="coltag dn" title="Approx. cost of living vs '+bfEsc(loc)+' — a guide, not exact">↓ ~'+(-d)+'% cost of living</span>';
   return '<span class="coltag eq" title="Approx. cost of living vs '+bfEsc(loc)+' — a guide, not exact">≈ similar cost of living</span>';
 }
-function profInferRoles(){ var t=Object.entries(DISC_COUNTS||{}).sort(function(a,b){return b[1]-a[1];})[0]; return t?[t[0]]:(DISC.length?[DISC[0]]:[]); }
+function profInferRoles(){ var b=bfBehaviorRoles(); if (b && b.length) return b.slice(0,3); var t=Object.entries(DISC_COUNTS||{}).sort(function(a,b){return b[1]-a[1];})[0]; return t?[t[0]]:(DISC.length?[DISC[0]]:[]); }
 function profGet(f){
   var pinned = !!PROFILE.pinned[f];
   if (f==="roles") return { v: pinned ? (Array.isArray(PROFILE.roles)?PROFILE.roles.slice():[]) : profInferRoles(), pinned:pinned };
@@ -3164,13 +3192,17 @@ function marketPulse(){
   const medianAge = ages.length ? ages[Math.floor(ages.length/2)] : null;
   return { open, studios, newWk, new72h, topStudio: top ? top[0] : "—", topStudioN: top ? top[1] : 0, salPct, remotePct, medianAge };
 }
+// Value-prop lead-in on the stat strip — frames the numbers ("why this beats LinkedIn") with zero
+// added rows. EASY REVERT: set VALUEPROP = false. (The strip is hidden on mobile, so this is desktop-only.)
+const VALUEPROP = true;
 function renderPulseStrip(){
   const el = document.getElementById("pulseStrip"); if (!el) return;
   const m = marketPulse();
   const chip = (num,label,cls="") => `<span class="psitem ${cls}"><b>${num}</b>${label}</span>`;
   window.__pulseTopStudio = m.topStudio;   // read by the clickable chip (avoids escaping studio names with quotes)
   const topClickable = m.topStudio && m.topStudio !== "—";
-  el.innerHTML = chip(m.open.toLocaleString(),"open roles")
+  el.innerHTML = (VALUEPROP ? `<span class="psvp">Real, current game-dev jobs:</span>` : "")
+    + chip(m.open.toLocaleString(),"open roles")
     + chip(m.studios,"studios hiring")
     + chip(m.new72h.toLocaleString(),"new in 72h","fresh")
     + chip(m.salPct+"%","list salary")
