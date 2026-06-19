@@ -675,6 +675,31 @@
   .mapcity .mc-clear { background: none; border: 1px solid var(--border); color: var(--muted); font-size: 12px; font-weight: 600; padding: 7px 12px; border-radius: 8px; cursor: pointer; }
   .mapcity .mc-clear:hover { color: var(--text); border-color: var(--muted); }
   .mapcity .mc-note { font-size: 11px; color: var(--muted); margin-top: 7px; }
+  /* Map: top-cities leaderboard, mode toggle, remote card, dream move */
+  .mappanel { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; margin: 0 0 12px; }
+  .mp-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+  .mp-title { font-size: 18px; font-weight: 700; color: var(--text); }
+  .mp-modes { display: flex; gap: 6px; flex-wrap: wrap; }
+  .mp-mode { font-size: 12.5px; font-weight: 600; padding: 5px 11px; border-radius: 999px; border: 1px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; }
+  .mp-mode:hover { color: var(--text); border-color: var(--muted); }
+  .mp-mode.on { background: var(--accent); color: #0d1117; border-color: var(--accent); }
+  .lb { width: 100%; border-collapse: collapse; }
+  .lb td, .lb th { padding: 6px 8px; text-align: left; font-size: 13.5px; border-bottom: 1px solid var(--border); }
+  .lb th { font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); font-weight: 700; }
+  .lb td.rank, .lb th.rank { color: var(--muted); width: 34px; }
+  .lb td.num, .lb th.num { text-align: right; font-weight: 600; white-space: nowrap; }
+  .lb tr.click { cursor: pointer; } .lb tr.click:hover td { background: rgba(255,255,255,.03); }
+  .lb .cityname { color: var(--accent); font-weight: 600; }
+  .col-better { color: var(--green); } .col-sim { color: var(--gold); } .col-worse { color: #e06c5e; }
+  .mp-remote { display: flex; align-items: center; gap: 10px; margin-top: 10px; padding: 10px 12px; border: 1px solid rgba(88,166,255,.35); border-radius: 10px; background: linear-gradient(180deg,rgba(88,166,255,.07),transparent); cursor: pointer; }
+  .mp-remote:hover { border-color: var(--accent); }
+  .mp-remote .rh { font-size: 14px; font-weight: 700; } .mp-remote .rs { font-size: 12px; color: var(--muted); } .mp-remote .rn { margin-left: auto; font-weight: 700; color: var(--accent); white-space: nowrap; }
+  .mp-dream { border: 1px solid rgba(163,113,247,.45); background: linear-gradient(180deg,rgba(163,113,247,.07),var(--panel)); border-radius: 12px; padding: 12px 14px; margin: 0 0 12px; }
+  .mp-dream .dh { font-size: 14px; font-weight: 800; margin-bottom: 3px; } .mp-dream .ds { font-size: 12px; color: var(--muted); margin-bottom: 9px; }
+  .mp-dream ol { margin: 0; padding: 0; list-style: none; }
+  .mp-dream li { display: flex; align-items: baseline; gap: 8px; padding: 4px 0; font-size: 13.5px; cursor: pointer; }
+  .mp-dream li:hover .dcity { text-decoration: underline; }
+  .mp-dream .drank { color: var(--purple); font-weight: 800; width: 22px; } .mp-dream .dcity { color: var(--text); font-weight: 600; } .mp-dream .dmeta { margin-left: auto; color: var(--muted); font-size: 12.5px; }
 </style>
 </head>
 <body>
@@ -827,6 +852,8 @@ function dqCopyLink(btn){
     <div id="moon"></div>
     <div id="mapWrap">
       <div id="mapCityBar"></div>
+      <div id="mapDream"></div>
+      <div id="mapPanel"></div>
       <div id="map"></div>
       <div class="mapnote" id="mapNote"></div>
     </div>
@@ -3965,11 +3992,11 @@ function renderPulse(){
 function renderMapCityBar(){
   var el=document.getElementById("mapCityBar"); if(!el) return;
   var loc=profGet("loc").v;
-  el.innerHTML='<div class="mapcity"><span class="mc-ic">📍</span>'
-    + '<div class="mc-body"><label class="mc-lbl" for="mapCityInput">Your city — for cost-of-living comparisons on jobs</label>'
-    + '<div class="mc-row"><input class="mc-in" id="mapCityInput" list="mapCities" value="'+bfEsc(loc)+'" placeholder="Type your city…" oninput="profSet(\'loc\', this.value); renderMapCitySync()">'
-    + (loc?'<button class="mc-clear" onclick="profRevert(\'loc\'); renderMapCityBar(); renderMapCitySync()">Clear</button>':'')
-    + '</div><div class="mc-note">Optional · saved on this device · only used to show cost differences on saved &amp; best-fit jobs, never to filter or hide roles.</div></div>'
+  el.innerHTML='<div class="mapcity"><span class="mc-ic">🏠</span>'
+    + '<div class="mc-body"><label class="mc-lbl" for="mapCityInput">Your home base'+(loc?' — '+bfEsc(loc):'')+'</label>'
+    + '<div class="mc-row"><input class="mc-in" id="mapCityInput" list="mapCities" value="'+bfEsc(loc)+'" placeholder="Type your city to compare cost of living…" oninput="profSet(\'loc\', this.value); renderMapCitySync(); renderMap()">'
+    + (loc?'<button class="mc-clear" onclick="profRevert(\'loc\'); renderMapCityBar(); renderMapCitySync(); renderMap()">Clear</button>':'')
+    + '</div><div class="mc-note">Compare salaries and purchasing power across game hubs. Optional · saved on this device · only used for cost-of-living comparisons, never to filter or hide roles.</div></div>'
     + '<datalist id="mapCities">'+COL_KEYS.slice().sort().map(function(c){return '<option value="'+bfEsc(c)+'"></option>';}).join("")+'</datalist></div>';
 }
 function renderMapCitySync(){
@@ -3977,8 +4004,101 @@ function renderMapCitySync(){
   try { profSummary(); } catch(e){}
   try { profMark("loc", profGet("loc").pinned); } catch(e){}
 }
+// ---- Map intelligence: shared per-city aggregation + leaderboard / dream-move ----
+let MAP_MODE = "jobs";   // jobs | studios | afford
+// Aggregate the current list into per-city stats (count, studios, disciplines, salary
+// median+coverage, fresh, COL) plus remote totals. All from data already on each job.
+function mapCityStats(){
+  const list = LAST_LIST;
+  const cities = {};
+  const remote = { count:0, disc:{}, studios:{} };
+  let unmapped = 0;
+  for (const j of list){
+    let placed = false, isRemote = false; const seen = new Set();
+    for (const loc of j.locs){
+      if (/remote/i.test(loc)){ isRemote = true; continue; }
+      const g = matchCity(loc);
+      if (g && !seen.has(g[0])){
+        seen.add(g[0]);
+        const c = cities[g[0]] = cities[g[0]] || { key:g[0], lat:g[1], lng:g[2], name:g[0].replace(/\b\w/g,ch=>ch.toUpperCase()), count:0, studios:{}, disc:{}, paid:0, fresh:0, pays:[] };
+        c.count++;
+        c.studios[j.s] = (c.studios[j.s]||0) + 1;
+        if (j.d) c.disc[j.d] = (c.disc[j.d]||0) + 1;
+        if (j.salary){ c.paid++; const pv = mtxParsePay(j.salary); if (pv) c.pays.push(pv); }
+        if ((j.fseen || j.ts || 0) >= Date.now() - 7*864e5) c.fresh++;
+        placed = true;
+      }
+    }
+    if (isRemote){ remote.count++; if (j.d) remote.disc[j.d] = (remote.disc[j.d]||0)+1; remote.studios[j.s] = (remote.studios[j.s]||0)+1; placed = true; }
+    if (!placed) unmapped++;
+  }
+  const arr = Object.values(cities);
+  arr.forEach(c => { c.nStudios = Object.keys(c.studios).length; c.payPct = c.count ? Math.round(100*c.paid/c.count) : 0; c.medPay = mtxMedian(c.pays); c.col = colLookup(c.key); });
+  return { cities: arr, remote, unmapped };
+}
+// Cost of living vs home base: cheaper than home = "better", within ±5% = "sim", pricier = "worse".
+function mapAffordClass(cityCol, homeCol){ const d = (cityCol - homeCol) / homeCol; return d <= -0.05 ? "better" : d >= 0.05 ? "worse" : "sim"; }
+function mapColDelta(cityCol, homeCol){ return Math.round(100 * (cityCol - homeCol) / homeCol); }
+function mapCityPopup(c, homeCol){
+  const topDisc = Object.entries(c.disc).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([d,n])=>`${d} (${n})`).join("<br>");
+  const pay = c.payPct ? `${c.payPct}% list salary${c.medPay?` · ~$${c.medPay}K median`:""}` : "no salary data yet";
+  let colLine = "";
+  if (homeCol != null && c.col != null){ const d = mapColDelta(c.col, homeCol); colLine = `<br><span style="color:#8b949e">Cost of living: <b>${d>0?'+':''}${d}%</b> vs home</span>`; }
+  return `<b>${c.name}</b> — ${c.count} role${c.count>1?'s':''} · ${c.nStudios} studio${c.nStudios>1?'s':''}<br>`
+    + `<span style="color:#8b949e">${topDisc}</span><br>`
+    + `<span style="color:#8b949e">${pay}${c.fresh?` · +${c.fresh} new this week`:""}</span>${colLine}<br>`
+    + `<a onclick="filterCity('${c.key.replace(/'/g,"\\'")}')">Show these jobs →</a>`;
+}
+function mapSetMode(m){ MAP_MODE = m; renderMap(); }
+function renderMapPanel(stats){
+  const el = document.getElementById("mapPanel"); if (!el) return;
+  const cityArr = stats.cities;
+  const homeCol = colLookup(profGet("loc").v);
+  const modeBtns = [["jobs","Jobs"],["studios","Studios"]];
+  if (homeCol != null) modeBtns.push(["afford","Affordability"]);
+  if (MAP_MODE === "afford" && homeCol == null) MAP_MODE = "jobs";
+  const modes = modeBtns.map(([m,l])=>`<button class="mp-mode${MAP_MODE===m?' on':''}" onclick="mapSetMode('${m}')">${l}</button>`).join("");
+  const sorted = cityArr.slice().sort((a,b)=> MAP_MODE==="studios" ? (b.nStudios-a.nStudios || b.count-a.count) : (b.count-a.count));
+  const top = sorted.slice(0,8);
+  const showCol = MAP_MODE === "afford" && homeCol != null;
+  const metricHead = MAP_MODE === "studios" ? "Studios" : "Jobs";
+  const rows = top.map((c,i)=>{
+    const metric = MAP_MODE === "studios" ? c.nStudios : c.count;
+    let colCell = "";
+    if (showCol){ const d = c.col!=null ? mapColDelta(c.col, homeCol) : null; const cls = c.col!=null ? mapAffordClass(c.col, homeCol) : null;
+      colCell = `<td class="num ${cls==='better'?'col-better':cls==='worse'?'col-worse':cls?'col-sim':''}">${d==null?'—':(d>0?'+':'')+d+'%'}</td>`; }
+    return `<tr class="click" onclick="filterCity('${c.key.replace(/'/g,"\\'")}')"><td class="rank">#${i+1}</td><td><span class="cityname">${c.name}</span></td><td class="num">${metric}</td>${showCol?colCell:""}</tr>`;
+  }).join("");
+  const r = stats.remote;
+  const remoteCard = r.count ? `<div class="mp-remote" onclick="filterCity('Remote')"><div><div class="rh">🌎 Remote</div><div class="rs">${Object.entries(r.disc).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([d,n])=>`${d} ${n}`).join(' · ')}</div></div><div class="rn">${r.count} role${r.count>1?'s':''} →</div></div>` : "";
+  el.innerHTML = `<div class="mappanel"><div class="mp-head"><span class="mp-title">Top cities right now</span><div class="mp-modes">${modes}</div></div>`
+    + `<table class="lb"><tr><th class="rank">#</th><th>City</th><th class="num">${metricHead}</th>${showCol?'<th class="num">COL vs home</th>':''}</tr>${rows}</table>`
+    + remoteCard + `</div>`;
+}
+function renderMapDream(){
+  const el = document.getElementById("mapDream"); if (!el) return;
+  const roles = profGet("roles").v;
+  if (!roles || !roles.length){ el.style.display = "none"; el.innerHTML = ""; return; }
+  const sen = profGet("sen").v, homeLoc = profGet("loc").v, homeCol = colLookup(homeLoc);
+  const match = LAST_LIST.filter(j => roles.indexOf(j.d) >= 0 && (sen === "__any" || j.sen === sen));
+  const cities = {};
+  for (const j of match){ const seen = new Set();
+    for (const loc of j.locs){ if (/remote/i.test(loc)) continue; const g = matchCity(loc);
+      if (g && !seen.has(g[0])){ seen.add(g[0]); const c = cities[g[0]] = cities[g[0]] || { key:g[0], name:g[0].replace(/\b\w/g,ch=>ch.toUpperCase()), n:0 }; c.n++; } } }
+  const arr = Object.values(cities).sort((a,b)=>b.n-a.n).slice(0,5);
+  if (!arr.length){ el.style.display = "none"; el.innerHTML = ""; return; }
+  const items = arr.map((c,i)=>{ let meta = `${c.n} match${c.n>1?'es':''}`; const col = colLookup(c.key);
+    if (homeCol != null && col != null){ const d = mapColDelta(col, homeCol); meta += ` · COL ${d>0?'+':''}${d}%`; }
+    return `<li onclick="filterCity('${c.key.replace(/'/g,"\\'")}')"><span class="drank">#${i+1}</span><span class="dcity">${c.name}</span><span class="dmeta">${meta}</span></li>`;
+  }).join("");
+  el.style.display = "";
+  el.innerHTML = `<div class="mp-dream"><div class="dh">🧭 Dream Move</div><div class="ds">Best places to land your next ${bfEsc(roles.join(", "))} role${homeCol!=null?", with cost of living vs "+bfEsc(homeLoc):""}.</div><ol>${items}</ol></div>`;
+}
 function renderMap(){
   renderMapCityBar();
+  const _stats = mapCityStats();
+  renderMapDream();
+  renderMapPanel(_stats);
   if (typeof L === "undefined") {
     document.getElementById("map").innerHTML = '<div class="empty">Map requires an internet connection (loads OpenStreetMap tiles).</div>';
     return;
@@ -3994,38 +4114,20 @@ function renderMap(){
   setTimeout(()=>map.invalidateSize(), 50);
   markerLayer.clearLayers();
 
-  const list = LAST_LIST;
-  const cities = {}; // key -> {lat,lng,count,studios:{}}
-  let remote = 0, unmapped = 0;
-  for (const j of list) {
-    let placed = false;
-    const seen = new Set();
-    for (const loc of j.locs) {
-      if (/remote/i.test(loc)) { if(!placed){remote++;} placed = true; continue; }
-      const g = matchCity(loc);
-      if (g && !seen.has(g[0])) {
-        seen.add(g[0]);
-        const c = cities[g[0]] = cities[g[0]] || { lat: g[1], lng: g[2], name: g[0], count: 0, studios: {} };
-        c.count++;
-        c.studios[j.s] = (c.studios[j.s] || 0) + 1;
-        placed = true;
-      }
+  const homeCol = colLookup(profGet("loc").v);
+  const cityArr = _stats.cities;
+  const maxCount = Math.max(1, ...cityArr.map(c=>c.count));
+  const maxStud = Math.max(1, ...cityArr.map(c=>c.nStudios));
+  for (const c of cityArr) {
+    let radius = (MAP_MODE === "studios") ? 6 + 22 * Math.sqrt(c.nStudios / maxStud) : 6 + 22 * Math.sqrt(c.count / maxCount);
+    let fill = "#58a6ff";
+    if (MAP_MODE === "afford" && homeCol != null && c.col != null) {
+      const cls = mapAffordClass(c.col, homeCol);
+      fill = cls === "better" ? "#3fb950" : cls === "worse" ? "#e06c5e" : "#d29922";
     }
-    if (!placed) unmapped++;
-  }
-
-  const max = Math.max(1, ...Object.values(cities).map(c=>c.count));
-  for (const c of Object.values(cities)) {
-    const r = 6 + 22 * Math.sqrt(c.count / max);
-    const label = c.name.replace(/\b\w/g, ch=>ch.toUpperCase());
-    const topStudios = Object.entries(c.studios).sort((a,b)=>b[1]-a[1]).slice(0,4)
-      .map(([s,n])=>`${s} (${n})`).join("<br>");
     L.circleMarker([c.lat, c.lng], {
-      radius: r, color: "#58a6ff", weight: 1.5, fillColor: "#58a6ff", fillOpacity: 0.35,
-    }).bindPopup(
-      `<b>${label}</b> — ${c.count} role${c.count>1?"s":""}<br><span style="color:#8b949e">${topStudios}</span><br>` +
-      `<a onclick="filterCity('${c.name.replace(/'/g,"\\'")}')">Show these jobs →</a>`
-    ).addTo(markerLayer);
+      radius: radius, color: fill, weight: 1.5, fillColor: fill, fillOpacity: 0.38,
+    }).bindPopup(mapCityPopup(c, homeCol)).addTo(markerLayer);
   }
   // island studios: gold pins at each studio's HQ, grouped by city, linking out.
   // Nudged slightly off the blue job-pins so overlapping cities stay clickable.
@@ -4053,9 +4155,9 @@ function renderMap(){
   }
 
   document.getElementById("mapNote").innerHTML =
-    `<span style="color:#58a6ff">●</span> ${Object.keys(cities).length} cities with listed roles · ` +
+    `<span style="color:#58a6ff">●</span> ${cityArr.length} cities with listed roles · ` +
     `<span style="color:#d29922">●</span> ${islandShown} "browse directly" studios · ` +
-    `${remote} remote roles &amp; ${unmapped} unmapped (not shown)`;
+    `${_stats.remote.count} remote roles &amp; ${_stats.unmapped} unmapped (not shown)`;
 }
 
 // ---- directory ("misfit island"): studios we link to directly ----------------
