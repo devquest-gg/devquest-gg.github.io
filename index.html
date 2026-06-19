@@ -2464,7 +2464,8 @@ function rowHtml(j, mjStage){
   const h = hoursAgo(j);
   const noDate = !j.ts;
   const status = appStatus[j.id] || "";
-  const mj = (mjStage && typeof MYJOBS_PIPELINE !== "undefined" && MYJOBS_PIPELINE) ? mjStage : "";
+  // NB: must be a string stage — guards against `list.map(rowHtml)` passing the array index here.
+  const mj = (typeof mjStage === "string" && mjStage && typeof MYJOBS_PIPELINE !== "undefined" && MYJOBS_PIPELINE) ? mjStage : "";
   const isNew = isNewForYou(j);
   const isDismissed = dismissed.has(j.id);
   const isSaved = saved.has(j.id);
