@@ -451,6 +451,17 @@
   .mjhealth.warn { color: var(--gold); } .mjhealth.warn .hd { background: var(--gold); box-shadow: 0 0 6px var(--gold); }
   .mjhealth.cold { color: var(--pink); } .mjhealth.cold .hd { background: var(--pink); }
   .mjhealth.none { color: var(--muted); } .mjhealth.none .hd { background: var(--muted); }
+  /* Company snapshot (inline in expanded My Jobs cards) */
+  .ci { margin: 12px 0 2px; background: linear-gradient(180deg, rgba(88,166,255,.06), transparent); border: 1px solid var(--border); border-radius: 10px; padding: 11px 13px; }
+  .ci-h { font-size: 12px; font-weight: 800; color: var(--text); margin-bottom: 9px; }
+  .ci-h .ci-m { color: var(--muted); font-weight: 600; }
+  .ci-r { display: flex; gap: 22px; flex-wrap: wrap; margin-bottom: 8px; }
+  .cistat { font-size: 11px; color: var(--muted); }
+  .cistat b { display: block; font-size: 17px; font-weight: 800; color: var(--text); line-height: 1.1; }
+  .ci .up { color: var(--green); } .ci .down { color: var(--pink); }
+  .ci-line { font-size: 12px; color: var(--muted); }
+  .ci-cta { display: inline-block; margin-top: 8px; font-size: 12px; font-weight: 700; color: var(--accent); cursor: pointer; }
+  .ci-cta:hover { text-decoration: underline; }
   .row.mjp.s-applied { box-shadow: inset 3px 0 0 var(--accent); }
   .row.mjp.s-interviewing { box-shadow: inset 3px 0 0 #a371f7; }
   .row.mjp.s-saved { box-shadow: inset 3px 0 0 var(--gold); }
@@ -932,6 +943,36 @@ function mjSummaryHtml(j, stage){
   }
   const key = j.salary ? `<span class="mjkey">${j.salary}</span>` : "";
   return `<span class="mjpill ${stage}">${L[stage]||stage}</span>${health}<span class="mjc-title">${j.t} <span class="mjc-studio">${j.s}</span></span>${key}<span class="mjc-chev">▾</span>`;
+}
+// Company intelligence on My Jobs cards (shown inline in the expanded view, not a new toggle): live
+// studio role count, hiring momentum (trends.json now vs ~30d), other roles in the same discipline,
+// and this listing's age — all from data already on the page. EASY REVERT: MYJOBS_COMPANY_INTEL = false.
+const MYJOBS_COMPANY_INTEL = true;
+function mjCompanyHtml(j){
+  const studio = j.s; if (!studio) return "";
+  const open = (typeof STUDIO_COUNTS === "object" && STUDIO_COUNTS && STUDIO_COUNTS[studio]) || 0;
+  if (!open) return "";
+  let sameDisc = 0; for (const x of JOBS) if (x.s === studio && x.d === j.d) sameDisc++;
+  const otherDisc = Math.max(0, sameDisc - 1);
+  let delta = null;
+  try { const T = window.JOBS_DATA && window.JOBS_DATA.trends; const s = T && T.studios && T.studios[studio];
+    if (s && s.now != null){ const base = (s.d30 != null) ? s.d30 : (s.d7 != null ? s.d7 : null); if (base != null) delta = s.now - base; } } catch(e){}
+  let dl = null; try { dl = daysListed(j); } catch(e){}
+  let stats = `<div class="cistat"><b>${open.toLocaleString()}</b>open role${open===1?'':'s'}</div>`;
+  if (delta != null && delta !== 0) stats += `<div class="cistat"><b class="${delta>0?'up':'down'}">${delta>0?'▲ +'+delta:'▼ '+Math.abs(delta)}</b>vs last month</div>`;
+  if (otherDisc > 0) stats += `<div class="cistat"><b>${otherDisc}</b>other ${j.d} role${otherDisc===1?'':'s'}</div>`;
+  if (dl != null) stats += `<div class="cistat"><b${dl>=45?' class="down"':''}>${dl}d</b>this listing's age</div>`;
+  let line = "";
+  if (delta > 0) line = "Hiring is <span class='up'>up</span> this month.";
+  else if (delta < 0) line = "Hiring has <span class='down'>slowed</span> — momentum, not layoff news.";
+  if (dl != null && dl >= 45) line += (line?" ":"") + `This posting has been live ${dl} days (possibly stale).`;
+  const esc = s => String(s).replace(/'/g, "\\'");
+  return `<div class="ci" onclick="event.stopPropagation()">`
+    + `<div class="ci-h">📊 ${studio} <span class="ci-m">· market snapshot</span></div>`
+    + `<div class="ci-r">${stats}</div>`
+    + (line ? `<div class="ci-line">${line}</div>` : "")
+    + `<span class="ci-cta" onclick="event.stopPropagation(); filterToStudio('${esc(studio)}')">See all ${open.toLocaleString()} ${studio} roles →</span>`
+    + `</div>`;
 }
 function renderFollowView(){
   const el = document.getElementById("followWrap"); if (!el) return;
@@ -2580,6 +2621,7 @@ function rowHtml(j, mjStage){
       ${ROW_COL?colChipForJob(j):``}
       <a class="tag knowbtn" href="${whoDoIKnowUrl(j.s)}" target="_blank" rel="noopener" onclick="event.stopPropagation()" aria-label="Who do I know at ${j.s.replace(/"/g,'')}?" title="Who do I know here? Opens LinkedIn and shows your 1st-degree connections at ${j.s.replace(/"/g,'')} — your warmest path to a referral. (You'll need to be logged into LinkedIn.)">🤝<span class="knowtext">Who do I know?</span></a>
     </div>
+    ${MINE_VIEW && typeof MYJOBS_COMPANY_INTEL !== "undefined" && MYJOBS_COMPANY_INTEL ? mjCompanyHtml(j) : ``}
     ${MINE_VIEW?nbPanelHtml(j):``}
   </div>`;
 }
@@ -4054,6 +4096,7 @@ try {
   };
 
   function track(name, props){
+    try{ if (localStorage.getItem("dq-nostat")==="1") return; }catch(e){}   // owner self-exclude (see /?dqstat=off)
     try{
       var payload = JSON.stringify({ name:name, props:props||{} });
       if (navigator.sendBeacon) navigator.sendBeacon(ALERTS_API+"/event", payload);
@@ -4061,6 +4104,14 @@ try {
     }catch(e){}
   }
   window.dqTrack = track;
+  // Owner self-exclude: visit /?dqstat=off on each of your own browsers to keep your visits out of
+  // analytics (stored per-browser; no events are sent). /?dqstat=on re-enables. Identity-based, so it
+  // never affects a real visitor who happens to live in your city.
+  try {
+    var _dqs = new URLSearchParams(location.search).get("dqstat");
+    if (_dqs === "off"){ localStorage.setItem("dq-nostat","1"); alert("DevQuest: this browser is now EXCLUDED from your analytics."); }
+    else if (_dqs === "on"){ localStorage.removeItem("dq-nostat"); alert("DevQuest: this browser is now INCLUDED in your analytics."); }
+  } catch(e){}
   // let the after-apply nudge (top-level) open the same alert form, pre-set to a discipline.
   window.dqAlertForm = function(label, c, src){ try{ openForm(label, c||{}, src||"apply"); }catch(e){} };
   // one-time visitor-source capture: referrer host + any UTM tags on the URL (cookieless).
