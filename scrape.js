@@ -49,6 +49,8 @@ const DIRECTORY = [
   { name: "Void Interactive", url: "https://voidinteractive.net/careers/", note: "Ready or Not (Dublin)", city: "Dublin, Ireland" },
   { name: "Grip Studios", url: "https://grip-studios.com/hiring.php", note: "Co-development on Indiana Jones and Civ VII (Prague)", city: "Prague, Czechia" },
   { name: "Mad Head Games", url: "https://careers.madheadgames.com/", note: "Scars Above, Pavilion (Serbia)", city: "Novi Sad, Serbia" },
+  // 2026-06-19: Keka board (not a supported ATS) — link-out
+  { name: "LightFury Games", url: "https://lightfury.keka.com/careers/", note: "AAA game-tech studio (India / UK)", city: "Bengaluru, India" },
   // batch 4 (2026-06-09): notable + mobile studios on custom / region-specific ATS — browse directly
   { name: "Kojima Productions", url: "https://www.kojimaproductions.jp/en/careers", note: "Death Stranding (Tokyo)", city: "Tokyo, Japan" },
   { name: "Cygames", url: "https://www.cygames.co.jp/en/recruit/", note: "Granblue Fantasy, Uma Musume (Tokyo)", city: "Tokyo, Japan" },
@@ -377,6 +379,9 @@ const STUDIOS = [
   { name: "Virtuos", type: "oracle", token: "fa-exhj-saasfaprod1", site: "CX_1", city: "Singapore" }, // AAA co-dev/outsourcing — Oracle Recruiting Cloud (promoted from Island 2026-06-18)
   { name: "Techland", type: "techland", token: "techland", city: "Wrocław, Poland" },           // Dying Light — own SSR board (promoted from Island 2026-06-18)
   { name: "Lighthouse Games", type: "workable", token: "lighthousegames" },                     // ex-Codemasters AAA studio (Leamington Spa, UK) — Workable
+  // ---- 2026-06-19 batch (requested) ----
+  { name: "Ludia", type: "bamboohr", token: "ludia", city: "Montréal, Canada" },                // mobile (Jurassic World Alive, DragonVale) — BambooHR
+  { name: "Astrid Entertainment", type: "workable", token: "astrid-entertainment", city: "United Kingdom" }, // co-op open-world studio (UK, remote) — Workable
 ];
 
 // ---- Studio type tags (Michelle's idea) ------------------------------------
