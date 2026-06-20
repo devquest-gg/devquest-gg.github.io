@@ -968,12 +968,34 @@ function strongTitleDiscipline(t) {
   if (/\baudio\b|sound design|\bcomposer\b|music design|\bsonore\b|conception sonore/.test(t)) return "Audio";
   if (/\bqa\b|quality assurance|\btester\b|\bsdet\b|test (engineer|analyst|lead|automation|specialist)|quality (engineer|analyst|specialist)|assurance qualit/.test(t)) return "QA";
   if (/art director|\bartist\b|\bartiste\b|direct(eur|rice|ion) artistique|\bart lead\b|lead artist|concept art|\bvfx\b|lighting (artist|lead)|environment artist|character artist|technical artist|technical art\b|(character|environment|prop|vehicle|weapon|texture) (artist|art|outsourc)/.test(t)) return "Art";
+  // Bare "art" as the role word: "AI Art Specialist", "Art Specialist/Lead/Manager/Outsourcing",
+  // etc. The main Art rule keys on "artist"/specific combos and missed these. Word boundaries guard
+  // out "smart", "part", "chart", "start", "state of the art".
+  if (/\bai art\b|\bart (specialist|generalist|lead|director|manager|outsourc\w*|coordinator|supervisor|associate|intern|internship|trainee|apprentice)\b/.test(t)) return "Art";
+  // Generative 3D-content roles (avatar / scene / model / character generation) read as Art, not the
+  // Business & Ops catch-all, e.g. "3D Model, Scene, and Avatar Generation Algorithm Research Intern".
+  // Guarded so "...generation engineer / pipeline / platform" roles stay Engineering.
+  if (/\b(avatar|scene|character|texture|environment|3d (model|asset))s?\b[^.]*\bgenerati(on|ve)\b/.test(t)
+      && !/\b(engineer|programmer|developer|pipeline|backend|infrastructure|sdk|platform)\b/.test(t)) return "Art";
   // "Generalist" in games almost always means a 3D/art generalist (e.g. "3D Unreal Generalist") —
   // EXCEPT corporate generalists (HR/People/Talent/etc.), which we guard out so they don't become Art.
   if (/\bgeneralist\b/.test(t) && !/\b(hr|human resources|people|talent|recruit|payroll|benefits|office|business|marketing|finance|legal|it|sales|community|player support)\b/.test(t)) return "Art";
   if (/\banimator\b|animation (director|lead|manager|supervisor)|\brigging\b|cinematics? (director|lead|supervisor|manager|animator|designer|editor|artist|coordinator)|\bcinematic editor\b|\bmocap\b|motion[ -]?capture/.test(t)) return "Animation";
   if (/game design|level design|systems? design|narrative design|\bwriter\b|\bscénariste\b|encounter design|combat design|content design|economy design|quality design|gameplay design|ux design|ui design|concepteur|conceptrice|conception de jeu|world build|world design|environment design|game (direct(or|ion)|lead)|creative direct(or|ion)|directeur (créatif|creatif)|directrice (créative|creative)/.test(t)) return "Design";
-  if ((/(engineers?|engineering|programmers?|programming|developers?|architects?)\b|architecte|ingénieur|programmeur|développeur|technical (director|lead)/.test(t)) && !/\bsales\b|customer success|account exec|solutions? consultant|product developer|developer (program|programme|community|ecosystem|partnership)|business develop(er|ment)|analytics developer/.test(t)) return "Engineering";
+  // "Feature Lead / Feature Designer" at a game studio is design leadership (owns a game feature).
+  // Adjacent "feature lead" only, so "Feature Engineering Lead" still falls to Engineering below.
+  if (/\bfeature (team )?(lead|owner)\b|\bfeature design(er)?\b/.test(t)) return "Design";
+  if ((/(engineers?|engineering|programmers?|programming|developers?|architects?)\b|architecte|ingénieur|programmeur|développeur|tech(nical)? (director|lead|manager)|\bback[ -]?end\b|\bfront[ -]?end\b|\bfull[ -]?stack\b|\bcoder\b|\bcoding\b|\b(gameplay|engine|tools?|graphics|rendering|networking?|systems?|game|gpu|simulation) code\b/.test(t)) && !/\bsales\b|customer success|account exec|solutions? consultant|product developer|developer (program|programme|community|ecosystem|partnership)|business develop(er|ment)|analytics developer/.test(t)) return "Engineering";
+  // Game-engine programming roles where the title says "development" (noun), not "developer" —
+  // e.g. "Lead Unity Game Development". Engine + a dev/programming signal, excluding art/design/audio
+  // so "Unity Technical Artist" / "Unity UI Designer" stay in their crafts.
+  if (/\b(unity|unreal|godot|cryengine|cocos)\b/.test(t) && /\b(develop|programm|gameplay|engine|tool|code|coder|coding|technical)/.test(t)
+      && !/\bartist\b|\bart\b|designer|\bdesign\b|animator|\baudio\b/.test(t)) return "Engineering";
+  // IT / infrastructure / network / security / systems roles read as Engineering (tech), e.g.
+  // "Network and Security Technician", "Networking and Security Lead", "IT Support", "SysAdmin",
+  // "DevOps". Guard out physical security / trust & safety / marketing-y "network" uses.
+  if (/\b(network(ing)?|cyber ?security|info ?sec|information security|sys ?admin|systems? admin(istrator)?|site reliability|\bsre\b|dev ?ops|infrastructure|\bit\b[ -](support|technician|engineer|administrator|operations|ops|specialist|manager|lead|director)|help ?desk|security (engineer|analyst|architect|technician|specialist|lead|manager|administrator|operations|ops|director))\b/.test(t)
+      && !/\bguard\b|physical security|trust (and|&) safety|loss prevention|social network|network marketing|developer network|partner network|ad network/.test(t)) return "Engineering";
   // Technical R&D leadership (e.g. "Director, Technology Research", "R&D Manager") → Engineering.
   // Scoped to technology/technical research so it won't grab user/market/player research.
   if (/\b(technology|technical) research\b|research (and|&) development|\br ?& ?d\b/.test(t)) return "Engineering";
@@ -1024,7 +1046,7 @@ function mapDiscipline(raw, title) {
   if (/writer|narrative/.test(t)) return "Design";
   // data: only clear data signals (NOT bare "analyst", which catches finance/business analysts)
   if (/\bdata\b|data scien|\banalytics\b|business intelligence|\bbi\b|insights/.test(t)) return "Data & Analytics";
-  if (/esports/.test(t)) return "Esports";
+  if (/\be-?sports?\b/.test(t)) return "Esports";   // also catches singular "esport" / "e-sport(s)"
   if (/player support|customer support|community support/.test(t)) return "Player Support";
   if (/market|\bbrand\b|public relations|\bpr\b|social media|communit|influencer|communication/.test(t)) return "Marketing";
   // Final fallback: a recognized department was already mapped above, so anything left is unknown.
