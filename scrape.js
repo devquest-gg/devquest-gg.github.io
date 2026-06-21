@@ -26,7 +26,6 @@ const DIRECTORY = [
   { name: "Eidos-Montréal", url: "https://www.eidosmontreal.com/careers/", note: "Deus Ex, Tomb Raider — part of Embracer", city: "Montréal, QC" },
   { name: "Valve", url: "https://www.valvesoftware.com/en/jobs", note: "Steam, Half-Life, Dota 2", city: "Bellevue, WA" },
   { name: "Remedy Entertainment", url: "https://www.remedygames.com/careers", note: "Control, Alan Wake — Finland", city: "Espoo, Finland" },
-  { name: "Creative Assembly", url: "https://www.creative-assembly.com/careers", note: "Total War, Alien — Sega", city: "Horsham, UK" },
   { name: "Fuse Games", url: "https://fusegames.com/careers", note: "ex-Criterion devs — UK", city: "Guildford, UK" },
   { name: "Saber Interactive", url: "https://saber.games/careers/", note: "World War Z, Space Marine 2", city: "Fort Lauderdale, FL" },
   { name: "Supermassive Games", url: "https://www.supermassivegames.com/careers", note: "Until Dawn, The Quarry — UK", city: "Guildford, UK" },
@@ -382,6 +381,7 @@ const STUDIOS = [
   // ---- 2026-06-19 batch (requested) ----
   { name: "Ludia", type: "bamboohr", token: "ludia", city: "Montréal, Canada" },                // mobile (Jurassic World Alive, DragonVale) — BambooHR
   { name: "Astrid Entertainment", type: "workable", token: "astrid-entertainment", city: "United Kingdom" }, // co-op open-world studio (UK, remote) — Workable
+  { name: "Creative Assembly", type: "jobvite", token: "creative-assembly", city: "Horsham, UK" },           // Total War, Alien (SEGA) — promoted from Island 2026-06-19, Jobvite
 ];
 
 // ---- Studio type tags (Michelle's idea) ------------------------------------
