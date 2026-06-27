@@ -1292,6 +1292,7 @@ function hotJobs(pool, P, n){
     const local = j => !regionPref.size || j.w==="Remote" || (j.regions||[]).some(r=>regionPref.has(r));
     const cmp   = (a,b)=> (local(b)?1:0)-(local(a)?1:0) || (b.ts||b.fseen||0)-(a.ts||a.fseen||0);
     return pool.filter(j => jobMatchesFilters(j, lf)
+        && profInCountry(j)
         && !saved.has(j.id) && !appStatus[j.id] && !dismissed.has(j.id)
         && (ageOf(j)==null || ageOf(j)<=HOT_MAX_DAYS))
       .sort(cmp).slice(0, n);
@@ -1304,6 +1305,7 @@ function hotJobs(pool, P, n){
   const regionSet = new Set(topKeys(P.region, 0.35));   // their geographic region(s)
   const ageOf = j => _ageDays(j);
   const cand = pool.filter(j => discSet.has(j.d)
+      && profInCountry(j)
       && !saved.has(j.id) && !appStatus[j.id] && !dismissed.has(j.id)
       && !P.negStudio[j.s]
       && (ageOf(j) == null || ageOf(j) <= HOT_MAX_DAYS));
@@ -2641,6 +2643,11 @@ function dqImportFile(input){
 }
 // ---- "What's new" / patch notes (newest first) ------------------------------
 const WHATSNEW = [
+  { id: 20260628, date: "June 2026", title: "Tell us where you can work", items: [
+      "Your career profile on For You now has a “Countries you can work in” picker.",
+      "Set it and your 🔥 Hot jobs and For You matches drop roles based only in other countries, including remote roles tied to them, so you stop seeing jobs you can’t realistically take.",
+      "Leave it empty to keep seeing roles everywhere. Roles with no stated country are always kept, and it’s saved on this device with no account."
+  ]},
   { id: 20260627, date: "June 2026", title: "Our biggest studio update yet", items: [
       "We added 75 studios in one update, the largest expansion so far, bringing the board to more than 340 studios across full live listings and curated link-outs.",
       "Marquee names join the board: GAME FREAK (Pokémon), Relic Entertainment (Company of Heroes, Age of Empires IV), Starbreeze (Payday), Sloclap (Sifu), Kepler Interactive (Clair Obscur), Mundfish (Atomic Heart), Red Barrels (Outlast) and Ember Lab (Kena).",
@@ -3125,6 +3132,43 @@ function profSenEffective(){
 const PROFILE = store.get("dq-profile", null) || { pinned:{} };
 if (!PROFILE.pinned) PROFILE.pinned = {};
 function profSave(){ try { store.set("dq-profile", PROFILE); } catch(e){} }
+// ---- Feasible-countries filter (For You / 🔥 Hot jobs / Best fit) -------------
+// Pin the countries you can actually work in; we then drop roles located ONLY in other
+// countries (including remote roles attributable to them). Roles whose location we can't
+// resolve to a country (remote-unspecified, unlisted, other) are always kept, so a US-remote
+// role with no stated country isn't lost. Empty selection = no constraint (see everywhere).
+const AMBIG_COUNTRY = new Set(["Remote/Unspecified","Unlisted / multiple","Other"]);
+function profCountries(){ return (PROFILE.pinned.countries && Array.isArray(PROFILE.countries)) ? PROFILE.countries.slice() : []; }
+function profCountrySet(){ var a = profCountries(); return a.length ? new Set(a) : null; }
+function profInCountry(j){
+  var set = profCountrySet(); if (!set) return true;
+  var cs = j.countries || [];
+  if (cs.some(function(c){ return set.has(c); })) return true;            // in a country you chose
+  if (cs.some(function(c){ return AMBIG_COUNTRY.has(c); })) return true;  // location unresolved — keep
+  return false;                                                          // all known, none chosen → hide
+}
+function profToggleCountry(c){
+  var a = profCountries(), i = a.indexOf(c);
+  if (i>=0) a.splice(i,1); else a.push(c);
+  if (a.length){ PROFILE.pinned.countries = true; PROFILE.countries = a; }
+  else { PROFILE.pinned.countries = false; delete PROFILE.countries; }
+  profSave(); profRenderCountries(); profSummary();
+  try { bfCompute(); } catch(e){}
+  try { if (typeof render === "function") render(); } catch(e){}
+  try { window.dqTrack && window.dqTrack("profile_set", { f:"countries", n:a.length }); } catch(e){}
+}
+function profClearCountries(){ PROFILE.pinned.countries=false; delete PROFILE.countries; profSave(); profRenderCountries(); profSummary(); try{ bfCompute(); }catch(e){} try{ if(typeof render==="function") render(); }catch(e){} }
+function profCountryBtns(){
+  var sel = new Set(profCountries());
+  var list = Object.keys(COUNTRY_COUNTS).filter(function(c){ return !AMBIG_COUNTRY.has(c); })
+    .sort(function(a,b){ return (COUNTRY_COUNTS[b]-COUNTRY_COUNTS[a]) || a.localeCompare(b); });
+  if (!list.length) return '<span class="pnote">No country data yet.</span>';
+  return list.map(function(c){
+    return '<button class="pseg'+(sel.has(c)?" on":"")+'" onclick="profToggleCountry(\''+c.replace(/'/g,"\\'")+'\')">'
+      + bfEsc(c) + ' <span style="opacity:.55">'+COUNTRY_COUNTS[c]+'</span></button>';
+  }).join("");
+}
+function profRenderCountries(){ var el = document.getElementById("profCountries"); if (el) el.innerHTML = profCountryBtns(); }
 // ===== Cost of living (Stage 3) — static index (≈ relative to San Francisco = 100), approximate.
 // Shown on SINGLE-location jobs in My Jobs + expanded Best fit only; never the front List. =====
 let ROW_COL = false;
@@ -3200,6 +3244,7 @@ function profPanelHtml(){
      + '<div class="pfield"><div class="pflabel">Target roles '+profTagHtml("roles")+'</div><div class="pchips" id="profRoles"></div></div>'
      + '<div class="pfield"><div class="pflabel">Seniority '+profTagHtml("sen")+'</div><div class="pseggrp" id="senSeg">'+profSegBtns("senSeg","sen",PROF_SEN,sen)+'</div></div>'
      + '<div class="pfield"><div class="pflabel">Where can you work? '+profTagHtml("work")+'</div><div class="pseggrp" id="workSeg">'+profSegBtns("workSeg","work",PROF_WORK,work)+'</div><div class="pnote">Pick "remote only" or "near me" only if it\'s a real constraint — otherwise we keep showing roles everywhere.</div></div>'
+     + '<div class="pfield"><div class="pflabel">Countries you can work in <a class="prev" style="display:inline" onclick="profClearCountries()">↺ clear</a></div><div class="pseggrp pcountries" id="profCountries">'+profCountryBtns()+'</div><div class="pnote">🌍 Pick the countries you can actually work in. We hide roles based only in other countries (including remote roles tied to them) from For You and 🔥 Hot jobs. Leave empty to see everywhere. Roles with no stated country are always kept.</div></div>'
      + '<div class="pfield2"><div class="pfield"><div class="pflabel">Experience '+profTagHtml("yrs")+'</div><select id="profYrs" onchange="profSet(\'yrs\', this.value); profSummary()">'+PROF_YRS.map(function(y){return '<option value="'+y+'"'+(y===yrs?" selected":"")+'>'+(y||"—")+'</option>';}).join("")+'</select></div>'
        + '<div class="pfield"><div class="pflabel">Based in '+profTagHtml("loc")+'</div><input class="ptxt" id="profLoc" list="profCities" value="'+bfEsc(loc)+'" placeholder="Type your city…" oninput="profSet(\'loc\', this.value); profSummary()"><datalist id="profCities">'+COL_KEYS.slice().sort().map(function(c){return '<option value="'+bfEsc(c)+'"></option>';}).join("")+'</datalist><div class="pnote">🗺 Your city, used only for cost-of-living comparison on jobs — never to hide roles.</div></div></div>'
    + '</div>';
@@ -3227,6 +3272,7 @@ function profSummary(){
   if (yrs) chips.push(yrs);
   chips.push(work==="remote" ? "Remote only" : work==="nearby" ? ("Remote / near "+(loc||"me")) : "Open to relocating");
   if (loc) chips.push("Based in "+loc);
+  var _cc=profCountries(); if (_cc.length) chips.push("🌍 "+(_cc.length<=2 ? _cc.join(", ") : _cc.length+" countries"));
   if (c) c.innerHTML=chips.map(function(x){ return '<span class="psumchip">'+bfEsc(x)+'</span>'; }).join("");
 }
 function profRenderRoles(){
@@ -3286,7 +3332,7 @@ function bfCompute(){
   const disc = bfActiveDisc || profGet("roles").v[0] || _bfDefaultDisc();
   const sen = profGet("sen").v;
   const remote = profGet("work").v === "remote";
-  const matched = JOBS.filter(j => j.d===disc && (sen==="__any" || j.sen===sen) && (!remote || j.w==="Remote"));
+  const matched = JOBS.filter(j => j.d===disc && (sen==="__any" || j.sen===sen) && (!remote || j.w==="Remote") && profInCountry(j));
   const byS = {};
   for (const j of matched){
     const o = byS[j.s] || (byS[j.s] = { n:j.s, roles:0, paid:0, ages:[], jobs:[] });
