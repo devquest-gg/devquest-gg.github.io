@@ -1541,6 +1541,20 @@ function inferCountry(loc){
   if (/taiwan|taipei/.test(s)) return "Taiwan";
   if (/israel|tel aviv/.test(s)) return "Israel";
   if (/switzerland|zurich|geneva/.test(s)) return "Switzerland";
+  // 2026-06-27: countries previously missing (bucketed as "Other") — needed for the country filter.
+  if (/denmark|copenhagen|aarhus/.test(s)) return "Denmark";
+  if (/norway|oslo/.test(s)) return "Norway";
+  if (/austria|vienna/.test(s)) return "Austria";
+  if (/iceland|reykjav/.test(s)) return "Iceland";
+  if (/serbia|belgrade|novi sad/.test(s)) return "Serbia";
+  if (/croatia|zagreb/.test(s)) return "Croatia";
+  if (/cyprus|nicosia|limassol/.test(s)) return "Cyprus";
+  if (/\bitaly\b|milan|\brome\b|turin|bologna/.test(s)) return "Italy";
+  if (/portugal|lisbon|\bporto\b/.test(s)) return "Portugal";
+  if (/greece|athens/.test(s)) return "Greece";
+  if (/hungary|budapest/.test(s)) return "Hungary";
+  if (/lithuania|vilnius/.test(s)) return "Lithuania";
+  if (/estonia|tallinn/.test(s)) return "Estonia";
   if (/unlisted|multiple location|^blank|,blank/.test(s)) return "Unlisted / multiple";
   if (/remote/.test(s)) return "Remote/Unspecified";
   return "Other";
@@ -2646,7 +2660,7 @@ const WHATSNEW = [
   { id: 20260628, date: "June 2026", title: "Tell us where you can work", items: [
       "Your career profile on For You now has a “Countries you can work in” picker.",
       "Set it and your 🔥 Hot jobs and For You matches drop roles based only in other countries, including remote roles tied to them, so you stop seeing jobs you can’t realistically take.",
-      "Leave it empty to keep seeing roles everywhere. Roles with no stated country are always kept, and it’s saved on this device with no account."
+      "Leave it empty to keep seeing roles everywhere. Roles with no stated country are kept only if they’re remote, and it’s saved on this device with no account."
   ]},
   { id: 20260627, date: "June 2026", title: "Our biggest studio update yet", items: [
       "We added 75 studios in one update, the largest expansion so far, bringing the board to more than 340 studios across full live listings and curated link-outs.",
@@ -3133,19 +3147,21 @@ const PROFILE = store.get("dq-profile", null) || { pinned:{} };
 if (!PROFILE.pinned) PROFILE.pinned = {};
 function profSave(){ try { store.set("dq-profile", PROFILE); } catch(e){} }
 // ---- Feasible-countries filter (For You / 🔥 Hot jobs / Best fit) -------------
-// Pin the countries you can actually work in; we then drop roles located ONLY in other
-// countries (including remote roles attributable to them). Roles whose location we can't
-// resolve to a country (remote-unspecified, unlisted, other) are always kept, so a US-remote
-// role with no stated country isn't lost. Empty selection = no constraint (see everywhere).
+// Pin the countries you can actually work in; we then drop roles located in other countries
+// (including remote roles attributable to them). Roles whose location can't be resolved to a
+// country (remote-unspecified, unlisted, other) are kept ONLY if they're genuinely remote — so a
+// US-remote role with no stated country isn't lost, but an overseas hybrid/onsite role with a
+// vague location ("Hybrid") doesn't sneak through. Empty selection = no constraint (everywhere).
 const AMBIG_COUNTRY = new Set(["Remote/Unspecified","Unlisted / multiple","Other"]);
 function profCountries(){ return (PROFILE.pinned.countries && Array.isArray(PROFILE.countries)) ? PROFILE.countries.slice() : []; }
 function profCountrySet(){ var a = profCountries(); return a.length ? new Set(a) : null; }
 function profInCountry(j){
   var set = profCountrySet(); if (!set) return true;
   var cs = j.countries || [];
-  if (cs.some(function(c){ return set.has(c); })) return true;            // in a country you chose
-  if (cs.some(function(c){ return AMBIG_COUNTRY.has(c); })) return true;  // location unresolved — keep
-  return false;                                                          // all known, none chosen → hide
+  if (cs.some(function(c){ return set.has(c); })) return true;             // in a country you chose → keep
+  if (cs.some(function(c){ return !AMBIG_COUNTRY.has(c); })) return false; // a known country, none yours → overseas, hide
+  // location unresolved: keep only genuinely-remote roles (could be workable); hide hybrid/onsite
+  return j.w === "Remote" || cs.indexOf("Remote/Unspecified") >= 0;
 }
 function profToggleCountry(c){
   var a = profCountries(), i = a.indexOf(c);
@@ -3244,7 +3260,7 @@ function profPanelHtml(){
      + '<div class="pfield"><div class="pflabel">Target roles '+profTagHtml("roles")+'</div><div class="pchips" id="profRoles"></div></div>'
      + '<div class="pfield"><div class="pflabel">Seniority '+profTagHtml("sen")+'</div><div class="pseggrp" id="senSeg">'+profSegBtns("senSeg","sen",PROF_SEN,sen)+'</div></div>'
      + '<div class="pfield"><div class="pflabel">Where can you work? '+profTagHtml("work")+'</div><div class="pseggrp" id="workSeg">'+profSegBtns("workSeg","work",PROF_WORK,work)+'</div><div class="pnote">Pick "remote only" or "near me" only if it\'s a real constraint — otherwise we keep showing roles everywhere.</div></div>'
-     + '<div class="pfield"><div class="pflabel">Countries you can work in <a class="prev" style="display:inline" onclick="profClearCountries()">↺ clear</a></div><div class="pseggrp pcountries" id="profCountries">'+profCountryBtns()+'</div><div class="pnote">🌍 Pick the countries you can actually work in. We hide roles based only in other countries (including remote roles tied to them) from For You and 🔥 Hot jobs. Leave empty to see everywhere. Roles with no stated country are always kept.</div></div>'
+     + '<div class="pfield"><div class="pflabel">Countries you can work in <a class="prev" style="display:inline" onclick="profClearCountries()">↺ clear</a></div><div class="pseggrp pcountries" id="profCountries">'+profCountryBtns()+'</div><div class="pnote">🌍 Pick the countries you can actually work in. We hide roles based only in other countries (including remote roles tied to them) from For You and 🔥 Hot jobs. Leave empty to see everywhere. Roles with no stated country are kept only if they\'re remote.</div></div>'
      + '<div class="pfield2"><div class="pfield"><div class="pflabel">Experience '+profTagHtml("yrs")+'</div><select id="profYrs" onchange="profSet(\'yrs\', this.value); profSummary()">'+PROF_YRS.map(function(y){return '<option value="'+y+'"'+(y===yrs?" selected":"")+'>'+(y||"—")+'</option>';}).join("")+'</select></div>'
        + '<div class="pfield"><div class="pflabel">Based in '+profTagHtml("loc")+'</div><input class="ptxt" id="profLoc" list="profCities" value="'+bfEsc(loc)+'" placeholder="Type your city…" oninput="profSet(\'loc\', this.value); profSummary()"><datalist id="profCities">'+COL_KEYS.slice().sort().map(function(c){return '<option value="'+bfEsc(c)+'"></option>';}).join("")+'</datalist><div class="pnote">🗺 Your city, used only for cost-of-living comparison on jobs — never to hide roles.</div></div></div>'
    + '</div>';
