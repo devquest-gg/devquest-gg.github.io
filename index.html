@@ -224,7 +224,7 @@
   .row.st-rejected { border-left: 3px solid var(--pink); opacity: .55; }
   .row.st-offer { border-left: 3px solid var(--green); }
   .rmain { flex: 1; min-width: 200px; }
-  .rmain .title { font-weight: 700; font-size: 15.5px; color: var(--text); }
+  .rmain .title { font-weight: 800; font-size: 16px; color: var(--text); }
   .rmain .studio { color: var(--accent); font-size: 13px; font-weight: 400; margin-left: 8px; }
   .nfy { background: var(--green); color: #0d1117; font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 999px; margin-left: 8px; vertical-align: middle; }
   .multibadge { background: rgba(88,166,255,.15); color: var(--accent); font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 999px; margin-left: 8px; vertical-align: middle; }
@@ -236,7 +236,7 @@
   .tag.hybrid { color: var(--gold); border-color: var(--gold); }
   .tag.onsite { color: var(--pink); border-color: var(--pink); }
   .tag.unknown { border-style: dashed; }
-  .tag.salary { color: var(--green); border-color: var(--green); font-weight: 700; }
+  .tag.salary { color: var(--green); }   /* green text keeps the honest-pay signal, but no bold/green border so it no longer out-shouts the title */
   .tag.longwarn { color: var(--gold); border-color: rgba(210,153,34,.5); }
   .tag.longbad { color: #f0883e; border-color: rgba(240,136,62,.6); font-weight: 700; }
   .tag.relist { color: var(--pink); border-color: rgba(247,120,186,.5); cursor: help; }
@@ -828,7 +828,7 @@ function dqCopyLink(btn){
       </div>
     </div>
 
-    <div class="acc open" data-sec="kind">
+    <div class="acc" data-sec="kind">
       <button type="button" class="acch" onclick="toggleAcc(this)"><span class="t" title="What the company primarily does. Most are developers; a company can be more than one.">Studio type</span><span class="bdg"></span><span class="chev">▸</span></button>
       <div class="accb"><div class="chips">
         <button type="button" class="kindchip" data-k="dev" onclick="kindChip(this,'dev')">Developer</button>
