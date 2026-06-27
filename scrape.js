@@ -164,7 +164,7 @@ const STUDIOS = [
   { name: "Blackbird Interactive", type: "lever", token: "blackbirdinteractive" },
   { name: "Larian Studios", type: "lever", token: "larian" },
   { name: "Xsolla", type: "lever", token: "xsolla" },   // game commerce / monetization / publishing platform (HQ LA); community-requested via search
-  { name: "Unity", type: "greenhouse", token: "unity3d" },
+  { name: "Unity", type: "greenhouse", token: "unity3d", applyTemplate: "https://unity.com/careers/positions?gh_jid={id}" }, // applies route through unity.com (gh_jid); old boards URL 404s
   { name: "Team17", type: "workable", token: "team-17-digital" },
   { name: "Kinetic Games", type: "rippling", token: "kinetic-games-careers", city: "Southampton, UK" }, // Phasmophobia · Rippling ATS (promoted from Island 2026-06-17)
   // batch 8 (2026-06-17): promoted from Island — confirmed on a supported ATS.
@@ -1286,7 +1286,10 @@ async function fetchGreenhouse(studio) {
       salary: extractSalary(desc),
       yoe: extractYoe(desc),
       postedAt: j.first_published || j.updated_at,
-      url: j.absolute_url,
+      // Some studios route applicants through their own careers site using the Greenhouse job id
+      // (e.g. Unity: unity.com/careers/positions?gh_jid=<id>) and let the old boards.greenhouse.io
+      // URL 404. An optional per-studio applyTemplate ("...{id}...") rebuilds a working apply link.
+      url: studio.applyTemplate ? studio.applyTemplate.replace("{id}", j.id) : j.absolute_url,
     };
   });
 }
