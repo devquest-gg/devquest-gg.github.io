@@ -3367,7 +3367,10 @@ function renderOnboard(){
     + '<div class="ob-lbl">Level <span style="opacity:.6;font-weight:400;text-transform:none;letter-spacing:0">(optional)</span></div><div class="ob-chips">'+lchips+'</div>'
     + '<div class="ob-foot"><button class="ob-go" onclick="obGo()">Show my jobs →</button><a class="ob-skip" onclick="obDismiss()">Just browsing — skip</a></div>'
     + '</div>';
-  if (!el.__shown){ el.__shown = true; obTrack("onboard_shown", {}); }
+  // Defer the impression event a tick: at first paint window.dqTrack isn't defined yet (it's set up
+  // in a later <script> block), so firing it inline would be silently dropped. setTimeout(0) runs
+  // after all scripts have executed, so the "shown" count is accurate.
+  if (!el.__shown){ el.__shown = true; setTimeout(function(){ obTrack("onboard_shown", {}); }, 0); }
 }
 function obPickDisc(btn, d){ _obDisc = (_obDisc===d)?null:d; [].forEach.call(btn.parentElement.children,function(c){ c.classList.toggle("on", c===btn && _obDisc===d); }); obTrack("onboard_pick_disc", { d:d }); }
 function obPickLvl(btn, l){ _obLvl = (_obLvl===l)?null:l; [].forEach.call(btn.parentElement.children,function(c){ c.classList.toggle("on", c===btn && _obLvl===l); }); obTrack("onboard_pick_level", { l:l }); }
