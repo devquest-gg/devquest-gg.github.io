@@ -681,6 +681,13 @@
   .psection { border: 1px solid var(--border); border-radius: 10px; padding: 13px 14px; }
   .psection .pfield:last-child { margin-bottom: 0; }
   .pseclabel { font-size: 12px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; color: var(--text); margin-bottom: 12px; padding-bottom: 9px; border-bottom: 1px solid var(--border); }
+  /* --- Region scope toggle (geo-defaulted) --- */
+  .regionbar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; background: rgba(88,166,255,.10); border: 1px solid rgba(88,166,255,.45); border-radius: 10px; padding: 9px 14px; margin: 10px 0 14px; }
+  .regionbar.rb-world { background: rgba(210,153,34,.10); border-color: rgba(210,153,34,.45); }
+  .regionbar .rb-msg { font-size: 13px; color: var(--text); } .regionbar .rb-msg b { font-weight: 800; }
+  .regionbar .rb-btn { margin-left: auto; font-size: 13px; font-weight: 800; padding: 7px 15px; border-radius: 8px; border: 1px solid var(--accent); background: var(--accent); color: #0d1117; cursor: pointer; white-space: nowrap; }
+  .regionbar .rb-btn:hover { filter: brightness(1.08); }
+  @media (max-width: 600px) { .regionbar .rb-btn { margin-left: 0; width: 100%; text-align: center; } }
   .bfdiscsw { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin: 0 0 12px; }
   .bfdiscsw .bfswlbl { font-size: 13px; color: var(--muted); margin-right: 2px; }
   .bfdiscsw .dbtn { font-size: 13px; font-weight: 600; padding: 5px 12px; border-radius: 999px; border: 1px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; }
@@ -867,6 +874,7 @@ function dqCopyLink(btn){
       <button id="tabStats" onclick="setView('stats')">📈 <span class="tabwide">Hiring </span>Trends</button>
     </div>
     </div>
+    <div id="regionBar"></div>
     <div id="pulseStrip"></div>
     <div id="followWrap"></div>
     <div id="matrixWrap"></div>
@@ -1286,7 +1294,7 @@ function hotJobs(pool, P, n){
     const _tgtSen = senPref ? SEN_FILTER_ORDER.indexOf(senPref) : -1;
     const _senOK = j => { if (_tgtSen < 0) return true; var r = SEN_FILTER_ORDER.indexOf(j.sen); return r < 0 || (r >= _tgtSen-1 && r <= _tgtSen+1); };
     const cand = pool.filter(j => discSet.has(j.d) && (!remoteOnly || j.w==="Remote")
-        && profInCountry(j) && _senOK(j)
+        && forYouGeoOK(j) && _senOK(j)
         && !saved.has(j.id) && !appStatus[j.id] && !dismissed.has(j.id)
         && (ageOf(j)==null || ageOf(j)<=HOT_MAX_DAYS));
     const cmp = (a,b)=> (senPref?((b.sen===senPref?1:0)-(a.sen===senPref?1:0)):0) || (b.ts||b.fseen||0)-(a.ts||a.fseen||0);
@@ -1304,7 +1312,7 @@ function hotJobs(pool, P, n){
     const local = j => !regionPref.size || j.w==="Remote" || (j.regions||[]).some(r=>regionPref.has(r));
     const cmp   = (a,b)=> (local(b)?1:0)-(local(a)?1:0) || (b.ts||b.fseen||0)-(a.ts||a.fseen||0);
     return pool.filter(j => jobMatchesFilters(j, lf)
-        && profInCountry(j)
+        && forYouGeoOK(j)
         && !saved.has(j.id) && !appStatus[j.id] && !dismissed.has(j.id)
         && (ageOf(j)==null || ageOf(j)<=HOT_MAX_DAYS))
       .sort(cmp).slice(0, n);
@@ -1317,7 +1325,7 @@ function hotJobs(pool, P, n){
   const regionSet = new Set(topKeys(P.region, 0.35));   // their geographic region(s)
   const ageOf = j => _ageDays(j);
   const cand = pool.filter(j => discSet.has(j.d)
-      && profInCountry(j)
+      && forYouGeoOK(j)
       && !saved.has(j.id) && !appStatus[j.id] && !dismissed.has(j.id)
       && !P.negStudio[j.s]
       && (ageOf(j) == null || ageOf(j) <= HOT_MAX_DAYS));
@@ -1916,7 +1924,8 @@ function render(){
     (!s.length || s.includes(j.sen)) &&
     (!r || j.regions.includes(r)) &&
     (!quickRemote || j.w === "Remote") &&
-    (!selRegionsQuick.size || j.regions.some(x=>selRegionsQuick.has(x)))
+    (!selRegionsQuick.size || j.regions.some(x=>selRegionsQuick.has(x))) &&
+    regionScopeOK(j)
   );
 
   // facet helpers: each chip group's counts respect ALL the other active facets,
@@ -2669,6 +2678,11 @@ function dqImportFile(input){
 }
 // ---- "What's new" / patch notes (newest first) ------------------------------
 const WHATSNEW = [
+  { id: 20260629, date: "June 2026", title: "Roles for your part of the world, first", items: [
+      "The board now leads with roles in your region. We detect your continent from your browser timezone (no account, no IP, no tracking) and default to it.",
+      "A prominent toggle up top flips you to 🌍 worldwide anytime, and your choice sticks. Remote roles and ones with no stated location are always kept, so nothing feasible is hidden.",
+      "If your continent is light on roles we just show worldwide, and an explicit country choice in your profile always takes precedence."
+  ]},
   { id: 20260628, date: "June 2026", title: "Tell us where you can work", items: [
       "Your career profile on For You now has a “Countries you can work in” picker.",
       "Set it and your 🔥 Hot jobs and For You matches drop roles based only in other countries, including remote roles tied to them, so you stop seeing jobs you can’t realistically take.",
@@ -3017,6 +3031,7 @@ function setView(v){
   document.getElementById("jobs").style.display = (v==="list") ? "" : "none";
   document.getElementById("count").style.display = (v==="list") ? "" : "none";
   document.getElementById("directory").style.display = v==="list" ? "" : "none";
+  var _rb=document.getElementById("regionBar"); if(_rb) _rb.style.display = (v==="list"||v==="bestfit") ? "" : "none";
   document.getElementById("moon").style.display = v==="list" ? "" : "none";
   document.getElementById("matrixWrap").style.display = v==="list" ? "" : "none";
   document.getElementById("quickbar").style.display = v==="list" ? "" : "none";
@@ -3167,14 +3182,16 @@ function profSave(){ try { store.set("dq-profile", PROFILE); } catch(e){} }
 const AMBIG_COUNTRY = new Set(["Remote/Unspecified","Unlisted / multiple","Other"]);
 function profCountries(){ return (PROFILE.pinned.countries && Array.isArray(PROFILE.countries)) ? PROFILE.countries.slice() : []; }
 function profCountrySet(){ var a = profCountries(); return a.length ? new Set(a) : null; }
-function profInCountry(j){
-  var set = profCountrySet(); if (!set) return true;
+// Shared geo test: keep j if it has a country in `set`; hide if it has a known country NOT in the
+// set; for unresolved-location roles keep only genuinely-remote ones. set=null → keep everything.
+function inCountrySet(j, set){
+  if (!set) return true;
   var cs = j.countries || [];
-  if (cs.some(function(c){ return set.has(c); })) return true;             // in a country you chose → keep
-  if (cs.some(function(c){ return !AMBIG_COUNTRY.has(c); })) return false; // a known country, none yours → overseas, hide
-  // location unresolved: keep only genuinely-remote roles (could be workable); hide hybrid/onsite
+  if (cs.some(function(c){ return set.has(c); })) return true;
+  if (cs.some(function(c){ return !AMBIG_COUNTRY.has(c); })) return false;
   return j.w === "Remote" || cs.indexOf("Remote/Unspecified") >= 0;
 }
+function profInCountry(j){ return inCountrySet(j, profCountrySet()); }
 function profToggleCountry(c){
   var a = profCountries(), i = a.indexOf(c);
   if (i>=0) a.splice(i,1); else a.push(c);
@@ -3204,6 +3221,69 @@ function profCountryBtns(){
 }
 function profAddCountryVal(c){ if (c) profToggleCountry(c); }
 function profRenderCountries(){ var el = document.getElementById("profCountries"); if (el) el.innerHTML = profCountryBtns(); }
+
+// ---- Region scope: geo-defaulted "your region / worldwide" toggle ------------------------
+// First-time visitors see roles for THEIR continent, detected from the browser timezone (no IP,
+// no network, no third party — fits the cookieless approach), with a prominent toggle to switch to
+// worldwide. Same safety as the country filter: remote and unknown-location roles are never hidden.
+// An explicit profile-country choice overrides this for For You. We only auto-scope to a continent
+// that actually has enough roles to be useful (else default worldwide), and we never override a
+// choice the visitor has already made.
+const CONTINENT_OF = {
+  "United States":"North America","Canada":"North America",
+  "Mexico":"Latin America","Brazil":"Latin America",
+  "United Kingdom":"Europe","France":"Europe","Germany":"Europe","Spain":"Europe","Poland":"Europe","Sweden":"Europe","Finland":"Europe","Romania":"Europe","Ireland":"Europe","Netherlands":"Europe","Belgium":"Europe","Czech Republic":"Europe","Turkey":"Europe","Ukraine":"Europe","Bulgaria":"Europe","Switzerland":"Europe","Denmark":"Europe","Norway":"Europe","Austria":"Europe","Iceland":"Europe","Serbia":"Europe","Croatia":"Europe","Cyprus":"Europe","Italy":"Europe","Portugal":"Europe","Greece":"Europe","Hungary":"Europe","Lithuania":"Europe","Estonia":"Europe",
+  "China":"Asia-Pacific","Japan":"Asia-Pacific","South Korea":"Asia-Pacific","Singapore":"Asia-Pacific","Australia":"Asia-Pacific","New Zealand":"Asia-Pacific","India":"Asia-Pacific","Vietnam":"Asia-Pacific","Philippines":"Asia-Pacific","Thailand":"Asia-Pacific","Malaysia":"Asia-Pacific","Taiwan":"Asia-Pacific",
+  "UAE":"Middle East & Africa","Israel":"Middle East & Africa"
+};
+const _REGION_SETS = {};
+Object.keys(CONTINENT_OF).forEach(function(c){ var r=CONTINENT_OF[c]; (_REGION_SETS[r]=_REGION_SETS[r]||new Set()).add(c); });
+function regionCountrySet(r){ return _REGION_SETS[r] || null; }
+function regionScopeOK(j){ return !REGION_SCOPE || inCountrySet(j, regionCountrySet(REGION_SCOPE)); }
+function forYouGeoOK(j){ return profCountrySet() ? profInCountry(j) : regionScopeOK(j); }  // explicit countries win for For You
+function detectRegionFromTZ(){
+  var tz=""; try{ tz=Intl.DateTimeFormat().resolvedOptions().timeZone||""; }catch(e){}
+  if(!tz) return null;
+  if(tz==="Pacific/Honolulu") return "North America";
+  if(/^America\/(Mexico|Tijuana|Monterrey|Cancun|Merida|Matamoros|Chihuahua|Hermosillo|Mazatlan|Bogota|Lima|Santiago|Sao_Paulo|Argentina|Buenos_Aires|Caracas|Montevideo|La_Paz|Guayaquil|Asuncion|Costa_Rica|Guatemala|Panama|Havana|Santo_Domingo|El_Salvador|Tegucigalpa|Managua|Recife|Fortaleza|Bahia|Manaus|Cuiaba|Belem|Campo_Grande|Porto_Velho|Rio_Branco|Maceio|Noronha)/.test(tz)) return "Latin America";
+  if(/^America\//.test(tz)) return "North America";
+  if(/^Europe\//.test(tz) || /^Atlantic\/(Reykjavik|Canary|Faroe|Madeira)/.test(tz)) return "Europe";
+  if(/^Africa\//.test(tz) || /^Asia\/(Jerusalem|Tel_Aviv|Gaza|Hebron|Dubai|Muscat|Riyadh|Qatar|Kuwait|Bahrain|Baghdad|Tehran|Beirut|Amman|Damascus|Aden)/.test(tz)) return "Middle East & Africa";
+  if(/^(Asia|Australia)\//.test(tz) || /^Pacific\//.test(tz)) return "Asia-Pacific";
+  return null;
+}
+const HOME_REGION = detectRegionFromTZ();
+const REGION_MIN = 120;   // only auto-scope to a continent with at least this many of its OWN roles
+var REGION_SCOPE = null;
+(function initRegionScope(){
+  var saved=null; try{ saved=store.get("dq-region-scope", null); }catch(e){}
+  if(saved){ REGION_SCOPE = (saved==="WORLD") ? null : saved; return; }   // honor a prior explicit choice
+  if(HOME_REGION){
+    var rset = regionCountrySet(HOME_REGION);
+    var own = rset ? JOBS.filter(function(j){ return (j.countries||[]).some(function(c){ return rset.has(c); }); }).length : 0;
+    if(own >= REGION_MIN) REGION_SCOPE = HOME_REGION;   // auto-default; not persisted until the visitor chooses
+  }
+})();
+function setRegionScope(r){
+  REGION_SCOPE = (r==="WORLD"||!r) ? null : r;
+  try{ store.set("dq-region-scope", REGION_SCOPE || "WORLD"); }catch(e){}
+  renderRegionBar();
+  try{ render(); }catch(e){}
+  try{ bfCompute(); }catch(e){}
+  try{ window.dqTrack && window.dqTrack("region_scope", { r: REGION_SCOPE || "WORLD" }); }catch(e){}
+}
+function renderRegionBar(){
+  var el=document.getElementById("regionBar"); if(!el) return;
+  if(!REGION_SCOPE && !HOME_REGION){ el.innerHTML=""; return; }
+  if(REGION_SCOPE){
+    el.innerHTML='<div class="regionbar"><span class="rb-msg">📍 Showing <b>'+bfEsc(REGION_SCOPE)+'</b> roles. Out-of-region jobs are hidden; remote roles always stay.</span>'
+      +'<button class="rb-btn" onclick="setRegionScope(\'WORLD\')">🌍 Show worldwide</button></div>';
+  } else {
+    var home=HOME_REGION;
+    el.innerHTML='<div class="regionbar rb-world"><span class="rb-msg">🌍 Showing <b>worldwide</b> roles.</span>'
+      +(home?'<button class="rb-btn" onclick="setRegionScope(\''+home.replace(/'/g,"\\'")+'\')">📍 '+bfEsc(home)+' only</button>':'')+'</div>';
+  }
+}
 // ===== Cost of living (Stage 3) — static index (≈ relative to San Francisco = 100), approximate.
 // Shown on SINGLE-location jobs in My Jobs + expanded Best fit only; never the front List. =====
 let ROW_COL = false;
@@ -3375,7 +3455,7 @@ function bfCompute(){
   const disc = bfActiveDisc || profGet("roles").v[0] || _bfDefaultDisc();
   const sen = profGet("sen").v;
   const remote = profGet("work").v === "remote";
-  const matched = JOBS.filter(j => j.d===disc && (sen==="__any" || j.sen===sen) && (!remote || j.w==="Remote") && profInCountry(j));
+  const matched = JOBS.filter(j => j.d===disc && (sen==="__any" || j.sen===sen) && (!remote || j.w==="Remote") && forYouGeoOK(j));
   const byS = {};
   for (const j of matched){
     const o = byS[j.s] || (byS[j.s] = { n:j.s, roles:0, paid:0, ages:[], jobs:[] });
@@ -4531,6 +4611,7 @@ try {
 renderDirectory();
 renderMoon();
 render();
+renderRegionBar();
 renderPulseStrip();
 updateFollowTab();
 dqUpdateWhatsNewDot();
