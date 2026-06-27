@@ -707,6 +707,23 @@
   .a2-modal h3 { margin: 0 0 12px; font-size: 16px; }
   .a2-modal ol { margin: 0; padding-left: 20px; font-size: 14px; line-height: 1.75; color: var(--text); }
   .a2-modal .a2-close { margin-top: 16px; width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border); background: transparent; color: var(--text); font-weight: 800; cursor: pointer; }
+  /* --- First-run onboarding card --- */
+  #onboardCard { margin: 10px 0 14px; }
+  .obcard { position: relative; background: linear-gradient(180deg,rgba(88,166,255,.08),var(--panel)); border: 1.5px solid rgba(88,166,255,.55); border-radius: 12px; padding: 15px 17px; }
+  .obcard .ob-x { position: absolute; top: 10px; right: 12px; background: none; border: none; color: var(--muted); font-size: 17px; cursor: pointer; line-height: 1; }
+  .obcard .ob-x:hover { color: var(--text); }
+  .obcard .ob-h { font-size: 16px; font-weight: 800; color: var(--text); padding-right: 22px; }
+  .obcard .ob-sub { font-size: 13px; color: var(--muted); margin: 3px 0 12px; max-width: 640px; }
+  .obcard .ob-lbl { font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .03em; margin-bottom: 7px; }
+  .obcard .ob-chips { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 13px; }
+  .ob-chip { font-size: 13px; font-weight: 600; padding: 6px 13px; border-radius: 999px; border: 1px solid var(--border); background: transparent; color: var(--text); cursor: pointer; }
+  .ob-chip:hover { border-color: var(--muted); }
+  .ob-chip.on { background: var(--accent); color: #0d1117; border-color: var(--accent); }
+  .obcard .ob-foot { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin-top: 2px; }
+  .obcard .ob-go { font-size: 14px; font-weight: 800; padding: 9px 18px; border-radius: 8px; border: 1px solid var(--accent); background: var(--accent); color: #0d1117; cursor: pointer; }
+  .obcard .ob-go:hover { filter: brightness(1.08); }
+  .obcard .ob-skip { font-size: 13px; color: var(--muted); cursor: pointer; }
+  .obcard .ob-skip:hover { color: var(--text); text-decoration: underline; }
   .bfdiscsw { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin: 0 0 12px; }
   .bfdiscsw .bfswlbl { font-size: 13px; color: var(--muted); margin-right: 2px; }
   .bfdiscsw .dbtn { font-size: 13px; font-weight: 600; padding: 5px 12px; border-radius: 999px; border: 1px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; }
@@ -894,6 +911,7 @@ function dqCopyLink(btn){
       <button id="tabStats" onclick="setView('stats')">📈 <span class="tabwide">Hiring </span>Trends</button>
     </div>
     </div>
+    <div id="onboardCard"></div>
     <div id="regionBar"></div>
     <div id="pulseStrip"></div>
     <div id="followWrap"></div>
@@ -3065,6 +3083,7 @@ function setView(v){
   document.getElementById("count").style.display = (v==="list") ? "" : "none";
   document.getElementById("directory").style.display = v==="list" ? "" : "none";
   var _rb=document.getElementById("regionBar"); if(_rb) _rb.style.display = (v==="list"||v==="bestfit") ? "" : "none";
+  try{ renderOnboard(); }catch(e){}
   document.getElementById("moon").style.display = v==="list" ? "" : "none";
   document.getElementById("matrixWrap").style.display = v==="list" ? "" : "none";
   document.getElementById("quickbar").style.display = v==="list" ? "" : "none";
@@ -3317,6 +3336,51 @@ function renderRegionBar(){
       +(home?'<button class="rb-btn" onclick="setRegionScope(\''+home.replace(/'/g,"\\'")+'\')">📍 '+bfEsc(home)+' only</button>':'')+'</div>';
   }
 }
+
+// ---- First-run onboarding card (new visitors → personalized For You) ----------------------
+// Shows only to a brand-new visitor who hasn't pinned a profile yet, at the top of the List view.
+// Picking a craft (+ optional level) seeds the For You profile and jumps them straight to matches.
+// Dismissible; once dismissed or once a profile exists it never returns. Every step is tracked so
+// we can see the funnel (shown → pick → submit vs dismiss) in /stats.
+var ONBOARD_DISCS = ["Engineering","Art","Animation","Design","Production","QA","Audio","Data & Analytics","Marketing & Comms"].filter(function(d){ return DISC.indexOf(d) >= 0; });
+var _obDisc = null, _obLvl = null;
+function obTrack(ev, d){ try{ window.dqTrack && window.dqTrack(ev, d||{}); }catch(e){} }
+function obEligible(){
+  if (view !== "list") return false;
+  try{ if (store.get("dq-onboard-done",0)) return false; }catch(e){}
+  try{ if (profPinnedRoles()) return false; }catch(e){}
+  return true;
+}
+function obSetDone(){ try{ store.set("dq-onboard-done",1); }catch(e){} }
+function renderOnboard(){
+  var el = document.getElementById("onboardCard"); if(!el) return;
+  if (!obEligible()){ el.innerHTML=""; el.style.display="none"; el.__shown=false; return; }
+  var lvls = ["Entry","Mid","Senior","Lead","Director+"];
+  var chips = ONBOARD_DISCS.map(function(d){ return '<button class="ob-chip'+(d===_obDisc?' on':'')+'" onclick="obPickDisc(this,\''+d.replace(/'/g,"\\'")+'\')">'+bfEsc(d)+'</button>'; }).join("");
+  var lchips = lvls.map(function(l){ return '<button class="ob-chip'+(l===_obLvl?' on':'')+'" onclick="obPickLvl(this,\''+l+'\')">'+l+'</button>'; }).join("");
+  el.style.display="";
+  el.innerHTML = '<div class="obcard">'
+    + '<button class="ob-x" aria-label="Dismiss" onclick="obDismiss()">✕</button>'
+    + '<div class="ob-h">👋 New here? Get jobs matched to you</div>'
+    + '<div class="ob-sub">Pick your craft and level and we will surface the best-fit studios and roles. No account; saved on this device.</div>'
+    + '<div class="ob-lbl">I work in</div><div class="ob-chips">'+chips+'</div>'
+    + '<div class="ob-lbl">Level <span style="opacity:.6;font-weight:400;text-transform:none;letter-spacing:0">(optional)</span></div><div class="ob-chips">'+lchips+'</div>'
+    + '<div class="ob-foot"><button class="ob-go" onclick="obGo()">Show my matches →</button><a class="ob-skip" onclick="obDismiss()">Just browsing — skip</a></div>'
+    + '</div>';
+  if (!el.__shown){ el.__shown = true; obTrack("onboard_shown", {}); }
+}
+function obPickDisc(btn, d){ _obDisc = (_obDisc===d)?null:d; [].forEach.call(btn.parentElement.children,function(c){ c.classList.toggle("on", c===btn && _obDisc===d); }); obTrack("onboard_pick_disc", { d:d }); }
+function obPickLvl(btn, l){ _obLvl = (_obLvl===l)?null:l; [].forEach.call(btn.parentElement.children,function(c){ c.classList.toggle("on", c===btn && _obLvl===l); }); obTrack("onboard_pick_level", { l:l }); }
+function obGo(){
+  obTrack("onboard_submit", { d:_obDisc||"", l:_obLvl||"" });
+  if (_obDisc){ try{ profSet("roles",[_obDisc]); bfActiveDisc=_obDisc; }catch(e){} }
+  if (_obLvl){ try{ profSet("sen",_obLvl); }catch(e){} }
+  obSetDone();
+  var el=document.getElementById("onboardCard"); if(el){ el.innerHTML=""; el.style.display="none"; }
+  try{ setView("bestfit"); }catch(e){}
+  try{ profSummary(); profRenderRoles(); bfRenderDiscSw(); bfCompute(); }catch(e){}
+}
+function obDismiss(){ obTrack("onboard_dismiss", {}); obSetDone(); var el=document.getElementById("onboardCard"); if(el){ el.innerHTML=""; el.style.display="none"; } }
 // ===== Cost of living (Stage 3) — static index (≈ relative to San Francisco = 100), approximate.
 // Shown on SINGLE-location jobs in My Jobs + expanded Best fit only; never the front List. =====
 let ROW_COL = false;
@@ -4645,6 +4709,7 @@ renderDirectory();
 renderMoon();
 render();
 renderRegionBar();
+renderOnboard();
 renderPulseStrip();
 updateFollowTab();
 dqUpdateWhatsNewDot();
