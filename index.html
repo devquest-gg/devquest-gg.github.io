@@ -1113,7 +1113,7 @@ const prevVisit = store.get("luj-lastVisit", 0);
 store.set("luj-lastVisit", Date.now());
 
 // ---- discipline consolidation: keep dev crafts, fold corporate noise -------
-const CORE_DISC = ["Engineering","Art","Animation","Design","Audio","Production","QA","Data & Analytics","Esports"];
+const CORE_DISC = ["Engineering","Art","Animation","Design","Audio","Production","QA","Data & Analytics"];
 function normDisc(d){
   if (CORE_DISC.includes(d)) return d;
   if (d === "Player Support") return "Marketing & Comms";   // too few roles for its own row — folded into Marketing & Comms
@@ -2041,7 +2041,6 @@ const DISC_INFO = {
   "Production": "Roles that drive a project to ship: producers, project and program managers, product managers, and development directors.",
   "QA": "Quality assurance and testing — manual QA, test analysts, and QA leads.<span class='tipnote'>Test automation engineering is under Engineering.</span>",
   "Data & Analytics": "Data science, analytics, business intelligence, and player-insights roles.",
-  "Esports": "Competitive play — esports operations, leagues, and live events.",
   "Player Support": "Player-facing support and community-support roles.",
   "Marketing & Comms": "Marketing, brand, PR, social, community management, and communications.",
   "Business & Ops": "The teams that keep a studio running: people and HR, finance, legal, IT, facilities, and security. Vendor and outsourcing management lives here too, including art outsourcing.",
@@ -2086,7 +2085,7 @@ const escTip = s => String(s).replace(/"/g, "&quot;");
 // disciplines (Marketing, Player Support, Business & Ops, …) stay gray so they recede.
 const DISC_COLOR = {
   "Engineering":"#5b9bd5","Art":"#b388d6","Animation":"#db8bb2","Design":"#4fb3a6",
-  "Audio":"#d4a85f","Production":"#7fb06c","QA":"#d18f63","Data & Analytics":"#5fb9cb","Esports":"#d27b7b"
+  "Audio":"#d4a85f","Production":"#7fb06c","QA":"#d18f63","Data & Analytics":"#5fb9cb"
 };
 function discColor(d){ return DISC_COLOR[d] || "var(--muted)"; }
 

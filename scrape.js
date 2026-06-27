@@ -1058,7 +1058,7 @@ const DISCIPLINE_MAP = {
   production: "Production", "quality assurance": "QA", qa: "QA",
   marketing: "Marketing", communications: "Marketing", publishing: "Marketing",
   data: "Data & Analytics", analytics: "Data & Analytics", research: "Data & Analytics",
-  esports: "Esports", "player support": "Player Support",
+  "player support": "Player Support",
   hr: "People & Ops", "human resources": "People & Ops", people: "People & Ops", finance: "People & Ops",
   legal: "People & Ops", facilities: "People & Ops", security: "IT & Security",
   it: "IT & Security", "information technology": "IT & Security",
@@ -1153,7 +1153,6 @@ function mapDiscipline(raw, title) {
   if (/writer|narrative/.test(t)) return "Design";
   // data: only clear data signals (NOT bare "analyst", which catches finance/business analysts)
   if (/\bdata\b|data scien|\banalytics\b|business intelligence|\bbi\b|insights/.test(t)) return "Data & Analytics";
-  if (/\be-?sports?\b/.test(t)) return "Esports";   // also catches singular "esport" / "e-sport(s)"
   if (/player support|customer support|community support/.test(t)) return "Player Support";
   if (/market|\bbrand\b|public relations|\bpr\b|social media|communit|influencer|communication/.test(t)) return "Marketing";
   // Final fallback: a recognized department was already mapped above, so anything left is unknown.
