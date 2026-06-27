@@ -5,6 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>DevQuest: Game Dev Jobs, Fresh and Filtered</title>
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
+<!-- Installable PWA (add-to-home-screen) -->
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#0d1117">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="DevQuest">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="description" content="Live game-dev jobs from 100+ studios, synced hourly. Map view, salary data, ghost-job filters, and free weekly email alerts. No ads.">
 <!-- Let Google show large image previews + full-length snippets in results & Discover. -->
 <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
@@ -688,6 +696,17 @@
   .regionbar .rb-btn { margin-left: auto; font-size: 13px; font-weight: 800; padding: 7px 15px; border-radius: 8px; border: 1px solid var(--accent); background: var(--accent); color: #0d1117; cursor: pointer; white-space: nowrap; }
   .regionbar .rb-btn:hover { filter: brightness(1.08); }
   @media (max-width: 600px) { .regionbar .rb-btn { margin-left: 0; width: 100%; text-align: center; } }
+  /* --- Add-to-home-screen (PWA install) banner + how-to --- */
+  #a2hsBanner { position: fixed; left: 12px; right: 12px; bottom: 12px; z-index: 1200; display: flex; align-items: center; gap: 12px; background: var(--panel); border: 1px solid rgba(88,166,255,.5); border-radius: 12px; padding: 11px 13px; box-shadow: 0 8px 30px rgba(0,0,0,.5); }
+  #a2hsBanner .a2-ico { width: 34px; height: 34px; border-radius: 8px; flex-shrink: 0; }
+  #a2hsBanner .a2-txt { font-size: 12.5px; color: var(--text); line-height: 1.35; flex: 1; } #a2hsBanner .a2-txt b { font-weight: 800; }
+  #a2hsBanner .a2-add { font-size: 13px; font-weight: 800; padding: 8px 14px; border-radius: 8px; border: 1px solid var(--accent); background: var(--accent); color: #0d1117; cursor: pointer; white-space: nowrap; }
+  #a2hsBanner .a2-x { background: none; border: none; color: var(--muted); font-size: 18px; cursor: pointer; padding: 2px 4px; line-height: 1; }
+  .a2-modal { position: fixed; inset: 0; z-index: 1300; background: rgba(0,0,0,.6); display: flex; align-items: center; justify-content: center; padding: 20px; }
+  .a2-modal .a2-card { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 20px; max-width: 360px; width: 100%; }
+  .a2-modal h3 { margin: 0 0 12px; font-size: 16px; }
+  .a2-modal ol { margin: 0; padding-left: 20px; font-size: 14px; line-height: 1.75; color: var(--text); }
+  .a2-modal .a2-close { margin-top: 16px; width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border); background: transparent; color: var(--text); font-weight: 800; cursor: pointer; }
   .bfdiscsw { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin: 0 0 12px; }
   .bfdiscsw .bfswlbl { font-size: 13px; color: var(--muted); margin-right: 2px; }
   .bfdiscsw .dbtn { font-size: 13px; font-weight: 600; padding: 5px 12px; border-radius: 999px; border: 1px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; }
@@ -754,6 +773,7 @@
       <button type="button" class="dqsh dqsh-cp" title="Copy link" aria-label="Copy link" onclick="dqCopyLink(this)"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"/></svg></button>
     </div>
     <!-- SHARE:END -->
+    <button id="installBtn" class="wnbtn" style="display:none" onclick="dqInstall()" title="Install DevQuest as an app on your device"><span class="bico-m" aria-hidden="true">📲</span><span class="btxt">📲 Install app</span></button>
     <button class="wnbtn" onclick="openWhatsNew()" title="What's new on DevQuest"><span class="bico-m" aria-hidden="true">✨</span><span class="btxt">✨ What's new</span><span class="wndot" id="wnDot"></span></button>
     <a class="aboutbtn" href="/about" title="Our mission: what DevQuest is, and what it isn't" onclick="try{window.dqTrack&&window.dqTrack('about_click',{})}catch(e){}" style="color:var(--muted);font-size:13px;font-weight:600;text-decoration:none;border:1px solid var(--border);padding:7px 13px;border-radius:7px;white-space:nowrap"><span class="bico-m" aria-hidden="true">📖</span><span class="btxt">Our mission</span></a>
     <a class="feedbackbtn" href="mailto:studios@devquest.gg?subject=DevQuest%20feedback&body=Bug%2C%20idea%2C%20or%20just%20a%20thought%3A%0A%0A%0AWhat%20page%20or%20filter%20were%20you%20on%20(optional)%3A%0A" title="Report a bug or share an idea (opens your email)" onclick="try{window.dqTrack&&window.dqTrack('feedback_click',{})}catch(e){}" style="color:var(--accent);font-size:13px;font-weight:600;text-decoration:none;border:1px solid var(--border);padding:7px 13px;border-radius:7px;white-space:nowrap"><span class="bico-m" aria-hidden="true">💬</span><span class="btxt">💬 Feedback</span></a>
@@ -4642,6 +4662,74 @@ try {
   window.addEventListener('load', alignFiltersTop);
   window.addEventListener('resize', function(){ clearTimeout(window.__afT); window.__afT = setTimeout(alignFiltersTop, 120); });
 } catch(e){}
+
+// ---- Add to home screen (installable PWA) -------------------------------------------------
+// Browsers don't allow a one-click "install" link universally. So: register a tiny service worker
+// (makes the site installable + fast), reveal a header "Install app" button when the browser supports
+// it, and show a dismissible mobile banner on the 2nd–4th visit (never the first). Android/desktop
+// Chrome get the native install dialog; iOS Safari gets a short "Share → Add to Home Screen" how-to
+// (Apple blocks programmatic install). Nothing shows once the app is already installed.
+(function(){
+  var deferredPrompt = null;
+  var isStandalone = (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone === true;
+  var isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  var isMobile = window.matchMedia && matchMedia('(max-width: 760px)').matches;
+  var btn = document.getElementById('installBtn');
+  function track(ev, d){ try{ window.dqTrack && window.dqTrack(ev, d||{}); }catch(e){} }
+
+  if ('serviceWorker' in navigator) { try { navigator.serviceWorker.register('/sw.js').catch(function(){}); } catch(e){} }
+  if (isStandalone) return;   // already installed → no install UI
+
+  var visits = 0;
+  try {
+    if (!sessionStorage.getItem('dq-sess')) { sessionStorage.setItem('dq-sess','1'); visits = (store.get('dq-visits',0)||0) + 1; store.set('dq-visits', visits); }
+    else visits = store.get('dq-visits',0)||0;
+  } catch(e){ visits = 1; }
+  function dismissed(){ try { return !!store.get('dq-a2hs-dismissed',0); } catch(e){ return false; } }
+  function showBtn(){ if (btn) btn.style.display = ''; }
+  function hideBanner(){ var b=document.getElementById('a2hsBanner'); if(b) b.remove(); }
+
+  window.addEventListener('beforeinstallprompt', function(e){ e.preventDefault(); deferredPrompt = e; showBtn(); maybeBanner(); });
+  window.addEventListener('appinstalled', function(){ deferredPrompt = null; if(btn) btn.style.display='none'; hideBanner(); track('pwa_installed'); });
+  if (isIOS) showBtn();
+
+  window.dqInstall = function(){
+    track('pwa_install_click', { ios: isIOS });
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      if (deferredPrompt.userChoice) deferredPrompt.userChoice.then(function(c){ track('pwa_choice', { outcome:(c&&c.outcome)||'?' }); }).finally(function(){ deferredPrompt=null; if(btn) btn.style.display='none'; hideBanner(); });
+      return;
+    }
+    showHowTo();
+  };
+
+  function showHowTo(){
+    if (document.getElementById('a2hsModal')) return;
+    var share = isIOS ? 'the Share button <b>(the square with an up-arrow)</b>' : 'your browser menu <b>(⋮)</b>';
+    var add   = isIOS ? '<b>“Add to Home Screen”</b>' : '<b>“Install app”</b> or <b>“Add to Home screen”</b>';
+    var m = document.createElement('div'); m.id='a2hsModal'; m.className='a2-modal';
+    m.innerHTML = '<div class="a2-card"><h3>📲 Add DevQuest to your home screen</h3>'
+      + '<ol><li>Tap '+share+'.</li><li>Choose '+add+'.</li><li>Tap <b>Add</b> — DevQuest gets its own app icon.</li></ol>'
+      + '<button class="a2-close">Got it</button></div>';
+    m.addEventListener('click', function(ev){ if (ev.target===m || (ev.target.className||'').indexOf('a2-close')>=0) m.remove(); });
+    document.body.appendChild(m);
+  }
+
+  function maybeBanner(){
+    if (isStandalone || !isMobile || dismissed()) return;
+    if (visits < 2 || visits > 4) return;       // 2nd–4th visit only, never the first
+    if (!isIOS && !deferredPrompt) return;       // Android: only once actually installable
+    if (document.getElementById('a2hsBanner')) return;
+    var b = document.createElement('div'); b.id='a2hsBanner';
+    b.innerHTML = '<img class="a2-ico" src="/icon-192.png" alt=""><div class="a2-txt"><b>Add DevQuest to your home screen</b><br>One tap to your jobs, like an app.</div>'
+      + '<button class="a2-add">Add</button><button class="a2-x" aria-label="Dismiss">✕</button>';
+    b.querySelector('.a2-add').addEventListener('click', function(){ track('a2hs_banner_add'); window.dqInstall(); });
+    b.querySelector('.a2-x').addEventListener('click', function(){ try{store.set('dq-a2hs-dismissed',1);}catch(e){} track('a2hs_banner_dismiss'); hideBanner(); });
+    document.body.appendChild(b);
+    track('a2hs_banner_shown', { v: visits, ios: isIOS });
+  }
+  if (isIOS) maybeBanner();   // iOS has no beforeinstallprompt; Android triggers it from the event
+})();
 </script>
 <!-- Cloudflare Web Analytics --><script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "95619b0dc4cf4d5c897a9ccd91097d8c"}'></script><!-- End Cloudflare Web Analytics -->
 <!-- ===== DevQuest alerts + cookieless event analytics (Phase 1) ===== -->
