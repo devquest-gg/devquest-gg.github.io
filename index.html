@@ -2428,6 +2428,19 @@ function applyFilterQuery(){
     return true;
   } catch(e){ return false; }
 }
+// Remember the matrix-square selection between visits. We restore ONLY the grid cells (not search /
+// sidebar facets) from the last-filters snapshot, and only if it's recent — so a stale selection
+// from weeks ago isn't resurrected. Restored cells show in the matrix + active-filters bar and clear
+// with "Clear all", so they're always visible and one click to drop.
+function restoreLastCells(){
+  try {
+    var lf = store.get("dq-lastfilters", null);
+    if (!lf || !Array.isArray(lf.cells) || !lf.cells.length) return false;
+    if (lf.ts && (Date.now() - lf.ts) > 30*864e5) return false;   // don't resurrect selections older than 30 days
+    lf.cells.forEach(function(c){ if (c) selCells.add(c); });
+    return selCells.size > 0;
+  } catch(e){ return false; }
+}
 function clearAllFilters(){
   document.getElementById('q').value = '';
   document.getElementById('region').selectedIndex = 0;
@@ -4619,7 +4632,8 @@ dqUpdateWhatsNewDot();
 // Shareable filter URLs (?studios=…&cells=…&region=…&q=…) reopen the exact view. Also makes the
 // JSON-LD SearchAction work (?q=term pre-fills the search). Applies all carried filters, then renders.
 try {
-  if (applyFilterQuery()) render();
+  if (applyFilterQuery()) render();              // a shared link wins
+  else if (restoreLastCells()) render();         // else restore your last matrix-square selection
 } catch(e){}
 // Keep the Filters box top exactly level with the matrix card (re-measure after layout + on resize).
 try {
