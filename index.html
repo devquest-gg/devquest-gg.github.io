@@ -1389,7 +1389,7 @@ function hotWhy(P){
 function renderHotSection(hot, P){
   const _lf = affLastFilters();
   const why = profPinnedRoles() ? profHotLabel() : (_lf && lfHasFilters(_lf)) ? hotFilterLabel(_lf) : hotWhy(P);
-  return `<div class="group" style="border:1px solid rgba(255,138,61,.35);border-radius:12px;background:linear-gradient(180deg,rgba(255,138,61,.07),transparent);margin-bottom:14px">
+  return `<div id="hotGroup" class="group" style="border:1px solid rgba(255,138,61,.35);border-radius:12px;background:linear-gradient(180deg,rgba(255,138,61,.07),transparent);margin-bottom:14px">
       <div class="group-header" onclick="toggleHot()" style="cursor:pointer">
         <span class="arrow ${hotOpen?'open':''}">▸</span>
         <span style="color:#ff8a3d;font-weight:800;letter-spacing:.2px">🔥 Hot jobs for you</span>
@@ -3365,7 +3365,7 @@ function renderOnboard(){
     + '<div class="ob-sub">Pick your craft and level and we will surface the best-fit studios and roles. No account; saved on this device.</div>'
     + '<div class="ob-lbl">I work in</div><div class="ob-chips">'+chips+'</div>'
     + '<div class="ob-lbl">Level <span style="opacity:.6;font-weight:400;text-transform:none;letter-spacing:0">(optional)</span></div><div class="ob-chips">'+lchips+'</div>'
-    + '<div class="ob-foot"><button class="ob-go" onclick="obGo()">Show my matches →</button><a class="ob-skip" onclick="obDismiss()">Just browsing — skip</a></div>'
+    + '<div class="ob-foot"><button class="ob-go" onclick="obGo()">Show my jobs →</button><a class="ob-skip" onclick="obDismiss()">Just browsing — skip</a></div>'
     + '</div>';
   if (!el.__shown){ el.__shown = true; obTrack("onboard_shown", {}); }
 }
@@ -3377,8 +3377,11 @@ function obGo(){
   if (_obLvl){ try{ profSet("sen",_obLvl); }catch(e){} }
   obSetDone();
   var el=document.getElementById("onboardCard"); if(el){ el.innerHTML=""; el.style.display="none"; }
-  try{ setView("bestfit"); }catch(e){}
-  try{ profSummary(); profRenderRoles(); bfRenderDiscSw(); bfCompute(); }catch(e){}
+  hotOpen = true;                                   // ensure the matches are expanded
+  try{ if (view !== "list") setView("list"); }catch(e){}
+  try{ profSummary(); profRenderRoles(); bfRenderDiscSw(); bfCompute(); }catch(e){}  // keep For You in sync in the background
+  try{ render(); }catch(e){}                         // rebuild List so "Hot jobs for you" reflects the new profile
+  try{ var hg=document.getElementById("hotGroup"); if(hg) hg.scrollIntoView({behavior:"smooth", block:"start"}); }catch(e){}
 }
 function obDismiss(){ obTrack("onboard_dismiss", {}); obSetDone(); var el=document.getElementById("onboardCard"); if(el){ el.innerHTML=""; el.style.display="none"; } }
 // ===== Cost of living (Stage 3) — static index (≈ relative to San Francisco = 100), approximate.
