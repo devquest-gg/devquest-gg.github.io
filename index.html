@@ -1275,6 +1275,7 @@ function hotJobs(pool, P, n){
     const remoteOnly = profGet("work").v === "remote";
     const ageOf = j => _ageDays(j);
     const cand = pool.filter(j => discSet.has(j.d) && (!remoteOnly || j.w==="Remote")
+        && profInCountry(j)
         && !saved.has(j.id) && !appStatus[j.id] && !dismissed.has(j.id)
         && (ageOf(j)==null || ageOf(j)<=HOT_MAX_DAYS));
     const cmp = (a,b)=> (senPref?((b.sen===senPref?1:0)-(a.sen===senPref?1:0)):0) || (b.ts||b.fseen||0)-(a.ts||a.fseen||0);
