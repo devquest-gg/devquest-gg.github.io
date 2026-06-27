@@ -1274,8 +1274,14 @@ function hotJobs(pool, P, n){
     const senG = profGet("sen"); const senPref = (senG.pinned && senG.v!=="__any") ? senG.v : null;
     const remoteOnly = profGet("work").v === "remote";
     const ageOf = j => _ageDays(j);
+    // Pinned seniority keeps the feed near your level: allow one level below to one level above
+    // (e.g. a Director+ profile gets Lead + Director+; a Mid profile gets Entry/Mid/Senior). Your
+    // EXACT level is still front-loaded first by cmp below. Roles outside the ±1 window are dropped;
+    // unknown-seniority roles are kept (benefit of the doubt). Order: ["Entry","Mid","Senior","Lead","Director+"].
+    const _tgtSen = senPref ? SEN_FILTER_ORDER.indexOf(senPref) : -1;
+    const _senOK = j => { if (_tgtSen < 0) return true; var r = SEN_FILTER_ORDER.indexOf(j.sen); return r < 0 || (r >= _tgtSen-1 && r <= _tgtSen+1); };
     const cand = pool.filter(j => discSet.has(j.d) && (!remoteOnly || j.w==="Remote")
-        && profInCountry(j)
+        && profInCountry(j) && _senOK(j)
         && !saved.has(j.id) && !appStatus[j.id] && !dismissed.has(j.id)
         && (ageOf(j)==null || ageOf(j)<=HOT_MAX_DAYS));
     const cmp = (a,b)=> (senPref?((b.sen===senPref?1:0)-(a.sen===senPref?1:0)):0) || (b.ts||b.fseen||0)-(a.ts||a.fseen||0);
