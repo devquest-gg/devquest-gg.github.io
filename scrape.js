@@ -86,6 +86,35 @@ const DIRECTORY = [
   { name: "Sports Interactive", url: "https://careers.sega.co.uk/studios/sports-interactive", note: "Football Manager — part of SEGA", city: "London, UK" },
   { name: "Two Point Studios", url: "https://careers.sega.co.uk/studios/two-point-studios", note: "Two Point Hospital/Campus — SEGA", city: "Farnham, UK" },
   { name: "Archetype Entertainment", url: "https://www.archetype-entertainment.com/en-US", note: "AAA sci-fi RPG (ex-BioWare) — Wizards of the Coast / Hasbro", city: "Austin, TX" },
+  // ---- 2026-06-26 batch: gap analysis vs alexanderrehm.com. Notable studios on UNsupported ATS
+  // (Personio, HRMOS, Kenjo, Huntflow, or custom sites) — link-outs for now. Batching note: a single
+  // Personio fetcher would promote Com2uS + KING Art + Travian; an HRMOS fetcher would promote
+  // GAME FREAK + Spike Chunsoft. (Codemasters is EA-owned, already covered by the EA board.)
+  { name: "GAME FREAK", url: "https://hrmos.co/pages/gamefreak/jobs", note: "Pokémon developer — HRMOS board (JP)", city: "Tokyo, Japan" },
+  { name: "Kepler Interactive", url: "https://careers.kepler-interactive.com/", note: "Clair Obscur: Expedition 33, Sifu — publisher", city: "London, UK" },
+  { name: "Sloclap", url: "https://careers.sloclap.com/", note: "Sifu, Absolver", city: "Paris, France" },
+  { name: "Deck13 Interactive", url: "https://deck13jobs.kenjo.io/", note: "Lords of the Fallen, The Surge — Kenjo board", city: "Frankfurt, Germany" },
+  { name: "Kalypso Media", url: "https://jobs.kalypsomedia.com/", note: "Tropico publisher", city: "Worms, Germany" },
+  { name: "Gameforge", url: "https://corporate.gameforge.com/en/career/", note: "browser/MMO publisher (AION, Metin2)", city: "Karlsruhe, Germany" },
+  { name: "Com2uS", url: "https://gvc2u.jobs.personio.com/", note: "Summoners War — Personio board (KR)", city: "Seoul, South Korea" },
+  { name: "DeNA", url: "https://herp.careers/v1/dena/", note: "mobile publisher (Pokémon Masters EX) — HERP board (JP)", city: "Tokyo, Japan" },
+  { name: "Spike Chunsoft", url: "https://hrmos.co/pages/spchun/jobs", note: "Danganronpa, Zero Escape — HRMOS board (JP)", city: "Tokyo, Japan" },
+  { name: "Moon Active", url: "https://www.moonactive.com/careers/", note: "Coin Master — mobile", city: "Tel Aviv, Israel" },
+  { name: "Toca Boca", url: "https://www.tocaboca.com/careers", note: "Toca Boca World — kids", city: "Stockholm, Sweden" },
+  { name: "Star Stable Entertainment", url: "https://jobs.starstableentertainment.com/", note: "Star Stable Online", city: "Stockholm, Sweden" },
+  { name: "Snowprint Studios", url: "https://career.snowprintstudios.com/", note: "Warhammer 40K: Tacticus", city: "Stockholm, Sweden" },
+  { name: "MAG Interactive", url: "https://career.maginteractive.com/", note: "WordBrain, Ruzzle — mobile", city: "Stockholm, Sweden" },
+  { name: "Neon Giant", url: "https://jobs.neongiant.se/", note: "The Ascent", city: "Uppsala, Sweden" },
+  { name: "Travian Games", url: "https://traviangames.jobs.personio.com/", note: "Travian — Personio board", city: "Munich, Germany" },
+  { name: "KING Art", url: "https://king-art-gmbh.jobs.personio.com/", note: "Iron Harvest — Personio board", city: "Bremen, Germany" },
+  { name: "Madbox", url: "https://careers.madbox.io/", note: "hypercasual/casual mobile", city: "Paris, France" },
+  { name: "Manticore Games", url: "https://www.manticoregames.com/careers/", note: "Core — UGC platform", city: "San Mateo, CA" },
+  { name: "Red Rover Interactive", url: "https://careers.redroverinteractive.com/", note: "Pioneers of Pagonia", city: "Oslo, Norway" },
+  { name: "Steel City Interactive", url: "https://careers.steelcityinteractive.co.uk/", note: "Undisputed (boxing)", city: "Sheffield, UK" },
+  { name: "Vivid Games", url: "https://jobs.vividgames.com/", note: "Real Boxing — mobile", city: "Bydgoszcz, Poland" },
+  { name: "SayGames", url: "https://saygameshr.global.huntflow.io/", note: "hypercasual publisher — Huntflow board", city: "Limassol, Cyprus" },
+  { name: "Yodo1 Games", url: "https://careers.yodo1.com/", note: "Crossy Road, Rodeo Stampede — publisher", city: "Remote / Beijing" },
+  { name: "BKOM Studios", url: "https://jobs.bkom.com/", note: "co-dev / work-for-hire", city: "Québec City, Canada" },
 ];
 
 // ---- "The Moon": smaller / indie studios, often ones who reached out to be listed.
@@ -392,6 +421,69 @@ const STUDIOS = [
   { name: "Triband", type: "teamtailor", token: "triband", host: "careers.triband.net", city: "Copenhagen, Denmark" }, // WHAT THE GOLF? comedy games
   { name: "Next Level Games", type: "jazzhr", token: "nextlevelgames", city: "Vancouver, Canada" },          // Luigi's Mansion, Mario Strikers — Nintendo subsidiary
   { name: "Critical Path Games", type: "critpath", token: "critpath", city: "Vancouver, BC" },               // custom static careers site — fetchCritpath (requested mainland)
+  // ---- 2026-06-26 batch: gap analysis vs alexanderrehm.com directory. Tier-1 studios already on a
+  // supported ATS (tokens read from their public careers URLs) — spot-check first scrape, a wrong
+  // token just shows 0 roles (per-source try/catch). See competitor-studio-gap-analysis.md. ----
+  // Greenhouse
+  { name: "Nordeus", type: "greenhouse", token: "nordeus", city: "Belgrade, Serbia" },                       // Top Eleven — EA-owned mobile sports
+  { name: "Playtika", type: "greenhouse", token: "playtikaltd", city: "Herzliya, Israel" },                  // mobile/casual giant (Bingo Blitz, Slotomania)
+  // Lever
+  { name: "InnoGames", type: "lever", token: "innogames", city: "Hamburg, Germany" },                        // Forge of Empires, Elvenar
+  // Ashby
+  { name: "Agave Games", type: "ashby", token: "agavegames", city: "Istanbul, Turkey" },                     // mobile (Mergeland)
+  { name: "BulletFarm", type: "ashby", token: "bulletfarm", city: "Los Angeles, CA" },                       // NetEase-backed AAA FPS (ex-COD lead)
+  { name: "Pocket Worlds", type: "ashby", token: "Pocket Worlds", city: "Austin, TX" },                      // Highrise — social metaverse; token has a space, spot-check
+  // Workable
+  { name: "Ace Games", type: "workable", token: "ace-games", city: "Istanbul, Turkey" },                     // mobile (Spades Royale)
+  { name: "Brightrock Games", type: "workable", token: "brightrockgames", city: "London, UK" },              // War for the Overworld, Ministry of Broadcast
+  { name: "Carry1st", type: "workable", token: "carry1st", city: "Cape Town, South Africa" },                // Africa-focused mobile publisher
+  { name: "Forgotten Empires", type: "workable", token: "forgotten-empires", city: "Remote (EU/US)" },       // Age of Empires / Mythology Definitive Editions
+  { name: "KingsIsle Entertainment", type: "workable", token: "kingsisle-entertainment-inc", city: "Austin, TX" }, // Wizard101, Pirate101
+  { name: "Lockwood Publishing", type: "workable", token: "lockwood", city: "Nottingham, UK" },              // Avakin Life
+  { name: "Longdue Games", type: "workable", token: "longdue-games", city: "Remote (UK)" },                  // narrative studio (ex-AAA vets)
+  { name: "Owlchemy Labs", type: "workable", token: "owlchemy-labs", city: "Austin, TX" },                   // VR (Job Simulator, Vacation Simulator) — Google
+  { name: "SNK", type: "workable", token: "snk", city: "Osaka, Japan" },                                     // King of Fighters, Metal Slug, Fatal Fury
+  { name: "StoryToys", type: "workable", token: "storytoys", city: "Dublin, Ireland" },                      // kids' educational games
+  { name: "Tamatem Games", type: "workable", token: "tamatem", city: "Amman, Jordan" },                      // MENA mobile publisher
+  // SmartRecruiters
+  { name: "Frima Studio", type: "smartrecruiters", token: "frimastudio", city: "Québec City, Canada" },      // co-dev / work-for-hire
+  { name: "Weta Workshop", type: "smartrecruiters", token: "WetaWorkshop", city: "Wellington, New Zealand" }, // Tales of the Shire — now a game dev
+  // Breezy
+  { name: "Fugo Games", type: "breezy", token: "fugo-games", city: "Istanbul, Turkey" },                     // Tile Busters, word/puzzle mobile
+  // JazzHR
+  { name: "Maximum Entertainment", type: "jazzhr", token: "maximumgames", city: "Walnut Creek, CA" },        // publisher (Maximum Games / Modus)
+  { name: "Sago Mini", type: "jazzhr", token: "sagomini", city: "Toronto, Canada" },                         // preschool games
+  // Teamtailor (default <token>.teamtailor.com host)
+  { name: "Starbreeze Entertainment", type: "teamtailor", token: "starbreeze", host: "starbreeze.teamtailor.com", city: "Stockholm, Sweden" }, // Payday
+  { name: "Stillfront Group", type: "teamtailor", token: "stillfrontgroup", host: "stillfrontgroup.teamtailor.com", city: "Stockholm, Sweden" }, // mobile/strategy group
+  { name: "SYBO Games", type: "teamtailor", token: "sybo", host: "sybo.teamtailor.com", city: "Copenhagen, Denmark" }, // Subway Surfers
+  { name: "Sandbox Interactive", type: "teamtailor", token: "sandboxinteractive", host: "sandboxinteractive.teamtailor.com", city: "Berlin, Germany" }, // Albion Online
+  { name: "Nanobit", type: "teamtailor", token: "nanobit", host: "nanobit.teamtailor.com", city: "Zagreb, Croatia" }, // narrative mobile (Stillfront)
+  { name: "Goodgame Studios", type: "teamtailor", token: "goodgamestudios", host: "goodgamestudios.teamtailor.com", city: "Hamburg, Germany" }, // Empire: Four Kingdoms
+  { name: "BULKHEAD", type: "teamtailor", token: "bulkheadinteractive", host: "bulkheadinteractive.teamtailor.com", city: "Derby, UK" }, // Battalion, co-dev
+  // Recruitee
+  { name: "CipSoft", type: "recruitee", token: "cipsoft", city: "Regensburg, Germany" },                     // Tibia
+  { name: "Dovetail Games", type: "recruitee", token: "dovetailgames", city: "Chatham, UK" },                // Train Sim World, fishing sims
+  { name: "Huuuge Games", type: "recruitee", token: "huuuge", city: "Warsaw, Poland" },                      // social casino mobile
+  { name: "Lucid Games", type: "recruitee", token: "lucidgames", city: "Liverpool, UK" },                    // Destruction AllStars
+  { name: "RocketWerkz", type: "recruitee", token: "rocketwerkz", city: "Auckland, New Zealand" },           // Dean Hall (DayZ) — Icarus, Stationeers
+  { name: "Ten Square Games", type: "recruitee", token: "tensquaregames", city: "Wrocław, Poland" },         // Fishing Clash, Hunting Clash
+  // BambooHR
+  { name: "Beamdog", type: "bamboohr", token: "beamdog", city: "Edmonton, Canada" },                         // Baldur's Gate Enhanced Editions
+  { name: "BetaDwarf", type: "bamboohr", token: "betadwarfaps", city: "Copenhagen, Denmark" },               // Minion Masters
+  { name: "Blazing Griffin", type: "bamboohr", token: "blazinggriffin", city: "Glasgow, UK" },               // games + film/TV
+  { name: "Ember Lab", type: "bamboohr", token: "emberlab", city: "Orange County, CA" },                     // Kena: Bridge of Spirits
+  { name: "Final Strike Games", type: "bamboohr", token: "finalstrikegames", city: "Bellevue, WA" },         // Gigantic / FOAMSTARS-adjacent
+  { name: "GungHo Online Entertainment", type: "bamboohr", token: "gungho", city: "Tokyo, Japan" },          // Puzzle & Dragons
+  { name: "Hyper Hippo", type: "bamboohr", token: "hyperhippoproductions", city: "Kelowna, Canada" },        // AdVenture Capitalist
+  { name: "Hypixel Studios", type: "bamboohr", token: "hypixel", city: "Derry, UK" },                        // Hytale — Riot-owned
+  { name: "IGG Canada", type: "bamboohr", token: "igg", city: "Vancouver, Canada" },                         // Lords Mobile
+  { name: "Mundfish", type: "bamboohr", token: "mundfish", city: "Limassol, Cyprus" },                       // Atomic Heart
+  { name: "Pixel Toys", type: "bamboohr", token: "pixeltoysltd", city: "Leamington Spa, UK" },               // Warhammer: Realms of Ruin, Knights & Dragons
+  { name: "Red Barrels", type: "bamboohr", token: "redbarrels", city: "Montréal, Canada" },                  // Outlast
+  { name: "Relic Entertainment", type: "bamboohr", token: "relicentertainment", city: "Vancouver, Canada" }, // Company of Heroes, Age of Empires IV — now independent
+  { name: "Stardock", type: "bamboohr", token: "stardock", city: "Plymouth, MI" },                           // Galactic Civilizations, Sins of a Solar Empire
+  { name: "Wolcen Studio", type: "bamboohr", token: "wolcenstudio", city: "Nice, France" },                  // Wolcen: Lords of Mayhem
 ];
 
 // ---- Studio type tags (Michelle's idea) ------------------------------------
