@@ -676,6 +676,11 @@
   .ptxt, .ppanel select { width: 100%; background: var(--bg); color: var(--text); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; font: inherit; font-size: 13px; }
   .ptxt:focus, .ppanel select:focus { outline: none; border-color: var(--accent); }
   .pnote { font-size: 11px; color: var(--muted); margin-top: 6px; line-height: 1.45; }
+  .pgrid2col { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 760px) { .pgrid2col { grid-template-columns: 1fr; } }
+  .psection { border: 1px solid var(--border); border-radius: 10px; padding: 13px 14px; }
+  .psection .pfield:last-child { margin-bottom: 0; }
+  .pseclabel { font-size: 12px; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; color: var(--text); margin-bottom: 12px; padding-bottom: 9px; border-bottom: 1px solid var(--border); }
   .bfdiscsw { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin: 0 0 12px; }
   .bfdiscsw .bfswlbl { font-size: 13px; color: var(--muted); margin-right: 2px; }
   .bfdiscsw .dbtn { font-size: 13px; font-weight: 600; padding: 5px 12px; border-radius: 999px; border: 1px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; }
@@ -3182,15 +3187,22 @@ function profToggleCountry(c){
 }
 function profClearCountries(){ PROFILE.pinned.countries=false; delete PROFILE.countries; profSave(); profRenderCountries(); profSummary(); try{ bfCompute(); }catch(e){} try{ if(typeof render==="function") render(); }catch(e){} }
 function profCountryBtns(){
-  var sel = new Set(profCountries());
-  var list = Object.keys(COUNTRY_COUNTS).filter(function(c){ return !AMBIG_COUNTRY.has(c); })
-    .sort(function(a,b){ return (COUNTRY_COUNTS[b]-COUNTRY_COUNTS[a]) || a.localeCompare(b); });
-  if (!list.length) return '<span class="pnote">No country data yet.</span>';
-  return list.map(function(c){
-    return '<button class="pseg'+(sel.has(c)?" on":"")+'" onclick="profToggleCountry(\''+c.replace(/'/g,"\\'")+'\')">'
-      + bfEsc(c) + ' <span style="opacity:.55">'+COUNTRY_COUNTS[c]+'</span></button>';
+  // Collapsed picker: selected countries as removable chips + an "add country" dropdown of the rest
+  // (sorted by how many roles each has). Mirrors the Target-roles field, so the 40-country wall is gone.
+  var sel = profCountries();
+  var chips = sel.map(function(c){
+    return '<span class="pchip">'+bfEsc(c)+' <span class="x" role="button" tabindex="0" title="Remove" onclick="profToggleCountry(\''+c.replace(/'/g,"\\'")+'\')">✕</span></span>';
   }).join("");
+  var remaining = Object.keys(COUNTRY_COUNTS).filter(function(c){ return !AMBIG_COUNTRY.has(c) && sel.indexOf(c)<0; })
+    .sort(function(a,b){ return (COUNTRY_COUNTS[b]-COUNTRY_COUNTS[a]) || a.localeCompare(b); });
+  var addSel = remaining.length
+    ? '<select class="paddsel" onchange="profAddCountryVal(this.value); this.selectedIndex=0;"><option value="">+ add country</option>'
+      + remaining.map(function(c){ return '<option value="'+bfEsc(c)+'">'+bfEsc(c)+' ('+COUNTRY_COUNTS[c]+')</option>'; }).join("")
+      + '</select>'
+    : '';
+  return chips + addSel;
 }
+function profAddCountryVal(c){ if (c) profToggleCountry(c); }
 function profRenderCountries(){ var el = document.getElementById("profCountries"); if (el) el.innerHTML = profCountryBtns(); }
 // ===== Cost of living (Stage 3) — static index (≈ relative to San Francisco = 100), approximate.
 // Shown on SINGLE-location jobs in My Jobs + expanded Best fit only; never the front List. =====
@@ -3263,13 +3275,21 @@ function profPanelHtml(){
        + '<div class="pfoot">Saved on this device. No account. <a id="profEdit" onclick="profToggle()">'+(profPanelOpen?"Done editing ▾":"Edit profile ▸")+'</a></div>'
      + '</div>'
    + '<div class="ppanel'+(profPanelOpen?" open":"")+'" id="profPanel">'
-     + '<div class="psub">Saved on this device — no account. Powers your matches across the site. Set anything to lock it; leave it and we keep learning from your activity.</div>'
-     + '<div class="pfield"><div class="pflabel">Target roles '+profTagHtml("roles")+'</div><div class="pchips" id="profRoles"></div></div>'
-     + '<div class="pfield"><div class="pflabel">Seniority '+profTagHtml("sen")+'</div><div class="pseggrp" id="senSeg">'+profSegBtns("senSeg","sen",PROF_SEN,sen)+'</div></div>'
-     + '<div class="pfield"><div class="pflabel">Where can you work? '+profTagHtml("work")+'</div><div class="pseggrp" id="workSeg">'+profSegBtns("workSeg","work",PROF_WORK,work)+'</div><div class="pnote">Pick "remote only" or "near me" only if it\'s a real constraint — otherwise we keep showing roles everywhere.</div></div>'
-     + '<div class="pfield"><div class="pflabel">Countries you can work in <a class="prev" style="display:inline" onclick="profClearCountries()">↺ clear</a></div><div class="pseggrp pcountries" id="profCountries">'+profCountryBtns()+'</div><div class="pnote">🌍 Pick the countries you can actually work in. We hide roles based only in other countries (including remote roles tied to them) from For You and 🔥 Hot jobs. Leave empty to see everywhere. Roles with no stated country are kept only if they\'re remote.</div></div>'
-     + '<div class="pfield2"><div class="pfield"><div class="pflabel">Experience '+profTagHtml("yrs")+'</div><select id="profYrs" onchange="profSet(\'yrs\', this.value); profSummary()">'+PROF_YRS.map(function(y){return '<option value="'+y+'"'+(y===yrs?" selected":"")+'>'+(y||"—")+'</option>';}).join("")+'</select></div>'
-       + '<div class="pfield"><div class="pflabel">Based in '+profTagHtml("loc")+'</div><input class="ptxt" id="profLoc" list="profCities" value="'+bfEsc(loc)+'" placeholder="Type your city…" oninput="profSet(\'loc\', this.value); profSummary()"><datalist id="profCities">'+COL_KEYS.slice().sort().map(function(c){return '<option value="'+bfEsc(c)+'"></option>';}).join("")+'</datalist><div class="pnote">🗺 Your city, used only for cost-of-living comparison on jobs — never to hide roles.</div></div></div>'
+     + '<div class="psub">Set anything to lock it; leave it and we keep learning from your activity.</div>'
+     + '<div class="pgrid2col">'
+       + '<div class="psection">'
+         + '<div class="pseclabel">Role &amp; level</div>'
+         + '<div class="pfield"><div class="pflabel">Target roles '+profTagHtml("roles")+'</div><div class="pchips" id="profRoles"></div></div>'
+         + '<div class="pfield"><div class="pflabel">Seniority '+profTagHtml("sen")+'</div><div class="pseggrp" id="senSeg">'+profSegBtns("senSeg","sen",PROF_SEN,sen)+'</div></div>'
+         + '<div class="pfield"><div class="pflabel">Experience '+profTagHtml("yrs")+'</div><select id="profYrs" onchange="profSet(\'yrs\', this.value); profSummary()">'+PROF_YRS.map(function(y){return '<option value="'+y+'"'+(y===yrs?" selected":"")+'>'+(y||"—")+'</option>';}).join("")+'</select></div>'
+       + '</div>'
+       + '<div class="psection">'
+         + '<div class="pseclabel">Location</div>'
+         + '<div class="pfield"><div class="pflabel">Where can you work? '+profTagHtml("work")+'</div><div class="pseggrp" id="workSeg">'+profSegBtns("workSeg","work",PROF_WORK,work)+'</div><div class="pnote">Pick "remote only" or "near me" only if it\'s a real constraint — otherwise we keep showing roles everywhere.</div></div>'
+         + '<div class="pfield"><div class="pflabel">Countries you can work in <a class="prev" style="display:inline" onclick="profClearCountries()">↺ clear</a></div><div class="pchips" id="profCountries">'+profCountryBtns()+'</div><div class="pnote">🌍 We hide roles based only in other countries (including remote roles tied to them) from For You and 🔥 Hot jobs. Leave empty to see everywhere; roles with no stated country are kept only if they\'re remote.</div></div>'
+         + '<div class="pfield"><div class="pflabel">Based in '+profTagHtml("loc")+'</div><input class="ptxt" id="profLoc" list="profCities" value="'+bfEsc(loc)+'" placeholder="Type your city…" oninput="profSet(\'loc\', this.value); profSummary()"><datalist id="profCities">'+COL_KEYS.slice().sort().map(function(c){return '<option value="'+bfEsc(c)+'"></option>';}).join("")+'</datalist><div class="pnote">🗺 Used only for cost-of-living comparison on jobs — never to hide roles.</div></div>'
+       + '</div>'
+     + '</div>'
    + '</div>';
 }
 function profToggle(){ profPanelOpen=!profPanelOpen; var p=document.getElementById("profPanel"); if(p)p.classList.toggle("open",profPanelOpen); var e=document.getElementById("profEdit"); if(e)e.textContent=profPanelOpen?"Done editing ▾":"Edit profile ▸"; }
