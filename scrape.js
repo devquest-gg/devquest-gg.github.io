@@ -54,9 +54,7 @@ const DIRECTORY = [
   { name: "Trailmix Games", url: "https://www.trailmixgames.com/careers", note: "Love & Pies — mobile (London)", city: "London, UK" },
   { name: "Gunfire Games", url: "https://gunfiregames.com/careers", note: "Remnant, Darksiders — Paylocity board", city: "Austin, TX" },
   { name: "10:10 Games", url: "https://www.1010games.com/join-us", note: "ex-Playtonic / Crash devs (Warrington)", city: "Warrington, UK" },
-  { name: "Snail Games", url: "https://snail-games-usa-inc.hiringthing.com", note: "ARK publisher — HiringThing board", city: "Culver City, CA" },
-  { name: "WildBrain", url: "https://wildbrain-career.talent-soft.com/job/list-of-all-jobs.aspx?all=1", note: "kids media & animation (mixed roles) — Talentsoft", city: "Vancouver, Canada" },
-  // batch 4 (2026-06-09): notable + mobile studios on custom / region-specific ATS — browse directly
+  { name: "Snail Games", url: "https://snail-games-usa-inc.hiringthing.com", note: "ARK publisher — HiringThing board", city: "Culver City, CA" },  // batch 4 (2026-06-09): notable + mobile studios on custom / region-specific ATS — browse directly
   { name: "Kojima Productions", url: "https://www.kojimaproductions.jp/en/careers", note: "Death Stranding (Tokyo)", city: "Tokyo, Japan" },
   { name: "Cygames", url: "https://www.cygames.co.jp/en/recruit/", note: "Granblue Fantasy, Uma Musume (Tokyo)", city: "Tokyo, Japan" },
   { name: "Garena", url: "https://careers.garena.com/", note: "Free Fire — part of Sea Ltd (Singapore)", city: "Singapore" },
