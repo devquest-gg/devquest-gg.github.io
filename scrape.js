@@ -87,16 +87,16 @@ const DIRECTORY = [
   { name: "Two Point Studios", url: "https://careers.sega.co.uk/studios/two-point-studios", note: "Two Point Hospital/Campus — SEGA", city: "Farnham, UK" },
   { name: "Archetype Entertainment", url: "https://www.archetype-entertainment.com/en-US", note: "AAA sci-fi RPG (ex-BioWare) — Wizards of the Coast / Hasbro", city: "Austin, TX" },
   // ---- 2026-06-26 batch: gap analysis vs alexanderrehm.com. Notable studios on UNsupported ATS
-  // (Personio, HRMOS, Kenjo, Huntflow, or custom sites) — link-outs for now. Batching note: a single
-  // Personio fetcher would promote Com2uS + KING Art + Travian; an HRMOS fetcher would promote
-  // GAME FREAK + Spike Chunsoft. (Codemasters is EA-owned, already covered by the EA board.)
+  // (HRMOS, Kenjo, Huntflow, or custom sites) — link-outs for now. NOTE: Com2uS, KING Art and Travian
+  // were here too but moved to mainland once fetchPersonio was added (see STUDIOS). GAME FREAK +
+  // Spike Chunsoft stay link-outs: HRMOS is JP-only HTML with no salary/date feed, like our other JP
+  // studios. (Codemasters is EA-owned, already covered by the EA board.)
   { name: "GAME FREAK", url: "https://hrmos.co/pages/gamefreak/jobs", note: "Pokémon developer — HRMOS board (JP)", city: "Tokyo, Japan" },
   { name: "Kepler Interactive", url: "https://careers.kepler-interactive.com/", note: "Clair Obscur: Expedition 33, Sifu — publisher", city: "London, UK" },
   { name: "Sloclap", url: "https://careers.sloclap.com/", note: "Sifu, Absolver", city: "Paris, France" },
   { name: "Deck13 Interactive", url: "https://deck13jobs.kenjo.io/", note: "Lords of the Fallen, The Surge — Kenjo board", city: "Frankfurt, Germany" },
   { name: "Kalypso Media", url: "https://jobs.kalypsomedia.com/", note: "Tropico publisher", city: "Worms, Germany" },
   { name: "Gameforge", url: "https://corporate.gameforge.com/en/career/", note: "browser/MMO publisher (AION, Metin2)", city: "Karlsruhe, Germany" },
-  { name: "Com2uS", url: "https://gvc2u.jobs.personio.com/", note: "Summoners War — Personio board (KR)", city: "Seoul, South Korea" },
   { name: "DeNA", url: "https://herp.careers/v1/dena/", note: "mobile publisher (Pokémon Masters EX) — HERP board (JP)", city: "Tokyo, Japan" },
   { name: "Spike Chunsoft", url: "https://hrmos.co/pages/spchun/jobs", note: "Danganronpa, Zero Escape — HRMOS board (JP)", city: "Tokyo, Japan" },
   { name: "Moon Active", url: "https://www.moonactive.com/careers/", note: "Coin Master — mobile", city: "Tel Aviv, Israel" },
@@ -105,8 +105,6 @@ const DIRECTORY = [
   { name: "Snowprint Studios", url: "https://career.snowprintstudios.com/", note: "Warhammer 40K: Tacticus", city: "Stockholm, Sweden" },
   { name: "MAG Interactive", url: "https://career.maginteractive.com/", note: "WordBrain, Ruzzle — mobile", city: "Stockholm, Sweden" },
   { name: "Neon Giant", url: "https://jobs.neongiant.se/", note: "The Ascent", city: "Uppsala, Sweden" },
-  { name: "Travian Games", url: "https://traviangames.jobs.personio.com/", note: "Travian — Personio board", city: "Munich, Germany" },
-  { name: "KING Art", url: "https://king-art-gmbh.jobs.personio.com/", note: "Iron Harvest — Personio board", city: "Bremen, Germany" },
   { name: "Madbox", url: "https://careers.madbox.io/", note: "hypercasual/casual mobile", city: "Paris, France" },
   { name: "Manticore Games", url: "https://www.manticoregames.com/careers/", note: "Core — UGC platform", city: "San Mateo, CA" },
   { name: "Red Rover Interactive", url: "https://careers.redroverinteractive.com/", note: "Pioneers of Pagonia", city: "Oslo, Norway" },
@@ -484,6 +482,10 @@ const STUDIOS = [
   { name: "Relic Entertainment", type: "bamboohr", token: "relicentertainment", city: "Vancouver, Canada" }, // Company of Heroes, Age of Empires IV — now independent
   { name: "Stardock", type: "bamboohr", token: "stardock", city: "Plymouth, MI" },                           // Galactic Civilizations, Sins of a Solar Empire
   { name: "Wolcen Studio", type: "bamboohr", token: "wolcenstudio", city: "Nice, France" },                  // Wolcen: Lords of Mayhem
+  // Personio (added fetchPersonio 2026-06-26 — promoted from Island). search.json feed has no posted date.
+  { name: "Com2uS", type: "personio", token: "gvc2u", city: "Seoul, South Korea" },                          // Summoners War (KR)
+  { name: "KING Art", type: "personio", token: "king-art-gmbh", city: "Bremen, Germany" },                   // Iron Harvest, The Dwarves
+  { name: "Travian Games", type: "personio", token: "traviangames", city: "Munich, Germany" },               // Travian
 ];
 
 // ---- Studio type tags (Michelle's idea) ------------------------------------
@@ -1422,6 +1424,38 @@ async function fetchRecruitee(studio) {
       url: o.careers_url || o.careers_apply_url || "",
     };
   });
+}
+
+// ---- Personio (Com2uS, KING Art, Travian + many EU/KR studios) ---------------
+// Public JSON feed: https://<token>.jobs.personio.com/search.json?language=en -> [ {id,name,office,
+// department,category,description,...} ]. No posted date in the feed, so postedAt stays null (honest
+// "date n/a", like EA). We skip Personio's evergreen "initiative/spontaneous application" pools.
+const PERSONIO_SKIP = /\b(initiativ|spontaneous|speculative|unsolicited|general application|application pool|talent (pool|community)|career (registration|pool)|open application)/i;
+async function fetchPersonio(studio) {
+  const data = SAMPLE_FILE ? loadSample(studio)
+    : await fetchJson(`https://${studio.token}.jobs.personio.com/search.json?language=en`);
+  if (!Array.isArray(data)) return [];
+  return data
+    .filter(o => o && o.name && !PERSONIO_SKIP.test(o.name + " " + (o.category || "")))
+    .map(o => {
+      const location = o.office || (Array.isArray(o.offices) && o.offices[0]) || "Unlisted";
+      const desc = stripHtml(o.description || "");
+      return {
+        id: `personio-${studio.token}-${o.id}`,
+        title: o.name,
+        tech: extractTech(o.name + " " + desc),
+        studio: studio.name,
+        discipline: mapDiscipline(o.department || o.category || "", o.name || ""),
+        workType: inferWorkType(o.name || "", location, [], desc.slice(0, 1200)),
+        location,
+        region: inferRegion(location),
+        seniority: inferSeniority(o.name || ""),
+        salary: extractSalary(desc),
+        yoe: extractYoe(desc),
+        postedAt: null,
+        url: `https://${studio.token}.jobs.personio.com/job/${o.id}?language=en`,
+      };
+    });
 }
 
 async function fetchRippling(studio) {
@@ -2655,7 +2689,7 @@ async function fetchCig(studio) {
   });
 }
 
-const FETCHERS = { greenhouse: fetchGreenhouse, lever: fetchLever, workday: fetchWorkday, avature: fetchAvature, smartrecruiters: fetchSmartRecruiters, workable: fetchWorkable, phenom: fetchPhenom, teamtailor: fetchTeamtailor, eightfold: fetchEightfold, amazonjobs: fetchAmazonJobs, ashby: fetchAshby, zenimax: fetchZenimax, bamboohr: fetchBambooHr, jobscore: fetchJobScore, jazzhr: fetchJazzHr, jobvite: fetchJobvite, recruitee: fetchRecruitee, rippling: fetchRippling, breezy: fetchBreezy, manatal: fetchManatal, sumodigital: fetchSumoDigital, pinpoint: fetchPinpoint, playground: fetchPlayground, obsidian: fetchObsidian, techland: fetchTechland, oracle: fetchOracle, cig: fetchCig, critpath: fetchCritpath };
+const FETCHERS = { greenhouse: fetchGreenhouse, lever: fetchLever, workday: fetchWorkday, avature: fetchAvature, smartrecruiters: fetchSmartRecruiters, workable: fetchWorkable, phenom: fetchPhenom, teamtailor: fetchTeamtailor, eightfold: fetchEightfold, amazonjobs: fetchAmazonJobs, ashby: fetchAshby, zenimax: fetchZenimax, bamboohr: fetchBambooHr, jobscore: fetchJobScore, jazzhr: fetchJazzHr, jobvite: fetchJobvite, recruitee: fetchRecruitee, personio: fetchPersonio, rippling: fetchRippling, breezy: fetchBreezy, manatal: fetchManatal, sumodigital: fetchSumoDigital, pinpoint: fetchPinpoint, playground: fetchPlayground, obsidian: fetchObsidian, techland: fetchTechland, oracle: fetchOracle, cig: fetchCig, critpath: fetchCritpath };
 
 // ---- Ghost-job tracking -----------------------------------------------------
 // Because we scrape on a schedule, we can see how long a listing has REALLY been
