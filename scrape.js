@@ -160,6 +160,9 @@ const STUDIOS = [
       "SLEDGEHAMMER GAMES": "Sledgehammer Games",
       "RAVEN SOFTWARE": "Raven Software",
       "ELSEWHERE": "Elsewhere Entertainment",   // new AAA narrative studio (Warsaw/Malmö), splits out of the Activision feed
+      "BEENOX": "Beenox",                       // Quebec — Crash Team Racing, CoD ports (2026-06-27: live feed jobCompany "BEENOX, INC.")
+      "DEMONWARE": "Demonware",                 // online services / netcode — Dublin/Vancouver/Shanghai ("DEMONWARE (CANADA), INC." etc.)
+      "DIGITAL LEGENDS": "Digital Legends",     // Barcelona — CoD: Warzone Mobile ("DIGITAL LEGENDS ENTERTAINMENT S.L.")
     } },
   // ZeniMax / Bethesda (jobs.zenimax.com) embeds its full posting list as encoded JSON
   // in the /jobs page; each posting names its real studio (Bethesda Game Studios,
@@ -426,7 +429,7 @@ const STUDIOS = [
   { name: "Nordeus", type: "greenhouse", token: "nordeus", city: "Belgrade, Serbia" },                       // Top Eleven — EA-owned mobile sports
   { name: "Playtika", type: "greenhouse", token: "playtikaltd", city: "Herzliya, Israel" },                  // mobile/casual giant (Bingo Blitz, Slotomania)
   // Lever
-  { name: "InnoGames", type: "lever", token: "innogames", city: "Hamburg, Germany" },                        // Forge of Empires, Elvenar
+  { name: "InnoGames", type: "lever", token: "innogames", region: "eu", city: "Hamburg, Germany" },           // Forge of Empires, Elvenar — Lever EU host (jobs.eu.lever.co)
   // Ashby
   { name: "Agave Games", type: "ashby", token: "agavegames", city: "Istanbul, Turkey" },                     // mobile (Mergeland)
   { name: "BulletFarm", type: "ashby", token: "bulletfarm", city: "Los Angeles, CA" },                       // NetEase-backed AAA FPS (ex-COD lead)
