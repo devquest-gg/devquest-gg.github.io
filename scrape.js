@@ -50,6 +50,12 @@ const DIRECTORY = [
   { name: "Mad Head Games", url: "https://careers.madheadgames.com/", note: "Scars Above, Pavilion (Serbia)", city: "Novi Sad, Serbia" },
   // 2026-06-19: Keka board (not a supported ATS) — link-out
   { name: "LightFury Games", url: "https://lightfury.keka.com/careers/", note: "AAA game-tech studio (India / UK)", city: "Bengaluru, India" },
+  // 2026-06-19 batch: custom sites / unsupported ATS (Paylocity, HiringThing, Talentsoft, Webflow) — link-outs
+  { name: "Trailmix Games", url: "https://www.trailmixgames.com/careers", note: "Love & Pies — mobile (London)", city: "London, UK" },
+  { name: "Gunfire Games", url: "https://gunfiregames.com/careers", note: "Remnant, Darksiders — Paylocity board", city: "Austin, TX" },
+  { name: "10:10 Games", url: "https://www.1010games.com/join-us", note: "ex-Playtonic / Crash devs (Warrington)", city: "Warrington, UK" },
+  { name: "Snail Games", url: "https://snail-games-usa-inc.hiringthing.com", note: "ARK publisher — HiringThing board", city: "Culver City, CA" },
+  { name: "WildBrain", url: "https://wildbrain-career.talent-soft.com/job/list-of-all-jobs.aspx?all=1", note: "kids media & animation (mixed roles) — Talentsoft", city: "Vancouver, Canada" },
   // batch 4 (2026-06-09): notable + mobile studios on custom / region-specific ATS — browse directly
   { name: "Kojima Productions", url: "https://www.kojimaproductions.jp/en/careers", note: "Death Stranding (Tokyo)", city: "Tokyo, Japan" },
   { name: "Cygames", url: "https://www.cygames.co.jp/en/recruit/", note: "Granblue Fantasy, Uma Musume (Tokyo)", city: "Tokyo, Japan" },
@@ -382,6 +388,12 @@ const STUDIOS = [
   { name: "Ludia", type: "bamboohr", token: "ludia", city: "Montréal, Canada" },                // mobile (Jurassic World Alive, DragonVale) — BambooHR
   { name: "Astrid Entertainment", type: "workable", token: "astrid-entertainment", city: "United Kingdom" }, // co-op open-world studio (UK, remote) — Workable
   { name: "Creative Assembly", type: "jobvite", token: "creative-assembly", city: "Horsham, UK" },           // Total War, Alien (SEGA) — promoted from Island 2026-06-19, Jobvite
+  // ---- 2026-06-19 studio batch ----
+  { name: "Torn Banner Studios", type: "bamboohr", token: "tornbanner", city: "Toronto, Canada" },          // Chivalry, No More Room in Hell 2
+  { name: "Devoted Studios", type: "workable", token: "devoted-studios-1", city: "Los Angeles, CA" },        // distributed co-dev / production management
+  { name: "Triband", type: "teamtailor", token: "triband", host: "careers.triband.net", city: "Copenhagen, Denmark" }, // WHAT THE GOLF? comedy games
+  { name: "Next Level Games", type: "jazzhr", token: "nextlevelgames", city: "Vancouver, Canada" },          // Luigi's Mansion, Mario Strikers — Nintendo subsidiary
+  { name: "Critical Path Games", type: "critpath", token: "critpath", city: "Vancouver, BC" },               // custom static careers site — fetchCritpath (requested mainland)
 ];
 
 // ---- Studio type tags (Michelle's idea) ------------------------------------
@@ -2432,6 +2444,43 @@ async function fetchTechland(studio) {
   return out;
 }
 
+// ---- Critical Path Games — custom static careers site (no ATS) -------------
+// The homepage links each opening at /careers/<slug>; each job page has a clean <title> and a
+// "Full-time - <city>" line. We read the slug list, then each page for title/location/salary.
+// Fragile by nature (no API) — if the site restructures, this returns 0 and the Health tab flags it.
+async function fetchCritpath(studio) {
+  const home = SAMPLE_FILE ? (loadSample(studio) || "") : await fetchText("https://critpath.com/");
+  const slugs = [...new Set([...String(home).matchAll(/\/careers\/([a-z0-9][a-z0-9-]*)/gi)].map(m => m[1].toLowerCase()))]
+    .filter(s => s !== "general-applications");
+  const out = [];
+  for (const slug of slugs) {
+    const html = await fetchText(`https://critpath.com/careers/${slug}`);
+    if (!html) continue;
+    const title = decodeEnt(((html.match(/<title>([\s\S]*?)<\/title>/i) || [])[1] || "")
+      .replace(/\s*[-–]\s*Critical Path Games\s*$/i, "").trim()) || slug;
+    if (!title) continue;
+    const desc = stripHtml(html);
+    const locM = html.replace(/<[^>]+>/g, " ").match(/Full-?time\s*[-–]\s*([A-Za-z][A-Za-z .,'-]{2,30})/i);
+    const location = locM ? locM[1].trim() : (studio.city || "Vancouver");
+    out.push({
+      id: `critpath-${slug}`,
+      title,
+      tech: extractTech(title + " " + desc),
+      studio: studio.name,
+      discipline: mapDiscipline(null, title),
+      workType: inferWorkType(title, location, [], desc.slice(0, 1200)),
+      location,
+      region: inferRegion(location),
+      seniority: inferSeniority(title),
+      salary: extractSalary(desc),
+      yoe: extractYoe(desc),
+      postedAt: null,
+      url: `https://critpath.com/careers/${slug}`,
+    });
+  }
+  return out;
+}
+
 // ---- Oracle Recruiting Cloud (ORC) — e.g. Virtuos --------------------------
 // Oracle's hosted candidate experience exposes a public REST feed:
 //   https://<pod>.fa.ocs.oraclecloud.com/hcmRestApi/resources/latest/recruitingCEJobRequisitions
@@ -2516,7 +2565,7 @@ async function fetchCig(studio) {
   });
 }
 
-const FETCHERS = { greenhouse: fetchGreenhouse, lever: fetchLever, workday: fetchWorkday, avature: fetchAvature, smartrecruiters: fetchSmartRecruiters, workable: fetchWorkable, phenom: fetchPhenom, teamtailor: fetchTeamtailor, eightfold: fetchEightfold, amazonjobs: fetchAmazonJobs, ashby: fetchAshby, zenimax: fetchZenimax, bamboohr: fetchBambooHr, jobscore: fetchJobScore, jazzhr: fetchJazzHr, jobvite: fetchJobvite, recruitee: fetchRecruitee, rippling: fetchRippling, breezy: fetchBreezy, manatal: fetchManatal, sumodigital: fetchSumoDigital, pinpoint: fetchPinpoint, playground: fetchPlayground, obsidian: fetchObsidian, techland: fetchTechland, oracle: fetchOracle, cig: fetchCig };
+const FETCHERS = { greenhouse: fetchGreenhouse, lever: fetchLever, workday: fetchWorkday, avature: fetchAvature, smartrecruiters: fetchSmartRecruiters, workable: fetchWorkable, phenom: fetchPhenom, teamtailor: fetchTeamtailor, eightfold: fetchEightfold, amazonjobs: fetchAmazonJobs, ashby: fetchAshby, zenimax: fetchZenimax, bamboohr: fetchBambooHr, jobscore: fetchJobScore, jazzhr: fetchJazzHr, jobvite: fetchJobvite, recruitee: fetchRecruitee, rippling: fetchRippling, breezy: fetchBreezy, manatal: fetchManatal, sumodigital: fetchSumoDigital, pinpoint: fetchPinpoint, playground: fetchPlayground, obsidian: fetchObsidian, techland: fetchTechland, oracle: fetchOracle, cig: fetchCig, critpath: fetchCritpath };
 
 // ---- Ghost-job tracking -----------------------------------------------------
 // Because we scrape on a schedule, we can see how long a listing has REALLY been
