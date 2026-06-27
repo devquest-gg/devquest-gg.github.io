@@ -168,7 +168,7 @@ const STUDIOS = [
   { name: "Blackbird Interactive", type: "lever", token: "blackbirdinteractive" },
   { name: "Larian Studios", type: "lever", token: "larian" },
   { name: "Xsolla", type: "lever", token: "xsolla" },   // game commerce / monetization / publishing platform (HQ LA); community-requested via search
-  { name: "Unity", type: "greenhouse", token: "unity3d", applyTemplate: "https://unity.com/careers" }, // Unity's careers SPA 404s on direct load of /careers/positions AND individual job pages (even their own greenhouse absolute_url) — only the /careers landing resolves on cold load, and reaches the warm job list via on-site nav. Point there until Unity fixes deep-linking.
+  { name: "Unity", type: "greenhouse", token: "unity3d" }, // deep-links via Greenhouse absolute_url (unity.com/careers/positions/<id>?gh_jid=<id>); the "dead links" flag was just Unity's scheduled careers-site maintenance (back Tue) — self-resolves, no override needed
   { name: "Team17", type: "workable", token: "team-17-digital" },
   { name: "Kinetic Games", type: "rippling", token: "kinetic-games-careers", city: "Southampton, UK" }, // Phasmophobia · Rippling ATS (promoted from Island 2026-06-17)
   // batch 8 (2026-06-17): promoted from Island — confirmed on a supported ATS.
