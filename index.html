@@ -2340,13 +2340,13 @@ function renderHubbar(availHubs){
     keys.map(h=>`<button class="qchip hub ${selHubs.has(h)?'on':''}" onclick="toggleHub('${h.replace(/'/g,"\\'")}')">${h} <span class="subn">${availHubs[h]}</span></button>`).join("");
 }
 
-function toggleCell(dn, sn){ const k = dn+"|"+sn; const adding = !selCells.has(k); adding ? selCells.add(k) : selCells.delete(k); try{ window.dqTrack && window.dqTrack("grid_cell", { d: dn, s: sn }); }catch(e){} if (adding) try{ affRecordCell(dn, sn); }catch(e){} render(); }
+function toggleCell(dn, sn){ const k = dn+"|"+sn; const adding = !selCells.has(k); adding ? selCells.add(k) : selCells.delete(k); try{ window.dqTrack && window.dqTrack("grid_cell", { d: dn, s: sn }); }catch(e){} if (adding) try{ affRecordCell(dn, sn); }catch(e){} saveCells(); render(); }
 function toggleSub(s){ selSubs.has(s) ? selSubs.delete(s) : selSubs.add(s); render(); }
 function toggleHub(h){ selHubs.has(h) ? selHubs.delete(h) : selHubs.add(h); render(); }
 function toggleQuickRemote(){ quickRemote = !quickRemote; render(); }
 function toggleQuickNew(){ quickNew = !quickNew; render(); }
 function toggleQuickRegion(rg){ selRegionsQuick.has(rg) ? selRegionsQuick.delete(rg) : selRegionsQuick.add(rg); render(); }
-function clearMatrix(){ selCells.clear(); selSubs.clear(); selHubs.clear(); selRegionsQuick.clear(); quickRemote = false; quickNew = false; render(); }
+function clearMatrix(){ selCells.clear(); selSubs.clear(); selHubs.clear(); selRegionsQuick.clear(); quickRemote = false; quickNew = false; saveCells(); render(); }
 
 // ---- Active-filters bar: shows every applied filter as a removable chip + "Clear all".
 // Each chip stores a closure that clears its specific filter, so removal needs no fragile
@@ -2466,16 +2466,19 @@ function applyFilterQuery(){
     return true;
   } catch(e){ return false; }
 }
-// Remember the matrix-square selection between visits. We restore ONLY the grid cells (not search /
-// sidebar facets) from the last-filters snapshot, and only if it's recent — so a stale selection
-// from weeks ago isn't resurrected. Restored cells show in the matrix + active-filters bar and clear
-// with "Clear all", so they're always visible and one click to drop.
+// Remember the matrix-square selection between visits — in a DEDICATED store ("dq-cells") that we
+// rewrite on every change (select AND deselect), so an intentional clear is remembered as clear and
+// never re-applied. (We can't use dq-lastfilters for this: it deliberately keeps your last *non-empty*
+// filter so Hot jobs can seed from it, so it would resurrect a cell you cleared.) Restore only the
+// grid cells, only if recent. Restored cells show in the matrix + active-filters bar and clear with
+// "Clear all" / "Clear" — so they're always visible and one tap to drop.
+function saveCells(){ try { store.set("dq-cells", { cells: [...selCells], ts: Date.now() }); } catch(e){} }
 function restoreLastCells(){
   try {
-    var lf = store.get("dq-lastfilters", null);
-    if (!lf || !Array.isArray(lf.cells) || !lf.cells.length) return false;
-    if (lf.ts && (Date.now() - lf.ts) > 30*864e5) return false;   // don't resurrect selections older than 30 days
-    lf.cells.forEach(function(c){ if (c) selCells.add(c); });
+    var s = store.get("dq-cells", null);
+    if (!s || !Array.isArray(s.cells) || !s.cells.length) return false;
+    if (s.ts && (Date.now() - s.ts) > 30*864e5) return false;   // don't resurrect selections older than 30 days
+    s.cells.forEach(function(c){ if (c) selCells.add(c); });
     return selCells.size > 0;
   } catch(e){ return false; }
 }
@@ -2489,6 +2492,7 @@ function clearAllFilters(){
   ['f-d','f-w','f-s'].forEach(cls => document.querySelectorAll('.'+cls+':checked').forEach(c => c.checked = false));
   renderSearchGroup("studioFilters","studioSearch",STUDIO_COUNTS,selStudios,STUDIO_LABELS,DIR_STUDIOS);
   renderSearchGroup("countryFilters","countrySearch",COUNTRY_COUNTS,selCountries,null);
+  saveCells();
   render();
 }
 
@@ -4260,7 +4264,7 @@ function heroFilter(type, value){
     else if (type === "sen"){ new Set(JOBS.map(function(j){return j.d;}).filter(Boolean)).forEach(function(d){ selCells.add(d+"|"+value); }); }
     else if (type === "skill"){ var qel = document.getElementById("q"); if (qel) qel.value = value; }
     else if (type === "cell"){ value.split(";").forEach(function(c){ if (c) selCells.add(c); }); }
-    setView("list"); render();
+    setView("list"); saveCells(); render();
   } catch(e){}
 }
 function heroInit(){
