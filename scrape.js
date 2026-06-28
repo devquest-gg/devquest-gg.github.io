@@ -31,7 +31,7 @@ const DIRECTORY = [
   { name: "Hello Games", url: "https://hellogames.org/join-us/", note: "No Man's Sky — Guildford, UK", city: "Guildford, UK" },
   { name: "Telltale Games", url: "https://telltale.com/careers/", note: "The Wolf Among Us — revived studio", city: "Malibu, CA" },
   // Notable studios we can't cleanly scrape yet (Xbox first-party / custom corporate portals) — link-outs for now.
-  { name: "Square Enix", url: "https://www.square-enix-games.com/en_GB/careers", note: "Final Fantasy, Dragon Quest — JP publisher", city: "Tokyo, Japan" },
+  { name: "Square Enix (Japan)", url: "https://www.jp.square-enix.com/recruit/career/", note: "Final Fantasy, Dragon Quest — Japan HQ (JP-only careers site)", city: "Tokyo, Japan" },  // West offices are scraped via Workable (Square Enix Europe / America)
   // ---- June 2026: requested / community additions (link-outs; no clean scrapeable feed yet) ----
   // (PUBG Studios is now a live source — see the KRAFTON krafton.com scraper below, which covers PUBG
   //  Studios and the other KRAFTON sub-studios — so its link-out was removed.)
@@ -423,6 +423,8 @@ const STUDIOS = [
   { name: "Snail Games", type: "hiringthing", token: "snail-games-usa-inc", city: "Culver City, CA" }, // ARK publisher (NASDAQ: SNAL) — HiringThing SSR board (promoted from Island 2026-06-28)
   { name: "Sports Interactive", type: "segacareers", token: "sports-interactive", studioFacet: "Sports Interactive", city: "London, UK", parentCompany: "SEGA" }, // Football Manager — careers.sega.co.uk Drupal site, studio-scoped (promoted from Island 2026-06-28)
   { name: "Two Point Studios", type: "segacareers", token: "two-point-studios", studioFacet: "Two Point Studios", city: "Farnham, UK", parentCompany: "SEGA" }, // Two Point Hospital/Campus — careers.sega.co.uk, studio-scoped (promoted from Island 2026-06-28)
+  { name: "Square Enix Europe", type: "workable", token: "square-enix", city: "London, UK", parentCompany: "Square Enix" },        // FF, Dragon Quest — UK/Europe office on Workable (promoted from Island 2026-06-28; Japan stays a link-out)
+  { name: "Square Enix America", type: "workable", token: "square-enix-america", city: "El Segundo, CA", parentCompany: "Square Enix" }, // Square Enix Americas (LA) on Workable (promoted from Island 2026-06-28)
   // ---- 2026-06-26 batch: gap analysis vs alexanderrehm.com directory. Tier-1 studios already on a
   // supported ATS (tokens read from their public careers URLs) — spot-check first scrape, a wrong
   // token just shows 0 roles (per-source try/catch). See competitor-studio-gap-analysis.md. ----
