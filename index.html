@@ -4767,7 +4767,7 @@ function renderMapCityBar(){
   var loc=profGet("loc").v;
   el.innerHTML='<div class="mapcity"><span class="mc-ic">🏠</span>'
     + '<div class="mc-body"><label class="mc-lbl" for="mapCityInput">Your home base'+(loc?' — '+bfEsc(loc):'')+'</label>'
-    + '<div class="mc-row"><input class="mc-in" id="mapCityInput" list="mapCities" value="'+bfEsc(loc)+'" placeholder="Type your city to compare cost of living…" oninput="profSet(\'loc\', this.value); renderMapCitySync(); renderMap()">'
+    + '<div class="mc-row"><input class="mc-in" id="mapCityInput" list="mapCities" value="'+bfEsc(loc)+'" placeholder="Type your city to compare cost of living…" oninput="mapCityInputChanged(this)" onchange="renderMap()">'
     + (loc?'<button class="mc-clear" onclick="profRevert(\'loc\'); renderMapCityBar(); renderMapCitySync(); renderMap()">Clear</button>':'')
     + '</div><div class="mc-note">Compare salaries and purchasing power across game hubs. Optional · saved on this device · only used for cost-of-living comparisons, never to filter or hide roles.</div></div>'
     + '<datalist id="mapCities">'+COL_KEYS.slice().sort().map(function(c){return '<option value="'+bfEsc(c)+'"></option>';}).join("")+'</datalist></div>';
@@ -4776,6 +4776,18 @@ function renderMapCitySync(){
   var pl=document.getElementById("profLoc"); if(pl) pl.value=profGet("loc").v;
   try { profSummary(); } catch(e){}
   try { profMark("loc", profGet("loc").pinned); } catch(e){}
+}
+// Live-update as the home-base field is typed, WITHOUT rebuilding the input (that's what dropped focus
+// and limited you to one keystroke). The label updates in place; the map redraw is debounced so it
+// doesn't fight typing; and the bar (with its Clear button) is rebuilt on change/blur via renderMap().
+var _mapCityT = null;
+function mapCityInputChanged(inp){
+  try{ profSet("loc", inp.value); }catch(e){}
+  var lbl=document.querySelector("#mapCityBar .mc-lbl");
+  if(lbl) lbl.textContent = "Your home base" + (inp.value ? " — " + inp.value : "");
+  try{ renderMapCitySync(); }catch(e){}
+  if(_mapCityT) clearTimeout(_mapCityT);
+  _mapCityT = setTimeout(function(){ try{ renderMap(true); }catch(e){} }, 250);   // markers + panels only
 }
 // ---- Map intelligence: shared per-city aggregation + leaderboard / dream-move ----
 let MAP_MODE = "jobs";   // jobs | studios | afford
@@ -4867,8 +4879,8 @@ function renderMapDream(){
   el.style.display = "";
   el.innerHTML = `<div class="mp-dream"><div class="dh">🧭 Dream Move</div><div class="ds">Best places to land your next ${bfEsc(roles.join(", "))} role${homeCol!=null?", with cost of living vs "+bfEsc(homeLoc):""}.</div><ol>${items}</ol></div>`;
 }
-function renderMap(){
-  renderMapCityBar();
+function renderMap(skipBar){
+  if(!skipBar) renderMapCityBar();   // skip when called from live typing so the input keeps focus
   const _stats = mapCityStats();
   renderMapDream();
   renderMapPanel(_stats);
