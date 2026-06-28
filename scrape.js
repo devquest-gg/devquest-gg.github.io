@@ -25,7 +25,6 @@ const DIRECTORY = [
   { name: "Ninja Theory", url: "https://www.ninjatheory.com/careers/opportunities", note: "Hellblade — Xbox Game Studios", city: "Cambridge, UK" },
   { name: "Valve", url: "https://www.valvesoftware.com/en/jobs", note: "Steam, Half-Life, Dota 2", city: "Bellevue, WA" },
   { name: "Remedy Entertainment", url: "https://www.remedygames.com/careers", note: "Control, Alan Wake — Finland", city: "Espoo, Finland" },
-  { name: "Fuse Games", url: "https://fusegames.com/careers", note: "ex-Criterion devs — UK", city: "Guildford, UK" },
   { name: "Saber Interactive", url: "https://saber.games/careers/", note: "World War Z, Space Marine 2", city: "Fort Lauderdale, FL" },
   { name: "Supermassive Games", url: "https://www.supermassivegames.com/careers", note: "Until Dawn, The Quarry — UK", city: "Guildford, UK" },
   { name: "The Coalition", url: "https://www.thecoalitionstudio.com/careers", note: "Gears of War — Xbox", city: "Vancouver, BC" },
@@ -474,6 +473,7 @@ const STUDIOS = [
   { name: "Beamdog", type: "bamboohr", token: "beamdog", city: "Edmonton, Canada" },                         // Baldur's Gate Enhanced Editions
   { name: "BetaDwarf", type: "bamboohr", token: "betadwarfaps", city: "Copenhagen, Denmark" },               // Minion Masters
   { name: "Blazing Griffin", type: "bamboohr", token: "blazinggriffin", city: "Glasgow, UK" },               // games + film/TV
+  { name: "Fuse Games", type: "bamboohr", token: "fusegames", city: "Guildford, UK" },                       // ex-Criterion devs — BambooHR (promoted from Island 2026-06-28)
   { name: "Ember Lab", type: "bamboohr", token: "emberlab", city: "Orange County, CA" },                     // Kena: Bridge of Spirits
   { name: "Final Strike Games", type: "bamboohr", token: "finalstrikegames", city: "Bellevue, WA" },         // Gigantic / FOAMSTARS-adjacent
   { name: "GungHo Online Entertainment", type: "bamboohr", token: "gungho", city: "Tokyo, Japan" },          // Puzzle & Dragons
