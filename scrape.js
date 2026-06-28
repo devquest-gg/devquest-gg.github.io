@@ -53,7 +53,7 @@ const DIRECTORY = [
   { name: "Trailmix Games", url: "https://www.trailmixgames.com/careers", note: "Love & Pies — mobile (London)", city: "London, UK" },
   { name: "Gunfire Games", url: "https://gunfiregames.com/careers", note: "Remnant, Darksiders — Paylocity board", city: "Austin, TX" },
   { name: "10:10 Games", url: "https://www.1010games.com/join-us", note: "ex-Playtonic / Crash devs (Warrington)", city: "Warrington, UK" },
-  { name: "Snail Games", url: "https://snail-games-usa-inc.hiringthing.com", note: "ARK publisher — HiringThing board", city: "Culver City, CA" },  // batch 4 (2026-06-09): notable + mobile studios on custom / region-specific ATS — browse directly
+  // batch 4 (2026-06-09): notable + mobile studios on custom / region-specific ATS — browse directly
   { name: "Kojima Productions", url: "https://www.kojimaproductions.jp/en/careers", note: "Death Stranding (Tokyo)", city: "Tokyo, Japan" },
   { name: "Cygames", url: "https://www.cygames.co.jp/en/recruit/", note: "Granblue Fantasy, Uma Musume (Tokyo)", city: "Tokyo, Japan" },
   { name: "Garena", url: "https://careers.garena.com/", note: "Free Fire — part of Sea Ltd (Singapore)", city: "Singapore" },
@@ -422,6 +422,7 @@ const STUDIOS = [
   { name: "Next Level Games", type: "jazzhr", token: "nextlevelgames", city: "Vancouver, Canada" },          // Luigi's Mansion, Mario Strikers — Nintendo subsidiary
   { name: "Critical Path Games", type: "critpath", token: "critpath", city: "Vancouver, BC" },               // custom static careers site — fetchCritpath (requested mainland)
   { name: "Eidos-Montréal", type: "eidos", token: "eidos", city: "Montréal, QC, Canada", parentCompany: "Embracer" }, // Deus Ex, Tomb Raider — careers page is Dayforce-backed SSR (promoted from Island 2026-06-28)
+  { name: "Snail Games", type: "hiringthing", token: "snail-games-usa-inc", city: "Culver City, CA" }, // ARK publisher (NASDAQ: SNAL) — HiringThing SSR board (promoted from Island 2026-06-28)
   // ---- 2026-06-26 batch: gap analysis vs alexanderrehm.com directory. Tier-1 studios already on a
   // supported ATS (tokens read from their public careers URLs) — spot-check first scrape, a wrong
   // token just shows 0 roles (per-source try/catch). See competitor-studio-gap-analysis.md. ----
@@ -2808,7 +2809,51 @@ async function fetchEidos(studio) {
   return out;
 }
 
-const FETCHERS = { greenhouse: fetchGreenhouse, lever: fetchLever, workday: fetchWorkday, avature: fetchAvature, smartrecruiters: fetchSmartRecruiters, workable: fetchWorkable, phenom: fetchPhenom, teamtailor: fetchTeamtailor, eightfold: fetchEightfold, amazonjobs: fetchAmazonJobs, ashby: fetchAshby, zenimax: fetchZenimax, bamboohr: fetchBambooHr, jobscore: fetchJobScore, jazzhr: fetchJazzHr, jobvite: fetchJobvite, recruitee: fetchRecruitee, personio: fetchPersonio, rippling: fetchRippling, breezy: fetchBreezy, manatal: fetchManatal, sumodigital: fetchSumoDigital, pinpoint: fetchPinpoint, playground: fetchPlayground, obsidian: fetchObsidian, techland: fetchTechland, oracle: fetchOracle, cig: fetchCig, critpath: fetchCritpath, krafton: fetchKrafton, eidos: fetchEidos };
+// ---- HiringThing (Snail Games + others) — SSR careers page ---------------------------------
+// <subdomain>.hiringthing.com server-renders each posting inside <div class="job-headline">:
+//   <div class="job-title-and-category"><a href="/job/<id>/<slug>"><h2>Title</h2></a></div>
+//   <div class="job-location">City, ST</div>  [<div>$NN,NNN ‒ $NN,NNN Annually</div>]  ...
+// We split on the card class and parse each one. Salary (when shown) is recovered by extractSalary;
+// figure/EN dashes are normalized first. No posted date on the list, so that stays Unknown.
+async function fetchHiringThing(studio) {
+  let html;
+  if (SAMPLE_FILE) { const d = loadSample(studio); if (!d) return []; html = typeof d === "string" ? d : (d.html || ""); }
+  else { html = await fetchText(`https://${studio.token}.hiringthing.com/`); }
+  const out = []; const seen = new Set();
+  // decodeEnt doesn't cover numeric refs (&#8211; dash, &#8203; zero-width prefix on some titles), so
+  // decode those generically and strip zero-width chars before trimming.
+  const norm = t => decodeEnt(String(t).replace(/<[^>]+>/g, " "))
+    .replace(/&#(\d+);/g, (_, n) => { try { return String.fromCodePoint(+n); } catch (e) { return " "; } })
+    .replace(/&#x([0-9a-fA-F]+);/g, (_, h) => { try { return String.fromCodePoint(parseInt(h, 16)); } catch (e) { return " "; } })
+    .replace(/[​-‍﻿]/g, "").replace(/\s+/g, " ").trim();
+  for (const card of html.split(/class="job-headline"/i).slice(1)) {
+    const head = card.slice(0, 1200);
+    const idm = head.match(/\/job\/(\d+)\//);
+    if (!idm) continue;
+    const id = idm[1];
+    if (seen.has(id)) continue; seen.add(id);
+    const tm = head.match(/<a\b[^>]*\/job\/\d+\/[^"]*"[^>]*>([\s\S]*?)<\/a>/i);
+    const title = tm ? norm(tm[1]) : "";
+    if (!title || /^learn more$/i.test(title)) continue;
+    const lm = head.match(/class="job-location"[^>]*>([\s\S]*?)<\/div>/i);
+    const location = lm ? norm(lm[1]) : (studio.city || "");
+    const cardText = decodeEnt(head.replace(/<[^>]+>/g, " ")).replace(/[‒–—]/g, "-").replace(/\s+/g, " ");
+    out.push({
+      id: `ht-${studio.token}-${id}`,
+      title, studio: studio.name,
+      discipline: mapDiscipline(null, title),
+      workType: inferWorkType(title, location, []),
+      location, region: inferRegion(location),
+      seniority: inferSeniority(title),
+      salary: extractSalary(cardText) || null,
+      yoe: null, postedAt: null,
+      url: `https://${studio.token}.hiringthing.com/job/${id}`,
+    });
+  }
+  return out;
+}
+
+const FETCHERS = { greenhouse: fetchGreenhouse, lever: fetchLever, workday: fetchWorkday, avature: fetchAvature, smartrecruiters: fetchSmartRecruiters, workable: fetchWorkable, phenom: fetchPhenom, teamtailor: fetchTeamtailor, eightfold: fetchEightfold, amazonjobs: fetchAmazonJobs, ashby: fetchAshby, zenimax: fetchZenimax, bamboohr: fetchBambooHr, jobscore: fetchJobScore, jazzhr: fetchJazzHr, jobvite: fetchJobvite, recruitee: fetchRecruitee, personio: fetchPersonio, rippling: fetchRippling, breezy: fetchBreezy, manatal: fetchManatal, sumodigital: fetchSumoDigital, pinpoint: fetchPinpoint, playground: fetchPlayground, obsidian: fetchObsidian, techland: fetchTechland, oracle: fetchOracle, cig: fetchCig, critpath: fetchCritpath, krafton: fetchKrafton, eidos: fetchEidos, hiringthing: fetchHiringThing };
 
 // ---- Ghost-job tracking -----------------------------------------------------
 // Because we scrape on a schedule, we can see how long a listing has REALLY been
@@ -3155,7 +3200,7 @@ module.exports = { mapDiscipline, strongTitleDiscipline, normDisc };
   // at our many Québécois studios, so blocking it would wrongly drop real lead roles.
   // ("culinary" and bare "landscap" are deliberately omitted — they'd catch real roles like a
   // cooking-game "Culinary Designer" or a "Landscape Artist"; we use "landscaping" for grounds work.)
-  const NON_GAME_TITLE = /\bmassage\b|masseu|car care|car wash|\bvalet\b|\bbarista\b|cafeteria|kitchen (porter|staff|assistant|hand|aide)|security guard|security officer|\bjanitor\b|custodian|housekeep|cleaning (staff|crew|attendant|service)|\bcleaner\b|\bgardener\b|landscaping|groundskeep|shuttle driver|delivery driver|\bchauffeur\b|\bnurse\b|\bcaregiver\b|physical therapist|occupational therapist|facilit(?:y|ies) (?:assistant|attendant|helper|worker|staff|aide)/i;
+  const NON_GAME_TITLE = /\bmassage\b|masseu|car care|car wash|\bvalet\b|\bbarista\b|cafeteria|kitchen (porter|staff|assistant|hand|aide)|security guard|security officer|\bjanitor\b|custodian|housekeep|cleaning (staff|crew|attendant|service)|\bcleaner\b|\bgardener\b|landscaping|groundskeep|shuttle driver|delivery driver|\bchauffeur\b|\bnurse\b|\bcaregiver\b|physical therapist|occupational therapist|facilit(?:y|ies) (?:assistant|attendant|helper|worker|staff|aide)|\bblockchain\b|\bweb3\b|\bnfts?\b|crypto(?:currency)?\b|\begofold\b/i;
   let droppedNonGame = 0;
   for (let i = all.length - 1; i >= 0; i--) { if (NON_GAME_TITLE.test(all[i].title || "")) { all.splice(i, 1); droppedNonGame++; } }
   if (droppedNonGame) console.log(`Filtered out ${droppedNonGame} non-game facility/service role(s).`);
