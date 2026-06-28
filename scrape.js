@@ -2541,10 +2541,15 @@ async function fetchObsidian(studio) {
 // grouped by category. No dates/locations on the list page, so those stay Unknown; the studio is in
 // Wrocław, Poland. Discipline is inferred from the title (the title-rules classifier is strong).
 // Promoted from the Island 2026-06-18.
+// AGE-GATE: techland.net serves an age-verification page with NO job links to ordinary BROWSER
+// User-Agents, but the full job list to search crawlers (the page is SEO-indexed). With our default
+// Chrome UA the scraper silently got 0 roles; fetching as Googlebot returns the real list. (Verified
+// 2026-06-28: a browser-UA fetch returns the age gate; a crawler-UA fetch returns ~30 openings.)
+const TECHLAND_UA = "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)";
 async function fetchTechland(studio) {
   let html;
   if (SAMPLE_FILE) { const d = loadSample(studio); if (!d) return []; html = typeof d === "string" ? d : (d.html || ""); }
-  else { html = await fetchText("https://techland.net/job-offers"); }
+  else { html = await fetchText("https://techland.net/job-offers", 15000, TECHLAND_UA); }
   const re = /<a\b[^>]*href="(?:https:\/\/techland\.net)?\/job-offers\/([a-z0-9][a-z0-9-]*)"[^>]*>([\s\S]*?)<\/a>/gi;
   const out = []; const seen = new Set(); let m;
   while ((m = re.exec(html))) {
@@ -2833,13 +2838,15 @@ async function fetchDetailJson(url, ms = 15000) {
   } finally { clearTimeout(timer); }
 }
 
-async function fetchText(url, ms = 15000) {
+async function fetchText(url, ms = 15000, ua) {
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), ms);
   try {
     const res = await fetch(url, {
       headers: {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36",
+        // Default to a real-browser UA. Pass `ua` to override — e.g. a crawler UA for sites that
+        // serve an age-gate (no content) to browsers but full content to search crawlers.
+        "User-Agent": ua || "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36",
         "Accept": "text/html,application/xhtml+xml",
       },
       signal: ctrl.signal,
