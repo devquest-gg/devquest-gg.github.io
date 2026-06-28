@@ -247,11 +247,6 @@
   .tag.longwarn { color: var(--gold); border-color: rgba(210,153,34,.5); }
   .tag.longbad { color: #f0883e; border-color: rgba(240,136,62,.6); font-weight: 700; }
   .tag.relist { color: var(--pink); border-color: rgba(247,120,186,.5); cursor: help; }
-  /* Line the tag rows up row-to-row: give the work-type and location chips a consistent width so the
-     chips after them (level, salary, etc.) start at the same x instead of zigzagging. Short labels pad;
-     a rare long one can still extend. */
-  .rtags .tag.remote, .rtags .tag.onsite, .rtags .tag.hybrid { min-width: 56px; text-align: center; }
-  .rtags .locchip { min-width: 150px; }
   .poolbadge { background: rgba(139,148,158,.18); color: var(--muted); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; padding: 2px 8px; border-radius: 999px; margin-left: 8px; vertical-align: middle; cursor: help; }
   .row.dismissed { opacity: .6; }
   .dismissedbadge { background: rgba(247,120,186,.15); color: var(--pink); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; padding: 2px 8px; border-radius: 999px; margin-left: 8px; vertical-align: middle; }
@@ -3551,8 +3546,18 @@ function colLookup(locStr){ if(!locStr) return null; var s=String(locStr).toLowe
 function colChipForJob(j){
   var loc = profGet("loc").v; if (!loc) return "";
   var home = COL_INDEX[loc] || colLookup(loc); if (!home) return "";
-  if (!j.places || j.places.length !== 1) return "";   // single location only — multi-city jobs show nothing
-  var there = colLookup(j.places[0] && j.places[0].l); if (!there) return "";
+  // Cost of living is only meaningful for a SINGLE city (different cities have different costs). Count
+  // TRUE distinct cities the same way the location chip does — flattening ";"-joined entries and dropping
+  // "Multiple Locations"/BLANK placeholders — so a one-object listing that crams several cities in
+  // ("Austin; Bay Area; …") is correctly treated as multi and shows no COL, just like multi-object ones.
+  var _cities = [];
+  (j.places||[]).forEach(function(p){ String(p.l||"").split(/\s*;\s*/).forEach(function(c){
+    c = String(c).replace(/\bBLANK\b/gi,"").replace(/^[\s,;]+|[\s,;]+$/g,"").trim();
+    if (c && !/^(multiple location(s)?|various location(s)?|various|multiple)$/i.test(c)) _cities.push(c.toLowerCase());
+  }); });
+  _cities = [...new Set(_cities)];
+  if (_cities.length !== 1) return "";   // 0 or 2+ distinct cities → ambiguous, no COL
+  var there = colLookup(_cities[0]); if (!there) return "";   // city not in our cost-of-living dataset
   var d = Math.round((there/home - 1)*100);
   // Compact chip: 🏠 + arrow + %, with the full "cost of living vs <city>" spelled out only on hover.
   if (d > 5)  return '<span class="coltag up" data-tip="Approx. cost of living vs '+bfEsc(loc)+' — a guide, not exact">🏠 ↑'+d+'%</span>';
