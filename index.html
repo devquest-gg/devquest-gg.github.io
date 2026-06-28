@@ -2886,12 +2886,60 @@ function rowHtml(j, mjStage){
   const isNew = isNewForYou(j);
   const isDismissed = dismissed.has(j.id);
   const isSaved = saved.has(j.id);
-  const locLabel = l => l.replace(/^united states,\s*/i, "").replace(/,/g, ", ");
-  const multi = j.places.length > 1;
-  // each location chip links to its own posting; clicking the row opens the first one (chips let you pick a city)
-  const locChips = j.places.slice(0,3).map(p=>
-    `<span class="tag locchip" ${p.url?`onclick="event.stopPropagation(); openApply('${j.id}','${p.url}')" data-tip="Open the ${locLabel(p.l)} posting"`:""}>${locLabel(p.l)}${multi?' ↗':''}</span>`).join("")
-    + (j.places.length>3 ? `<span class="tag">+${j.places.length-3} more</span>` : "");
+  // Normalize a location label: drop ATS placeholders ("BLANK" = unknown city/state, e.g. Epic) and
+  // standardize country names (US/UK) so the board reads consistently.
+  const locLabel = l => String(l||"")
+    .replace(/\bBLANK\b/gi, "")
+    .replace(/^united states,\s*/i, "")
+    .replace(/\bunited states of america\b/ig, "US").replace(/\bunited states\b/ig, "US").replace(/\bu\.s\.a?\.?\b/ig, "US")
+    .replace(/\bunited kingdom\b/ig, "UK")
+    .replace(/\s*;\s*/g, "; ").replace(/\s*,\s*/g, ", ")
+    .replace(/^[\s,;]+|[\s,;]+$/g, "").replace(/,\s*,/g, ", ")   // tidy stray separators left by removed placeholders
+    .replace(/\s+/g, " ").trim();
+  // Some source feeds cram several cities into ONE place entry (";"-separated), others give one entry
+  // per city, and we also MERGE same-title postings from a studio (one role posted in N cities = one
+  // row). Flatten every city across all entries, dedupe, and show EITHER a single clean location chip OR
+  // one "Multiple locations" chip (full list on hover). A literal "Multiple Locations"/"Various" value is
+  // a placeholder, not a city — it just flags that the role spans places.
+  const _isVarious = s => /^(multiple location(s)?|various location(s)?|various|multiple)$/i.test(s);
+  let _hasVarious = false;
+  const _allLocs = [];
+  (j.places||[]).forEach(p => String(p.l||"").split(/\s*;\s*/).forEach(c => {
+    c = locLabel(c);
+    if (!c) return;
+    if (_isVarious(c)) { _hasVarious = true; return; }
+    _allLocs.push(c);
+  }));
+  const uniqLocs = [...new Set(_allLocs)];
+  // Compact display form: "City, Country" (drop the middle admin region) so chips stay tidy.
+  const _short = c => { const p = c.split(",").map(x=>x.trim()).filter(Boolean); return p.length >= 3 ? p[0] + ", " + p[p.length-1] : c; };
+  const isMulti = uniqLocs.length > 1 || _hasVarious;
+  let locChips;
+  if (isMulti) {
+    // Show the 2 cities most relevant to THIS visitor; the rest collapse into "+N" (full list on hover).
+    // Relevance: your profile countries first, else your home continent, else a known major hub, else the
+    // source order. So a US user sees the US cities, a Vancouverite sees Vancouver, and nobody's left
+    // guessing where the role is.
+    let _pcs = null; try { _pcs = profCountrySet(); } catch(e){}
+    const _cc = c => { try { return inferCountry(c); } catch(e){ return ""; } };
+    const _score = c => { let s = 0; const cc = _cc(c);
+      if (_pcs && _pcs.size) { if (cc && _pcs.has(cc)) s += 4; }
+      else { try { if (cc && CONTINENT_OF[cc] && CONTINENT_OF[cc] === HOME_REGION) s += 2; } catch(e){} }
+      try { if (colLookup(c)) s += 1; } catch(e){}
+      return s; };
+    const _ordered = uniqLocs.map((c,i)=>({c,i,s:_score(c)})).sort((a,b)=> b.s - a.s || a.i - b.i).map(o=>o.c);
+    const _shown = _ordered.slice(0,2).map(c => c.split(",")[0].trim() || c);   // city name only on the chip
+    const _more = Math.max(0, uniqLocs.length - _shown.length) + (_hasVarious ? 1 : 0);
+    const _label = _shown.length ? (_shown.join(", ") + (_more > 0 ? " +" + _more : "")) : "Multiple locations";
+    const _tip = "<b>Locations</b>" + (uniqLocs.length ? "<br>" + uniqLocs.join("<br>") : "") + (_hasVarious ? "<br>+ other locations" : "");
+    locChips = `<span class="tag locchip" data-tip="${escTip(_tip)}" ${j.url?`onclick="event.stopPropagation(); openApply('${j.id}','${j.url}')"`:""}>${_label} ↗</span>`;
+  } else {
+    const _only = _short(uniqLocs[0] || "");
+    const _u = (j.places[0]||{}).url;
+    // suppress a lone "Remote" location chip when the work-type tag already says Remote (avoids a dup)
+    locChips = (!_only || (/^remote$/i.test(_only) && j.w === "Remote")) ? ""
+      : `<span class="tag locchip" ${_u?`onclick="event.stopPropagation(); openApply('${j.id}','${_u}')" data-tip="Open the ${_only} posting"`:""}>${_only}</span>`;
+  }
   const rowClick = j.url ? `onclick="openApply('${j.id}','${j.url}')"` : "";
   // ghost-job signals (facts, not accusations)
   const dl = daysListed(j);
@@ -2906,7 +2954,6 @@ function rowHtml(j, mjStage){
         <span class="title">${j.t}</span><span class="studio" data-tip="${escTip(studioTipHtml(j.s))}">${j.s}</span><span class="cardstar${isFollowed(j.s)?' on':''}" data-st="${j.s.replace(/"/g,'')}" role="button" tabindex="0" data-tip="${isFollowed(j.s)?'Following · click to unfollow':'Follow this studio'}" aria-label="${isFollowed(j.s)?'Unfollow':'Follow'} ${j.s.replace(/"/g,'')}" onclick="toggleFollow(this.getAttribute('data-st'), event)">${isFollowed(j.s)?'★':'☆'}</span>
         ${isDismissed?'<span class="dismissedbadge">hidden</span>':''}
         ${poolBadge}
-        ${multi?`<span class="multibadge">${j.places.length} locations</span>`:''}
         ${isNew?'<span class="nfy">NEW FOR YOU</span>':''}
       </div>
       <div class="posted">${noDate?'date n/a':`${h<=24&&!isNew?'<span class="new">● </span>':''}${ago(h)}`}</div>
