@@ -2899,6 +2899,44 @@ function studioTipHtml(name){
     ? '<div class="gtgames"><div class="gtlabel">Notable games</div>'+bfEsc(STUDIO_TITLES[name])+'</div>' : "";
   return '<div class="gttitle">'+bfEsc(name)+'</div><div class="gtsub">'+roles+mom+'</div>'+g;
 }
+// Normalize a location label: drop ATS placeholders ("BLANK"), strip ISO-2 country-code prefixes
+// ("US - San Francisco" -> "San Francisco"), standardize country names (US/UK), and tidy separators —
+// so the board reads consistently regardless of how each source formats locations.
+function locClean(l){
+  return String(l||"")
+    .replace(/\bBLANK\b/gi, "")
+    .replace(/^\s*[A-Z]{2}\s*[-–]\s*/, "")
+    .replace(/^united states,\s*/i, "")
+    .replace(/\bunited states(?: of america)?\b/ig, "US").replace(/\bU\.?S\.?A?\.?\b/g, "US")
+    .replace(/\bunited kingdom\b/ig, "UK").replace(/\bU\.?K\.?\b/g, "UK")
+    .replace(/\s*;\s*/g, "; ").replace(/\s*,\s*/g, ", ")
+    .replace(/^[\s,;]+|[\s,;]+$/g, "").replace(/,\s*,/g, ", ")
+    .replace(/\b(US|UK)(?:,\s*\1\b)+/g, "$1")
+    .replace(/\s+/g, " ").trim();
+}
+// Extract the distinct cities for a job, handling every multi-location format we see:
+//  - separate place entries (merged same-title postings) and ";"-separated strings (Scopely/Fortis)
+//  - "City - Campus, City - Campus" comma strings (EA/Respawn): split on the comma, drop the campus
+//  - "Multiple Locations"/"Various" -> flagged as `various`, not treated as a city
+// "City, State, Country" and "Remote - Country" are left intact (not mistaken for multiple cities).
+function jobCities(j){
+  var isCampus = function(s){ var m=String(s).trim().match(/^(.+?)\s[-–]\s(.+)$/); if(!m) return false; var left=m[1].trim(); return left.length>2 && !/^remote$/i.test(left); };
+  var out=[], various=false;
+  (j.places||[]).forEach(function(p){
+    String(p.l||"").split(/\s*;\s*/).forEach(function(seg){
+      var parts = seg.split(",").map(function(x){return x.trim();}).filter(Boolean);
+      var items = (parts.length>=2 && parts.every(isCampus)) ? parts : [seg];
+      items.forEach(function(raw){
+        var c = isCampus(raw) ? raw.replace(/\s[-–]\s.+$/, "") : raw;   // drop "- Campus", keep the city
+        c = locClean(c);
+        if (!c) return;
+        if (/^(multiple location(s)?|various location(s)?|various|multiple)$/i.test(c)) { various = true; return; }
+        out.push(c);
+      });
+    });
+  });
+  return { cities: [...new Set(out)], various: various };
+}
 function rowHtml(j, mjStage){
   const h = hoursAgo(j);
   const noDate = !j.ts;
@@ -2908,31 +2946,11 @@ function rowHtml(j, mjStage){
   const isNew = isNewForYou(j);
   const isDismissed = dismissed.has(j.id);
   const isSaved = saved.has(j.id);
-  // Normalize a location label: drop ATS placeholders ("BLANK" = unknown city/state, e.g. Epic) and
-  // standardize country names (US/UK) so the board reads consistently.
-  const locLabel = l => String(l||"")
-    .replace(/\bBLANK\b/gi, "")
-    .replace(/^united states,\s*/i, "")
-    .replace(/\bunited states of america\b/ig, "US").replace(/\bunited states\b/ig, "US").replace(/\bu\.s\.a?\.?\b/ig, "US")
-    .replace(/\bunited kingdom\b/ig, "UK")
-    .replace(/\s*;\s*/g, "; ").replace(/\s*,\s*/g, ", ")
-    .replace(/^[\s,;]+|[\s,;]+$/g, "").replace(/,\s*,/g, ", ")   // tidy stray separators left by removed placeholders
-    .replace(/\s+/g, " ").trim();
-  // Some source feeds cram several cities into ONE place entry (";"-separated), others give one entry
-  // per city, and we also MERGE same-title postings from a studio (one role posted in N cities = one
-  // row). Flatten every city across all entries, dedupe, and show EITHER a single clean location chip OR
-  // one "Multiple locations" chip (full list on hover). A literal "Multiple Locations"/"Various" value is
-  // a placeholder, not a city — it just flags that the role spans places.
-  const _isVarious = s => /^(multiple location(s)?|various location(s)?|various|multiple)$/i.test(s);
-  let _hasVarious = false;
-  const _allLocs = [];
-  (j.places||[]).forEach(p => String(p.l||"").split(/\s*;\s*/).forEach(c => {
-    c = locLabel(c);
-    if (!c) return;
-    if (_isVarious(c)) { _hasVarious = true; return; }
-    _allLocs.push(c);
-  }));
-  const uniqLocs = [...new Set(_allLocs)];
+  // Distinct cities for this job (see jobCities: handles ";"-strings, merged postings, EA "City - Campus"
+  // comma strings, and "Multiple Locations" placeholders). Show one clean chip, or "Multiple locations".
+  const _jc = jobCities(j);
+  const uniqLocs = _jc.cities;
+  const _hasVarious = _jc.various;
   // Compact display form: "City, Country" (drop the middle admin region) so chips stay tidy.
   const _short = c => { const p = c.split(",").map(x=>x.trim()).filter(Boolean); return p.length >= 3 ? p[0] + ", " + p[p.length-1] : c; };
   const isMulti = uniqLocs.length > 1 || _hasVarious;
@@ -3537,6 +3555,8 @@ function obDismiss(){ obTrack("onboard_dismiss", {}); obSetDone(); var el=docume
 let ROW_COL = false;
 const COL_INDEX = {
   "San Francisco":100,"San Jose":98,"Mountain View":96,"San Mateo":95,"Foster City":92,"New York":92,"Santa Monica":88,"Culver City":85,"Boston":85,"Seattle":83,"Bellevue":83,"Los Angeles":82,"Burbank":82,"Redmond":80,"Irvine":80,"Washington":80,"Washington DC":80,"Rockville":78,"San Diego":78,"Miami":74,"Boulder":74,"Chicago":72,"Portland":72,"Denver":72,"Sacramento":70,"Baltimore":70,"Austin":68,"Minneapolis":66,"Atlanta":64,"Las Vegas":63,"Phoenix":63,"Dallas":63,"Raleigh":63,"Cary":63,"Durham":62,"Houston":62,"Orlando":62,"Salt Lake":62,"Madison":62,"Detroit":58,
+  "El Segundo":82,"Marina del Rey":84,"Playa Vista":84,"Manhattan Beach":86,"Glendale":78,"Pasadena":80,"Aliso Viejo":76,"Carlsbad":76,"Redwood City":94,"Sunnyvale":95,"Palo Alto":98,"Oakland":86,"Berkeley":86,"Emeryville":90,"Novato":82,"San Rafael":84,"Petaluma":76,"Walnut Creek":78,"San Ramon":78,"Pleasanton":78,"Bay Area":92,"Mercer Island":85,"Kirkland":82,"Sammamish":80,"Renton":74,"Plano":63,"Frisco":63,"Round Rock":66,"San Antonio":58,"Hunt Valley":68,"Hoboken":86,"Brooklyn":88,
+  "Burnaby":70,"Richmond":70,"Mississauga":66,"Markham":66,"Kitchener":56,"Victoria":64,"Halifax":54,"Quebec City":54,"Seville":56,"Sevilla":56,"Galway":62,"Cork":62,"Gdańsk":44,"Poznań":42,"Katowice":42,"Karlsruhe":58,"Sundbyberg":64,"Gurgaon":36,"Gurugram":36,"Noida":34,"Kaohsiung":48,
   "Vancouver":72,"Toronto":70,"Ottawa":62,"Montréal":58,"Montreal":58,"Edmonton":56,"Quebec":54,
   "London":85,"Guildford":78,"Farnham":70,"Oxford":76,"Cambridge":74,"Brighton":70,"Horsham":68,"Edinburgh":64,"Leamington":62,"Manchester":58,"Nottingham":55,"Twycross":55,"Liverpool":54,"Sheffield":54,"Newcastle":54,"Dundee":52,
   "Zurich":110,"Geneva":108,"Reykjavík":88,"Reykjavik":88,"Oslo":80,"Copenhagen":80,"Paris":78,"Dublin":78,"Amsterdam":72,"Munich":72,"Vienna":66,"Espoo":66,"Helsinki":68,"Frankfurt":66,"Hamburg":64,"Brussels":64,"Cologne":62,"Stockholm":65,"Gothenburg":60,"Lyon":60,"Berlin":60,"Bordeaux":58,"Ghent":58,"Malmö":58,"Barcelona":58,"Madrid":56,"Montpellier":55,"Skövde":55,"Lisbon":54,"Prague":50,"Vilnius":48,"Brno":46,"Warsaw":45,"Nicosia":52,"Kraków":42,"Wrocław":42,"Bucharest":42,"Budapest":44,"Sofia":40,"Belgrade":40,"Novi Sad":38,"Bielsko-Biała":38,"Istanbul":45,
@@ -3547,22 +3567,16 @@ function colLookup(locStr){ if(!locStr) return null; var s=String(locStr).toLowe
 function colChipForJob(j){
   var loc = profGet("loc").v; if (!loc) return "";
   var home = COL_INDEX[loc] || colLookup(loc); if (!home) return "";
-  // Cost of living is only meaningful for a SINGLE city (different cities have different costs). Count
-  // TRUE distinct cities the same way the location chip does — flattening ";"-joined entries and dropping
-  // "Multiple Locations"/BLANK placeholders — so a one-object listing that crams several cities in
-  // ("Austin; Bay Area; …") is correctly treated as multi and shows no COL, just like multi-object ones.
-  var _cities = [];
-  (j.places||[]).forEach(function(p){ String(p.l||"").split(/\s*;\s*/).forEach(function(c){
-    c = String(c).replace(/\bBLANK\b/gi,"").replace(/^[\s,;]+|[\s,;]+$/g,"").trim();
-    if (c && !/^(multiple location(s)?|various location(s)?|various|multiple)$/i.test(c)) _cities.push(c.toLowerCase());
-  }); });
-  _cities = [...new Set(_cities)];
+  // Cost of living is only meaningful for a SINGLE city (different cities have different costs). Use the
+  // same city extraction as the location chip (jobCities) so a multi-city listing — whatever its format —
+  // correctly shows no COL.
+  var _cities = jobCities(j).cities;
   if (_cities.length !== 1) return "";   // 0 or 2+ distinct cities → ambiguous, no COL
   var there = colLookup(_cities[0]); if (!there) return "";   // city not in our cost-of-living dataset
   var d = Math.round((there/home - 1)*100);
   // Compact chip: 🏠 + arrow + %, with the full "cost of living vs <city>" spelled out only on hover.
-  if (d > 5)  return '<span class="coltag up" data-tip="Approx. cost of living vs '+bfEsc(loc)+' — a guide, not exact">🏠 ↑'+d+'%</span>';
-  if (d < -5) return '<span class="coltag dn" data-tip="Approx. cost of living vs '+bfEsc(loc)+' — a guide, not exact">🏠 ↓'+(-d)+'%</span>';
+  if (d > 5)  return '<span class="coltag up" data-tip="Approx. cost of living vs '+bfEsc(loc)+' — a guide, not exact">🏠 '+d+'% ↑</span>';
+  if (d < -5) return '<span class="coltag dn" data-tip="Approx. cost of living vs '+bfEsc(loc)+' — a guide, not exact">🏠 '+(-d)+'% ↓</span>';
   return '<span class="coltag eq" data-tip="Approx. cost of living vs '+bfEsc(loc)+' — a guide, not exact">🏠 ≈ same</span>';
 }
 // Resolve the visitor's saved home location to a cost-of-living index value (or null if unset/unknown).
