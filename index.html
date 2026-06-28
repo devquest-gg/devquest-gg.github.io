@@ -490,6 +490,10 @@
   .qchip { cursor: pointer; border: 1px solid var(--border); background: var(--panel); color: var(--muted); border-radius: 999px; padding: 6px 13px; font-size: 13px; font-weight: 600; }
   .qchip:hover { border-color: var(--accent); color: var(--text); }
   .qchip .qx { opacity: .8; font-size: 11px; margin-left: 1px; }
+  /* Region scope is a default, not an active filter the eye should jump to — keep it muted even when "on". */
+  .qchip.scope.on { background: transparent; color: var(--muted); border-color: var(--border); font-weight: 600; }
+  .qchip.scope.on:hover { color: var(--text); border-color: var(--accent); }
+  .qchip.scope.on .qx { opacity: .6; }
   /* My Jobs pipeline: stage pills + health dots + colored card bars (scoped via .mjp; flag MYJOBS_PIPELINE) */
   .mjbar { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; padding: 10px 15px 0; }
   .mjpill { font-size: 11px; font-weight: 800; padding: 2px 9px; border-radius: 999px; text-transform: uppercase; letter-spacing: .03em; }
@@ -729,8 +733,31 @@
   .a2-modal h3 { margin: 0 0 12px; font-size: 16px; }
   .a2-modal ol { margin: 0; padding-left: 20px; font-size: 14px; line-height: 1.75; color: var(--text); }
   .a2-modal .a2-close { margin-top: 16px; width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border); background: transparent; color: var(--text); font-weight: 800; cursor: pointer; }
-  /* --- First-run onboarding card --- */
-  #onboardCard { margin: 10px 0 14px; }
+  /* --- First-run onboarding hint (minimal, sits directly above the matrix) --- */
+  #onboardCard { margin: 0 0 12px; }
+  .obhint { display: flex; align-items: center; gap: 10px; background: linear-gradient(180deg,rgba(88,166,255,.08),var(--panel)); border: 1px solid rgba(88,166,255,.45); border-radius: 10px; padding: 9px 14px; }
+  .obhint .ob-emoji { font-size: 16px; line-height: 1; flex: none; }
+  .obhint .ob-txt { font-size: 13px; color: var(--text); } .obhint .ob-txt b { font-weight: 800; }
+  .obhint .ob-x { margin-left: auto; background: none; border: none; color: var(--muted); font-size: 16px; cursor: pointer; line-height: 1; padding: 2px 4px; flex: none; }
+  .obhint .ob-x:hover { color: var(--text); }
+  /* --- Closest-city strip (below the matrix; shown to anyone who hasn't set a city) --- */
+  #cityStrip { margin: 0 0 12px; }
+  .citystrip { position: relative; display: flex; align-items: center; flex-wrap: wrap; gap: 8px 10px; background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px; }
+  .citystrip .cs-lbl { font-size: 13px; font-weight: 700; color: var(--text); }
+  .citystrip .cs-sub { font-weight: 400; color: var(--muted); }
+  .citystrip .cs-chips { display: flex; flex-wrap: wrap; gap: 7px; }
+  .cs-chip { font-size: 13px; font-weight: 600; padding: 5px 12px; border-radius: 999px; border: 1px solid var(--border); background: transparent; color: var(--text); cursor: pointer; }
+  .cs-chip:hover { border-color: var(--accent); }
+  .cs-chip.on { background: var(--accent); color: #0d1117; border-color: var(--accent); }
+  .citystrip .cs-x { margin-left: auto; background: none; border: none; color: var(--muted); font-size: 15px; cursor: pointer; line-height: 1; padding: 2px 4px; }
+  .citystrip .cs-x:hover { color: var(--text); }
+  .citystrip .cs-in { font-size: 13px; padding: 8px 11px; border-radius: 8px; border: 1px solid var(--border); background: #0d1117; color: var(--text); min-width: 220px; }
+  .citystrip .cs-in:focus { outline: none; border-color: var(--accent); }
+  .citystrip .cs-go { margin-left: 8px; font-size: 13px; font-weight: 700; padding: 8px 14px; border-radius: 8px; border: 1px solid var(--accent); background: var(--accent); color: #0d1117; cursor: pointer; }
+  /* Region scope is folded into the quick-filters row on desktop; on mobile the quick bar is hidden,
+     so the banner stays as the geo control there. */
+  #regionBar { display: none; }
+  @media (max-width: 560px) { #regionBar { display: block; } }
   .obcard { position: relative; background: linear-gradient(180deg,rgba(88,166,255,.08),var(--panel)); border: 1.5px solid rgba(88,166,255,.55); border-radius: 12px; padding: 15px 17px; }
   .obcard .ob-x { position: absolute; top: 10px; right: 12px; background: none; border: none; color: var(--muted); font-size: 17px; cursor: pointer; line-height: 1; }
   .obcard .ob-x:hover { color: var(--text); }
@@ -938,11 +965,12 @@ function dqCopyLink(btn){
       <button id="tabStats" onclick="setView('stats')">📈 <span class="tabwide">Hiring </span>Trends</button>
     </div>
     </div>
-    <div id="onboardCard"></div>
-    <div id="regionBar"></div>
     <div id="pulseStrip"></div>
+    <div id="onboardCard"></div>
     <div id="followWrap"></div>
     <div id="matrixWrap"></div>
+    <div id="cityStrip"></div>
+    <div id="regionBar"></div>
     <div id="quickbar"></div>
     <div id="hubbar"></div>
     <div id="subbar"></div>
@@ -964,6 +992,17 @@ function dqCopyLink(btn){
   </main>
 </div>
 
+<script>
+/* Testing helper: open with ?dqreset to wipe THIS device's DevQuest state (onboarding, profile,
+   saved cells/filters, last-visit) and reload as a brand-new visitor. Runs before everything else so
+   the app inits clean. Harmless if a real visitor ever hits it — they just start fresh. */
+(function(){ try{
+  if (/[?&]dqreset\b/i.test(location.search)) {
+    Object.keys(localStorage).filter(function(k){ return /^(dq-|luj-)/.test(k); }).forEach(function(k){ localStorage.removeItem(k); });
+    location.replace(location.href.split("?")[0]);
+  }
+}catch(e){} })();
+</script>
 <script src="jobs.js"></script>
 <script>
 // ---- sample data (used when jobs.js hasn't been generated yet) -------------
@@ -2046,6 +2085,7 @@ function render(){
 
   renderMatrix(base);
   renderQuickbar(newCount);
+  try{ renderCityStrip(); }catch(e){}
   renderHubbar(availHubs);
   renderSubbar(availSubs);
   renderActiveFilters();
@@ -2359,6 +2399,13 @@ function renderQuickbar(newCount){
   const regions = ["North America","Europe","Asia-Pacific"];
   const x = on => on ? ` <span class="qx">✕</span>` : "";   // active = an applied filter you can remove
   let chips = "";
+  // Region scope (the geo default) folded into the quick-filters row, replacing the old banner.
+  // When scoped, this chip clears to worldwide; when worldwide with a known home region, it re-scopes.
+  if (REGION_SCOPE) {
+    chips += `<button class="qchip scope on" onclick="setRegionScope('WORLD')" data-tip="Showing ${bfEsc(REGION_SCOPE)} roles only. Out-of-region jobs are hidden; remote roles always stay.">📍 ${bfEsc(REGION_SCOPE)} only${x(true)}</button>`;
+  } else if (typeof HOME_REGION !== "undefined" && HOME_REGION) {
+    chips += `<button class="qchip scope" onclick="setRegionScope('${HOME_REGION.replace(/'/g,"\\'")}')" data-tip="Limit to ${bfEsc(HOME_REGION)} roles (remote roles always stay)">🌍 Worldwide</button>`;
+  }
   // "New for you" only appears when there's actually something new since your last visit,
   // so it adds no clutter for first-time visitors or when nothing's new.
   if (newCount > 0) chips += `<button class="qchip new ${quickNew?'on':''}" onclick="toggleQuickNew()" data-tip="Show only roles new since your last visit">✨ New for you <span class="subn">${newCount}</span>${x(quickNew)}</button>`;
@@ -2798,8 +2845,8 @@ function dqImportFile(input){
 }
 // ---- "What's new" / patch notes (newest first) ------------------------------
 const WHATSNEW = [
-  { id: 20260630, date: "June 2026", title: "Cost of living, on every job", items: [
-      "Tell us your closest city (right when you set up your profile, or anytime in My profile or the Map) and every job shows how its cost of living compares to home: cheaper, similar, or pricier.",
+  { id: 20260630, date: "June 2026", title: "Cost of living on single-location jobs", items: [
+      "Tell us the city closest to where you live (right below the grid, in My profile, or on the Map) and any job with a single location shows how its cost of living compares to home: cheaper, similar, or pricier. Roles spanning multiple locations don't show it.",
       "It used to be tucked away on saved and best-fit roles only. Now it appears across the main job list too, so the comparison is right there while you browse.",
       "It is only a guide, never used to hide roles, and your city is saved on this device with no account."
   ]},
@@ -3239,6 +3286,7 @@ function setView(v){
   var _rb=document.getElementById("regionBar"); if(_rb) _rb.style.display = (v==="list") ? "" : "none";   // region banner is the List geo control; For You uses the profile's countries
   var _ly=document.querySelector(".layout"); if(_ly) _ly.classList.toggle("nofilters", v==="bestfit"||v==="follow"||v==="stats");   // hide the filter rail on For You, My Jobs and Hiring Trends (List and Map keep it)
   try{ renderOnboard(); }catch(e){}
+  try{ renderCityStrip(); }catch(e){}
   document.getElementById("moon").style.display = v==="list" ? "" : "none";
   document.getElementById("matrixWrap").style.display = v==="list" ? "" : "none";
   document.getElementById("quickbar").style.display = v==="list" ? "" : "none";
@@ -3511,17 +3559,10 @@ function renderOnboard(){
   var el = document.getElementById("onboardCard"); if(!el) return;
   if (!obEligible()){ el.innerHTML=""; el.style.display="none"; el.__shown=false; return; }
   el.style.display="";
-  el.innerHTML = '<div class="obcard">'
+  el.innerHTML = '<div class="obhint">'
+    + '<span class="ob-emoji">👋</span>'
+    + '<span class="ob-txt"><b>New here?</b> Tap your craft and level on the grid below to see matched roles and tune your 🔥 Hot jobs. No account; saved on this device.</span>'
     + '<button class="ob-x" aria-label="Dismiss" onclick="obDismiss()">✕</button>'
-    + '<div class="ob-h">👋 New here? Find jobs matched to you</div>'
-    + '<div class="ob-sub">Tap your craft × level on the grid below ↓ — that shows matching roles and tunes your 🔥 Hot jobs and For You. No account; saved on this device.</div>'
-    + '<div class="ob-lbl">Closest city <span style="opacity:.6;font-weight:400;text-transform:none;letter-spacing:0">(optional — unlocks cost-of-living on every job)</span></div>'
-    + '<div class="ob-chips" id="obCityChips">'+obCityChipsHtml()+'</div>'
-    + '<div id="obCityOther" style="display:'+(_obCityOther?'':'none')+';margin-top:2px">'
-      + '<input class="ob-city" id="obCity" list="obCities" value="'+bfEsc(_obCity||"")+'" placeholder="Type your nearest big city…" oninput="obSetCity(this.value)" autocomplete="off">'
-      + '<datalist id="obCities">'+COL_KEYS.slice().sort().map(function(c){ return '<option value="'+bfEsc(c)+'"></option>'; }).join("")+'</datalist></div>'
-    + '<div class="ob-citynote">Pick the closest hub — cost of living is metro-level, so it doesn\'t need to be exact. Saved on this device; never used to hide roles.</div>'
-    + '<div class="ob-foot"><button class="ob-go" onclick="obGo()">Got it →</button><a class="ob-skip" onclick="obDismiss()">Skip</a></div>'
     + '</div>';
   // Defer the impression event a tick: at first paint window.dqTrack isn't defined yet (it's set up
   // in a later <script> block), so firing it inline would be silently dropped. setTimeout(0) runs
@@ -3576,6 +3617,55 @@ function obCityOtherToggle(){
   var o=document.getElementById("obCityOther"); if(o){ o.style.display=_obCityOther?"":"none"; var inp=document.getElementById("obCity"); if(_obCityOther&&inp){ try{ inp.focus(); }catch(e){} } }
 }
 function obDismiss(){ obTrack("onboard_dismiss", {}); obSetDone(); var el=document.getElementById("onboardCard"); if(el){ el.innerHTML=""; el.style.display="none"; } }
+
+// ---- Closest-city strip (below the matrix) --------------------------------------------------
+// Decoupled from onboarding so it reaches everyone, not just first-time visitors: a small,
+// dismissible bar shown on the List whenever no home city is set. Picking a hub (or typing one)
+// sets the profile "loc", which unlocks the cost-of-living read on every job. Privacy: we log only
+// whether a city was set and whether it came from a hub chip, never the value.
+var _csOther = false;
+function csEligible(){
+  if (view !== "list") return false;
+  try{ if (profGet("loc").v) return false; }catch(e){}                 // already has a city
+  try{ if (store.get("dq-city-strip-done",0)) return false; }catch(e){} // dismissed this device
+  return true;
+}
+function csHubs(){ return obCityHubs(); }   // reuse the region-aware hub list
+function csChipsHtml(){
+  return csHubs().map(function(c){
+    return '<button class="cs-chip" onclick="csPick(\''+c.replace(/'/g,"\\'")+'\')">'+bfEsc(c)+'</button>';
+  }).join("") + '<button class="cs-chip'+(_csOther?' on':'')+'" onclick="csOtherToggle()">Other…</button>';
+}
+function renderCityStrip(){
+  var el=document.getElementById("cityStrip"); if(!el) return;
+  if(!csEligible()){ el.innerHTML=""; el.style.display="none"; return; }
+  el.style.display="";
+  el.innerHTML = '<div class="citystrip">'
+    + '<span class="cs-lbl">📍 Closest city to you <span class="cs-sub">see how cost of living compares on single-location jobs</span></span>'
+    + '<span class="cs-chips" id="csChips">'+csChipsHtml()+'</span>'
+    + '<button class="cs-x" aria-label="Dismiss" onclick="csDismiss()">✕</button>'
+    + '<div id="csOther" style="display:'+(_csOther?'':'none')+';width:100%">'
+      + '<input class="cs-in" id="csCity" list="csCities" placeholder="Type your nearest big city…" autocomplete="off" onkeydown="if(event.key===\'Enter\')csSubmitOther()">'
+      + '<button class="cs-go" onclick="csSubmitOther()">Set</button>'
+      + '<datalist id="csCities">'+COL_KEYS.slice().sort().map(function(c){ return '<option value="'+bfEsc(c)+'"></option>'; }).join("")+'</datalist></div>'
+    + '</div>';
+}
+function csSet(city, viaHub){
+  if(!city || !city.trim()) return;
+  try{ profSet("loc", city.trim()); }catch(e){}
+  try{ window.dqTrack && window.dqTrack("city_strip_set", { hub: viaHub?1:0 }); }catch(e){}
+  _csOther=false;
+  try{ profSummary(); }catch(e){}
+  try{ render(); }catch(e){}   // re-renders rows with the cost-of-living chip and hides the strip (loc now set)
+}
+function csPick(c){ csSet(c, true); }
+function csSubmitOther(){ var i=document.getElementById("csCity"); csSet(i?i.value:"", false); }
+function csOtherToggle(){
+  _csOther=!_csOther;
+  var box=document.getElementById("csChips"); if(box) box.innerHTML=csChipsHtml();
+  var o=document.getElementById("csOther"); if(o){ o.style.display=_csOther?"":"none"; var inp=document.getElementById("csCity"); if(_csOther&&inp){ try{ inp.focus(); }catch(e){} } }
+}
+function csDismiss(){ try{ store.set("dq-city-strip-done",1); }catch(e){} try{ window.dqTrack && window.dqTrack("city_strip_dismiss", {}); }catch(e){} var el=document.getElementById("cityStrip"); if(el){ el.innerHTML=""; el.style.display="none"; } }
 // ===== Cost of living (Stage 3) — static index (≈ relative to San Francisco = 100), approximate.
 // Shown on SINGLE-location jobs in My Jobs + expanded Best fit only; never the front List. =====
 let ROW_COL = false;
@@ -4955,6 +5045,7 @@ renderMoon();
 render();
 renderRegionBar();
 renderOnboard();
+try{ renderCityStrip(); }catch(e){}
 renderPulseStrip();
 updateFollowTab();
 dqUpdateWhatsNewDot();
