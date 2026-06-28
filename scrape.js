@@ -35,7 +35,8 @@ const DIRECTORY = [
   // Notable studios we can't cleanly scrape yet (Xbox first-party / custom corporate portals) — link-outs for now.
   { name: "Square Enix", url: "https://www.square-enix-games.com/en_GB/careers", note: "Final Fantasy, Dragon Quest — JP publisher", city: "Tokyo, Japan" },
   // ---- June 2026: requested / community additions (link-outs; no clean scrapeable feed yet) ----
-  { name: "PUBG Studios", url: "https://www.krafton.com/en/careers/jobs/", note: "PUBG: Battlegrounds — Krafton", city: "Seoul, South Korea" },
+  // (PUBG Studios is now a live source — see the KRAFTON krafton.com scraper below, which covers PUBG
+  //  Studios and the other KRAFTON sub-studios — so its link-out was removed.)
   // Can't cleanly scrape (Xbox first-party portals, custom sites, or a Pinpoint board) — link-outs.
   { name: "Retro Studios", url: "https://careers.nintendo.com/studios/retro-studios/", note: "Metroid Prime, Donkey Kong — Nintendo (Austin)", city: "Austin, TX" },
   { name: "Rare", url: "https://www.rare.co.uk/careers", note: "Sea of Thieves — Xbox Game Studios (UK)", city: "Twycross, UK" },
@@ -218,7 +219,7 @@ const STUDIOS = [
   { name: "The Pokémon Company", type: "greenhouse", token: "pokemoncareers" },
   { name: "Jam City", type: "lever", token: "jamcity" },
   { name: "Take-Two Interactive", type: "greenhouse", token: "taketwo" },
-  { name: "Krafton", type: "greenhouse", token: "kraftonamericas" },
+  { name: "KRAFTON", type: "krafton", parentCompany: "KRAFTON", city: "Seoul, South Korea" }, // custom SSR board (krafton.com) covering HQ + all sub-studios (~200 roles); replaced the Greenhouse "kraftonamericas" board, which only held ~3 US corporate roles
   { name: "Gearbox Software", type: "greenhouse", token: "gearbox" },
   { name: "Second Dinner", type: "ashby", token: "seconddinner" },
   { name: "Supercell", type: "ashby", token: "supercell" },
@@ -513,7 +514,8 @@ const STUDIO_KIND = {
   "Bandai Namco": ["publisher", "dev"],
   "Nintendo": ["publisher", "dev"],
   "NCSOFT": ["publisher", "dev"],
-  "Krafton": ["publisher", "dev"],
+  "KRAFTON": ["publisher", "dev"],
+  "PUBG Studios": ["dev"],
   "Nexon": ["publisher", "dev"],
   "Capcom": ["publisher", "dev"],
   "Gameloft": ["publisher", "dev"],
@@ -2691,7 +2693,73 @@ async function fetchCig(studio) {
   });
 }
 
-const FETCHERS = { greenhouse: fetchGreenhouse, lever: fetchLever, workday: fetchWorkday, avature: fetchAvature, smartrecruiters: fetchSmartRecruiters, workable: fetchWorkable, phenom: fetchPhenom, teamtailor: fetchTeamtailor, eightfold: fetchEightfold, amazonjobs: fetchAmazonJobs, ashby: fetchAshby, zenimax: fetchZenimax, bamboohr: fetchBambooHr, jobscore: fetchJobScore, jazzhr: fetchJazzHr, jobvite: fetchJobvite, recruitee: fetchRecruitee, personio: fetchPersonio, rippling: fetchRippling, breezy: fetchBreezy, manatal: fetchManatal, sumodigital: fetchSumoDigital, pinpoint: fetchPinpoint, playground: fetchPlayground, obsidian: fetchObsidian, techland: fetchTechland, oracle: fetchOracle, cig: fetchCig, critpath: fetchCritpath };
+// ---- KRAFTON (PUBG, Subnautica, The Callisto Protocol, Hi-Fi Rush, inZOI) — own SSR careers site ----
+// krafton.com is a custom WordPress board (no ATS), so it can't use a standard API fetcher. Each opening
+// is server-rendered as <li class="RecruitList-item"> with a RecruitItemTitle-link (href ...?job=ID),
+// the title in RecruitItemTitle-title, the Corp./Studio in RecruitItemMeta-studio, and a small list of
+// RecruitItemMetaCategory-item cells ([Job Family, Employment Type, Location]). The board paginates via
+// ?var_page=N&search_list_cnt=50 (~5 pages for ~208 roles). No posted date on the list, so postedAt
+// stays null ("date n/a", like EA). Sub-studios we already scrape via a dedicated ATS are skipped here
+// to avoid duplicates. Fragile by nature (no API) — if the markup changes this returns 0 and the Health
+// tab flags it. parentCompany on the studio entry rolls every sub-studio up under KRAFTON.
+const KRAFTON_BASE = "https://www.krafton.com";
+// already covered by their own Greenhouse boards — don't double-list them
+const KRAFTON_SKIP_STUDIOS = /^(5minlab|tango gameworks|unknown worlds|eleventh hour games)$/i;
+const KRAFTON_EMP = /^(regular|contractor|professional contractor|internship|part[\s-]?time|contingent worker|dispatch)\b/i;
+function kraftonStudioName(raw){
+  const s = decodeEnt(raw || "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+  if (!s || /^krafton$/i.test(s)) return "KRAFTON";
+  if (/^pubg studios?$/i.test(s)) return "PUBG Studios";
+  if (/montreal/i.test(s)) return "KRAFTON Montréal Studio";
+  // Title-case ALL-CAPS values (e.g. "OVERDARE" -> "Overdare"); otherwise keep as the site presents it.
+  return s === s.toUpperCase() ? s.replace(/\S+/g, w => w[0] + w.slice(1).toLowerCase()) : s;
+}
+async function fetchKrafton(studio){
+  const out = [], seen = new Set();
+  const MAX_PAGES = 25;   // ~5 pages at 50/page; cap guards runaway. Loop also stops when a page adds nothing.
+  for (let p = 1; p <= MAX_PAGES; p++){
+    let html;
+    if (SAMPLE_FILE) { const d = loadSample(studio); if (!d) break; html = typeof d === "string" ? d : (d.html || ""); }
+    else { html = await fetchText(`${KRAFTON_BASE}/en/careers/jobs/?var_page=${p}&search_list_cnt=50`); }
+    const chunks = String(html).split(/class="RecruitList-item/).slice(1);
+    if (!chunks.length) break;
+    let added = 0;
+    for (const c of chunks){
+      const href = (c.match(/href="([^"]*recruit-detail[^"]*)"/i) || [])[1];
+      const jid  = href && (href.match(/job=(\d+)/) || [])[1];
+      if (!jid || seen.has(jid)) continue;
+      const title = decodeEnt((c.match(/RecruitItemTitle-title[^>]*>([\s\S]*?)<\/[a-z0-9]+>/i) || [,""])[1].replace(/<[^>]+>/g, " ")).replace(/\s+/g, " ").trim();
+      if (!title) continue;
+      const studioName = kraftonStudioName((c.match(/RecruitItemMeta-studio[^>]*>([\s\S]*?)<\/span>/i) || [,""])[1]);
+      if (KRAFTON_SKIP_STUDIOS.test(studioName)) continue;
+      const cats = [...c.matchAll(/RecruitItemMetaCategory-item[^>]*>([\s\S]*?)<\/li>/gi)]
+        .map(m => decodeEnt(m[1].replace(/<[^>]+>/g, " ")).replace(/\s+/g, " ").trim()).filter(Boolean);
+      const family = cats[0] || "";
+      let location = cats.length ? cats[cats.length - 1] : "";
+      if (!location || KRAFTON_EMP.test(location)) location = studio.city || "Seoul, South Korea";
+      seen.add(jid); added++;
+      out.push({
+        id: `krafton-${jid}`,
+        title,
+        tech: extractTech(title),
+        studio: studioName,
+        discipline: mapDiscipline(family, title),
+        workType: inferWorkType(title, location, []),
+        location,
+        region: inferRegion(location),
+        seniority: inferSeniority(title),
+        salary: "",
+        yoe: null,
+        postedAt: null,
+        url: KRAFTON_BASE + (href.startsWith("/") ? href.replace(/&amp;/g, "&") : "/" + href.replace(/&amp;/g, "&")),
+      });
+    }
+    if (SAMPLE_FILE || !added) break;   // sample is one page; live stops when a page yields nothing new
+  }
+  return out;
+}
+
+const FETCHERS = { greenhouse: fetchGreenhouse, lever: fetchLever, workday: fetchWorkday, avature: fetchAvature, smartrecruiters: fetchSmartRecruiters, workable: fetchWorkable, phenom: fetchPhenom, teamtailor: fetchTeamtailor, eightfold: fetchEightfold, amazonjobs: fetchAmazonJobs, ashby: fetchAshby, zenimax: fetchZenimax, bamboohr: fetchBambooHr, jobscore: fetchJobScore, jazzhr: fetchJazzHr, jobvite: fetchJobvite, recruitee: fetchRecruitee, personio: fetchPersonio, rippling: fetchRippling, breezy: fetchBreezy, manatal: fetchManatal, sumodigital: fetchSumoDigital, pinpoint: fetchPinpoint, playground: fetchPlayground, obsidian: fetchObsidian, techland: fetchTechland, oracle: fetchOracle, cig: fetchCig, critpath: fetchCritpath, krafton: fetchKrafton };
 
 // ---- Ghost-job tracking -----------------------------------------------------
 // Because we scrape on a schedule, we can see how long a listing has REALLY been
