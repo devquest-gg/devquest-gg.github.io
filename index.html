@@ -2436,7 +2436,7 @@ function renderHubbar(availHubs){
     keys.map(h=>`<button class="qchip hub ${selHubs.has(h)?'on':''}" onclick="toggleHub('${h.replace(/'/g,"\\'")}')">${h} <span class="subn">${availHubs[h]}</span></button>`).join("");
 }
 
-function toggleCell(dn, sn){ const k = dn+"|"+sn; const adding = !selCells.has(k); adding ? selCells.add(k) : selCells.delete(k); try{ window.dqTrack && window.dqTrack("grid_cell", { d: dn, s: sn }); }catch(e){} if (adding) try{ affRecordCell(dn, sn); }catch(e){} saveCells(); try{ profFromMatrix(); }catch(e){} render(); }
+function toggleCell(dn, sn){ const k = dn+"|"+sn; const adding = !selCells.has(k); adding ? selCells.add(k) : selCells.delete(k); try{ window.dqTrack && window.dqTrack("grid_cell", { d: dn, s: sn }); }catch(e){} try{ if (typeof obEligible==="function" && obEligible()) obTrack("onboard_grid", {}); }catch(e){}  /* new-visitor conversion: first grid tap while the hint is still up */ if (adding) try{ affRecordCell(dn, sn); }catch(e){} saveCells(); try{ profFromMatrix(); }catch(e){} render(); }
 function toggleSub(s){ selSubs.has(s) ? selSubs.delete(s) : selSubs.add(s); render(); }
 function toggleHub(h){ selHubs.has(h) ? selHubs.delete(h) : selHubs.add(h); render(); }
 function toggleQuickRemote(){ quickRemote = !quickRemote; render(); }
