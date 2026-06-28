@@ -476,6 +476,7 @@
   #gridTip .gtgames { border-top: 1px solid var(--border); margin-top: 7px; padding-top: 6px; color: var(--text); }
   #gridTip .gtlabel { font-size: 10px; text-transform: uppercase; letter-spacing: .4px; color: var(--muted); margin-bottom: 2px; }
   .rmain .studio[data-tip] { cursor: help; }
+  .mjc-studio[data-tip] { cursor: help; }
   #quickbar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
   #quickbar .qlabel, #subbar .qlabel, #hubbar .qlabel { color: var(--muted); font-size: 13px; margin-right: 2px; }
   .qchip { cursor: pointer; border: 1px solid var(--border); background: var(--panel); color: var(--muted); border-radius: 999px; padding: 6px 13px; font-size: 13px; font-weight: 600; }
@@ -790,23 +791,23 @@
 
 <header>
   <div>
-    <div class="logo"><a href="/" class="logohome" title="Back to DevQuest home" aria-label="DevQuest home" onclick="if(event.metaKey||event.ctrlKey||event.shiftKey)return true;var h=location.origin+'/';location.href===h?location.reload():location.assign(h);return false;"><svg width="24" height="24" viewBox="0 0 32 32" aria-hidden="true"><rect x="1" y="1" width="8" height="8" rx="2" fill="var(--accent)"/><rect x="12" y="1" width="8" height="8" rx="2" fill="#2d333b"/><rect x="23" y="1" width="8" height="8" rx="2" fill="#2d333b"/><rect x="1" y="12" width="8" height="8" rx="2" fill="#2d333b"/><rect x="12" y="12" width="8" height="8" rx="2" fill="var(--accent)"/><rect x="23" y="12" width="8" height="8" rx="2" fill="#2d333b"/><rect x="1" y="23" width="8" height="8" rx="2" fill="#2d333b"/><rect x="12" y="23" width="8" height="8" rx="2" fill="#2d333b"/><rect x="23" y="23" width="8" height="8" rx="2" fill="var(--accent)"/></svg><span class="wordmark">Dev<span>Quest</span><span class="logo-tld">.gg</span></span></a></div>
+    <div class="logo"><a href="/" class="logohome" data-tip="Back to DevQuest home" aria-label="DevQuest home" onclick="if(event.metaKey||event.ctrlKey||event.shiftKey)return true;var h=location.origin+'/';location.href===h?location.reload():location.assign(h);return false;"><svg width="24" height="24" viewBox="0 0 32 32" aria-hidden="true"><rect x="1" y="1" width="8" height="8" rx="2" fill="var(--accent)"/><rect x="12" y="1" width="8" height="8" rx="2" fill="#2d333b"/><rect x="23" y="1" width="8" height="8" rx="2" fill="#2d333b"/><rect x="1" y="12" width="8" height="8" rx="2" fill="#2d333b"/><rect x="12" y="12" width="8" height="8" rx="2" fill="var(--accent)"/><rect x="23" y="12" width="8" height="8" rx="2" fill="#2d333b"/><rect x="1" y="23" width="8" height="8" rx="2" fill="#2d333b"/><rect x="12" y="23" width="8" height="8" rx="2" fill="#2d333b"/><rect x="23" y="23" width="8" height="8" rx="2" fill="var(--accent)"/></svg><span class="wordmark">Dev<span>Quest</span><span class="logo-tld">.gg</span></span></a></div>
     <div class="pulse"><span class="pulse-full">⟳ Last sync: <b id="syncTime"></b> · refreshes hourly</span><span class="pulse-mini" id="syncMini"></span></div>
   </div>
   <div class="herotag">Game dev jobs. <em>Fresh, honest, trackable.</em></div>
   <div class="headeractions" style="display:flex;gap:10px;align-items:center">
     <!-- SHARE:START (header share buttons — delete this group + the SHARE block after </header> to remove) -->
     <div class="dqshare" aria-label="Share DevQuest">
-      <a class="dqsh dqsh-li" href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fdevquest.gg" target="_blank" rel="noopener" title="Share on LinkedIn" aria-label="Share on LinkedIn" onclick="try{window.dqTrack&&window.dqTrack('share_click',{p:'linkedin'})}catch(e){}"><svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path fill="currentColor" d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.225 0z"/></svg></a>
-      <a class="dqsh dqsh-x" href="https://twitter.com/intent/tweet?text=DevQuest%20%E2%80%94%20real%2C%20current%20game-dev%20jobs%2C%20fresh%20and%20honest.&url=https%3A%2F%2Fdevquest.gg" target="_blank" rel="noopener" title="Share on X" aria-label="Share on X" onclick="try{window.dqTrack&&window.dqTrack('share_click',{p:'x'})}catch(e){}"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path fill="currentColor" d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></a>
-      <a class="dqsh dqsh-bs" href="https://bsky.app/intent/compose?text=DevQuest%20%E2%80%94%20real%2C%20current%20game-dev%20jobs%2C%20fresh%20and%20honest.%20https%3A%2F%2Fdevquest.gg" target="_blank" rel="noopener" title="Share on Bluesky" aria-label="Share on Bluesky" onclick="try{window.dqTrack&&window.dqTrack('share_click',{p:'bluesky'})}catch(e){}"><svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path fill="currentColor" d="M12 10.8c-1.087-2.114-4.046-6.053-6.798-7.995C2.566.944 1.561 1.266.902 1.565.139 1.908 0 3.08 0 3.768c0 .69.378 5.65.624 6.479.815 2.736 3.713 3.66 6.383 3.364.136-.02.275-.039.415-.056-.138.022-.276.04-.415.056-3.912.58-7.387 2.005-2.83 7.078 5.013 5.19 6.87-1.113 7.823-4.308.953 3.195 2.05 9.271 7.733 4.308 4.267-4.308 1.172-6.498-2.74-7.078a8.741 8.741 0 01-.415-.056c.14.017.279.036.415.056 2.67.296 5.568-.628 6.383-3.364.246-.829.624-5.79.624-6.479 0-.688-.139-1.86-.902-2.203-.659-.299-1.664-.621-4.3 1.24C16.046 4.748 13.087 8.687 12 10.8z"/></svg></a>
-      <button type="button" class="dqsh dqsh-cp" title="Copy link" aria-label="Copy link" onclick="dqCopyLink(this)"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"/></svg></button>
+      <a class="dqsh dqsh-li" href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fdevquest.gg" target="_blank" rel="noopener" data-tip="Share on LinkedIn" aria-label="Share on LinkedIn" onclick="try{window.dqTrack&&window.dqTrack('share_click',{p:'linkedin'})}catch(e){}"><svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path fill="currentColor" d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.225 0z"/></svg></a>
+      <a class="dqsh dqsh-x" href="https://twitter.com/intent/tweet?text=DevQuest%20%E2%80%94%20real%2C%20current%20game-dev%20jobs%2C%20fresh%20and%20honest.&url=https%3A%2F%2Fdevquest.gg" target="_blank" rel="noopener" data-tip="Share on X" aria-label="Share on X" onclick="try{window.dqTrack&&window.dqTrack('share_click',{p:'x'})}catch(e){}"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path fill="currentColor" d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></a>
+      <a class="dqsh dqsh-bs" href="https://bsky.app/intent/compose?text=DevQuest%20%E2%80%94%20real%2C%20current%20game-dev%20jobs%2C%20fresh%20and%20honest.%20https%3A%2F%2Fdevquest.gg" target="_blank" rel="noopener" data-tip="Share on Bluesky" aria-label="Share on Bluesky" onclick="try{window.dqTrack&&window.dqTrack('share_click',{p:'bluesky'})}catch(e){}"><svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path fill="currentColor" d="M12 10.8c-1.087-2.114-4.046-6.053-6.798-7.995C2.566.944 1.561 1.266.902 1.565.139 1.908 0 3.08 0 3.768c0 .69.378 5.65.624 6.479.815 2.736 3.713 3.66 6.383 3.364.136-.02.275-.039.415-.056-.138.022-.276.04-.415.056-3.912.58-7.387 2.005-2.83 7.078 5.013 5.19 6.87-1.113 7.823-4.308.953 3.195 2.05 9.271 7.733 4.308 4.267-4.308 1.172-6.498-2.74-7.078a8.741 8.741 0 01-.415-.056c.14.017.279.036.415.056 2.67.296 5.568-.628 6.383-3.364.246-.829.624-5.79.624-6.479 0-.688-.139-1.86-.902-2.203-.659-.299-1.664-.621-4.3 1.24C16.046 4.748 13.087 8.687 12 10.8z"/></svg></a>
+      <button type="button" class="dqsh dqsh-cp" data-tip="Copy link" aria-label="Copy link" onclick="dqCopyLink(this)"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"/></svg></button>
     </div>
     <!-- SHARE:END -->
-    <button id="installBtn" class="wnbtn" style="display:none" onclick="dqInstall()" title="Install DevQuest as an app on your device"><span class="bico-m" aria-hidden="true">📲</span><span class="btxt">📲 Install app</span></button>
-    <button class="wnbtn" onclick="openWhatsNew()" title="What's new on DevQuest"><span class="bico-m" aria-hidden="true">✨</span><span class="btxt">✨ What's new</span><span class="wndot" id="wnDot"></span></button>
-    <a class="aboutbtn" href="/about" title="Our mission: what DevQuest is, and what it isn't" onclick="try{window.dqTrack&&window.dqTrack('about_click',{})}catch(e){}" style="color:var(--muted);font-size:13px;font-weight:600;text-decoration:none;border:1px solid var(--border);padding:7px 13px;border-radius:7px;white-space:nowrap"><span class="bico-m" aria-hidden="true">📖</span><span class="btxt">Our mission</span></a>
-    <a class="feedbackbtn" href="mailto:studios@devquest.gg?subject=DevQuest%20feedback&body=Bug%2C%20idea%2C%20or%20just%20a%20thought%3A%0A%0A%0AWhat%20page%20or%20filter%20were%20you%20on%20(optional)%3A%0A" title="Report a bug or share an idea (opens your email)" onclick="try{window.dqTrack&&window.dqTrack('feedback_click',{})}catch(e){}" style="color:var(--accent);font-size:13px;font-weight:600;text-decoration:none;border:1px solid var(--border);padding:7px 13px;border-radius:7px;white-space:nowrap"><span class="bico-m" aria-hidden="true">💬</span><span class="btxt">💬 Feedback</span></a>
+    <button id="installBtn" class="wnbtn" style="display:none" onclick="dqInstall()" data-tip="Install DevQuest as an app on your device"><span class="bico-m" aria-hidden="true">📲</span><span class="btxt">📲 Install app</span></button>
+    <button class="wnbtn" onclick="openWhatsNew()" data-tip="What's new on DevQuest"><span class="bico-m" aria-hidden="true">✨</span><span class="btxt">✨ What's new</span><span class="wndot" id="wnDot"></span></button>
+    <a class="aboutbtn" href="/about" data-tip="Our mission: what DevQuest is, and what it isn't" onclick="try{window.dqTrack&&window.dqTrack('about_click',{})}catch(e){}" style="color:var(--muted);font-size:13px;font-weight:600;text-decoration:none;border:1px solid var(--border);padding:7px 13px;border-radius:7px;white-space:nowrap"><span class="bico-m" aria-hidden="true">📖</span><span class="btxt">Our mission</span></a>
+    <a class="feedbackbtn" href="mailto:studios@devquest.gg?subject=DevQuest%20feedback&body=Bug%2C%20idea%2C%20or%20just%20a%20thought%3A%0A%0A%0AWhat%20page%20or%20filter%20were%20you%20on%20(optional)%3A%0A" data-tip="Report a bug or share an idea (opens your email)" onclick="try{window.dqTrack&&window.dqTrack('feedback_click',{})}catch(e){}" style="color:var(--accent);font-size:13px;font-weight:600;text-decoration:none;border:1px solid var(--border);padding:7px 13px;border-radius:7px;white-space:nowrap"><span class="bico-m" aria-hidden="true">💬</span><span class="btxt">💬 Feedback</span></a>
   </div>
 </header>
 
@@ -859,7 +860,7 @@ function dqCopyLink(btn){
     </div>
 
     <div class="acc" data-sec="kind">
-      <button type="button" class="acch" onclick="toggleAcc(this)"><span class="t" title="What the company primarily does. Most are developers; a company can be more than one.">Studio type</span><span class="bdg"></span><span class="chev">▸</span></button>
+      <button type="button" class="acch" onclick="toggleAcc(this)"><span class="t" data-tip="What the company primarily does. Most are developers; a company can be more than one.">Studio type</span><span class="bdg"></span><span class="chev">▸</span></button>
       <div class="accb"><div class="chips">
         <button type="button" class="kindchip" data-k="dev" onclick="kindChip(this,'dev')">Developer</button>
         <button type="button" class="kindchip" data-k="publisher" onclick="kindChip(this,'publisher')">Publisher</button>
@@ -895,7 +896,7 @@ function dqCopyLink(btn){
     <div class="acc" data-sec="pipeline">
       <button type="button" class="acch" onclick="toggleAcc(this)"><span class="t">My pipeline</span><span class="bdg"></span><span class="chev">▸</span></button>
       <div class="accb">
-        <label class="chk tgl" title="Hides any job you've marked applied, interviewing, or rejected, so the board stays focused on roles you haven't acted on yet."><input type="checkbox" id="hideTracked" onchange="render()"><span class="sw"></span>Hide tracked jobs</label>
+        <label class="chk tgl" data-tip="Hides any job you've marked applied, interviewing, or rejected, so the board stays focused on roles you haven't acted on yet."><input type="checkbox" id="hideTracked" onchange="render()"><span class="sw"></span>Hide tracked jobs</label>
         <label class="chk tgl"><input type="checkbox" id="savedOnly" onchange="render()"><span class="sw"></span><svg width="11" height="13" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:-2px;margin-right:3px" aria-hidden="true"><path d="M6 2a2 2 0 0 0-2 2v18l8-5 8 5V4a2 2 0 0 0-2-2H6z"/></svg>Saved (<span id="savedCount">0</span>)</label>
         <label class="chk tgl"><input type="checkbox" id="showDismissed" onchange="render()"><span class="sw"></span>Show hidden (<span id="dismissCount">0</span>)</label>
       </div>
@@ -904,8 +905,8 @@ function dqCopyLink(btn){
     <div class="acc" data-sec="quality">
       <button type="button" class="acch" onclick="toggleAcc(this)"><span class="t">Listing quality</span><span class="bdg"></span><span class="chev">▸</span></button>
       <div class="accb">
-        <label class="chk tgl" title="Talent pools are open-ended 'introduce yourself' or 'general application' listings, not specific open roles. Hidden by default; uncheck to include them."><input type="checkbox" id="hidePools" checked onchange="render()"><span class="sw"></span>Hide talent pools</label>
-        <label class="chk tgl" title="Removes roles we've seen live 45+ days or that keep re-posting, the probable ghost jobs. The ⏳/↻ badges still show on every card."><input type="checkbox" id="hideStale" onchange="render()"><span class="sw"></span>Hide likely-stale listings</label>
+        <label class="chk tgl" data-tip="Talent pools are open-ended 'introduce yourself' or 'general application' listings, not specific open roles. Hidden by default; uncheck to include them."><input type="checkbox" id="hidePools" checked onchange="render()"><span class="sw"></span>Hide talent pools</label>
+        <label class="chk tgl" data-tip="Removes roles we've seen live 45+ days or that keep re-posting, the probable ghost jobs. The ⏳/↻ badges still show on every card."><input type="checkbox" id="hideStale" onchange="render()"><span class="sw"></span>Hide likely-stale listings</label>
       </div>
     </div>
 
@@ -1024,7 +1025,7 @@ function buildStudioDash(){
   const deltaOf = s => { if (!T || !T.studios || !T.studios[s]) return null; const t = T.studios[s]; const base = t.d7 != null ? t.d7 : t.now; return (t.now || 0) - base; };
   const studios = [...FOLLOWS].map(s => ({ s, n: byS[s] || 0, d: deltaOf(s) })).sort((a,b)=> b.n - a.n);
   const arrow = d => d > 0 ? ` <span class="d up">+${d}</span>` : (d < 0 ? ` <span class="d dn">−${-d}</span>` : "");
-  const chips = studios.map(o => `<span class="wlchip"><span class="st" role="button" tabindex="0" title="Unfollow ${o.s.replace(/"/g,'')}" onclick="toggleFollow('${o.s.replace(/'/g,"\\'")}', event)">★</span><span class="nm" role="button" tabindex="0" title="Browse ${o.s.replace(/"/g,'')} roles" style="cursor:pointer" onclick="filterToStudio('${o.s.replace(/'/g,"\\'")}')">${o.s}</span><span class="c">${o.n}</span>${arrow(o.d)}</span>`).join("");
+  const chips = studios.map(o => `<span class="wlchip"><span class="st" role="button" tabindex="0" data-tip="Unfollow ${o.s.replace(/"/g,'')}" onclick="toggleFollow('${o.s.replace(/'/g,"\\'")}', event)">★</span><span class="nm" role="button" tabindex="0" data-tip="Browse ${o.s.replace(/"/g,'')} roles" style="cursor:pointer" onclick="filterToStudio('${o.s.replace(/'/g,"\\'")}')">${o.s}</span><span class="c">${o.n}</span>${arrow(o.d)}</span>`).join("");
   const ups = studios.filter(o => o.d > 0).sort((a,b)=> b.d - a.d).slice(0, 4);
   const downs = studios.filter(o => o.d < 0).sort((a,b)=> a.d - b.d).slice(0, 3);
   const moversLine = (ups.length || downs.length)
@@ -1055,9 +1056,9 @@ function mjBarHtml(j, stage){
     if (d != null){
       const cls = d < 7 ? "ok" : d < 30 ? "warn" : "cold";
       const txt = d < 7 ? `Active · ${d}d` : d < 30 ? `Follow up · ${d}d` : `Quiet · ${d}d`;
-      health = `<span class="mjhealth ${cls}" title="Based on days since you applied — not recruiter activity"><span class="hd"></span>${txt}</span>`;
+      health = `<span class="mjhealth ${cls}" data-tip="Based on days since you applied — not recruiter activity"><span class="hd"></span>${txt}</span>`;
     } else {
-      health = `<span class="mjhealth none" title="No applied date saved — open the notebook (📝) to add one"><span class="hd"></span>No date</span>`;
+      health = `<span class="mjhealth none" data-tip="No applied date saved — open the notebook (📝) to add one"><span class="hd"></span>No date</span>`;
     }
   }
   return `<div class="mjbar"><span class="mjpill ${stage}">${L[stage]||stage}</span>${health}</div>`;
@@ -1075,11 +1076,11 @@ function mjSummaryHtml(j, stage){
       const t = d < 7 ? `Active · ${d}d` : d < 30 ? `Follow up · ${d}d` : `Quiet · ${d}d`;
       health = `<span class="mjhealth ${c}"><span class="hd"></span>${t}</span>`;
     } else {
-      health = `<span class="mjhealth none" title="No applied date saved — expand the card and set it in the notebook"><span class="hd"></span>No date</span>`;
+      health = `<span class="mjhealth none" data-tip="No applied date saved — expand the card and set it in the notebook"><span class="hd"></span>No date</span>`;
     }
   }
   const key = j.salary ? `<span class="mjkey">${j.salary}</span>` : "";
-  return `<span class="mjpill ${stage}">${L[stage]||stage}</span>${health}<span class="mjc-title">${j.t} <span class="mjc-studio">${j.s}</span></span>${key}<span class="mjc-chev">▾</span>`;
+  return `<span class="mjpill ${stage}">${L[stage]||stage}</span>${health}<span class="mjc-title">${j.t} <span class="mjc-studio" data-tip="${escTip(studioTipHtml(j.s))}">${j.s}</span></span>${key}<span class="mjc-chev">▾</span>`;
 }
 // Company intelligence on My Jobs cards (shown inline in the expanded view, not a new toggle): live
 // studio role count, hiring momentum (trends.json now vs ~30d), other roles in the same discipline,
@@ -1162,7 +1163,7 @@ function renderFollowView(){
   if (followN) html += sec("★ Followed studios", followN, buildStudioDash());
   if (hiddenJobs.length){
     const op = !!window.__mineHiddenOpen;
-    html += `<div class="minesec"><div class="minehead" role="button" tabindex="0" style="cursor:pointer" title="Show or hide" onclick="window.__mineHiddenOpen=!window.__mineHiddenOpen;renderFollowView();"><h2 style="color:var(--muted)">🚫 Hidden ${op?'▾':'▸'}</h2><span class="minecount">${hiddenJobs.length}</span></div>${op?cards(hiddenJobs):''}</div>`;
+    html += `<div class="minesec"><div class="minehead" role="button" tabindex="0" style="cursor:pointer" data-tip="Show or hide" onclick="window.__mineHiddenOpen=!window.__mineHiddenOpen;renderFollowView();"><h2 style="color:var(--muted)">🚫 Hidden ${op?'▾':'▸'}</h2><span class="minecount">${hiddenJobs.length}</span></div>${op?cards(hiddenJobs):''}</div>`;
   }
   html += `<div class="mineexport"><span>Everything in My Jobs lives only in this browser.</span><button class="exportbtn" onclick="dqExportData()">⬇ Export my data</button><button class="exportbtn" onclick="dqImportClick()">⬆ Import</button><input id="mineImportInput" type="file" accept="application/json,.json" style="display:none" onchange="dqImportFile(this)"></div>`;
   MINE_VIEW = false; ROW_COL = false;
@@ -1511,7 +1512,7 @@ function showForYouNudge(disc){
     + '<div class="fybody"><div class="fyh">See the best studios to apply to for <b>' + _h(label) + '</b></div>'
     + '<div class="fys">Ranked by openings, pay transparency and freshness — built from what you’re filtering.</div></div>'
     + '<button class="fycta" id="fyGo">Show my matches →</button>'
-    + '<button class="fyx" id="fyDismiss" title="Dismiss">✕</button>';
+    + '<button class="fyx" id="fyDismiss" data-tip="Dismiss" aria-label="Dismiss">✕</button>';
   bar.style.display = "flex";
   try { window.dqTrack && window.dqTrack("foryou_nudge_show", { disc: disc || "" }); } catch(e){}
   document.getElementById("fyGo").onclick = function(){
@@ -1773,12 +1774,12 @@ function renderSearchGroup(boxId, searchId, counts, sel, labels, extras){
        <span class="fname">${lbl(name)}</span><span class="fcount">${n}</span></label>`;
     if (!isStudio) return row;
     const fav = isFollowed(name);
-    return `<div class="strow"><span class="fstar${fav?' on':''}" role="button" tabindex="0" title="${fav?'Following':'Follow'} ${lbl(name).replace(/"/g,'')}" onclick="toggleFollow('${name.replace(/'/g,"\\'")}', event)">${fav?'★':'☆'}</span>${row}</div>`;
+    return `<div class="strow"><span class="fstar${fav?' on':''}" role="button" tabindex="0" data-tip="${fav?'Following':'Follow'} ${lbl(name).replace(/"/g,'')}" onclick="toggleFollow('${name.replace(/'/g,"\\'")}', event)">${fav?'★':'☆'}</span>${row}</div>`;
   }).join("");
   // directory (link-out) rows, filtered by the same search
   const extraRows = (extras || [])
     .filter(d => d.name.toLowerCase().includes(q))
-    .map(d => `<a class="chk dirrow" href="${d.url}" target="_blank" rel="noopener" title="Opens ${d.name}'s careers page">
+    .map(d => `<a class="chk dirrow" href="${d.url}" target="_blank" rel="noopener" data-tip="Opens ${d.name}'s careers page">
        <span class="fname">${d.name}</span><span class="fcount">↗ link</span></a>`).join("");
   document.getElementById(boxId).innerHTML = (checkboxes + extraRows)
     || `<div class="xhint">No matches.</div>`;
@@ -2324,7 +2325,7 @@ function renderQuickbar(newCount){
   let chips = "";
   // "New for you" only appears when there's actually something new since your last visit,
   // so it adds no clutter for first-time visitors or when nothing's new.
-  if (newCount > 0) chips += `<button class="qchip new ${quickNew?'on':''}" onclick="toggleQuickNew()" title="Show only roles new since your last visit">✨ New for you <span class="subn">${newCount}</span>${x(quickNew)}</button>`;
+  if (newCount > 0) chips += `<button class="qchip new ${quickNew?'on':''}" onclick="toggleQuickNew()" data-tip="Show only roles new since your last visit">✨ New for you <span class="subn">${newCount}</span>${x(quickNew)}</button>`;
   chips += `<button class="qchip ${quickRemote?'on':''}" onclick="toggleQuickRemote()">🌐 Remote only${x(quickRemote)}</button>`;
   chips += regions.map(rg=>`<button class="qchip ${selRegionsQuick.has(rg)?'on':''}" onclick="toggleQuickRegion('${rg}')">${rg}${x(selRegionsQuick.has(rg))}</button>`).join("");
   // Funnel icon + label so this row reads as FILTERING the list (not navigation like the view tabs).
@@ -2393,9 +2394,9 @@ function renderActiveFilters(){
   el.style.display = 'flex';
   const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   el.innerHTML = '<span class="aflabel">Filters:</span>'
-    + __af.map((f, i) => '<button class="afchip" onclick="rmActive(' + i + ')" title="Remove this filter">' + esc(f.label) + ' <span class="afx">✕</span></button>').join('')
-    + '<button class="afexport" onclick="copyShareLink(this)" title="Copy a link that reopens this exact filtered view">🔗 Copy link</button>'
-    + '<button class="afexport" onclick="exportCsv()" title="Download these filtered results as a CSV spreadsheet">⤓ Export CSV</button>'
+    + __af.map((f, i) => '<button class="afchip" onclick="rmActive(' + i + ')" data-tip="Remove this filter">' + esc(f.label) + ' <span class="afx">✕</span></button>').join('')
+    + '<button class="afexport" onclick="copyShareLink(this)" data-tip="Copy a link that reopens this exact filtered view">🔗 Copy link</button>'
+    + '<button class="afexport" onclick="exportCsv()" data-tip="Download these filtered results as a CSV spreadsheet">⤓ Export CSV</button>'
     + '<button class="afclear" onclick="clearAllFilters()">Clear all</button>';
 }
 function rmActive(i){ const f = __af[i]; if (f) { f.fn(); render(); } }
@@ -2564,19 +2565,19 @@ function nbDateRow(id, d){
   return `<div class="daterow">${nbLabelSelect(d.l||"", id)}`
     + `<input class="dt dt-date" type="date" value="${nbEsc(d.d)}" onchange="nbSync('${id}')">`
     + `<input class="dt dt-time" type="time" value="${nbEsc(d.t)}" onchange="nbSync('${id}')">`
-    + `<button class="del" title="Remove" onclick="event.stopPropagation(); nbRemoveRow(this,'${id}')">✕</button></div>`;
+    + `<button class="del" data-tip="Remove" aria-label="Remove" onclick="event.stopPropagation(); nbRemoveRow(this,'${id}')">✕</button></div>`;
 }
 function nbContactRow(id, c){
   c = c || { n:"", e:"" };
   return `<div class="nb-contact">`
     + `<input class="txt c-name" placeholder="Name" value="${nbEsc(c.n)}" oninput="nbSync('${id}')">`
     + `<input class="txt c-email" placeholder="email@studio.com" value="${nbEsc(c.e)}" oninput="nbSync('${id}')">`
-    + `<button class="del" title="Remove" onclick="event.stopPropagation(); nbRemoveRow(this,'${id}')">✕</button></div>`;
+    + `<button class="del" data-tip="Remove" aria-label="Remove" onclick="event.stopPropagation(); nbRemoveRow(this,'${id}')">✕</button></div>`;
 }
 function nbQuestionRow(id, q){
   return `<div class="nb-q"><span class="dot">•</span>`
     + `<input class="txt q-text" placeholder="A question to ask…" value="${nbEsc(q)}" oninput="nbSync('${id}')">`
-    + `<button class="del" title="Remove" onclick="event.stopPropagation(); nbRemoveRow(this,'${id}')">✕</button></div>`;
+    + `<button class="del" data-tip="Remove" aria-label="Remove" onclick="event.stopPropagation(); nbRemoveRow(this,'${id}')">✕</button></div>`;
 }
 function nbPanelHtml(j){
   const id = j.id, d = nbData(id), isOpen = nbOpen.has(id);
@@ -2634,7 +2635,7 @@ function nbAppliedDays(id){
 function nbAppliedChip(j){
   if (!appStatus[j.id]) return "";
   var dys = nbAppliedDays(j.id); if (dys==null) return "";
-  return '<span class="tag" title="When you marked this applied — from your notebook; edit it there.">✓ '+(dys===0?"applied today":("applied "+dys+"d ago"))+'</span>';
+  return '<span class="tag" data-tip="When you marked this applied — from your notebook; edit it there.">✓ '+(dys===0?"applied today":("applied "+dys+"d ago"))+'</span>';
 }
 function nbSync(id){
   const p = document.getElementById("nb-"+id); if (!p) return;
@@ -2854,15 +2855,15 @@ function rowHtml(j, mjStage){
   const multi = j.places.length > 1;
   // each location chip links to its own posting; clicking the row opens the first one (chips let you pick a city)
   const locChips = j.places.slice(0,3).map(p=>
-    `<span class="tag locchip" ${p.url?`onclick="event.stopPropagation(); openApply('${j.id}','${p.url}')" title="Open the ${locLabel(p.l)} posting"`:""}>${locLabel(p.l)}${multi?' ↗':''}</span>`).join("")
+    `<span class="tag locchip" ${p.url?`onclick="event.stopPropagation(); openApply('${j.id}','${p.url}')" data-tip="Open the ${locLabel(p.l)} posting"`:""}>${locLabel(p.l)}${multi?' ↗':''}</span>`).join("")
     + (j.places.length>3 ? `<span class="tag">+${j.places.length-3} more</span>` : "");
   const rowClick = j.url ? `onclick="openApply('${j.id}','${j.url}')"` : "";
   // ghost-job signals (facts, not accusations)
   const dl = daysListed(j);
   const longClass = dl==null ? "" : dl>=90 ? "longbad" : dl>=45 ? "longwarn" : "";
-  const longChip = longClass ? `<span class="tag ${longClass}" title="We've seen this exact listing live for ${dl} days. Long-running posts are more likely to be stale or 'ghost' listings.">⏳ ${dl}d listed</span>` : "";
-  const relistChip = relistedNow(j) ? `<span class="tag relist" title="This role has been live far longer than its shown posted date${j.relistCount>1?` (date refreshed ${j.relistCount}×)`:''} — re-posted/refreshed rather than newly open.">↻ re-listed${j.relistCount>1?` ${j.relistCount}×`:''}</span>` : "";
-  const poolBadge = j.pool ? `<span class="poolbadge" title="A talent pool / general application — not a specific open role.">talent pool</span>` : "";
+  const longChip = longClass ? `<span class="tag ${longClass}" data-tip="We've seen this exact listing live for ${dl} days. Long-running posts are more likely to be stale or 'ghost' listings.">⏳ ${dl}d listed</span>` : "";
+  const relistChip = relistedNow(j) ? `<span class="tag relist" data-tip="This role has been live far longer than its shown posted date${j.relistCount>1?` (date refreshed ${j.relistCount}×)`:''} — re-posted/refreshed rather than newly open.">↻ re-listed${j.relistCount>1?` ${j.relistCount}×`:''}</span>` : "";
+  const poolBadge = j.pool ? `<span class="poolbadge" data-tip="A talent pool / general application — not a specific open role.">talent pool</span>` : "";
   return `<div class="row ${status?'st-'+status:''} ${mj?'mjp s-'+mj:''} ${isDismissed?'dismissed':''} ${MINE_VIEW&&nbOpen.has(j.id)?'nbopen':''}" ${rowClick}>
     ${mj?mjBarHtml(j, mj):''}
     <div class="rtop">
@@ -2875,7 +2876,7 @@ function rowHtml(j, mjStage){
       </div>
       <div class="posted">${noDate?'date n/a':`${h<=24&&!isNew?'<span class="new">● </span>':''}${ago(h)}`}</div>
       <button class="save ${isSaved?'on':''}" onclick="event.stopPropagation(); toggleSave('${j.id}')" data-tip="${isSaved?'Saved · click to remove':'Save for later'}" aria-label="${isSaved?'Remove from saved':'Save for later'}">${isSaved?'<svg width="13" height="15" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle" aria-hidden="true"><path d="M6 2a2 2 0 0 0-2 2v18l8-5 8 5V4a2 2 0 0 0-2-2H6z"/></svg>':'<svg width="13" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle" aria-hidden="true"><path d="M6 2a2 2 0 0 0-2 2v18l8-5 8 5V4a2 2 0 0 0-2-2H6z"/></svg>'}</button>
-      ${MINE_VIEW?`<button class="nbicon ${nbHas(j.id)?'hasnotes':''} ${nbOpen.has(j.id)?'open':''}" data-nb-btn="${j.id}" onclick="event.stopPropagation(); nbToggle('${j.id}', this)" title="Notebook — notes, key dates, contacts &amp; questions" aria-label="Open notebook">📝</button>`:``}
+      ${MINE_VIEW?`<button class="nbicon ${nbHas(j.id)?'hasnotes':''} ${nbOpen.has(j.id)?'open':''}" data-nb-btn="${j.id}" onclick="event.stopPropagation(); nbToggle('${j.id}', this)" data-tip="Notebook — notes, key dates, contacts &amp; questions" aria-label="Open notebook">📝</button>`:``}
       <span class="actsep"></span>
       <span class="statusgrp" onclick="event.stopPropagation()">
         <button class="stbtn applied ${status==='applied'?'on':''}" onclick="event.stopPropagation(); setStatusToggle('${j.id}','applied')" data-tip="Mark as applied" aria-label="Mark as applied">✓</button>
@@ -3289,7 +3290,7 @@ function profCountryBtns(){
   // (sorted by how many roles each has). Mirrors the Target-roles field, so the 40-country wall is gone.
   var sel = profCountries();
   var chips = sel.map(function(c){
-    return '<span class="pchip">'+bfEsc(c)+' <span class="x" role="button" tabindex="0" title="Remove" onclick="profToggleCountry(\''+c.replace(/'/g,"\\'")+'\')">✕</span></span>';
+    return '<span class="pchip">'+bfEsc(c)+' <span class="x" role="button" tabindex="0" data-tip="Remove" aria-label="Remove" onclick="profToggleCountry(\''+c.replace(/'/g,"\\'")+'\')">✕</span></span>';
   }).join("");
   var remaining = Object.keys(COUNTRY_COUNTS).filter(function(c){ return !AMBIG_COUNTRY.has(c) && sel.indexOf(c)<0; })
     .sort(function(a,b){ return (COUNTRY_COUNTS[b]-COUNTRY_COUNTS[a]) || a.localeCompare(b); });
@@ -3434,9 +3435,9 @@ function colChipForJob(j){
   if (!j.places || j.places.length !== 1) return "";   // single location only — multi-city jobs show nothing
   var there = colLookup(j.places[0] && j.places[0].l); if (!there) return "";
   var d = Math.round((there/home - 1)*100);
-  if (d > 5)  return '<span class="coltag up" title="Approx. cost of living vs '+bfEsc(loc)+' — a guide, not exact">↑ ~'+d+'% cost of living</span>';
-  if (d < -5) return '<span class="coltag dn" title="Approx. cost of living vs '+bfEsc(loc)+' — a guide, not exact">↓ ~'+(-d)+'% cost of living</span>';
-  return '<span class="coltag eq" title="Approx. cost of living vs '+bfEsc(loc)+' — a guide, not exact">≈ similar cost of living</span>';
+  if (d > 5)  return '<span class="coltag up" data-tip="Approx. cost of living vs '+bfEsc(loc)+' — a guide, not exact">↑ ~'+d+'% cost of living</span>';
+  if (d < -5) return '<span class="coltag dn" data-tip="Approx. cost of living vs '+bfEsc(loc)+' — a guide, not exact">↓ ~'+(-d)+'% cost of living</span>';
+  return '<span class="coltag eq" data-tip="Approx. cost of living vs '+bfEsc(loc)+' — a guide, not exact">≈ similar cost of living</span>';
 }
 function profInferRoles(){ var b=bfBehaviorRoles(); if (b && b.length) return b.slice(0,3); var t=Object.entries(DISC_COUNTS||{}).sort(function(a,b){return b[1]-a[1];})[0]; return t?[t[0]]:(DISC.length?[DISC[0]]:[]); }
 function profGet(f){
@@ -3799,7 +3800,7 @@ function barChart(title, entries, limit){
   const max = Math.max(1, ...top.map(e=>e[1]));
   const VIS = 5;   // show top few; rest behind a one-tap "show all" to keep the page skimmable
   const row = ([k,n]) =>
-    `<div class="barrow"><span class="blabel" title="${k}">${k}</span>
+    `<div class="barrow"><span class="blabel" data-tip="${k}">${k}</span>
      <span class="btrack"><span class="bfill" style="width:${Math.round(100*n/max)}%"></span></span>
      <span class="bnum">${n}</span></div>`;
   const head = top.slice(0, VIS).map(row).join("");
@@ -3855,7 +3856,7 @@ function renderPulseStrip(){
     + chip(m.new72h.toLocaleString(),"new in 72h","fresh")
     + chip(m.salPct+"%","list salary")
     + (topClickable
-        ? `<span class="psitem top psclick" role="button" tabindex="0" title="Show ${m.topStudio} jobs" onclick="filterToStudio(window.__pulseTopStudio)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();filterToStudio(window.__pulseTopStudio);}"><b>${m.topStudio}</b>${m.topStudioN.toLocaleString()} role${m.topStudioN===1?'':'s'} · most active</span>`
+        ? `<span class="psitem top psclick" role="button" tabindex="0" data-tip="Show ${m.topStudio} jobs" onclick="filterToStudio(window.__pulseTopStudio)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();filterToStudio(window.__pulseTopStudio);}"><b>${m.topStudio}</b>${m.topStudioN.toLocaleString()} role${m.topStudioN===1?'':'s'} · most active</span>`
         : chip(m.topStudio,"most active","top"));
 }
 // Filter the list down to a single studio (used by the "most active" pulse chip).
@@ -3990,7 +3991,7 @@ function renderStats(){
   const medal = i => i===0?"🥇 ":i===1?"🥈 ":i===2?"🥉 ":"";
   const transparencyCard = `<div class="statcard"><h3>Salary transparency leaderboard — studios that publish pay</h3>`
     + (transRows.length
-        ? transRows.map((r,i) => `<div class="barrow"><span class="blabel" title="${r.s}">${medal(i)}${r.s}</span>`
+        ? transRows.map((r,i) => `<div class="barrow"><span class="blabel" data-tip="${r.s}">${medal(i)}${r.s}</span>`
             + `<span class="btrack"><span class="bfill" style="width:${Math.round(100*r.pct/transMax)}%;background:linear-gradient(90deg,#2ea043,var(--green))"></span></span>`
             + `<span class="bnum" style="width:96px">${r.pct}% · ${r.sal}/${r.tot}</span></div>`).join("")
         : `<div class="xhint">Not enough data yet — needs studios with 15+ current listings that publish a salary.</div>`)
@@ -4045,7 +4046,7 @@ function renderStats(){
   const ghShareMax = Math.max(1, ...ghShareRows.map(r=>r.share));
   const ghStudioCard = `<div class="statcard"><h3>Studios with the most long-running listings (60+ days, share of their board)</h3>`
     + (ghShareRows.length
-        ? ghShareRows.map(r => `<div class="barrow"><span class="blabel" title="${r.s}">${r.s}</span>`
+        ? ghShareRows.map(r => `<div class="barrow"><span class="blabel" data-tip="${r.s}">${r.s}</span>`
             + `<span class="btrack"><span class="bfill" style="width:${Math.round(100*r.share/ghShareMax)}%"></span></span>`
             + `<span class="bnum" style="width:96px">${r.share}% · ${r.long}/${r.tot}</span></div>`).join("")
         : `<div class="xhint">Not enough data yet — this needs studios with 8+ current listings.</div>`)
@@ -4169,22 +4170,33 @@ function renderStats(){
             barText: e.nw ? e.n+" roles · "+e.nw+" new" : e.n+" role"+(e.n===1?"":"s"),
             pct:Math.max(2,Math.round(e.n/_fM*100)), act:{type:"studio",val:e.s} })), "")]);
         }
-        // (2) Salary by discipline — your discipline highlighted, the rest dimmed for context
-        if (salRows.length){
-          const _sdM = Math.max(100, ...salRows.map(r=>r.hi));
-          custom.push(["🔥 For you — salary by discipline", heroSlide(salRows.map(r=>({ label:r.d,
+        // (2) Salary by discipline — show EVERY discipline (computed from the full dataset, not the
+        // profile-filtered view) so you can see how your field's pay compares, with your discipline
+        // highlighted and the rest dimmed for context.
+        const _salAll = {};
+        JOBS.forEach(j => { const m = j.salary && j.salary.match(/\$(\d+)K–\$(\d+)K/); if (!m) return; (_salAll[j.d] = _salAll[j.d] || []).push([+m[1], +m[2]]); });
+        const _salRowsAll = Object.entries(_salAll).filter(([,v])=>v.length>=2)
+          .map(([d,v])=>({ d, n:v.length, lo:Math.round(v.reduce((s,x)=>s+x[0],0)/v.length), hi:Math.round(v.reduce((s,x)=>s+x[1],0)/v.length) }))
+          .sort((a,b)=>b.hi-a.hi);
+        if (_salRowsAll.length){
+          const _sdM = Math.max(100, ..._salRowsAll.map(r=>r.hi));
+          custom.push(["🔥 For you — salary by discipline", heroSlide(_salRowsAll.map(r=>({ label:r.d,
             barText:"$"+r.lo+"–$"+r.hi+"K", pct:Math.max(2,Math.round(r.hi/_sdM*100)),
             hi:discLock.has(r.d), dim:!discLock.has(r.d), act:{type:"disc",val:r.d} })), "")]);
         }
-        // (3) Your discipline's roles by seniority — click a bar for that level's roles
+        // (3) Your discipline's roles by seniority — show EVERY seniority level for the discipline
+        // (from the full dataset, not just your level), with your level highlighted. Click a bar for
+        // that level's roles.
+        const _senG3 = profGet("sen"); const _senPref3 = (_senG3.pinned && _senG3.v!=="__any") ? _senG3.v : null;
         const _sc = {};
-        list.forEach(j => { if (discLock.has(j.d) && j.sen) _sc[j.sen] = (_sc[j.sen]||0)+1; });
+        JOBS.forEach(j => { if (discLock.has(j.d) && j.sen) _sc[j.sen] = (_sc[j.sen]||0)+1; });
         const _senRows = SEN_ORD.filter(s=>_sc[s]).map(s=>({ s, n:_sc[s] }));
         if (_senRows.length){
           const _snM = Math.max(1, ..._senRows.map(r=>r.n));
           const _cellVal = s => [...discLock].map(d=>d+"|"+s).join(";");
           custom.push(["🔥 For you — "+disc+" roles by seniority", heroSlide(_senRows.map(r=>({ label:r.s,
             barText:r.n+" role"+(r.n===1?"":"s"), pct:Math.max(2,Math.round(r.n/_snM*100)),
+            hi:_senPref3 ? r.s===_senPref3 : false, dim:_senPref3 ? r.s!==_senPref3 : false,
             act:{type:"cell",val:_cellVal(r.s)} })), "")]);
         }
         if (custom.length){ heroData = custom; _heroForYou = true; }
@@ -4206,7 +4218,7 @@ function renderStats(){
   // When any filter/search narrows the board, say so right on the hero (it drives every Trends
   // chart) so a small number never reads as "the whole market is tiny". Tap to clear and see all.
   const heroFiltBadge = (list.length !== mp.open)
-    ? `<button type="button" class="herofilt" onclick="clearAllFilters()" title="These charts reflect your active filters — tap to clear and see the whole board.">Filtered · ${list.length.toLocaleString()} of ${mp.open.toLocaleString()} · clear ✕</button>`
+    ? `<button type="button" class="herofilt" onclick="clearAllFilters()" data-tip="These charts reflect your active filters — tap to clear and see the whole board.">Filtered · ${list.length.toLocaleString()} of ${mp.open.toLocaleString()} · clear ✕</button>`
     : "";
   const heroHtml = `<div class="herowrap" id="heroWrap"><div class="herohead"><span class="herohl"><span class="herotitle" id="heroTitle">${heroData[0][0]}</span>${heroFiltBadge}</span>`
     + `<span class="heroctrl"><button type="button" class="herobtn" onclick="heroStep(-1)" aria-label="Previous">‹</button>`
@@ -4259,7 +4271,7 @@ function heroSlide(rows, emptyMsg){
     var act = r.act ? (' data-act="'+r.act.type+'" data-val="'+escAttr(r.act.val)+'" role="button" tabindex="0"') : "";
     var cls = 'herobar'+(r.act?' clickable':'')+(r.hi?' hi':'')+(r.dim?' dim':'');
     return '<div class="'+cls+'"'+act+'>'
-      + '<span class="hblabel" title="'+escAttr(r.label)+'">'+r.label+'</span>'
+      + '<span class="hblabel" data-tip="'+escAttr(r.label)+'">'+r.label+'</span>'
       + '<span class="hbtrack"><span class="hbfill" style="width:'+r.pct+'%"></span></span>'
       + '<span class="hbnum">'+r.barText+'</span></div>';
   }).join("");
@@ -4323,8 +4335,8 @@ function buildMomentum(){
   const up=sRows.filter(r=>r.c==="up").sort((a,b)=>b.delta-a.delta);
   const down=sRows.filter(r=>r.c==="down"||r.c==="dark").sort((a,b)=>a.delta-b.delta);
   // Confidence: how meaningful is the move? major (>=10), moderate (>=4), or small/stable.
-  const conf=d=>{const a=Math.abs(d);return a>=10?'<span class="pconf maj" title="Major move">🔥</span>':a>=4?('<span class="pconf mod" title="Moderate move">'+(d>0?'↑':'↓')+'</span>'):'<span class="pconf st" title="Small move">→</span>';};
-  const srow=r=>`<div class="pulserow"><span class="plabel" title="${r.name}">${r.name}${r.c==="dark"?' <span class="darktag">board quiet</span>':''}</span><span class="spark">${sparkline(r.series)}</span><span class="pulsenum">${conf(r.delta)}${r.now}<span class="pdelta p-${r.c}">${r.delta>0?'+':''}${r.delta}</span></span></div>`;
+  const conf=d=>{const a=Math.abs(d);return a>=10?'<span class="pconf maj" data-tip="Major move">🔥</span>':a>=4?('<span class="pconf mod" data-tip="Moderate move">'+(d>0?'↑':'↓')+'</span>'):'<span class="pconf st" data-tip="Small move">→</span>';};
+  const srow=r=>`<div class="pulserow"><span class="plabel" data-tip="${r.name}">${r.name}${r.c==="dark"?' <span class="darktag">board quiet</span>':''}</span><span class="spark">${sparkline(r.series)}</span><span class="pulsenum">${conf(r.delta)}${r.now}<span class="pdelta p-${r.c}">${r.delta>0?'+':''}${r.delta}</span></span></div>`;
   const dArr=T.disc?Object.keys(T.disc).map(name=>Object.assign({name}, T.disc[name])):[];
   const dRows=dArr.map(s=>{ const base=s.d30!=null?s.d30:(s.d7!=null?s.d7:s.now); return {name:s.name, now:s.now, delta:s.now-base, series:s.series}; });
   const hot=dRows.filter(r=>r.delta>0).sort((a,b)=>b.delta-a.delta).slice(0,6);
@@ -4445,7 +4457,7 @@ function renderPulse(){
     const up = rows.filter(r=>r.cls==="up").sort((a,b)=>b.delta-a.delta);
     const down = rows.filter(r=>r.cls==="down"||r.cls==="dark").sort((a,b)=>a.delta-b.delta);
     const row = r => `<div class="pulserow">
-       <span class="plabel" title="${r.name}">${r.name}${r.cls==="dark"?' <span class="darktag">board quiet</span>':''}</span>
+       <span class="plabel" data-tip="${r.name}">${r.name}${r.cls==="dark"?' <span class="darktag">board quiet</span>':''}</span>
        <span class="spark">${sparkline(r.series)}</span>
        <span class="pulsenum">${r.now}<span class="pdelta p-${r.cls}">${r.delta>0?'+':''}${r.delta}</span></span>
      </div>`;
@@ -4713,7 +4725,7 @@ function renderMoon(){
     `<div class="dirsub">Smaller and independent studios, including many who asked to be listed. These links go straight to their careers pages.</div>`;
   const body = MOON_STUDIOS.length
     ? `<div class="moongrid">` + MOON_STUDIOS.map(d =>
-        `<a class="moonchip" data-st="${(d.name||'').replace(/"/g,'')}" href="${d.url}" target="_blank" rel="noopener" ${d.note?`title="${(d.note||'').replace(/"/g,'')}"`:""}>${d.name} ↗</a>`).join("") + `</div>`
+        `<a class="moonchip" data-st="${(d.name||'').replace(/"/g,'')}" href="${d.url}" target="_blank" rel="noopener" ${d.note?`data-tip="${(d.note||'').replace(/"/g,'')}"`:""}>${d.name} ↗</a>`).join("") + `</div>`
     : `<div class="moonempty">No indie studios listed here yet. Run a small or independent studio? <a href="mailto:${SUBMIT_EMAIL}?subject=${encodeURIComponent("Add our studio to DevQuest")}">Get listed →</a></div>`;
   el.innerHTML = head + body;
 }
@@ -4729,7 +4741,7 @@ function filterCity(name){
 document.getElementById("syncTime").innerHTML = LIVE
   ? new Date(window.JOBS_DATA.scrapedAt).toLocaleString([], {month:'short', day:'numeric', hour:'numeric', minute:'2-digit'}) + " (live data)"
     + (window.JOBS_DATA.errors && window.JOBS_DATA.errors.length
-       ? ` · <a style="color:var(--muted);cursor:pointer" onclick="setView('stats')" title="One or more studio feeds are temporarily not updating — open Trends for details">${window.JOBS_DATA.errors.length} source${window.JOBS_DATA.errors.length===1?'':'s'} delayed</a>` : "")
+       ? ` · <a style="color:var(--muted);cursor:pointer" onclick="setView('stats')" data-tip="One or more studio feeds are temporarily not updating — open Trends for details">${window.JOBS_DATA.errors.length} source${window.JOBS_DATA.errors.length===1?'':'s'} delayed</a>` : "")
   : "demo data";
 // Mobile: a short "live" chip stands in for the verbose sync line (set above for desktop).
 try {
@@ -5017,7 +5029,7 @@ try {
     bar.innerHTML='<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;color:#d0dcc8">'+
       '<span style="font-size:14px;flex:1;min-width:180px">'+msg+'</span>'+
       '<button id="alertCta" style="background:#1f6feb;color:#fff;border:0;border-radius:6px;padding:7px 14px;font-weight:600;cursor:pointer">'+btnLabel+'</button>'+
-      '<button id="alertDismiss" title="Not now" aria-label="Dismiss" style="background:transparent;color:#6e7681;border:0;font-size:16px;line-height:1;cursor:pointer;padding:2px 6px">×</button></div>';
+      '<button id="alertDismiss" data-tip="Not now" aria-label="Dismiss" style="background:transparent;color:#6e7681;border:0;font-size:16px;line-height:1;cursor:pointer;padding:2px 6px">×</button></div>';
     var btn=document.getElementById("alertCta"); if(btn) btn.onclick=function(){ openForm(label, c, fresh ? "hotjobs" : "filter"); };
     var dis=document.getElementById("alertDismiss"); if(dis) dis.onclick=function(){ try{dismissEmailAsk();}catch(e){} bar.style.display="none"; bar.removeAttribute("data-state"); window.__emailAskActive=false; };
     window.__emailAskActive=true;
@@ -5066,44 +5078,4 @@ try {
     return { disc:disc.slice(0,4), sen:sen.slice(0,4),
       studios:(c.studios||[]).map(function(s){return String(s).replace(/^@/,"");}).slice(0,4),
       regions:regions.slice(0,4), countries:(c.countries||[]).slice(0,4), subs:(c.subs||[]).slice(0,4),
-      remote:!!c.quickRemote, q:(c.q||"").toLowerCase().slice(0,30), n:n, zero:n===0,
-      gc:cells.length, sd:(c.disc||[]).length, ss:(c.sen||[]).length };  // grid-cells vs sidebar disc/sen counts
-  }
-
-  var lastSig="";
-  function renderBar(){
-    var c=readCriteria();
-    var sig=""; try{ sig=JSON.stringify(c); }catch(e){}
-    var changed=(sig!==lastSig);
-    if(changed){ lastSig=sig; if(hasFilters(c)){ try{ track("filter", filterSummary(c)); }catch(e){} try{ window.__fyOnFilter && window.__fyOnFilter(c); }catch(e){} } }
-    var state=bar.getAttribute("data-state");
-    // Keep an open or just-submitted form while the filters are unchanged. The moment the
-    // filters change, clear it so a subscriber can set up an alert for the NEW search.
-    if((state==="form"||state==="done") && !changed) return;
-    if(state==="form"||state==="done") bar.removeAttribute("data-state");
-    var n=(typeof window.__dqCount==="number"?window.__dqCount:null);
-    // No filters, or a free-text-only search that found nothing -> no email ask (the in-list
-    // "no roles match" helper covers the typo case). Structured filters at zero DO get the ask.
-    if(!hasFilters(c) || (n===0 && !hasStructured(c))){
-      // No active filter (or a fruitless free-text search): offer a discipline-targeted ask to the
-      // engaged hot-jobs crowd; otherwise stay hidden. The shared budget/cooldown is enforced in buildCta.
-      var hd = window.__hotDisc;
-      if (hd) { buildCta(hd, { disc: (window.__hotDiscs||[hd]) }, (window.__hotDiscNew||0), true); }
-      else { bar.style.display="none"; bar.removeAttribute("data-state"); window.__emailAskActive=false; }
-      return;
-    }
-    buildCta(labelFor(c), c, n, false);
-  }
-
-  // update the bar whenever the job list re-renders (i.e. filters changed)
-  if(jobsEl){ try{ new MutationObserver(function(){ try{ renderBar(); }catch(e){} }).observe(jobsEl,{childList:true}); }catch(e){} }
-  try{ renderBar(); }catch(e){}
-})();
-</script>
-
-<!-- DOODLE:START -->
-<script defer src="doodle-random.js?v=36"></script>
-<!-- DOODLE:END -->
-
-</body>
-</html>
+      remote:!!c.quickRe
