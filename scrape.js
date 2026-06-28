@@ -82,8 +82,6 @@ const DIRECTORY = [
   { name: "Devolver Digital", url: "https://www.devolverdigital.com/jobs", note: "Indie publisher — Cult of the Lamb, Cuphead", city: "Austin, TX" },
   { name: "Klei Entertainment", url: "https://www.klei.com/careers", note: "Don't Starve, Oxygen Not Included (Vancouver)", city: "Vancouver, BC" },
   { name: "Electric Square", url: "https://electricsquare.com/come-join-us/open-positions/", note: "Co-development (Lively, Hot Wheels Unleashed) — part of Keywords Studios", city: "Brighton, UK" },
-  { name: "Sports Interactive", url: "https://careers.sega.co.uk/studios/sports-interactive", note: "Football Manager — part of SEGA", city: "London, UK" },
-  { name: "Two Point Studios", url: "https://careers.sega.co.uk/studios/two-point-studios", note: "Two Point Hospital/Campus — SEGA", city: "Farnham, UK" },
   { name: "Archetype Entertainment", url: "https://www.archetype-entertainment.com/en-US", note: "AAA sci-fi RPG (ex-BioWare) — Wizards of the Coast / Hasbro", city: "Austin, TX" },
   // ---- 2026-06-26 batch: gap analysis vs alexanderrehm.com. Notable studios on UNsupported ATS
   // (HRMOS, Kenjo, Huntflow, or custom sites) — link-outs for now. NOTE: Com2uS, KING Art and Travian
@@ -423,6 +421,8 @@ const STUDIOS = [
   { name: "Critical Path Games", type: "critpath", token: "critpath", city: "Vancouver, BC" },               // custom static careers site — fetchCritpath (requested mainland)
   { name: "Eidos-Montréal", type: "eidos", token: "eidos", city: "Montréal, QC, Canada", parentCompany: "Embracer" }, // Deus Ex, Tomb Raider — careers page is Dayforce-backed SSR (promoted from Island 2026-06-28)
   { name: "Snail Games", type: "hiringthing", token: "snail-games-usa-inc", city: "Culver City, CA" }, // ARK publisher (NASDAQ: SNAL) — HiringThing SSR board (promoted from Island 2026-06-28)
+  { name: "Sports Interactive", type: "segacareers", token: "sports-interactive", studioFacet: "Sports Interactive", city: "London, UK", parentCompany: "SEGA" }, // Football Manager — careers.sega.co.uk Drupal site, studio-scoped (promoted from Island 2026-06-28)
+  { name: "Two Point Studios", type: "segacareers", token: "two-point-studios", studioFacet: "Two Point Studios", city: "Farnham, UK", parentCompany: "SEGA" }, // Two Point Hospital/Campus — careers.sega.co.uk, studio-scoped (promoted from Island 2026-06-28)
   // ---- 2026-06-26 batch: gap analysis vs alexanderrehm.com directory. Tier-1 studios already on a
   // supported ATS (tokens read from their public careers URLs) — spot-check first scrape, a wrong
   // token just shows 0 roles (per-source try/catch). See competitor-studio-gap-analysis.md. ----
@@ -2853,7 +2853,46 @@ async function fetchHiringThing(studio) {
   return out;
 }
 
-const FETCHERS = { greenhouse: fetchGreenhouse, lever: fetchLever, workday: fetchWorkday, avature: fetchAvature, smartrecruiters: fetchSmartRecruiters, workable: fetchWorkable, phenom: fetchPhenom, teamtailor: fetchTeamtailor, eightfold: fetchEightfold, amazonjobs: fetchAmazonJobs, ashby: fetchAshby, zenimax: fetchZenimax, bamboohr: fetchBambooHr, jobscore: fetchJobScore, jazzhr: fetchJazzHr, jobvite: fetchJobvite, recruitee: fetchRecruitee, personio: fetchPersonio, rippling: fetchRippling, breezy: fetchBreezy, manatal: fetchManatal, sumodigital: fetchSumoDigital, pinpoint: fetchPinpoint, playground: fetchPlayground, obsidian: fetchObsidian, techland: fetchTechland, oracle: fetchOracle, cig: fetchCig, critpath: fetchCritpath, krafton: fetchKrafton, eidos: fetchEidos, hiringthing: fetchHiringThing };
+// ---- SEGA Europe careers (careers.sega.co.uk) — Drupal Views, studio-scoped -----------------
+// One SSR site covers several SEGA Europe studios (SEGA Europe, Sports Interactive, Two Point, and
+// Creative Assembly — but CA is already on Jobvite, so we scope each studio via the ?f[0]=studio:
+// facet to avoid duplicates). Each result is <div class="... views-row"> with .views-field-field-*
+// divs: title (+slug link), date-updated ("Last updated: 29 May 2026"), department, studio, country.
+// This is separate from the "Sega" Workday tenant (corporate/America), which doesn't list these.
+const SEGA_MONTHS = { jan:0,feb:1,mar:2,apr:3,may:4,jun:5,jul:6,aug:7,sep:8,oct:9,nov:10,dec:11 };
+function parseSegaDate(s){ const m=String(s).match(/(\d{1,2})\s+([A-Za-z]{3,})\s+(\d{4})/); if(!m) return null; const mo=SEGA_MONTHS[m[2].slice(0,3).toLowerCase()]; if(mo==null) return null; const d=new Date(Date.UTC(+m[3],mo,+m[1])); return isNaN(d.getTime())?null:d.toISOString(); }
+async function fetchSegaCareers(studio) {
+  let html;
+  if (SAMPLE_FILE) { const d = loadSample(studio); if (!d) return []; html = typeof d === "string" ? d : (d.html || ""); }
+  else { html = await fetchText(`https://careers.sega.co.uk/vacancies?f%5B0%5D=studio%3A${encodeURIComponent(studio.studioFacet || studio.name)}`); }
+  const out = []; const seen = new Set();
+  const fieldOf = (chunk, name) => { const m = chunk.match(new RegExp('views-field-field-' + name + '[^>]*>([\\s\\S]*?)</div>', 'i')); return m ? decodeEnt(m[1].replace(/<[^>]+>/g, ' ')).replace(/\s+/g, ' ').replace(/^[^:]*:\s*/, '').trim() : ''; };
+  for (const chunk of html.split(/class="[^"]*views-row[^"]*"/i).slice(1)) {
+    const tm = chunk.match(/views-field-title[\s\S]*?<a\b[^>]*href="([^"]*\/vacancies\/([a-z0-9][a-z0-9-]*))"[^>]*>([\s\S]*?)<\/a>/i);
+    if (!tm) continue;
+    const slug = tm[2];
+    if (seen.has(slug)) continue; seen.add(slug);
+    const title = decodeEnt(tm[3].replace(/<[^>]+>/g, ' ')).replace(/\s+/g, ' ').trim();
+    if (!title) continue;
+    const dept = fieldOf(chunk, 'department');
+    const country = fieldOf(chunk, 'country');
+    const location = studio.city || country || "United Kingdom";
+    out.push({
+      id: `segac-${studio.token}-${slug}`,
+      title, studio: studio.name,
+      discipline: mapDiscipline(dept, title),
+      workType: inferWorkType(title, location, []),
+      location, region: inferRegion(location),
+      seniority: inferSeniority(title),
+      salary: null, yoe: null,
+      postedAt: parseSegaDate(fieldOf(chunk, 'date-updated')),
+      url: `https://careers.sega.co.uk/vacancies/${slug}`,
+    });
+  }
+  return out;
+}
+
+const FETCHERS = { greenhouse: fetchGreenhouse, lever: fetchLever, workday: fetchWorkday, avature: fetchAvature, smartrecruiters: fetchSmartRecruiters, workable: fetchWorkable, phenom: fetchPhenom, teamtailor: fetchTeamtailor, eightfold: fetchEightfold, amazonjobs: fetchAmazonJobs, ashby: fetchAshby, zenimax: fetchZenimax, bamboohr: fetchBambooHr, jobscore: fetchJobScore, jazzhr: fetchJazzHr, jobvite: fetchJobvite, recruitee: fetchRecruitee, personio: fetchPersonio, rippling: fetchRippling, breezy: fetchBreezy, manatal: fetchManatal, sumodigital: fetchSumoDigital, pinpoint: fetchPinpoint, playground: fetchPlayground, obsidian: fetchObsidian, techland: fetchTechland, oracle: fetchOracle, cig: fetchCig, critpath: fetchCritpath, krafton: fetchKrafton, eidos: fetchEidos, hiringthing: fetchHiringThing, segacareers: fetchSegaCareers };
 
 // ---- Ghost-job tracking -----------------------------------------------------
 // Because we scrape on a schedule, we can see how long a listing has REALLY been
