@@ -96,10 +96,16 @@
   .hero h1 { font-size: 18px; font-weight: 600; margin: 0 0 4px; }
   .hero h1 em { color: var(--pink); font-style: normal; }
   .hero p { color: var(--muted); max-width: 620px; margin: 0 auto; }
-  .layout { display: grid; grid-template-columns: 270px 1fr; gap: 24px; max-width: 1240px; margin: 0 auto; padding: 14px 24px 60px; }
-  /* Let the main column shrink to the viewport: grid items default to min-width:auto, which
-     otherwise forces the page wider than a phone screen to fit the widest child (the matrix). */
-  .layout > main { min-width: 0; }
+  /* Centered content with a fixed sidebar slot on the left and a matching right gutter, so the content
+     stays anchored in the SAME centered position on every tab. Hiding the sidebar (below) leaves its
+     column reserved, so switching tabs never shifts the content. main is pinned to column 2 so it
+     stays centered even when the sidebar is gone. */
+  .layout { display: grid; grid-template-columns: 270px minmax(0, 920px) 270px; justify-content: center; gap: 24px; max-width: 1520px; margin: 0 auto; padding: 14px 24px 60px; }
+  .layout > #sidebar { grid-column: 1; }
+  .layout > main { grid-column: 2; min-width: 0; }
+  /* Tabs that don't use the sidebar facets (For You, My Jobs, Hiring Trends) hide it; the column stays
+     reserved so the centered content doesn't move. */
+  .layout.nofilters #sidebar, .layout.nofilters #filterToggle { display: none; }
   /* CLS fix: reserve space for JS-rendered content so the layout does not jump as data loads */
   #heroSub { min-height: 3.5em; }
   #matrixWrap { min-height: 410px; }
@@ -108,6 +114,7 @@
   #filterToggle, #filterClose, #filterBackdrop, .swipehint { display: none; }
   @media (max-width: 820px) {
     .layout { grid-template-columns: 1fr; gap: 14px; padding: 14px 12px 48px; }
+    .layout > main, .layout > #sidebar { grid-column: auto; }   /* reset desktop column pinning for the single-column phone layout */
     /* filters become an off-canvas drawer; content (matrix + jobs) comes first */
     #sidebar { position: fixed; top: 0; left: 0; width: 86%; max-width: 330px; z-index: 60;
       border-radius: 0; height: 100vh; height: 100dvh; max-height: none; overflow-y: auto;
@@ -3103,7 +3110,8 @@ function setView(v){
   document.getElementById("jobs").style.display = (v==="list") ? "" : "none";
   document.getElementById("count").style.display = (v==="list") ? "" : "none";
   document.getElementById("directory").style.display = v==="list" ? "" : "none";
-  var _rb=document.getElementById("regionBar"); if(_rb) _rb.style.display = (v==="list"||v==="bestfit") ? "" : "none";
+  var _rb=document.getElementById("regionBar"); if(_rb) _rb.style.display = (v==="list") ? "" : "none";   // region banner is the List geo control; For You uses the profile's countries
+  var _ly=document.querySelector(".layout"); if(_ly) _ly.classList.toggle("nofilters", v==="bestfit"||v==="follow"||v==="stats");   // hide the filter rail on For You, My Jobs and Hiring Trends (List and Map keep it)
   try{ renderOnboard(); }catch(e){}
   document.getElementById("moon").style.display = v==="list" ? "" : "none";
   document.getElementById("matrixWrap").style.display = v==="list" ? "" : "none";
@@ -3690,7 +3698,7 @@ function bfCard(r,i,disc){
     + (mom > 0 ? `<span class="bfwchip mom">▲ hiring up this month</span>` : "")
     + `</div>`;
   const signalOld = `<div style="display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:6px;font-size:13px;color:var(--muted)"><span>${r.roles} open</span><span>${r.payPct}% pay</span>${fl?`<span style="color:${flColor}">${fl}</span>`:""}${r.clabel?bfContChip(r.clabel):""}</div>`;
-  return `<div class="bfcard" data-studio="${bfEsc(r.n)}" data-disc="${bfEsc(disc)}" style="border:${best?"2px solid var(--accent)":"1px solid var(--border)"};border-radius:12px;margin-bottom:10px;background:var(--panel);overflow:hidden">
+  return `<div class="bfcard" data-studio="${bfEsc(r.n)}" data-disc="${bfEsc(disc)}" style="border:${isOpen?"2px solid var(--accent)":"1px solid var(--border)"};border-radius:12px;margin-bottom:10px;background:var(--panel);overflow:hidden">
     <div class="bfcardhead" onclick="bfToggleStudio('${nameJs}','${discJs}')" style="display:flex;align-items:center;gap:14px;padding:14px 16px;cursor:pointer">
       <div style="flex:1;min-width:0">
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
@@ -3700,7 +3708,7 @@ function bfCard(r,i,disc){
         ${titles?`<div style="font-size:12px;color:var(--muted);margin-top:2px">${bfEsc(titles)}</div>`:""}
         ${BF_INTEL ? why : signalOld}
       </div>
-      <div style="text-align:right"><div style="font-size:20px;font-weight:700;color:var(--accent)">${r.score}</div><div style="font-size:11px;color:var(--muted)">match</div>${BF_INTEL?`<div class="bfband ${band[0]}">${band[1]}</div>`:""}</div>
+      <div style="text-align:right"><div style="font-size:20px;font-weight:700;color:var(--accent)">${r.score}<span style="font-size:12px;font-weight:600;color:var(--muted)">/100</span></div><div style="font-size:11px;color:var(--muted)">match</div>${BF_INTEL?`<div class="bfband ${band[0]}">${band[1]}</div>`:""}</div>
       <span style="color:var(--muted);font-size:13px;margin-left:2px">${isOpen?"▾":"▸ jobs"}</span>
     </div>
     ${isOpen?`<div class="bfjobs">${bfStudioJobsHtml(r,disc)}</div>`:""}
