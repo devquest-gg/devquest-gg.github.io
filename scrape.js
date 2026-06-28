@@ -1269,13 +1269,21 @@ function metaValue(metadata, fieldName) {
 
 function stripHtml(s) {
   return (s || "")
+    .replace(/&amp;/g, "&")   // collapse double-encoded entities first (e.g. "&amp;mdash;" -> "&mdash;")
+    // Preserve dash entities as REAL dashes before the generic entity->space passes below. Otherwise a
+    // salary range written "$120,000 &mdash; $150,000" loses its separator (becomes a space), the range
+    // parser misses it, and only the first number survives as a misleading single salary.
+    .replace(/&mdash;|&#8212;|&#x2014;/gi, "—").replace(/&ndash;|&#8211;|&#x2013;/gi, "–")
     .replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"')
-    .replace(/&amp;/g, "&").replace(/&#\d+;/g, " ").replace(/&\w+;/g, " ")
+    .replace(/&#\d+;/g, " ").replace(/&\w+;/g, " ")
     .replace(/<[^>]*>/g, " ");
 }
 
 function extractSalary(text) {
   if (!text) return null;
+  // Defensive: normalize entity dashes to real dashes so a range separator is never lost, even if the
+  // caller passes text that didn't go through stripHtml (e.g. a verbatim source pay string).
+  text = String(text).replace(/&amp;/g, "&").replace(/&mdash;|&#8212;|&#x2014;/gi, "—").replace(/&ndash;|&#8211;|&#x2013;/gi, "–");
   let lo = null, hi = null;
   // 1) adjacent range: "$120,000 - $150,000", "$120K to $150K", "$134,320 – $248,404"
   let m = text.match(/\$\s?([\d][\d,.]*)\s*([kK])?\s*(?:-|–|—|to|through)\s*\$?\s?([\d][\d,.]*)\s*([kK])?/);
