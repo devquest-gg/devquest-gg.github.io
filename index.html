@@ -2860,24 +2860,24 @@ function rowHtml(j, mjStage){
     ${mj?mjBarHtml(j, mj):''}
     <div class="rtop">
       <div class="rmain">
-        <span class="title">${j.t}</span><span class="studio" data-tip="${escTip(studioTipHtml(j.s))}">${j.s}</span><span class="cardstar${isFollowed(j.s)?' on':''}" data-st="${j.s.replace(/"/g,'')}" role="button" tabindex="0" title="${isFollowed(j.s)?'Following':'Follow'} ${j.s.replace(/"/g,'')}" onclick="toggleFollow(this.getAttribute('data-st'), event)">${isFollowed(j.s)?'★':'☆'}</span>
+        <span class="title">${j.t}</span><span class="studio" data-tip="${escTip(studioTipHtml(j.s))}">${j.s}</span><span class="cardstar${isFollowed(j.s)?' on':''}" data-st="${j.s.replace(/"/g,'')}" role="button" tabindex="0" data-tip="${isFollowed(j.s)?'Following · click to unfollow':'Follow this studio'}" aria-label="${isFollowed(j.s)?'Unfollow':'Follow'} ${j.s.replace(/"/g,'')}" onclick="toggleFollow(this.getAttribute('data-st'), event)">${isFollowed(j.s)?'★':'☆'}</span>
         ${isDismissed?'<span class="dismissedbadge">hidden</span>':''}
         ${poolBadge}
         ${multi?`<span class="multibadge">${j.places.length} locations</span>`:''}
         ${isNew?'<span class="nfy">NEW FOR YOU</span>':''}
       </div>
       <div class="posted">${noDate?'date n/a':`${h<=24&&!isNew?'<span class="new">● </span>':''}${ago(h)}`}</div>
-      <button class="save ${isSaved?'on':''}" onclick="event.stopPropagation(); toggleSave('${j.id}')" title="${isSaved?'Saved for later':'Save for later'}" aria-label="${isSaved?'Remove from saved':'Save for later'}">${isSaved?'<svg width="13" height="15" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle" aria-hidden="true"><path d="M6 2a2 2 0 0 0-2 2v18l8-5 8 5V4a2 2 0 0 0-2-2H6z"/></svg>':'<svg width="13" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle" aria-hidden="true"><path d="M6 2a2 2 0 0 0-2 2v18l8-5 8 5V4a2 2 0 0 0-2-2H6z"/></svg>'}</button>
+      <button class="save ${isSaved?'on':''}" onclick="event.stopPropagation(); toggleSave('${j.id}')" data-tip="${isSaved?'Saved · click to remove':'Save for later'}" aria-label="${isSaved?'Remove from saved':'Save for later'}">${isSaved?'<svg width="13" height="15" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle" aria-hidden="true"><path d="M6 2a2 2 0 0 0-2 2v18l8-5 8 5V4a2 2 0 0 0-2-2H6z"/></svg>':'<svg width="13" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle" aria-hidden="true"><path d="M6 2a2 2 0 0 0-2 2v18l8-5 8 5V4a2 2 0 0 0-2-2H6z"/></svg>'}</button>
       ${MINE_VIEW?`<button class="nbicon ${nbHas(j.id)?'hasnotes':''} ${nbOpen.has(j.id)?'open':''}" data-nb-btn="${j.id}" onclick="event.stopPropagation(); nbToggle('${j.id}', this)" title="Notebook — notes, key dates, contacts &amp; questions" aria-label="Open notebook">📝</button>`:``}
       <span class="actsep"></span>
       <span class="statusgrp" onclick="event.stopPropagation()">
-        <button class="stbtn applied ${status==='applied'?'on':''}" onclick="event.stopPropagation(); setStatusToggle('${j.id}','applied')" title="Applied" aria-label="Mark as applied">✓</button>
-        <button class="stbtn interview ${status==='interviewing'?'on':''}" onclick="event.stopPropagation(); setStatusToggle('${j.id}','interviewing')" title="Interviewing" aria-label="Mark as interviewing">💬</button>
-        <button class="stbtn offer ${status==='offer'?'on':''}" onclick="event.stopPropagation(); setStatusToggle('${j.id}','offer')" title="Got an offer" aria-label="Mark as offer">🏆</button>
-        <button class="stbtn reject ${status==='rejected'?'on':''}" onclick="event.stopPropagation(); setStatusToggle('${j.id}','rejected')" title="Rejected" aria-label="Mark as rejected">⊘</button>
+        <button class="stbtn applied ${status==='applied'?'on':''}" onclick="event.stopPropagation(); setStatusToggle('${j.id}','applied')" data-tip="Mark as applied" aria-label="Mark as applied">✓</button>
+        <button class="stbtn interview ${status==='interviewing'?'on':''}" onclick="event.stopPropagation(); setStatusToggle('${j.id}','interviewing')" data-tip="Mark as interviewing" aria-label="Mark as interviewing">💬</button>
+        <button class="stbtn offer ${status==='offer'?'on':''}" onclick="event.stopPropagation(); setStatusToggle('${j.id}','offer')" data-tip="Mark as got an offer" aria-label="Mark as offer">🏆</button>
+        <button class="stbtn reject ${status==='rejected'?'on':''}" onclick="event.stopPropagation(); setStatusToggle('${j.id}','rejected')" data-tip="Mark as rejected" aria-label="Mark as rejected">⊘</button>
       </span>
       <span class="actsep"></span>
-      <button class="dismiss" onclick="event.stopPropagation(); toggleDismiss('${j.id}')" title="${isDismissed?'Restore this job':'Hide this job'}">${isDismissed?'↩':'✕'}</button>
+      <button class="dismiss" onclick="event.stopPropagation(); toggleDismiss('${j.id}')" data-tip="${isDismissed?'Restore this job':'Hide this job'}" aria-label="${isDismissed?'Restore this job':'Hide this job'}">${isDismissed?'↩':'✕'}</button>
     </div>
     <div class="rtags">
       ${j.w!=="Unknown"?`<span class="tag ${j.w.toLowerCase()}">${j.w}</span>`:""}
@@ -2889,7 +2889,7 @@ function rowHtml(j, mjStage){
       ${relistChip}
       ${MINE_VIEW?nbAppliedChip(j):``}
       ${ROW_COL?colChipForJob(j):``}
-      <a class="tag knowbtn" href="${whoDoIKnowUrl(j.s)}" target="_blank" rel="noopener" onclick="event.stopPropagation()" aria-label="Who do I know at ${j.s.replace(/"/g,'')}?" title="Who do I know here? Opens LinkedIn and shows your 1st-degree connections at ${j.s.replace(/"/g,'')} — your warmest path to a referral. (You'll need to be logged into LinkedIn.)">🤝<span class="knowtext">Who do I know?</span></a>
+      <a class="tag knowbtn" href="${whoDoIKnowUrl(j.s)}" target="_blank" rel="noopener" onclick="event.stopPropagation()" aria-label="Who do I know at ${j.s.replace(/"/g,'')}?" data-tip="Find your LinkedIn connections at this studio.">🤝<span class="knowtext">Who do I know?</span></a>
     </div>
     ${MINE_VIEW && typeof MYJOBS_COMPANY_INTEL !== "undefined" && MYJOBS_COMPANY_INTEL ? mjCompanyHtml(j) : ``}
     ${MINE_VIEW?nbPanelHtml(j):``}
