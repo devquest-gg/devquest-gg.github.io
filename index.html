@@ -1806,7 +1806,7 @@ function toggleSel(boxId, name, on){
   on ? sel.add(name) : sel.delete(name);
   // re-render that group so selected items pin to top, then refresh results
   if (boxId==="studioFilters") renderSearchGroup("studioFilters","studioSearch",STUDIO_COUNTS,selStudios,STUDIO_LABELS,DIR_STUDIOS);
-  else renderSearchGroup("countryFilters","countrySearch",COUNTRY_COUNTS,selCountries,null);
+  else { renderSearchGroup("countryFilters","countrySearch",COUNTRY_COUNTS,selCountries,null); saveCountries(); }
   render();
 }
 renderSearchGroup("studioFilters","studioSearch",STUDIO_COUNTS,selStudios,STUDIO_LABELS,DIR_STUDIOS);
@@ -2409,7 +2409,7 @@ function renderActiveFilters(){
   [...selCells].forEach(k => { const x = k.split('|'); add((x[1] ? x[1] + ' ' : '') + x[0], () => selCells.delete(k)); });
   [...selSubs].forEach(s => add(s, () => selSubs.delete(s)));
   [...selStudios].forEach(s => add(String(s).replace(/^@/, ''), () => { selStudios.delete(s); renderSearchGroup("studioFilters","studioSearch",STUDIO_COUNTS,selStudios,STUDIO_LABELS,DIR_STUDIOS); }));
-  [...selCountries].forEach(c => add(c, () => { selCountries.delete(c); renderSearchGroup("countryFilters","countrySearch",COUNTRY_COUNTS,selCountries,null); }));
+  [...selCountries].forEach(c => add(c, () => { selCountries.delete(c); renderSearchGroup("countryFilters","countrySearch",COUNTRY_COUNTS,selCountries,null); saveCountries(); }));
   [...selRegionsQuick].forEach(r => add(r, () => selRegionsQuick.delete(r)));
   [...selKinds].forEach(k => add('Type: ' + (KIND_LABELS[k] || k), () => { selKinds.delete(k); const c = document.querySelector('.kindchip[data-k="' + k + '"]'); if (c) c.classList.remove('on'); }));
   // Sidebar Discipline / Work Type / Seniority checkboxes — were filtering silently with no chip
@@ -2525,6 +2525,21 @@ function restoreLastCells(){
     return selCells.size > 0;
   } catch(e){ return false; }
 }
+// Remember the COUNTRY filter between visits (dedicated "dq-countries" store, same approach as the grid
+// cells). A location preference is stable, so someone who filters to "United States" keeps seeing US
+// roles on return without re-selecting. Written on every change (incl. clearing → remembered as cleared,
+// so it's never resurrected), restored on load, and shown as a removable chip like any other filter.
+function saveCountries(){ try { store.set("dq-countries", { countries: [...selCountries], ts: Date.now() }); } catch(e){} }
+function restoreCountries(){
+  try {
+    var s = store.get("dq-countries", null);
+    if (!s || !Array.isArray(s.countries) || !s.countries.length) return false;
+    if (s.ts && (Date.now() - s.ts) > 90*864e5) return false;   // keep ~90 days; a geo preference is long-lived
+    s.countries.forEach(function(c){ if (c) selCountries.add(c); });
+    try{ renderSearchGroup("countryFilters","countrySearch",COUNTRY_COUNTS,selCountries,null); }catch(e){}
+    return selCountries.size > 0;
+  } catch(e){ return false; }
+}
 function clearAllFilters(){
   document.getElementById('q').value = '';
   document.getElementById('region').selectedIndex = 0;
@@ -2536,6 +2551,7 @@ function clearAllFilters(){
   renderSearchGroup("studioFilters","studioSearch",STUDIO_COUNTS,selStudios,STUDIO_LABELS,DIR_STUDIOS);
   renderSearchGroup("countryFilters","countrySearch",COUNTRY_COUNTS,selCountries,null);
   saveCells();
+  saveCountries();   // remember the cleared country filter so it isn't resurrected next visit
   render();
 }
 
@@ -4858,7 +4874,7 @@ dqUpdateWhatsNewDot();
 // JSON-LD SearchAction work (?q=term pre-fills the search). Applies all carried filters, then renders.
 try {
   if (applyFilterQuery()) render();              // a shared link wins
-  else if (restoreLastCells()) render();         // else restore your last matrix-square selection
+  else { var _rc = restoreCountries(); var _rs = restoreLastCells(); if (_rc || _rs) render(); }   // else restore your saved country filter + last matrix-square selection
 } catch(e){}
 // Keep the Filters box top exactly level with the matrix card (re-measure after layout + on resize).
 try {
