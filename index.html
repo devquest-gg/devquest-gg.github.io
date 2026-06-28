@@ -738,6 +738,9 @@
   .obcard .ob-go:hover { filter: brightness(1.08); }
   .obcard .ob-skip { font-size: 13px; color: var(--muted); cursor: pointer; }
   .obcard .ob-skip:hover { color: var(--text); text-decoration: underline; }
+  .obcard .ob-city { width: 100%; max-width: 360px; font-size: 14px; padding: 9px 12px; border-radius: 8px; border: 1px solid var(--border); background: #0d1117; color: var(--text); margin-bottom: 6px; }
+  .obcard .ob-city:focus { outline: none; border-color: var(--accent); }
+  .obcard .ob-citynote { font-size: 12px; color: var(--muted); margin: 0 0 13px; max-width: 480px; line-height: 1.45; }
   .bfdiscsw { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin: 0 0 12px; }
   .bfdiscsw .bfswlbl { font-size: 13px; color: var(--muted); margin-right: 2px; }
   .bfdiscsw .dbtn { font-size: 13px; font-weight: 600; padding: 5px 12px; border-radius: 999px; border: 1px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; }
@@ -2063,6 +2066,10 @@ function render(){
   // visitors with enough on-device signal. Any active filter / search / selection hides it so the
   // normal grouped results take over (and first-timers always get the standard default view).
   let hotHtml = "";
+  // Surface the cost-of-living chip on the main List (not just My Jobs / Best Fit) whenever the visitor
+  // has set a home city we can resolve. colChipForJob still self-guards (single-location jobs with a
+  // known city only), so this is safe to leave on for the whole list. Reset after the rows are built.
+  ROW_COL = (view === "list") && !!colHome();
   window.__hotDisc = null;   // discipline the email-ask bar can pre-target (set when hot jobs show)
   try {
     const defaultBrowse = view === "list" && !showDismissed && !savedOnly && !quickNew && !quickRemote
@@ -2130,6 +2137,7 @@ function render(){
     </div>`;
   }).join("") : `<div class="empty">No roles match. Click a highlighted square again to deselect, or clear your filters.</div>`;
 
+  ROW_COL = false;   // done building List rows; leave the flag off for other views/renderers
   LAST_LIST = list;
   renderDirectory(); // keep the island in sync with the top search bar
   if (view === "map") renderMap();
@@ -3391,7 +3399,7 @@ function renderRegionBar(){
 // Dismissible; once dismissed or once a profile exists it never returns. Every step is tracked so
 // we can see the funnel (shown → pick → submit vs dismiss) in /stats.
 var ONBOARD_DISCS = ["Engineering","Art","Animation","Design","Production","QA","Audio","Data & Analytics","Marketing & Comms"].filter(function(d){ return DISC.indexOf(d) >= 0; });
-var _obDisc = null, _obLvl = null;
+var _obDisc = null, _obLvl = null, _obCity = null;
 function obTrack(ev, d){ try{ window.dqTrack && window.dqTrack(ev, d||{}); }catch(e){} }
 function obEligible(){
   if (view !== "list") return false;
@@ -3413,6 +3421,10 @@ function renderOnboard(){
     + '<div class="ob-sub">Pick your craft and level and we will surface the best-fit studios and roles. No account; saved on this device.</div>'
     + '<div class="ob-lbl">I work in</div><div class="ob-chips">'+chips+'</div>'
     + '<div class="ob-lbl">Level <span style="opacity:.6;font-weight:400;text-transform:none;letter-spacing:0">(optional)</span></div><div class="ob-chips">'+lchips+'</div>'
+    + '<div class="ob-lbl">Closest city <span style="opacity:.6;font-weight:400;text-transform:none;letter-spacing:0">(optional)</span></div>'
+    + '<input class="ob-city" id="obCity" list="obCities" value="'+bfEsc(_obCity||"")+'" placeholder="Start typing your nearest big city…" oninput="obSetCity(this.value)" autocomplete="off">'
+    + '<datalist id="obCities">'+COL_KEYS.slice().sort().map(function(c){ return '<option value="'+bfEsc(c)+'"></option>'; }).join("")+'</datalist>'
+    + '<div class="ob-citynote">No need for an exact match — pick the closest listed city and we will show a cost-of-living comparison on every job. Saved on this device; never used to hide roles.</div>'
     + '<div class="ob-foot"><button class="ob-go" onclick="obGo()">Show my jobs →</button><a class="ob-skip" onclick="obDismiss()">Just browsing — skip</a></div>'
     + '</div>';
   // Defer the impression event a tick: at first paint window.dqTrack isn't defined yet (it's set up
@@ -3422,10 +3434,14 @@ function renderOnboard(){
 }
 function obPickDisc(btn, d){ _obDisc = (_obDisc===d)?null:d; [].forEach.call(btn.parentElement.children,function(c){ c.classList.toggle("on", c===btn && _obDisc===d); }); obTrack("onboard_pick_disc", { d:d }); }
 function obPickLvl(btn, l){ _obLvl = (_obLvl===l)?null:l; [].forEach.call(btn.parentElement.children,function(c){ c.classList.toggle("on", c===btn && _obLvl===l); }); obTrack("onboard_pick_level", { l:l }); }
+function obSetCity(v){ _obCity = v; }
 function obGo(){
-  obTrack("onboard_submit", { d:_obDisc||"", l:_obLvl||"" });
+  var cityEl = document.getElementById("obCity"); if (cityEl) _obCity = cityEl.value;
+  // Privacy: log only whether a city was provided, never the value itself.
+  obTrack("onboard_submit", { d:_obDisc||"", l:_obLvl||"", city: _obCity ? 1 : 0 });
   if (_obDisc){ try{ profSet("roles",[_obDisc]); bfActiveDisc=_obDisc; }catch(e){} }
   if (_obLvl){ try{ profSet("sen",_obLvl); }catch(e){} }
+  if (_obCity && _obCity.trim()){ try{ profSet("loc", _obCity.trim()); }catch(e){} }
   obSetDone();
   var el=document.getElementById("onboardCard"); if(el){ el.innerHTML=""; el.style.display="none"; }
   hotOpen = true;                                   // ensure the matches are expanded
@@ -3457,6 +3473,9 @@ function colChipForJob(j){
   if (d < -5) return '<span class="coltag dn" data-tip="Approx. cost of living vs '+bfEsc(loc)+' — a guide, not exact">↓ ~'+(-d)+'% cost of living</span>';
   return '<span class="coltag eq" data-tip="Approx. cost of living vs '+bfEsc(loc)+' — a guide, not exact">≈ similar cost of living</span>';
 }
+// Resolve the visitor's saved home location to a cost-of-living index value (or null if unset/unknown).
+// Used to decide whether to show COL chips on the main List, not just My Jobs / Best Fit.
+function colHome(){ var loc = profGet("loc").v; if(!loc) return null; return COL_INDEX[loc] || colLookup(loc) || null; }
 function profInferRoles(){ var b=bfBehaviorRoles(); if (b && b.length) return b.slice(0,3); var t=Object.entries(DISC_COUNTS||{}).sort(function(a,b){return b[1]-a[1];})[0]; return t?[t[0]]:(DISC.length?[DISC[0]]:[]); }
 function profGet(f){
   var pinned = !!PROFILE.pinned[f];
