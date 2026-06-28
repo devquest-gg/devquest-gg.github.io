@@ -1400,9 +1400,19 @@ function hotWhy(P){
   const s = topKeys(P.studio, 0.35)[0];
   return s ? `${d} roles · ${s} & similar` : `based on your ${d} activity`;
 }
-function renderHotSection(hot, P){
+function renderHotSection(hot, P, mode){
   const _lf = affLastFilters();
-  const why = profPinnedRoles() ? profHotLabel() : (_lf && lfHasFilters(_lf)) ? hotFilterLabel(_lf) : hotWhy(P);
+  const baseWhy = profPinnedRoles() ? profHotLabel() : (_lf && lfHasFilters(_lf)) ? hotFilterLabel(_lf) : hotWhy(P);
+  const visited = prevVisit ? new Date(prevVisit).toLocaleDateString([], {month:'short', day:'numeric'}) : "";
+  // "new" = roles first seen since your last visit (the reason to come back). "fresh" = nothing new,
+  // so we fall back to the freshest matches and (for returning visitors) say so up front.
+  let why, caught = "";
+  if (mode === "new") {
+    why = "new since your last visit" + (visited ? " · since " + visited : "");
+  } else {
+    why = baseWhy;
+    if (prevVisit) caught = `<div style="color:var(--muted);font-size:12.5px;padding:6px 4px 12px;line-height:1.5">✓ You're all caught up since ${visited} — no new matches, so here are the freshest roles for you.</div>`;
+  }
   return `<div id="hotGroup" class="group" style="border:1px solid rgba(255,138,61,.35);border-radius:12px;background:linear-gradient(180deg,rgba(255,138,61,.07),transparent);margin-bottom:14px">
       <div class="group-header" onclick="toggleHot()" style="cursor:pointer">
         <span class="arrow ${hotOpen?'open':''}">▸</span>
@@ -1410,7 +1420,7 @@ function renderHotSection(hot, P){
         <span class="gcount">${hot.length}</span>
         ${why?`<span style="color:var(--muted);font-weight:400;font-size:12px;margin-left:8px">${why}</span>`:""}
       </div>
-      ${hotOpen ? hot.map(rowHtml).join("") : ""}
+      ${hotOpen ? caught + hot.map(rowHtml).join("") : ""}
     </div>`;
 }
 function toggleHot(){ hotOpen = !hotOpen; render(); }
@@ -2070,14 +2080,22 @@ function render(){
     }
     if (defaultBrowse && list.length) {
       const P = buildProfile();
-      const hot = hotJobs(list, P, 12);
+      // "Hot jobs for you" now means NEW-since-your-last-visit AND matches your criteria — the reason to
+      // come back. Pull a larger matched pool, then keep only roles first seen after your previous visit
+      // (isNewForYou). If nothing's new (frequent visitors — and always on a first session), fall back to
+      // the freshest matches so the section is never empty.
+      const allHot = hotJobs(list, P, 60);
       // If the visitor set an explicit filter last time, honor it even with just a few matches.
       // The stricter ≥4 bar only guards the IMPLICIT affinity guess (no recent filter), so a weak
       // signal doesn't produce a thin section. Fixes: a single matrix cell / cell+studios not surfacing.
       const _lfNow = affLastFilters();
       const minHot = (_lfNow && lfHasFilters(_lfNow)) ? 1 : 4;
-      if (hot.length >= minHot) {
-        hotHtml = renderHotSection(hot, P);
+      if (allHot.length >= minHot) {
+        const newHot = allHot.filter(isNewForYou)
+          .sort((a,b)=>(b.ts||b.fseen||0)-(a.ts||a.fseen||0));   // a "what's new" feed leads with the freshest
+        const hotMode = newHot.length ? "new" : "fresh";
+        const hot = (newHot.length ? newHot : allHot).slice(0, 12);
+        hotHtml = renderHotSection(hot, P, hotMode);
         // email-ask discipline target. Mirror hotJobs()'s priority ladder so the alert matches the
         // "your profile · …" header: an explicitly pinned My-profile wins over transient last-filters /
         // affinity. (Previously this skipped the pinned profile, so the ask drifted to the affinity
