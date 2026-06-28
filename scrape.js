@@ -21,7 +21,6 @@ const SAMPLE_FILE = sampleIdx > -1 ? process.argv[sampleIdx + 1] : null;
 // We link players straight to the studio's own careers page. Honest + useful.
 // Adding one is a single line: { name, url, note }.
 const DIRECTORY = [
-  { name: "Turn 10 Studios", url: "https://www.turn10studios.com/careers", note: "Forza — Xbox Game Studios", city: "Redmond, WA" },
   { name: "Ninja Theory", url: "https://www.ninjatheory.com/careers/opportunities", note: "Hellblade — Xbox Game Studios", city: "Cambridge, UK" },
   { name: "Valve", url: "https://www.valvesoftware.com/en/jobs", note: "Steam, Half-Life, Dota 2", city: "Bellevue, WA" },
   { name: "Remedy Entertainment", url: "https://www.remedygames.com/careers", note: "Control, Alan Wake — Finland", city: "Espoo, Finland" },
@@ -425,6 +424,7 @@ const STUDIOS = [
   { name: "Two Point Studios", type: "segacareers", token: "two-point-studios", studioFacet: "Two Point Studios", city: "Farnham, UK", parentCompany: "SEGA" }, // Two Point Hospital/Campus — careers.sega.co.uk, studio-scoped (promoted from Island 2026-06-28)
   { name: "Square Enix Europe", type: "workable", token: "square-enix", city: "London, UK", parentCompany: "Square Enix" },        // FF, Dragon Quest — UK/Europe office on Workable (promoted from Island 2026-06-28; Japan stays a link-out)
   { name: "Square Enix America", type: "workable", token: "square-enix-america", city: "El Segundo, CA", parentCompany: "Square Enix" }, // Square Enix Americas (LA) on Workable (promoted from Island 2026-06-28)
+  { name: "Turn 10 Studios", type: "turn10", token: "turn10", city: "Redmond, WA", parentCompany: "Xbox Game Studios" }, // Forza — own SSR page deep-links to MS Careers (promoted from Island 2026-06-28)
   // ---- 2026-06-26 batch: gap analysis vs alexanderrehm.com directory. Tier-1 studios already on a
   // supported ATS (tokens read from their public careers URLs) — spot-check first scrape, a wrong
   // token just shows 0 roles (per-source try/catch). See competitor-studio-gap-analysis.md. ----
@@ -2894,7 +2894,39 @@ async function fetchSegaCareers(studio) {
   return out;
 }
 
-const FETCHERS = { greenhouse: fetchGreenhouse, lever: fetchLever, workday: fetchWorkday, avature: fetchAvature, smartrecruiters: fetchSmartRecruiters, workable: fetchWorkable, phenom: fetchPhenom, teamtailor: fetchTeamtailor, eightfold: fetchEightfold, amazonjobs: fetchAmazonJobs, ashby: fetchAshby, zenimax: fetchZenimax, bamboohr: fetchBambooHr, jobscore: fetchJobScore, jazzhr: fetchJazzHr, jobvite: fetchJobvite, recruitee: fetchRecruitee, personio: fetchPersonio, rippling: fetchRippling, breezy: fetchBreezy, manatal: fetchManatal, sumodigital: fetchSumoDigital, pinpoint: fetchPinpoint, playground: fetchPlayground, obsidian: fetchObsidian, techland: fetchTechland, oracle: fetchOracle, cig: fetchCig, critpath: fetchCritpath, krafton: fetchKrafton, eidos: fetchEidos, hiringthing: fetchHiringThing, segacareers: fetchSegaCareers };
+// ---- Turn 10 Studios (Forza) — Strapi careers page, deep-links to Microsoft Careers ----------
+// Xbox first-party, so applications live on apply.careers.microsoft.com (not cleanly scrapeable per
+// studio), but turn10studios.com/careers SSR-lists each opening as
+//   <a href="https://apply.careers.microsoft.com/careers?...&pid=<id>...">Title</a> under a discipline
+// heading. We parse the studio page; apply URLs deep-link into MS Careers. All roles are Redmond, WA;
+// no salary/date on the list. Promoted from the Island 2026-06-28.
+async function fetchTurn10(studio) {
+  let html;
+  if (SAMPLE_FILE) { const d = loadSample(studio); if (!d) return []; html = typeof d === "string" ? d : (d.html || ""); }
+  else { html = await fetchText("https://www.turn10studios.com/careers"); }
+  const re = /<a\b[^>]*href="(https:\/\/apply\.careers\.microsoft\.com\/[^"]*?pid=(\d+)[^"]*)"[^>]*>([\s\S]*?)<\/a>/gi;
+  const out = []; const seen = new Set(); let m;
+  while ((m = re.exec(html))) {
+    const pid = m[2];
+    if (seen.has(pid)) continue; seen.add(pid);
+    const title = decodeEnt(m[3].replace(/<[^>]+>/g, " ")).replace(/\s+/g, " ").trim();
+    if (!title) continue;
+    const location = studio.city || "Redmond, WA";
+    out.push({
+      id: `turn10-${pid}`,
+      title, studio: studio.name,
+      discipline: mapDiscipline(null, title),
+      workType: inferWorkType(title, location, []),
+      location, region: inferRegion(location),
+      seniority: inferSeniority(title),
+      salary: null, yoe: null, postedAt: null,
+      url: decodeEnt(m[1].replace(/&amp;/g, "&")),
+    });
+  }
+  return out;
+}
+
+const FETCHERS = { greenhouse: fetchGreenhouse, lever: fetchLever, workday: fetchWorkday, avature: fetchAvature, smartrecruiters: fetchSmartRecruiters, workable: fetchWorkable, phenom: fetchPhenom, teamtailor: fetchTeamtailor, eightfold: fetchEightfold, amazonjobs: fetchAmazonJobs, ashby: fetchAshby, zenimax: fetchZenimax, bamboohr: fetchBambooHr, jobscore: fetchJobScore, jazzhr: fetchJazzHr, jobvite: fetchJobvite, recruitee: fetchRecruitee, personio: fetchPersonio, rippling: fetchRippling, breezy: fetchBreezy, manatal: fetchManatal, sumodigital: fetchSumoDigital, pinpoint: fetchPinpoint, playground: fetchPlayground, obsidian: fetchObsidian, techland: fetchTechland, oracle: fetchOracle, cig: fetchCig, critpath: fetchCritpath, krafton: fetchKrafton, eidos: fetchEidos, hiringthing: fetchHiringThing, segacareers: fetchSegaCareers, turn10: fetchTurn10 };
 
 // ---- Ghost-job tracking -----------------------------------------------------
 // Because we scrape on a schedule, we can see how long a listing has REALLY been
