@@ -23,7 +23,6 @@ const SAMPLE_FILE = sampleIdx > -1 ? process.argv[sampleIdx + 1] : null;
 const DIRECTORY = [
   { name: "Turn 10 Studios", url: "https://www.turn10studios.com/careers", note: "Forza — Xbox Game Studios", city: "Redmond, WA" },
   { name: "Ninja Theory", url: "https://www.ninjatheory.com/careers/opportunities", note: "Hellblade — Xbox Game Studios", city: "Cambridge, UK" },
-  { name: "Eidos-Montréal", url: "https://www.eidosmontreal.com/careers/", note: "Deus Ex, Tomb Raider — part of Embracer", city: "Montréal, QC" },
   { name: "Valve", url: "https://www.valvesoftware.com/en/jobs", note: "Steam, Half-Life, Dota 2", city: "Bellevue, WA" },
   { name: "Remedy Entertainment", url: "https://www.remedygames.com/careers", note: "Control, Alan Wake — Finland", city: "Espoo, Finland" },
   { name: "Fuse Games", url: "https://fusegames.com/careers", note: "ex-Criterion devs — UK", city: "Guildford, UK" },
@@ -423,6 +422,7 @@ const STUDIOS = [
   { name: "Triband", type: "teamtailor", token: "triband", host: "careers.triband.net", city: "Copenhagen, Denmark" }, // WHAT THE GOLF? comedy games
   { name: "Next Level Games", type: "jazzhr", token: "nextlevelgames", city: "Vancouver, Canada" },          // Luigi's Mansion, Mario Strikers — Nintendo subsidiary
   { name: "Critical Path Games", type: "critpath", token: "critpath", city: "Vancouver, BC" },               // custom static careers site — fetchCritpath (requested mainland)
+  { name: "Eidos-Montréal", type: "eidos", token: "eidos", city: "Montréal, QC, Canada", parentCompany: "Embracer" }, // Deus Ex, Tomb Raider — careers page is Dayforce-backed SSR (promoted from Island 2026-06-28)
   // ---- 2026-06-26 batch: gap analysis vs alexanderrehm.com directory. Tier-1 studios already on a
   // supported ATS (tokens read from their public careers URLs) — spot-check first scrape, a wrong
   // token just shows 0 roles (per-source try/catch). See competitor-studio-gap-analysis.md. ----
@@ -2772,7 +2772,43 @@ async function fetchKrafton(studio){
   return out;
 }
 
-const FETCHERS = { greenhouse: fetchGreenhouse, lever: fetchLever, workday: fetchWorkday, avature: fetchAvature, smartrecruiters: fetchSmartRecruiters, workable: fetchWorkable, phenom: fetchPhenom, teamtailor: fetchTeamtailor, eightfold: fetchEightfold, amazonjobs: fetchAmazonJobs, ashby: fetchAshby, zenimax: fetchZenimax, bamboohr: fetchBambooHr, jobscore: fetchJobScore, jazzhr: fetchJazzHr, jobvite: fetchJobvite, recruitee: fetchRecruitee, personio: fetchPersonio, rippling: fetchRippling, breezy: fetchBreezy, manatal: fetchManatal, sumodigital: fetchSumoDigital, pinpoint: fetchPinpoint, playground: fetchPlayground, obsidian: fetchObsidian, techland: fetchTechland, oracle: fetchOracle, cig: fetchCig, critpath: fetchCritpath, krafton: fetchKrafton };
+// ---- Eidos-Montréal (Deus Ex, Tomb Raider) — WordPress careers page, Dayforce-backed -------
+// jobs.dayforcehcm.com is a JS SPA (no server HTML to scrape), but eidosmontreal.com/careers server-
+// renders every opening as <a href="https://jobs.dayforcehcm.com/.../jobs/<id>">
+//   <span class="jobs-listing__job-title">Title</span>
+//   <span class="jobs-listing__job-location">Montréal, QC, CAN</span>
+//   [<span class="jobs-listing__job-tag">New</span>]</a>
+// We parse that page. Apply links go straight to Dayforce. No dates/salary on the list, so those stay
+// Unknown; all roles are Montréal. Promoted from the Island 2026-06-28.
+async function fetchEidos(studio) {
+  let html;
+  if (SAMPLE_FILE) { const d = loadSample(studio); if (!d) return []; html = typeof d === "string" ? d : (d.html || ""); }
+  else { html = await fetchText("https://www.eidosmontreal.com/careers/"); }
+  const re = /<a\b[^>]*href="(https:\/\/jobs\.dayforcehcm\.com\/[^"]*\/jobs\/(\d+))"[^>]*>([\s\S]*?)<\/a>/gi;
+  const out = []; const seen = new Set(); let m;
+  while ((m = re.exec(html))) {
+    const url = m[1], jid = m[2], inner = m[3];
+    if (seen.has(jid)) continue; seen.add(jid);
+    const tM = inner.match(/job-title[^>]*>([\s\S]*?)<\/span>/i);
+    const lM = inner.match(/job-location[^>]*>([\s\S]*?)<\/span>/i);
+    const title = decodeEnt((tM ? tM[1] : inner).replace(/<[^>]+>/g, " ")).replace(/\s+/g, " ").trim();
+    if (!title) continue;
+    let location = lM ? decodeEnt(lM[1].replace(/<[^>]+>/g, " ")).replace(/\s+/g, " ").trim() : (studio.city || "Montréal, QC, Canada");
+    location = location.replace(/,\s*CAN$/i, ", Canada");   // dayforce uses 3-letter country codes
+    out.push({
+      id: `eidos-${jid}`,
+      title, studio: studio.name,
+      discipline: mapDiscipline(null, title),
+      workType: inferWorkType(title, location, []),
+      location, region: inferRegion(location),
+      seniority: inferSeniority(title),
+      salary: null, yoe: null, postedAt: null, url,
+    });
+  }
+  return out;
+}
+
+const FETCHERS = { greenhouse: fetchGreenhouse, lever: fetchLever, workday: fetchWorkday, avature: fetchAvature, smartrecruiters: fetchSmartRecruiters, workable: fetchWorkable, phenom: fetchPhenom, teamtailor: fetchTeamtailor, eightfold: fetchEightfold, amazonjobs: fetchAmazonJobs, ashby: fetchAshby, zenimax: fetchZenimax, bamboohr: fetchBambooHr, jobscore: fetchJobScore, jazzhr: fetchJazzHr, jobvite: fetchJobvite, recruitee: fetchRecruitee, personio: fetchPersonio, rippling: fetchRippling, breezy: fetchBreezy, manatal: fetchManatal, sumodigital: fetchSumoDigital, pinpoint: fetchPinpoint, playground: fetchPlayground, obsidian: fetchObsidian, techland: fetchTechland, oracle: fetchOracle, cig: fetchCig, critpath: fetchCritpath, krafton: fetchKrafton, eidos: fetchEidos };
 
 // ---- Ghost-job tracking -----------------------------------------------------
 // Because we scrape on a schedule, we can see how long a listing has REALLY been
