@@ -1188,7 +1188,7 @@ function normDisc(d){
 
 // ---- talent-pool detection: these aren't specific openings, they're pipelines ----
 function isPool(title){
-  return /general (application|resume|submission|interest)|resume submission|open application|spontaneous application|unsolicited|talent (community|pool|network|connection)|future opportunit|expression of interest|speculative|join our talent|introduce yourself|don'?t see (a|the|your) (role|fit)|prospective|candidate pool|stay connected/i.test(title || "");
+  return /general (application|resume|submission|interest)|resume submission|open applications?\b|open\s+(?:[\w\/&-]+\s+){1,3}applications?(?=\s*$|\s*[\(\[\-–|\/])|candidature\s+(?:libre|ouverte|spontan)|spontaneous application|unsolicited|talent (community|pool|network|connection)|future opportunit|expression of interest|speculative|join our talent|introduce yourself|don'?t see (a|the|your) (role|fit)|prospective|candidate pool|stay connected/i.test(title || "");
 }
 
 // ---- load + normalize + dedupe ----------------------------------------------

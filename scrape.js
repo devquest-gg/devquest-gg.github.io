@@ -676,7 +676,7 @@ const SKILL_PAGES = [
 
 // Evergreen "talent pool" / speculative reqs aren't real openings — keep them off the SEO pages.
 function isPool(title){
-  return /\b(talent\s+)?(pool|pipeline)\b|general application|speculative|expression of interest|future opportunit|don'?t see (a|your)/i.test(title || "");
+  return /\b(talent\s+)?(pool|pipeline)\b|general application|open applications?\b|open\s+(?:[\w\/&-]+\s+){1,3}applications?(?=\s*$|\s*[\(\[\-–|\/])|candidature\s+(?:libre|ouverte|spontan)|speculative|expression of interest|future opportunit|don'?t see (a|your)/i.test(title || "");
 }
 // Each job's discipline is already normalized to the canonical label set by mapDiscipline()
 // at scrape time, so this is an identity-safe pass-through (kept as a seam for future synonyms).
