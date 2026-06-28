@@ -2389,7 +2389,7 @@ function renderHubbar(availHubs){
     keys.map(h=>`<button class="qchip hub ${selHubs.has(h)?'on':''}" onclick="toggleHub('${h.replace(/'/g,"\\'")}')">${h} <span class="subn">${availHubs[h]}</span></button>`).join("");
 }
 
-function toggleCell(dn, sn){ const k = dn+"|"+sn; const adding = !selCells.has(k); adding ? selCells.add(k) : selCells.delete(k); try{ window.dqTrack && window.dqTrack("grid_cell", { d: dn, s: sn }); }catch(e){} if (adding) try{ affRecordCell(dn, sn); }catch(e){} saveCells(); render(); }
+function toggleCell(dn, sn){ const k = dn+"|"+sn; const adding = !selCells.has(k); adding ? selCells.add(k) : selCells.delete(k); try{ window.dqTrack && window.dqTrack("grid_cell", { d: dn, s: sn }); }catch(e){} if (adding) try{ affRecordCell(dn, sn); }catch(e){} saveCells(); try{ profFromMatrix(); }catch(e){} render(); }
 function toggleSub(s){ selSubs.has(s) ? selSubs.delete(s) : selSubs.add(s); render(); }
 function toggleHub(h){ selHubs.has(h) ? selHubs.delete(h) : selHubs.add(h); render(); }
 function toggleQuickRemote(){ quickRemote = !quickRemote; render(); }
@@ -3498,7 +3498,7 @@ function renderRegionBar(){
 // Dismissible; once dismissed or once a profile exists it never returns. Every step is tracked so
 // we can see the funnel (shown → pick → submit vs dismiss) in /stats.
 var ONBOARD_DISCS = ["Engineering","Art","Animation","Design","Production","QA","Audio","Data & Analytics","Marketing & Comms"].filter(function(d){ return DISC.indexOf(d) >= 0; });
-var _obDisc = null, _obLvl = null, _obCity = null;
+var _obDisc = null, _obLvl = null, _obCity = null, _obCityOther = false;
 function obTrack(ev, d){ try{ window.dqTrack && window.dqTrack(ev, d||{}); }catch(e){} }
 function obEligible(){
   if (view !== "list") return false;
@@ -3510,21 +3510,18 @@ function obSetDone(){ try{ store.set("dq-onboard-done",1); }catch(e){} }
 function renderOnboard(){
   var el = document.getElementById("onboardCard"); if(!el) return;
   if (!obEligible()){ el.innerHTML=""; el.style.display="none"; el.__shown=false; return; }
-  var lvls = ["Entry","Mid","Senior","Lead","Director+"];
-  var chips = ONBOARD_DISCS.map(function(d){ return '<button class="ob-chip'+(d===_obDisc?' on':'')+'" onclick="obPickDisc(this,\''+d.replace(/'/g,"\\'")+'\')">'+bfEsc(d)+'</button>'; }).join("");
-  var lchips = lvls.map(function(l){ return '<button class="ob-chip'+(l===_obLvl?' on':'')+'" onclick="obPickLvl(this,\''+l+'\')">'+l+'</button>'; }).join("");
   el.style.display="";
   el.innerHTML = '<div class="obcard">'
     + '<button class="ob-x" aria-label="Dismiss" onclick="obDismiss()">✕</button>'
-    + '<div class="ob-h">👋 New here? Get jobs matched to you</div>'
-    + '<div class="ob-sub">Pick your craft and level and we will surface the best-fit studios and roles. No account; saved on this device.</div>'
-    + '<div class="ob-lbl">I work in</div><div class="ob-chips">'+chips+'</div>'
-    + '<div class="ob-lbl">Level <span style="opacity:.6;font-weight:400;text-transform:none;letter-spacing:0">(optional)</span></div><div class="ob-chips">'+lchips+'</div>'
-    + '<div class="ob-lbl">Closest city <span style="opacity:.6;font-weight:400;text-transform:none;letter-spacing:0">(optional)</span></div>'
-    + '<input class="ob-city" id="obCity" list="obCities" value="'+bfEsc(_obCity||"")+'" placeholder="Start typing your nearest big city…" oninput="obSetCity(this.value)" autocomplete="off">'
-    + '<datalist id="obCities">'+COL_KEYS.slice().sort().map(function(c){ return '<option value="'+bfEsc(c)+'"></option>'; }).join("")+'</datalist>'
-    + '<div class="ob-citynote">No need for an exact match — pick the closest listed city and we will show a cost-of-living comparison on every job. Saved on this device; never used to hide roles.</div>'
-    + '<div class="ob-foot"><button class="ob-go" onclick="obGo()">Show my jobs →</button><a class="ob-skip" onclick="obDismiss()">Just browsing — skip</a></div>'
+    + '<div class="ob-h">👋 New here? Find jobs matched to you</div>'
+    + '<div class="ob-sub">Tap your craft × level on the grid below ↓ — that shows matching roles and tunes your 🔥 Hot jobs and For You. No account; saved on this device.</div>'
+    + '<div class="ob-lbl">Closest city <span style="opacity:.6;font-weight:400;text-transform:none;letter-spacing:0">(optional — unlocks cost-of-living on every job)</span></div>'
+    + '<div class="ob-chips" id="obCityChips">'+obCityChipsHtml()+'</div>'
+    + '<div id="obCityOther" style="display:'+(_obCityOther?'':'none')+';margin-top:2px">'
+      + '<input class="ob-city" id="obCity" list="obCities" value="'+bfEsc(_obCity||"")+'" placeholder="Type your nearest big city…" oninput="obSetCity(this.value)" autocomplete="off">'
+      + '<datalist id="obCities">'+COL_KEYS.slice().sort().map(function(c){ return '<option value="'+bfEsc(c)+'"></option>'; }).join("")+'</datalist></div>'
+    + '<div class="ob-citynote">Pick the closest hub — cost of living is metro-level, so it doesn\'t need to be exact. Saved on this device; never used to hide roles.</div>'
+    + '<div class="ob-foot"><button class="ob-go" onclick="obGo()">Got it →</button><a class="ob-skip" onclick="obDismiss()">Skip</a></div>'
     + '</div>';
   // Defer the impression event a tick: at first paint window.dqTrack isn't defined yet (it's set up
   // in a later <script> block), so firing it inline would be silently dropped. setTimeout(0) runs
@@ -3535,19 +3532,48 @@ function obPickDisc(btn, d){ _obDisc = (_obDisc===d)?null:d; [].forEach.call(btn
 function obPickLvl(btn, l){ _obLvl = (_obLvl===l)?null:l; [].forEach.call(btn.parentElement.children,function(c){ c.classList.toggle("on", c===btn && _obLvl===l); }); obTrack("onboard_pick_level", { l:l }); }
 function obSetCity(v){ _obCity = v; }
 function obGo(){
-  var cityEl = document.getElementById("obCity"); if (cityEl) _obCity = cityEl.value;
-  // Privacy: log only whether a city was provided, never the value itself.
-  obTrack("onboard_submit", { d:_obDisc||"", l:_obLvl||"", city: _obCity ? 1 : 0 });
-  if (_obDisc){ try{ profSet("roles",[_obDisc]); bfActiveDisc=_obDisc; }catch(e){} }
-  if (_obLvl){ try{ profSet("sen",_obLvl); }catch(e){} }
+  if (_obCityOther){ var cityEl = document.getElementById("obCity"); if (cityEl) _obCity = cityEl.value; }
+  // Privacy: log only whether a city was provided (and whether via a hub chip), never the value itself.
+  obTrack("onboard_submit", { city: _obCity ? 1 : 0, hub: (_obCity && !_obCityOther) ? 1 : 0 });
   if (_obCity && _obCity.trim()){ try{ profSet("loc", _obCity.trim()); }catch(e){} }
   obSetDone();
   var el=document.getElementById("onboardCard"); if(el){ el.innerHTML=""; el.style.display="none"; }
-  hotOpen = true;                                   // ensure the matches are expanded
   try{ if (view !== "list") setView("list"); }catch(e){}
-  try{ profSummary(); profRenderRoles(); bfRenderDiscSw(); bfCompute(); }catch(e){}  // keep For You in sync in the background
-  try{ render(); }catch(e){}                         // rebuild List so "Hot jobs for you" reflects the new profile
-  try{ var hg=document.getElementById("hotGroup"); if(hg) hg.scrollIntoView({behavior:"smooth", block:"start"}); }catch(e){}
+  try{ profSummary(); render(); }catch(e){}
+  // The grid is now the primary "what do you want" input — nudge attention to it.
+  try{ var mw=document.getElementById("matrixWrap"); if(mw) mw.scrollIntoView({behavior:"smooth", block:"center"}); }catch(e){}
+}
+// Region-aware home-city hubs (chips) + an "Other…" reveal for the search box. Same end result as the
+// old free-text field (sets profile "loc" for cost-of-living), but tappable and mobile-friendly.
+function obCityHubs(){
+  var byRegion = {
+    "North America": ["San Francisco","Los Angeles","Seattle","Austin","New York","Orlando","Vancouver","Toronto"],
+    "Europe": ["London","Berlin","Paris","Stockholm","Amsterdam","Warsaw","Guildford","Barcelona"],
+    "Asia-Pacific": ["Tokyo","Seoul","Singapore","Shanghai","Sydney","Bangalore"],
+    "Middle East & Africa": ["Tel Aviv","Dubai","Cairo","Cape Town"],
+    "Latin America": ["Mexico City","São Paulo"]
+  };
+  var hubs = byRegion[(typeof HOME_REGION!=="undefined" && HOME_REGION) || "North America"] || byRegion["North America"];
+  hubs = hubs.filter(function(c){ return COL_INDEX[c]!=null; });
+  return hubs.length ? hubs : byRegion["North America"];
+}
+function obCityChipsHtml(){
+  var html = obCityHubs().map(function(c){
+    var on = (_obCity===c && !_obCityOther);
+    return '<button class="ob-chip'+(on?' on':'')+'" onclick="obPickHub(this,\''+c.replace(/'/g,"\\'")+'\')">'+bfEsc(c)+'</button>';
+  }).join("");
+  return html + '<button class="ob-chip'+(_obCityOther?' on':'')+'" onclick="obCityOtherToggle()">Other…</button>';
+}
+function obPickHub(btn, c){
+  _obCityOther=false; _obCity=(_obCity===c)?null:c;
+  var box=document.getElementById("obCityChips"); if(box) box.innerHTML=obCityChipsHtml();
+  var o=document.getElementById("obCityOther"); if(o) o.style.display="none";
+  obTrack("onboard_city_hub", {});
+}
+function obCityOtherToggle(){
+  _obCityOther=!_obCityOther; if(_obCityOther) _obCity=null;
+  var box=document.getElementById("obCityChips"); if(box) box.innerHTML=obCityChipsHtml();
+  var o=document.getElementById("obCityOther"); if(o){ o.style.display=_obCityOther?"":"none"; var inp=document.getElementById("obCity"); if(_obCityOther&&inp){ try{ inp.focus(); }catch(e){} } }
 }
 function obDismiss(){ obTrack("onboard_dismiss", {}); obSetDone(); var el=document.getElementById("onboardCard"); if(el){ el.innerHTML=""; el.style.display="none"; } }
 // ===== Cost of living (Stage 3) — static index (≈ relative to San Francisco = 100), approximate.
@@ -3597,6 +3623,35 @@ function profGet(f){
 function profPinnedRoles(){ try { var r = profGet("roles"); return (r.pinned && r.v && r.v.length) ? r.v.slice() : null; } catch(e){ return null; } }
 function profHotLabel(){ var roles=profPinnedRoles(); if(!roles) return ""; var sen=profGet("sen"); var senL=(sen.pinned && sen.v!=="__any")?(sen.v+" "):""; return "your profile · "+senL+roles.join(", "); }
 function profSet(f, val){ PROFILE.pinned[f]=true; PROFILE[f]=val; profSave(); profMark(f,true); try{ window.dqTrack && window.dqTrack("profile_set", { f:f }); }catch(e){} }
+// Matrix interaction IS profile-setting: selecting craft x level on the grid sets your profile (recency
+// = your latest intent), so Hot jobs / For You follow what you just sought. Guardrails: an EMPTY grid
+// never wipes the profile (clearing filters to browse everything keeps your personalization), and the
+// change is shown via a brief, undoable toast so it's transparent, not silent. Multiple selected
+// seniorities collapse to "any". Called from toggleCell.
+var _profMatrixToastTs = 0;
+function profFromMatrix(){
+  if (!selCells.size) return;                       // empty grid never wipes the profile
+  var discs=[], sens=[];
+  selCells.forEach(function(k){ var x=String(k).split("|"); if(x[0]&&discs.indexOf(x[0])<0)discs.push(x[0]); if(x[1]&&sens.indexOf(x[1])<0)sens.push(x[1]); });
+  if (!discs.length) return;
+  var pr=profGet("roles"), ps=profGet("sen");
+  var newRoles=discs.slice(0,4), newSen=(sens.length===1)?sens[0]:"__any";
+  var changed = JSON.stringify(newRoles)!==JSON.stringify(pr.v||[]) || newSen!==(ps.v||"");
+  if (!changed) return;
+  // snapshot exact prior profile state for a clean Undo
+  var snap = { roles: PROFILE.roles, rolesP: !!(PROFILE.pinned&&PROFILE.pinned.roles), sen: PROFILE.sen, senP: !!(PROFILE.pinned&&PROFILE.pinned.sen) };
+  profSet("roles", newRoles); profSet("sen", newSen);
+  try{ bfActiveDisc = newRoles[0]; }catch(e){}
+  try{ profSummary(); profRenderRoles(); bfRenderDiscSw(); bfCompute(); }catch(e){}
+  var now=Date.now();
+  if (now - _profMatrixToastTs > 4000){       // transparent but not spammy on rapid toggling
+    _profMatrixToastTs = now;
+    try { dqToast("Profile updated from the grid", null, { icon:"🎯", label:"Undo", ms:5000, fn:function(){
+      try { PROFILE.roles=snap.roles; PROFILE.sen=snap.sen; PROFILE.pinned.roles=snap.rolesP; PROFILE.pinned.sen=snap.senP; profSave();
+        profSummary(); profRenderRoles(); bfRenderDiscSw(); bfCompute(); render(); } catch(e){}
+    }}); } catch(e){}
+  }
+}
 function profRevert(f){
   PROFILE.pinned[f]=false; delete PROFILE[f]; profSave(); profMark(f,false);
   if (f==="roles"){ bfActiveDisc=profGet("roles").v[0]||null; profRenderRoles(); bfRenderDiscSw(); bfCompute(); }
