@@ -247,6 +247,11 @@
   .tag.longwarn { color: var(--gold); border-color: rgba(210,153,34,.5); }
   .tag.longbad { color: #f0883e; border-color: rgba(240,136,62,.6); font-weight: 700; }
   .tag.relist { color: var(--pink); border-color: rgba(247,120,186,.5); cursor: help; }
+  /* Line the tag rows up row-to-row: give the work-type and location chips a consistent width so the
+     chips after them (level, salary, etc.) start at the same x instead of zigzagging. Short labels pad;
+     a rare long one can still extend. */
+  .rtags .tag.remote, .rtags .tag.onsite, .rtags .tag.hybrid { min-width: 56px; text-align: center; }
+  .rtags .locchip { min-width: 150px; }
   .poolbadge { background: rgba(139,148,158,.18); color: var(--muted); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; padding: 2px 8px; border-radius: 999px; margin-left: 8px; vertical-align: middle; cursor: help; }
   .row.dismissed { opacity: .6; }
   .dismissedbadge { background: rgba(247,120,186,.15); color: var(--pink); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; padding: 2px 8px; border-radius: 999px; margin-left: 8px; vertical-align: middle; }
@@ -346,6 +351,11 @@
   .p-up { color: var(--green); } .p-down { color: var(--pink); } .p-dark { color: #f0883e; } .p-flat { color: var(--muted); }
   .darktag { background: rgba(240,136,62,.15); color: #f0883e; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; padding: 1px 7px; border-radius: 999px; margin-left: 6px; }
   .posted { font-size: 12px; color: var(--muted); white-space: nowrap; }
+  /* Long-listed (stale/ghost) signal moved off a chip and onto the posted-date color: orange when a
+     listing has been live a long time, bold-orange when very long. */
+  .posted.pdwarn { color: var(--gold); }
+  .posted.pdbad { color: #f0883e; font-weight: 700; }
+  .posted[data-tip] { cursor: help; }
   .new { color: var(--green); font-weight: 700; }
   .status-sel { width: auto; background: var(--bg); border: 1px solid var(--border); color: var(--muted); border-radius: 6px; font-size: 12px; padding: 4px 6px; cursor: pointer; }
   .dismiss { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 14px; padding: 4px 6px; border-radius: 6px; }
@@ -2959,8 +2969,12 @@ function rowHtml(j, mjStage){
   const rowClick = j.url ? `onclick="openApply('${j.id}','${j.url}')"` : "";
   // ghost-job signals (facts, not accusations)
   const dl = daysListed(j);
-  const longClass = dl==null ? "" : dl>=90 ? "longbad" : dl>=45 ? "longwarn" : "";
-  const longChip = longClass ? `<span class="tag ${longClass}" data-tip="We've seen this exact listing live for ${dl} days. Long-running posts are more likely to be stale or 'ghost' listings.">⏳ ${dl}d listed</span>` : "";
+  // Staleness signal now lives in the posted-date column's COLOR (no separate "Nd listed" chip): the date
+  // turns orange when a listing has been live a long time, bold-orange when very long. Uses days-listed
+  // (true live duration) when known, else the posted age.
+  const _staleDays = (dl != null) ? dl : (noDate ? null : Math.floor(h/24));
+  const postedClass = _staleDays==null ? "" : _staleDays>=90 ? "pdbad" : _staleDays>=45 ? "pdwarn" : "";
+  const postedTip = postedClass ? ` data-tip="${escTip("Live ~"+_staleDays+" days"+(relistedNow(j)?" · posted date refreshed":"")+" — long-running posts are more likely stale or 'ghost' listings.")}"` : "";
   const relistChip = relistedNow(j) ? `<span class="tag relist" data-tip="This role has been live far longer than its shown posted date${j.relistCount>1?` (date refreshed ${j.relistCount}×)`:''} — re-posted/refreshed rather than newly open.">↻ re-listed${j.relistCount>1?` ${j.relistCount}×`:''}</span>` : "";
   const poolBadge = j.pool ? `<span class="poolbadge" data-tip="A talent pool / general application — not a specific open role.">talent pool</span>` : "";
   return `<div class="row ${status?'st-'+status:''} ${mj?'mjp s-'+mj:''} ${isDismissed?'dismissed':''} ${MINE_VIEW&&nbOpen.has(j.id)?'nbopen':''}" ${rowClick}>
@@ -2972,7 +2986,7 @@ function rowHtml(j, mjStage){
         ${poolBadge}
         ${isNew?'<span class="nfy">NEW FOR YOU</span>':''}
       </div>
-      <div class="posted">${noDate?'date n/a':`${h<=24&&!isNew?'<span class="new">● </span>':''}${ago(h)}`}</div>
+      <div class="posted ${postedClass}"${postedTip}>${noDate?'date n/a':`${h<=24&&!isNew?'<span class="new">● </span>':''}${ago(h)}`}</div>
       <button class="save ${isSaved?'on':''}" onclick="event.stopPropagation(); toggleSave('${j.id}')" data-tip="${isSaved?'Saved · click to remove':'Save for later'}" aria-label="${isSaved?'Remove from saved':'Save for later'}">${isSaved?'<svg width="13" height="15" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle" aria-hidden="true"><path d="M6 2a2 2 0 0 0-2 2v18l8-5 8 5V4a2 2 0 0 0-2-2H6z"/></svg>':'<svg width="13" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle" aria-hidden="true"><path d="M6 2a2 2 0 0 0-2 2v18l8-5 8 5V4a2 2 0 0 0-2-2H6z"/></svg>'}</button>
       ${MINE_VIEW?`<button class="nbicon ${nbHas(j.id)?'hasnotes':''} ${nbOpen.has(j.id)?'open':''}" data-nb-btn="${j.id}" onclick="event.stopPropagation(); nbToggle('${j.id}', this)" data-tip="Notebook — notes, key dates, contacts &amp; questions" aria-label="Open notebook">📝</button>`:``}
       <span class="actsep"></span>
@@ -2991,7 +3005,6 @@ function rowHtml(j, mjStage){
       <span class="tag">${j.sen}</span>
       ${j.salary?`<span class="tag salary">${j.salary}</span>`:""}
       ${j.yoe?`<span class="tag">${j.yoe}+ yrs</span>`:""}
-      ${longChip}
       ${relistChip}
       ${MINE_VIEW?nbAppliedChip(j):``}
       ${ROW_COL?colChipForJob(j):``}
@@ -3541,9 +3554,10 @@ function colChipForJob(j){
   if (!j.places || j.places.length !== 1) return "";   // single location only — multi-city jobs show nothing
   var there = colLookup(j.places[0] && j.places[0].l); if (!there) return "";
   var d = Math.round((there/home - 1)*100);
-  if (d > 5)  return '<span class="coltag up" data-tip="Approx. cost of living vs '+bfEsc(loc)+' — a guide, not exact">↑ ~'+d+'% cost of living</span>';
-  if (d < -5) return '<span class="coltag dn" data-tip="Approx. cost of living vs '+bfEsc(loc)+' — a guide, not exact">↓ ~'+(-d)+'% cost of living</span>';
-  return '<span class="coltag eq" data-tip="Approx. cost of living vs '+bfEsc(loc)+' — a guide, not exact">≈ similar cost of living</span>';
+  // Compact chip: 🏠 + arrow + %, with the full "cost of living vs <city>" spelled out only on hover.
+  if (d > 5)  return '<span class="coltag up" data-tip="Approx. cost of living vs '+bfEsc(loc)+' — a guide, not exact">🏠 ↑'+d+'%</span>';
+  if (d < -5) return '<span class="coltag dn" data-tip="Approx. cost of living vs '+bfEsc(loc)+' — a guide, not exact">🏠 ↓'+(-d)+'%</span>';
+  return '<span class="coltag eq" data-tip="Approx. cost of living vs '+bfEsc(loc)+' — a guide, not exact">🏠 ≈ same</span>';
 }
 // Resolve the visitor's saved home location to a cost-of-living index value (or null if unset/unknown).
 // Used to decide whether to show COL chips on the main List, not just My Jobs / Best Fit.
