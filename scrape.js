@@ -91,7 +91,6 @@ const DIRECTORY = [
   { name: "Kepler Interactive", url: "https://careers.kepler-interactive.com/", note: "Clair Obscur: Expedition 33, Sifu — publisher", city: "London, UK" },
   { name: "Sloclap", url: "https://careers.sloclap.com/", note: "Sifu, Absolver", city: "Paris, France" },
   { name: "Deck13 Interactive", url: "https://deck13jobs.kenjo.io/", note: "Lords of the Fallen, The Surge — Kenjo board", city: "Frankfurt, Germany" },
-  { name: "Kalypso Media", url: "https://jobs.kalypsomedia.com/", note: "Tropico publisher", city: "Worms, Germany" },
   { name: "Gameforge", url: "https://corporate.gameforge.com/en/career/", note: "browser/MMO publisher (AION, Metin2)", city: "Karlsruhe, Germany" },
   { name: "DeNA", url: "https://herp.careers/v1/dena/", note: "mobile publisher (Pokémon Masters EX) — HERP board (JP)", city: "Tokyo, Japan" },
   { name: "Spike Chunsoft", url: "https://hrmos.co/pages/spchun/jobs", note: "Danganronpa, Zero Escape — HRMOS board (JP)", city: "Tokyo, Japan" },
@@ -425,6 +424,7 @@ const STUDIOS = [
   { name: "Square Enix Europe", type: "workable", token: "square-enix", city: "London, UK", parentCompany: "Square Enix" },        // FF, Dragon Quest — UK/Europe office on Workable (promoted from Island 2026-06-28; Japan stays a link-out)
   { name: "Square Enix America", type: "workable", token: "square-enix-america", city: "El Segundo, CA", parentCompany: "Square Enix" }, // Square Enix Americas (LA) on Workable (promoted from Island 2026-06-28)
   { name: "Turn 10 Studios", type: "turn10", token: "turn10", city: "Redmond, WA", parentCompany: "Xbox Game Studios" }, // Forza — own SSR page deep-links to MS Careers (promoted from Island 2026-06-28)
+  { name: "Kalypso Media", type: "hrworks", token: "kalypso", feedUrl: "https://jobs.kalypsomedia.com/en", city: "Worms, Germany", parentCompany: "Kalypso Media Group" }, // Tropico, Commandos — HRworks SSR portal (promoted from Island 2026-06-28)
   // ---- 2026-06-26 batch: gap analysis vs alexanderrehm.com directory. Tier-1 studios already on a
   // supported ATS (tokens read from their public careers URLs) — spot-check first scrape, a wrong
   // token just shows 0 roles (per-source try/catch). See competitor-studio-gap-analysis.md. ----
@@ -2926,7 +2926,46 @@ async function fetchTurn10(studio) {
   return out;
 }
 
-const FETCHERS = { greenhouse: fetchGreenhouse, lever: fetchLever, workday: fetchWorkday, avature: fetchAvature, smartrecruiters: fetchSmartRecruiters, workable: fetchWorkable, phenom: fetchPhenom, teamtailor: fetchTeamtailor, eightfold: fetchEightfold, amazonjobs: fetchAmazonJobs, ashby: fetchAshby, zenimax: fetchZenimax, bamboohr: fetchBambooHr, jobscore: fetchJobScore, jazzhr: fetchJazzHr, jobvite: fetchJobvite, recruitee: fetchRecruitee, personio: fetchPersonio, rippling: fetchRippling, breezy: fetchBreezy, manatal: fetchManatal, sumodigital: fetchSumoDigital, pinpoint: fetchPinpoint, playground: fetchPlayground, obsidian: fetchObsidian, techland: fetchTechland, oracle: fetchOracle, cig: fetchCig, critpath: fetchCritpath, krafton: fetchKrafton, eidos: fetchEidos, hiringthing: fetchHiringThing, segacareers: fetchSegaCareers, turn10: fetchTurn10 };
+// ---- HRworks (Kalypso Media + other German employers) — SSR careers portal ------------------
+// HRworks job portals (custom domain, e.g. jobs.kalypsomedia.com/en) server-render each posting in a
+// full-width Bootstrap wrapper (class "col-xs-12 col-sm-12 col-md-12 col-lg-12", one per job, never
+// nested). Inside: <a href="...?id=<hex>" title="Role">…</a>, a "Scope - Employment - Time" line, and
+// a Google-Maps link whose text is "City, …, Country". No salary/date on the list. Keyed by feedUrl so
+// it's reusable for other HRworks studios.
+async function fetchHRworks(studio) {
+  let html;
+  if (SAMPLE_FILE) { const d = loadSample(studio); if (!d) return []; html = typeof d === "string" ? d : (d.html || ""); }
+  else { html = await fetchText(studio.feedUrl || `https://jobs.${studio.token}.com/en`); }
+  const base = (studio.feedUrl || "").replace(/\/en\/?$/, "") || `https://jobs.${studio.token}.com`;
+  const out = []; const seen = new Set();
+  const GENDER = /\s*\((?:m\/f\/d|m\/w\/d|w\/m\/d|d\/f\/m|d\/m\/w|f\/m\/d|a\/m\/w|m\/w\/x|all genders?)\)\s*$/i;
+  for (const chunk of html.split(/col-xs-12 col-sm-12 col-md-12 col-lg-12/i).slice(1)) {
+    const im = chunk.match(/[?&]id=([a-f0-9]{4,})"[^>]*title="([^"]*)"/i);
+    if (!im) continue;
+    const id = im[1];
+    if (seen.has(id)) continue; seen.add(id);
+    let title = decodeEnt(im[2]).replace(/\s+/g, " ").trim().replace(GENDER, "").trim();
+    if (!title) continue;
+    let location = studio.city || "Germany";
+    const lm = chunk.match(/maps[^>]*>([^<]+)</i);
+    if (lm) { const p = decodeEnt(lm[1]).split(",").map(s => s.trim()).filter(Boolean); if (p.length >= 2) location = p[0] + ", " + p[p.length - 1]; }
+    const cm = chunk.match(/>([^<>]*\s-\s(?:Permanent employment|Internship)[^<>]*)</i);
+    const category = cm ? decodeEnt(cm[1]).replace(/\s+/g, " ").trim() : "";
+    out.push({
+      id: `hrw-${studio.token}-${id}`,
+      title, studio: studio.name,
+      discipline: mapDiscipline(category, title),
+      workType: inferWorkType(title, location, []),
+      location, region: inferRegion(location),
+      seniority: inferSeniority(title),
+      salary: null, yoe: null, postedAt: null,
+      url: `${base}/en?id=${id}`,
+    });
+  }
+  return out;
+}
+
+const FETCHERS = { greenhouse: fetchGreenhouse, lever: fetchLever, workday: fetchWorkday, avature: fetchAvature, smartrecruiters: fetchSmartRecruiters, workable: fetchWorkable, phenom: fetchPhenom, teamtailor: fetchTeamtailor, eightfold: fetchEightfold, amazonjobs: fetchAmazonJobs, ashby: fetchAshby, zenimax: fetchZenimax, bamboohr: fetchBambooHr, jobscore: fetchJobScore, jazzhr: fetchJazzHr, jobvite: fetchJobvite, recruitee: fetchRecruitee, personio: fetchPersonio, rippling: fetchRippling, breezy: fetchBreezy, manatal: fetchManatal, sumodigital: fetchSumoDigital, pinpoint: fetchPinpoint, playground: fetchPlayground, obsidian: fetchObsidian, techland: fetchTechland, oracle: fetchOracle, cig: fetchCig, critpath: fetchCritpath, krafton: fetchKrafton, eidos: fetchEidos, hiringthing: fetchHiringThing, segacareers: fetchSegaCareers, turn10: fetchTurn10, hrworks: fetchHRworks };
 
 // ---- Ghost-job tracking -----------------------------------------------------
 // Because we scrape on a schedule, we can see how long a listing has REALLY been
