@@ -5221,4 +5221,40 @@ try {
     return { disc:disc.slice(0,4), sen:sen.slice(0,4),
       studios:(c.studios||[]).map(function(s){return String(s).replace(/^@/,"");}).slice(0,4),
       regions:regions.slice(0,4), countries:(c.countries||[]).slice(0,4), subs:(c.subs||[]).slice(0,4),
-      remote:!!c.quickRe
+      remote:!!c.quickRemote, q:(c.q||"").toLowerCase().slice(0,30), n:n, zero:n===0,
+      gc:cells.length, sd:(c.disc||[]).length, ss:(c.sen||[]).length };  // grid-cells vs sidebar disc/sen counts
+  }
+
+  var lastSig="";
+  function renderBar(){
+    var c=readCriteria();
+    var sig=""; try{ sig=JSON.stringify(c); }catch(e){}
+    var changed=(sig!==lastSig);
+    if(changed){ lastSig=sig; if(hasFilters(c)){ try{ track("filter", filterSummary(c)); }catch(e){} try{ window.__fyOnFilter && window.__fyOnFilter(c); }catch(e){} } }
+    var state=bar.getAttribute("data-state");
+    // Keep an open or just-submitted form while the filters are unchanged. The moment the
+    // filters change, clear it so a subscriber can set up an alert for the NEW search.
+    if((state==="form"||state==="done") && !changed) return;
+    if(state==="form"||state==="done") bar.removeAttribute("data-state");
+    var n=(typeof window.__dqCount==="number"?window.__dqCount:null);
+    // No filters, or a free-text-only search that found nothing -> no email ask (the in-list
+    // "no roles match" helper covers the typo case). Structured filters at zero DO get the ask.
+    if(!hasFilters(c) || (n===0 && !hasStructured(c))){
+      // No active filter (or a fruitless free-text search): offer a discipline-targeted ask to the
+      // engaged hot-jobs crowd; otherwise stay hidden. The shared budget/cooldown is enforced in buildCta.
+      var hd = window.__hotDisc;
+      if (hd) { buildCta(hd, { disc: (window.__hotDiscs||[hd]) }, (window.__hotDiscNew||0), true); }
+      else { bar.style.display="none"; bar.removeAttribute("data-state"); window.__emailAskActive=false; }
+      return;
+    }
+    buildCta(labelFor(c), c, n, false);
+  }
+
+  // update the bar whenever the job list re-renders (i.e. filters changed)
+  if(jobsEl){ try{ new MutationObserver(function(){ try{ renderBar(); }catch(e){} }).observe(jobsEl,{childList:true}); }catch(e){} }
+  try{ renderBar(); }catch(e){}
+})();
+</script>
+
+</body>
+</html>
