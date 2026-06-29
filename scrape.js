@@ -1374,9 +1374,35 @@ function loadSample(studio) {
   return JSON.parse(fs.readFileSync(p, "utf8"));
 }
 
+// Transient failures (throttling, brief 5xx, network blips, timeouts) make a healthy source return 0
+// for a single run and get flagged "likely broken". Retry those a couple of times with backoff + jitter;
+// real 4xx (404/401/403/410) still fail fast so genuine breaks surface immediately.
+const RETRY_STATUS = new Set([408, 425, 429, 500, 502, 503, 504]);
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+async function fetchRetry(url, { headers = {}, ms = 15000, attempts = 3 } = {}) {
+  let lastErr;
+  for (let i = 0; i < attempts; i++) {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), ms);
+    let res;
+    try {
+      res = await fetch(url, { headers, signal: ctrl.signal });
+    } catch (e) {                       // network error / timeout (abort) — transient
+      clearTimeout(timer); lastErr = e;
+      if (i === attempts - 1) throw e;
+      await sleep(600 * 2 ** i + Math.random() * 300); continue;
+    }
+    clearTimeout(timer);
+    if (res.ok) return res;
+    lastErr = new Error(`HTTP ${res.status}`);
+    if (!RETRY_STATUS.has(res.status) || i === attempts - 1) throw lastErr;   // real 4xx fail fast
+    await sleep(600 * 2 ** i + Math.random() * 300);                          // ~0.6s, then ~1.2s
+  }
+  throw lastErr;
+}
+
 async function fetchJson(url) {
-  const res = await fetch(url, { headers: { "User-Agent": "DevQuest/0.1 (game-dev job aggregator)" } });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const res = await fetchRetry(url, { headers: { "User-Agent": "DevQuest/0.1 (game-dev job aggregator)" } });
   return res.json();
 }
 
@@ -3026,34 +3052,18 @@ const SALARY_RECHECK = 30 * DAY;  // re-open "no salary found" jobs at most this
 const SALARY_CACHE_VERSION = 3;   // bump to re-check previously-empty results after parser/fetcher upgrades (v3: single-value salaries)
 
 async function fetchDetailJson(url, ms = 15000) {
-  const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), ms);
-  try {
-    const res = await fetch(url, {
-      headers: { "User-Agent": "DevQuest/0.1 (game-dev job aggregator)", "Accept": "application/json" },
-      signal: ctrl.signal,
-    });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    return await res.json();
-  } finally { clearTimeout(timer); }
+  const res = await fetchRetry(url, { ms, headers: { "User-Agent": "DevQuest/0.1 (game-dev job aggregator)", "Accept": "application/json" } });
+  return res.json();
 }
 
 async function fetchText(url, ms = 15000, ua) {
-  const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), ms);
-  try {
-    const res = await fetch(url, {
-      headers: {
-        // Default to a real-browser UA. Pass `ua` to override — e.g. a crawler UA for sites that
-        // serve an age-gate (no content) to browsers but full content to search crawlers.
-        "User-Agent": ua || "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36",
-        "Accept": "text/html,application/xhtml+xml",
-      },
-      signal: ctrl.signal,
-    });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    return await res.text();
-  } finally { clearTimeout(timer); }
+  const res = await fetchRetry(url, { ms, headers: {
+    // Default to a real-browser UA. Pass `ua` to override — e.g. a crawler UA for sites that serve an
+    // age-gate (no content) to browsers but full content to search crawlers.
+    "User-Agent": ua || "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36",
+    "Accept": "text/html,application/xhtml+xml",
+  } });
+  return res.text();
 }
 
 // Full description text for salary mining. Workday needs its JSON detail endpoint;
@@ -3311,7 +3321,7 @@ module.exports = { mapDiscipline, strongTitleDiscipline, normDisc };
   // at our many Québécois studios, so blocking it would wrongly drop real lead roles.
   // ("culinary" and bare "landscap" are deliberately omitted — they'd catch real roles like a
   // cooking-game "Culinary Designer" or a "Landscape Artist"; we use "landscaping" for grounds work.)
-  const NON_GAME_TITLE = /\bmassage\b|masseu|car care|car wash|\bvalet\b|\bbarista\b|cafeteria|kitchen (porter|staff|assistant|hand|aide)|security guard|security officer|\bjanitor\b|custodian|housekeep|cleaning (staff|crew|attendant|service)|\bcleaner\b|\bgardener\b|landscaping|groundskeep|shuttle driver|delivery driver|\bchauffeur\b|\bnurse\b|\bcaregiver\b|physical therapist|occupational therapist|facilit(?:y|ies) (?:assistant|attendant|helper|worker|staff|aide)|\bblockchain\b|\bweb3\b|\bnfts?\b|crypto(?:currency)?\b|\begofold\b/i;
+  const NON_GAME_TITLE = /\bmassage\b|masseu|car care|car wash|\bvalet\b|\bbarista\b|cafeteria|kitchen (porter|staff|assistant|hand|aide)|security guard|security officer|\bjanitor\b|custodian|housekeep|cleaning (staff|crew|attendant|service)|\bcleaner\b|\bgardener\b|landscaping|groundskeep|shuttle driver|delivery driver|\bchauffeur\b|\bnurse\b|\bcaregiver\b|physical therapist|occupational therapist|facilit(?:y|ies) (?:assistant|attendant|helper|worker|staff|aide)|\bblockchain\b|\bweb3\b|\bnfts?\b|crypto(?:currency)?\b|\begofold\b|\bscams?\b/i;
   let droppedNonGame = 0;
   for (let i = all.length - 1; i >= 0; i--) { if (NON_GAME_TITLE.test(all[i].title || "")) { all.splice(i, 1); droppedNonGame++; } }
   if (droppedNonGame) console.log(`Filtered out ${droppedNonGame} non-game facility/service role(s).`);
