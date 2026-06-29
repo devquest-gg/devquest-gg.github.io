@@ -2156,9 +2156,15 @@ function render(){
       if (allHot.length >= minHot) {
         const newHot = allHot.filter(isNewForYou)
           .sort((a,b)=>(b.ts||b.fseen||0)-(a.ts||a.fseen||0));   // a "what's new" feed leads with the freshest
-        const hotMode = newHot.length ? "new" : "fresh";
-        const hot = (newHot.length ? newHot : allHot).slice(0, 12);
-        hotHtml = renderHotSection(hot, P, hotMode);
+        // Always surface genuinely NEW-since-last-visit matches. But skip the "freshest matches" fallback
+        // when a grid square is selected: the list right below is already narrowed to that craft×level, so
+        // the fallback would just repeat its first rows. (Geo-only filters keep the list broad — the
+        // fallback still adds value there, so it stays.)
+        if (newHot.length || !selCells.size) {
+          const hotMode = newHot.length ? "new" : "fresh";
+          const hot = (newHot.length ? newHot : allHot).slice(0, 12);
+          hotHtml = renderHotSection(hot, P, hotMode);
+        }
         // email-ask discipline target. Mirror hotJobs()'s priority ladder so the alert matches the
         // "your profile · …" header: an explicitly pinned My-profile wins over transient last-filters /
         // affinity. (Previously this skipped the pinned profile, so the ask drifted to the affinity
