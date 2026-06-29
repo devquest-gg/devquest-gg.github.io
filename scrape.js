@@ -201,7 +201,6 @@ const STUDIOS = [
   { name: "Playdead", type: "breezy", token: "playdead", city: "Copenhagen, Denmark" },
   { name: "Warhorse Studios", type: "breezy", token: "warhorsestudios", city: "Prague, Czechia" }, // Kingdom Come: Deliverance
   { name: "Fool's Theory", type: "teamtailor", token: "foolstheory", host: "careers.foolstheory.com", city: "Bielsko-Biała, Poland" }, // The Witcher Remake
-  { name: "Thunderful Games", type: "teamtailor", token: "thunderfulgames", host: "career.thunderfulgames.com", city: "Gothenburg, Sweden" }, // spot-check first scrape
   { name: "GIANTS Software", type: "smartrecruiters", token: "GIANTSSoftwareGmbH", city: "Zurich, Switzerland" }, // Farming Simulator — spot-check first scrape
   { name: "Mad Mushroom", type: "workable", token: "otk-media", city: "Austin, TX" }, // OTK Network — spot-check first scrape
   { name: "LightSpeed Studios", type: "workday", host: "tencent.wd1.myworkdayjobs.com", tenant: "tencent", site: "Lightspeed", token: "lightspeed", city: "Los Angeles, CA" }, // PUBG Mobile (Tencent) — spot-check first scrape
