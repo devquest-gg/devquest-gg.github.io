@@ -2122,14 +2122,16 @@ function render(){
   ROW_COL = (view === "list") && !!colHome();
   window.__hotDisc = null;   // discipline the email-ask bar can pre-target (set when hot jobs show)
   try {
-    // "onlyMatrix" = the clean browse state, EXCEPT grid-square selections are allowed — the grid is the
-    // visitor's profile now, not a hard filter, so Hot jobs should stay up after they tap a square.
-    // "defaultBrowse" additionally requires no squares; it's used below to snapshot the last real filter set.
-    const onlyMatrix = view === "list" && !showDismissed && !savedOnly && !quickNew && !quickRemote
-      && !q && !qExc.length && !selStudios.size && !selSubs.size && !selCountries.size
-      && !selKinds.size && !selHubs.size && !selRegionsQuick.size && !d.length && !w.length && !s.length
-      && !r && !maxDays;
-    const defaultBrowse = onlyMatrix && !selCells.size;
+    // "hotOK" = when to show the personalized "🔥 Hot jobs for you" highlight. It survives PROFILE-LEVEL
+    // context — the grid (your craft×level), your feasible country / region-quick filters, the sidebar
+    // region, and the region scope — because those describe WHO you are and WHERE you can work, not an
+    // ad-hoc search. It hides only for explicit narrowing: a text search, a studio / sub-discipline /
+    // work-type / seniority facet, a day limit, remote-only, or the new / saved / dismissed views.
+    const hotOK = view === "list" && !showDismissed && !savedOnly && !quickNew && !quickRemote
+      && !q && !qExc.length && !selStudios.size && !selSubs.size && !selKinds.size && !selHubs.size
+      && !d.length && !w.length && !s.length && !maxDays;
+    // "defaultBrowse" = nothing applied at all (used to snapshot the last real filter set for next visit).
+    const defaultBrowse = hotOK && !selCells.size && !selCountries.size && !selRegionsQuick.size && !r;
     // Snapshot the active filter set so hot jobs can lead with it on the next visit (matrix cells
     // carry discipline×seniority; sidebar facets too). Only saved when a real filter is set, so the
     // last meaningful search persists after the visitor clears back to the default view.
@@ -2139,7 +2141,7 @@ function render(){
         countries:[...selCountries], regionsQuick:[...selRegionsQuick], region:r||"", disc:d, sen:s, work:w,
         remote:!!quickRemote, q:q||"", ts:Date.now() }); } catch(e){}
     }
-    if (onlyMatrix && list.length) {
+    if (hotOK && list.length) {
       const P = buildProfile();
       // "Hot jobs for you" now means NEW-since-your-last-visit AND matches your criteria — the reason to
       // come back. Pull a larger matched pool, then keep only roles first seen after your previous visit
