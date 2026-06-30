@@ -2116,6 +2116,7 @@ function render(){
   // visitors with enough on-device signal. Any active filter / search / selection hides it so the
   // normal grouped results take over (and first-timers always get the standard default view).
   let hotHtml = "";
+  let hotShownIds = new Set();   // ids shown in the Hot strip — removed from the grouped list below so nothing repeats
   // Surface the cost-of-living chip on the main List (not just My Jobs / Best Fit) whenever the visitor
   // has set a home city we can resolve. colChipForJob still self-guards (single-location jobs with a
   // known city only), so this is safe to leave on for the whole list. Reset after the rows are built.
@@ -2156,15 +2157,13 @@ function render(){
       if (allHot.length >= minHot) {
         const newHot = allHot.filter(isNewForYou)
           .sort((a,b)=>(b.ts||b.fseen||0)-(a.ts||a.fseen||0));   // a "what's new" feed leads with the freshest
-        // Always surface genuinely NEW-since-last-visit matches. But skip the "freshest matches" fallback
-        // when a grid square is selected: the list right below is already narrowed to that craft×level, so
-        // the fallback would just repeat its first rows. (Geo-only filters keep the list broad — the
-        // fallback still adds value there, so it stays.)
-        if (newHot.length || !selCells.size) {
-          const hotMode = newHot.length ? "new" : "fresh";
-          const hot = (newHot.length ? newHot : allHot).slice(0, 12);
-          hotHtml = renderHotSection(hot, P, hotMode);
-        }
+        // Always show the strip when there's profile signal, so it's consistent across devices/sessions
+        // regardless of whether a grid square is selected. Lead with NEW-since-last-visit matches; if
+        // you're caught up, fall back to your freshest matches so it's never empty.
+        const hotMode = newHot.length ? "new" : "fresh";
+        const hot = (newHot.length ? newHot : allHot).slice(0, 12);
+        hotHtml = renderHotSection(hot, P, hotMode);
+        hotShownIds = new Set(hot.map(j => j.id));   // so these don't repeat in the grouped list below
         // email-ask discipline target. Mirror hotJobs()'s priority ladder so the alert matches the
         // "your profile · …" header: an explicitly pinned My-profile wins over transient last-filters /
         // affinity. (Previously this skipped the pinned profile, so the ask drifted to the affinity
@@ -2185,7 +2184,8 @@ function render(){
   } catch(e){}
 
   document.getElementById("jobs").innerHTML = list.length ? hotHtml + GROUPS.map((dn,gi)=>{
-    const jobs = groups[dn];
+    const jobs = hotShownIds.size ? groups[dn].filter(j=>!hotShownIds.has(j.id)) : groups[dn];
+    if (!jobs.length) return "";   // every role in this group is already up in "Hot jobs for you"
     const open = !collapsed.has(dn);
     const n = shown[dn] || SHOW_STEP;
     const rest = jobs.length - n;
