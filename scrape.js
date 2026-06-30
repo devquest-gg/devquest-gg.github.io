@@ -74,7 +74,6 @@ const DIRECTORY = [
   { name: "Level-5", url: "https://www.level5.co.jp/", note: "Professor Layton, Ni no Kuni (Japan)", city: "Fukuoka, Japan" },
   { name: "Koei Tecmo", url: "https://www.koeitecmo.com.sg/index.php/careers/", note: "Dynasty Warriors, Nioh, Atelier (Japan)", city: "Yokohama, Japan" },
   { name: "Pearl Abyss", url: "https://www.pearlabyss.com/en-US/Company/Careers/List", note: "Black Desert, Crimson Desert (South Korea)", city: "Anyang, South Korea" },
-  { name: "Smilegate", url: "https://careers.smilegate.com/en/", note: "Lost Ark, CrossFire (South Korea)", city: "Seongnam, South Korea" },
   { name: "Shift Up", url: "https://shiftup.co.kr/recruit/", note: "Stellar Blade, NIKKE (South Korea)", city: "Seoul, South Korea" },
   { name: "Moon Studios", url: "https://www.moongamestudios.com/", note: "Ori, No Rest for the Wicked — fully remote", city: "Vienna, Austria" },
   { name: "Iron Gate Studio", url: "https://irongate.se/", note: "Valheim — small Swedish studio", city: "Skövde, Sweden" },
@@ -424,6 +423,7 @@ const STUDIOS = [
   { name: "Square Enix America", type: "workable", token: "square-enix-america", city: "El Segundo, CA", parentCompany: "Square Enix" }, // Square Enix Americas (LA) on Workable (promoted from Island 2026-06-28)
   { name: "Turn 10 Studios", type: "turn10", token: "turn10", city: "Redmond, WA", parentCompany: "Xbox Game Studios" }, // Forza — own SSR page deep-links to MS Careers (promoted from Island 2026-06-28)
   { name: "Kalypso Media", type: "hrworks", token: "kalypso", feedUrl: "https://jobs.kalypsomedia.com/en", city: "Worms, Germany", parentCompany: "Kalypso Media Group" }, // Tropico, Commandos — HRworks SSR portal (promoted from Island 2026-06-28)
+  { name: "Smilegate", type: "smilegate", token: "smilegate", city: "Seongnam, South Korea", parentCompany: "Smilegate" }, // Lost Ark, CrossFire — Korean SPA, game-production category only (promoted from Island 2026-06-28)
   // ---- 2026-06-26 batch: gap analysis vs alexanderrehm.com directory. Tier-1 studios already on a
   // supported ATS (tokens read from their public careers URLs) — spot-check first scrape, a wrong
   // token just shows 0 roles (per-source try/catch). See competitor-studio-gap-analysis.md. ----
@@ -1082,7 +1082,7 @@ function strongTitleDiscipline(t) {
   // Bare "art" as the role word: "AI Art Specialist", "Art Specialist/Lead/Manager/Outsourcing",
   // etc. The main Art rule keys on "artist"/specific combos and missed these. Word boundaries guard
   // out "smart", "part", "chart", "start", "state of the art".
-  if (/\bai art\b|\bart (specialist|generalist|lead|director|manager|outsourc\w*|coordinator|supervisor|associate|intern|internship|trainee|apprentice)\b/.test(t)) return "Art";
+  if (/\bai art\b|\bart (specialist|generalist|lead|director|manager|outsourc\w*|coordinator|supervisor|associate|intern|internship|trainee|apprentice|applications?)\b/.test(t)) return "Art";
   // Generative 3D-content roles (avatar / scene / model / character generation) read as Art, not the
   // Business & Ops catch-all, e.g. "3D Model, Scene, and Avatar Generation Algorithm Research Intern".
   // Guarded so "...generation engineer / pipeline / platform" roles stay Engineering.
@@ -1379,14 +1379,14 @@ function loadSample(studio) {
 // real 4xx (404/401/403/410) still fail fast so genuine breaks surface immediately.
 const RETRY_STATUS = new Set([408, 425, 429, 500, 502, 503, 504]);
 const sleep = ms => new Promise(r => setTimeout(r, ms));
-async function fetchRetry(url, { headers = {}, ms = 15000, attempts = 3 } = {}) {
+async function fetchRetry(url, { headers = {}, ms = 15000, attempts = 3, method = "GET", body } = {}) {
   let lastErr;
   for (let i = 0; i < attempts; i++) {
     const ctrl = new AbortController();
     const timer = setTimeout(() => ctrl.abort(), ms);
     let res;
     try {
-      res = await fetch(url, { headers, signal: ctrl.signal });
+      res = await fetch(url, { method, headers, body, signal: ctrl.signal });
     } catch (e) {                       // network error / timeout (abort) — transient
       clearTimeout(timer); lastErr = e;
       if (i === attempts - 1) throw e;
@@ -2990,7 +2990,52 @@ async function fetchHRworks(studio) {
   return out;
 }
 
-const FETCHERS = { greenhouse: fetchGreenhouse, lever: fetchLever, workday: fetchWorkday, avature: fetchAvature, smartrecruiters: fetchSmartRecruiters, workable: fetchWorkable, phenom: fetchPhenom, teamtailor: fetchTeamtailor, eightfold: fetchEightfold, amazonjobs: fetchAmazonJobs, ashby: fetchAshby, zenimax: fetchZenimax, bamboohr: fetchBambooHr, jobscore: fetchJobScore, jazzhr: fetchJazzHr, jobvite: fetchJobvite, recruitee: fetchRecruitee, personio: fetchPersonio, rippling: fetchRippling, breezy: fetchBreezy, manatal: fetchManatal, sumodigital: fetchSumoDigital, pinpoint: fetchPinpoint, playground: fetchPlayground, obsidian: fetchObsidian, techland: fetchTechland, oracle: fetchOracle, cig: fetchCig, critpath: fetchCritpath, krafton: fetchKrafton, eidos: fetchEidos, hiringthing: fetchHiringThing, segacareers: fetchSegaCareers, turn10: fetchTurn10, hrworks: fetchHRworks };
+// ---- Smilegate (Lost Ark, CrossFire) — Korean careers SPA, POST JSON API -------------------
+// careers.smilegate.com is a client-rendered SPA; its list comes from POST /api/apply/announce/guest
+// returning { announce: [{ announceSeq, title, jobMainCd, jobMainNm, jobDtlNm, displayYn, ... }] }.
+// We keep only the game-production category (jobMainCd "JOB1001" = 게임제작) and map the Korean detail
+// category to a discipline (titles are Korean, but jobDtlNm classifies them reliably). All roles are in
+// Korea (Seongnam); no location/salary/posted date in the feed. Promoted from the Island 2026-06-28.
+const SG_DISC = {
+  "게임기획": "Design", "그래픽": "Art", "게임개발": "Engineering", "QA": "QA", "사운드": "Audio",
+  "매니지먼트": "Production", "운영서비스": "Business & Ops", "애니메이션": "Animation",
+};
+async function fetchSmilegate(studio) {
+  let announce = [];
+  if (SAMPLE_FILE) { const d = loadSample(studio); if (!d) return []; announce = d.announce || (Array.isArray(d) ? d : []); }
+  else {
+    const res = await fetchRetry("https://careers.smilegate.com/api/apply/announce/guest", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Accept": "application/json",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36",
+        "Origin": "https://careers.smilegate.com", "Referer": "https://careers.smilegate.com/apply/announce" },
+      body: JSON.stringify({ pageSize: 300 }),
+    });
+    const data = await res.json();
+    announce = data.announce || [];
+  }
+  const out = [];
+  for (const a of announce) {
+    if (a.jobMainCd !== "JOB1001") continue;          // 게임제작 (game production) only — skip corporate / infra / CSR / biz
+    if (a.displayYn === "N") continue;
+    const title = decodeEnt(String(a.title || "")).replace(/\s+/g, " ").trim();
+    if (!title) continue;
+    const location = studio.city || "Seongnam, South Korea";
+    out.push({
+      id: `sg-${a.announceSeq}`,
+      title, studio: studio.name,
+      discipline: SG_DISC[a.jobDtlNm] || mapDiscipline(a.jobDtlNm || "", title),
+      workType: inferWorkType(title, location, []),
+      location, region: inferRegion(location),
+      seniority: inferSeniority(title),
+      salary: null, yoe: null, postedAt: null,
+      url: `https://careers.smilegate.com/apply/announce/view?seq=${a.announceSeq}`,
+    });
+  }
+  return out;
+}
+
+const FETCHERS = { greenhouse: fetchGreenhouse, lever: fetchLever, workday: fetchWorkday, avature: fetchAvature, smartrecruiters: fetchSmartRecruiters, workable: fetchWorkable, phenom: fetchPhenom, teamtailor: fetchTeamtailor, eightfold: fetchEightfold, amazonjobs: fetchAmazonJobs, ashby: fetchAshby, zenimax: fetchZenimax, bamboohr: fetchBambooHr, jobscore: fetchJobScore, jazzhr: fetchJazzHr, jobvite: fetchJobvite, recruitee: fetchRecruitee, personio: fetchPersonio, rippling: fetchRippling, breezy: fetchBreezy, manatal: fetchManatal, sumodigital: fetchSumoDigital, pinpoint: fetchPinpoint, playground: fetchPlayground, obsidian: fetchObsidian, techland: fetchTechland, oracle: fetchOracle, cig: fetchCig, critpath: fetchCritpath, krafton: fetchKrafton, eidos: fetchEidos, hiringthing: fetchHiringThing, segacareers: fetchSegaCareers, turn10: fetchTurn10, hrworks: fetchHRworks, smilegate: fetchSmilegate };
 
 // ---- Ghost-job tracking -----------------------------------------------------
 // Because we scrape on a schedule, we can see how long a listing has REALLY been
