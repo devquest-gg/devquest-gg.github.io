@@ -239,7 +239,10 @@
   .rmain { flex: 1; min-width: 200px; }
   .rmain .title { font-weight: 800; font-size: 16px; color: var(--text); }
   .rmain .studio { color: var(--accent); font-size: 13px; font-weight: 400; margin-left: 8px; }
-  .nfy { background: var(--green); color: #0d1117; font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 999px; margin-left: 8px; vertical-align: middle; }
+  .nfy { position: relative; overflow: hidden; background: linear-gradient(100deg, #2ea043 0%, #56d364 48%, #2ea043 100%); color: #06210d; font-size: 10px; font-weight: 800; letter-spacing: .03em; padding: 2px 9px; border-radius: 999px; margin-left: 8px; vertical-align: middle; box-shadow: 0 0 0 1px rgba(86,211,100,.35), 0 2px 9px rgba(46,160,67,.45); }
+  .nfy::after { content: ""; position: absolute; inset: 0; background: linear-gradient(100deg, transparent 25%, rgba(255,255,255,.9) 50%, transparent 75%); transform: translateX(-130%); animation: nfyShine 2.8s ease-in-out infinite; pointer-events: none; }
+  @keyframes nfyShine { 0%, 55% { transform: translateX(-130%); } 100% { transform: translateX(130%); } }
+  @media (prefers-reduced-motion: reduce) { .nfy::after { animation: none; } }
   .multibadge { background: rgba(88,166,255,.15); color: var(--accent); font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 999px; margin-left: 8px; vertical-align: middle; }
   .tag.locchip[onclick] { cursor: pointer; }
   .tag.locchip[onclick]:hover { color: var(--accent); border-color: var(--accent); }
@@ -3076,7 +3079,7 @@ function rowHtml(j, mjStage){
         <span class="title">${j.t}</span><span class="studio" data-tip="${escTip(studioTipHtml(j.s))}">${j.s}</span><span class="cardstar${isFollowed(j.s)?' on':''}" data-st="${j.s.replace(/"/g,'')}" role="button" tabindex="0" data-tip="${isFollowed(j.s)?'Following · click to unfollow':'Follow this studio'}" aria-label="${isFollowed(j.s)?'Unfollow':'Follow'} ${j.s.replace(/"/g,'')}" onclick="toggleFollow(this.getAttribute('data-st'), event)">${isFollowed(j.s)?'★':'☆'}</span>
         ${isDismissed?'<span class="dismissedbadge">hidden</span>':''}
         ${poolBadge}
-        ${isNew?'<span class="nfy">NEW FOR YOU</span>':''}
+        ${isNew?'<span class="nfy" data-tip="New since your last visit">✨ NEW!</span>':''}
       </div>
       <div class="posted ${postedClass}"${postedTip}>${noDate?'date n/a':`${h<=24&&!isNew?'<span class="new">● </span>':''}${ago(h)}`}</div>
       <button class="save ${isSaved?'on':''}" onclick="event.stopPropagation(); toggleSave('${j.id}')" data-tip="${isSaved?'Saved · click to remove':'Save for later'}" aria-label="${isSaved?'Remove from saved':'Save for later'}">${isSaved?'<svg width="13" height="15" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle" aria-hidden="true"><path d="M6 2a2 2 0 0 0-2 2v18l8-5 8 5V4a2 2 0 0 0-2-2H6z"/></svg>':'<svg width="13" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle" aria-hidden="true"><path d="M6 2a2 2 0 0 0-2 2v18l8-5 8 5V4a2 2 0 0 0-2-2H6z"/></svg>'}</button>
