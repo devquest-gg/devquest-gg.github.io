@@ -1186,6 +1186,8 @@ function inferSeniority(title) {
 // while preserving structure: "; " separates distinct locations, "," separates city/state/country.
 function cleanLocation(loc) {
   if (!loc) return loc;
+  // Workday remote format e.g. "US-Remote(WA-Seattle Area)" -> "Seattle Area, US" (drops the state prefix).
+  loc = String(loc).replace(/^([A-Za-z]{2})-Remote\(([^)]+)\)\s*$/, (m, cc, inner) => `${inner.replace(/^[A-Za-z]{2}-/, "").trim()}, ${cc.toUpperCase()}`);
   const isJunk = p => !p || /^(blank|n\/?a|null|undefined|unlisted|tbd|various)$/i.test(p);
   const cleanOne = one => {
     const parts = one.split(",").map(p => p.trim()).filter(p => !isJunk(p));

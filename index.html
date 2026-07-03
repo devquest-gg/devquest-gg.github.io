@@ -1650,6 +1650,7 @@ const US_STATES = /\b(AL|AK|AZ|AR|CA|CO|CT|DE|FL|GA|HI|ID|IL|IN|IA|KS|KY|LA|ME|M
 function inferCountry(loc){
   const s = (loc||"").toLowerCase();
   if (/united states|u\.?s\.?a\.?|, us\b|\bus -|remote \(us\)|america(?!n samoa)/.test(s)) return "United States";
+  if (/,\s*ca\b/i.test(s) && /\b(montr[eé]al|toronto|ottawa|calgary|edmonton|winnipeg|qu[eé]bec|halifax|mississauga|brampton|laval|gatineau|saskatoon|regina|vancouver|victoria|burnaby|markham|kitchener)\b/i.test(s)) return "Canada"; // "Montreal, CA" etc.: trailing CA is the Canada country code, not California
   if (US_STATES.test(loc||"") && !/canada|ontario|quebec|alberta|british columbia/i.test(loc||"")) return "United States";
   if (/canada|ontario|quebec|québec|alberta|british columbia|manitoba|saskatchewan|nova scotia/.test(s)) return "Canada";
   if (/united kingdom|england|scotland|wales|, uk\b|\bgb -|london|oxford|brighton|guildford|leamington|newcastle/.test(s)) return "United Kingdom";
@@ -2355,7 +2356,7 @@ function renderMatrixDash(base){
   for (const k in agg){ const a=agg[k];
     const pay = a.pays.length>=MIN_PAY ? mtxMedian(a.pays) : null;
     const top = Object.entries(a.studios).sort((x,y)=>y[1]-x[1]).slice(0,3).map(e=>e[0]);
-    der[k] = { n:a.n, pay, paysN:a.pays.length, rem:a.n?Math.round(100*a.rem/a.n):0, fresh:a.fresh, top };
+    der[k] = { n:a.n, pay, payAny:(a.pays.length?mtxMedian(a.pays):null), paysN:a.pays.length, rem:a.n?Math.round(100*a.rem/a.n):0, fresh:a.fresh, top };
     if (a.n>maxN) maxN=a.n; if (pay&&pay>maxPay) maxPay=pay; if (a.fresh>maxFresh) maxFresh=a.fresh;
   }
   const RGB = { n:"88,166,255", pay:"210,153,34", rem:"63,185,80", fr:"163,113,247" };
@@ -2398,7 +2399,7 @@ function renderMatrixDash(base){
     h += `<tr><td class="xname" style="color:${discColor(dn)};overflow:hidden;text-overflow:ellipsis">${dCell}</td>` + seniorities.map(sn=>{
       const key = dn+"|"+sn, d = der[key], sel = selCells.has(key);
       if (!d) return `<td class="mcell mcell-empty"></td>`;
-      const payTxt = d.pay ? `$${d.pay}K median` : `no salary data`;
+      const payTxt = d.pay ? `$${d.pay}K median` : (d.paysN ? `~$${d.payAny}K · ${d.paysN} role${d.paysN===1?'':'s'} list${d.paysN===1?'s':''} pay` : `no salary data`);
       const tip = `<b>${dn} · ${sn}</b><br>`
         + `<span style="color:var(--gold)">${payTxt}</span> · `
         + `<span style="color:var(--green)">${d.rem}% remote</span> · `
