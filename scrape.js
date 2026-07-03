@@ -1386,7 +1386,7 @@ function loadSample(studio) {
 // real 4xx (404/401/403/410) still fail fast so genuine breaks surface immediately.
 const RETRY_STATUS = new Set([408, 425, 429, 500, 502, 503, 504]);
 const sleep = ms => new Promise(r => setTimeout(r, ms));
-async function fetchRetry(url, { headers = {}, ms = 15000, attempts = 3, method = "GET", body } = {}) {
+async function fetchRetry(url, { headers = {}, ms = 15000, attempts = 3, method = "GET", body, retryStatus = RETRY_STATUS } = {}) {
   let lastErr;
   for (let i = 0; i < attempts; i++) {
     const ctrl = new AbortController();
@@ -1402,7 +1402,7 @@ async function fetchRetry(url, { headers = {}, ms = 15000, attempts = 3, method 
     clearTimeout(timer);
     if (res.ok) return res;
     lastErr = new Error(`HTTP ${res.status}`);
-    if (!RETRY_STATUS.has(res.status) || i === attempts - 1) throw lastErr;   // real 4xx fail fast
+    if (!retryStatus.has(res.status) || i === attempts - 1) throw lastErr;   // real 4xx fail fast (unless caller opts a status in)
     await sleep(600 * 2 ** i + Math.random() * 300);                          // ~0.6s, then ~1.2s
   }
   throw lastErr;
@@ -2703,18 +2703,31 @@ async function fetchCig(studio) {
   let jobs = [];
   if (SAMPLE_FILE) { const d = loadSample(studio); jobs = (d && ((d.data && d.data.jobs) || d.jobs)) || []; }
   else {
-    const res = await fetch("https://cloudimperiumgames.com/graphql", {
+    // CIG's /graphql sits behind Cloudflare bot-management, which 403s the CI runner *intermittently*
+    // (works fine from a real browser). Send browser-like headers and retry on 403 a few times to ride
+    // out the flaky blocks — turns "rarely shows" into "usually shows". Not 100%: Cloudflare also
+    // fingerprints the TLS handshake, which a plain fetch can't spoof. If it stays flaky, next step is a
+    // headless-browser fetch or demoting CIG to a link-out.
+    const res = await fetchRetry("https://cloudimperiumgames.com/graphql", {
       method: "POST",
+      attempts: 5,
+      retryStatus: new Set([...RETRY_STATUS, 403]),
       headers: {
         "Content-Type": "application/json",
-        "Accept": "application/json",
+        "Accept": "application/json, text/plain, */*",
+        "Accept-Language": "en-US,en;q=0.9",
         "Origin": "https://cloudimperiumgames.com",
         "Referer": "https://cloudimperiumgames.com/jobs",
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+        "sec-ch-ua": '"Chromium";v="124", "Google Chrome";v="124", "Not-A.Brand";v="99"',
+        "sec-ch-ua-mobile": "?0",
+        "sec-ch-ua-platform": '"Windows"',
+        "sec-fetch-dest": "empty",
+        "sec-fetch-mode": "cors",
+        "sec-fetch-site": "same-origin",
       },
       body: JSON.stringify({ operationName: "GetJobs", query: CIG_QUERY, variables: { where: {}, limit: 200, sort: "title" } }),
     });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
     jobs = (data && data.data && data.data.jobs) || [];
   }
