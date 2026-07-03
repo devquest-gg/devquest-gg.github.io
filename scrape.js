@@ -196,7 +196,7 @@ const STUDIOS = [
   { name: "Blackbird Interactive", type: "lever", token: "blackbirdinteractive" },
   { name: "Larian Studios", type: "lever", token: "larian" },
   { name: "Xsolla", type: "lever", token: "xsolla" },   // game commerce / monetization / publishing platform (HQ LA); community-requested via search
-  { name: "Unity", type: "greenhouse", token: "unity3d" }, // deep-links via Greenhouse absolute_url (unity.com/careers/positions/<id>?gh_jid=<id>); the "dead links" flag was just Unity's scheduled careers-site maintenance (back Tue) — self-resolves, no override needed
+  { name: "Unity", type: "workday", host: "unitytech.wd1.myworkdayjobs.com", tenant: "unitytech", site: "Unity", token: "unity" }, // moved off Greenhouse (old unity3d board now 404s) to Workday — July 2026; jobs live at unitytech.wd1.myworkdayjobs.com/Unity/... — spot-check first scrape
   { name: "Team17", type: "workable", token: "team-17-digital" },
   { name: "Kinetic Games", type: "rippling", token: "kinetic-games-careers", city: "Southampton, UK" }, // Phasmophobia · Rippling ATS (promoted from Island 2026-06-17)
   // batch 8 (2026-06-17): promoted from Island — confirmed on a supported ATS.
