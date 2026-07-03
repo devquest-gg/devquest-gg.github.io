@@ -111,6 +111,10 @@ const DIRECTORY = [
   { name: "Nitro Games", url: "https://nitrogames.careers.haileyhr.app", note: "Nasdaq-listed mobile studio — HaileyHR board (no fetcher yet)", city: "Helsinki, Finland" },
   { name: "Enduring Games", url: "https://enduring.games/jobs/", note: "Console co-dev & ports — email apply, no ATS feed", city: "Austin, TX" },
   { name: "Torpor Games", url: "https://torporgames.careers.hibob.com/jobs", note: "The Conformist, Project Vanguard — HiBob board (no fetcher yet)", city: "Berlin, Germany" },
+  { name: "Flix Interactive", url: "https://www.flixinteractive.com/#careers", note: "Unreal co-dev (Sea of Thieves, Mafia, Sniper Elite) — email apply, no ATS feed", city: "Yorkshire, UK" },
+  { name: "Anshar Studios", url: "https://ansharstudios.com/careers/", note: "Co-dev (Larian, Saber, PCF partners) — Traffit board (no fetcher yet)", city: "Katowice, Poland" },
+  { name: "Overwolf", url: "https://careers.overwolf.com/", note: "CurseForge, Tebex — Comeet board (no fetcher yet)", city: "Tel Aviv, Israel" },
+  { name: "Nekki", url: "https://nekki.com/vacancy", note: "Shadow Fight, Vector — self-hosted careers", city: "Limassol, Cyprus" },
 ];
 
 // ---- "The Moon": smaller / indie studios, often ones who reached out to be listed.
@@ -401,6 +405,14 @@ const STUDIOS = [
   { name: "Hi-Rez Studios", type: "jazzhr", token: "hirezstudios" },               // SMITE, Paladins — JazzHR
   // CIG left Workday for a self-hosted GraphQL board (2026-06-18); see fetchCig.
   { name: "Cloud Imperium Games", type: "cig", token: "cig" }, // Star Citizen, Squadron 42
+  // ---- July 2026 batch 2: promoted to Mainland (confirmed live on a supported ATS) — spot-check first scrape ----
+  { name: "Tripledot Studios", type: "greenhouse", token: "tripledotstudios" }, // aggregate board across acquired studios (~58 roles; standard greenhouse API works despite the EU display host)
+  { name: "Rocket Science", type: "ashby", token: "rocketsciencegg" }, // co-dev group incl. Atomic Theory
+  { name: "Volka", type: "ashby", token: "volka", city: "Limassol, Cyprus" }, // Taonga — mobile
+  { name: "Companion Group", type: "recruitee", token: "companiongroupltd" },
+  { name: "Liquid Development", type: "workable", token: "liquid-development", city: "Portland, OR" }, // Keywords Studios art co-dev
+  { name: "Goodbye Kansas", type: "teamtailor", token: "goodbyekansas", host: "career.goodbyekansas.com", city: "Stockholm, Sweden" }, // VFX / game cinematics
+  { name: "Beffio", type: "teamtailor", token: "beffio", host: "careers.beffio.com", city: "Poznań, Poland" }, // art co-dev
   // Xbox first-party studio on its own SSR careers site (Microsoft's central board can't attribute studios).
   { name: "Playground Games", type: "playground", token: "playground", city: "Leamington Spa, UK" }, // Fable, Forza Horizon
   { name: "Obsidian Entertainment", type: "obsidian", token: "obsidian", city: "Irvine, CA" }, // Avowed, Pillars of Eternity — own SSR board
