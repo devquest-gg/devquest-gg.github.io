@@ -107,6 +107,10 @@ const DIRECTORY = [
   { name: "SayGames", url: "https://saygameshr.global.huntflow.io/", note: "hypercasual publisher — Huntflow board", city: "Limassol, Cyprus" },
   { name: "Yodo1 Games", url: "https://careers.yodo1.com/", note: "Crossy Road, Rodeo Stampede — publisher", city: "Remote / Beijing" },
   { name: "BKOM Studios", url: "https://jobs.bkom.com/", note: "co-dev / work-for-hire", city: "Québec City, Canada" },
+  // ---- July 2026 additions: real studios on unsupported ATSes (link-outs until a fetcher exists) ----
+  { name: "Nitro Games", url: "https://nitrogames.careers.haileyhr.app", note: "Nasdaq-listed mobile studio — HaileyHR board (no fetcher yet)", city: "Helsinki, Finland" },
+  { name: "Enduring Games", url: "https://enduring.games/jobs/", note: "Console co-dev & ports — email apply, no ATS feed", city: "Austin, TX" },
+  { name: "Torpor Games", url: "https://torporgames.careers.hibob.com/jobs", note: "The Conformist, Project Vanguard — HiBob board (no fetcher yet)", city: "Berlin, Germany" },
 ];
 
 // ---- "The Moon": smaller / indie studios, often ones who reached out to be listed.
@@ -200,6 +204,7 @@ const STUDIOS = [
   { name: "Playdead", type: "breezy", token: "playdead", city: "Copenhagen, Denmark" },
   { name: "Warhorse Studios", type: "breezy", token: "warhorsestudios", city: "Prague, Czechia" }, // Kingdom Come: Deliverance
   { name: "Fool's Theory", type: "teamtailor", token: "foolstheory", host: "careers.foolstheory.com", city: "Bielsko-Biała, Poland" }, // The Witcher Remake
+  { name: "Raw Power Games", type: "teamtailor", token: "rawpowergames", host: "careers.rawpowergames.com", city: "Copenhagen, Denmark" }, // ex-IO Interactive/Hitman & AAA devs (incl. Raw Power Labs entity on same board) — spot-check first scrape
   { name: "GIANTS Software", type: "smartrecruiters", token: "GIANTSSoftwareGmbH", city: "Zurich, Switzerland" }, // Farming Simulator — spot-check first scrape
   { name: "Mad Mushroom", type: "workable", token: "otk-media", city: "Austin, TX" }, // OTK Network — spot-check first scrape
   { name: "LightSpeed Studios", type: "workday", host: "tencent.wd1.myworkdayjobs.com", tenant: "tencent", site: "Lightspeed", token: "lightspeed", city: "Los Angeles, CA" }, // PUBG Mobile (Tencent) — spot-check first scrape
