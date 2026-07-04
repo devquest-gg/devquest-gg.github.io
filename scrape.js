@@ -54,8 +54,8 @@ const DIRECTORY = [
   { name: "10:10 Games", url: "https://www.1010games.com/join-us", note: "ex-Playtonic / Crash devs (Warrington)", city: "Warrington, UK" },
   // batch 4 (2026-06-09): notable + mobile studios on custom / region-specific ATS — browse directly
   { name: "Kojima Productions", url: "https://www.kojimaproductions.jp/en/careers", note: "Death Stranding (Tokyo)", city: "Tokyo, Japan" },
-  { name: "Cygames", url: "https://www.cygames.co.jp/en/recruit/", note: "Granblue Fantasy, Uma Musume (Tokyo)", city: "Tokyo, Japan" },
-  { name: "Garena", url: "https://careers.garena.com/", note: "Free Fire — part of Sea Ltd (Singapore)", city: "Singapore" },
+  // (Cygames promoted to mainland 2026-07-04 — recruit.cygames.co.jp/career server-renders all roles; see fetchCygames.)
+  // (Garena promoted to mainland 2026-07-04 — careers.garena.com exposes POST /api/job/list JSON; see fetchGarena.)
   { name: "Plarium", url: "https://company.plarium.com/en/career/", note: "RAID: Shadow Legends — mobile games (Israel)", city: "Herzliya, Israel" },
   { name: "SuperPlay", url: "https://www.superplay.co/careers", note: "Dice Dreams — casual mobile games (Israel)", city: "Tel Aviv, Israel" },
   { name: "Playrix", url: "https://playrix.com/job/open/", note: "Gardenscapes, Township (Dublin)", city: "Dublin, Ireland" },
@@ -82,11 +82,10 @@ const DIRECTORY = [
   { name: "Electric Square", url: "https://electricsquare.com/come-join-us/open-positions/", note: "Co-development (Lively, Hot Wheels Unleashed) — part of Keywords Studios", city: "Brighton, UK" },
   { name: "Archetype Entertainment", url: "https://www.archetype-entertainment.com/en-US", note: "AAA sci-fi RPG (ex-BioWare) — Wizards of the Coast / Hasbro", city: "Austin, TX" },
   // ---- 2026-06-26 batch: gap analysis vs alexanderrehm.com. Notable studios on UNsupported ATS
-  // (HRMOS, Kenjo, Huntflow, or custom sites) — link-outs for now. NOTE: Com2uS, KING Art and Travian
-  // were here too but moved to mainland once fetchPersonio was added (see STUDIOS). GAME FREAK +
-  // Spike Chunsoft stay link-outs: HRMOS is JP-only HTML with no salary/date feed, like our other JP
-  // studios. (Codemasters is EA-owned, already covered by the EA board.)
-  { name: "GAME FREAK", url: "https://hrmos.co/pages/gamefreak/jobs", note: "Pokémon developer — HRMOS board (JP)", city: "Tokyo, Japan" },
+  // (Kenjo, Huntflow, or custom sites) — link-outs for now. NOTE: Com2uS, KING Art and Travian
+  // were here too but moved to mainland once fetchPersonio was added (see STUDIOS). GAME FREAK moved
+  // to the Mainland 2026-07-04 once fetchHrmos was added (HRMOS server-renders its list after all).
+  // Spike Chunsoft is also on HRMOS and could follow. (Codemasters is EA-owned, covered by the EA board.)
   { name: "Kepler Interactive", url: "https://careers.kepler-interactive.com/", note: "Clair Obscur: Expedition 33, Sifu — publisher", city: "London, UK" },
   { name: "Sloclap", url: "https://careers.sloclap.com/", note: "Sifu, Absolver", city: "Paris, France" },
   { name: "Deck13 Interactive", url: "https://deck13jobs.kenjo.io/", note: "Lords of the Fallen, The Surge — Kenjo board", city: "Frankfurt, Germany" },
@@ -221,6 +220,9 @@ const STUDIOS = [
   { name: "Jam City", type: "lever", token: "jamcity" },
   { name: "Take-Two Interactive", type: "greenhouse", token: "taketwo" },
   { name: "KRAFTON", type: "krafton", parentCompany: "KRAFTON", city: "Seoul, South Korea" }, // custom SSR board (krafton.com) covering HQ + all sub-studios (~200 roles); replaced the Greenhouse "kraftonamericas" board, which only held ~3 US corporate roles
+  { name: "Cygames", type: "cygames", city: "Tokyo, Japan" }, // Uma Musume, Granblue Fantasy — custom SSR page linking to HRMOS (~170 JP-language roles); promoted from Island 2026-07-04 — spot-check first scrape
+  { name: "GAME FREAK", type: "hrmos", token: "gamefreak", city: "Tokyo, Japan" }, // Pokémon developer — HRMOS board (~57 JP-language roles, Tokyo HQ); promoted from Island 2026-07-04 — spot-check first scrape
+  { name: "Garena", type: "garena", city: "Singapore" }, // Free Fire (Sea Ltd) — careers.garena.com Nuxt site, POST /api/job/list JSON (~96 roles across APAC/LatAm/Casablanca); promoted from Island 2026-07-04 — spot-check first scrape
   { name: "Gearbox Software", type: "greenhouse", token: "gearbox" },
   { name: "Second Dinner", type: "ashby", token: "seconddinner" },
   { name: "Supercell", type: "ashby", token: "supercell" },
@@ -1219,8 +1221,8 @@ function inferRegion(location) {
   if (/(canada|montreal|montréal|toronto|vancouver|quebec)/.test(l)) return "North America";
   if (/(mexico|brazil|são paulo|sao paulo|argentina|chile|colombia)/.test(l)) return "Latin America";
   if (/(uk|united kingdom|london|oxford|horsham|brighton|ireland|dublin|france|paris|lyon|germany|berlin|poland|warsaw|spain|barcelona|madrid|belgium|ghent|netherlands|amsterdam|finland|espoo|helsinki|sweden|stockholm|turkey|istanbul|czech|prague)/.test(l)) return "Europe";
-  if (/(japan|tokyo|china|shanghai|guangzhou|beijing|hong kong|korea|seoul|singapore|taiwan|taipei|australia|sydney|india|bangalore|vietnam|thailand|bangkok|malaysia|philippines|manila)/.test(l)) return "Asia-Pacific";
-  if (/(dubai|uae|saudi|riyadh|israel|tel aviv|south africa)/.test(l)) return "Middle East & Africa";
+  if (/(japan|tokyo|china|shanghai|guangzhou|beijing|hong kong|korea|seoul|singapore|taiwan|taipei|australia|sydney|india|bangalore|mumbai|vietnam|hanoi|ho chi minh|thailand|bangkok|malaysia|philippines|manila|indonesia|jakarta|bangladesh|dhaka)/.test(l)) return "Asia-Pacific";
+  if (/(dubai|uae|saudi|riyadh|israel|tel aviv|south africa|morocco|casablanca)/.test(l)) return "Middle East & Africa";
   if (/remote/.test(l)) return "Remote";
   return "Other";
 }
@@ -3067,7 +3069,212 @@ async function fetchSmilegate(studio) {
   return out;
 }
 
-const FETCHERS = { greenhouse: fetchGreenhouse, lever: fetchLever, workday: fetchWorkday, avature: fetchAvature, smartrecruiters: fetchSmartRecruiters, workable: fetchWorkable, phenom: fetchPhenom, teamtailor: fetchTeamtailor, eightfold: fetchEightfold, amazonjobs: fetchAmazonJobs, ashby: fetchAshby, zenimax: fetchZenimax, bamboohr: fetchBambooHr, jobscore: fetchJobScore, jazzhr: fetchJazzHr, jobvite: fetchJobvite, recruitee: fetchRecruitee, personio: fetchPersonio, rippling: fetchRippling, breezy: fetchBreezy, manatal: fetchManatal, sumodigital: fetchSumoDigital, pinpoint: fetchPinpoint, playground: fetchPlayground, obsidian: fetchObsidian, techland: fetchTechland, oracle: fetchOracle, cig: fetchCig, critpath: fetchCritpath, krafton: fetchKrafton, eidos: fetchEidos, hiringthing: fetchHiringThing, segacareers: fetchSegaCareers, turn10: fetchTurn10, hrworks: fetchHRworks, smilegate: fetchSmilegate };
+// ---- Cygames (Uma Musume, Granblue Fantasy, Shadowverse) — custom recruit site ----------
+// recruit.cygames.co.jp/career server-renders every opening as an <a> straight to its HRMOS
+// posting (hrmos.co/pages/cygames/jobs/<id>). HRMOS itself is a JS-only board with no feed
+// (why GAME FREAK / Spike Chunsoft stay link-outs), but Cygames' own page gives us title +
+// link for all ~170 roles. Titles are Japanese and end in the office (…／東京・大阪・佐賀);
+// the list carries no salary or posted date, so those show Unknown / date-n/a (like EA).
+// Promoted from the Island 2026-07-04.
+const CYGAMES_LOC = { "東京": "Tokyo, Japan", "大阪": "Osaka, Japan", "佐賀": "Saga, Japan" };
+const CYGAMES_DISC = [   // JP-title → discipline; first match wins, order matters
+  [/サウンド|音楽|ミュージック|コンポーザ/, "Audio"],                                     // before Engineering: サウンドエンジニア is Audio
+  [/エンジニア|プログラマ|インフラ|サーバ|クライアントサイド|フロントエンド|セキュリティ|システム|ヘルプデスク/, "Engineering"],
+  [/アニメーター|アニメーションデザイナー/, "Animation"],
+  [/3DCG|イラスト|アーティスト|漫画|作画|着彩|彩色|原画|背景|デフォルメ|モーションキャプチャ|フォトグラメトリ|映像/, "Art"],
+  [/デバッグ|テスト|校正・校閲|QA/, "QA"],
+  [/アナリスト|分析|データ/, "Data & Analytics"],
+  [/ローカライ|コーディネーター|翻訳/, "Production"],                                     // localization folds into Production (matches mapDiscipline)
+  [/プロジェクトマネージャ|プロデューサ|進行管理|制作進行|プロダクションマネージャ/, "Production"],
+  [/プランナー|ディレクター|ディレクション|シナリオ|ゲームデザイナー|Webデザイナー|UIデザイナー|プロダクトデザイナー|企画/, "Design"],
+  [/カスタマーサポート|ゲームマスター/, "Player Support"],
+  [/プロモーション|広報|宣伝|マーケ|ブランディング|メディア|デザイナー/, "Marketing"],     // 広報デザイナー etc.
+  [/営業|経理|法務|労務|人事|総合職|ビジネス|事業|ライセンス|渉外|業務管理|経営|採用/, "Business & Ops"],
+];
+async function fetchCygames(studio) {
+  let html;
+  if (SAMPLE_FILE) { const d = loadSample(studio); if (!d) return []; html = typeof d === "string" ? d : (d.html || ""); }
+  else { html = await fetchText("https://recruit.cygames.co.jp/career"); }
+  const out = [], seen = new Set();
+  for (const m of String(html).matchAll(/<a[^>]+href="https?:\/\/hrmos\.co\/pages\/cygames\/jobs\/(\d+)[^"]*"[^>]*>([\s\S]*?)<\/a>/gi)) {
+    const jid = m[1];
+    const title = decodeEnt(m[2].replace(/<[^>]+>/g, " ")).replace(/\s+/g, " ").trim();
+    if (!jid || !title || seen.has(jid)) continue;
+    seen.add(jid);
+    const segs = title.split("／").map(s => s.trim());
+    const location = CYGAMES_LOC[segs[segs.length - 1]] || studio.city || "Tokyo, Japan";
+    let discipline = "Other";
+    for (const [re, d] of CYGAMES_DISC) if (re.test(title)) { discipline = d; break; }
+    out.push({
+      id: `cygames-${jid}`,
+      title, tech: extractTech(title), studio: studio.name,
+      discipline,
+      workType: inferWorkType(title, location, []),
+      location, region: inferRegion(location),
+      seniority: inferSeniority(title),
+      salary: null, yoe: null, postedAt: null,
+      url: `https://hrmos.co/pages/cygames/jobs/${jid}`,
+    });
+  }
+  return out;
+}
+
+// ---- HRMOS (BizReach's ATS) — GAME FREAK, reusable for other JP studios --------------------
+// hrmos.co/pages/<token>/jobs SERVER-renders every opening (our earlier note that HRMOS was
+// "JS-only with no feed" was wrong — the list is in the initial HTML, confirmed via a no-JS fetch).
+// Each posting is an <a href=".../jobs/<id>"> wrapping an <h2> title and a <ul class="sg-tags cf">
+// of three <li>: 求人カテゴリー (category), 雇用形態 (employment type), and a .sg-tag-location
+// address. Titles/locations are Japanese; the list carries no salary or posted date, so those show
+// Unknown / date-n/a (like Cygames / EA). We drop the evergreen "キャリア登録" (talent-pool
+// registration) and "新卒" (new-grad info) entries — they aren't real single openings. GAME FREAK's
+// roles are all at its Tokyo HQ (addresses begin 東京都). Promoted from the Island 2026-07-04.
+const HRMOS_DISC = {                       // 求人カテゴリー → discipline
+  "プログラマ": "Engineering",
+  "グラフィックデザイナー": "Art",
+  "テクニカルアーティスト": "Art",
+  "プランナー": "Design",
+};
+function hrmosDiscipline(cat, title) {
+  if (HRMOS_DISC[cat]) return HRMOS_DISC[cat];
+  // "その他" (Other) mixes internal IT and HR/admin — split by title keyword.
+  if (/インフラ|サーバ|エンジニア|プログラ|ネットワーク|セキュリティ|データベース/.test(title)) return "Engineering";
+  return "Business & Ops";                 // 人事・採用・総務・ITヘルプデスク など
+}
+function hrmosSeniority(title) {
+  if (/ディレクター|部長/.test(title)) return "Director+";
+  if (/リーダー|リード|責任者|マネージャ/.test(title)) return "Lead";
+  if (/ジュニア|新卒|未経験|アシスタント/.test(title)) return "Entry";
+  return inferSeniority(title);
+}
+async function fetchHrmos(studio) {
+  const token = studio.token;
+  let html;
+  if (SAMPLE_FILE) { const d = loadSample(studio); if (!d) return []; html = typeof d === "string" ? d : (d.html || ""); }
+  else { html = await fetchText(`https://hrmos.co/pages/${token}/jobs`); }
+  const out = [], seen = new Set();
+  const tk = token.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const blockRe = new RegExp(`<a\\s+href="https?:\\/\\/hrmos\\.co\\/pages\\/${tk}\\/jobs\\/([\\w-]+)"[^>]*>([\\s\\S]*?)<\\/a>`, "gi");
+  for (const m of String(html).matchAll(blockRe)) {
+    const id = m[1], block = m[2];
+    if (seen.has(id)) continue;
+    const h2 = block.match(/<h2[^>]*>([\s\S]*?)<\/h2>/i);
+    if (!h2) continue;
+    const title = decodeEnt(h2[1].replace(/<[^>]+>/g, " ")).replace(/\s+/g, " ").trim();
+    if (!title) continue;
+    // sg-tags <li>s: [category, employment type, location(.sg-tag-location)]
+    let cat = "", loc = "";
+    const ul = block.match(/<ul[^>]*class="[^"]*sg-tags[^"]*"[^>]*>([\s\S]*?)<\/ul>/i);
+    if (ul) {
+      const lis = [...ul[1].matchAll(/<li([^>]*)>([\s\S]*?)<\/li>/gi)].map(x => ({
+        cls: x[1] || "",
+        txt: decodeEnt(x[2].replace(/<[^>]+>/g, " ")).replace(/\s+/g, " ").trim(),
+      }));
+      cat = lis[0] ? lis[0].txt : "";
+      const locLi = lis.find(x => /sg-tag-location/.test(x.cls));
+      loc = locLi ? locLi.txt : "";
+    }
+    if (cat === "キャリア登録" || cat === "新卒") continue;   // evergreen registration / new-grad info — not real openings
+    seen.add(id);
+    const location = /東京|Tokyo/i.test(loc) ? "Tokyo, Japan" : (studio.city || "Tokyo, Japan");
+    const remote = /フルリモート|リモートワーク可|完全リモート/.test(title);
+    out.push({
+      id: `hrmos-${token}-${id}`,
+      title, tech: extractTech(title), studio: studio.name,
+      discipline: hrmosDiscipline(cat, title),
+      workType: remote ? "Remote" : inferWorkType(title, location, []),
+      location, region: inferRegion(location),
+      seniority: hrmosSeniority(title),
+      salary: null, yoe: null, postedAt: null,
+      url: `https://hrmos.co/pages/${token}/jobs/${id}`,
+    });
+  }
+  return out;
+}
+
+// ---- Garena (Free Fire, Arena of Valor — Sea Ltd) — custom Nuxt careers site + JSON API ----------
+// careers.garena.com is a Nuxt SPA whose global board is served by a single call:
+//   POST https://careers.garena.com/api/job/list   (empty JSON body) -> { filters, jobs:[...] }
+// (GET returns ERROR__BAD_REQUEST — it must be POST; the underlying ATS is ats.workatsea.com, but the
+// public site proxies it.) Each job: { id, title, tags:{ location[], job_category[], job_type[] },
+// description(HTML) }. Titles are English; there's no salary or posted date, so those show
+// Unknown / date-n/a. ~96 roles across APAC (Singapore, Jakarta, Hanoi/HCMC, Bangkok, Taipei, Seoul,
+// Bangalore/Mumbai, Manila, Dhaka), Casablanca, Mexico City, São Paulo, and 2 Remote. Promoted from
+// the Island 2026-07-04.
+const GARENA_DISC = {                      // job_category -> discipline (Garena's own classification)
+  "Engineering and Technology": "Engineering",
+  "Product Management": "Production",
+  "Design": "Design",
+  "Game Design": "Design",
+  "Game Operations": "Production",
+  "Esports": "Marketing",
+  "Business Intelligence and Data Analytics": "Data & Analytics",
+  "Marketing": "Marketing",
+  "Business Development and Partnerships": "Business & Ops",
+  "Strategy": "Business & Ops",
+  "People": "Business & Ops",
+  "Finance": "Business & Ops",
+  "Legal": "Business & Ops",
+  "Management Associate Program": "Business & Ops",
+};
+const GARENA_LOC = {                       // office city -> "City, Country" (so inferRegion resolves it)
+  "Jakarta": "Jakarta, Indonesia", "Singapore": "Singapore", "Mexico City": "Mexico City, Mexico",
+  "Hanoi": "Hanoi, Vietnam", "Ho Chi Minh City": "Ho Chi Minh City, Vietnam",
+  "Bangalore": "Bangalore, India", "Mumbai": "Mumbai, India", "Casablanca": "Casablanca, Morocco",
+  "Bangkok": "Bangkok, Thailand", "Dhaka": "Dhaka, Bangladesh", "Manila": "Manila, Philippines",
+  "Taipei": "Taipei, Taiwan", "Seoul": "Seoul, South Korea", "São Paulo": "São Paulo, Brazil",
+  "Remote": "Remote",
+};
+const GARENA_SEN_RANK = { Entry: 1, Mid: 2, Senior: 3, Lead: 4, "Director+": 5 };
+const GARENA_TYPE_SEN = {
+  "Entry Level": "Entry", "Internship": "Entry",
+  "Experienced (Individual Contributor)": "Mid", "Experienced (Team Lead)": "Lead",
+};
+async function fetchGarena(studio) {
+  let jobs = [];
+  if (SAMPLE_FILE) { const d = loadSample(studio); if (!d) return []; jobs = d.jobs || (Array.isArray(d) ? d : []); }
+  else {
+    const res = await fetchRetry("https://careers.garena.com/api/job/list", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Accept": "application/json",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36",
+        "Origin": "https://careers.garena.com", "Referer": "https://careers.garena.com/global/careers" },
+      body: "{}",
+    });
+    const data = await res.json();
+    jobs = data.jobs || [];
+  }
+  const out = [];
+  for (const x of jobs) {
+    const tg = x.tags || {};
+    const title = decodeEnt(String(x.title || "").replace(/<[^>]+>/g, " ")).replace(/\s+/g, " ").trim();
+    if (!x.id || !title) continue;
+    const cat = (tg.job_category || [])[0] || "";
+    const jt = (tg.job_type || [])[0] || "";
+    const rawLoc = (tg.location || [])[0] || "";
+    const location = GARENA_LOC[rawLoc] || rawLoc || studio.city || "Singapore";
+    const descText = decodeEnt(String(x.description || "").replace(/<[^>]+>/g, " ")).replace(/\s+/g, " ").trim();
+    // seniority: start from the job_type tag; let an explicit title signal only RAISE it.
+    // inferSeniority's default "Mid" is a fallback, not a signal, so it never overrides the tag
+    // (e.g. an "Entry Level" role with an unmarked title stays Entry, not Mid).
+    const byTitle = inferSeniority(title), byType = GARENA_TYPE_SEN[jt] || "Mid";
+    const titleRank = byTitle === "Mid" ? 0 : (GARENA_SEN_RANK[byTitle] || 0);
+    const seniority = titleRank > (GARENA_SEN_RANK[byType] || 2) ? byTitle : byType;
+    const remote = /remote/i.test(rawLoc);
+    out.push({
+      id: `garena-${x.id}`,
+      title, tech: extractTech(`${title} ${descText}`), studio: studio.name,
+      discipline: GARENA_DISC[cat] || mapDiscipline(cat, title),
+      workType: remote ? "Remote" : inferWorkType(title, location, [], descText),
+      location, region: inferRegion(location),
+      seniority,
+      salary: null, yoe: null, postedAt: null,
+      url: `https://careers.garena.com/global/careers/${x.id}`,
+    });
+  }
+  return out;
+}
+
+const FETCHERS = { greenhouse: fetchGreenhouse, lever: fetchLever, workday: fetchWorkday, avature: fetchAvature, smartrecruiters: fetchSmartRecruiters, workable: fetchWorkable, phenom: fetchPhenom, teamtailor: fetchTeamtailor, eightfold: fetchEightfold, amazonjobs: fetchAmazonJobs, ashby: fetchAshby, zenimax: fetchZenimax, bamboohr: fetchBambooHr, jobscore: fetchJobScore, jazzhr: fetchJazzHr, jobvite: fetchJobvite, recruitee: fetchRecruitee, personio: fetchPersonio, rippling: fetchRippling, breezy: fetchBreezy, manatal: fetchManatal, sumodigital: fetchSumoDigital, pinpoint: fetchPinpoint, playground: fetchPlayground, obsidian: fetchObsidian, techland: fetchTechland, oracle: fetchOracle, cig: fetchCig, critpath: fetchCritpath, krafton: fetchKrafton, eidos: fetchEidos, hiringthing: fetchHiringThing, segacareers: fetchSegaCareers, turn10: fetchTurn10, hrworks: fetchHRworks, smilegate: fetchSmilegate, cygames: fetchCygames, hrmos: fetchHrmos, garena: fetchGarena };
 
 // ---- Ghost-job tracking -----------------------------------------------------
 // Because we scrape on a schedule, we can see how long a listing has REALLY been
