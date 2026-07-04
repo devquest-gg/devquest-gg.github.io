@@ -74,7 +74,7 @@ const DIRECTORY = [
   { name: "Level-5", url: "https://www.level5.co.jp/", note: "Professor Layton, Ni no Kuni (Japan)", city: "Fukuoka, Japan" },
   { name: "Koei Tecmo", url: "https://www.koeitecmo.com.sg/index.php/careers/", note: "Dynasty Warriors, Nioh, Atelier (Japan)", city: "Yokohama, Japan" },
   { name: "Pearl Abyss", url: "https://www.pearlabyss.com/en-US/Company/Careers/List", note: "Black Desert, Crimson Desert (South Korea)", city: "Anyang, South Korea" },
-  { name: "Shift Up", url: "https://shiftup.co.kr/recruit/", note: "Stellar Blade, NIKKE (South Korea)", city: "Seoul, South Korea" },
+  // (Shift Up promoted to mainland 2026-07-04 — shiftup.co.kr/recruit.php server-renders all roles; see fetchShiftUp.)
   { name: "Moon Studios", url: "https://www.moongamestudios.com/", note: "Ori, No Rest for the Wicked — fully remote", city: "Vienna, Austria" },
   { name: "Iron Gate Studio", url: "https://irongate.se/", note: "Valheim — small Swedish studio", city: "Skövde, Sweden" },
   { name: "Devolver Digital", url: "https://www.devolverdigital.com/jobs", note: "Indie publisher — Cult of the Lamb, Cuphead", city: "Austin, TX" },
@@ -223,6 +223,7 @@ const STUDIOS = [
   { name: "Cygames", type: "cygames", city: "Tokyo, Japan" }, // Uma Musume, Granblue Fantasy — custom SSR page linking to HRMOS (~170 JP-language roles); promoted from Island 2026-07-04 — spot-check first scrape
   { name: "GAME FREAK", type: "hrmos", token: "gamefreak", city: "Tokyo, Japan" }, // Pokémon developer — HRMOS board (~57 JP-language roles, Tokyo HQ); promoted from Island 2026-07-04 — spot-check first scrape
   { name: "Garena", type: "garena", city: "Singapore" }, // Free Fire (Sea Ltd) — careers.garena.com Nuxt site, POST /api/job/list JSON (~96 roles across APAC/LatAm/Casablanca); promoted from Island 2026-07-04 — spot-check first scrape
+  { name: "Shift Up", type: "shiftup", city: "Seoul, South Korea" }, // Stellar Blade, NIKKE — shiftup.co.kr/recruit.php SSR (~38 open KR-language roles). Its Greeting ATS hides per-job IDs, so every role links to the main recruit page (owner-approved 2026-07-04). Promoted from Island 2026-07-04 — spot-check first scrape
   { name: "Gearbox Software", type: "greenhouse", token: "gearbox" },
   { name: "Second Dinner", type: "ashby", token: "seconddinner" },
   { name: "Supercell", type: "ashby", token: "supercell" },
@@ -3274,7 +3275,76 @@ async function fetchGarena(studio) {
   return out;
 }
 
-const FETCHERS = { greenhouse: fetchGreenhouse, lever: fetchLever, workday: fetchWorkday, avature: fetchAvature, smartrecruiters: fetchSmartRecruiters, workable: fetchWorkable, phenom: fetchPhenom, teamtailor: fetchTeamtailor, eightfold: fetchEightfold, amazonjobs: fetchAmazonJobs, ashby: fetchAshby, zenimax: fetchZenimax, bamboohr: fetchBambooHr, jobscore: fetchJobScore, jazzhr: fetchJazzHr, jobvite: fetchJobvite, recruitee: fetchRecruitee, personio: fetchPersonio, rippling: fetchRippling, breezy: fetchBreezy, manatal: fetchManatal, sumodigital: fetchSumoDigital, pinpoint: fetchPinpoint, playground: fetchPlayground, obsidian: fetchObsidian, techland: fetchTechland, oracle: fetchOracle, cig: fetchCig, critpath: fetchCritpath, krafton: fetchKrafton, eidos: fetchEidos, hiringthing: fetchHiringThing, segacareers: fetchSegaCareers, turn10: fetchTurn10, hrworks: fetchHRworks, smilegate: fetchSmilegate, cygames: fetchCygames, hrmos: fetchHrmos, garena: fetchGarena };
+// ---- Shift Up (Stellar Blade, Goddess of Victory: NIKKE) — self-hosted PHP careers page --------
+// shiftup.co.kr/recruit/recruit.php server-renders every posting as a <div class="recruit_list">:
+// a <span class="status …">진행중/마감</span> (open/closed), an <h4> title, and a <ul> whose <li>s are
+// [title, experience, employment type]. Titles are Korean; the page carries no salary or posted date.
+// We keep only 진행중 (open) roles and drop evergreen campus-hiring / 산업기능요원 pools. Shift Up's
+// apply flow runs on a Greeting ATS (career.shiftup.co.kr/o/<id>) that hides the per-job IDs from any
+// server-side feed, so — with the owner's sign-off (2026-07-04) — every role links to the main recruit
+// page rather than a per-job deep link. All roles are at the Seoul HQ. Promoted from the Island 2026-07-04.
+const SHIFTUP_URL = "https://shiftup.co.kr/recruit/recruit.php?category=0";
+const SHIFTUP_APPLY = "https://shiftup.co.kr/recruit/";
+const SHIFTUP_SKIP = /캠퍼스\s?리크루팅|OFF-CAMPUS|산업기능요원\(보충역\)$/;   // evergreen campus / alt-service pools, not real single openings
+const SHIFTUP_DISC = [                     // Korean title → discipline; first match wins, order matters
+  [/오디오|사운드|작곡|음악|음향/, "Audio"],
+  [/QA|품질|테스터|테스트/i, "QA"],
+  [/원화|아티스트|일러스트|컨셉|스토리보드|크리에이티브|2D\s?디자이너/, "Art"],   // before Animation/Engineering: 테크니컬 아티스트 is Art
+  [/애니메이터|애니메이션/, "Animation"],
+  [/\bPM\b|프로듀서|프로덕션|프로젝트\s?매니저|\bPD\b/, "Production"],            // before Engineering: 개발 PM is Production
+  [/프로그래머|엔지니어|서버|클라이언트|엔진|개발자|인프라|보안|최적화/, "Engineering"],
+  [/기획|디자이너|레벨|시나리오|라이터|내러티브|밸런스/, "Design"],              // before Marketing: 커뮤니케이션 디자이너 is Design
+  [/마케팅|마케터|브랜드|홍보|커뮤니티/, "Marketing"],
+  [/데이터|분석|애널리/, "Data & Analytics"],
+  [/IR|공시|투자|전략|경영지원|인사|총무|재무|회계|경리|법무|담당자|매니저/, "Business & Ops"],
+];
+function shiftupDiscipline(title) {
+  for (const [re, d] of SHIFTUP_DISC) if (re.test(title)) return d;
+  return "Other";
+}
+function shiftupSeniority(title, exp, type) {
+  if (/인턴/.test(type) || /산업기능요원|보충역|캠퍼스|OFF-CAMPUS|인턴/i.test(title)) return "Entry";
+  if (/리드|리더|총괄|책임|수석|디렉터/.test(title)) return "Lead";
+  const m = String(exp).match(/(\d+)/);   // first number = minimum years of experience
+  if (m) return (+m[1] >= 5) ? "Senior" : "Mid";
+  return "Mid";                            // 무관 (any) / unspecified
+}
+function shiftupId(title) {                // stable per-title id (their ATS gives us no numeric id)
+  let h = 5381; for (let i = 0; i < title.length; i++) h = ((h << 5) + h + title.charCodeAt(i)) >>> 0;
+  return "shiftup-" + h.toString(36);
+}
+async function fetchShiftUp(studio) {
+  let html;
+  if (SAMPLE_FILE) { const d = loadSample(studio); if (!d) return []; html = typeof d === "string" ? d : (d.html || ""); }
+  else { html = await fetchText(SHIFTUP_URL); }
+  const out = [], seen = new Set();
+  const location = studio.city || "Seoul, South Korea";
+  for (const chunk of String(html).split(/<div class="recruit_list"/).slice(1)) {
+    const head = chunk.split("recruit_desc")[0];   // metadata block only (before the description)
+    const status = decodeEnt((head.match(/<span class=['"]status[^'"]*['"]>([\s\S]*?)<\/span>/) || [])[1] || "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+    if (status !== "진행중") continue;              // open roles only (skip 마감 = closed)
+    const title = decodeEnt((head.match(/<h4>([\s\S]*?)<\/h4>/) || [])[1] || "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+    if (!title || seen.has(title)) continue;
+    if (SHIFTUP_SKIP.test(title)) continue;
+    seen.add(title);
+    const ul = (head.match(/<ul>([\s\S]*?)<\/ul>/) || [])[1] || "";
+    const lis = [...ul.matchAll(/<li>([\s\S]*?)<\/li>/g)].map(m => decodeEnt(m[1].replace(/<[^>]+>/g, " ")).replace(/\s+/g, " ").trim());
+    const exp = lis[1] || "", type = lis[2] || "";
+    out.push({
+      id: shiftupId(title),
+      title, tech: extractTech(title), studio: studio.name,
+      discipline: shiftupDiscipline(title),
+      workType: inferWorkType(title, location, []),
+      location, region: inferRegion(location),
+      seniority: shiftupSeniority(title, exp, type),
+      salary: null, yoe: null, postedAt: null,
+      url: SHIFTUP_APPLY,
+    });
+  }
+  return out;
+}
+
+const FETCHERS = { greenhouse: fetchGreenhouse, lever: fetchLever, workday: fetchWorkday, avature: fetchAvature, smartrecruiters: fetchSmartRecruiters, workable: fetchWorkable, phenom: fetchPhenom, teamtailor: fetchTeamtailor, eightfold: fetchEightfold, amazonjobs: fetchAmazonJobs, ashby: fetchAshby, zenimax: fetchZenimax, bamboohr: fetchBambooHr, jobscore: fetchJobScore, jazzhr: fetchJazzHr, jobvite: fetchJobvite, recruitee: fetchRecruitee, personio: fetchPersonio, rippling: fetchRippling, breezy: fetchBreezy, manatal: fetchManatal, sumodigital: fetchSumoDigital, pinpoint: fetchPinpoint, playground: fetchPlayground, obsidian: fetchObsidian, techland: fetchTechland, oracle: fetchOracle, cig: fetchCig, critpath: fetchCritpath, krafton: fetchKrafton, eidos: fetchEidos, hiringthing: fetchHiringThing, segacareers: fetchSegaCareers, turn10: fetchTurn10, hrworks: fetchHRworks, smilegate: fetchSmilegate, cygames: fetchCygames, hrmos: fetchHrmos, garena: fetchGarena, shiftup: fetchShiftUp };
 
 // ---- Ghost-job tracking -----------------------------------------------------
 // Because we scrape on a schedule, we can see how long a listing has REALLY been
