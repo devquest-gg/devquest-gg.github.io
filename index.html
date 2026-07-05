@@ -478,6 +478,10 @@
   #matrixWrap.mtx-dash table.xtab td.xname, #matrixWrap.mtx-dash table.xtab td.xtot { background: transparent; }
   #matrixWrap.mtx-dash table.xtab td.mcell { transition: transform .08s, box-shadow .12s, filter .12s; }
   #matrixWrap.mtx-dash table.xtab td.mcell[onclick]:hover { outline: none; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,.4); filter: brightness(1.12); }
+  /* One-shot soft re-tint when switching the "View by" lens (added by setMatrixMetric). */
+  @keyframes mtxRecolor { from { opacity: .35; } to { opacity: 1; } }
+  .matrixbody.mtx-recolor { animation: mtxRecolor .24s ease; }
+  @media (prefers-reduced-motion: reduce) { .matrixbody.mtx-recolor { animation: none; } }
   #matrixWrap.mtx-dash table.xtab td.mcell-empty { background: #0e131a; }
   /* grid tooltips: hover a discipline label or seniority header to see what's in it */
   .tipname { border-bottom: 1px dotted var(--muted); cursor: help; }
@@ -2298,7 +2302,14 @@ function matrixToggle(){
 const MATRIX_DASH = true;
 const MATRIX_RESTYLE = false;   // cosmetic "dashboard" grid (rounded, spaced cells). false = original tight heatmap. Independent of MATRIX_DASH (the lenses/hover/pay).
 let matrixMetric = "n";   // n | pay | rem | fr
-function setMatrixMetric(m){ matrixMetric = m; render(); }
+function setMatrixMetric(m){
+  if (m === matrixMetric) return;                 // no-op if the lens is already active
+  matrixMetric = m; render();
+  // One-shot soft cross-fade so the grid reads as "re-tinting" when you switch View by, instead of a hard
+  // color swap. render() rebuilds the matrix synchronously, so the fresh .matrixbody is in the DOM now;
+  // adding the class replays the keyframe once. Honors prefers-reduced-motion (CSS disables it).
+  try { const _mb = document.querySelector("#matrixWrap .matrixbody"); if (_mb) _mb.classList.add("mtx-recolor"); } catch(e){}
+}
 function mtxMedian(a){ if(!a.length) return 0; const s=[...a].sort((x,y)=>x-y), m=Math.floor(s.length/2); return s.length%2 ? s[m] : Math.round((s[m-1]+s[m])/2); }
 function mtxParsePay(str){
   if(!str || /hour|hr\b|\/h/i.test(str)) return 0;
