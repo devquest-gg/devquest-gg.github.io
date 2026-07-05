@@ -30,16 +30,16 @@ const DIRECTORY = [
   { name: "Hello Games", url: "https://hellogames.org/join-us/", note: "No Man's Sky — Guildford, UK", city: "Guildford, UK" },
   { name: "Telltale Games", url: "https://telltale.com/careers/", note: "The Wolf Among Us — revived studio", city: "Malibu, CA" },
   // Notable studios we can't cleanly scrape yet (Xbox first-party / custom corporate portals) — link-outs for now.
-  { name: "Square Enix (Japan)", url: "https://www.jp.square-enix.com/recruit/career/", note: "Final Fantasy, Dragon Quest — Japan HQ (JP-only careers site)", city: "Tokyo, Japan" },  // West offices are scraped via Workable (Square Enix Europe / America)
+  // (Square Enix (Japan) promoted to mainland 2026-07-04 — its jp.square-enix.com career site posts to HRMOS (hrmos.co/pages/square-enix); see fetchHrmos.)
   // ---- June 2026: requested / community additions (link-outs; no clean scrapeable feed yet) ----
   // (PUBG Studios is now a live source — see the KRAFTON krafton.com scraper below, which covers PUBG
   //  Studios and the other KRAFTON sub-studios — so its link-out was removed.)
   // Can't cleanly scrape (Xbox first-party portals, custom sites, or a Pinpoint board) — link-outs.
   { name: "Retro Studios", url: "https://careers.nintendo.com/studios/retro-studios/", note: "Metroid Prime, Donkey Kong — Nintendo (Austin)", city: "Austin, TX" },
   { name: "Rare", url: "https://www.rare.co.uk/careers", note: "Sea of Thieves — Xbox Game Studios (UK)", city: "Twycross, UK" },
-  { name: "Atlus", url: "https://atlus.com/careers", note: "Persona, Shin Megami Tensei — SEGA West", city: "Tokyo, Japan" },
+  // (Atlus promoted to mainland 2026-07-04 — atlus.com/careers redirects to a Paycom portal; see fetchAtlus.)
   // Custom / first-party / unsupported-ATS boards — link-outs (June 2026 batch).
-  { name: "Owlcat Games", url: "https://owlcat.games/careers", note: "Pathfinder, Rogue Trader — CRPG studio (Cyprus)", city: "Nicosia, Cyprus" },
+  // (Owlcat Games promoted to mainland 2026-07-04 — owlcat.games/careers Next.js site, jobs in __NEXT_DATA__; see fetchOwlcat.)
   { name: "Sucker Punch Productions", url: "https://jobs.suckerpunch.com/", note: "Ghost of Tsushima/Yōtei — Sony first-party (Bellevue, WA)", city: "Bellevue, WA" },
   { name: "Grinding Gear Games", url: "https://www.grindinggear.com/?page=careers", note: "Path of Exile — Tencent (Auckland, NZ)", city: "Auckland, New Zealand" },
   // batch 3 (2026-06-08): self-hosted / no-API boards — browse directly
@@ -53,15 +53,15 @@ const DIRECTORY = [
   { name: "Gunfire Games", url: "https://gunfiregames.com/careers", note: "Remnant, Darksiders — Paylocity board", city: "Austin, TX" },
   { name: "10:10 Games", url: "https://www.1010games.com/join-us", note: "ex-Playtonic / Crash devs (Warrington)", city: "Warrington, UK" },
   // batch 4 (2026-06-09): notable + mobile studios on custom / region-specific ATS — browse directly
-  { name: "Kojima Productions", url: "https://www.kojimaproductions.jp/en/careers", note: "Death Stranding (Tokyo)", city: "Tokyo, Japan" },
+  // (Kojima Productions promoted to mainland 2026-07-04 — kojimaproductions.jp POST /kjpviewloader/load; see fetchKojima.)
   // (Cygames promoted to mainland 2026-07-04 — recruit.cygames.co.jp/career server-renders all roles; see fetchCygames.)
   // (Garena promoted to mainland 2026-07-04 — careers.garena.com exposes POST /api/job/list JSON; see fetchGarena.)
   { name: "Plarium", url: "https://company.plarium.com/en/career/", note: "RAID: Shadow Legends — mobile games (Israel)", city: "Herzliya, Israel" },
-  { name: "SuperPlay", url: "https://www.superplay.co/careers", note: "Dice Dreams — casual mobile games (Israel)", city: "Tel Aviv, Israel" },
-  { name: "Playrix", url: "https://playrix.com/job/open/", note: "Gardenscapes, Township (Dublin)", city: "Dublin, Ireland" },
+  // (SuperPlay promoted to mainland 2026-07-04 — superplay.co/careers WordPress SSR; see fetchSuperPlay.)
+  // (Playrix promoted to mainland 2026-07-04 — playrix.com POST /api/v1 job/getList JSON; see fetchPlayrix.)
   // batch 5 (2026-06-11): big names with custom / no-API careers sites (christran sweep holdouts) — browse directly.
   { name: "CCP Games", url: "https://careers.fenriscreations.com/", note: "EVE Online — now Fenris Creations (Reykjavík)", city: "Reykjavík, Iceland" },
-  { name: "Miniclip", url: "https://www.miniclip.com/careers/vacancies", note: "8 Ball Pool, Agar.io (Switzerland)", city: "Neuchâtel, Switzerland" },
+  // (Miniclip promoted to mainland 2026-07-04 — miniclip.com/careers/vacancies server-renders all roles; see fetchMiniclip.)
   { name: "Keen Software House", url: "https://www.keenswh.com/careers/", note: "Space Engineers (Prague)", city: "Prague, Czechia" },
   // From the Grackle HQ comparison (2026-06-11): notable studios on custom careers sites.
   { name: "FromSoftware", url: "https://careers.fromsoftware.jp/en/openpositions.html", note: "Elden Ring, Dark Souls (Japan)", city: "Tokyo, Japan" },
@@ -92,7 +92,7 @@ const DIRECTORY = [
   { name: "Gameforge", url: "https://corporate.gameforge.com/en/career/", note: "browser/MMO publisher (AION, Metin2)", city: "Karlsruhe, Germany" },
   { name: "DeNA", url: "https://herp.careers/v1/dena/", note: "mobile publisher (Pokémon Masters EX) — HERP board (JP)", city: "Tokyo, Japan" },
   { name: "Spike Chunsoft", url: "https://hrmos.co/pages/spchun/jobs", note: "Danganronpa, Zero Escape — HRMOS board (JP)", city: "Tokyo, Japan" },
-  { name: "Moon Active", url: "https://www.moonactive.com/careers/", note: "Coin Master — mobile", city: "Tel Aviv, Israel" },
+  // (Moon Active promoted to mainland 2026-07-04 — Comeet ATS (comeet.co positions API); see fetchComeet.)
   { name: "Toca Boca", url: "https://www.tocaboca.com/careers", note: "Toca Boca World — kids", city: "Stockholm, Sweden" },
   { name: "Star Stable Entertainment", url: "https://jobs.starstableentertainment.com/", note: "Star Stable Online", city: "Stockholm, Sweden" },
   { name: "Snowprint Studios", url: "https://career.snowprintstudios.com/", note: "Warhammer 40K: Tacticus", city: "Stockholm, Sweden" },
@@ -112,7 +112,7 @@ const DIRECTORY = [
   { name: "Torpor Games", url: "https://torporgames.careers.hibob.com/jobs", note: "The Conformist, Project Vanguard — HiBob board (no fetcher yet)", city: "Berlin, Germany" },
   { name: "Flix Interactive", url: "https://www.flixinteractive.com/#careers", note: "Unreal co-dev (Sea of Thieves, Mafia, Sniper Elite) — email apply, no ATS feed", city: "Yorkshire, UK" },
   { name: "Anshar Studios", url: "https://ansharstudios.com/careers/", note: "Co-dev (Larian, Saber, PCF partners) — Traffit board (no fetcher yet)", city: "Katowice, Poland" },
-  { name: "Overwolf", url: "https://careers.overwolf.com/", note: "CurseForge, Tebex — Comeet board (no fetcher yet)", city: "Tel Aviv, Israel" },
+  // (Overwolf promoted to mainland 2026-07-04 — Comeet ATS, same fetcher as Moon Active; see fetchComeet.)
   { name: "Nekki", url: "https://nekki.com/vacancy", note: "Shadow Fight, Vector — self-hosted careers", city: "Limassol, Cyprus" },
 ];
 
@@ -224,6 +224,15 @@ const STUDIOS = [
   { name: "GAME FREAK", type: "hrmos", token: "gamefreak", city: "Tokyo, Japan" }, // Pokémon developer — HRMOS board (~57 JP-language roles, Tokyo HQ); promoted from Island 2026-07-04 — spot-check first scrape
   { name: "Garena", type: "garena", city: "Singapore" }, // Free Fire (Sea Ltd) — careers.garena.com Nuxt site, POST /api/job/list JSON (~96 roles across APAC/LatAm/Casablanca); promoted from Island 2026-07-04 — spot-check first scrape
   { name: "Shift Up", type: "shiftup", city: "Seoul, South Korea" }, // Stellar Blade, NIKKE — shiftup.co.kr/recruit.php SSR (~38 open KR-language roles). Its Greeting ATS hides per-job IDs, so every role links to the main recruit page (owner-approved 2026-07-04). Promoted from Island 2026-07-04 — spot-check first scrape
+  { name: "Miniclip", type: "miniclip", city: "Lisbon, Portugal" }, // 8 Ball Pool, Agar.io — miniclip.com/careers/vacancies Nuxt SSR (~31 roles across PT/UK/NL/TR, real per-job URLs); backed by SuccessFactors but the Miniclip page renders all roles. Promoted from Island 2026-07-04 — spot-check first scrape
+  { name: "Playrix", type: "playrix" }, // Gardenscapes, Township — playrix.com custom API (POST /api/v1 job/getList, ~26 real dated roles). Fully remote ("work from anywhere"), so all roles are Remote. Promoted from Island 2026-07-04 — spot-check first scrape
+  { name: "SuperPlay", type: "superplay", city: "Tel-Aviv, Israel" }, // Dice Dreams, Domino Dreams (Playtika) — superplay.co/careers WordPress SSR (~30 roles across Tel-Aviv/Bucharest/Poland, real per-job URLs). Promoted from Island 2026-07-04 — spot-check first scrape
+  { name: "Atlus", type: "atlus", token: "E743DEB45C5896F708643C7D7B581397", city: "Irvine, CA", parentCompany: "SEGA" }, // Persona, Shin Megami Tensei (SEGA West / Atlus West) — atlus.com/careers → Paycom portal (~21 mostly publishing/marketing roles in Irvine/Burbank). Promoted from Island 2026-07-04 — spot-check first scrape
+  { name: "Kojima Productions", type: "kojima", city: "Tokyo, Japan" }, // Death Stranding, OD — kojimaproductions.jp Drupal careers, POST /kjpviewloader/load returns the job-listing view HTML (~37 roles, all Tokyo, real per-job URLs). Promoted from Island 2026-07-04 — spot-check first scrape
+  { name: "Square Enix (Japan)", type: "hrmos", token: "square-enix", city: "Tokyo, Japan", parentCompany: "Square Enix" }, // Final Fantasy, Dragon Quest — Japan HQ careers run on HRMOS (hrmos.co/pages/square-enix, ~35 JP roles incl. game dev + publishing/manga/EC). Same fetcher as GAME FREAK. Promoted from Island 2026-07-04 — spot-check first scrape
+  { name: "Owlcat Games", type: "owlcat", city: "Nicosia, Cyprus" }, // Pathfinder, Rogue Trader — owlcat.games/careers Next.js site; jobs embedded in __NEXT_DATA__ (~7 roles, real dates + per-job URLs). Promoted from Island 2026-07-04 — spot-check first scrape
+  { name: "Moon Active", type: "comeet", token: "A2.00C", comeetToken: "2ACD5C02AC10081008AB01560180C804", city: "Tel Aviv, Israel" }, // Coin Master — Comeet ATS public positions API (~29 roles across Tel Aviv/Barcelona/Kyiv/Warsaw/Remote). Promoted from Island 2026-07-04 — spot-check first scrape
+  { name: "Overwolf", type: "comeet", token: "B1.001", comeetToken: "1B16C4BD7005131B1A26F391B1", city: "Ramat Gan, Israel" }, // CurseForge, Tebex — Comeet ATS (~13 roles across Ramat Gan/London/Hoboken). Same fetcher as Moon Active. Promoted from Island 2026-07-04 — spot-check first scrape
   { name: "Gearbox Software", type: "greenhouse", token: "gearbox" },
   { name: "Second Dinner", type: "ashby", token: "seconddinner" },
   { name: "Supercell", type: "ashby", token: "supercell" },
@@ -1221,7 +1230,7 @@ function inferRegion(location) {
   if (/(united states|usa|\b(ca|wa|tx|ny|md|fl|il|ma|nc|ga)\b|los angeles|seattle|austin|new york|san (francisco|mateo|diego)|bellevue|irvine|burbank|santa monica|redmond|mercer island|atlanta|chicago|boston|novato)/.test(l)) return "North America";
   if (/(canada|montreal|montréal|toronto|vancouver|quebec)/.test(l)) return "North America";
   if (/(mexico|brazil|são paulo|sao paulo|argentina|chile|colombia)/.test(l)) return "Latin America";
-  if (/(uk|united kingdom|london|oxford|horsham|brighton|ireland|dublin|france|paris|lyon|germany|berlin|poland|warsaw|spain|barcelona|madrid|belgium|ghent|netherlands|amsterdam|finland|espoo|helsinki|sweden|stockholm|turkey|istanbul|czech|prague)/.test(l)) return "Europe";
+  if (/(uk|united kingdom|london|oxford|horsham|brighton|derby|ireland|dublin|france|paris|lyon|germany|berlin|poland|warsaw|romania|bucharest|spain|barcelona|madrid|portugal|lisbon|porto|belgium|ghent|netherlands|amsterdam|zoetermeer|finland|espoo|helsinki|sweden|stockholm|turkey|türkiye|istanbul|czech|prague|cyprus|nicosia|limassol|ukraine|kyiv|kiev)/.test(l)) return "Europe";
   if (/(japan|tokyo|china|shanghai|guangzhou|beijing|hong kong|korea|seoul|singapore|taiwan|taipei|australia|sydney|india|bangalore|mumbai|vietnam|hanoi|ho chi minh|thailand|bangkok|malaysia|philippines|manila|indonesia|jakarta|bangladesh|dhaka)/.test(l)) return "Asia-Pacific";
   if (/(dubai|uae|saudi|riyadh|israel|tel aviv|south africa|morocco|casablanca)/.test(l)) return "Middle East & Africa";
   if (/remote/.test(l)) return "Remote";
@@ -3129,17 +3138,28 @@ async function fetchCygames(studio) {
 // Unknown / date-n/a (like Cygames / EA). We drop the evergreen "キャリア登録" (talent-pool
 // registration) and "新卒" (new-grad info) entries — they aren't real single openings. GAME FREAK's
 // roles are all at its Tokyo HQ (addresses begin 東京都). Promoted from the Island 2026-07-04.
-const HRMOS_DISC = {                       // 求人カテゴリー → discipline
-  "プログラマ": "Engineering",
-  "グラフィックデザイナー": "Art",
-  "テクニカルアーティスト": "Art",
-  "プランナー": "Design",
-};
+// 求人カテゴリー (JP) → discipline, as ordered keyword rules so one map serves every HRMOS studio
+// (GAME FREAK's プログラマ/グラフィックデザイナー/… and Square Enix's ゲームデザイナー/サウンド/編集/…).
+// Matched against the category first, then the title; order matters (Art before Design so
+// グラフィックデザイナー→Art not Design; BI before Engineering so a BI engineer→Data).
+const HRMOS_DISC_RULES = [
+  [/サウンド|オーディオ|音響|作曲|効果音/, "Audio"],
+  [/\bQA\b|品質|デバッグ|テスター|テスト/i, "QA"],
+  [/\bBI\b|データ分析|データサイエン|アナリスト|analytics/i, "Data & Analytics"],
+  [/アーティスト|グラフィック|\bCG\b|映像|モデル|背景|エフェクト|キャラクター|原画|イラスト|コンセプト|ライティング|リガー|テクニカルアート/i, "Art"],
+  [/アニメーター/, "Animation"],
+  [/エンジニア|プログラマ|インフラ|サーバ|アプリケーション|セキュリティ|\bSRE\b|クラウド|ネットワーク|システム|社内SE|R&D|開発者/i, "Engineering"],
+  [/ゲームデザイナー|ゲームデザイン|プランナー|レベルデザイン|シナリオ|ソーシャルゲーム/, "Design"],
+  [/ローカライズ|翻訳|localization/i, "Production"],
+  [/プロデューサー|ディレクター|プロジェクトマネージャ|制作進行|プロダクションマネージャ|プロデュース|運営/, "Production"],
+  [/マーケティング|宣伝|プロモーション|広報|\bPR\b|イベント企画|販促/i, "Marketing"],
+  [/カスタマーサポート|カスタマー|サポート窓口/, "Player Support"],
+  [/営業|編集|出版|経理|財務|法務|人事|総務|バックオフィス|EC|受発注|入金|契約|ライセンス|売上|原価|事業管理|\bDX\b|採用|労務|貿易|管理/i, "Business & Ops"],
+];
 function hrmosDiscipline(cat, title) {
-  if (HRMOS_DISC[cat]) return HRMOS_DISC[cat];
-  // "その他" (Other) mixes internal IT and HR/admin — split by title keyword.
-  if (/インフラ|サーバ|エンジニア|プログラ|ネットワーク|セキュリティ|データベース/.test(title)) return "Engineering";
-  return "Business & Ops";                 // 人事・採用・総務・ITヘルプデスク など
+  for (const [re, d] of HRMOS_DISC_RULES) if (re.test(cat)) return d;      // category is the reliable field
+  for (const [re, d] of HRMOS_DISC_RULES) if (re.test(title)) return d;    // fall back to the title (e.g. GAME FREAK's "その他")
+  return "Business & Ops";
 }
 function hrmosSeniority(title) {
   if (/ディレクター|部長/.test(title)) return "Director+";
@@ -3176,7 +3196,7 @@ async function fetchHrmos(studio) {
     }
     if (cat === "キャリア登録" || cat === "新卒") continue;   // evergreen registration / new-grad info — not real openings
     seen.add(id);
-    const location = /東京|Tokyo/i.test(loc) ? "Tokyo, Japan" : (studio.city || "Tokyo, Japan");
+    const location = /大阪|Osaka/i.test(loc) ? "Osaka, Japan" : /東京|Tokyo/i.test(loc) ? "Tokyo, Japan" : (studio.city || "Tokyo, Japan");
     const remote = /フルリモート|リモートワーク可|完全リモート/.test(title);
     out.push({
       id: `hrmos-${token}-${id}`,
@@ -3344,7 +3364,394 @@ async function fetchShiftUp(studio) {
   return out;
 }
 
-const FETCHERS = { greenhouse: fetchGreenhouse, lever: fetchLever, workday: fetchWorkday, avature: fetchAvature, smartrecruiters: fetchSmartRecruiters, workable: fetchWorkable, phenom: fetchPhenom, teamtailor: fetchTeamtailor, eightfold: fetchEightfold, amazonjobs: fetchAmazonJobs, ashby: fetchAshby, zenimax: fetchZenimax, bamboohr: fetchBambooHr, jobscore: fetchJobScore, jazzhr: fetchJazzHr, jobvite: fetchJobvite, recruitee: fetchRecruitee, personio: fetchPersonio, rippling: fetchRippling, breezy: fetchBreezy, manatal: fetchManatal, sumodigital: fetchSumoDigital, pinpoint: fetchPinpoint, playground: fetchPlayground, obsidian: fetchObsidian, techland: fetchTechland, oracle: fetchOracle, cig: fetchCig, critpath: fetchCritpath, krafton: fetchKrafton, eidos: fetchEidos, hiringthing: fetchHiringThing, segacareers: fetchSegaCareers, turn10: fetchTurn10, hrworks: fetchHRworks, smilegate: fetchSmilegate, cygames: fetchCygames, hrmos: fetchHrmos, garena: fetchGarena, shiftup: fetchShiftUp };
+// ---- Miniclip (8 Ball Pool, Agar.io) — own Nuxt careers site (SSR) -----------------------------
+// miniclip.com/careers/vacancies server-renders every opening grouped by department: an
+// <h3 class="…text-2xl">Department</h3> heading, then <li class="flex justify-between …"> rows, each
+// with an <a href="/careers/vacancies/<slug>/<id>"> (title + Miniclip's own detail page) and a
+// trailing <span> location ("City, Country"). Titles are English; the list carries no salary or posted
+// date, so those show Unknown / date-n/a. Applications ultimately run on SuccessFactors
+// (careers.miniclip.com), but Miniclip's page is the clean, complete feed. Promoted from the Island 2026-07-04.
+async function fetchMiniclip(studio) {
+  let html;
+  if (SAMPLE_FILE) { const d = loadSample(studio); if (!d) return []; html = typeof d === "string" ? d : (d.html || ""); }
+  else { html = await fetchText("https://www.miniclip.com/careers/vacancies"); }
+  const out = [], seen = new Set();
+  const sections = String(html).split(/<h3 class="[^"]*text-2xl[^"]*">/);   // [preamble, dept1seg, dept2seg, …]
+  for (let k = 1; k < sections.length; k++) {
+    const seg = sections[k];
+    const dept = decodeEnt((seg.match(/^\s*([\s\S]*?)<\/h3>/) || [])[1] || "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+    for (const li of seg.matchAll(/<li class="flex justify-between[\s\S]*?<\/li>/g)) {
+      const b = li[0];
+      const dm = b.match(/href="\/careers\/vacancies\/([^"\/]+)\/(\d+)"/);
+      if (!dm) continue;
+      const id = dm[2];
+      if (seen.has(id)) continue; seen.add(id);
+      const title = decodeEnt((b.match(/href="\/careers\/vacancies\/[^"]+"[^>]*>([\s\S]*?)<\/a>/) || [])[1] || "").replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim();
+      if (!title) continue;
+      const spans = [...b.matchAll(/<span[^>]*>([\s\S]*?)<\/span>/g)].map(m => decodeEnt(m[1].replace(/<[^>]+>/g, "")).replace(/\s+/g, " ").trim()).filter(Boolean);
+      const location = spans.length ? spans[spans.length - 1] : (studio.city || "Lisbon, Portugal");
+      out.push({
+        id: `miniclip-${id}`,
+        title, tech: extractTech(title), studio: studio.name,
+        discipline: mapDiscipline(dept, title),
+        workType: inferWorkType(title, location, []),
+        location, region: inferRegion(location),
+        seniority: inferSeniority(title),
+        salary: null, yoe: null, postedAt: null,
+        url: `https://www.miniclip.com/careers/vacancies/${dm[1]}/${id}`,
+      });
+    }
+  }
+  return out;
+}
+
+// ---- Playrix (Gardenscapes, Township, Fishdom) — custom careers API -----------------------------
+// playrix.com is a React SPA backed by a simple JSON API: POST /api/v1/index.php?action=job/getList
+// (no body) -> { success, items:[…] }. Each item: { id, name (title), code (slug), sectionId, dateUpdate,
+// isHidden, workFormat, … }. Titles are English; there's no salary. Playrix is fully remote ("work from
+// anywhere in the world"), so every role is Remote. dateUpdate gives an honest posted date. Section
+// English labels are mostly blank, so discipline is mapped from the (clear) title. Job detail pages live
+// at playrix.com/job/<code>/. We drop isHidden rows. Promoted from the Island 2026-07-04.
+const PLAYRIX_DISC = [                      // title → discipline; first match wins, order matters
+  [/\bqa\b|quality assurance|\btester\b|testing/i, "QA"],
+  [/artist|\bvfx\b|\b2d\b|\b3d\b|concept|illustrat|art director|lighting|texture/i, "Art"],   // catch "Art Director" before Production
+  [/animator|animation/i, "Animation"],
+  [/analyst|analytics|\bdata\b|\bbi\b/i, "Data & Analytics"],                                  // "Product Analyst" -> Data, before Production
+  [/engineer|developer|programmer|software|golang|back[- ]?end|front[- ]?end|\bsre\b|devops|platform|technical lead/i, "Engineering"],
+  [/game design|designer|narrative|writer|scriptwriter|level design/i, "Design"],
+  [/producer|production|project manager|program manager|delivery manager|development director|game director|\bpmo\b/i, "Production"],
+  [/product (manager|owner)/i, "Production"],
+  [/marketing|user acquisition|\bua\b|creative|\bbrand\b|community/i, "Marketing"],
+  [/recruit|\bhr\b|people|talent|finance|legal|accountant|office manager|business/i, "Business & Ops"],
+];
+function playrixDiscipline(title) {
+  for (const [re, d] of PLAYRIX_DISC) if (re.test(title)) return d;
+  return "Other";
+}
+async function fetchPlayrix(studio) {
+  let items = [];
+  if (SAMPLE_FILE) { const d = loadSample(studio); if (!d) return []; items = d.items || (Array.isArray(d) ? d : []); }
+  else {
+    const res = await fetchRetry("https://playrix.com/api/v1/index.php?action=job%2FgetList", {
+      method: "POST",
+      headers: { "Accept": "application/json",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36",
+        "Origin": "https://playrix.com", "Referer": "https://playrix.com/job/open/" },
+    });
+    const data = await res.json();
+    items = data.items || [];
+  }
+  const out = [];
+  for (const x of items) {
+    if (!x || x.isHidden) continue;
+    const title = decodeEnt(String(x.name || "").replace(/<[^>]+>/g, " ")).replace(/\s+/g, " ").trim();
+    if (!title || !x.code) continue;
+    const postedAt = x.dateUpdate ? String(x.dateUpdate).trim().replace(" ", "T") : null;
+    out.push({
+      id: `playrix-${x.id}`,
+      title, tech: extractTech(title), studio: studio.name,
+      discipline: playrixDiscipline(title),
+      workType: "Remote",
+      location: "Remote", region: "Remote",
+      seniority: inferSeniority(title),
+      salary: null, yoe: null, postedAt,
+      url: `https://playrix.com/job/${x.code}/`,
+    });
+  }
+  return out;
+}
+
+// ---- SuperPlay (Dice Dreams, Domino Dreams — Playtika) — WordPress careers page (SSR) ------------
+// superplay.co/careers server-renders every opening as a card carrying data-department + data-location,
+// an <a class="careers-position__link" href=".../careers-position/<id>">, an <h3 class="…__title">, and
+// detail spans: __location, __employment-type, __experience-level (Entry-level / Intermediate / Senior;
+// sometimes absent). Titles are English; there's no salary or posted date. Discipline is mapped from the
+// (clear) title; seniority from the experience-level label, falling back to the title. Roles are onsite in
+// Tel-Aviv, Bucharest, or Poland. Promoted from the Island 2026-07-04.
+const SUPERPLAY_DISC = [                    // title → discipline; first match wins, order matters
+  [/\bqa\b|quality|tester|testing/i, "QA"],
+  [/\bbi\b|analyst|analytics|\bdata\b/i, "Data & Analytics"],
+  [/animator|animation/i, "Animation"],                                       // before Art: "2D Animator" is Animation
+  [/artist|\bvfx\b|\b2d\b|\b3d\b|concept|illustrat|texture|technical artist|motion graphic/i, "Art"],
+  [/developer|engineer|programmer|software|unity|\bit\b|devops|\bsre\b|server/i, "Engineering"],
+  [/designer|\bui\b|\bux\b|game design/i, "Design"],
+  [/community|user acquisition|\bua\b|\baso\b|marketing|\bbrand\b|\bpr\b|social/i, "Marketing"],
+  [/customer support|player support|support manager/i, "Player Support"],
+  [/product manager|product owner|producer|production/i, "Production"],
+  [/monetization|monetisation|\bhr\b|hrbp|recruit|people|finance|legal|operations/i, "Business & Ops"],
+];
+function superplayDiscipline(title) {
+  for (const [re, d] of SUPERPLAY_DISC) if (re.test(title)) return d;
+  return "Other";
+}
+function superplaySeniority(label, title) {
+  const l = (label || "").toLowerCase();
+  if (/entry/.test(l)) return "Entry";
+  if (/senior/.test(l)) return "Senior";
+  if (/intermediate|\bmid\b/.test(l)) return "Mid";
+  return inferSeniority(title);            // unlabeled roles: infer from the title (catches Lead / Senior)
+}
+async function fetchSuperPlay(studio) {
+  let html;
+  if (SAMPLE_FILE) { const d = loadSample(studio); if (!d) return []; html = typeof d === "string" ? d : (d.html || ""); }
+  else { html = await fetchText("https://www.superplay.co/careers/"); }
+  const s = String(html);
+  const out = [], seen = new Set();
+  const linkRe = /<a href="https:\/\/www\.superplay\.co\/careers-position\/([^"?]+)" class="careers-position__link">/g;
+  let m;
+  while ((m = linkRe.exec(s))) {
+    const id = m[1];
+    if (seen.has(id)) continue; seen.add(id);
+    const before = s.slice(Math.max(0, m.index - 500), m.index);   // outer card div (holds data-location)
+    const after = s.slice(m.index, m.index + 1200);
+    const title = decodeEnt(((after.match(/careers-position__title[^>]*>([\s\S]*?)<\/h3>/) || [])[1] || "").replace(/<[^>]+>/g, " ")).replace(/\s+/g, " ").trim();
+    if (!title) continue;
+    const location = decodeEnt((before.match(/data-location="([^"]*)"/) || [])[1] || "") || studio.city || "Tel-Aviv, Israel";
+    const expLabel = decodeEnt(((after.match(/careers-position__experience-level[^>]*>\s*([^<]*?)\s*</) || [])[1] || "")).replace(/\s+/g, " ").trim();
+    out.push({
+      id: `superplay-${id}`,
+      title, tech: extractTech(title), studio: studio.name,
+      discipline: superplayDiscipline(title),
+      workType: inferWorkType(title, location, []),
+      location, region: inferRegion(location),
+      seniority: superplaySeniority(expLabel, title),
+      salary: null, yoe: null, postedAt: null,
+      url: `https://www.superplay.co/careers-position/${id}`,
+    });
+  }
+  return out;
+}
+
+// ---- Atlus / SEGA of America (Persona, Shin Megami Tensei — Western publishing) — Paycom ATS -----
+// atlus.com/careers redirects to a Paycom career portal (clientkey in studio.token). The React portal's
+// data lives behind a bearer-auth API, but the token is public: GET the portal's career-page JSON to read
+// its `sessionJWT`, then GET /api/ats/job-map with that bearer to receive every opening grouped by office
+// ({ locations:[{ locationDisplay, jobs:[{ jobCode, jobTitle }] }] }). Titles are English (mostly Western
+// publishing / marketing roles at Irvine + Burbank); no salary or posted date. Job detail/apply pages live
+// at paycomonline.net/v4/ats/web.php/portal/<clientkey>/jobs/<jobCode>. Promoted from the Island 2026-07-04.
+const ATLUS_DISC = [                       // title → discipline; first match wins, order matters
+  [/\bqa\b|quality assurance|\btester\b|\btesting\b/i, "QA"],
+  [/business development|business strategy|\bsales\b|partnership|licensing|financ|legal|\baccount(ing|ant)?\b|\bhr\b|people ops|talent acquisition|recruit|\boperations\b|administrat|office manager|payroll/i, "Business & Ops"],   // before Marketing/Production: "Financial Analyst", "Consumer Product Licensing"
+  [/animator|animation/i, "Animation"],
+  [/artist|graphic design|\bvideo\b|multimedia|\bvfx\b|illustrat|art director/i, "Art"],
+  [/\bdata\b|\banalytics\b|\bbi\b|business intelligence/i, "Data & Analytics"],
+  [/brand|marketing|community|\bsocial\b|\bpr\b|public relations|advertis|influencer|\beditor\b|\bcontent\b|transmedia|gaas/i, "Marketing"],   // before Production so "Product Marketing" is Marketing
+  [/product (manager|planning|management|owner)|\bproducer\b|localization|project manager|program manager/i, "Production"],
+  [/designer|\bui\b|\bux\b|game design/i, "Design"],
+  [/engineer|developer|programmer|software|\bit\b|network|systems admin|devops/i, "Engineering"],
+  [/customer support|player support|support specialist/i, "Player Support"],
+];
+function atlusDiscipline(title) {
+  for (const [re, d] of ATLUS_DISC) if (re.test(title)) return d;
+  return "Other";
+}
+function cleanPaycomLoc(l) {              // "Progress - Irvine, CA 92618" -> "Irvine, CA"
+  return String(l || "").split(" - ").pop().replace(/\s+\d{5}(-\d{4})?\s*$/, "").trim();
+}
+async function fetchAtlus(studio) {
+  const ck = studio.token;
+  let locations = [];
+  if (SAMPLE_FILE) { const d = loadSample(studio); if (!d) return []; locations = d.locations || (Array.isArray(d) ? d : []); }
+  else {
+    const cpRes = await fetchRetry(`https://www.paycomonline.net/v4/ats/web.php/portal/${ck}/career-page`, {
+      headers: { "Accept": "application/json", "User-Agent": "DevQuest/0.1 (game-dev job aggregator)" },
+    });
+    const cp = await cpRes.json();
+    const jwt = cp && cp.sessionJWT;
+    if (!jwt) return [];
+    const res = await fetchRetry("https://portal-applicant-tracking.us-cent.paycomonline.net/api/ats/job-map", {
+      headers: { "Authorization": "Bearer " + jwt, "Accept": "application/json", "User-Agent": "DevQuest/0.1 (game-dev job aggregator)" },
+    });
+    const jm = await res.json();
+    locations = (jm && jm.locations) || [];
+  }
+  const out = [], seen = new Set();
+  for (const L of locations) {
+    const location = cleanPaycomLoc(L.locationDisplay) || studio.city || "Irvine, CA";
+    for (const j of (L.jobs || [])) {
+      const code = j.jobCode;
+      const title = decodeEnt(String(j.jobTitle || "").replace(/<[^>]+>/g, " ")).replace(/\s+/g, " ").trim();
+      if (!code || !title || seen.has(code)) continue;
+      seen.add(code);
+      out.push({
+        id: `atlus-${code}`,
+        title, tech: extractTech(title), studio: studio.name,
+        discipline: atlusDiscipline(title),
+        workType: inferWorkType(title, location, []),
+        location, region: inferRegion(location),
+        seniority: inferSeniority(title),
+        salary: null, yoe: null, postedAt: null,
+        url: `https://www.paycomonline.net/v4/ats/web.php/portal/${ck}/jobs/${code}`,
+      });
+    }
+  }
+  return out;
+}
+
+// ---- Kojima Productions (Death Stranding, OD) — Drupal careers, custom view-loader endpoint --------
+// kojimaproductions.jp is a Drupal 11 site; the careers view is hydrated via POST /kjpviewloader/load
+// (JSON body naming the view) which returns the rendered job-listing HTML. Each row is
+// <a href="/en/<slug>"><div class="title">…</div><div class="discipline">…</div><div class="location">…</div></a>.
+// Titles/categories are English, all roles are at the Tokyo studio; no salary or posted date. Discipline is
+// mapped from the category (with "Animator" → Animation). Promoted from the Island 2026-07-04.
+const KOJIMA_DISC = {                      // category (Drupal "discipline") → our discipline
+  "Programming": "Engineering", "Art Department": "Art", "Marketing": "Marketing",
+  "Production": "Production", "Game Design": "Design", "Administrative": "Business & Ops",
+  "Localization": "Production", "Sound Department": "Audio", "Writing": "Design",
+};
+function kojimaDiscipline(category, title) {
+  if (/\banimator\b|animation artist/i.test(title)) return "Animation";   // Animator sits under "Art Department"
+  return KOJIMA_DISC[category] || mapDiscipline(category, title);
+}
+async function fetchKojima(studio) {
+  let html;
+  if (SAMPLE_FILE) { const d = loadSample(studio); if (!d) return []; html = typeof d === "string" ? d : (d.html || ""); }
+  else {
+    const res = await fetchRetry("https://www.kojimaproductions.jp/kjpviewloader/load", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Accept": "text/html, */*",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36",
+        "Origin": "https://www.kojimaproductions.jp", "Referer": "https://www.kojimaproductions.jp/en/careers" },
+      body: JSON.stringify({ viewName: "kjp_view_job_listing", viewDisplayBase: "kjp_view_job_listing__", langCode: "en",
+        inputs: [{ name: "jobDiscipline", value: "All" }, { name: "jobLocation", value: "All" }], page: 0, writeDate: Date.now() }),
+    });
+    html = await res.text();
+  }
+  const out = [], seen = new Set();
+  const rowRe = /<a href="(\/en\/[^"]+)">\s*<div class="title">([\s\S]*?)<\/div>\s*<div class="discipline">([\s\S]*?)<\/div>\s*<div class="location">([\s\S]*?)<\/div>/g;
+  let m;
+  while ((m = rowRe.exec(String(html)))) {
+    const href = m[1];
+    const title = decodeEnt(m[2].replace(/<[^>]+>/g, " ")).replace(/\s+/g, " ").trim();
+    const category = decodeEnt(m[3].replace(/<[^>]+>/g, " ")).replace(/\s+/g, " ").trim();
+    const location = decodeEnt(m[4].replace(/<[^>]+>/g, " ")).replace(/\s+/g, " ").trim() || studio.city || "Tokyo, Japan";
+    const slug = href.replace(/^\/en\//, "").replace(/\/+$/, "");
+    if (!title || !slug || seen.has(slug)) continue;
+    seen.add(slug);
+    out.push({
+      id: `kojima-${slug.replace(/\//g, "-")}`,
+      title, tech: extractTech(title), studio: studio.name,
+      discipline: kojimaDiscipline(category, title),
+      workType: inferWorkType(title, location, []),
+      location, region: inferRegion(location),
+      seniority: inferSeniority(title),
+      salary: null, yoe: null, postedAt: null,
+      url: `https://www.kojimaproductions.jp${href}`,
+    });
+  }
+  return out;
+}
+
+// ---- Owlcat Games (Pathfinder, Rogue Trader — cRPG studio) — Next.js careers, __NEXT_DATA__ --------
+// owlcat.games/careers is a Next.js app whose openings are embedded in the SSR JSON blob
+// (<script id="__NEXT_DATA__">). props.pageProps.initialState.contentStore.jobs.data is an array of
+// category buckets; the "All" bucket holds every opening as { id, title, subtitle, published, category }.
+// Titles are English; there's a real posted date, no salary. category → discipline. Job detail/apply pages
+// live at owlcat.games/careers/<id>. Roles are at the Cyprus studio. Promoted from the Island 2026-07-04.
+const OWLCAT_DISC = {                       // Owlcat "category" → discipline
+  "Art": "Art", "Design": "Design", "Programming": "Engineering",
+  "Management": "Production", "Publishing": "Marketing", "Hr": "Business & Ops", "HR": "Business & Ops",
+};
+async function fetchOwlcat(studio) {
+  let jobs = [];
+  if (SAMPLE_FILE) { const d = loadSample(studio); if (!d) return []; jobs = d.jobs || (Array.isArray(d) ? d : []); }
+  else {
+    const html = await fetchText("https://owlcat.games/careers");
+    const m = String(html).match(/<script id="__NEXT_DATA__" type="application\/json">([\s\S]*?)<\/script>/);
+    if (!m) return [];
+    let nd; try { nd = JSON.parse(m[1]); } catch (e) { return []; }
+    const data = (nd && nd.props && nd.props.pageProps && nd.props.pageProps.initialState
+      && nd.props.pageProps.initialState.contentStore && nd.props.pageProps.initialState.contentStore.jobs
+      && nd.props.pageProps.initialState.contentStore.jobs.data) || [];
+    const all = data.find(c => String(c.title || "").toLowerCase() === "all") || data[0];
+    jobs = (all && all.jobs) || [];
+  }
+  const out = [], seen = new Set();
+  const location = studio.city || "Nicosia, Cyprus";
+  for (const j of jobs) {
+    const id = j.id;
+    const title = decodeEnt(String(j.title || "").replace(/<[^>]+>/g, " ")).replace(/\s+/g, " ").trim();
+    if (!id || !title || seen.has(id)) continue;
+    seen.add(id);
+    let postedAt = null;
+    if (j.published) { const t = Date.parse(j.published); if (!isNaN(t)) postedAt = new Date(t).toISOString(); }
+    out.push({
+      id: `owlcat-${id}`,
+      title, tech: extractTech(title), studio: studio.name,
+      discipline: OWLCAT_DISC[j.category] || mapDiscipline(j.category || "", title),
+      workType: inferWorkType(title, location, []),
+      location, region: inferRegion(location),
+      seniority: inferSeniority(title),
+      salary: null, yoe: null, postedAt,
+      url: `https://owlcat.games/careers/${id}`,
+    });
+  }
+  return out;
+}
+
+// ---- Comeet ATS (Moon Active — reusable for any Comeet studio, e.g. Overwolf) -------------------
+// Comeet exposes a public positions API keyed by the company UID (studio.token) + public embed token
+// (studio.comeetToken): GET www.comeet.co/careers-api/2.0/company/<uid>/positions?token=<token> returns a
+// JSON array of { name, department, location:{name,…}, workplace_type, experience_level, time_updated (ISO),
+// uid, url_comeet_hosted_page, is_internal, … }. Titles/departments are English. We drop internal postings.
+function comeetSeniority(exp, title) {
+  const byTitle = inferSeniority(title);
+  if (byTitle !== "Mid") return byTitle;             // Lead/Director/Senior/Entry from the title wins
+  const e = String(exp || "").toLowerCase();
+  if (/senior|lead|principal/.test(e)) return "Senior";
+  if (/mid|intermediate/.test(e)) return "Mid";
+  if (/junior|entry|associate|intern/.test(e)) return "Entry";
+  return "Mid";
+}
+// Comeet's location.name is sometimes a nickname ("Overwolf's lair"), so resolve region from the ISO
+// country code first (reliable), falling back to the display name.
+const COMEET_CC_REGION = {
+  US: "North America", CA: "North America", MX: "Latin America", BR: "Latin America", AR: "Latin America",
+  GB: "Europe", IE: "Europe", DE: "Europe", FR: "Europe", ES: "Europe", PT: "Europe", NL: "Europe",
+  PL: "Europe", RO: "Europe", SE: "Europe", FI: "Europe", CZ: "Europe", UA: "Europe", CY: "Europe",
+  TR: "Europe", IT: "Europe", BE: "Europe", CH: "Europe", AT: "Europe", DK: "Europe", NO: "Europe",
+  IL: "Middle East & Africa", AE: "Middle East & Africa", SA: "Middle East & Africa", ZA: "Middle East & Africa", MA: "Middle East & Africa",
+  JP: "Asia-Pacific", KR: "Asia-Pacific", CN: "Asia-Pacific", SG: "Asia-Pacific", IN: "Asia-Pacific",
+  AU: "Asia-Pacific", TW: "Asia-Pacific", PH: "Asia-Pacific", VN: "Asia-Pacific", TH: "Asia-Pacific", MY: "Asia-Pacific", ID: "Asia-Pacific",
+};
+function comeetRegion(loc) {
+  const cc = String((loc && loc.country) || "").toUpperCase();
+  if (COMEET_CC_REGION[cc]) return COMEET_CC_REGION[cc];
+  return inferRegion((loc && loc.name) || "");
+}
+async function fetchComeet(studio) {
+  let arr = [];
+  if (SAMPLE_FILE) { const d = loadSample(studio); if (!d) return []; arr = Array.isArray(d) ? d : (d.positions || d.jobs || []); }
+  else { arr = await fetchJson(`https://www.comeet.co/careers-api/2.0/company/${studio.token}/positions?token=${studio.comeetToken}`); }
+  if (!Array.isArray(arr)) return [];
+  const out = [], seen = new Set();
+  for (const p of arr) {
+    if (p.is_internal) continue;
+    const uid = p.uid;
+    const title = decodeEnt(String(p.name || "").replace(/<[^>]+>/g, " ")).replace(/\s+/g, " ").trim();
+    if (!uid || !title || seen.has(uid)) continue;
+    seen.add(uid);
+    const dept = String(p.department || "").trim();
+    const location = (p.location && p.location.name) || studio.city || "Unlisted";
+    const wt = String(p.workplace_type || "").toLowerCase();
+    const workType = wt.includes("remote") ? "Remote" : wt.includes("hybrid") ? "Hybrid" : wt.includes("site") ? "Onsite" : inferWorkType(title, location, []);
+    let postedAt = null;
+    if (p.time_updated) { const t = Date.parse(p.time_updated); if (!isNaN(t)) postedAt = new Date(t).toISOString(); }
+    out.push({
+      id: `comeet-${studio.token}-${uid}`,
+      title, tech: extractTech(title), studio: studio.name,
+      discipline: mapDiscipline(dept, title),
+      workType,
+      location, region: comeetRegion(p.location),
+      seniority: comeetSeniority(p.experience_level, title),
+      salary: null, yoe: null, postedAt,
+      url: p.url_comeet_hosted_page || p.url_active_page || p.position_url || "",
+    });
+  }
+  return out;
+}
+
+const FETCHERS = { greenhouse: fetchGreenhouse, lever: fetchLever, workday: fetchWorkday, avature: fetchAvature, smartrecruiters: fetchSmartRecruiters, workable: fetchWorkable, phenom: fetchPhenom, teamtailor: fetchTeamtailor, eightfold: fetchEightfold, amazonjobs: fetchAmazonJobs, ashby: fetchAshby, zenimax: fetchZenimax, bamboohr: fetchBambooHr, jobscore: fetchJobScore, jazzhr: fetchJazzHr, jobvite: fetchJobvite, recruitee: fetchRecruitee, personio: fetchPersonio, rippling: fetchRippling, breezy: fetchBreezy, manatal: fetchManatal, sumodigital: fetchSumoDigital, pinpoint: fetchPinpoint, playground: fetchPlayground, obsidian: fetchObsidian, techland: fetchTechland, oracle: fetchOracle, cig: fetchCig, critpath: fetchCritpath, krafton: fetchKrafton, eidos: fetchEidos, hiringthing: fetchHiringThing, segacareers: fetchSegaCareers, turn10: fetchTurn10, hrworks: fetchHRworks, smilegate: fetchSmilegate, cygames: fetchCygames, hrmos: fetchHrmos, garena: fetchGarena, shiftup: fetchShiftUp, miniclip: fetchMiniclip, playrix: fetchPlayrix, superplay: fetchSuperPlay, atlus: fetchAtlus, kojima: fetchKojima, owlcat: fetchOwlcat, comeet: fetchComeet };
 
 // ---- Ghost-job tracking -----------------------------------------------------
 // Because we scrape on a schedule, we can see how long a listing has REALLY been
