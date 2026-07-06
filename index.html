@@ -494,6 +494,8 @@
   #gridTip .gttitle { font-weight: 800; color: var(--text); margin-bottom: 2px; }
   #gridTip .gtsub { color: var(--muted); }
   #gridTip .gtup { color: var(--green); }
+  #gridTip .gtmeta { margin-top: 6px; display: flex; flex-direction: column; gap: 3px; font-size: 12px; color: var(--text); }
+  #gridTip .gtwarn { color: var(--gold); }
   #gridTip .gtgames { border-top: 1px solid var(--border); margin-top: 7px; padding-top: 6px; color: var(--text); }
   #gridTip .gtlabel { font-size: 10px; text-transform: uppercase; letter-spacing: .4px; color: var(--muted); margin-bottom: 2px; }
   .rmain .studio[data-tip] { cursor: help; }
@@ -959,7 +961,7 @@ function dqCopyLink(btn){
       <button type="button" class="acch" onclick="toggleAcc(this)"><span class="t">Listing quality</span><span class="bdg"></span><span class="chev">▸</span></button>
       <div class="accb">
         <label class="chk tgl" data-tip="Talent pools are open-ended 'introduce yourself' or 'general application' listings, not specific open roles. Hidden by default; uncheck to include them."><input type="checkbox" id="hidePools" checked onchange="render()"><span class="sw"></span>Hide talent pools</label>
-        <label class="chk tgl" data-tip="Removes roles we've seen live 45+ days or that keep re-posting, the probable ghost jobs. The ⏳/↻ badges still show on every card."><input type="checkbox" id="hideStale" onchange="render()"><span class="sw"></span>Hide likely-stale listings</label>
+        <label class="chk tgl" data-tip="Removes roles we've seen live 60+ days or that keep re-posting, the probable ghost jobs. The ⏳/↻ badges still show on every card."><input type="checkbox" id="hideStale" onchange="render()"><span class="sw"></span>Hide likely-stale listings</label>
       </div>
     </div>
 
@@ -1164,11 +1166,11 @@ function mjCompanyHtml(j){
   let stats = `<div class="cistat"><b>${open.toLocaleString()}</b>open role${open===1?'':'s'}</div>`;
   if (delta != null && delta !== 0) stats += `<div class="cistat"><b class="${delta>0?'up':'down'}">${delta>0?'▲ +'+delta:'▼ '+Math.abs(delta)}</b>vs last month</div>`;
   if (otherDisc > 0) stats += `<div class="cistat"><b>${otherDisc}</b>other ${j.d} role${otherDisc===1?'':'s'}</div>`;
-  if (dl != null) stats += `<div class="cistat"><b${dl>=45?' class="down"':''}>${dl}d</b>this listing's age</div>`;
+  if (dl != null) stats += `<div class="cistat"><b${dl>=STALE_DAYS?' class="down"':''}>${dl}d</b>this listing's age</div>`;
   let line = "";
   if (delta > 0) line = "Hiring is <span class='up'>up</span> this month.";
   else if (delta < 0) line = "Hiring has <span class='down'>slowed</span> — momentum, not layoff news.";
-  if (dl != null && dl >= 45) line += (line?" ":"") + `This posting has been live ${dl} days (possibly stale).`;
+  if (dl != null && dl >= STALE_DAYS) line += (line?" ":"") + `This posting has been live ${dl} days (possibly stale).`;
   const esc = s => String(s).replace(/'/g, "\\'");
   return `<div class="ci" onclick="event.stopPropagation()">`
     + `<div class="ci-h">📊 ${studio} <span class="ci-m">· market snapshot</span></div>`
@@ -1760,6 +1762,12 @@ JOBS.forEach(j => { j.hubs = [...new Set(j.places.map(p=>hubOf(p.l)).filter(Bool
 
 const hoursAgo = j => Math.max(0, Math.round((Date.now() - j.ts) / 36e5));
 // how long WE'VE seen the listing live (reliable age for ghost-job signal); null if unknown
+// Days-live beyond which a listing reads as "likely stale". One source of truth for the
+// ⏳ badge, the hide-stale filter, the orange posted-date and the studio tooltip so they can
+// never drift. Calibrated from our own data (Jul 2026): 60 clears the MEDIAN age of every
+// seniority band (Senior 36d · Lead 40d · Director+ 50d), so it flags roles that are old for
+// their level rather than normal slow game-industry hiring. A separate 90d tier marks the worst.
+const STALE_DAYS = 60;
 const daysListed = j => j.fseen ? Math.max(0, Math.floor((Date.now() - j.fseen) / 864e5)) : null;
 // "re-listed" = either the scraper saw the studio's date jump across runs, OR the role
 // has been live far longer than its currently-shown posted date claims (a refreshed /
@@ -1772,9 +1780,9 @@ function relistedNow(j){
   return dl - postedDays >= 30; // live 30+ days longer than its posted date suggests
 }
 // "Likely stale" = exactly the set that earns a ⏳ or ↻ badge on the card: re-listed/refreshed,
-// or we've seen it live 45+ days. One toggle ("Hide likely-stale listings") uses this, replacing
-// the old overlapping "Hide re-listed" + "Hide listings live longer than" controls.
-function isStale(j){ const dl = daysListed(j); return relistedNow(j) || (dl != null && dl >= 45); }
+// or we've seen it live STALE_DAYS+ days. One toggle ("Hide likely-stale listings") uses this,
+// replacing the old overlapping "Hide re-listed" + "Hide listings live longer than" controls.
+function isStale(j){ const dl = daysListed(j); return relistedNow(j) || (dl != null && dl >= STALE_DAYS); }
 // "NEW FOR YOU" = appeared in your view since your last visit — posted OR first-seen by us
 // after prevVisit (so freshly-added studios count too, and sources with no posted date still
 // qualify) — but never a likely-stale/re-listed role, so the badge stays "fresh opportunity".
@@ -3005,14 +3013,57 @@ document.addEventListener("keydown", function(e){ if (e.key === "Escape") closeW
 // Desktop hover for a studio name: open roles + this-month momentum + notable games — all from data we
 // already have. Rendered through the shared #gridTip tooltip (innerHTML), so it's styled, not a browser
 // default, and desktop-only (showGridTip bails on touch). Momentum/games omit gracefully when absent.
+// Per-studio rollup for the hover tooltip (locations, remote count, parent, and how many
+// roles look stale). Memoized — JOBS is fixed per page load, so each studio is computed once.
+var _stMeta = {};
+function studioMeta(name){
+  if (_stMeta[name]) return _stMeta[name];
+  var roles = (typeof JOBS !== "undefined" ? JOBS : []).filter(function(j){ return j.s === name; });
+  var cities = [], seen = {}, various = false, remote = 0, stale = 0, parent = null;
+  roles.forEach(function(j){
+    if (!parent && j.p && j.p !== name) parent = j.p;
+    if (/remote|hybrid/i.test(j.w || "")) remote++;
+    try { if (isStale(j)) stale++; } catch(e){}
+    try {
+      var jc = jobCities(j);
+      if (jc.various) various = true;
+      jc.cities.forEach(function(c){
+        if (/^remote\b/i.test(c) || /^(unlisted|unknown|n\/?a|tbd)$/i.test(c)) return;  // remote counted separately; skip placeholders
+        var k = c.toLowerCase(); if (!seen[k]) { seen[k] = 1; cities.push(c); }
+      });
+    } catch(e){}
+  });
+  return (_stMeta[name] = { cities: cities, various: various, remote: remote, stale: stale, total: roles.length, parent: parent });
+}
 function studioTipHtml(name){
   var n = (typeof STUDIO_COUNTS !== "undefined" && STUDIO_COUNTS[name]) || 0;
-  var roles = "<b>"+n+"</b> open role"+(n===1?"":"s");
-  var mom = "";
-  try { var d = bfMomentum(name); if (d>0) mom = ' · <span class="gtup">↑ hiring up this month</span>'; else if (d<0) mom = " · slowing this month"; } catch(e){}
+  var sub = "<b>"+n+"</b> open role"+(n===1?"":"s");
+  var m; try { m = studioMeta(name); } catch(e){ m = { cities:[], various:false, remote:0, stale:0, total:n, parent:null }; }
+  var rows = "";
+
+  var where = "";
+  if (m.various) where = "Multiple locations";
+  else if (m.cities.length) where = m.cities.slice(0,3).map(bfEsc).join(" · ") + (m.cities.length>3 ? ' <span class="gtsub">+'+(m.cities.length-3)+'</span>' : "");
+  else if (m.remote) where = "Remote";
+  var remoteSuffix = (m.remote && where !== "Remote") ? ' <span class="gtsub">· '+m.remote+' remote</span>' : "";
+  if (where) rows += '<div>📍 '+where+remoteSuffix+'</div>';
+
+  if (m.parent && name.indexOf(m.parent) < 0 && m.parent.indexOf(name) < 0) rows += '<div>🏢 Part of <b>'+bfEsc(m.parent)+'</b></div>';
+
+  try { var d = bfMomentum(name);
+    if (d>0) rows += '<div class="gtup">↑ '+d+' more role'+(d===1?"":"s")+' than last month</div>';
+    else if (d<0) rows += '<div class="gtwarn">↓ '+(-d)+' fewer than last month</div>';
+  } catch(e){}
+
+  // Listing health: only flag genuine outliers. ~a third of any studio''s roles being 60+ days
+  // is the board-wide baseline, so we only surface it when MOST of a studio''s board is old —
+  // that is the real "ghost-heavy" signal, not normal slow senior hiring.
+  if (m.total >= 3 && m.stale / m.total >= 0.6) rows += '<div class="gtwarn">⏳ most roles live '+STALE_DAYS+'+ days</div>';
+
+  var meta = rows ? '<div class="gtmeta">'+rows+'</div>' : "";
   var g = (typeof STUDIO_TITLES !== "undefined" && STUDIO_TITLES[name])
     ? '<div class="gtgames"><div class="gtlabel">Notable games</div>'+bfEsc(STUDIO_TITLES[name])+'</div>' : "";
-  return '<div class="gttitle">'+bfEsc(name)+'</div><div class="gtsub">'+roles+mom+'</div>'+g;
+  return '<div class="gttitle">'+bfEsc(name)+'</div><div class="gtsub">'+sub+'</div>'+meta+g;
 }
 // Normalize a location label: drop ATS placeholders ("BLANK"), strip ISO-2 country-code prefixes
 // ("US - San Francisco" -> "San Francisco"), standardize country names (US/UK), and tidy separators —
@@ -3102,7 +3153,7 @@ function rowHtml(j, mjStage){
   // turns orange when a listing has been live a long time, bold-orange when very long. Uses days-listed
   // (true live duration) when known, else the posted age.
   const _staleDays = (dl != null) ? dl : (noDate ? null : Math.floor(h/24));
-  const postedClass = _staleDays==null ? "" : _staleDays>=90 ? "pdbad" : _staleDays>=45 ? "pdwarn" : "";
+  const postedClass = _staleDays==null ? "" : _staleDays>=90 ? "pdbad" : _staleDays>=STALE_DAYS ? "pdwarn" : "";
   const postedTip = postedClass ? ` data-tip="${escTip("Live ~"+_staleDays+" days"+(relistedNow(j)?" · posted date refreshed":"")+" — long-running posts are more likely stale or 'ghost' listings.")}"` : "";
   const relistChip = relistedNow(j) ? `<span class="tag relist" data-tip="This role has been live far longer than its shown posted date${j.relistCount>1?` (date refreshed ${j.relistCount}×)`:''} — re-posted/refreshed rather than newly open.">↻ re-listed${j.relistCount>1?` ${j.relistCount}×`:''}</span>` : "";
   const poolBadge = j.pool ? `<span class="poolbadge" data-tip="A talent pool / general application — not a specific open role.">talent pool</span>` : "";
