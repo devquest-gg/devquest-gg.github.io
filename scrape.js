@@ -35,22 +35,23 @@ const DIRECTORY = [
   // (PUBG Studios is now a live source — see the KRAFTON krafton.com scraper below, which covers PUBG
   //  Studios and the other KRAFTON sub-studios — so its link-out was removed.)
   // Can't cleanly scrape (Xbox first-party portals, custom sites, or a Pinpoint board) — link-outs.
-  { name: "Retro Studios", url: "https://careers.nintendo.com/studios/retro-studios/", note: "Metroid Prime, Donkey Kong — Nintendo (Austin)", city: "Austin, TX" },
+  // (Retro Studios promoted to mainland 2026-07-05 — carved out of Nintendo's shared Greenhouse board via titleInclude "(Retro Studios)"; see fetchGreenhouse.)
   { name: "Rare", url: "https://www.rare.co.uk/careers", note: "Sea of Thieves — Xbox Game Studios (UK)", city: "Twycross, UK" },
   // (Atlus promoted to mainland 2026-07-04 — atlus.com/careers redirects to a Paycom portal; see fetchAtlus.)
   // Custom / first-party / unsupported-ATS boards — link-outs (June 2026 batch).
   // (Owlcat Games promoted to mainland 2026-07-04 — owlcat.games/careers Next.js site, jobs in __NEXT_DATA__; see fetchOwlcat.)
   { name: "Sucker Punch Productions", url: "https://jobs.suckerpunch.com/", note: "Ghost of Tsushima/Yōtei — Sony first-party (Bellevue, WA)", city: "Bellevue, WA" },
-  { name: "Grinding Gear Games", url: "https://www.grindinggear.com/?page=careers", note: "Path of Exile — Tencent (Auckland, NZ)", city: "Auckland, New Zealand" },
+  // (Grinding Gear Games promoted to mainland 2026-07-05 — self-hosted careers page (email apply); see fetchGrindingGear.)
   // batch 3 (2026-06-08): self-hosted / no-API boards — browse directly
   { name: "Void Interactive", url: "https://voidinteractive.net/careers/", note: "Ready or Not (Dublin)", city: "Dublin, Ireland" },
   { name: "Grip Studios", url: "https://grip-studios.com/hiring.php", note: "Co-development on Indiana Jones and Civ VII (Prague)", city: "Prague, Czechia" },
-  { name: "Mad Head Games", url: "https://careers.madheadgames.com/", note: "Scars Above, Pavilion (Serbia)", city: "Novi Sad, Serbia" },
+  { name: "Mad Head Games", type: "madhead", city: "Belgrade, Serbia" }, // Scars Above, Pavilion — self-hosted careers site; jobs via an AJAX "JobList" endpoint (X-Requested-With header). ~5 roles in Belgrade (Art/Animation/Design/People), all Hybrid; skips "Open application". Promoted from Island 2026-07-05 — spot-check first scrape
+  { name: "Trailmix Games", type: "trailmix", careersUrl: "https://www.trailmixgames.com/careers", city: "London, UK" }, // Love & Pies — mobile; self-hosted Webflow careers page, <a> links to /jobs/<slug>. ~3 roles (London + Berlin), discipline/location from title. Promoted from Island 2026-07-05 — spot-check first scrape
   // (LightFury Games promoted to mainland 2026-07-05 — Keka careers JSON API; see fetchKeka.)
   // 2026-06-19 batch: custom sites / unsupported ATS (Paylocity, HiringThing, Talentsoft, Webflow) — link-outs
-  { name: "Trailmix Games", url: "https://www.trailmixgames.com/careers", note: "Love & Pies — mobile (London)", city: "London, UK" },
+  // (Trailmix Games promoted to mainland 2026-07-05 — self-hosted Webflow careers page; see fetchTrailmix.)
   { name: "Gunfire Games", url: "https://gunfiregames.com/careers", note: "Remnant, Darksiders — Paylocity board", city: "Austin, TX" },
-  { name: "10:10 Games", url: "https://www.1010games.com/join-us", note: "ex-Playtonic / Crash devs (Warrington)", city: "Warrington, UK" },
+  { name: "10:10 Games", type: "bamboohr", token: "1010games", city: "Warrington, UK" }, // ex-Playtonic / Crash devs — BambooHR board (1010games.bamboohr.com); ~3 roles in Warrington (Art/Design). Skips speculative applications. Promoted from Island 2026-07-05 — spot-check first scrape
   // batch 4 (2026-06-09): notable + mobile studios on custom / region-specific ATS — browse directly
   // (Kojima Productions promoted to mainland 2026-07-04 — kojimaproductions.jp POST /kjpviewloader/load; see fetchKojima.)
   // (Cygames promoted to mainland 2026-07-04 — recruit.cygames.co.jp/career server-renders all roles; see fetchCygames.)
@@ -63,12 +64,12 @@ const DIRECTORY = [
   // (Miniclip promoted to mainland 2026-07-04 — miniclip.com/careers/vacancies server-renders all roles; see fetchMiniclip.)
   { name: "Keen Software House", url: "https://www.keenswh.com/careers/", note: "Space Engineers (Prague)", city: "Prague, Czechia" },
   // From the Grackle HQ comparison (2026-06-11): notable studios on custom careers sites.
-  { name: "FromSoftware", url: "https://careers.fromsoftware.jp/en/openpositions.html", note: "Elden Ring, Dark Souls (Japan)", city: "Tokyo, Japan" },
+  // (FromSoftware promoted to mainland 2026-07-05 — self-hosted recruiting site (.bluebox links); see fetchFromSoftware.)
   { name: "Robot Entertainment", url: "https://robotentertainment.com/careers", note: "Orcs Must Die! — fully remote (US Central)", city: "Plano, TX" },
   // batch 6 (2026-06-13): Hitmarker gap analysis — notable independents + JP/KR studios on
   // boutique/custom ATS (Teamtailor, Pinpoint, JazzHR, regional). Link-outs for now; several
   // cluster onto the same ATS, so a single Teamtailor or Pinpoint fetcher could promote a batch.
-  { name: "Konami", url: "https://www.konami.com/games/us/en/jobs/", note: "Metal Gear, Silent Hill, Castlevania", city: "Tokyo, Japan" },
+  // (Konami promoted to mainland 2026-07-05 — self-hosted US careers page (Yu-Gi-Oh! TCG/organized-play roles); see fetchKonami.)
   { name: "PlatinumGames", url: "https://www.platinumgames.com/recruit/mid-career/", note: "Bayonetta, NieR: Automata (Japan)", city: "Osaka, Japan" },
   { name: "Level-5", url: "https://www.level5.co.jp/", note: "Professor Layton, Ni no Kuni (Japan)", city: "Fukuoka, Japan" },
   { name: "Koei Tecmo", url: "https://www.koeitecmo.com.sg/index.php/careers/", note: "Dynasty Warriors, Nioh, Atelier (Japan)", city: "Yokohama, Japan" },
@@ -86,21 +87,21 @@ const DIRECTORY = [
   // to the Mainland 2026-07-04 once fetchHrmos was added (HRMOS server-renders its list after all).
   // (Codemasters is EA-owned, covered by the EA board.)
   // (Kepler Interactive promoted to mainland 2026-07-05 — classic Teamtailor theme; see fetchTeamtailor.)
-  { name: "Sloclap", url: "https://careers.sloclap.com/", note: "Sifu, Absolver", city: "Paris, France" },
-  { name: "Deck13 Interactive", url: "https://deck13jobs.kenjo.io/", note: "Lords of the Fallen, The Surge — Kenjo board", city: "Frankfurt, Germany" },
+  // (Sloclap promoted to mainland 2026-07-05 — Teamtailor "cards" theme; roles deduped off Kepler's aggregator board. See fetchTeamtailor.)
+  { name: "Deck13 Interactive", type: "kenjo", token: "deck13jobs", city: "Frankfurt, Germany" }, // Lords of the Fallen, The Surge — Kenjo careers site, public positions JSON API (/api/controller/career-site/public/deck13jobs/positions). ~2 roles (Art/Tech), Frankfurt + remote-in-Germany (Hybrid). Skips General Application. Promoted from Island 2026-07-05 — spot-check first scrape
   { name: "Gameforge", url: "https://corporate.gameforge.com/en/career/", note: "browser/MMO publisher (AION, Metin2)", city: "Karlsruhe, Germany" },
   { name: "DeNA", url: "https://herp.careers/v1/dena/", note: "mobile publisher (Pokémon Masters EX) — HERP board (JP)", city: "Tokyo, Japan" },
   // (Spike Chunsoft promoted to mainland 2026-07-05 — HRMOS board (hrmos.co/pages/spchun); same fetchHrmos as GAME FREAK / Square Enix.)
   // (Moon Active promoted to mainland 2026-07-04 — Comeet ATS (comeet.co positions API); see fetchComeet.)
   { name: "Toca Boca", url: "https://www.tocaboca.com/careers", note: "Toca Boca World — kids", city: "Stockholm, Sweden" },
   { name: "Star Stable Entertainment", url: "https://jobs.starstableentertainment.com/", note: "Star Stable Online", city: "Stockholm, Sweden" },
-  { name: "Snowprint Studios", url: "https://career.snowprintstudios.com/", note: "Warhammer 40K: Tacticus", city: "Stockholm, Sweden" },
+  // (Snowprint Studios promoted to mainland 2026-07-05 — classic Teamtailor theme; see fetchTeamtailor team-strip.)
   { name: "MAG Interactive", url: "https://career.maginteractive.com/", note: "WordBrain, Ruzzle — mobile", city: "Stockholm, Sweden" },
   { name: "Neon Giant", url: "https://jobs.neongiant.se/", note: "The Ascent", city: "Uppsala, Sweden" },
   // (Madbox promoted to mainland 2026-07-05 — Teamtailor "cards" theme; see parseTeamtailorCards.)
   { name: "Manticore Games", url: "https://www.manticoregames.com/careers/", note: "Core — UGC platform", city: "San Mateo, CA" },
   { name: "Red Rover Interactive", url: "https://careers.redroverinteractive.com/", note: "Pioneers of Pagonia", city: "Oslo, Norway" },
-  { name: "Steel City Interactive", url: "https://careers.steelcityinteractive.co.uk/", note: "Undisputed (boxing)", city: "Sheffield, UK" },
+  // (Steel City Interactive promoted to mainland 2026-07-05 — Teamtailor "cards" theme; see parseTeamtailorCards.)
   { name: "Vivid Games", url: "https://jobs.vividgames.com/", note: "Real Boxing — mobile", city: "Bydgoszcz, Poland" },
   // (SayGames promoted to mainland 2026-07-04 — Huntflow board with a public /api/vacancy JSON API; see fetchHuntflow.)
   // (Yodo1 Games promoted to mainland 2026-07-05 — Teamtailor "cards" theme; see parseTeamtailorCards.)
@@ -207,7 +208,8 @@ const STUDIOS = [
   { name: "Warhorse Studios", type: "breezy", token: "warhorsestudios", city: "Prague, Czechia" }, // Kingdom Come: Deliverance
   { name: "Fool's Theory", type: "teamtailor", token: "foolstheory", host: "careers.foolstheory.com", city: "Bielsko-Biała, Poland" }, // The Witcher Remake
   { name: "Raw Power Games", type: "teamtailor", token: "rawpowergames", host: "careers.rawpowergames.com", city: "Copenhagen, Denmark" }, // ex-IO Interactive/Hitman & AAA devs (incl. Raw Power Labs entity on same board) — spot-check first scrape
-  { name: "Kepler Interactive", type: "teamtailor", token: "kepler", host: "careers.kepler-interactive.com", city: "London, UK" }, // Clair Obscur: Expedition 33, Sifu — publisher/group of 11 studios; classic Teamtailor theme (careers.kepler-interactive.com), ~9 roles across London/Paris/Tokyo/Montréal, all Hybrid. Promoted from Island 2026-07-05 — spot-check first scrape
+  { name: "Kepler Interactive", type: "teamtailor", token: "kepler", host: "careers.kepler-interactive.com", city: "London, UK", aggregator: true },
+  { name: "Snowprint Studios", type: "teamtailor", token: "snowprintstudios", team: "Snowprint", host: "career.snowprintstudios.com", city: "Stockholm, Sweden" }, // Warhammer 40K: Tacticus — classic Teamtailor theme; meta reads "Dept · Snowprint <City> · WorkType", so team:"Snowprint" strips the office prefix + pulls work-type. ~4 roles (Code/Audio/Marketing) across Stockholm + Berlin, Hybrid. Promoted from Island 2026-07-05 — spot-check first scrape // Clair Obscur: Expedition 33, Sifu — publisher/group of 11 studios; classic Teamtailor theme (careers.kepler-interactive.com), ~9 roles across London/Paris/Tokyo/Montréal, all Hybrid. aggregator:true so roles also listed on a member studio's own board (e.g. Sloclap) are deduped in favour of that studio. Promoted from Island 2026-07-05 — spot-check first scrape
   { name: "Yodo1 Games", type: "teamtailor", theme: "cards", token: "yodo1", team: "Yodo1", host: "careers.yodo1.com", city: "Remote" }, // Crossy Road, Rodeo Stampede — mobile publisher, fully remote. Teamtailor "cards" theme (meta div is a sibling of the title anchor); all roles Remote (~18: publishing, licensing, product, ops). Promoted from Island 2026-07-05 — spot-check first scrape
   { name: "LightFury Games", type: "keka", token: "lightfury", city: "Bengaluru, India" }, // AAA game-tech studio (India/UK) — Keka careers portal, clean JSON API (/careers/api/jobs/default/active). ~14 roles (mostly Engineering/Design/Product in Bengaluru); real per-job URLs + posted dates + YOE, no salary. Promoted from Island 2026-07-05 — spot-check first scrape
   { name: "Madbox", type: "teamtailor", theme: "cards", token: "madbox", team: "Madbox", host: "careers.madbox.io", city: "Paris, France" }, // hypercasual/casual mobile (Pocket Champs) — Teamtailor "cards" theme; team name is a prefix on office tokens ("Madbox Paris"/"Madbox Barcelona"), all roles Hybrid across Paris + Barcelona (~13). Promoted from Island 2026-07-05 — spot-check first scrape
@@ -217,6 +219,12 @@ const STUDIOS = [
   { name: "Hello Games", type: "hellogames", careersUrl: "https://hellogames.org/join-us/", city: "Guildford, UK" }, // No Man's Sky — self-hosted static careers page (hellogames.org/join-us), server-rendered <a href="/jobs/slug/"> list; ~8 roles (Eng/Art/QA/Production), all Guildford. Discipline from title. Promoted from Island 2026-07-05 — spot-check first scrape
   { name: "Torpor Games", type: "hibob", token: "torporgames", city: "Berlin, Germany" }, // The Conformist, Project Vanguard — HiBob (Bob) ATS; clean JSON API (torporgames.careers.hibob.com/api/job-ad). ~6 roles (Writing/Design/Eng/Finance), all Berlin HQ, Hybrid; posted dates + workspaceType. Skips speculative applications. Promoted from Island 2026-07-05 — spot-check first scrape
   { name: "Flix Interactive", type: "flix", careersUrl: "https://www.flixinteractive.com/", city: "West Midlands, UK" }, // Unreal co-dev (Sea of Thieves, Mafia, Sniper Elite) — self-hosted WP careers page, .vacancy-card links to /vacancies/slug/ with title + location; ~4 roles (email apply), all UK Remote/Hybrid. Skips speculative applications. Promoted from Island 2026-07-05 — spot-check first scrape
+  { name: "FromSoftware", type: "fromsoftware", careersUrl: "https://careers.fromsoftware.jp/en/openpositions.html", city: "Tokyo, Japan" },
+  { name: "Grinding Gear Games", type: "grindinggear", careersUrl: "https://www.grindinggear.com/?page=careers", city: "Auckland, New Zealand", parentCompany: "Tencent" },
+  { name: "Konami", type: "konami", careersUrl: "https://www.konami.com/games/us/en/jobs/", city: "Hawthorne, CA" }, // Yu-Gi-Oh! TCG / US organized-play & card-business roles — self-hosted careers page; <h3> titles under <h2> location groups, all Hybrid (Hawthorne, CA). Discipline from title. Promoted from Island 2026-07-05 — spot-check first scrape
+ // Path of Exile — self-hosted careers page (email apply); roles as <h2> titles, all Auckland/Onsite (relocation offered). Discipline from title. Promoted from Island 2026-07-05 — spot-check first scrape // Elden Ring, Dark Souls — self-hosted recruiting site; roles as .bluebox links grouped under <h3> discipline headers, all Tokyo/Onsite. English board (roles open to non-Japanese speakers). Promoted from Island 2026-07-05 — spot-check first scrape
+  { name: "Sloclap", type: "teamtailor", theme: "cards", token: "sloclap", team: "Sloclap", host: "careers.sloclap.com", city: "Paris, France" },
+  { name: "Steel City Interactive", type: "teamtailor", theme: "cards", token: "steelcityinteractive", host: "careers.steelcityinteractive.co.uk", city: "Sheffield, UK" }, // Undisputed (boxing) — Teamtailor "cards" theme; meta is plain "Dept · Location · WorkType" (no team token). ~5 roles across Sheffield/Leamington Spa (Programming/Design/Ops), mostly Hybrid. Promoted from Island 2026-07-05 — spot-check first scrape // Sifu, Absolver — Kepler member studio; Teamtailor "cards" theme (careers.sloclap.com), ~3 Paris roles (Art/VFX/Producing), all Hybrid. Shares Kepler's Teamtailor tenant, so these same IDs are deduped off the Kepler aggregator board. Promoted from Island 2026-07-05 — spot-check first scrape
   { name: "GIANTS Software", type: "smartrecruiters", token: "GIANTSSoftwareGmbH", city: "Zurich, Switzerland" }, // Farming Simulator — spot-check first scrape
   { name: "Mad Mushroom", type: "workable", token: "otk-media", city: "Austin, TX" }, // OTK Network — spot-check first scrape
   { name: "LightSpeed Studios", type: "workday", host: "tencent.wd1.myworkdayjobs.com", tenant: "tencent", site: "Lightspeed", token: "lightspeed", city: "Los Angeles, CA" }, // PUBG Mobile (Tencent) — spot-check first scrape
@@ -286,7 +294,8 @@ const STUDIOS = [
   // { name: "PlayStation (Sony)", type: "workday", token: "sonyglobal",
   //   host: "sonyglobal.wd1.myworkdayjobs.com", tenant: "sonyglobal", site: "SonyGlobalCareers", search: "PlayStation" },
   // ---- Promoted from the directory by the June 7 2026 island re-audit ----
-  { name: "Nintendo", type: "greenhouse", token: "nintendo" },
+  { name: "Nintendo", type: "greenhouse", token: "nintendo", titleExclude: "\\(Retro Studios\\)" }, // shares its Greenhouse board with subsidiary studios tagged in the title; Retro Studios is listed separately, so exclude its roles here to avoid duplicates
+  { name: "Retro Studios", type: "greenhouse", token: "nintendo", titleInclude: "\\(Retro Studios\\)", titleStrip: "\\s*\\(Retro Studios\\)\\s*", city: "Austin, TX", parentCompany: "Nintendo" }, // Metroid Prime, Donkey Kong — Nintendo subsidiary; roles live on the shared Nintendo Greenhouse board tagged "(Retro Studios)". ~6 Austin roles (Art/Animation/Eng). Promoted from Island 2026-07-05 — spot-check first scrape
   { name: "Mojang Studios", type: "greenhouse", token: "mojangab" },
   { name: "Bandai Namco", type: "greenhouse", token: "bandainamco" },
   { name: "Firaxis Games", type: "greenhouse", token: "firaxis" },
@@ -1133,7 +1142,7 @@ function strongTitleDiscipline(t) {
   // EXCEPT corporate generalists (HR/People/Talent/etc.), which we guard out so they don't become Art.
   if (/\bgeneralist\b/.test(t) && !/\b(hr|human resources|people|talent|recruit|payroll|benefits|office|business|marketing|finance|legal|it|sales|community|player support)\b/.test(t)) return "Art";
   if (/\banimator\b|animation (director|lead|manager|supervisor)|\brigging\b|cinematics? (director|lead|supervisor|manager|animator|designer|editor|artist|coordinator)|\bcinematic editor\b|\bmocap\b|motion[ -]?capture/.test(t)) return "Animation";
-  if (/game design|level design|systems? design|narrative design|\bwriter\b|\bscénariste\b|encounter design|combat design|content design|economy design|quality design|gameplay design|ux design|ui design|concepteur|conceptrice|conception de jeu|world build|world design|environment design|game (direct(or|ion)|lead)|creative direct(or|ion)|directeur (créatif|creatif)|directrice (créative|creative)/.test(t)) return "Design";
+  if (/game design|level design|systems? design|technical design|narrative design|\bwriter\b|\bscénariste\b|encounter design|combat design|content design|economy design|quality design|gameplay design|ux design|ui design|concepteur|conceptrice|conception de jeu|world build|world design|environment design|game (direct(or|ion)|lead)|creative direct(or|ion)|directeur (créatif|creatif)|directrice (créative|creative)/.test(t)) return "Design";
   // "Feature Lead / Feature Designer" at a game studio is design leadership (owns a game feature).
   // Adjacent "feature lead" only, so "Feature Engineering Lead" still falls to Engineering below.
   if (/\bfeature (team )?(lead|owner)\b|\bfeature design(er)?\b/.test(t)) return "Design";
@@ -1200,8 +1209,8 @@ function mapDiscipline(raw, title) {
   // data: only clear data signals (NOT bare "analyst", which catches finance/business analysts)
   if (/\bdata\b|data scien|\banalytics\b|business intelligence|\bbi\b|insights/.test(t)) return "Data & Analytics";
   if (/player support|customer support|community support/.test(t)) return "Player Support";
-  if (/human resources|\bhr\b|people (?:&|and) culture|people ops|people operations|talent acquisition|\brecruit(?:er|ing|ment)?\b|compensation|\bpayroll\b|\bbenefits\b|learning (?:&|and) development|\bl&d\b/.test(t)) return "People & Ops"; // HR/People titles (esp. under generic "General"/"Corporate" departments)
-  if (/market|\bbrand\b|public relations|\bpr\b|social media|communit|influencer|communication/.test(t)) return "Marketing";
+  if (/human resources|\bhr\b|people (?:&|and) culture|people ops|people operations|talent acquisition|\brecruit(?:er|ing|ment)?\b|compensation|\bpayroll\b|\bbenefits\b|learning (?:&|and) development|\bl&d\b|relocation|mobility specialist/.test(t)) return "People & Ops"; // HR/People titles (esp. under generic "General"/"Corporate" departments)
+  if (/market|\bbrand\b|public relations|\bpr\b|social media|communit|influencer|communication|esports|e-sports|tournament|organized play|broadcast|\bgrowth\b|user acquisition|\bua\b/.test(t)) return "Marketing"; // incl. esports / organized-play / broadcast / growth / UA community roles
   // Final fallback: a recognized department was already mapped above, so anything left is unknown.
   // Return the canonical catch-all — never the raw ATS string (that leaked junk like a studio or
   // status label into the discipline field, e.g. "Ubisoft" / "Currently Hiring").
@@ -1244,8 +1253,8 @@ function inferRegion(location) {
   if (/(united states|usa|\b(ca|wa|tx|ny|md|fl|il|ma|nc|ga)\b|los angeles|seattle|austin|new york|san (francisco|mateo|diego)|bellevue|irvine|burbank|santa monica|redmond|mercer island|atlanta|chicago|boston|novato)/.test(l)) return "North America";
   if (/(canada|montreal|montréal|toronto|vancouver|quebec)/.test(l)) return "North America";
   if (/(mexico|brazil|são paulo|sao paulo|argentina|chile|colombia)/.test(l)) return "Latin America";
-  if (/(uk|united kingdom|london|oxford|horsham|brighton|derby|ireland|dublin|france|paris|lyon|germany|berlin|poland|warsaw|romania|bucharest|spain|barcelona|madrid|portugal|lisbon|porto|belgium|ghent|netherlands|amsterdam|zoetermeer|finland|espoo|helsinki|sweden|stockholm|turkey|türkiye|istanbul|czech|prague|cyprus|nicosia|limassol|ukraine|kyiv|kiev|kharkiv|lviv|\beurope\b)/.test(l)) return "Europe";
-  if (/(japan|tokyo|china|shanghai|guangzhou|beijing|hong kong|korea|seoul|singapore|taiwan|taipei|australia|sydney|india|bangalore|mumbai|vietnam|hanoi|ho chi minh|thailand|bangkok|malaysia|philippines|manila|indonesia|jakarta|bangladesh|dhaka)/.test(l)) return "Asia-Pacific";
+  if (/(uk|united kingdom|london|oxford|horsham|brighton|derby|sheffield|leamington|ireland|dublin|france|paris|lyon|germany|berlin|poland|warsaw|romania|bucharest|spain|barcelona|madrid|portugal|lisbon|porto|belgium|ghent|netherlands|amsterdam|zoetermeer|finland|espoo|helsinki|sweden|stockholm|turkey|türkiye|istanbul|czech|prague|cyprus|nicosia|limassol|ukraine|kyiv|kiev|kharkiv|lviv|serbia|belgrade|beograd|novi sad|warrington|cheshire|\beurope\b)/.test(l)) return "Europe";
+  if (/(japan|tokyo|china|shanghai|guangzhou|beijing|hong kong|korea|seoul|singapore|taiwan|taipei|australia|sydney|melbourne|new zealand|auckland|wellington|india|bangalore|mumbai|vietnam|hanoi|ho chi minh|thailand|bangkok|malaysia|philippines|manila|indonesia|jakarta|bangladesh|dhaka)/.test(l)) return "Asia-Pacific";
   if (/(dubai|uae|saudi|riyadh|israel|tel aviv|herzliya|south africa|morocco|casablanca)/.test(l)) return "Middle East & Africa";
   if (/remote/.test(l)) return "Remote";
   return "Other";
@@ -1455,16 +1464,24 @@ async function fetchGreenhouse(studio) {
   const data = SAMPLE_FILE ? loadSample(studio)
     : await fetchJson(`https://boards-api.greenhouse.io/v1/boards/${studio.token}/jobs?content=true`);
   if (!data) return [];
-  return data.jobs.map(j => {
+  let jobs = data.jobs || [];
+  // Optional per-studio title filters. A shared Greenhouse board (e.g. Nintendo) can host
+  // several sub-studios tagged in the title, e.g. "... (Retro Studios)". titleInclude carves
+  // out one studio's roles; titleExclude drops them from the parent so they aren't duplicated;
+  // titleStrip removes the now-redundant tag from the displayed title.
+  if (studio.titleInclude) { const re = new RegExp(studio.titleInclude, "i"); jobs = jobs.filter(j => re.test(j.title || "")); }
+  if (studio.titleExclude) { const re = new RegExp(studio.titleExclude, "i"); jobs = jobs.filter(j => !re.test(j.title || "")); }
+  return jobs.map(j => {
     const location = j.location?.name || "Unlisted";
     const craft = ["Craft", "Career Page - Sub Department", "Job Family", "Job Family Group"]
       .map(f => metaValue(j.metadata, f)).find(v => v) || null;
     const desc = stripHtml(j.content);
     const dept = studio.deptAsStudio ? metaValue(j.metadata, "Career Page - Department") : null;
     const isStudioDept = dept && STUDIO_DEPT.test(dept);
+    const title = studio.titleStrip ? String(j.title || "").replace(new RegExp(studio.titleStrip, "ig"), "").replace(/\s+/g, " ").trim() : j.title;
     return {
       id: `gh-${studio.token}-${j.id}`,
-      title: j.title,
+      title,
       tech: extractTech(j.title + " " + desc),
       studio: isStudioDept ? dept : studio.name,
       discipline: mapDiscipline(craft, j.title),
@@ -2033,6 +2050,9 @@ function parseTeamtailorCards(html, studio) {
       }
       if (rest.length) dept = rest[0];
       if (cities.length) location = cities.join(", ");
+      else if (rest.length >= 2) location = rest.slice(1).join(", "); // "Dept · Location" with no team-name token (e.g. Steel City)
+      else if (metaWorkType === "Remote") location = "Remote";
+      else if (metaWorkType && studio.city) location = studio.city; // Hybrid/Onsite with no city -> studio HQ
       else if (metaWorkType) location = metaWorkType;
     }
     if (/^fully remote$/i.test(location) || /^remote$/i.test(location)) location = "Remote";
@@ -2073,12 +2093,27 @@ function parseTeamtailor(html, studio) {
     if (!title) continue;
     seen.add(id);
     // department + location from the "mt-1" meta div (spans split by ·)
-    let dept = null, location = "Unlisted";
+    let dept = null, location = "Unlisted", metaWorkType = null;
     const meta = inner.match(/<div class="mt-1[^"]*">([\s\S]*?)<\/div>/);
     if (meta) {
       // decode entities first (so · separators are real), strip tags, split on the bullet
       const text = decodeEnt(meta[1].replace(/<[^>]*>/g, " ")).replace(/\s+/g, " ").trim();
-      const parts = text.split("·").map(s => s.trim()).filter(Boolean);
+      let parts = text.split("·").map(s => s.trim()).filter(Boolean);
+      // Opt-in cleaning (studios with a team token, e.g. Snowprint whose meta reads
+      // "Code · Snowprint Stockholm · Hybrid"): pull the work-type out of the parts and
+      // strip the company/team prefix from office names ("Snowprint Stockholm" -> "Stockholm").
+      // Gated on studio.team so the many classic-theme studios are completely unaffected.
+      if (studio.team) {
+        const WT = /^(fully remote|remote|hybrid|on[-\s]?site|onsite|in office)$/i;
+        const tr = new RegExp("^" + studio.team.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "\\s+", "i");
+        const kept = [];
+        for (const p of parts) {
+          if (WT.test(p)) { const pl = p.toLowerCase(); metaWorkType = /hybrid/.test(pl) ? "Hybrid" : /remote/.test(pl) ? "Remote" : "Onsite"; continue; }
+          const c = p.replace(tr, "").trim();
+          if (c) kept.push(c);
+        }
+        parts = kept.length ? kept : (metaWorkType ? [metaWorkType] : []);
+      }
       if (parts.length >= 2) { dept = parts[0]; location = parts.slice(1).join(", "); }
       else if (parts.length === 1) location = parts[0];
     }
@@ -2087,7 +2122,7 @@ function parseTeamtailor(html, studio) {
       title,
       studio: studio.name,
       discipline: mapDiscipline(dept, title),
-      workType: inferWorkType(title, location, []),
+      workType: metaWorkType || inferWorkType(title, location, []),
       location,
       region: inferRegion(location),
       seniority: inferSeniority(title),
@@ -2361,6 +2396,8 @@ async function fetchBambooHr(studio) {
   let result = [];
   if (SAMPLE_FILE) { const d = loadSample(studio); if (!d) return []; result = d.result || []; }
   else { const d = await fetchJson(`https://${studio.token}.bamboohr.com/careers/list`); result = d.result || []; }
+  // drop evergreen "speculative / open / general application" placeholders (not real openings)
+  result = result.filter(j => !/speculative|spontaneous|open application|general application|talent pool|future opportunit/i.test(j.jobOpeningName || ""));
   return result.map(j => {
     const loc = j.location ? [j.location.city, j.location.state].filter(Boolean).join(", ") : "";
     const location = loc || "Unlisted";
@@ -4190,7 +4227,256 @@ async function fetchFlix(studio) {
   }
   return out;
 }
-const FETCHERS = { greenhouse: fetchGreenhouse, lever: fetchLever, workday: fetchWorkday, avature: fetchAvature, smartrecruiters: fetchSmartRecruiters, workable: fetchWorkable, phenom: fetchPhenom, teamtailor: fetchTeamtailor, eightfold: fetchEightfold, amazonjobs: fetchAmazonJobs, ashby: fetchAshby, zenimax: fetchZenimax, bamboohr: fetchBambooHr, jobscore: fetchJobScore, jazzhr: fetchJazzHr, jobvite: fetchJobvite, recruitee: fetchRecruitee, personio: fetchPersonio, rippling: fetchRippling, breezy: fetchBreezy, manatal: fetchManatal, sumodigital: fetchSumoDigital, pinpoint: fetchPinpoint, playground: fetchPlayground, obsidian: fetchObsidian, techland: fetchTechland, oracle: fetchOracle, cig: fetchCig, critpath: fetchCritpath, krafton: fetchKrafton, eidos: fetchEidos, hiringthing: fetchHiringThing, segacareers: fetchSegaCareers, turn10: fetchTurn10, hrworks: fetchHRworks, smilegate: fetchSmilegate, cygames: fetchCygames, hrmos: fetchHrmos, garena: fetchGarena, shiftup: fetchShiftUp, miniclip: fetchMiniclip, playrix: fetchPlayrix, superplay: fetchSuperPlay, atlus: fetchAtlus, kojima: fetchKojima, owlcat: fetchOwlcat, comeet: fetchComeet, huntflow: fetchHuntflow, keka: fetchKeka, traffit: fetchTraffit, nekki: fetchNekki, plarium: fetchPlarium, hellogames: fetchHelloGames, hibob: fetchHibob, flix: fetchFlix };
+// ---- FromSoftware — self-hosted recruiting site ---------------------------------
+// careers.fromsoftware.jp/en/openpositions.html server-renders roles as
+// <a class="bluebox" href="<slug>.html">Title</a> grouped under <h3> discipline
+// headers (Art, Programming, ...), used as the discipline hint. All roles require
+// working in Tokyo, so they are Onsite. (Its English board lists the roles open to
+// non-Japanese speakers; the studio hires selectively.)
+async function fetchFromSoftware(studio) {
+  let html;
+  if (SAMPLE_FILE) { const d = loadSample(studio); if (!d) return []; html = typeof d === "string" ? d : (d.html || ""); }
+  else { html = await fetchText(studio.careersUrl || "https://careers.fromsoftware.jp/en/openpositions.html"); }
+  const out = [], seen = new Set();
+  let cat = null;
+  for (const m of String(html).matchAll(/<h3[^>]*>([\s\S]*?)<\/h3>|<a\b([^>]*\bbluebox\b[^>]*)>([\s\S]*?)<\/a>/gi)) {
+    if (m[1] !== undefined) { cat = decodeEnt(m[1].replace(/<[^>]+>/g, " ")).replace(/\s+/g, " ").trim(); continue; }
+    const attrs = m[2] || "";
+    const href = (attrs.match(/href="([^"]+)"/) || [])[1] || "";
+    const title = decodeEnt(m[3].replace(/<[^>]+>/g, " ")).replace(/\s+/g, " ").trim();
+    if (!href || !title || seen.has(href)) continue;
+    seen.add(href);
+    const slug = href.replace(/^.*\//, "").replace(/\.html?$/i, "");
+    const location = studio.city || "Tokyo, Japan";
+    out.push({
+      id: `fromsoft-${slug}`,
+      title,
+      tech: extractTech(title),
+      studio: studio.name,
+      discipline: mapDiscipline(cat, title),
+      workType: "Onsite",
+      location,
+      region: inferRegion(location),
+      seniority: inferSeniority(title),
+      salary: null,
+      yoe: null,
+      postedAt: null,
+      url: /^https?:/i.test(href) ? href : "https://careers.fromsoftware.jp/en/" + href.replace(/^\//, ""),
+    });
+  }
+  return out;
+}
+// ---- Grinding Gear Games — self-hosted careers page (email apply) ---------------
+// grindinggear.com/?page=careers lists open roles as <h2> titles after a "the
+// following positions" marker (the two intro <h2> sentences are excluded by length /
+// punctuation / keyword). Email-apply, no per-job pages, so each role links to the
+// careers page. All roles are Auckland, New Zealand, on-site (relocation offered).
+async function fetchGrindingGear(studio) {
+  let html;
+  if (SAMPLE_FILE) { const d = loadSample(studio); if (!d) return []; html = typeof d === "string" ? d : (d.html || ""); }
+  else { html = await fetchText(studio.careersUrl || "https://www.grindinggear.com/?page=careers"); }
+  const start = String(html).search(/following positions/i);
+  const region = start > -1 ? String(html).slice(start) : String(html);
+  const out = [], seen = new Set();
+  const location = studio.city || "Auckland, New Zealand";
+  const careersUrl = studio.careersUrl || "https://www.grindinggear.com/?page=careers";
+  for (const m of region.matchAll(/<h2[^>]*>([\s\S]*?)<\/h2>/gi)) {
+    const title = decodeEnt(m[1].replace(/<[^>]+>/g, " ")).replace(/\s+/g, " ").trim();
+    if (!title || title.length > 60 || /\.$/.test(title) || /hiring|interested|contact|apply|currently|following/i.test(title)) continue;
+    const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+    if (!slug || seen.has(slug)) continue;
+    seen.add(slug);
+    out.push({
+      id: `ggg-${slug}`,
+      title,
+      tech: extractTech(title),
+      studio: studio.name,
+      discipline: mapDiscipline("", title),
+      workType: "Onsite",
+      location,
+      region: inferRegion(location),
+      seniority: inferSeniority(title),
+      salary: null,
+      yoe: null,
+      postedAt: null,
+      url: careersUrl,
+    });
+  }
+  return out;
+}
+// ---- Konami (US card-business / Yu-Gi-Oh! TCG) — self-hosted careers page --------
+// konami.com/games/us/en/jobs server-renders roles as <h3> titles grouped under <h2>
+// company/location headers ("Konami Digital Entertainment, Inc. Hawthorne, CA"). Work
+// type is a "(Hybrid/Full-time)" suffix; a CALIFORNIA NOTICE <h3> is skipped. No per-job
+// pages, so each role links to the careers page. (This board is the US TCG/organized-play
+// side; Konami's Japan game-dev roles live on a separate site.)
+async function fetchKonami(studio) {
+  let html;
+  if (SAMPLE_FILE) { const d = loadSample(studio); if (!d) return []; html = typeof d === "string" ? d : (d.html || ""); }
+  else { html = await fetchText(studio.careersUrl || "https://www.konami.com/games/us/en/jobs/"); }
+  const out = [], seen = new Set();
+  let loc = studio.city || "Unlisted";
+  const careersUrl = studio.careersUrl || "https://www.konami.com/games/us/en/jobs/";
+  for (const m of String(html).matchAll(/<h2[^>]*>([\s\S]*?)<\/h2>|<h3[^>]*>([\s\S]*?)<\/h3>/gi)) {
+    if (m[1] !== undefined) {
+      const txt = decodeEnt(m[1].replace(/<[^>]+>/g, " ")).replace(/\s+/g, " ").trim();
+      const cm = txt.match(/([A-Z][a-zA-Z]+(?:\s[A-Z][a-zA-Z]+)*),\s([A-Z]{2})\s*$/);
+      if (cm) loc = `${cm[1]}, ${cm[2]}`;
+      continue;
+    }
+    const t = decodeEnt(m[2].replace(/<[^>]+>/g, " ")).replace(/\s+/g, " ").trim();
+    if (!t || /notice|privacy|policy|applicant/i.test(t)) continue;
+    const wl = (t.match(/\((?:Hybrid|Remote|On-?site|Full-time|Part-time)[^)]*\)/i) || [""])[0].toLowerCase();
+    const workType = /hybrid/.test(wl) ? "Hybrid" : /remote/.test(wl) ? "Remote" : /on-?site/.test(wl) ? "Onsite" : null;
+    const title = t.replace(/\s*\((?:[^()]*(?:Hybrid|Remote|On-?site|Full-time|Part-time)[^()]*)\)\s*$/i, "").trim();
+    const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+    if (!slug || seen.has(slug)) continue;
+    seen.add(slug);
+    out.push({
+      id: `konami-${slug}`,
+      title,
+      tech: extractTech(title),
+      studio: studio.name,
+      discipline: mapDiscipline("", title),
+      workType: workType || inferWorkType(title, loc, []),
+      location: loc,
+      region: inferRegion(loc),
+      seniority: inferSeniority(title),
+      salary: null,
+      yoe: null,
+      postedAt: null,
+      url: careersUrl,
+    });
+  }
+  return out;
+}
+// ---- Mad Head Games — self-hosted careers site (custom "JobList" widget) ---------
+// careers.madheadgames.com is a jQuery site whose jobs load from an AJAX-only endpoint:
+//   GET /JobList?...&subdomain=madheadgames&page=1&pageSize=50  (needs the X-Requested-With
+//   header; omit the "d" filter param to get all roles). Returns an HTML fragment of
+//   <a class="jobs__box" href=".../jobs/<slug>"><h3>Title</h3><p>City (WorkType)</p></a>.
+//   Skips the evergreen "Open application".
+async function fetchMadHead(studio) {
+  let html;
+  if (SAMPLE_FILE) { const d = loadSample(studio); if (!d) return []; html = typeof d === "string" ? d : (d.html || ""); }
+  else {
+    const url = studio.jobsUrl || "https://careers.madheadgames.com/JobList?layoutId=Jobs-2&websiteUrl=https://careers.madheadgames.com&themeId=2&language=en&subdomain=madheadgames&page=1&pageSize=50&contains=";
+    const res = await fetchRetry(url, { headers: {
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36",
+      "X-Requested-With": "XMLHttpRequest", "Accept": "text/html" } });
+    html = await res.text();
+  }
+  const out = [], seen = new Set();
+  for (const m of String(html).matchAll(/<a\b([^>]*\bjobs__box\b[^>]*)>([\s\S]*?)<\/a>/gi)) {
+    const attrs = m[1], inner = m[2];
+    const href = (attrs.match(/href="([^"]+)"/) || [])[1] || "";
+    const slug = (href.match(/\/jobs\/([a-z0-9-]+)/i) || [])[1] || "";
+    const title = decodeEnt((inner.match(/<h3[^>]*>([\s\S]*?)<\/h3>/i) || [, ""])[1].replace(/<[^>]+>/g, " ")).replace(/\s+/g, " ").trim();
+    if (!title || !slug || seen.has(slug)) continue;
+    if (/open application|spontaneous|speculative/i.test(title)) continue;
+    seen.add(slug);
+    const metaText = decodeEnt((inner.match(/<p[^>]*jobs__box__text[^>]*>([\s\S]*?)<\/p>/i) || [, ""])[1].replace(/<[^>]+>/g, " ")).replace(/\s+/g, " ").trim();
+    const wtM = metaText.match(/\((hybrid|remote|on-?site|onsite)\)/i);
+    const workType = wtM ? (/hybrid/i.test(wtM[1]) ? "Hybrid" : /remote/i.test(wtM[1]) ? "Remote" : "Onsite") : null;
+    const location = (metaText.replace(/\s*\([^)]*\)\s*$/, "").trim().replace(/\bBeograd\b/i, "Belgrade")) || studio.city || "Unlisted";
+    out.push({
+      id: `madhead-${slug}`,
+      title,
+      tech: extractTech(title),
+      studio: studio.name,
+      discipline: mapDiscipline("", title),
+      workType: workType || inferWorkType(title, location, []),
+      location,
+      region: inferRegion(location),
+      seniority: inferSeniority(title),
+      salary: null,
+      yoe: null,
+      postedAt: null,
+      url: href.startsWith("http") ? href : "https://careers.madheadgames.com" + href,
+    });
+  }
+  return out;
+}
+// ---- Kenjo (Deck13 + others) — career-site public positions API -----------------
+// <token>.kenjo.io is an Angular careers site backed by a clean JSON API:
+//   GET /api/controller/career-site/public/<token>/positions
+//   -> { activePositions:[ { _id, jobTitle, customUrl, departmentName, officeName,
+//        positionType } ] }. Detail pages at /<customUrl>. officeName like
+//   "Frankfurt am Main / Remote in Germany" -> Hybrid. Skips "General Application".
+async function fetchKenjo(studio) {
+  const token = studio.token;
+  let arr;
+  if (SAMPLE_FILE) { const d = loadSample(studio); if (!d) return []; arr = d.activePositions || (Array.isArray(d) ? d : []); }
+  else { const d = await fetchJson(`https://${token}.kenjo.io/api/controller/career-site/public/${token}/positions`); arr = (d && d.activePositions) || []; }
+  const out = [], seen = new Set();
+  for (const j of arr) {
+    if (!j || !j._id || seen.has(j._id)) continue;
+    const title = decodeEnt(String(j.jobTitle || "").replace(/<[^>]+>/g, " ")).replace(/\s+/g, " ").trim();
+    if (!title || /general application|speculative|spontaneous|open application|unsolicited/i.test(title)) continue;
+    seen.add(j._id);
+    const office = String(j.officeName || "").trim();
+    const remote = /remote/i.test(office);
+    const country = (office.match(/\bin\s+([A-Za-z][A-Za-z .-]+?)\s*$/) || [])[1] || "";
+    const city = office.split("/")[0].replace(/\bremote\b[\s\S]*/i, "").trim();
+    const location = city ? (country ? `${city}, ${country}` : city)
+      : (country ? `Remote, ${country}` : (remote ? "Remote" : (studio.city || "Unlisted")));
+    const workType = remote ? (city ? "Hybrid" : "Remote") : inferWorkType(title, location, []);
+    out.push({
+      id: `kenjo-${token}-${j._id}`,
+      title,
+      tech: extractTech(title),
+      studio: studio.name,
+      discipline: mapDiscipline(j.departmentName, title),
+      workType,
+      location,
+      region: inferRegion(location),
+      seniority: inferSeniority(title),
+      salary: null,
+      yoe: null,
+      postedAt: null,
+      url: `https://${token}.kenjo.io/${j.customUrl || j._id}`,
+    });
+  }
+  return out;
+}
+// ---- Trailmix Games — self-hosted Webflow careers page --------------------------
+// trailmixgames.com/careers server-renders each opening as an <a class="open-position...">
+// to /jobs/<slug>. Only the title is on the listing (apply is by form on the detail page),
+// so location defaults to the London HQ unless the title ends with a "(City)" that resolves
+// to a real region (e.g. "... (Berlin)"), which is then used as the location and stripped
+// from the title.
+async function fetchTrailmix(studio) {
+  let html;
+  if (SAMPLE_FILE) { const d = loadSample(studio); if (!d) return []; html = typeof d === "string" ? d : (d.html || ""); }
+  else { html = await fetchText(studio.careersUrl || "https://www.trailmixgames.com/careers"); }
+  const out = [], seen = new Set();
+  for (const m of String(html).matchAll(/<a[^>]*href="([^"]*\/jobs\/([a-z0-9-]+))"[^>]*>([\s\S]*?)<\/a>/gi)) {
+    const slug = m[2];
+    let title = decodeEnt(m[3].replace(/<[^>]+>/g, " ")).replace(/\s+/g, " ").trim();
+    if (!title || title.length > 120 || /find out more|apply|learn more|read more/i.test(title) || seen.has(slug)) continue;
+    seen.add(slug);
+    let location = studio.city || "London, UK";
+    const pm = title.match(/\s*\(([^)]+)\)\s*$/);
+    if (pm) { const reg = inferRegion(pm[1]); if (reg && reg !== "Other") { location = pm[1].trim(); title = title.slice(0, pm.index).trim(); } }
+    out.push({
+      id: `trailmix-${slug}`,
+      title,
+      tech: extractTech(title),
+      studio: studio.name,
+      discipline: mapDiscipline("", title),
+      workType: inferWorkType(title, location, []),
+      location,
+      region: inferRegion(location),
+      seniority: inferSeniority(title),
+      salary: null,
+      yoe: null,
+      postedAt: null,
+      url: m[1].startsWith("http") ? m[1] : "https://www.trailmixgames.com" + m[1],
+    });
+  }
+  return out;
+}
+const FETCHERS = { greenhouse: fetchGreenhouse, lever: fetchLever, workday: fetchWorkday, avature: fetchAvature, smartrecruiters: fetchSmartRecruiters, workable: fetchWorkable, phenom: fetchPhenom, teamtailor: fetchTeamtailor, eightfold: fetchEightfold, amazonjobs: fetchAmazonJobs, ashby: fetchAshby, zenimax: fetchZenimax, bamboohr: fetchBambooHr, jobscore: fetchJobScore, jazzhr: fetchJazzHr, jobvite: fetchJobvite, recruitee: fetchRecruitee, personio: fetchPersonio, rippling: fetchRippling, breezy: fetchBreezy, manatal: fetchManatal, sumodigital: fetchSumoDigital, pinpoint: fetchPinpoint, playground: fetchPlayground, obsidian: fetchObsidian, techland: fetchTechland, oracle: fetchOracle, cig: fetchCig, critpath: fetchCritpath, krafton: fetchKrafton, eidos: fetchEidos, hiringthing: fetchHiringThing, segacareers: fetchSegaCareers, turn10: fetchTurn10, hrworks: fetchHRworks, smilegate: fetchSmilegate, cygames: fetchCygames, hrmos: fetchHrmos, garena: fetchGarena, shiftup: fetchShiftUp, miniclip: fetchMiniclip, playrix: fetchPlayrix, superplay: fetchSuperPlay, atlus: fetchAtlus, kojima: fetchKojima, owlcat: fetchOwlcat, comeet: fetchComeet, huntflow: fetchHuntflow, keka: fetchKeka, traffit: fetchTraffit, nekki: fetchNekki, plarium: fetchPlarium, hellogames: fetchHelloGames, hibob: fetchHibob, flix: fetchFlix, fromsoftware: fetchFromSoftware, grindinggear: fetchGrindingGear, konami: fetchKonami, madhead: fetchMadHead, kenjo: fetchKenjo, trailmix: fetchTrailmix };
 
 // ---- Ghost-job tracking -----------------------------------------------------
 // Because we scrape on a schedule, we can see how long a listing has REALLY been
@@ -4531,6 +4817,23 @@ module.exports = { mapDiscipline, strongTitleDiscipline, normDisc };
   let droppedJunk = 0;
   for (let i = all.length - 1; i >= 0; i--) { const tt = (all[i].title || "").trim(); if (!tt || JUNK_TITLE.test(tt)) { all.splice(i, 1); droppedJunk++; } }
   if (droppedJunk) console.log(`Filtered out ${droppedJunk} junk/placeholder-title role(s).`);
+  // Cross-board dedup for Teamtailor group boards: a parent/group careers site (e.g. Kepler
+  // Interactive) re-lists the SAME Teamtailor postings that its member studios (e.g. Sloclap)
+  // show on their own boards. Teamtailor job IDs are globally unique, so when the same
+  // tt-<token>-<id> appears under both, drop the aggregator's copy so the role shows once,
+  // attributed to the specific studio.
+  const AGGREGATORS = new Set(STUDIOS.filter(s => s.aggregator).map(s => s.name));
+  if (AGGREGATORS.size) {
+    const ttNum = (j) => { const m = /^tt-.+-(\d+)$/.exec(j.id || ""); return m ? m[1] : null; };
+    const onSpecificBoard = new Set();
+    for (const j of all) { const t = ttNum(j); if (t && !AGGREGATORS.has(j.studio)) onSpecificBoard.add(t); }
+    let droppedAgg = 0;
+    for (let i = all.length - 1; i >= 0; i--) {
+      const t = ttNum(all[i]);
+      if (t && AGGREGATORS.has(all[i].studio) && onSpecificBoard.has(t)) { all.splice(i, 1); droppedAgg++; }
+    }
+    if (droppedAgg) console.log(`Deduped ${droppedAgg} aggregator role(s) already listed under a member studio.`);
+  }
   // Tabletop fix: at card / board / physical-game publishers, "Developer" means game *design*, not
   // software — e.g. a "Principal Game Developer" at Exploding Kittens is a tabletop designer. Their
   // real software roles are titled Engineer / Software / Full-Stack and are left as Engineering; we
