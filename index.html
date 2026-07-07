@@ -1426,7 +1426,9 @@ function buildProfile(){
 //   2) their discipline at other companies in their region
 //   3) their discipline, newly posted (≤14d), anywhere
 //   4) their discipline, anything else still ≤60 days
-// Acted-on roles (saved/applied/dismissed) and roles older than 60 days are never shown.
+// Hidden (✕) and rejected (⊘) roles, and roles older than 60 days, are never shown. Saved and
+//   tracked (applied/interviewing/offer) roles STAY in place, marked with their state, so bookmarking
+//   or flagging one doesn't make it jump out of the list — it just ages out normally by recency.
 function hotJobs(pool, P, n){
   // TOP priority: an explicitly pinned My-profile (target roles) overrides transient last-filters.
   const _pinRoles = profPinnedRoles();
@@ -1443,7 +1445,7 @@ function hotJobs(pool, P, n){
     const _senOK = j => { if (_tgtSen < 0) return true; var r = SEN_FILTER_ORDER.indexOf(j.sen); return r < 0 || (r >= _tgtSen-1 && r <= _tgtSen+1); };
     const cand = pool.filter(j => discSet.has(j.d) && (!remoteOnly || j.w==="Remote")
         && forYouGeoOK(j) && _senOK(j)
-        && !saved.has(j.id) && !appStatus[j.id] && !dismissed.has(j.id)
+        && !dismissed.has(j.id) && appStatus[j.id] !== "rejected"
         && (ageOf(j)==null || ageOf(j)<=HOT_MAX_DAYS));
     const cmp = (a,b)=> (senPref?((b.sen===senPref?1:0)-(a.sen===senPref?1:0)):0) || (b.ts||b.fseen||0)-(a.ts||a.fseen||0);
     return cand.sort(cmp).slice(0, n);
@@ -1461,7 +1463,7 @@ function hotJobs(pool, P, n){
     const cmp   = (a,b)=> (local(b)?1:0)-(local(a)?1:0) || (b.ts||b.fseen||0)-(a.ts||a.fseen||0);
     return pool.filter(j => jobMatchesFilters(j, lf)
         && forYouGeoOK(j)
-        && !saved.has(j.id) && !appStatus[j.id] && !dismissed.has(j.id)
+        && !dismissed.has(j.id) && appStatus[j.id] !== "rejected"
         && (ageOf(j)==null || ageOf(j)<=HOT_MAX_DAYS))
       .sort(cmp).slice(0, n);
   }
@@ -1474,7 +1476,7 @@ function hotJobs(pool, P, n){
   const ageOf = j => _ageDays(j);
   const cand = pool.filter(j => discSet.has(j.d)
       && forYouGeoOK(j)
-      && !saved.has(j.id) && !appStatus[j.id] && !dismissed.has(j.id)
+      && !dismissed.has(j.id) && appStatus[j.id] !== "rejected"
       && !P.negStudio[j.s]
       && (ageOf(j) == null || ageOf(j) <= HOT_MAX_DAYS));
   const newer    = j => { const a = ageOf(j); return a != null && a <= HOT_NEW_DAYS; };
