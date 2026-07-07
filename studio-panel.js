@@ -140,7 +140,7 @@ body.sp-open #sp-drawer{transform:translateX(0)}
     +'<div class="spstat"><b class="spup">+'+s.newWk+'</b><span>new this week</span></div>'
     +'</div>'
     +(momFlat?'':'<div class="spmom '+(momUp?'spup':'spdown')+'">Hiring is <b>'+(momUp?'up':'cooling')+'</b> this month vs last · momentum, not news.</div>')
-    +(chartHtml?'<div class="spsec"><div class="spsech">New roles by month <span class="spnote">first seen · fills in as we track longer</span></div>'+chartHtml+'</div>':'')
+    +(chartHtml?'<div class="spsec"><div class="spsech">When these roles were posted <span class="spnote">original posting month · last 12 mo</span></div>'+chartHtml+'</div>':'')
     +'<div class="spsec"><div class="spsech">Salary transparency</div><div class="spsal">'+salLine+'</div></div>'
     +'<div class="spsec"><div class="spsech">Disciplines hiring</div>'+s.disc.slice(0,8).map(function(d,i){return barRow(d[0],d[1],discMax,PAL[i%PAL.length]);}).join('')+'</div>'
     +'<div class="spsec"><div class="spsech">Seniority mix</div>'+s.sen.map(function(d){return barRow(d[0],d[1],senMax,'#3fb950');}).join('')+'</div>'

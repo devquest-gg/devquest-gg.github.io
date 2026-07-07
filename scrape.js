@@ -4507,10 +4507,17 @@ function applyListingHistory(jobs) {
         h.relistCount = (h.relistCount || 0) + 1;
       if (postedMs) h.lastPostedAt = postedMs;
     }
+    // True first-sighting date — never seeded from the studio's posted date. Preserved once set;
+    // pre-existing seen.json entries get stamped on the first run after this shipped (a one-time
+    // backlog stamp in that month, which then slides out of any 12-month window). Unlike firstSeen
+    // (bootstrapped from postedAt for realistic day-one ages), this is a genuine "when DevQuest first
+    // observed this role", so a real "new roles tracked per month" chart can build going forward.
+    if (!h.discoveredAt) h.discoveredAt = now;
     h.lastSeen = now;
     hist[j.id] = h;
 
     j.firstSeen = new Date(h.firstSeen).toISOString();
+    j.discoveredAt = new Date(h.discoveredAt).toISOString();
     j.daysListed = Math.floor((now - h.firstSeen) / DAY);
     j.relistCount = h.relistCount || 0;
     j.relisted = j.relistCount > 0;
