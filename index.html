@@ -3063,7 +3063,7 @@ function studioTipHtml(name){
   var meta = rows ? '<div class="gtmeta">'+rows+'</div>' : "";
   var g = (typeof STUDIO_TITLES !== "undefined" && STUDIO_TITLES[name])
     ? '<div class="gtgames"><div class="gtlabel">Notable games</div>'+bfEsc(STUDIO_TITLES[name])+'</div>' : "";
-  return '<div class="gttitle">'+bfEsc(name)+'</div><div class="gtsub">'+sub+'</div>'+meta+g;
+  return '<div class="gttitle">'+bfEsc(name)+'</div><div class="gtsub">'+sub+'</div>'+meta+g+'<div class="gtcta">Click name for full studio view →</div>';
 }
 // Normalize a location label: drop ATS placeholders ("BLANK"), strip ISO-2 country-code prefixes
 // ("US - San Francisco" -> "San Francisco"), standardize country names (US/UK), and tidy separators —
@@ -5263,6 +5263,8 @@ try {
   if (isIOS) maybeBanner();   // iOS has no beforeinstallprompt; Android triggers it from the event
 })();
 </script>
+<!-- Studio intelligence panel: opens a drawer/sheet from any studio name -->
+<script src="studio-panel.js"></script>
 <!-- Cloudflare Web Analytics --><script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "95619b0dc4cf4d5c897a9ccd91097d8c"}'></script><!-- End Cloudflare Web Analytics -->
 <!-- ===== DevQuest alerts + cookieless event analytics (Phase 1) ===== -->
 <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
