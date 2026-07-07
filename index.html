@@ -251,7 +251,11 @@
   /* Only Remote is highlighted (the sought-after work type, green). Hybrid/Onsite are neutral facts, so
      they stay the default gray — keeps the row calm and frees pink/red to mean "caution" (re-listed,
      pricier cost of living) rather than "onsite". */
-  .tag.remote { color: var(--green); border-color: var(--green); }
+  /* Work type: Remote/Hybrid are coloured icon chips (the flexible, sought-after states); Onsite stays a
+     quiet 🏢 on the location so it doesn't out-shout them, and Unknown shows no work-type chip at all. */
+  .wt { font-weight: 700; }
+  .tag.wt.remote { color: var(--accent); border-color: rgba(88,166,255,.5); background: rgba(88,166,255,.14); }
+  .tag.wt.hybrid { color: var(--purple); border-color: rgba(163,113,247,.5); background: rgba(163,113,247,.14); }
   .tag.unknown { border-style: dashed; }
   .tag.salary { color: var(--green); }   /* green text keeps the honest-pay signal, but no bold/green border so it no longer out-shouts the title */
   .tag.longwarn { color: var(--gold); border-color: rgba(210,153,34,.5); }
@@ -3151,6 +3155,7 @@ function rowHtml(j, mjStage){
   const _short = c => { const p = c.split(",").map(x=>x.trim()).filter(Boolean); return p.length >= 3 ? p[0] + ", " + p[p.length-1] : c; };
   const isMulti = uniqLocs.length > 1 || _hasVarious;
   let locChips;
+  const _onsiteIc = (j.w === "Onsite") ? "🏢 " : "";   // Onsite: a quiet building icon on the location chip (treatment A)
   if (isMulti) {
     // Show the 2 cities most relevant to THIS visitor; the rest collapse into "+N" (full list on hover).
     // Relevance: your profile countries first, else your home continent, else a known major hub, else the
@@ -3166,7 +3171,7 @@ function rowHtml(j, mjStage){
     const _ordered = uniqLocs.map((c,i)=>({c,i,s:_score(c)})).sort((a,b)=> b.s - a.s || a.i - b.i).map(o=>o.c);
     const _shown = _ordered.slice(0,2).map(c => c.split(",")[0].trim() || c);   // city name only on the chip
     const _more = Math.max(0, uniqLocs.length - _shown.length) + (_hasVarious ? 1 : 0);
-    const _label = _shown.length ? (_shown.join(", ") + (_more > 0 ? " +" + _more : "")) : "Multiple locations";
+    const _label = _onsiteIc + (_shown.length ? (_shown.join(", ") + (_more > 0 ? " +" + _more : "")) : "Multiple locations");
     const _tip = "<b>Locations</b>" + (uniqLocs.length ? "<br>" + uniqLocs.join("<br>") : "") + (_hasVarious ? "<br>+ other locations" : "");
     locChips = `<span class="tag locchip" data-tip="${escTip(_tip)}" ${j.url?`onclick="event.stopPropagation(); openApply('${j.id}','${j.url}')"`:""}>${_label} ↗</span>`;
   } else {
@@ -3174,7 +3179,7 @@ function rowHtml(j, mjStage){
     const _u = (j.places[0]||{}).url;
     // suppress a lone "Remote" location chip when the work-type tag already says Remote (avoids a dup)
     locChips = (!_only || (/^remote$/i.test(_only) && j.w === "Remote")) ? ""
-      : `<span class="tag locchip" ${_u?`onclick="event.stopPropagation(); openApply('${j.id}','${_u}')" data-tip="Open the ${_only} posting"`:""}>${_only}</span>`;
+      : `<span class="tag locchip" ${_u?`onclick="event.stopPropagation(); openApply('${j.id}','${_u}')" data-tip="Open the ${_only} posting"`:""}>${_onsiteIc}${_only}</span>`;
   }
   const rowClick = j.url ? `onclick="openApply('${j.id}','${j.url}')"` : "";
   // ghost-job signals (facts, not accusations)
@@ -3212,7 +3217,7 @@ function rowHtml(j, mjStage){
       <button class="dismiss" onclick="event.stopPropagation(); toggleDismiss('${j.id}')" data-tip="${isDismissed?'Restore this job':'Hide this job'}" aria-label="${isDismissed?'Restore this job':'Hide this job'}">${isDismissed?'↩':'✕'}</button>
     </div>
     <div class="rtags">
-      ${j.w!=="Unknown"?`<span class="tag ${j.w.toLowerCase()}">${j.w}</span>`:""}
+      ${j.w==="Remote"?`<span class="tag wt remote">🏠 Remote</span>`:j.w==="Hybrid"?`<span class="tag wt hybrid">⇄ Hybrid</span>`:""}
       ${locChips}
       <span class="tag">${j.sen}</span>
       ${j.salary?`<span class="tag salary">${j.salary}</span>`:""}
