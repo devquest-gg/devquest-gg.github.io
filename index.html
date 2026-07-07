@@ -4400,8 +4400,7 @@ function renderPulseStripFor(el, pool, slice){
     + (med != null ? chip("$" + med + "K", "median pay") : "")
     + (topClickable
         ? `<span class="psitem top psclick" role="button" tabindex="0" data-tip="Show ${bfEsc(m.topStudio)} jobs" onclick="filterToStudio(window.__pulseTopStudio)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();filterToStudio(window.__pulseTopStudio);}"><b>${bfEsc(m.topStudio)}</b>${m.topStudioN.toLocaleString()} role${m.topStudioN===1?'':'s'} · top for you</span>`
-        : "")
-    + `<span class="psitem count"><b>${m.open.toLocaleString()}</b>matching</span>`;
+        : "");
   dqFitPulse(el);
 }
 // Build a short label for the active filter slice, e.g. "Senior Production · Remote".
