@@ -304,6 +304,7 @@
   .ptile .pnum { font-size: 26px; font-weight: 800; color: var(--text); }
   .ptile .plabelt { font-size: 12px; color: var(--muted); margin-top: 4px; }
   #pulseStrip { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 18px; padding: 10px 18px; margin: 0 0 14px; background: var(--panel); border: 1px solid var(--border); border-radius: 12px; }
+  #pulseStrip.pspersonal { justify-content: flex-start; column-gap: 22px; }   /* personalized bar: even left-aligned spacing, no stretch */
   /* Dream Studio watchlist */
   .strow { display: flex; align-items: center; gap: 4px; }
   .fstar { cursor: pointer; color: #565d68; font-size: 15px; width: 17px; flex: none; text-align: center; line-height: 1; user-select: none; transition: color .12s, transform .12s; }
@@ -342,10 +343,10 @@
   .psvp { font-size: 13px; font-weight: 700; color: var(--text); white-space: nowrap; margin-right: 2px; }
   .psitem { font-size: 13px; color: var(--muted); white-space: nowrap; }
   .psitem b { color: var(--text); font-size: 15px; font-weight: 800; margin-right: 5px; }
-  .psitem.top b { color: var(--text); font-size: 14px; font-weight: 600; }
+  .psitem.top b { color: var(--text); font-size: 15px; font-weight: 700; }
   .psvp.you { color: var(--accent); }
   .psitem.count { color: var(--muted); }
-  .psitem.count b { color: var(--muted); font-size: 14px; font-weight: 700; }
+  .psitem.count b { color: var(--muted); font-size: 15px; font-weight: 700; }
   .psitem.fresh b { color: var(--green); }
   .psitem.psclick { cursor: pointer; border-radius: 6px; padding: 2px 6px; margin: -2px -6px; transition: background .12s; }
   .psitem.psclick:hover, .psitem.psclick:focus-visible { background: rgba(88,166,255,.12); outline: none; }
@@ -4362,6 +4363,7 @@ const VALUEPROP = true;
 function renderPulseStrip(){
   const el = document.getElementById("pulseStrip"); if (!el) return;
   if (PULSE_FILTERED && LAST_LIST && LAST_LIST.length) { renderPulseStripFor(el, LAST_LIST, PULSE_SLICE || "Your search"); return; }
+  el.classList.remove("pspersonal");
   const m = marketPulse();
   const chip = (num,label,cls="") => `<span class="psitem ${cls}"><b>${num}</b>${label}</span>`;
   window.__pulseTopStudio = m.topStudio;   // read by the clickable chip (avoids escaping studio names with quotes)
@@ -4378,6 +4380,7 @@ function renderPulseStrip(){
 // Personalized pulse bar: the same one-line strip, recomputed over the current filtered slice (LAST_LIST).
 // Same item count as the global bar (shorter prefix), so it stays a single line where the global one does.
 function renderPulseStripFor(el, pool, slice){
+  el.classList.add("pspersonal");
   const m = marketPulse(pool);
   const chip = (num,label,cls="") => `<span class="psitem ${cls}"><b>${num}</b>${label}</span>`;
   const pays = []; for (const j of pool){ if (j.salary){ const p = mtxParsePay(j.salary); if (p) pays.push(p); } }
