@@ -343,6 +343,9 @@
   .psitem { font-size: 13px; color: var(--muted); white-space: nowrap; }
   .psitem b { color: var(--text); font-size: 15px; font-weight: 800; margin-right: 5px; }
   .psitem.top b { color: var(--text); font-size: 14px; font-weight: 600; }
+  .psvp.you { color: var(--accent); }
+  .psitem.count { color: var(--muted); }
+  .psitem.count b { color: var(--muted); font-size: 14px; font-weight: 700; }
   .psitem.fresh b { color: var(--green); }
   .psitem.psclick { cursor: pointer; border-radius: 6px; padding: 2px 6px; margin: -2px -6px; transition: background .12s; }
   .psitem.psclick:hover, .psitem.psclick:focus-visible { background: rgba(88,166,255,.12); outline: none; }
@@ -1936,6 +1939,7 @@ function ago(h){ return h<1 ? "just now" : h===1 ? "1 hr ago" : h<24 ? h+" hrs a
 // ---- render --------------------------------------------------------------------
 let GROUPS = [];
 let LAST_LIST = [];
+let PULSE_FILTERED = false, PULSE_SLICE = "";   // pulse bar: is a list filter active, and a label for the current slice
 const collapsed = new Set();
 const shown = {};
 const SHOW_STEP = 10;
@@ -2279,6 +2283,12 @@ function render(){
 
   ROW_COL = false;   // done building List rows; leave the flag off for other views/renderers
   LAST_LIST = list;
+  // Personalize the top pulse bar to the active filter slice (stays global on the default/first-visit view).
+  try {
+    PULSE_FILTERED = (view === "list") && !!(selCells.size||selStudios.size||selSubs.size||selCountries.size||selRegionsQuick.size||d.length||w.length||s.length||r||quickRemote||q);
+    PULSE_SLICE = PULSE_FILTERED ? dqSliceLabel([...selCells], d, s, r, [...selCountries], [...selRegionsQuick], quickRemote, [...selStudios], q) : "";
+    renderPulseStrip();
+  } catch(e){}
   renderDirectory(); // keep the island in sync with the top search bar
   if (view === "map") renderMap();
   if (view === "stats") renderStats();
@@ -4332,16 +4342,17 @@ function engineCard(list){
 
 // Market-pulse headline numbers (whole board, not the filtered view) — shared by the
 // front-page strip and the Trends report header. No estimates: every figure is a live role.
-function marketPulse(){
-  const open = JOBS.length;
-  const studios = new Set(JOBS.map(j=>j.s)).size;
-  const newWk = JOBS.filter(j=>{ const d=daysListed(j); return d!=null ? d<=7 : (j.ts && hoursAgo(j)<=168); }).length;
-  const new72h = JOBS.filter(j=>{ const d=daysListed(j); return d!=null ? d<=3 : (j.ts && hoursAgo(j)<=72); }).length;
-  const byS = {}; for (const j of JOBS) byS[j.s] = (byS[j.s]||0)+1;
+function marketPulse(pool){
+  pool = pool || JOBS;
+  const open = pool.length;
+  const studios = new Set(pool.map(j=>j.s)).size;
+  const newWk = pool.filter(j=>{ const d=daysListed(j); return d!=null ? d<=7 : (j.ts && hoursAgo(j)<=168); }).length;
+  const new72h = pool.filter(j=>{ const d=daysListed(j); return d!=null ? d<=3 : (j.ts && hoursAgo(j)<=72); }).length;
+  const byS = {}; for (const j of pool) byS[j.s] = (byS[j.s]||0)+1;
   const top = Object.entries(byS).sort((a,b)=>b[1]-a[1])[0];
-  const salPct = open ? Math.round(100 * JOBS.filter(j=>j.salary).length / open) : 0;
-  const remotePct = open ? Math.round(100 * JOBS.filter(j=>j.w==="Remote").length / open) : 0;
-  const ages = JOBS.filter(j=>j.ts).map(j=>Math.max(0, Math.floor((Date.now()-j.ts)/864e5))).sort((a,b)=>a-b);
+  const salPct = open ? Math.round(100 * pool.filter(j=>j.salary).length / open) : 0;
+  const remotePct = open ? Math.round(100 * pool.filter(j=>j.w==="Remote").length / open) : 0;
+  const ages = pool.filter(j=>j.ts).map(j=>Math.max(0, Math.floor((Date.now()-j.ts)/864e5))).sort((a,b)=>a-b);
   const medianAge = ages.length ? ages[Math.floor(ages.length/2)] : null;
   return { open, studios, newWk, new72h, topStudio: top ? top[0] : "—", topStudioN: top ? top[1] : 0, salPct, remotePct, medianAge };
 }
@@ -4350,6 +4361,7 @@ function marketPulse(){
 const VALUEPROP = true;
 function renderPulseStrip(){
   const el = document.getElementById("pulseStrip"); if (!el) return;
+  if (PULSE_FILTERED && LAST_LIST && LAST_LIST.length) { renderPulseStripFor(el, LAST_LIST, PULSE_SLICE || "Your search"); return; }
   const m = marketPulse();
   const chip = (num,label,cls="") => `<span class="psitem ${cls}"><b>${num}</b>${label}</span>`;
   window.__pulseTopStudio = m.topStudio;   // read by the clickable chip (avoids escaping studio names with quotes)
@@ -4362,6 +4374,45 @@ function renderPulseStrip(){
     + (topClickable
         ? `<span class="psitem top psclick" role="button" tabindex="0" data-tip="Show ${m.topStudio} jobs" onclick="filterToStudio(window.__pulseTopStudio)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();filterToStudio(window.__pulseTopStudio);}"><b>${m.topStudio}</b>${m.topStudioN.toLocaleString()} role${m.topStudioN===1?'':'s'} · most active</span>`
         : chip(m.topStudio,"most active","top"));
+}
+// Personalized pulse bar: the same one-line strip, recomputed over the current filtered slice (LAST_LIST).
+// Same item count as the global bar (shorter prefix), so it stays a single line where the global one does.
+function renderPulseStripFor(el, pool, slice){
+  const m = marketPulse(pool);
+  const chip = (num,label,cls="") => `<span class="psitem ${cls}"><b>${num}</b>${label}</span>`;
+  const pays = []; for (const j of pool){ if (j.salary){ const p = mtxParsePay(j.salary); if (p) pays.push(p); } }
+  const med = pays.length >= 8 ? mtxMedian(pays) : null;   // only claim a median when the slice has enough listed pay
+  window.__pulseTopStudio = m.topStudio;
+  const topClickable = m.topStudio && m.topStudio !== "—";
+  el.innerHTML = `<span class="psvp you">${bfEsc(slice)}:</span>`
+    + (m.newWk > 0 ? chip("+" + m.newWk.toLocaleString(), "new this week", "fresh") : "")
+    + chip(m.salPct + "%", "list salary")
+    + (med != null ? chip("$" + med + "K", "median pay") : "")
+    + (topClickable
+        ? `<span class="psitem top psclick" role="button" tabindex="0" data-tip="Show ${bfEsc(m.topStudio)} jobs" onclick="filterToStudio(window.__pulseTopStudio)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();filterToStudio(window.__pulseTopStudio);}"><b>${bfEsc(m.topStudio)}</b>${m.topStudioN.toLocaleString()} role${m.topStudioN===1?'':'s'} · top for you</span>`
+        : "")
+    + `<span class="psitem count"><b>${m.open.toLocaleString()}</b>matching</span>`;
+}
+// Build a short label for the active filter slice, e.g. "Senior Production · Remote".
+function dqSliceLabel(cellsArr, discArr, senArr, region, countriesArr, regionsQuickArr, remote, studiosArr, search){
+  const disc = new Set(), sen = new Set();
+  (cellsArr||[]).forEach(k=>{ const p=String(k).split("|"); if(p[0])disc.add(p[0]); if(p[1])sen.add(p[1]); });
+  (discArr||[]).forEach(x=>x&&disc.add(x)); (senArr||[]).forEach(x=>x&&sen.add(x));
+  const senL=[...sen], discL=[...disc], parts=[];
+  if (senL.length) parts.push(senL.length<=2 ? senL.join(" / ") : senL.length+" levels");
+  if (discL.length) parts.push(discL.length<=2 ? discL.join(" / ") : discL.length+" disciplines");
+  let label = parts.join(" ");
+  if (!label && studiosArr && studiosArr.length) label = studiosArr.length===1 ? studiosArr[0] : studiosArr.length+" studios";
+  if (!label && search) label = '"' + search + '"';
+  if (!label) label = "Your search";
+  const qual = [];
+  if (remote) qual.push("Remote");
+  if (region) qual.push(region);
+  (regionsQuickArr||[]).forEach(x=>x&&qual.push(x));
+  (countriesArr||[]).forEach(x=>x&&qual.push(x));
+  if (qual.length) label += " · " + qual.slice(0,2).join(" · ");
+  if (label.length > 42) label = label.slice(0,40) + "…";
+  return label;
 }
 // Filter the list down to a single studio (used by the "most active" pulse chip).
 function filterToStudio(studio){
