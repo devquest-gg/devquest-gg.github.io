@@ -1070,11 +1070,31 @@ function refreshFollowStars(){
 function updateFollowTab(){
   const t = document.getElementById("tabFollow");
   if (!t) return;
-  // badge = everything personal: tracked (pipeline) + saved + followed studios
-  let n = 0; try { n = Object.keys(appStatus).length + saved.size + FOLLOWS.size; } catch(e){}
+  // badge = everything personal you can still act on: tracked (pipeline) + saved + followed studios.
+  // Count only ids that still resolve to a live listing, so the badge matches what My Jobs actually
+  // shows — a saved/tracked role drops off the board when it's filled or re-listed under a new id,
+  // and we have no data left to render it (only the id was stored), so it must not be counted either.
+  let n = 0;
+  try {
+    const live = id => (typeof JOB_BY_ID !== "undefined") && !!JOB_BY_ID[id];
+    n = Object.keys(appStatus).filter(live).length + [...saved].filter(live).length + FOLLOWS.size;
+  } catch(e){ try { n = Object.keys(appStatus).length + saved.size + FOLLOWS.size; } catch(e2){} }
   // Light the star gold whenever the tab holds anything personal; stays lit while populated.
   const star = n ? '<span style="color:var(--gold)">★</span>' : '★';
   t.innerHTML = star + " My Jobs" + (n ? ' <span style="opacity:.75">' + n + '</span>' : "");
+}
+// Prune saved/tracked ids whose listing has left the board (filled or re-posted under a new id).
+// Only the id was stored, so there's nothing left to render — drop them and re-sync the badge + view.
+function dqClearStale(){
+  try {
+    [...saved].forEach(id => { if (!JOB_BY_ID[id]) saved.delete(id); });
+    Object.keys(appStatus).forEach(id => { if (!JOB_BY_ID[id]) delete appStatus[id]; });
+    store.set("luj-saved", [...saved]);
+    store.set("luj-status", appStatus);
+  } catch(e){}
+  try { window.dqTrack && window.dqTrack("clear_stale_jobs", {}); } catch(e){}
+  updateFollowTab();
+  try { renderFollowView(); } catch(e){}
 }
 window.dqShowFollowEmail = function(){
   const box = document.getElementById("followEmailBox"); if (!box) return;
@@ -1191,7 +1211,10 @@ function renderFollowView(){
   const savedJobs = lookup([...saved]);
   const hiddenJobs = lookup([...dismissed]);
   const followN = FOLLOWS.size;
-  if (!pipeN && !savedJobs.length && !followN && !hiddenJobs.length){
+  const staleSaved = [...saved].filter(id => !JOB_BY_ID[id]);
+  const staleTracked = Object.keys(appStatus).filter(id => !JOB_BY_ID[id]);
+  const staleN = staleSaved.length + staleTracked.length;   // saved/tracked whose listing has left the board
+  if (!pipeN && !savedJobs.length && !followN && !hiddenJobs.length && !staleN){
     el.innerHTML = `<div class="wlpanel empty" style="text-align:center;padding:28px 40px"><div style="font-size:16px;color:var(--text);margin-bottom:8px">★ <b>Your personal job tracker</b></div><div style="font-size:14px;color:var(--muted);max-width:620px;margin:0 auto;line-height:1.6">As you use DevQuest this becomes your dashboard. <b>Bookmark</b> roles to revisit (🔖), mark what you've <b>applied</b> to (✓ 💬 ⊘), <b>follow</b> studios (★), and <b>hide</b> roles you're not interested in (✕). Everything is saved on this device — no account needed.</div></div>`;
     return;
   }
@@ -1226,6 +1249,7 @@ function renderFollowView(){
     html += sec("📋 My pipeline", PIPE ? activeN : pipeN, body);
   }
   if (savedJobs.length) html += sec("🔖 Saved", savedJobs.length, cards(savedJobs, "saved"));
+  if (staleN) html += `<div style="margin:10px 0 4px;padding:10px 14px;border:1px solid var(--border);border-radius:10px;background:var(--panel);color:var(--muted);font-size:13px;line-height:1.5">${staleN} role${staleN===1?'':'s'} you saved or tracked ${staleN===1?'is':'are'} no longer on the board (filled, or re-posted as a new listing). <button onclick="dqClearStale()" style="margin-left:6px;background:transparent;border:1px solid var(--border);color:var(--accent);border-radius:8px;padding:4px 10px;font:inherit;font-size:12px;font-weight:700;cursor:pointer">Clear</button></div>`;
   if (PIPE && rejected.length) html += sec("⊘ Rejected", rejected.length, cards(rejected, "rejected"));
   if (followN) html += sec("★ Followed studios", followN, buildStudioDash());
   if (hiddenJobs.length){
