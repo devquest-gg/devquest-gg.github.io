@@ -359,6 +359,7 @@
   /* Long-listed (stale/ghost) signal moved off a chip and onto the posted-date color: orange when a
      listing has been live a long time, bold-orange when very long. */
   .posted.pdwarn { color: var(--gold); }
+  .posted.pdtoday { color: #ff8a3d; font-weight: 600; }
   .posted.pdbad { color: #f0883e; font-weight: 700; }
   .posted[data-tip] { cursor: help; }
   .new { color: var(--green); font-weight: 700; }
@@ -3182,8 +3183,10 @@ function rowHtml(j, mjStage){
   // turns orange when a listing has been live a long time, bold-orange when very long. Uses days-listed
   // (true live duration) when known, else the posted age.
   const _staleDays = (dl != null) ? dl : (noDate ? null : Math.floor(h/24));
-  const postedClass = _staleDays==null ? "" : _staleDays>=90 ? "pdbad" : _staleDays>=STALE_DAYS ? "pdwarn" : "";
-  const postedTip = postedClass ? ` data-tip="${escTip("Live ~"+_staleDays+" days"+(relistedNow(j)?" · posted date refreshed":"")+" — long-running posts are more likely stale or 'ghost' listings.")}"` : "";
+  const isFreshToday = !noDate && h<=24 && !isNew;   // posted within ~a day → flame + orange "fresh right now" cue
+  const _stale = _staleDays==null ? "" : _staleDays>=90 ? "pdbad" : _staleDays>=STALE_DAYS ? "pdwarn" : "";
+  const postedClass = isFreshToday ? "pdtoday" : _stale;
+  const postedTip = _stale ? ` data-tip="${escTip("Live ~"+_staleDays+" days"+(relistedNow(j)?" · posted date refreshed":"")+" — long-running posts are more likely stale or 'ghost' listings.")}"` : "";
   const relistChip = relistedNow(j) ? `<span class="tag relist" data-tip="This role has been live far longer than its shown posted date${j.relistCount>1?` (date refreshed ${j.relistCount}×)`:''} — re-posted/refreshed rather than newly open.">↻ re-listed${j.relistCount>1?` ${j.relistCount}×`:''}</span>` : "";
   const poolBadge = j.pool ? `<span class="poolbadge" data-tip="A talent pool / general application — not a specific open role.">talent pool</span>` : "";
   return `<div class="row ${status?'st-'+status:''} ${mj?'mjp s-'+mj:''} ${isDismissed?'dismissed':''} ${MINE_VIEW&&nbOpen.has(j.id)?'nbopen':''}" ${rowClick}>
@@ -3195,7 +3198,7 @@ function rowHtml(j, mjStage){
         ${poolBadge}
         ${isNew?'<span class="nfy" data-tip="New since your last visit">✨ NEW!</span>':''}
       </div>
-      <div class="posted ${postedClass}"${postedTip}>${noDate?'date n/a':`${h<=24&&!isNew?'<span class="new">● </span>':''}${ago(h)}`}</div>
+      <div class="posted ${postedClass}"${postedTip}>${noDate?'date n/a':`${isFreshToday?'🔥 ':''}${ago(h)}`}</div>
       <button class="save ${isSaved?'on':''}" onclick="event.stopPropagation(); toggleSave('${j.id}')" data-tip="${isSaved?'Saved · click to remove':'Save for later'}" aria-label="${isSaved?'Remove from saved':'Save for later'}">${isSaved?'<svg width="13" height="15" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle" aria-hidden="true"><path d="M6 2a2 2 0 0 0-2 2v18l8-5 8 5V4a2 2 0 0 0-2-2H6z"/></svg>':'<svg width="13" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle" aria-hidden="true"><path d="M6 2a2 2 0 0 0-2 2v18l8-5 8 5V4a2 2 0 0 0-2-2H6z"/></svg>'}</button>
       ${MINE_VIEW?`<button class="nbicon ${nbHas(j.id)?'hasnotes':''} ${nbOpen.has(j.id)?'open':''}" data-nb-btn="${j.id}" onclick="event.stopPropagation(); nbToggle('${j.id}', this)" data-tip="Notebook — notes, key dates, contacts &amp; questions" aria-label="Open notebook">📝</button>`:``}
       <span class="actsep"></span>
