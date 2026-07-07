@@ -303,7 +303,7 @@
   .ptile { flex: 1; min-width: 120px; background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; text-align: center; }
   .ptile .pnum { font-size: 26px; font-weight: 800; color: var(--text); }
   .ptile .plabelt { font-size: 12px; color: var(--muted); margin-top: 4px; }
-  #pulseStrip { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-start; gap: 8px 22px; padding: 10px 18px; line-height: 18px; margin: 0 0 14px; background: var(--panel); border: 1px solid var(--border); border-radius: 12px; }
+  #pulseStrip { display: flex; flex-wrap: nowrap; overflow: hidden; align-items: center; justify-content: flex-start; gap: 20px; padding: 10px 18px; line-height: 18px; margin: 0 0 14px; background: var(--panel); border: 1px solid var(--border); border-radius: 12px; }
   /* Dream Studio watchlist */
   .strow { display: flex; align-items: center; gap: 4px; }
   .fstar { cursor: pointer; color: #565d68; font-size: 15px; width: 17px; flex: none; text-align: center; line-height: 1; user-select: none; transition: color .12s, transform .12s; }
@@ -339,17 +339,15 @@
   .wlbtn.primary { background: var(--accent); border-color: var(--accent); color: #0d1117; }
   .wlbtn.on { background: var(--accent); border-color: var(--accent); color: #0d1117; }
   .wlnote { font-size: 12px; color: var(--muted); margin-top: 10px; }
-  .psvp { font-size: 13px; font-weight: 700; color: var(--text); white-space: nowrap; margin-right: 2px; }
+  /* Pulse bar type — one consistent scale: values 15px/800 white (green only for "new" counts),
+     labels 13px muted, prefix 13px/700 (accent when it's a personalized slice). No per-item exceptions. */
+  .psvp { font-size: 13px; font-weight: 700; color: var(--text); white-space: nowrap; }
+  .psvp.you { color: var(--accent); }
   .psitem { font-size: 13px; color: var(--muted); white-space: nowrap; }
   .psitem b { color: var(--text); font-size: 15px; font-weight: 800; margin-right: 5px; }
-  .psitem.top b { color: var(--text); font-size: 15px; font-weight: 700; }
-  .psvp.you { color: var(--accent); }
-  .psitem.count { color: var(--muted); }
-  .psitem.count b { color: var(--muted); font-size: 13px; font-weight: 700; }   /* secondary count: same size as its label so no baseline step; fixed line-height keeps it aligned, not floating */
   .psitem.fresh b { color: var(--green); }
-  .psitem.psclick { cursor: pointer; border-radius: 6px; padding: 0 6px; margin: 0 -6px; transition: background .12s; }
-  .psitem.psclick:hover, .psitem.psclick:focus-visible { background: rgba(88,166,255,.12); outline: none; }
-  .psitem.psclick:hover b { color: var(--accent); }
+  .psitem.psclick { cursor: pointer; }
+  .psitem.psclick:hover b, .psitem.psclick:focus-visible b { color: var(--accent); text-decoration: underline; }
   .psexport { margin-left: auto; background: none; border: 1px solid var(--border); color: var(--text); font-size: 12.5px; font-weight: 600; padding: 6px 12px; border-radius: 8px; cursor: pointer; }
   .psexport:hover { border-color: var(--accent); color: var(--accent); }
   .trendhead { margin: 2px 0 14px; }
@@ -3343,7 +3341,7 @@ function dqSyncStick(){
   } catch(e){}
 }
 var _dqStickT = null;
-window.addEventListener("resize", function(){ clearTimeout(_dqStickT); _dqStickT = setTimeout(dqSyncStick, 120); });
+window.addEventListener("resize", function(){ clearTimeout(_dqStickT); _dqStickT = setTimeout(function(){ dqSyncStick(); try{ dqFitPulse(document.getElementById("pulseStrip")); }catch(e){} }, 120); });
 window.addEventListener("load", dqSyncStick);
 document.addEventListener("DOMContentLoaded", dqSyncStick);
 function setStatus(id, v){
@@ -4359,6 +4357,15 @@ function marketPulse(pool){
 // Value-prop lead-in on the stat strip — frames the numbers ("why this beats LinkedIn") with zero
 // added rows. EASY REVERT: set VALUEPROP = false. (The strip is hidden on mobile, so this is desktop-only.)
 const VALUEPROP = true;
+// Guarantee a single line: if the bar's content is wider than the bar, drop the prefix first, then the
+// "N matching" count, until it fits. Re-run after every render and on resize (it re-shows then re-hides).
+function dqFitPulse(el){
+  if (!el) return;
+  var vp = el.querySelector(".psvp"); if (vp) vp.style.display = "";
+  var cnt = el.querySelector(".psitem.count"); if (cnt) cnt.style.display = "";
+  if (vp && el.scrollWidth > el.clientWidth + 1) vp.style.display = "none";
+  if (cnt && el.scrollWidth > el.clientWidth + 1) cnt.style.display = "none";
+}
 function renderPulseStrip(){
   const el = document.getElementById("pulseStrip"); if (!el) return;
   if (PULSE_FILTERED && LAST_LIST && LAST_LIST.length) { renderPulseStripFor(el, LAST_LIST, PULSE_SLICE || "Your search"); return; }
@@ -4375,6 +4382,7 @@ function renderPulseStrip(){
     + (topClickable
         ? `<span class="psitem top psclick" role="button" tabindex="0" data-tip="Show ${m.topStudio} jobs" onclick="filterToStudio(window.__pulseTopStudio)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();filterToStudio(window.__pulseTopStudio);}"><b>${m.topStudio}</b>${m.topStudioN.toLocaleString()} role${m.topStudioN===1?'':'s'} · most active</span>`
         : chip(m.topStudio,"most active","top"));
+  dqFitPulse(el);
 }
 // Personalized pulse bar: the same one-line strip, recomputed over the current filtered slice (LAST_LIST).
 // Same item count as the global bar (shorter prefix), so it stays a single line where the global one does.
@@ -4394,6 +4402,7 @@ function renderPulseStripFor(el, pool, slice){
         ? `<span class="psitem top psclick" role="button" tabindex="0" data-tip="Show ${bfEsc(m.topStudio)} jobs" onclick="filterToStudio(window.__pulseTopStudio)" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();filterToStudio(window.__pulseTopStudio);}"><b>${bfEsc(m.topStudio)}</b>${m.topStudioN.toLocaleString()} role${m.topStudioN===1?'':'s'} · top for you</span>`
         : "")
     + `<span class="psitem count"><b>${m.open.toLocaleString()}</b>matching</span>`;
+  dqFitPulse(el);
 }
 // Build a short label for the active filter slice, e.g. "Senior Production · Remote".
 function dqSliceLabel(cellsArr, discArr, senArr, region, countriesArr, regionsQuickArr, remote, studiosArr, search){
