@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DevQuest Credits · edit &amp; recovery</title>
+<style>
+  :root{
+    --bg:#0b0e14; --panel:#141a23; --panel2:#1b222c; --border:#242c38; --text:#eef3fa; --muted:#8b98a9;
+    --accent:#58a6ff; --green:#3fb950; --gold:#e0b23a; --purple:#a371f7; --pink:#f778ba; --red:#f85149;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.5;-webkit-font-smoothing:antialiased}
+  a{color:inherit;text-decoration:none;cursor:pointer}
+  .container{max-width:840px;margin:0 auto;padding:0 22px}
+  body::before{content:"";position:fixed;inset:0;z-index:-2;background:radial-gradient(55% 45% at 25% 0%,rgba(88,166,255,.12),transparent 60%),radial-gradient(45% 40% at 85% 4%,rgba(163,113,247,.1),transparent 60%)}
+
+  .topbar{position:sticky;top:0;z-index:50;backdrop-filter:blur(12px);background:rgba(11,14,20,.75);border-bottom:1px solid var(--border)}
+  .topbar .container{display:flex;align-items:center;justify-content:space-between;height:58px}
+  .brand{display:flex;align-items:center;gap:10px}
+  .brand .wm{font-weight:800;font-size:19px;letter-spacing:-.3px}
+  .brand .wm .q{color:var(--accent)} .brand .wm .tld{color:var(--gold)}
+  .brand .cr{font-size:11.5px;font-weight:700;color:var(--accent);border:1px solid rgba(88,166,255,.4);border-radius:999px;padding:2px 9px;background:rgba(88,166,255,.08);letter-spacing:.03em}
+  .whoami{font-size:12.5px;color:var(--muted)} .whoami b{color:var(--green)}
+
+  .btn{display:inline-flex;align-items:center;gap:7px;border-radius:10px;padding:9px 15px;font-size:13.5px;font-weight:700;cursor:pointer;border:1px solid transparent}
+  .btn.primary{background:linear-gradient(135deg,var(--accent),var(--purple));color:#fff}
+  .btn.ghost{background:transparent;border:1px solid var(--border);color:var(--text)}
+  .btn.ghost:hover{border-color:var(--accent)}
+  .btn.green{background:linear-gradient(135deg,#2ea043,#3fb950);color:#04120a}
+  .btn.sm{padding:5px 11px;font-size:12px}
+
+  .switch{display:flex;gap:6px;margin:22px 0}
+  .swb{background:var(--panel);border:1px solid var(--border);color:var(--muted);border-radius:9px;padding:9px 15px;font-size:13.5px;font-weight:700;cursor:pointer}
+  .swb.on{background:var(--accent);border-color:var(--accent);color:#08111f}
+  .view{display:none}.view.on{display:block;animation:f .2s ease}
+  @keyframes f{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+
+  .crumb{font-size:12.5px;color:var(--muted);margin-bottom:14px}.crumb a{color:var(--accent)}
+  .card{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:16px}
+  .card h3{margin:0 0 3px;font-size:17px}
+  .card .csub{color:var(--muted);font-size:13px;margin-bottom:14px}
+  .field{margin-bottom:18px}
+  .field label{display:block;font-size:11.5px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin-bottom:7px}
+  .input,.sel,textarea{width:100%;background:#0f141b;border:1px solid var(--border);border-radius:9px;color:var(--text);padding:10px 13px;font-size:14px;font-family:inherit}
+  .sel{appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);background-position:calc(100% - 18px) 18px,calc(100% - 13px) 18px;background-size:5px 5px,5px 5px;background-repeat:no-repeat}
+  .locked{opacity:.72;pointer-events:none;display:flex;align-items:center;justify-content:space-between}
+  .hint{font-size:12px;color:var(--muted);margin-top:6px}
+  .fix{font-size:12.5px;margin-top:7px;color:var(--gold)}
+  .fix .old{color:var(--muted);text-decoration:line-through;margin:0 4px}
+  .fix a{color:var(--accent)}
+
+  .chips{display:flex;flex-wrap:wrap;gap:6px;align-items:center;background:#0f141b;border:1px solid var(--border);border-radius:9px;padding:9px 11px}
+  .chip{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;background:rgba(88,166,255,.1);color:var(--accent);border:1px solid rgba(88,166,255,.35);border-radius:999px;padding:3px 10px}
+  .chip .x{opacity:.6;font-weight:800;cursor:pointer}
+  .chip.new{background:rgba(63,185,80,.12);color:var(--green);border-color:rgba(63,185,80,.4)}
+  .chipinput{flex:1;min-width:120px;background:none;border:none;outline:none;color:var(--text);font-size:13.5px;font-family:inherit;padding:3px}
+  .acomplete{border:1px solid var(--border);border-top:none;border-radius:0 0 9px 9px;background:var(--panel);margin-top:-2px;overflow:hidden}
+  .acomplete .ai{padding:8px 13px;font-size:13.5px;cursor:pointer;display:flex;justify-content:space-between}
+  .acomplete .ai:hover,.acomplete .ai.hot{background:rgba(88,166,255,.09)}
+  .acomplete .ai .k{color:var(--muted);font-size:11.5px}
+
+  .shield{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--green);margin-top:8px}
+  .modrow{display:flex;gap:8px;font-size:12px;color:var(--muted);padding:2px 0}.modrow b{color:var(--text);font-weight:600}
+
+  .changebox{background:#0f141b;border:1px solid var(--border);border-radius:10px;padding:13px 15px}
+  .changebox .h{font-size:11.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+  .changebox .cr{font-size:13px;padding:3px 0;display:flex;gap:8px}
+  .changebox .cr .d{color:var(--green)}
+
+  .preview{border:1px dashed var(--border);border-radius:10px;padding:12px 14px;display:flex;gap:12px;align-items:center}
+  .pcov{width:34px;height:44px;border-radius:5px;border:1px solid var(--border);flex:none}
+  .preview .g{flex:1}.preview .gt{font-weight:700;font-size:14px}.preview .gr{font-size:12.5px;color:var(--muted)}
+  .vouch{font-size:11.5px;color:var(--green)}
+
+  /* recovery */
+  .authrow{display:flex;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid rgba(36,44,56,.7)}
+  .authrow:last-child{border-bottom:none}
+  .authic{width:34px;height:34px;border-radius:9px;flex:none;display:flex;align-items:center;justify-content:center;font-size:16px;background:#0f141b;border:1px solid var(--border)}
+  .authrow .a{flex:1}.authrow .a .t{font-weight:600;font-size:14px}.authrow .a .s{font-size:12px;color:var(--muted)}
+  .badge{font-size:10.5px;font-weight:700;border-radius:999px;padding:2px 8px;white-space:nowrap}
+  .badge.v{color:var(--green);border:1px solid rgba(63,185,80,.4);background:rgba(63,185,80,.08)}
+  .badge.p{color:var(--gold);border:1px solid rgba(224,178,58,.4);background:rgba(224,178,58,.08)}
+  .badge.off{color:var(--muted);border:1px solid var(--border)}
+  .step2{display:flex;gap:14px;margin-bottom:12px}
+  .step2 .n{width:26px;height:26px;border-radius:50%;flex:none;background:linear-gradient(135deg,var(--accent),var(--purple));color:#fff;font-weight:800;font-size:12.5px;display:flex;align-items:center;justify-content:center}
+  .step2 .tx{font-size:13.5px}.step2 .tx b{color:var(--text)}
+  .callout{background:linear-gradient(135deg,rgba(224,178,58,.12),rgba(88,166,255,.08));border:1px solid rgba(224,178,58,.4);border-radius:12px;padding:16px 18px;font-size:13.5px;color:#e6dcc0}
+  .callout b{color:#fff}
+  .muted{color:var(--muted)}.small{font-size:12.5px}
+  .concept{position:fixed;bottom:14px;left:14px;z-index:80;font-size:11px;color:var(--muted);background:rgba(11,14,20,.85);border:1px solid var(--border);border-radius:8px;padding:6px 10px}
+</style>
+</head>
+<body>
+<div class="concept">Concept mockup · edit &amp; recovery</div>
+
+<div class="topbar"><div class="container">
+  <div class="brand"><span class="wm">Dev<span class="q">Quest</span><span class="tld">.gg</span></span> <span class="cr">CREDITS</span></div>
+  <div class="whoami">Editing as <b>Marco Alvarez ✓</b></div>
+</div></div>
+
+<div class="container">
+  <div class="switch">
+    <div class="swb on" data-v="edit">✏️ Edit a credit</div>
+    <div class="swb" data-v="recover">🔑 Account &amp; recovery</div>
+  </div>
+
+  <!-- ===================== EDIT ===================== -->
+  <div class="view on" id="v-edit">
+    <div class="crumb"><a>My Credits</a> › <a>Ghost of Tsushima</a> › <b style="color:var(--text)">Edit</b></div>
+
+    <div class="card">
+      <h3>Edit your credit</h3>
+      <div class="csub">Fix what the imported credit roll got wrong, and add the detail only you know.</div>
+
+      <div class="field">
+        <label>Game</label>
+        <div class="input locked"><span>Ghost of Tsushima · Sucker Punch · 2020</span><span class="muted small">from catalogue · locked</span></div>
+      </div>
+
+      <div class="field">
+        <label>Role / title</label>
+        <select class="sel"><option>Gameplay Programmer</option><option>Engine Programmer</option><option>Systems Designer</option><option>Combat Designer</option><option>Tools Programmer</option><option>+ request a new role title…</option></select>
+        <div class="fix">✎ Imported as <span class="old">Programmer</span> → corrected to <b>Gameplay Programmer</b>. <a>undo</a></div>
+        <div class="hint">Chosen from a curated role list. This fixes the vague/wrong title the public roll had, without letting anyone type junk.</div>
+      </div>
+
+      <div class="field">
+        <label>Skills</label>
+        <div class="chips">
+          <span class="chip">C++ <span class="x">×</span></span>
+          <span class="chip">Combat <span class="x">×</span></span>
+          <span class="chip new">Netcode <span class="x">×</span></span>
+          <input class="chipinput" value="net" spellcheck="false">
+        </div>
+        <div class="acomplete">
+          <div class="ai hot"><span>Netcode</span><span class="k">added ✓</span></div>
+          <div class="ai"><span>Networking</span><span class="k">skill</span></div>
+          <div class="ai"><span>.NET</span><span class="k">skill</span></div>
+          <div class="ai"><span class="muted">Netherrealm engine</span><span class="k muted">no match · can't free-type</span></div>
+        </div>
+        <div class="hint">Autocomplete from a controlled vocabulary. You pick from real skills; arbitrary strings can't enter the database.</div>
+      </div>
+
+      <div class="field">
+        <label>Notes <span class="muted" style="text-transform:none;font-weight:400">· the only free-text field</span></label>
+        <textarea rows="3">Owned the parry and stance-switch combat systems. Shipped the enemy telegraph pass and the standoff duel mode.</textarea>
+        <div class="shield">🛡️ Checked on save: profanity/slur filter + spam &amp; hate classifier, behind your verified email.</div>
+      </div>
+
+      <div class="field">
+        <label>What will change · public edit history</label>
+        <div class="changebox">
+          <div class="cr"><span class="d">role</span> Programmer → <b>Gameplay Programmer</b></div>
+          <div class="cr"><span class="d">+skills</span> C++, Combat, Netcode</div>
+          <div class="cr"><span class="d">+note</span> combat systems detail added</div>
+          <div class="muted small" style="margin-top:6px">Every edit is logged and publicly reversible, which keeps vandalism cheap to undo.</div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Live preview · how it reads on the game &amp; your profile</label>
+        <div class="preview">
+          <div class="pcov" style="background:linear-gradient(160deg,#b23a48,#3a1720)"></div>
+          <div class="g"><div class="gt">Ghost of Tsushima <span class="muted small">· 2020</span></div><div class="gr">Gameplay Programmer · parry &amp; stance combat systems</div></div>
+          <span class="vouch">◈ 8 vouch</span>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:10px"><span class="btn green">Save credit</span><span class="btn ghost">Cancel</span></div>
+    </div>
+  </div>
+
+  <!-- ===================== RECOVERY ===================== -->
+  <div class="view" id="v-recover">
+    <div class="card">
+      <h3>How your profile is secured</h3>
+      <div class="csub">No passwords. You get in with any verified email or linked sign-in. Add more than one so you're never locked out.</div>
+
+      <div class="authrow"><div class="authic">✉️</div><div class="a"><div class="t">marco@hotmail.com</div><div class="s">Primary · verified when you claimed</div></div><span class="badge v">verified</span></div>
+      <div class="authrow"><div class="authic">🏢</div><div class="a"><div class="t">marco@suckerpunch.com</div><div class="s">Work email · strongest proof it's really you</div></div><span class="badge v">verified</span></div>
+      <div class="authrow"><div class="authic">◆</div><div class="a"><div class="t">Google</div><div class="s">Linked sign-in · survives losing any email</div></div><span class="badge v">linked</span></div>
+      <div class="authrow"><div class="authic">🐙</div><div class="a"><div class="t">GitHub</div><div class="s">Common for programmers · a durable second key</div></div><span class="badge off">link</span></div>
+      <div class="authrow"><div class="authic">💬</div><div class="a"><div class="t">Discord</div><div class="s">Link one more and losing an email is a non-event</div></div><span class="badge off">link</span></div>
+      <div class="authrow"><div class="authic">＋</div><div class="a"><div class="t">Add a recovery email</div><div class="s">A personal Gmail is a good backup to a work address you'll leave someday</div></div><span class="btn ghost sm">Add</span></div>
+    </div>
+
+    <div class="card">
+      <h3>Lost access to everything?</h3>
+      <div class="csub">Yes, a claimed profile can be re-claimed. The email is a key you can rotate. Your credits live with the record, not the address.</div>
+      <div class="step2"><div class="n">1</div><div class="tx"><b>Start a re-claim</b> from any new email on your own page ("This is me, I lost my old login").</div></div>
+      <div class="step2"><div class="n">2</div><div class="tx"><b>We ping the old address</b> and open a short cool-down. If someone still controls it, they can veto, which is what stops hijacking. A dead inbox simply never responds.</div></div>
+      <div class="step2"><div class="n">3</div><div class="tx"><b>You re-prove it's you</b> with the cheap signals we already use: peer vouches from people you shipped with, and/or a work-email domain match. Same machinery as a contested claim.</div></div>
+      <div class="step2"><div class="n">4</div><div class="tx"><b>Ownership transfers</b> to your new key. Credits, vouches, skills and history all stay attached to you. Nothing is lost.</div></div>
+    </div>
+
+    <div class="callout">
+      <b>Your hotmail scenario:</b> if you'd linked a Google/GitHub sign-in or a recovery email at claim time, recovery is instant: just use the other key. If you truly lost every login, you start a re-claim from your new email; we ping the dead hotmail (it never answers), a cool-down passes, your old colleagues' vouches or your work-domain confirm you, and the profile moves to your new email. You never lose the credits. The one thing that makes this smooth is linking a second key <b>now</b>, so we nudge for it right after you claim.
+    </div>
+  </div>
+</div>
+
+<script>
+  document.querySelectorAll('.swb[data-v]').forEach(function(b){b.addEventListener('click',function(){
+    document.querySelectorAll('.swb[data-v]').forEach(x=>x.classList.remove('on'));b.classList.add('on');
+    document.querySelectorAll('.view').forEach(v=>v.classList.remove('on'));
+    document.getElementById('v-'+b.dataset.v).classList.add('on');window.scrollTo({top:0,behavior:'smooth'});
+  });});
+</script>
+</body>
+</html>

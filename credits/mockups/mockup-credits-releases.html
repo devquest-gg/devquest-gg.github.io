@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DevQuest Credits · releases &amp; add-without-duplicates</title>
+<style>
+  :root{--bg:#0b0e14;--panel:#141a23;--panel2:#1b222c;--border:#242c38;--text:#eef3fa;--muted:#8b98a9;--accent:#58a6ff;--green:#3fb950;--gold:#e0b23a;--purple:#a371f7;--pink:#f778ba;--red:#f85149}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.5;-webkit-font-smoothing:antialiased}
+  a{color:inherit;text-decoration:none;cursor:pointer}
+  .container{max-width:880px;margin:0 auto;padding:0 22px}
+  .muted{color:var(--muted)} .small{font-size:12.5px}
+  body::before{content:"";position:fixed;inset:0;z-index:-2;background:radial-gradient(55% 45% at 22% 0%,rgba(88,166,255,.12),transparent 60%),radial-gradient(45% 40% at 85% 4%,rgba(163,113,247,.1),transparent 60%)}
+  .topbar{position:sticky;top:0;z-index:50;backdrop-filter:blur(12px);background:rgba(11,14,20,.78);border-bottom:1px solid var(--border)}
+  .topbar .container{display:flex;align-items:center;justify-content:space-between;height:56px}
+  .brand{display:flex;align-items:center;gap:9px} .brand .wm{font-weight:800;font-size:19px;letter-spacing:-.3px} .brand .wm .q{color:var(--accent)} .brand .wm .tld{color:var(--gold)}
+  .brand .cr{font-size:11px;font-weight:700;color:var(--accent);border:1px solid rgba(88,166,255,.4);border-radius:999px;padding:2px 8px;background:rgba(88,166,255,.08)}
+  .btn{display:inline-flex;align-items:center;gap:7px;border-radius:10px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;border:1px solid transparent}
+  .btn.primary{background:linear-gradient(135deg,var(--accent),var(--purple));color:#fff} .btn.ghost{background:transparent;border:1px solid var(--border);color:var(--text)} .btn.ghost:hover{border-color:var(--accent)} .btn.green{background:linear-gradient(135deg,#2ea043,#3fb950);color:#04120a} .btn.sm{padding:5px 11px;font-size:12px}
+
+  .intro{background:rgba(88,166,255,.08);border:1px solid rgba(88,166,255,.35);border-radius:12px;padding:13px 15px;font-size:13.5px;color:#c8d6e5;margin:20px 0}
+  .intro b{color:#fff}
+  .tabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:20px}
+  .tab{background:var(--panel);border:1px solid var(--border);color:var(--muted);border-radius:9px;padding:9px 14px;font-size:13px;font-weight:700;cursor:pointer}
+  .tab.on{background:var(--accent);border-color:var(--accent);color:#08111f}
+  .view{display:none}.view.on{display:block;animation:f .18s ease}
+  @keyframes f{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+  .card{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:16px}
+  .card h3{margin:0 0 3px;font-size:17px} .csub{color:var(--muted);font-size:13px;margin-bottom:14px}
+  .caption{color:var(--muted);font-size:12.5px;margin-top:12px;font-style:italic;border-left:2px solid var(--border);padding-left:10px}
+  .sechead{font-size:11.5px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin:18px 0 8px}
+
+  /* game hero */
+  .ghero{display:flex;gap:18px;align-items:flex-end;border:1px solid var(--border);border-radius:16px;padding:20px;position:relative;overflow:hidden;margin-bottom:14px}
+  .ghero .bgart{position:absolute;inset:0;z-index:-1;background:linear-gradient(160deg,#4a6a2a,#16240f)} .ghero .bgart::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(11,14,20,.3),rgba(11,14,20,.9))}
+  .gcover{width:96px;height:128px;border-radius:10px;flex:none;position:relative;overflow:hidden;border:1px solid rgba(255,255,255,.1);background:linear-gradient(160deg,#4a6a2a,#16240f)}
+  .gcover .ctt{position:absolute;left:0;right:0;bottom:0;padding:9px;font-size:12px;font-weight:800;line-height:1.1;background:linear-gradient(180deg,transparent,rgba(0,0,0,.55))}
+  .ghero h1{font-size:28px;font-weight:850;letter-spacing:-.7px;margin:0 0 3px} .ghero .sub{color:#c4cfdd;font-size:13.5px}
+  .locktag{font-size:10.5px;color:var(--muted);border:1px solid var(--border);border-radius:12px;padding:1px 8px;margin-left:6px}
+
+  .rail{display:flex;gap:7px;flex-wrap:wrap;margin:4px 0 14px}
+  .relpill{font-size:12.5px;color:var(--muted);border:1px solid var(--border);border-radius:999px;padding:6px 13px;cursor:pointer;background:#0f141b}
+  .relpill:hover{border-color:var(--accent);color:var(--text)} .relpill.on{background:rgba(88,166,255,.14);border-color:var(--accent);color:var(--text)}
+  .relpill.add{border-style:dashed}
+  .relhdr{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;padding:11px 14px;border:1px solid var(--border);border-radius:10px;background:#0f141b;margin-bottom:10px}
+  .relhdr .rt{font-weight:700;font-size:14.5px} .relhdr .rm{font-size:12px;color:var(--muted)}
+  .relblock{display:none} .relblock.on{display:block}
+  .cl-row{display:flex;gap:12px;align-items:center;padding:9px 2px;border-bottom:1px solid rgba(36,44,56,.7)} .cl-row:last-child{border-bottom:none}
+  .av{width:30px;height:30px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:11px;color:#08111f}
+  .who{flex:1;min-width:0} .who .nm{font-weight:600;font-size:14px} .who .ro{font-size:12px;color:var(--muted)}
+  .tag{font-size:10.5px;color:var(--muted);border:1px solid var(--border);border-radius:12px;padding:1px 8px;white-space:nowrap} .tag.yes{color:var(--green);border-color:rgba(63,185,80,.4)} .tag.un{color:var(--gold);border-color:rgba(224,178,58,.45)}
+  .vouch{font-size:11.5px;color:var(--green);white-space:nowrap} .vouch.z{color:var(--muted)}
+  .hlrow{background:rgba(224,178,58,.07);border:1px solid rgba(224,178,58,.3);border-radius:9px;padding:8px 10px}
+
+  /* live-service timeline */
+  .tl{position:relative;margin-left:8px;padding-left:18px;border-left:2px solid var(--border)}
+  .era{position:relative;padding:8px 0 14px}
+  .era::before{content:"";position:absolute;left:-25px;top:12px;width:11px;height:11px;border-radius:50%;background:var(--accent);border:2px solid var(--bg)}
+  .era.you::before{background:var(--gold)}
+  .era .yr{font-weight:800;font-size:13.5px} .era .names{font-size:12.5px;color:var(--muted);margin-top:2px}
+  .era.you .yr{color:var(--gold)}
+
+  /* form fields */
+  .field{margin-bottom:16px} .field label{display:block;font-size:11px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+  .input,.sel,textarea{width:100%;background:#0f141b;border:1px solid var(--border);border-radius:9px;color:var(--text);padding:10px 13px;font-size:14px;font-family:inherit}
+  .sel{appearance:none}
+  .row2{display:flex;gap:10px}.row2>*{flex:1}
+  .locked{opacity:.72;pointer-events:none;display:flex;align-items:center;justify-content:space-between}
+  .hint{font-size:12px;color:var(--muted);margin-top:6px}
+  .seg{display:flex;gap:8px}
+  .segb{flex:1;border:1px solid var(--border);background:#0f141b;border-radius:9px;padding:11px;cursor:pointer;font-size:13px}
+  .segb.on{border-color:var(--green);background:rgba(63,185,80,.08)} .segb .h{font-weight:700} .segb .d{font-size:11.5px;color:var(--muted);margin-top:2px}
+  .canon{background:#0f141b;border:1px dashed var(--accent);border-radius:10px;padding:12px 14px;margin-top:4px}
+  .canon .k{font-size:10.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+  .canon .v{font-size:16px;font-weight:800;margin-top:3px}
+  .canon .id{font-size:11px;color:var(--muted);margin-top:4px;font-family:ui-monospace,monospace}
+  .warn{background:rgba(224,178,58,.1);border:1px solid rgba(224,178,58,.45);border-radius:10px;padding:11px 14px;font-size:13px;color:#e6dcc0;margin-top:10px}
+  .warn b{color:#fff}
+  .match{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 13px;border:1px solid var(--border);border-radius:9px;background:#0f141b;margin-bottom:8px}
+  .match:hover{border-color:var(--accent)} .match .mt{font-weight:600;font-size:14px} .match .mm{font-size:12px;color:var(--muted)}
+  .prov{display:flex;align-items:center;gap:9px;font-size:12.5px;color:var(--muted);background:#0f141b;border:1px solid var(--border);border-radius:9px;padding:10px 13px;margin-top:8px}
+  .prov .dot{width:8px;height:8px;border-radius:50%;background:var(--gold);flex:none}
+  .concept{position:fixed;bottom:14px;left:14px;z-index:80;font-size:11px;color:var(--muted);background:rgba(11,14,20,.85);border:1px solid var(--border);border-radius:8px;padding:6px 10px}
+  @media(max-width:640px){.row2{flex-direction:column}.seg{flex-direction:column}}
+</style>
+</head>
+<body>
+<div class="concept">Concept mockup · releases &amp; safe adds</div>
+
+<div class="topbar"><div class="container">
+  <div class="brand"><span class="wm">Dev<span class="q">Quest</span><span class="tld">.gg</span></span> <span class="cr">CREDITS</span></div>
+  <span class="btn ghost sm">← Prototype</span>
+</div></div>
+
+<div class="container">
+  <div class="intro"><b>Two ideas here:</b> a credit attaches to a specific <b>release or era</b> of a game (base game, PC port, remaster, DLC, live-service season), and users can <b>add releases without creating duplicate soup</b> by matching before creating and building from structured fields, never free text.</div>
+
+  <div class="tabs">
+    <div class="tab on" data-v="game">① Release-aware game page</div>
+    <div class="tab" data-v="claim">② Claim a specific release</div>
+    <div class="tab" data-v="add">③ Add a release (no duplicates)</div>
+  </div>
+
+  <!-- ① RELEASE-AWARE GAME PAGE -->
+  <div class="view on" id="v-game">
+    <div class="ghero"><div class="bgart"></div>
+      <div class="gcover"><span class="ctt">Days Gone</span></div>
+      <div><h1>Days Gone <span class="locktag">core facts from Wikidata · locked</span></h1><div class="sub">Bend Studio · 2019 · Action-adventure</div></div>
+    </div>
+    <div class="muted small" style="margin-bottom:6px">Pick a release. Credits are scoped to it, so joining after launch is captured correctly.</div>
+    <div class="rail">
+      <span class="relpill on" data-rel="base" onclick="rel('base')">Base game · 2019</span>
+      <span class="relpill" data-rel="pc" onclick="rel('pc')">PC port · 2020</span>
+      <span class="relpill" data-rel="dlc" onclick="rel('dlc')">Broken Road DLC · 2019</span>
+      <span class="relpill" data-rel="rem" onclick="rel('rem')">Remaster · 2024</span>
+      <span class="relpill add" onclick="document.querySelector('[data-v=add]').click()">+ add a release</span>
+    </div>
+
+    <div class="relblock on" data-b="base">
+      <div class="relhdr"><div><div class="rt">Base game</div><div class="rm">2019 · Bend Studio · 312 credited</div></div><span class="tag">original credit roll</span></div>
+      <div class="cl-row"><div class="av" style="background:var(--accent)">DG</div><div class="who"><div class="nm">Jeff Ross</div><div class="ro">Game Director</div></div><span class="tag yes">claimed ✓</span><span class="vouch">◈ 21</span></div>
+      <div class="cl-row"><div class="av" style="background:var(--purple)">KM</div><div class="who"><div class="nm">Kris Meyer</div><div class="ro">Lead Gameplay Programmer</div></div><span class="tag">unclaimed</span><span class="vouch z">◈ 0</span></div>
+    </div>
+    <div class="relblock" data-b="pc">
+      <div class="relhdr"><div><div class="rt">PC port</div><div class="rm">2020 · Bend Studio · 41 credited</div></div><span class="tag">separate release</span></div>
+      <div class="cl-row hlrow"><div class="av" style="background:var(--gold)">MA</div><div class="who"><div class="nm">Marco Alvarez <span class="muted small">· that's you</span></div><div class="ro">Gameplay Programmer · graphics &amp; input options · Jan 2020 to Aug 2020</div></div><span class="tag yes">claimed ✓</span><span class="vouch">◈ 5</span></div>
+      <div class="cl-row"><div class="av" style="background:var(--accent)">TP</div><div class="who"><div class="nm">Tara Pike</div><div class="ro">Graphics Programmer</div></div><span class="tag yes">claimed ✓</span><span class="vouch">◈ 4</span></div>
+      <div class="caption">You joined Bend after launch and only worked the PC port. Here that reads exactly right: a PC-port credit, not a base-game one you never earned.</div>
+    </div>
+    <div class="relblock" data-b="dlc">
+      <div class="relhdr"><div><div class="rt">Broken Road DLC</div><div class="rm">2019 · Bend Studio · 28 credited</div></div><span class="tag">add-on</span></div>
+      <div class="cl-row"><div class="av" style="background:var(--pink)">RG</div><div class="who"><div class="nm">Rae Gomez</div><div class="ro">Content Designer</div></div><span class="tag yes">claimed ✓</span><span class="vouch">◈ 3</span></div>
+    </div>
+    <div class="relblock" data-b="rem">
+      <div class="relhdr"><div><div class="rt">Remaster</div><div class="rm">2024 · ported by Climax Studios · 60 credited</div></div><span class="tag">different studio</span></div>
+      <div class="cl-row"><div class="av" style="background:var(--purple)">NK</div><div class="who"><div class="nm">Nadia Khan</div><div class="ro">Rendering Engineer · remaster</div></div><span class="tag yes">claimed ✓</span><span class="vouch">◈ 6</span></div>
+      <div class="caption">A remaster can be built by a different studio. Because the credit is scoped to the remaster release, its team is cleanly separate from the 2019 originals.</div>
+    </div>
+
+    <div class="sechead">Live-service pattern · League of Legends (shipped 2009, still running)</div>
+    <div class="card" style="margin-bottom:0">
+      <div class="csub">For games with no single ship date, credits scope to an <b>era or date range</b> instead of an edition. "I worked on League" becomes meaningful because it says <b>when</b>.</div>
+      <div class="tl">
+        <div class="era"><div class="yr">2009 to 2011 · Launch era</div><div class="names">Original design + engineering team · 47 credited</div></div>
+        <div class="era"><div class="yr">2012 to 2015 · Season expansion</div><div class="names">Champion &amp; systems teams · 120 credited</div></div>
+        <div class="era you"><div class="yr">2019 to 2022 · Live team <span class="tag un" style="margin-left:4px">you were here</span></div><div class="names">You: Gameplay Programmer, ranked systems · ◈ 7 vouches from teammates of that era</div></div>
+        <div class="era"><div class="yr">2023 to now · Current live team</div><div class="names">Ongoing · 210 credited</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ② CLAIM A SPECIFIC RELEASE -->
+  <div class="view" id="v-claim">
+    <div class="card">
+      <h3>Claim / edit your credit</h3>
+      <div class="csub">The release scope and the "uncredited" option are what capture the situations existing systems can't.</div>
+      <div class="field"><label>Game</label><div class="input locked"><span>Days Gone · Bend Studio</span><span class="muted small">from catalogue · locked</span></div></div>
+      <div class="field"><label>Which release or era did you work on?</label>
+        <select class="sel"><option>PC port · 2020</option><option>Base game · 2019</option><option>Broken Road DLC · 2019</option><option>Remaster · 2024</option><option>+ my release isn't listed (add it)</option></select>
+        <div class="hint">Scopes your credit to the exact thing you shipped. Not in the list? You can add it, guarded against duplicates.</div>
+      </div>
+      <div class="row2">
+        <div class="field"><label>Role / title</label><select class="sel"><option>Gameplay Programmer</option><option>Graphics Programmer</option><option>Tools Programmer</option></select></div>
+        <div class="field"><label>When (optional, key for live-service)</label><input class="input" value="Jan 2020 to Aug 2020"></div>
+      </div>
+      <div class="field"><label>Was this in the official credits?</label>
+        <div class="seg">
+          <div class="segb" onclick="seg(this,0)"><div class="h">Yes, official</div><div class="d">In the game's credit roll. Shown as fact.</div></div>
+          <div class="segb on" onclick="seg(this,1)"><div class="h">No, uncredited</div><div class="d">You contributed but were left off. Shown as peer-vouched until a colleague confirms.</div></div>
+        </div>
+        <div class="warn" id="uncredited-note"><b>Uncredited contribution:</b> this is the layoff / port / patch case the industry loses. It will display as "peer-vouched, not official," and needs one teammate from this release to confirm before it counts.</div>
+      </div>
+      <div class="field"><label>Contribution note</label><textarea rows="2">Added the graphics and input options pass for the PC port; DX11 settings UI.</textarea></div>
+      <div style="display:flex;gap:10px"><span class="btn green">Save credit</span><span class="btn ghost">Cancel</span></div>
+    </div>
+  </div>
+
+  <!-- ③ ADD A RELEASE WITHOUT DUPLICATES -->
+  <div class="view" id="v-add">
+    <div class="card">
+      <h3>Add a release · the anti-duplicate flow</h3>
+      <div class="csub">Parent game is Days Gone (locked). You cannot free-type a new entity. You search first, then build from fields.</div>
+
+      <div class="sechead" style="margin-top:0">Step 1 · Match before create</div>
+      <div class="field"><label>What did you work on?</label><input class="input" value="pc port" spellcheck="false" style="border-color:var(--accent)"></div>
+      <div class="match"><div><div class="mt">Days Gone · PC (2020)</div><div class="mm">Port · Windows · 41 credited · established</div></div><span class="btn ghost sm">Use this ✓</span></div>
+      <div class="match" style="opacity:.8"><div><div class="mt">Days Gone · PC Enhanced (2021)</div><div class="mm">Patch · community-added · unverified</div></div><span class="btn ghost sm">Use this</span></div>
+      <div class="hint">Existing releases surface first. Most of the time you pick one here and no new entity is created. That single step prevents the bulk of duplicates.</div>
+
+      <div class="sechead">Step 2 · If nothing fits, build from structured fields (not a text box)</div>
+      <div class="row2">
+        <div class="field"><label>Type</label><select class="sel"><option>Port</option><option>Remaster</option><option>Definitive Edition</option><option>DLC / Expansion</option><option>Season / Update</option></select></div>
+        <div class="field"><label>Platform</label><select class="sel"><option>PC (Windows)</option><option>PS5</option><option>Xbox Series</option><option>Switch</option></select></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label>Release year</label><input class="input" value="2020"></div>
+        <div class="field"><label>Name (optional)</label><input class="input" placeholder="usually auto-generated"></div>
+      </div>
+      <div class="canon">
+        <div class="k">Will be created as</div>
+        <div class="v">Days Gone · PC Port (2020)</div>
+        <div class="id">key: days-gone / port / pc-windows / 2020</div>
+      </div>
+      <div class="warn"><b>Heads up:</b> a very similar release already exists: <b>Days Gone · PC (2020)</b>. Use that instead of making a near-duplicate? <a style="color:var(--accent)">Use existing</a> · <a class="muted">create anyway</a></div>
+      <div class="hint">The canonical name and key are generated from the fields, so everyone who enters the same release lands on the same record. The collision check catches near-misses before they happen.</div>
+
+      <div class="sechead">Step 3 · Provenance &amp; cleanup</div>
+      <div class="prov"><span class="dot"></span> New release starts as <b style="color:var(--text);margin:0 4px">community-added · unverified</b>, and becomes established once a peer who worked on it vouches.</div>
+      <div class="prov" style="margin-top:6px"><span class="dot" style="background:var(--accent)"></span> Duplicates that slip through are auto-flagged as look-alikes and can be <b style="color:var(--text);margin:0 4px">merged</b>, with reversible history. Same pattern MusicBrainz and Wikidata use.</div>
+      <div class="caption">Adding a whole new <b>game</b> (an unlisted indie, or a title too new for Wikidata) uses the same flow with a higher bar: search first, structured fields, community-added until vouched.</div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.querySelectorAll('.tab').forEach(function(t){t.addEventListener('click',function(){
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));t.classList.add('on');
+    document.querySelectorAll('.view').forEach(v=>v.classList.remove('on'));
+    document.getElementById('v-'+t.dataset.v).classList.add('on');window.scrollTo({top:0,behavior:'smooth'});
+  });});
+  function rel(r){
+    document.querySelectorAll('.relpill[data-rel]').forEach(p=>p.classList.toggle('on',p.dataset.rel===r));
+    document.querySelectorAll('.relblock').forEach(b=>b.classList.toggle('on',b.dataset.b===r));
+  }
+  function seg(el,i){el.parentElement.querySelectorAll('.segb').forEach(x=>x.classList.remove('on'));el.classList.add('on');
+    document.getElementById('uncredited-note').style.display=(i===1?'block':'none');}
+</script>
+</body>
+</html>

@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DevQuest Credits · game &amp; person pages</title>
+<style>
+  :root{
+    --bg:#0b0e14; --panel:#141a23; --panel2:#1b222c; --border:#242c38; --text:#eef3fa; --muted:#8b98a9;
+    --accent:#58a6ff; --green:#3fb950; --gold:#e0b23a; --purple:#a371f7; --pink:#f778ba; --red:#f85149;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.5;-webkit-font-smoothing:antialiased}
+  a{color:inherit;text-decoration:none;cursor:pointer}
+  .container{max-width:1000px;margin:0 auto;padding:0 22px}
+  body::before{content:"";position:fixed;inset:0;z-index:-2;
+    background:radial-gradient(60% 45% at 20% 0%,rgba(88,166,255,.13),transparent 60%),radial-gradient(50% 40% at 85% 4%,rgba(163,113,247,.12),transparent 60%)}
+
+  .topbar{position:sticky;top:0;z-index:50;backdrop-filter:blur(12px);background:rgba(11,14,20,.75);border-bottom:1px solid var(--border)}
+  .topbar .container{display:flex;align-items:center;justify-content:space-between;height:58px}
+  .brand{display:flex;align-items:center;gap:10px}
+  .brand .wm{font-weight:800;font-size:19px;letter-spacing:-.3px}
+  .brand .wm .q{color:var(--accent)} .brand .wm .tld{color:var(--gold)}
+  .brand .cr{font-size:11.5px;font-weight:700;color:var(--accent);border:1px solid rgba(88,166,255,.4);border-radius:999px;padding:2px 9px;background:rgba(88,166,255,.08);letter-spacing:.03em}
+  .btn{display:inline-flex;align-items:center;gap:7px;border-radius:10px;padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;border:1px solid transparent}
+  .btn.primary{background:linear-gradient(135deg,var(--accent),var(--purple));color:#fff;box-shadow:0 6px 20px rgba(88,166,255,.26)}
+  .btn.ghost{background:transparent;border:1px solid var(--border);color:var(--text)}
+  .btn.ghost:hover{border-color:var(--accent)}
+  .btn.green{background:linear-gradient(135deg,#2ea043,#3fb950);color:#04120a}
+
+  /* design-note + toggle */
+  .designnote{background:rgba(224,178,58,.08);border:1px solid rgba(224,178,58,.4);border-radius:12px;padding:12px 15px;font-size:13.5px;color:#e6dcc0;margin:20px 0}
+  .designnote b{color:#fff}
+  .switch{display:flex;gap:6px;margin:0 0 22px}
+  .swb{background:var(--panel);border:1px solid var(--border);color:var(--muted);border-radius:9px;padding:9px 15px;font-size:13.5px;font-weight:700;cursor:pointer}
+  .swb.on{background:var(--accent);border-color:var(--accent);color:#08111f}
+  .view{display:none} .view.on{display:block;animation:f .2s ease}
+  @keyframes f{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+
+  .crumb{font-size:12.5px;color:var(--muted);margin:22px 0 14px}
+  .crumb a{color:var(--accent)}
+  .urlbar{display:inline-flex;align-items:center;gap:7px;font-size:12px;color:var(--muted);background:var(--panel);border:1px solid var(--border);border-radius:999px;padding:4px 12px;margin-bottom:16px}
+  .urlbar b{color:var(--text);font-weight:600}
+  .urlbar .lock{color:var(--green)}
+
+  /* GAME hero */
+  .ghero{display:flex;gap:22px;align-items:flex-end;border:1px solid var(--border);border-radius:18px;padding:24px;position:relative;overflow:hidden}
+  .ghero .bgart{position:absolute;inset:0;z-index:-1;opacity:.9}
+  .ghero .bgart::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(11,14,20,.35),rgba(11,14,20,.92))}
+  .gcover{width:118px;height:158px;border-radius:12px;flex:none;position:relative;overflow:hidden;border:1px solid rgba(255,255,255,.1);box-shadow:0 12px 30px rgba(0,0,0,.5)}
+  .gcover .cg{position:absolute;top:11px;left:12px;font-size:8.5px;font-weight:800;letter-spacing:.13em;text-transform:uppercase;color:rgba(255,255,255,.55)}
+  .gcover .ctt{position:absolute;left:0;right:0;bottom:0;padding:11px;font-size:13px;font-weight:800;line-height:1.12;background:linear-gradient(180deg,transparent,rgba(0,0,0,.55))}
+  .ghero .meta{flex:1;min-width:0}
+  .ghero h1{font-size:36px;font-weight:850;letter-spacing:-1px;margin:0 0 4px}
+  .ghero .sub{color:#c4cfdd;font-size:14.5px}
+  .gstats{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+  .gst{background:rgba(20,26,35,.75);border:1px solid var(--border);border-radius:10px;padding:8px 13px}
+  .gst b{display:block;font-size:20px;font-weight:850;line-height:1}.gst.hl b{color:var(--green)} .gst span{font-size:11px;color:var(--muted)}
+
+  .claimbar{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;
+    background:linear-gradient(135deg,rgba(88,166,255,.12),rgba(163,113,247,.1));border:1px solid rgba(88,166,255,.35);border-radius:13px;padding:15px 18px;margin:16px 0}
+  .claimbar .t{font-size:14px}.claimbar .t b{color:#fff}
+
+  .searchrow{display:flex;align-items:center;gap:10px;background:var(--panel);border:1px solid var(--border);border-radius:11px;padding:11px 15px;margin:20px 0 14px}
+  .searchrow input{flex:1;background:none;border:none;outline:none;color:var(--text);font-size:14px;font-family:inherit}
+
+  .disc{border:1px solid var(--border);border-radius:11px;margin-bottom:9px;overflow:hidden;background:var(--panel)}
+  .disc>.head{display:flex;justify-content:space-between;align-items:center;padding:12px 15px;cursor:pointer}
+  .disc>.head:hover{background:rgba(88,166,255,.05)}
+  .disc>.head .lft{font-weight:700;font-size:14px}.disc>.head .lft .n{color:var(--muted);font-weight:600;margin-left:6px}
+  .disc>.head .chev{transition:transform .15s;color:var(--muted)} .disc.open>.head .chev{transform:rotate(90deg)}
+  .disc>.head .cl{font-size:12px;color:var(--muted)}
+  .disc>.body{display:none;padding:2px 15px 10px} .disc.open>.body{display:block}
+  .cl-row{display:flex;gap:12px;align-items:center;padding:9px 0;border-bottom:1px solid rgba(36,44,56,.7)}
+  .cl-row:last-child{border-bottom:none}
+  .av{width:30px;height:30px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:11px;color:#08111f}
+  .cl-row .who{flex:1;min-width:0}
+  .cl-row .who .nm{font-weight:600;font-size:14px}
+  .cl-row .who .nm a{color:var(--accent)} .cl-row .who .ro{font-size:12px;color:var(--muted)}
+  .tag{font-size:10.5px;color:var(--muted);border:1px solid var(--border);border-radius:12px;padding:1px 8px;white-space:nowrap}
+  .tag.yes{color:var(--green);border-color:rgba(63,185,80,.4)}
+  .vouch{font-size:11.5px;color:var(--green);white-space:nowrap}.vouch.z{color:var(--muted)}
+
+  /* SEARCH dropdown */
+  .searchbox{max-width:560px;position:relative}
+  .sbi{display:flex;align-items:center;gap:10px;background:var(--panel);border:1px solid var(--accent);border-radius:12px 12px 0 0;padding:13px 16px;box-shadow:0 8px 30px rgba(88,166,255,.15)}
+  .sbi input{flex:1;background:none;border:none;outline:none;color:var(--text);font-size:15px;font-family:inherit}
+  .results{border:1px solid var(--accent);border-top:none;border-radius:0 0 12px 12px;background:var(--panel);overflow:hidden}
+  .rgrp{font-size:10.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);padding:10px 16px 4px}
+  .ritem{display:flex;gap:11px;align-items:center;padding:9px 16px;cursor:pointer}
+  .ritem:hover,.ritem.hot{background:rgba(88,166,255,.09)}
+  .ritem .who{flex:1}.ritem .nm{font-weight:600;font-size:14px}.ritem .mm{font-size:12px;color:var(--muted)}
+
+  /* PERSON page */
+  .phero{display:flex;gap:18px;align-items:center;border:1px solid var(--border);border-radius:18px;padding:22px;position:relative;overflow:hidden}
+  .phero .halo{position:absolute;top:-50px;left:-30px;width:200px;height:200px;border-radius:50%;filter:blur(50px);opacity:.35;z-index:-1}
+  .pav{width:70px;height:70px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;font-weight:850;font-size:26px;color:#08111f}
+  .phero h1{font-size:28px;font-weight:850;letter-spacing:-.6px;margin:0}
+  .phero .prole{color:#c4cfdd;font-size:14px}
+  .pstate{font-size:11.5px;font-weight:700;border-radius:999px;padding:2px 10px;margin-left:8px;vertical-align:middle}
+  .pstate.un{color:var(--gold);border:1px solid rgba(224,178,58,.45);background:rgba(224,178,58,.08)}
+  .pstate.cl{color:var(--green);border:1px solid rgba(63,185,80,.45);background:rgba(63,185,80,.08)}
+
+  .claimhero{background:linear-gradient(135deg,rgba(224,178,58,.14),rgba(88,166,255,.08));border:1px solid rgba(224,178,58,.4);border-radius:14px;padding:20px;margin:16px 0;display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
+  .claimhero .t b{color:#fff;font-size:15px}.claimhero .t p{margin:4px 0 0;color:#d8cead;font-size:13px}
+
+  .pskills{margin:16px 0}
+  .skchip{display:inline-block;font-size:11.5px;color:var(--accent);border:1px solid rgba(88,166,255,.3);background:rgba(88,166,255,.08);border-radius:999px;padding:3px 10px;margin:3px 5px 0 0}
+  .pcredit{display:flex;gap:12px;align-items:center;padding:13px 0;border-bottom:1px solid rgba(36,44,56,.7)}
+  .pcredit:last-child{border-bottom:none}
+  .pcov{width:38px;height:50px;border-radius:6px;flex:none;border:1px solid var(--border)}
+  .pcredit .g{flex:1}.pcredit .g .gt{font-weight:700}.pcredit .g .gr{font-size:12.5px;color:var(--muted)}
+  .imported{opacity:.62}
+  .sechead{font-size:12px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin:24px 0 8px}
+  .muted{color:var(--muted)} .small{font-size:12.5px}
+  .concept{position:fixed;bottom:14px;left:14px;z-index:80;font-size:11px;color:var(--muted);background:rgba(11,14,20,.85);border:1px solid var(--border);border-radius:8px;padding:6px 10px}
+  @media(max-width:720px){.ghero{flex-direction:column;align-items:flex-start}.phero{flex-direction:column;text-align:center}}
+</style>
+</head>
+<body>
+<div class="concept">Concept mockup · full pages, not drawers</div>
+
+<div class="topbar"><div class="container">
+  <div class="brand"><span class="wm">Dev<span class="q">Quest</span><span class="tld">.gg</span></span> <span class="cr">CREDITS</span></div>
+  <span class="btn ghost">← Jobs board</span>
+</div></div>
+
+<div class="container">
+  <div class="designnote">
+    <b>Design decision:</b> these are <b>full pages with real URLs</b> (shareable + Google-indexable), not fly-out drawers. The studio drawer stays on the jobs board for quick glances; the catalogue needs pages people can link to and search engines can find. Toggle the two below.
+  </div>
+  <div class="switch">
+    <div class="swb on" data-v="game">🎮 Click a game</div>
+    <div class="swb" data-v="find">🙋 Find your name</div>
+  </div>
+
+  <!-- ===================== GAME PAGE ===================== -->
+  <div class="view on" id="v-game">
+    <div class="urlbar"><span class="lock">🔒</span> devquest.gg/credits/game/<b>ghost-of-tsushima</b></div>
+    <div class="crumb"><a>Credits</a> › <a>Sucker Punch</a> › <b style="color:var(--text)">Ghost of Tsushima</b></div>
+
+    <div class="ghero">
+      <div class="bgart" style="background:linear-gradient(160deg,#b23a48,#3a1720)"></div>
+      <div class="gcover" style="background:linear-gradient(160deg,#b23a48,#3a1720)"><span class="cg">Action</span><span class="ctt">Ghost of Tsushima</span></div>
+      <div class="meta">
+        <h1>Ghost of Tsushima</h1>
+        <div class="sub">Sucker Punch Productions · 2020 · Action-adventure</div>
+        <div class="gstats">
+          <div class="gst"><b>247</b><span>credited</span></div>
+          <div class="gst hl"><b>63</b><span>claimed on DevQuest</span></div>
+          <div class="gst"><b>512</b><span>peer vouches</span></div>
+          <div class="gst"><b>5</b><span>open roles at studio</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="claimbar">
+      <div class="t"><b>Did you work on this game?</b> Find your name below and claim your credit in 30 seconds.</div>
+      <span class="btn green">Find &amp; claim my credit</span>
+    </div>
+
+    <div class="searchrow"><span>🔍</span><input placeholder="Search this game's 247 credits by name or role..."></div>
+
+    <div class="disc open"><div class="head" onclick="tog(this)"><span class="lft">Design <span class="n">· 22</span></span><span style="display:flex;gap:12px;align-items:center"><span class="cl">3 claimed</span><span class="chev">▸</span></span></div>
+      <div class="body">
+        <div class="cl-row"><div class="av" style="background:var(--accent)">JC</div><div class="who"><div class="nm"><a>Jordan Cole</a></div><div class="ro">Lead Combat Designer</div></div><span class="tag yes">claimed ✓</span><span class="vouch">◈ 12</span></div>
+        <div class="cl-row"><div class="av" style="background:var(--purple)">SL</div><div class="who"><div class="nm">Sam Lin</div><div class="ro">Systems Designer</div></div><span class="tag">unclaimed</span><span class="vouch z">◈ 0</span></div>
+        <div class="cl-row"><div class="av" style="background:var(--pink)">RG</div><div class="who"><div class="nm"><a>Rae Gomez</a></div><div class="ro">Encounter Designer</div></div><span class="tag yes">claimed ✓</span><span class="vouch">◈ 7</span></div>
+      </div>
+    </div>
+    <div class="disc"><div class="head" onclick="tog(this)"><span class="lft">Programming <span class="n">· 41</span></span><span style="display:flex;gap:12px;align-items:center"><span class="cl">9 claimed</span><span class="chev">▸</span></span></div>
+      <div class="body"><div class="cl-row"><div class="av" style="background:var(--gold)">MA</div><div class="who"><div class="nm"><a>Marco Alvarez</a></div><div class="ro">Gameplay Programmer</div></div><span class="tag yes">claimed ✓</span><span class="vouch">◈ 8</span></div>
+        <div class="muted small" style="padding:8px 0">…and 40 more. Claimed and vouched names sort to the top; the rest stay for completeness.</div></div></div>
+    <div class="disc"><div class="head" onclick="tog(this)"><span class="lft">Art · Audio · Production · QA · Other <span class="n">· 184</span></span><span style="display:flex;gap:12px;align-items:center"><span class="cl">21 claimed</span><span class="chev">▸</span></span></div>
+      <div class="body"><div class="muted small" style="padding:8px 0">Big buckets stay collapsed so a 247-name page opens calm. Search cuts across all of them.</div></div></div>
+  </div>
+
+  <!-- ===================== FIND YOUR NAME ===================== -->
+  <div class="view" id="v-find">
+    <div class="sechead" style="margin-top:22px">Step 1 · You search your own name</div>
+    <div class="searchbox">
+      <div class="sbi"><span>🔍</span><input value="marco alv" spellcheck="false"><span class="btn primary" style="padding:6px 12px">Search</span></div>
+      <div class="results">
+        <div class="rgrp">People</div>
+        <div class="ritem hot" onclick="showPerson()"><div class="av" style="background:var(--gold)">MA</div><div class="who"><div class="nm">Marco Alvarez <span class="pstate un" style="margin-left:4px">unclaimed</span></div><div class="mm">Gameplay Programmer · Ghost of Tsushima, Days Gone</div></div><span class="muted small">This is me →</span></div>
+        <div class="ritem"><div class="av" style="background:var(--accent)">MA</div><div class="who"><div class="nm">Marco Alvez</div><div class="mm">Environment Artist · Forza Horizon 5</div></div></div>
+        <div class="rgrp">Games</div>
+        <div class="ritem"><div class="av" style="background:var(--purple);border-radius:6px">A</div><div class="who"><div class="nm">Alan Wake 2</div><div class="mm">Remedy · 2023</div></div></div>
+      </div>
+    </div>
+    <div class="muted small" style="margin:10px 2px 0">Your name is probably already here, imported from the public credit roll. Click it to open your page.</div>
+
+    <div class="sechead">Step 2 · Your page (before you claim it)</div>
+    <div class="switch" style="margin-bottom:14px">
+      <div class="swb on" data-p="un" onclick="setP('un')">As found (unclaimed)</div>
+      <div class="swb" data-p="cl" onclick="setP('cl')">After you claim it</div>
+    </div>
+
+    <div class="urlbar"><span class="lock">🔒</span> devquest.gg/credits/dev/<b>marco-alvarez</b></div>
+
+    <!-- UNCLAIMED STATE -->
+    <div id="p-un">
+      <div class="phero"><div class="halo" style="background:var(--gold)"></div>
+        <div class="pav" style="background:var(--gold)">MA</div>
+        <div><h1>Marco Alvarez <span class="pstate un">unclaimed</span></h1><div class="prole">Gameplay Programmer</div></div>
+      </div>
+      <div class="claimhero">
+        <div class="t"><b>Is this you?</b><p>Claim this page to correct your roles, add skills, and collect peer vouches. One email, no password, 30 seconds.</p></div>
+        <span class="btn green" style="padding:11px 20px">🙋 This is me — claim it</span>
+      </div>
+      <div class="sechead">Credits · imported from public records</div>
+      <div class="pcredit imported"><div class="pcov" style="background:linear-gradient(160deg,#b23a48,#3a1720)"></div><div class="g"><div class="gt">Ghost of Tsushima <span class="muted small">· Sucker Punch · 2020</span></div><div class="gr">Gameplay Programmer</div></div><span class="tag">imported</span></div>
+      <div class="pcredit imported"><div class="pcov" style="background:linear-gradient(160deg,#4a6a2a,#16240f)"></div><div class="g"><div class="gt">Days Gone <span class="muted small">· Bend Studio · 2019</span></div><div class="gr">Gameplay Programmer</div></div><span class="tag">imported</span></div>
+      <div class="muted small" style="margin-top:12px">Imported credits are shown as facts from the public roll, and clearly marked. No skills, notes, or vouches appear until the real person claims the page — nothing is put in their mouth.</div>
+    </div>
+
+    <!-- CLAIMED STATE -->
+    <div id="p-cl" style="display:none">
+      <div class="phero"><div class="halo" style="background:var(--accent)"></div>
+        <div class="pav" style="background:var(--accent)">MA</div>
+        <div><h1>Marco Alvarez <span class="pstate cl">claimed ✓</span></h1><div class="prole">Gameplay Programmer · Seattle</div></div>
+        <div style="margin-left:auto;display:flex;gap:8px"><span class="btn ghost">Share</span><span class="btn ghost">Export ⤓</span></div>
+      </div>
+      <div class="pskills">
+        <span class="skchip">C++</span><span class="skchip">Gameplay systems</span><span class="skchip">Combat</span><span class="skchip">Netcode</span><span class="skchip">AI</span>
+      </div>
+      <div class="sechead">Credits · 3 games</div>
+      <div class="pcredit"><div class="pcov" style="background:linear-gradient(160deg,#b23a48,#3a1720)"></div><div class="g"><div class="gt">Ghost of Tsushima <span class="muted small">· 2020</span></div><div class="gr">Gameplay Programmer — parry &amp; stance combat systems</div></div><span class="vouch">◈ 8 vouch</span></div>
+      <div class="pcredit"><div class="pcov" style="background:linear-gradient(160deg,#4a6a2a,#16240f)"></div><div class="g"><div class="gt">Days Gone <span class="muted small">· 2019</span></div><div class="gr">Gameplay Programmer — enemy AI hordes</div></div><span class="vouch">◈ 5 vouch</span></div>
+      <div class="pcredit"><div class="pcov" style="background:linear-gradient(160deg,#3a4a7b,#12172c)"></div><div class="g"><div class="gt">Untitled indie <span class="muted small">· self · 2017</span></div><div class="gr">Solo <span class="tag">self-reported</span></div></div><span class="vouch z">◈ 0</span></div>
+      <div class="muted small" style="margin-top:12px">Once claimed: roles corrected, skills and notes added, peer vouches collected. This public page is exactly what a recruiter sees, and what the dev takes with them anywhere.</div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.querySelectorAll('.swb[data-v]').forEach(function(b){b.addEventListener('click',function(){
+    document.querySelectorAll('.swb[data-v]').forEach(x=>x.classList.remove('on'));b.classList.add('on');
+    document.querySelectorAll('.view').forEach(v=>v.classList.remove('on'));
+    document.getElementById('v-'+b.dataset.v).classList.add('on');window.scrollTo({top:0,behavior:'smooth'});
+  });});
+  function tog(h){h.parentElement.classList.toggle('open');}
+  function setP(p){
+    document.querySelectorAll('.swb[data-p]').forEach(x=>x.classList.toggle('on',x.dataset.p===p));
+    document.getElementById('p-un').style.display=(p==='un'?'block':'none');
+    document.getElementById('p-cl').style.display=(p==='cl'?'block':'none');
+  }
+  function showPerson(){document.querySelector('.sechead:nth-of-type(2)')&&window.scrollBy({top:200,behavior:'smooth'});}
+</script>
+</body>
+</html>
