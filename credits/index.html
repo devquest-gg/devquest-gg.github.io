@@ -33,6 +33,10 @@
   .topbar .container{display:flex;align-items:center;justify-content:space-between;height:60px}
   .brand{display:flex;align-items:center;gap:8px}
 .brand .mark{width:24px;height:24px;flex:none;display:block}
+.brandhome{display:inline-flex;align-items:center;gap:8px;text-decoration:none;color:inherit;cursor:pointer;transition:opacity .15s;position:relative}
+.brandhome:hover{opacity:.85}
+.brandhome[data-tip]::after{content:attr(data-tip);position:absolute;top:calc(100% + 9px);left:0;background:var(--panel);border:1px solid var(--border);color:var(--text);font-size:12px;font-weight:600;padding:5px 9px;border-radius:7px;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .14s;box-shadow:0 8px 22px rgba(0,0,0,.5);z-index:60}
+.brandhome:hover[data-tip]::after{opacity:1}
   .brand .wm{font-weight:800;font-size:20px;letter-spacing:-.3px;color:var(--text)}
   .brand .wm .q{color:var(--accent)}
   .brand .wm .tld{color:var(--gold)}
@@ -153,7 +157,7 @@
 </head>
 <body>
 <div class="topbar"><div class="container">
-  <div class="brand"><svg class="mark" viewBox="0 0 32 32" aria-hidden="true"><rect x="1" y="1" width="8" height="8" rx="2" fill="var(--gold)"/><rect x="12" y="1" width="8" height="8" rx="2" fill="#2d333b"/><rect x="23" y="1" width="8" height="8" rx="2" fill="#2d333b"/><rect x="1" y="12" width="8" height="8" rx="2" fill="#2d333b"/><rect x="12" y="12" width="8" height="8" rx="2" fill="var(--gold)"/><rect x="23" y="12" width="8" height="8" rx="2" fill="#2d333b"/><rect x="1" y="23" width="8" height="8" rx="2" fill="#2d333b"/><rect x="12" y="23" width="8" height="8" rx="2" fill="#2d333b"/><rect x="23" y="23" width="8" height="8" rx="2" fill="var(--gold)"/></svg><span class="wm">Dev<span class="q">Quest</span><span class="tld">.gg</span></span> <span class="cr">CREDITS</span></div>
+  <div class="brand"><a class="brandhome" href="/credits/" data-tip="Back to Credits home" aria-label="DevQuest Credits home" onclick="if(event.metaKey||event.ctrlKey||event.shiftKey)return true;var h=location.origin+'/credits/';location.href===h?location.reload():location.assign(h);return false;"><svg class="mark" viewBox="0 0 32 32" aria-hidden="true"><rect x="1" y="1" width="8" height="8" rx="2" fill="var(--gold)"/><rect x="12" y="1" width="8" height="8" rx="2" fill="#2d333b"/><rect x="23" y="1" width="8" height="8" rx="2" fill="#2d333b"/><rect x="1" y="12" width="8" height="8" rx="2" fill="#2d333b"/><rect x="12" y="12" width="8" height="8" rx="2" fill="var(--gold)"/><rect x="23" y="12" width="8" height="8" rx="2" fill="#2d333b"/><rect x="1" y="23" width="8" height="8" rx="2" fill="#2d333b"/><rect x="12" y="23" width="8" height="8" rx="2" fill="#2d333b"/><rect x="23" y="23" width="8" height="8" rx="2" fill="var(--gold)"/></svg><span class="wm">Dev<span class="q">Quest</span><span class="tld">.gg</span></span></a> <span class="cr">CREDITS</span></div>
   <div class="topnav">
     <a href="#trending">Games</a><a href="#devs">People</a><a href="#how">How it works</a>
     <a class="back" href="/">← Jobs board</a>
