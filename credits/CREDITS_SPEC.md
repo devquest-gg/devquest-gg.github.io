@@ -155,3 +155,34 @@ Because we ask people to invest time, the data must be able to outlive us. Offer
 ## 10. Relationship to the jobs board
 
 The credits profile *is* a candidate profile. A vouched game-credit history is a stronger hiring signal than a self-reported LinkedIn list. The two products share studios and branding. On the jobs board, the studio drawer's game list can link out to credits game pages, and a claimed profile can back a job application. The credits side deliberately does **not** add contact/messaging in the catalogue-first scope; that "professional network" layer is a separate, later decision with its own moderation cost.
+
+## 11. Email, consent and privacy
+
+Credits is a much stronger email channel than the jobs board, because the email is intrinsic to the core action rather than a side ask. To claim or edit a profile the person verifies an email via the magic link, so every engaged user hands over a verified email as a natural part of a high-intent action. Expect far higher email capture among engaged users than the jobs board's newsletter box. This section defines how to handle those addresses correctly from the start, so consent is designed in during Phase 2 rather than bolted on.
+
+*Note: this is a practical design guide, not legal advice. Confirm specifics with counsel before launch.*
+
+### Two buckets, kept strictly separate
+
+**Transactional / service email.** Tied to the account and necessary for the thing the user asked for: the magic link itself, claim confirmation, "someone vouched for your credit," work-email verification, contested-claim and re-claim notices. These are generally permitted without a separate marketing consent because they are part of the service. Most of the genuine re-engagement value lives here (a "someone vouched for you" email is a real reason to return).
+
+**Marketing / product email.** Product updates, digests, "N new people claimed at your studio," cross-promotion of the jobs board. These require explicit opt-in and must not be sent to someone just because they claimed a profile.
+
+### Consent rules (design to these)
+
+- **Do not** auto-add the claim email to a marketing list. Offer a **separate, unticked** "send me occasional product updates" checkbox in or after the claim flow.
+- Include a working **unsubscribe** in every marketing email and honour it promptly. Keep a suppression list.
+- Maintain a short **privacy policy** stating what is collected, why, how it is used, retention, and how to opt out or delete.
+- Design to the **GDPR** opt-in standard (EU/UK users are certain in a global game-dev audience). It is stricter than US CAN-SPAM, so meeting it covers you broadly.
+- **Double opt-in comes free:** claiming already verifies the email via magic link, so the marketing list can inherit verified-address quality.
+- Honour **access, export and deletion** rights. This aligns naturally with the open-data commitment (Section 9): "your credits are yours, exportable, deletable."
+
+### Brand rule
+
+Treat email as a **byproduct of a genuinely useful action, never a harvest.** The entire positioning is "your data is yours." If devs sense the claim is really an email grab, that trust erodes fast. Never sell or rent the list. Done right, the credits list should be more engaged than the jobs list, because these are people who actively claimed something they care about.
+
+### Implementation notes (for Phase 2)
+
+- Store a **marketing-consent flag plus timestamp** on the person/identity record, separate from the verified-email flag. Record the consent source and version of the privacy policy.
+- Use a reliable **transactional email provider** for magic links and service notices (for example Resend, Postmark, or Amazon SES), since deliverability of the magic link is load-bearing for the whole claim flow.
+- Keep marketing sends on a separate list/flow from transactional, so an unsubscribe never blocks a magic link.

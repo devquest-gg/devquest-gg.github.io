@@ -52,6 +52,7 @@ Do:
 - Edit a credit: controlled role and skill vocabularies, moderated Notes.
 - Prompt to link a second key (recovery email or OAuth) right after first claim.
 - Public, reversible edit history.
+- **Email consent done right:** keep transactional email (magic link, vouch notices) separate from marketing; add a separate unticked opt-in for product updates; include unsubscribe and a privacy policy; store a marketing-consent flag plus timestamp. See `CREDITS_SPEC.md` section 11 for the full guidance.
 
 **Go/no-go:** people claim and maintain pages → Phase 3.
 
