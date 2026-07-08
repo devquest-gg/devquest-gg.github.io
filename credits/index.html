@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DevQuest Credits · The credit developers deserve</title>
+<meta name="description" content="An opt-in, dev-controlled game credits database. Find your credits, claim your page, and let the peers you shipped with vouch for it.">
+<meta name="robots" content="noindex, nofollow">
+<link rel="canonical" href="https://devquest.gg/credits">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<style>
+  :root{
+    --bg:#0b0e14; --panel:#141a23; --border:#242c38; --text:#eef3fa; --muted:#8b98a9;
+    --accent:#58a6ff; --green:#3fb950; --gold:#e0b23a; --purple:#a371f7; --pink:#f778ba;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.5;-webkit-font-smoothing:antialiased}
+  a{color:inherit;text-decoration:none}
+  .container{max-width:1080px;margin:0 auto;padding:0 22px}
+  .mut{color:var(--muted)}
+
+  body::before{content:"";position:fixed;inset:0;z-index:-2;
+    background:
+      radial-gradient(60% 50% at 20% 0%,rgba(88,166,255,.16),transparent 60%),
+      radial-gradient(50% 45% at 85% 5%,rgba(163,113,247,.15),transparent 60%),
+      radial-gradient(45% 40% at 60% 30%,rgba(224,178,58,.08),transparent 60%);}
+
+  /* top bar */
+  .topbar{position:sticky;top:0;z-index:50;backdrop-filter:blur(12px);
+    background:rgba(11,14,20,.72);border-bottom:1px solid var(--border)}
+  .topbar .container{display:flex;align-items:center;justify-content:space-between;height:60px}
+  .brand{display:flex;align-items:center;gap:10px}
+  .brand .wm{font-weight:800;font-size:20px;letter-spacing:-.3px;color:var(--text)}
+  .brand .wm .q{color:var(--accent)}
+  .brand .wm .tld{color:var(--gold)}
+  .brand .cr{font-size:12px;font-weight:700;color:var(--accent);border:1px solid rgba(88,166,255,.4);border-radius:999px;padding:2px 9px;background:rgba(88,166,255,.08);letter-spacing:.03em}
+  .topnav{display:flex;align-items:center;gap:22px;font-size:14px;font-weight:600}
+  .topnav a{color:var(--muted)} .topnav a:hover{color:var(--text)}
+  .topnav .back{font-size:12.5px;color:var(--muted);border:1px solid var(--border);border-radius:8px;padding:6px 11px}
+  .btn{display:inline-flex;align-items:center;gap:7px;border-radius:10px;padding:9px 16px;font-size:14px;font-weight:700;cursor:pointer;border:1px solid transparent}
+  .btn.primary{background:linear-gradient(135deg,var(--accent),var(--purple));color:#fff;box-shadow:0 6px 22px rgba(88,166,255,.28)}
+  .btn.primary:hover{filter:brightness(1.08)}
+
+  /* HERO */
+  .hero{position:relative;overflow:hidden;padding:66px 0 40px}
+  .hero h1{font-size:52px;line-height:1.04;font-weight:850;letter-spacing:-1.2px;margin:0 0 18px;max-width:760px}
+  .hero h1 .grad{background:linear-gradient(100deg,#7cc0ff,#a371f7 55%,#e0b23a);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .hero p.lede{font-size:18px;color:#c4cfdd;max-width:620px;margin:0 0 26px}
+  .searchwrap{display:flex;gap:10px;max-width:640px;margin-bottom:14px}
+  .search{flex:1;display:flex;align-items:center;gap:10px;background:var(--panel);border:1px solid var(--border);border-radius:13px;padding:13px 16px;box-shadow:0 8px 30px rgba(0,0,0,.35)}
+  .search:focus-within{border-color:var(--accent)}
+  .search input{flex:1;background:none;border:none;outline:none;color:var(--text);font-size:15.5px;font-family:inherit}
+  .search .ic{font-size:16px;opacity:.7}
+  .trustline{font-size:13px;color:var(--muted)}
+  .trustline b{color:var(--green)}
+  .heroquick{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+  .qk{font-size:12.5px;color:var(--muted);border:1px solid var(--border);border-radius:999px;padding:5px 12px;cursor:pointer}
+  .qk:hover{border-color:var(--accent);color:var(--text)}
+
+  /* cover wall marquee: contained to center column, fades at edges */
+  .wall{margin-top:46px;position:relative;overflow:hidden;padding:10px 0}
+  .wall::before,.wall::after{content:"";position:absolute;top:0;bottom:0;width:110px;z-index:2;pointer-events:none}
+  .wall::before{left:0;background:linear-gradient(90deg,var(--bg),transparent)}
+  .wall::after{right:0;background:linear-gradient(270deg,var(--bg),transparent)}
+  .marquee{display:flex;gap:14px;width:max-content;animation:slide 42s linear infinite}
+  .marquee.rev{animation-direction:reverse;animation-duration:52s;margin-top:14px}
+  .wall:hover .marquee{animation-play-state:paused}
+  @keyframes slide{to{transform:translateX(-50%)}}
+  .cover{width:132px;height:176px;border-radius:12px;flex:none;position:relative;overflow:hidden;
+    border:1px solid rgba(255,255,255,.08);box-shadow:0 10px 26px rgba(0,0,0,.4);cursor:pointer;transition:transform .18s}
+  .cover:hover{transform:translateY(-4px) scale(1.02)}
+  .cover .cgenre{position:absolute;top:12px;left:13px;right:13px;font-size:9px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.52)}
+  .cover .ct{position:absolute;left:0;right:0;bottom:0;padding:13px 13px 13px;font-size:14.5px;font-weight:800;line-height:1.15;
+    background:linear-gradient(180deg,transparent,rgba(0,0,0,.5))}
+  .cover .cc{display:block;font-size:10.5px;font-weight:600;color:rgba(255,255,255,.72);margin-top:3px}
+
+  section.blk{padding:56px 0}
+  .eyebrow{font-size:12px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);margin-bottom:10px}
+  h2.sec{font-size:30px;font-weight:800;letter-spacing:-.5px;margin:0 0 8px}
+  .secsub{color:var(--muted);font-size:15px;margin:0 0 26px;max-width:640px}
+  .rowhead{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:22px}
+  .rowhead a.more{font-size:13.5px;font-weight:700;color:var(--accent)}
+
+  /* stat strip */
+  .statslead{font-size:13px;color:var(--muted);font-style:italic;margin:44px 0 12px}
+  .stats{display:flex;flex-wrap:wrap;gap:14px;border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:22px 0}
+  .stat{flex:1;min-width:170px}
+  .stat b{display:block;font-size:32px;font-weight:850;letter-spacing:-.5px;
+    background:linear-gradient(120deg,#eef3fa,#9db4d0);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .stat.hl b{background:linear-gradient(120deg,#7cc0ff,#a371f7);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .stat span{font-size:13px;color:var(--muted)}
+
+  /* trending game cards */
+  .gcards{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+  .gcard{background:var(--panel);border:1px solid var(--border);border-radius:14px;overflow:hidden;cursor:pointer;transition:border-color .16s,transform .16s}
+  .gcard:hover{border-color:var(--accent);transform:translateY(-3px)}
+  .gcard .art{height:120px;position:relative}
+  .gcard .art .genre{position:absolute;top:13px;left:15px;font-size:9.5px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.6)}
+  .gcard .art .bigt{position:absolute;left:15px;right:15px;bottom:12px;font-size:17px;font-weight:850;letter-spacing:-.3px;line-height:1.1;text-shadow:0 2px 10px rgba(0,0,0,.4)}
+  .gcard .body{padding:12px 15px 15px}
+  .gcard .gm{font-size:12px;color:var(--muted)}
+  .gcard .gstat{margin-top:9px;font-size:12.5px;color:var(--muted)}
+  .gcard .gstat b{color:var(--accent)}
+
+  /* dev spotlight cards */
+  .dcards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  .dcard{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:18px;position:relative;overflow:hidden}
+  .dcard .halo{position:absolute;top:-40px;right:-40px;width:120px;height:120px;border-radius:50%;filter:blur(30px);opacity:.5}
+  .dcard .av{width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:19px;color:#0b0e14}
+  .dcard .nm{font-weight:800;font-size:16px;margin-top:12px}
+  .dcard .rl{font-size:12.5px;color:var(--muted)}
+  .dcard .verified{color:var(--green);font-size:12px;font-weight:700}
+  .dcard .titles{margin-top:12px;display:flex;flex-direction:column;gap:6px}
+  .dcard .tl{font-size:12.5px;color:#c4cfdd;display:flex;justify-content:space-between}
+  .dcard .tl .v{color:var(--green);font-size:11.5px}
+  .dcard .skills{margin-top:12px}
+  .skchip{display:inline-block;font-size:11px;color:var(--accent);border:1px solid rgba(88,166,255,.3);background:rgba(88,166,255,.08);border-radius:999px;padding:2px 9px;margin:2px 4px 0 0}
+
+  /* how it works */
+  .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+  .step{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:22px}
+  .step .num{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:800;
+    background:linear-gradient(135deg,var(--accent),var(--purple));color:#fff;margin-bottom:14px}
+  .step h4{margin:0 0 6px;font-size:16px}
+  .step p{margin:0;font-size:13.5px;color:var(--muted)}
+
+  /* manifesto */
+  .manifesto{background:linear-gradient(135deg,rgba(88,166,255,.1),rgba(163,113,247,.08));border:1px solid var(--border);border-radius:20px;padding:44px}
+  .manifesto h2{font-size:28px;font-weight:800;letter-spacing:-.5px;margin:0 0 14px;max-width:720px}
+  .manifesto p{font-size:15.5px;color:#c4cfdd;max-width:730px;margin:0 0 10px}
+  .manifesto p b{color:var(--text)}
+
+  /* CTA band */
+  .cta{text-align:center;background:linear-gradient(135deg,#131a2a,#0d1017);border:1px solid var(--border);border-radius:20px;padding:52px 24px;position:relative;overflow:hidden}
+  .cta .glow{position:absolute;top:-60px;left:50%;transform:translateX(-50%);width:340px;height:200px;background:radial-gradient(closest-side,rgba(88,166,255,.35),transparent);filter:blur(20px)}
+  .cta h2{font-size:32px;font-weight:850;letter-spacing:-.6px;margin:0 0 10px}
+  .cta p{color:var(--muted);margin:0 0 22px;font-size:15px}
+
+  footer{border-top:1px solid var(--border);padding:34px 0;margin-top:50px;color:var(--muted);font-size:13px}
+  footer .container{display:flex;justify-content:space-between;flex-wrap:wrap;gap:14px}
+  footer a:hover{color:var(--text)}
+
+  .concept{position:fixed;bottom:14px;left:14px;z-index:80;font-size:11px;color:var(--muted);background:rgba(11,14,20,.85);border:1px solid var(--border);border-radius:8px;padding:6px 10px}
+
+  @media(max-width:860px){
+    .hero h1{font-size:38px}.gcards{grid-template-columns:repeat(2,1fr)}
+    .dcards{grid-template-columns:1fr}.steps{grid-template-columns:1fr}.topnav a:not(.back){display:none}
+  }
+</style>
+</head>
+<body>
+<div class="topbar"><div class="container">
+  <div class="brand"><span class="wm">Dev<span class="q">Quest</span><span class="tld">.gg</span></span> <span class="cr">CREDITS</span></div>
+  <div class="topnav">
+    <a href="#trending">Games</a><a href="#devs">People</a><a href="#how">How it works</a>
+    <a class="back" href="/">← Jobs board</a>
+    <span class="btn primary">Claim your credits</span>
+  </div>
+</div></div>
+
+<!-- HERO -->
+<div class="hero"><div class="container">
+  <div class="eyebrow">The credit developers deserve</div>
+  <h1>Every game. Every dev.<br><span class="grad">Properly credited.</span></h1>
+  <p class="lede">The opt-in credits database for the people who actually make games. Controlled by you, verified by the peers you shipped with. Not another wiki you can't edit.</p>
+  <div class="searchwrap">
+    <div class="search"><span class="ic">🔍</span><input placeholder="Search a game, a studio, or your own name..."></div>
+    <span class="btn primary">Search</span>
+  </div>
+  <div class="trustline">Completely free · opt-in · <b>your data is exportable and yours</b></div>
+  <div class="heroquick">
+    <span class="qk">Browse games</span><span class="qk">Studios</span><span class="qk">Find yourself &amp; claim</span><span class="qk">How vouching works</span>
+  </div>
+
+  <!-- cover wall -->
+  <div class="wall">
+    <div class="marquee" id="m1"></div>
+    <div class="marquee rev" id="m2"></div>
+  </div>
+
+  <!-- stats: cold-start-safe (seeded catalogue scale, unclaimed framed as opportunity) -->
+  <div class="statslead">Seeded from public records at launch. The people who earned these credits claim them over time.</div>
+  <div class="stats">
+    <div class="stat hl"><b data-to="48210">0</b><span>credits waiting to be claimed</span></div>
+    <div class="stat"><b data-to="12904">0</b><span>games catalogued</span></div>
+    <div class="stat"><b data-to="1240">0</b><span>studios</span></div>
+  </div>
+</div></div>
+
+<!-- TRENDING / MOST CREDITED GAMES -->
+<section class="blk" id="trending"><div class="container">
+  <div class="rowhead">
+    <div><div class="eyebrow">Explore</div><h2 class="sec">Most credited games</h2>
+      <p class="secsub" style="margin:0">The biggest credit rolls in the catalogue, ready to explore.</p></div>
+    <a class="more" href="#">All 12,904 games →</a>
+  </div>
+  <div class="gcards" id="gcards"></div>
+</div></section>
+
+<!-- DEV SPOTLIGHT -->
+<section class="blk" id="devs"><div class="container">
+  <div class="rowhead">
+    <div><div class="eyebrow">The people</div><h2 class="sec">What a claimed profile looks like</h2>
+      <p class="secsub" style="margin:0">A credit page beats a résumé bullet. Verified by the people you actually worked with.</p></div>
+    <a class="more" href="#">Browse people →</a>
+  </div>
+  <div class="dcards" id="dcards"></div>
+</div></section>
+
+<!-- HOW IT WORKS -->
+<section class="blk" id="how"><div class="container">
+  <div class="eyebrow">Dead simple</div><h2 class="sec">Claim yours in 30 seconds</h2>
+  <p class="secsub">No account, no password, no résumé builder. Just proof you made what you made.</p>
+  <div class="steps">
+    <div class="step"><div class="num">1</div><h4>Find your name</h4><p>It's probably already here, imported from public credit rolls across thousands of games.</p></div>
+    <div class="step"><div class="num">2</div><h4>Claim with a link</h4><p>Tap "This is me," verify an email once, and a magic link lets you edit forever. That's the whole signup.</p></div>
+    <div class="step"><div class="num">3</div><h4>Peers vouch</h4><p>Colleagues who shipped the same game confirm your role in one click. Trust you can point a recruiter at.</p></div>
+  </div>
+</div></section>
+
+<!-- MANIFESTO -->
+<section class="blk"><div class="container">
+  <div class="manifesto">
+    <div class="eyebrow">Why we're building this</div>
+    <h2>Games have databases. They don't have a record you control.</h2>
+    <p>There are places to look up who made a game, like MobyGames and IGDB. But they are third-party catalogues, edited around you rather than by you. Credits still get people cut after layoffs, mislabelled, or left off a game entirely, and no existing site lets the person who did the work own and correct their own record.</p>
+    <p>DevQuest Credits flips that. <b>The person who did the work owns the record of it.</b> Opt-in, peer-verified, and openly licensed, so it can outlive any one company, including us.</p>
+  </div>
+</div></section>
+
+<!-- CTA -->
+<section class="blk"><div class="container">
+  <div class="cta"><div class="glow"></div>
+    <h2>Your work deserves your name on it.</h2>
+    <p>Find your credits, claim your page, and take it with you wherever you go next.</p>
+    <span class="btn primary" style="font-size:15px;padding:12px 22px">Claim your credits</span>
+  </div>
+</div></section>
+
+<footer><div class="container">
+  <div><b style="color:var(--text)">DevQuest.gg / Credits</b> · a companion to the game-industry job board</div>
+  <div><a href="#">← Back to jobs</a> &nbsp;·&nbsp; <a href="#">Open data &amp; exports</a> &nbsp;·&nbsp; <a href="#">Crediting guidelines</a></div>
+</div></footer>
+
+<script>
+  // ---- cover wall (typographic covers: gradient + title + genre, no icons) ----
+  var COVERS=[
+    ["Ghost of Tsushima","247 credited","Action","linear-gradient(160deg,#b23a48,#3a1720)"],
+    ["Hades","121 credited","Roguelike","linear-gradient(160deg,#e0662a,#3a1a10)"],
+    ["Baldur's Gate 3","1,904 credited","RPG","linear-gradient(160deg,#7b3fb0,#1c1030)"],
+    ["Celeste","44 credited","Platformer","linear-gradient(160deg,#4aa5e0,#10233a)"],
+    ["Elden Ring","1,540 credited","Action RPG","linear-gradient(160deg,#c8a23a,#2a2210)"],
+    ["Stardew Valley","3 credited","Sim","linear-gradient(160deg,#4caf50,#12331a)"],
+    ["Cyberpunk 2077","2,110 credited","RPG","linear-gradient(160deg,#c9b23a,#33300f)"],
+    ["Hollow Knight","62 credited","Metroidvania","linear-gradient(160deg,#2a6fb0,#0f1c30)"],
+    ["God of War","1,320 credited","Action","linear-gradient(160deg,#b0532a,#301810)"],
+    ["Disco Elysium","78 credited","RPG","linear-gradient(160deg,#3a8fb0,#10283a)"],
+    ["Alan Wake 2","640 credited","Horror","linear-gradient(160deg,#5a5fb0,#161a30)"],
+    ["Balatro","1 credited","Deckbuilder","linear-gradient(160deg,#c02a5a,#300f1c)"]
+  ];
+  function coverHTML(c){return '<div class="cover" style="background:'+c[3]+'"><span class="cgenre">'+c[2]+'</span><div class="ct">'+c[0]+'<span class="cc">'+c[1]+'</span></div></div>';}
+  var half=COVERS.map(coverHTML).join('');
+  document.getElementById('m1').innerHTML=half+half;
+  var rev=COVERS.slice().reverse().map(coverHTML).join('');
+  document.getElementById('m2').innerHTML=rev+rev;
+
+  // ---- most-credited game cards (typographic) ----
+  var GAMES=[
+    ["Baldur's Gate 3","Larian · 2023","RPG","linear-gradient(160deg,#7b3fb0,#1c1030)","1,904"],
+    ["Cyberpunk 2077","CD Projekt Red · 2020","RPG","linear-gradient(160deg,#c9b23a,#33300f)","2,110"],
+    ["Elden Ring","FromSoftware · 2022","Action RPG","linear-gradient(160deg,#c8a23a,#2a2210)","1,540"],
+    ["Ghost of Tsushima","Sucker Punch · 2020","Action","linear-gradient(160deg,#b23a48,#3a1720)","247"]
+  ];
+  document.getElementById('gcards').innerHTML=GAMES.map(function(g){
+    return '<div class="gcard"><div class="art" style="background:'+g[3]+'"><span class="genre">'+g[2]+'</span><div class="bigt">'+g[0]+'</div></div>'+
+      '<div class="body"><div class="gm">'+g[1]+'</div>'+
+      '<div class="gstat"><b>'+g[4]+'</b> people credited</div></div></div>';
+  }).join('');
+
+  // ---- dev spotlight cards ----
+  var DEVS=[
+    ["Marco Alvarez","Gameplay Programmer","#58a6ff",[["Ghost of Tsushima","◈8"],["Days Gone","◈5"]],["C++","Combat","Netcode"]],
+    ["Priya Anand","Environment Artist","#a371f7",[["Elden Ring","◈14"],["Sekiro","◈9"]],["Substance","World-building","Lighting"]],
+    ["Sam Rivera","Audio Director","#3fb950",[["Hades","◈11"],["Pyre","◈6"]],["Wwise","Adaptive music","VO"]]
+  ];
+  document.getElementById('dcards').innerHTML=DEVS.map(function(d){
+    var titles=d[3].map(function(t){return '<div class="tl"><span>'+t[0]+'</span><span class="v">'+t[1]+' vouch</span></div>';}).join('');
+    var skills=d[4].map(function(s){return '<span class="skchip">'+s+'</span>';}).join('');
+    return '<div class="dcard"><div class="halo" style="background:'+d[2]+'"></div>'+
+      '<div class="av" style="background:'+d[2]+'">'+d[0].split(' ').map(function(w){return w[0];}).join('')+'</div>'+
+      '<div class="nm">'+d[0]+' <span class="verified">✓</span></div><div class="rl">'+d[1]+'</div>'+
+      '<div class="titles">'+titles+'</div><div class="skills">'+skills+'</div></div>';
+  }).join('');
+
+  // ---- animated counters ----
+  function animate(el){
+    var to=+el.dataset.to,start=null,dur=1400;
+    function step(ts){if(!start)start=ts;var p=Math.min((ts-start)/dur,1);
+      var v=Math.floor((1-Math.pow(1-p,3))*to);el.textContent=v.toLocaleString();
+      if(p<1)requestAnimationFrame(step);}
+    requestAnimationFrame(step);
+  }
+  var io=new IntersectionObserver(function(es){es.forEach(function(e){
+    if(e.isIntersecting){animate(e.target);io.unobserve(e.target);}});},{threshold:.4});
+  document.querySelectorAll('.stat b[data-to]').forEach(function(el){io.observe(el);});
+</script>
+</body>
+</html>
