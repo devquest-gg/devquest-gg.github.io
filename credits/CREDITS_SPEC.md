@@ -48,8 +48,9 @@ The core relationship: **Studio → Game → Release → Credit → Person**, wi
 - A person exists as an unclaimed, imported stub until the real individual claims it.
 
 **Credit** (person's role on a specific release)
-- id, person_id (FK), release_id (FK), role (controlled vocabulary), discipline (derived from role), contribution_note (free text, moderated), date_range (optional; important for live-service), official (bool: was it in the official credit roll?), source (`imported` | `self`), status (`active` | `contested`), vouch_count (denormalized), created_at
-- `official = false` means an uncredited contribution (the layoff / port / patch case). It displays as peer-vouched, not official.
+- id, person_id (FK), release_id (FK), role (controlled vocabulary), discipline (derived from role), attribution (enum: `credited` | `special_thanks` | `uncredited`), contribution_note (free text, moderated), date_range (optional; important for live-service), source (`imported` | `self`), status (`active` | `contested`), vouch_count (denormalized), created_at
+- **Two independent axes.** `role` is *what you did* (Gameplay Programmer). `attribution` is *how the game credits you*: `credited` (a role credit in the official roll), `special_thanks` (acknowledged in a thanks section, not a role credit), or `uncredited` (contributed but left off the roll entirely). Someone can be a Gameplay Programmer credited any of the three ways, for example a late joiner who appears only in Special Thanks. This replaces an earlier binary "official" flag, which could not express the Special Thanks middle ground.
+- `credited` and `special_thanks` are both verifiable in the roll and shown as fact; `uncredited` is self-reported and relies on peer vouches (see 5.3, 5.4, and the trust tiers in Section 12).
 
 **Vouch**
 - id, credit_id (FK), voucher_person_id (FK), created_at
@@ -81,6 +82,8 @@ Studio 1..* Game 1..* Release 1..* Credit *..1 Person; Credit 1..* Vouch; Person
 ### 5.1 Seeding (cold-start)
 Import Games and Studios from **Wikidata** (CC0 public domain, safe for commercial reuse) and baseline Credits from public in-game credit rolls. Store everything as our own records in our own database. We never call a third-party API at runtime, so if a source dies or blocks us, the catalogue keeps working; we only lose the ability to pull *new* seed data. As people claim and correct, our dataset diverges from the source and becomes a more accurate, proprietary asset.
 
+**Keeping the catalogue current (new releases).** The seed is not a one-time grab. Re-run the Wikidata import on a schedule (weekly is plenty; the game catalogue changes far more slowly than job postings) as an *incremental* pull of only items added or changed since the last sync. Wikidata usually has entries for notable games at or before launch, so this catches the large majority of new releases automatically. It stays consistent with the no-live-dependency rule because it is a scheduled batch import cached as our own records, not a runtime call, and the site works normally between syncs. Anything not yet in Wikidata (brand-new indies, tiny titles, Wikidata lag) is covered on demand by the dedup-guarded add-a-game flow (see 5.6): a dev who wants to claim a credit on a missing game adds it themselves, which is the natural trigger. The two paths reconcile via merge tooling: if a community-added game later appears in a Wikidata sync, they are linked and the Wikidata ID is back-filled. The catalogue never needs to be exhaustively complete, only complete enough that a game exists by the time someone wants to claim credit on it.
+
 ### 5.2 Claiming (no signup wall)
 Find your name (already imported) → "This is me" → enter one email → receive a magic link → the link verifies you and opens your page for editing. No password, no account. Immediately prompt the user to link a second key (a recovery email or an OAuth sign-in) so a lost email never locks them out.
 
@@ -90,7 +93,7 @@ Find your name (already imported) → "This is me" → enter one email → recei
 - **Role / title**: chosen from a curated role vocabulary. Fixes vague or wrong imported titles without allowing junk.
 - **Skills**: autocomplete from a controlled skill vocabulary. No arbitrary strings enter the database.
 - **Notes**: the only free-text field. Moderated on save (see 5.5).
-- **Official vs uncredited**: a toggle. Uncredited contributions display as peer-vouched until a same-release teammate confirms.
+- **How does the game credit you?**: a three-way choice, not a binary: **Credited** (role credit in the roll), **Special Thanks** (acknowledged, not a role credit), or **Uncredited** (contributed but left off). Only prompted on self-add or correction; imported credits get their attribution from the roll section automatically, so claiming an existing official role credit asks nothing. Uncredited entries display as peer-vouched until a same-release teammate confirms.
 
 ### 5.4 Vouching
 On a colleague's credit for a release you also shipped, a one-click "I worked with them" appears, but only if you hold a claimed credit on that same release. One tap records your vouch and increments the public count. If you have not yet claimed your own credit on that release, the button instead asks you to do so first. The host never adjudicates.
@@ -140,7 +143,7 @@ Pages, not drawers: on the credits side, game and person views are full pages wi
 - **Front-end:** static HTML/CSS/JS, same stack as the jobs board, served on GitHub Pages under `/credits`. Game and person pages should be pre-generated as static HTML (nightly from the database) for SEO and speed; reads then mostly do not touch the database.
 - **Backend (new):** a small **Cloudflare Worker** API plus **Cloudflare D1** (managed SQLite) for the writes (claim, edit, vouch, contest) and dynamic bits. This is the one genuine step up from the jobs board's pure-static setup.
 - **Auth:** magic-link email plus optional OAuth (Google/GitHub/Discord). No passwords.
-- **Seed import:** one-time Node scripts pulling Wikidata (CC0) and parsing public credit rolls into D1.
+- **Seed import:** one-time and scheduled-incremental Node scripts pull Wikidata (CC0) and parse public credit rolls into D1.
 - **Moderation:** wordlist filter plus a lightweight classifier on Notes.
 - **Cost:** Cloudflare free tier covers launch comfortably (Workers 100k requests/day; D1 5 million rows read/day, 100k rows written/day, 5 GB storage). The entire dataset (tens of thousands of people, a few million credit rows) fits inside the free 5 GB. The only step up is Workers Paid at about $5/month, reached only on real success. Check current numbers at the Cloudflare docs before building.
 
@@ -183,6 +186,42 @@ Treat email as a **byproduct of a genuinely useful action, never a harvest.** Th
 
 ### Implementation notes (for Phase 2)
 
-- Store a **marketing-consent flag plus timestamp** on the person/identity record, separate from the verified-email flag. Record the consent source and version of the privacy policy.
+- Store a **marketing-consent flag plus timestamp** on the person/identity record, separate from the verified-email flag. Record the consent source and the version of the privacy policy.
 - Use a reliable **transactional email provider** for magic links and service notices (for example Resend, Postmark, or Amazon SES), since deliverability of the magic link is load-bearing for the whole claim flow.
 - Keep marketing sends on a separate list/flow from transactional, so an unsubscribe never blocks a magic link.
+
+## 12. Trust tiers (how much to believe a credit)
+
+Every credit carries a visible credibility level, and the three are never blended:
+
+- **Official**: imported from the game's credit roll (attribution `credited` or `special_thanks`). Shown as fact.
+- **Community**: added by a user and not yet vouched. Shown as self-reported, clearly labelled.
+- **Peer-verified**: a community or uncredited claim that colleagues who shipped the same release have vouched for. The vouch count is shown; it is the trust signal, never an operator verdict.
+
+This is the honesty brand made concrete: imported facts, labelled self-reports, and peer confirmation, each visually distinct and never mixed. Trust tier is *derived* from `source`, `attribution`, and `vouch_count`, not a separate stored field.
+
+## 13. Why users maintain their profile (the value-back layer)
+
+A credits database dies if users give data and get nothing back. The retention engine is giving people a selfish reason to claim, and to keep claiming. These features are catalogue-safe (no messaging) and should be built **early**, alongside the catalogue, because they drive the north-star metric (credits claimed per user; see roadmap):
+
+- **Claim-completion bar.** "You have claimed 14 of 22 known credits (63%)." A completion prompt is a strong motivator.
+- **Missing-credits nudge.** The system finds a person's likely imported credits across studios and asks "did you also work on these?" Very sticky, and it directly grows claims-per-user.
+- **Gameography aggregate (the portfolio).** Shipped-title count, years active, studios, platforms, genres, AAA/indie split. An instant recruiter-facing portfolio.
+- **Shareable credit card.** A generated image summarising the gameography for LinkedIn, resume, or a personal site. Free marketing, because people post it.
+- **Studio alumni pages.** "Blizzard alumni"-style pages: who shipped there, top titles, and (via the jobs board) where they work now. Highly browsable and a natural cross-link to the jobs product.
+- **Subtle milestones.** First credit, 5 / 10 / 25 games, first lead role, first director role. Light gamification only, nothing gimmicky.
+- **"Who worked together" (aggregate only).** On a game page: "2,143 contributors, 874 verified, and 352 are at studios currently hiring" (the hiring number comes free from jobs-board data). Powerful and safe. The *per-person* "open to networking / contact me" version is the deferred contact layer (Section 14), not this.
+
+**Honesty guardrail:** aggregate stats must stay verifiable. Show shipped titles, years, studios, platforms, genres, AAA/indie. Do **not** invent sales or "combined player reach" figures; show "unknown" rather than guess, per the shared no-made-up-numbers rule.
+
+## 14. Product layers and sequencing
+
+There are three layers, and conflating them causes confusion:
+
+1. **Catalogue**: the data (games, releases, credits, people). The foundation.
+2. **Identity / reputation**: profiles, vouches, completion, gameography, alumni, share cards (Section 13). The retention engine.
+3. **Contact network**: messaging, "open to networking / contact me", per-person outreach. High moderation cost.
+
+The locked "catalogue first, network later" decision defers **layer 3 only**. Layer 2 is *not* the deferred network; it should be built early, because it is what makes people claim and maintain profiles. So the real sequence is: build the catalogue, layer the identity/value features on top of it as soon as claiming exists, and keep the contact network parked until there is both a reason and a moderation plan for it. Framed simply: "LinkedIn meets IMDb for game developers, minus the messaging."
+
+Strategic note: credits may become more valuable than the jobs board over time, because jobs are a transaction (searched a few times a year) while credits are identity (cared about for a career). The two reinforce each other: the jobs board helps people find their next role; credits proves everything they have already done.

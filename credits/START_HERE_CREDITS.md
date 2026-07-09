@@ -19,7 +19,10 @@ A planned second product for DevQuest: an opt-in, dev-controlled **game credits 
 - **Honesty brand, shared with the jobs board:** imported facts marked as imported, self-added items labelled, vouches shown as counts not verdicts, open/exportable data.
 
 ## Key decisions already locked
-- **Catalogue first, network later.** Build the credits catalogue; the contact/messaging "professional network" layer is a separate, later, higher-moderation decision. Out of current scope.
+- **Catalogue first, network later.** Build the credits catalogue; the contact/messaging "professional network" layer is a separate, later, higher-moderation decision. Out of current scope. Note: "network later" means the *contact/messaging* layer only. The identity/reputation value layer (profiles, vouches, gameography, completion bar, alumni pages, share cards) is built **early** because it drives retention. Three layers: catalogue, identity, contact (spec Section 14).
+- **Attribution is three-way, not binary:** Credited / Special Thanks / Uncredited (how the game credits you), kept separate from role (what you did). Handles gray areas like a late joiner in Special Thanks (spec Section 4, 5.3).
+- **North-star metric: credits claimed per user.** One-and-done claiming = weak product; 8 to 20 claims per user = a lasting one. Prioritise the value-back features (spec Section 13) that move it.
+- **Launch all-in as a private beta.** Come out of the gate with the full v1 (comprehensive Wikidata-seeded catalogue + claiming + core value-back, including the shareable credit card). Release it privately first: BETA tag on the page, noindex, unlinked from the jobs board, seeded via the founder's personal network (invite clusters who shipped the same games together, so vouching works). Go public after roughly one to two weeks. See the roadmap "Launch plan" section.
 - **Full pages, not drawers,** for game and person views (SEO + shareability). The studio *drawer* stays on the jobs board.
 - **Seed from Wikidata (CC0),** not IGDB (whose free tier is non-commercial and restricts caching). Import once and cache; never live-depend on a third party.
 - **Backend is Cloudflare Worker + D1 (SQLite).** Free tier covers launch; about $5/month only if it takes off.
