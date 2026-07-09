@@ -1,0 +1,33 @@
+{
+  "_readme": "Hand-entered / first-party seed credits. One object per game with a credits[] array. See README.md for the schema and the provenance rule. Merged with the Wikidata games catalogue by 'slug'. The single entry below is a clearly-marked EXAMPLE showing the format. Replace it with real games as they come in.",
+  "games": [
+    {
+      "slug": "example-game",
+      "title": "Example Game",
+      "studio": "Example Studio",
+      "year": 2024,
+      "platforms": ["PC", "PS5"],
+      "genre": "Action",
+      "wikidata_qid": "",
+      "source": "hand",
+      "credits": [
+        {
+          "name": "Jane Doe",
+          "role": "Gameplay Programmer",
+          "attribution": "credited",
+          "verification": ["in_game_credits"],
+          "source_url": "https://example.com/where-you-found-it",
+          "note": "EXAMPLE ENTRY - replace with real data"
+        },
+        {
+          "name": "John Smith",
+          "role": "Environment Artist",
+          "attribution": "special_thanks",
+          "verification": ["studio_website"],
+          "source_url": "https://examplestudio.com/credits",
+          "note": "EXAMPLE ENTRY - replace with real data"
+        }
+      ]
+    }
+  ]
+}

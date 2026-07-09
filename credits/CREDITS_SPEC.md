@@ -225,3 +225,31 @@ There are three layers, and conflating them causes confusion:
 The locked "catalogue first, network later" decision defers **layer 3 only**. Layer 2 is *not* the deferred network; it should be built early, because it is what makes people claim and maintain profiles. So the real sequence is: build the catalogue, layer the identity/value features on top of it as soon as claiming exists, and keep the contact network parked until there is both a reason and a moderation plan for it. Framed simply: "LinkedIn meets IMDb for game developers, minus the messaging."
 
 Strategic note: credits may become more valuable than the jobs board over time, because jobs are a transaction (searched a few times a year) while credits are identity (cared about for a career). The two reinforce each other: the jobs board helps people find their next role; credits proves everything they have already done.
+
+## 15. Credit sourcing and verification signals
+
+There is no open, comprehensive credit source (MobyGames built theirs over 25 years and protects it), so we build credits by **aggregation from clean sources, never by scraping a single database**. The catalogue of games and studios comes from Wikidata; the per-person credits are built up, not bulk-imported.
+
+**Use (clean sources):**
+- **First-party game credits:** the game's own credits screen, official press kits, digital manuals, art books, developer sites ("Meet the Team", "Shipped Titles"). Facts recorded from primary sources are free to use.
+- **Wikidata (CC0):** the comprehensive games/studios catalogue plus notable individual credits (director, composer, lead roles where documented).
+- **First-party self-report:** the dev enters and verifies their own credits (the core opt-in model), and may link their own LinkedIn/portfolio as a verification signal.
+- **Community submissions plus peer vouches:** the growth engine for the long tail.
+
+**Avoid (risky):**
+- **Scraping MobyGames, GameFAQs, or Giant Bomb**, even manually at scale. Individual facts are free, but systematically extracting their *compilation* runs into ToS and EU database rights on substantial extraction.
+- **Automated LinkedIn scraping.** Prohibited by ToS, heavily anti-bot and litigious, and scraping personal data at scale is a GDPR problem. LinkedIn is fine only as a first-party signal (the dev links their own profile), never as a source we crawl.
+- **OCR-the-game or unpacking Steam files at scale.** Impractical and EULA-adjacent. Curiosities, not a launch plan.
+
+**Verification signals (extends the trust tiers in Section 12).** Beyond the Official / Community / Peer-verified tier, a credit can carry one or more verification signals, each a confidence marker:
+- Verified by in-game credits
+- Verified by studio website or press kit
+- Verified by the dev's own linked LinkedIn or portfolio
+- Peer-vouched (colleagues on the same release)
+- Community-submitted, unverified
+
+Display the strongest applicable signal and let confidence grow as signals accumulate. This transparent, layered confidence is what differentiates DevQuest from a static credits archive.
+
+**People-first, not game-first.** Optimise for verified career credits (the recruiting and identity value) rather than exhaustive game coverage. Game coverage can start smaller; a person's verified, vouched gameography is the durable asset.
+
+**Provenance:** record a source URL or note on every hand-entered or imported credit, so the honesty brand holds and we can always show where a fact came from.
