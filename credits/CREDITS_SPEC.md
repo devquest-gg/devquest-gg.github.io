@@ -48,9 +48,9 @@ The core relationship: **Studio → Game → Release → Credit → Person**, wi
 - A person exists as an unclaimed, imported stub until the real individual claims it.
 
 **Credit** (person's role on a specific release)
-- id, person_id (FK), release_id (FK), role (controlled vocabulary), discipline (derived from role), attribution (enum: `credited` | `special_thanks` | `uncredited`), contribution_note (free text, moderated), date_range (optional; important for live-service), source (`imported` | `self`), status (`active` | `contested`), vouch_count (denormalized), created_at
-- **Two independent axes.** `role` is *what you did* (Gameplay Programmer). `attribution` is *how the game credits you*: `credited` (a role credit in the official roll), `special_thanks` (acknowledged in a thanks section, not a role credit), or `uncredited` (contributed but left off the roll entirely). Someone can be a Gameplay Programmer credited any of the three ways, for example a late joiner who appears only in Special Thanks. This replaces an earlier binary "official" flag, which could not express the Special Thanks middle ground.
-- `credited` and `special_thanks` are both verifiable in the roll and shown as fact; `uncredited` is self-reported and relies on peer vouches (see 5.3, 5.4, and the trust tiers in Section 12).
+- id, person_id (FK), release_id (FK), role (headline title the person chooses to feature), roles_other (optional array of additional titles held on the same release), discipline (derived from role), contribution_note (free text, moderated), date_range (optional; important for live-service), source (`imported` | `self`), status (`active` | `contested`), verification (array of equal provenance signals; see Section 15), vouch_count (denormalized), created_at
+- **Role is what you did; you choose which title leads.** `role` is the headline — the title the person wants shown first (most senior, most defining, their call) — and `roles_other` holds any additional titles held on the same release, shown as a "+N more" affordance. On a long or live-service project someone may wear several hats over the years; they decide which one represents them, rather than the system imposing "primary = longest held."
+- **No official-vs-unofficial status (deliberate).** We do NOT record whether the studio officially credited someone. Whether a game's roll includes your name is the studio's decision, and plenty of studios leave off people who did the work. Treating "official" credit as a higher tier would reproduce the exact power imbalance this product exists to correct. A credit's legitimacy comes from verification signals and peer vouches (Sections 12 and 15), all treated as equal provenance; being in the official credits is merely one such signal (`in_game_credits`), never a rank or badge. This supersedes an earlier `attribution` enum (`credited` / `special_thanks` / `uncredited`), which has been removed.
 
 **Vouch**
 - id, credit_id (FK), voucher_person_id (FK), created_at
@@ -90,10 +90,11 @@ Find your name (already imported) → "This is me" → enter one email → recei
 ### 5.3 Editing a credit (controlled inputs)
 - **Game**: locked (from catalogue).
 - **Release / era**: chosen from the game's releases, or add one (see 5.6).
-- **Role / title**: chosen from a curated role vocabulary. Fixes vague or wrong imported titles without allowing junk.
+- **Headline role**: the title the person chooses to feature (curated role vocabulary). This is what shows first on the credit, the person page, and the share card. The person picks which title leads; the system does not impose "primary = longest held."
+- **Other titles (optional)**: any additional titles held on the same release, shown as a "+N more" affordance. Handles the artist-who-became-lead and the multi-hat live-service career without turning the claim into a LinkedIn job history.
 - **Skills**: autocomplete from a controlled skill vocabulary. No arbitrary strings enter the database.
 - **Notes**: the only free-text field. Moderated on save (see 5.5).
-- **How does the game credit you?**: a three-way choice, not a binary: **Credited** (role credit in the roll), **Special Thanks** (acknowledged, not a role credit), or **Uncredited** (contributed but left off). Only prompted on self-add or correction; imported credits get their attribution from the roll section automatically, so claiming an existing official role credit asks nothing. Uncredited entries display as peer-vouched until a same-release teammate confirms.
+- **No "how does the game credit you?" prompt.** We deliberately do not ask, record, or display official-vs-unofficial crediting status (see Section 4). A claim states that you did the work; verification signals and peer vouches (Sections 12, 15) carry legitimacy, all treated equally. If a developer wants to note that they were left off the official roll, that is their statement to make in Notes, not a status the system assigns.
 
 ### 5.4 Vouching
 On a colleague's credit for a release you also shipped, a one-click "I worked with them" appears, but only if you hold a claimed credit on that same release. One tap records your vouch and increments the public count. If you have not yet claimed your own credit on that release, the button instead asks you to do so first. The host never adjudicates.
@@ -190,15 +191,17 @@ Treat email as a **byproduct of a genuinely useful action, never a harvest.** Th
 - Use a reliable **transactional email provider** for magic links and service notices (for example Resend, Postmark, or Amazon SES), since deliverability of the magic link is load-bearing for the whole claim flow.
 - Keep marketing sends on a separate list/flow from transactional, so an unsubscribe never blocks a magic link.
 
-## 12. Trust tiers (how much to believe a credit)
+## 12. How much to believe a credit (provenance, not officialdom)
 
-Every credit carries a visible credibility level, and the three are never blended:
+Every credit carries a visible provenance level, and the three are never blended. Provenance is about where the record came from and who has confirmed it, **never** about whether a studio chose to credit the person:
 
-- **Official**: imported from the game's credit roll (attribution `credited` or `special_thanks`). Shown as fact.
-- **Community**: added by a user and not yet vouched. Shown as self-reported, clearly labelled.
-- **Peer-verified**: a community or uncredited claim that colleagues who shipped the same release have vouched for. The vouch count is shown; it is the trust signal, never an operator verdict.
+- **Imported**: pulled from a primary source (the catalogue, a press kit, a studio site). Shown as sourced fact, with the source visible.
+- **Self-reported**: added by a user and not yet vouched. Clearly labelled as a first-person claim.
+- **Peer-verified**: a self-reported claim that colleagues who shipped the same release have vouched for. The vouch count is the trust signal, never an operator verdict.
 
-This is the honesty brand made concrete: imported facts, labelled self-reports, and peer confirmation, each visually distinct and never mixed. Trust tier is *derived* from `source`, `attribution`, and `vouch_count`, not a separate stored field.
+Crucially, we do **not** elevate "in the official credits" into its own tier. Being in a game's roll is one verification signal among several (Section 15), shown next to a studio page, a press kit, or a peer vouch, all equal. A vouched self-report from someone the studio never credited is treated as no less legitimate than a name in the roll. That is the whole point of the product: legitimacy flows from evidence and peers, not from whether a company remembered to list you.
+
+Trust level is *derived* from `source`, verification signals, and `vouch_count`, not a separate stored field.
 
 ## 13. Why users maintain their profile (the value-back layer)
 
@@ -241,10 +244,10 @@ There is no open, comprehensive credit source (MobyGames built theirs over 25 ye
 - **Automated LinkedIn scraping.** Prohibited by ToS, heavily anti-bot and litigious, and scraping personal data at scale is a GDPR problem. LinkedIn is fine only as a first-party signal (the dev links their own profile), never as a source we crawl.
 - **OCR-the-game or unpacking Steam files at scale.** Impractical and EULA-adjacent. Curiosities, not a launch plan.
 
-**Verification signals (extends the trust tiers in Section 12).** Beyond the Official / Community / Peer-verified tier, a credit can carry one or more verification signals, each a confidence marker:
-- Verified by in-game credits
-- Verified by studio website or press kit
-- Verified by the dev's own linked LinkedIn or portfolio
+**Verification signals (extends Section 12).** Alongside the provenance level, a credit can carry one or more verification signals. These are treated as **equal** provenance markers, never a ranking, and "in-game credits" is just one of them, not a superior status:
+- In-game credits
+- Studio website or press kit
+- The dev's own linked LinkedIn or portfolio
 - Peer-vouched (colleagues on the same release)
 - Community-submitted, unverified
 

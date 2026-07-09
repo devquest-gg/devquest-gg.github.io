@@ -105,7 +105,6 @@ function writeShards(subdir, n, entries) {
       (sg.credits || []).map((c) => ({
         name: c.name, role: c.role || "",
         roles_other: c.roles_other || [],
-        attribution: c.attribution || "credited",
         verification: c.verification || [],
         source_url: c.source_url || "", note: c.note || "",
       }))
@@ -154,7 +153,6 @@ function writeShards(subdir, n, entries) {
       people.get(pslug).credits.push({
         game_slug: g.slug, game_title: g.title, year: g.year || null,
         role: c.role || "", roles_other: c.roles_other || [],
-        attribution: c.attribution || "credited",
         verification: c.verification || [],
       });
     }

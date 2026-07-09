@@ -66,14 +66,12 @@
       creditsHTML = '<div class="rows">' + credits.map(function(c){
         var pslug = DQ.slugify(c.name);
         var sigs = (c.verification||[]).map(function(s){ return '<span class="sig">'+DQ.esc(DQ.SIG_LABEL[s]||s)+'</span>'; }).join("");
-        var attr = c.attribution || "credited";
         var others = c.roles_other || [];
         var more = others.length ? ' <span class="rmore" title="Also: '+DQ.esc(others.join(", "))+'">+'+others.length+' more</span>' : '';
         return '<div class="row">'+
           '<div class="av">'+DQ.esc(DQ.initials(c.name))+'</div>'+
           '<div class="rmain"><div class="rname"><a href="person.html?slug='+encodeURIComponent(pslug)+'">'+DQ.esc(c.name)+'</a></div>'+
             '<div class="rsub">'+DQ.esc(c.role||"Role not recorded")+more+(sigs?' &nbsp; '+sigs:'')+'</div></div>'+
-          '<div class="rright"><span class="badge '+attr+'">'+DQ.esc(DQ.ATTR_LABEL[attr]||attr)+'</span></div>'+
         '</div>';
       }).join("") + '</div>';
     } else {

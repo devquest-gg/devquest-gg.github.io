@@ -46,14 +46,13 @@
 
     var credits = (p.credits||[]).slice().sort(function(a,b){ return (b.year||0)-(a.year||0); });
     var rowsHTML = credits.length ? '<div class="rows">' + credits.map(function(c){
-      var attr = c.attribution||"credited";
       var sigs = (c.verification||[]).map(function(s){ return '<span class="sig">'+DQ.esc(DQ.SIG_LABEL[s]||s)+'</span>'; }).join("");
       var others = c.roles_other || [];
       var more = others.length ? ' <span class="rmore" title="Also: '+DQ.esc(others.join(", "))+'">+'+others.length+' more</span>' : '';
       return '<div class="row">'+
         '<div class="rmain"><div class="rname"><a href="game.html?slug='+encodeURIComponent(c.game_slug)+'">'+DQ.esc(c.game_title)+'</a></div>'+
           '<div class="rsub">'+DQ.esc(c.role||"Role not recorded")+more+(sigs?' &nbsp; '+sigs:'')+'</div></div>'+
-        '<div class="rright">'+(c.year?'<span class="yr">'+c.year+'</span>':'')+'<span class="badge '+attr+'">'+DQ.esc(DQ.ATTR_LABEL[attr]||attr)+'</span></div>'+
+        '<div class="rright">'+(c.year?'<span class="yr">'+c.year+'</span>':'')+'</div>'+
       '</div>';
     }).join("") + '</div>' : '<div class="empty">No credits on record yet.</div>';
 

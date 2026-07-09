@@ -21,10 +21,9 @@ Each game object:
 - `source`: "hand" | "wikidata"
 - `credits`: array of:
   - `name` (person as credited)
-  - `role` (primary/headline title, e.g. "Content Lead" — the one shown everywhere)
+  - `role` (headline title the person chooses to feature, e.g. "Content Lead" — the one shown first everywhere)
   - `roles_other` (optional array of other titles held on the same game, e.g. `["Technical Support Lead", "Game Designer", "Content Manager"]`; shown as a "+N more" affordance)
-  - `attribution`: "credited" | "special_thanks" | "uncredited" (how the game credits them; see spec 4 and 5.3)
-  - `verification`: array of signals: "in_game_credits" | "studio_website" | "press_kit" | "linkedin_self" | "peer_vouch" | "community" (see spec 15)
+  - `verification`: array of signals, all treated as EQUAL provenance (never a ranking): "in_game_credits" | "studio_website" | "press_kit" | "linkedin_self" | "peer_vouch" | "community" (see spec 15). Note: being in the official credits (`in_game_credits`) is just one signal among these, never a badge that ranks one credit above another. We do not record or display an "official vs unofficial" status.
   - `source_url`: where the fact came from (provenance; required)
   - `note`: optional
 

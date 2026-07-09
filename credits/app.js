@@ -202,9 +202,8 @@
         'During the beta, claims are reviewed by a human. This drafts a prefilled email to us — we verify and add your credit, usually within a day.</div>' +
       '<label>Your name (as it should be credited)</label><input id="dqc-name" value="' + esc(opts.person_name || "") + '" placeholder="Jane Doe">' +
       '<label>Your email</label><input id="dqc-email" type="email" placeholder="you@example.com">' +
-      (isGame ? '<div class="dq-row2"><div><label>Your primary role</label><input id="dqc-role" placeholder="e.g. Content Lead"></div>' +
-        '<div><label>Credited as</label><select id="dqc-attr"><option value="credited">Credited</option><option value="special_thanks">Special thanks</option><option value="uncredited">Uncredited</option></select></div></div>' +
-        '<label>Other titles you held on this game (optional, comma-separated)</label><input id="dqc-roles2" placeholder="Technical Support Lead, Game Designer, Content Manager">' : '') +
+      (isGame ? '<label>Your headline role <span style="font-weight:400;color:var(--muted,#8b98a9)">— the title to show first; your call</span></label><input id="dqc-role" placeholder="e.g. Content Lead">' +
+        '<label>Other titles you held on this game <span style="font-weight:400;color:var(--muted,#8b98a9)">— optional, comma-separated</span></label><input id="dqc-roles2" placeholder="Technical Support Lead, Game Designer, Content Manager">' : '') +
       '<label>Proof link — LinkedIn, studio page, press kit (optional)</label><input id="dqc-proof" placeholder="https://">' +
       '<label>Note (optional)</label><textarea id="dqc-note" placeholder="Anything that helps us verify"></textarea>' +
       '<div class="dq-actions"><button class="dq-cancel">Cancel</button><button class="dq-submit">Open email to submit →</button></div>' +
@@ -221,7 +220,6 @@
       function val(id) { var el = ov.querySelector("#" + id); return el ? el.value.trim() : ""; }
       var name = val("dqc-name"), email = val("dqc-email"), role = val("dqc-role"),
           rolesOther = val("dqc-roles2"),
-          attrEl = ov.querySelector("#dqc-attr"), attr = attrEl ? attrEl.value : "",
           proof = val("dqc-proof"), note = val("dqc-note");
       var subj = isGame ? ("Credit claim: " + opts.game_title) : ("Profile claim: " + (name || opts.person_name || ""));
       var lines = ["DevQuest Credits — claim (beta, hand-reviewed)", ""];
@@ -230,7 +228,7 @@
       lines.push("----------------------------------------", "");
       lines.push("Name (as credited): " + name);
       lines.push("Email: " + email);
-      if (isGame) { lines.push("Role (primary): " + role); if (rolesOther) lines.push("Other roles: " + rolesOther); lines.push("Attribution: " + (attr || "credited")); }
+      if (isGame) { lines.push("Headline role: " + role); if (rolesOther) lines.push("Other roles: " + rolesOther); }
       lines.push("Proof link: " + proof);
       lines.push("Note: " + note);
       w.location.href = "mailto:studios@devquest.gg?subject=" + encodeURIComponent(subj) + "&body=" + encodeURIComponent(lines.join("\n"));
@@ -243,7 +241,6 @@
     bkt: bkt, qs: qs, getJSON: getJSON, loadEntity: loadEntity, loadIndex: loadIndex,
     rank: rank, searchRows: searchRows, attachSuggest: attachSuggest, openClaim: openClaim,
     esc: esc, initials: initials, slugify: slugify,
-    ATTR_LABEL: { credited: "Credited", special_thanks: "Special thanks", uncredited: "Uncredited" },
     SIG_LABEL: {
       in_game_credits: "In-game credits", studio_website: "Studio site", press_kit: "Press kit",
       linkedin_self: "LinkedIn (self)", peer_vouch: "Peer vouch", community: "Community"
