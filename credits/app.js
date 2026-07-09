@@ -193,16 +193,22 @@
 
   function openClaim(opts) {
     opts = opts || {}; injectClaimStyles();
+    var isAdd = opts.mode === "addGame";
     var isGame = !!opts.game_title;
+    var showRole = isGame || isAdd;
     var ov = document.createElement("div"); ov.className = "dq-modal-ov";
     ov.innerHTML = '<div class="dq-modal" role="dialog" aria-modal="true">' +
       '<button class="dq-x" aria-label="Close">×</button>' +
-      '<div class="dq-mh">' + (isGame ? 'Claim your credit' : 'Claim this profile') + '</div>' +
-      '<div class="dq-sub">' + (isGame ? 'On <b>' + esc(opts.game_title) + '</b>. ' : '') +
-        'Every claim is reviewed by a person — nothing appears on the site until we verify it (usually within a day). This just drafts a prefilled email to us.</div>' +
+      '<div class="dq-mh">' + (isAdd ? 'Add a game and your credit' : isGame ? 'Claim your credit' : 'Claim this profile') + '</div>' +
+      '<div class="dq-sub">' + (isAdd ? 'Not in the catalogue yet? Add the game and your role. ' : isGame ? 'On <b>' + esc(opts.game_title) + '</b>. ' : '') +
+        'A person reviews every submission — nothing appears on the site until we verify it (usually within a day).</div>' +
+      (isAdd ? '<label>Game title</label><input id="dqc-gtitle" value="' + esc(opts.prefillTitle || "") + '" placeholder="e.g. City of Heroes">' +
+        '<div class="dq-row2"><div><label>Studio</label><input id="dqc-gstudio" placeholder="e.g. Paragon Studios"></div>' +
+        '<div><label>Year <span style="font-weight:400;color:var(--muted,#8b98a9)">— optional</span></label><input id="dqc-gyear" placeholder="2004"></div></div>' +
+        '<label>Platforms <span style="font-weight:400;color:var(--muted,#8b98a9)">— optional, comma-separated</span></label><input id="dqc-gplat" placeholder="Microsoft Windows">' : '') +
       '<label>Your name (as it should be credited)</label><input id="dqc-name" value="' + esc(opts.person_name || "") + '" placeholder="Jane Doe">' +
       '<label>Your email</label><input id="dqc-email" type="email" placeholder="you@example.com">' +
-      (isGame ? '<label>Your headline role <span style="font-weight:400;color:var(--muted,#8b98a9)">— the title to show first; your call</span></label><input id="dqc-role" placeholder="e.g. Content Lead">' +
+      (showRole ? '<label>Your headline role <span style="font-weight:400;color:var(--muted,#8b98a9)">— the title to show first; your call</span></label><input id="dqc-role" placeholder="e.g. Content Lead">' +
         '<label>Other titles you held on this game <span style="font-weight:400;color:var(--muted,#8b98a9)">— optional, comma-separated</span></label><input id="dqc-roles2" placeholder="Technical Support Lead, Game Designer, Content Manager">' : '') +
       '<label>Links that help show this is you <span style="font-weight:400;color:var(--muted,#8b98a9)">— LinkedIn, portfolio / ArtStation, studio team page. One per line, optional</span></label><textarea id="dqc-proof" placeholder="https://linkedin.com/in/you&#10;https://yourstudio.com/team"></textarea>' +
       '<label>Anything else for our reviewer <span style="font-weight:400;color:var(--muted,#8b98a9)">— optional</span></label><textarea id="dqc-note" placeholder="Context that helps us verify you"></textarea>' +
@@ -221,21 +227,29 @@
       var name = val("dqc-name"), email = val("dqc-email"), role = val("dqc-role"),
           rolesOther = val("dqc-roles2"),
           proof = val("dqc-proof"), note = val("dqc-note");
-      var subj = isGame ? ("Credit claim: " + opts.game_title) : ("Profile claim: " + (name || opts.person_name || ""));
-      var lines = ["DevQuest Credits — claim (beta, hand-reviewed)", ""];
-      if (isGame) { lines.push("Game: " + opts.game_title); if (opts.game_slug) lines.push("Slug: " + opts.game_slug); if (opts.game_qid) lines.push("Wikidata: " + opts.game_qid); }
+      var subj = isAdd ? ("New game + credit: " + (val("dqc-gtitle") || "(untitled)"))
+              : isGame ? ("Credit claim: " + opts.game_title)
+              : ("Profile claim: " + (name || opts.person_name || ""));
+      var lines = ["DevQuest Credits — " + (isAdd ? "new game + claim" : "claim") + " (beta, hand-reviewed)", ""];
+      if (isAdd) {
+        lines.push("NEW GAME (not yet in catalogue)");
+        lines.push("Title: " + val("dqc-gtitle"));
+        lines.push("Studio: " + val("dqc-gstudio"));
+        if (val("dqc-gyear")) lines.push("Year: " + val("dqc-gyear"));
+        if (val("dqc-gplat")) lines.push("Platforms: " + val("dqc-gplat"));
+      } else if (isGame) { lines.push("Game: " + opts.game_title); if (opts.game_slug) lines.push("Slug: " + opts.game_slug); if (opts.game_qid) lines.push("Wikidata: " + opts.game_qid); }
       else { lines.push("Profile: " + (opts.person_name || name)); }
       lines.push("----------------------------------------", "");
       lines.push("Name (as credited): " + name);
       lines.push("Email: " + email);
-      if (isGame) { lines.push("Headline role: " + role); if (rolesOther) lines.push("Other roles: " + rolesOther); }
+      if (showRole) { lines.push("Headline role: " + role); if (rolesOther) lines.push("Other roles: " + rolesOther); }
       if (proof) { lines.push("Proof links:"); proof.split(/\n+/).forEach(function (u) { u = u.trim(); if (u) lines.push("  " + u); }); }
       else { lines.push("Proof links: (none provided)"); }
       lines.push("Note: " + note);
       w.location.href = "mailto:studios@devquest.gg?subject=" + encodeURIComponent(subj) + "&body=" + encodeURIComponent(lines.join("\n"));
       close();
     };
-    var nameEl = ov.querySelector("#dqc-name"); if (nameEl) nameEl.focus();
+    var firstEl = ov.querySelector(isAdd ? "#dqc-gtitle" : "#dqc-name"); if (firstEl) firstEl.focus();
   }
 
   w.DQ = {

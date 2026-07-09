@@ -37,7 +37,11 @@
   DQ.loadEntity("games", slug).then(function(g){
     if(!g){
       document.getElementById("crumb").textContent = "Not found";
-      app.innerHTML = '<div class="container"><div class="empty">We could not find that game.<br><a class="btn ghost" style="margin-top:14px" href="search.html">Search the catalogue</a></div></div>';
+      app.innerHTML = '<div class="container"><div class="empty">We could not find that game.<br>'+
+        '<a class="btn ghost" style="margin-top:14px" href="search.html">Search the catalogue</a> '+
+        '<a class="btn primary" id="addbtn" style="margin-top:14px">Add this game →</a></div></div>';
+      var ab = document.getElementById("addbtn");
+      if(ab) ab.onclick = function(){ DQ.openClaim({ mode:"addGame", prefillTitle: slug.replace(/-/g," ").replace(/\b\w/g,function(c){return c.toUpperCase();}) }); };
       return;
     }
     document.title = g.title + " · DevQuest Credits";

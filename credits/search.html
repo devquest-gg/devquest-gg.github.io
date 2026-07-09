@@ -12,6 +12,9 @@
   .tab{font-size:13.5px;font-weight:700;color:var(--muted);border:1px solid var(--border);background:var(--panel);border-radius:9px;padding:8px 15px;cursor:pointer}
   .tab.on{color:var(--text);border-color:var(--accent);background:rgba(88,166,255,.08)}
   .tab .n{color:var(--muted);font-weight:600;margin-left:5px}
+  .addhint{font-size:13px;color:var(--muted);margin-top:14px}
+  .addhint a{color:var(--accent);font-weight:600;cursor:pointer}
+  .addhint a:hover{color:var(--text)}
 </style>
 </head>
 <body>
@@ -35,6 +38,7 @@
       <span class="tab" data-tab="studios">Studios<span class="n" id="ns"></span></span>
       <span class="tab" data-tab="people">People<span class="n" id="np"></span></span>
     </div>
+    <div class="addhint">Worked on a game that isn't here yet? <a id="addgamebtn">Add it →</a></div>
   </div>
 </div>
 
@@ -89,7 +93,7 @@
         s = DQ.searchRows(data.studios,1,q,6),
         p = (data.people&&data.people.length)?DQ.searchRows(data.people,1,q,6):{total:0,rows:[]};
     setCounts(g.total,s.total,p.total);
-    if(!g.total && !s.total && !p.total) return '<div class="empty">Nothing matches “'+DQ.esc(q)+'”.</div>';
+    if(!g.total && !s.total && !p.total) return '<div class="empty">Nothing matches “'+DQ.esc(q)+'”.<br><a class="btn ghost" data-add style="margin-top:14px">Add this game →</a></div>';
     var h="";
     if(g.total) h += section("Games", g, "games", gameTiles);
     if(s.total) h += section("Studios", s, "studios", studioTiles);
@@ -102,7 +106,7 @@
     if(!q) return '<div class="empty">Type to search '+ (data.games?data.games.length.toLocaleString():'') +' games.</div>';
     var m = DQ.searchRows(data.games,1,q,LIMIT);
     document.getElementById("ng").textContent = m.total ? " "+m.total.toLocaleString() : "";
-    if(!m.total) return '<div class="empty">No games match “'+DQ.esc(q)+'”.</div>';
+    if(!m.total) return '<div class="empty">No games match “'+DQ.esc(q)+'”.<br><a class="btn ghost" data-add style="margin-top:14px">Add this game →</a></div>';
     return gameTiles(m.rows) + (m.total>LIMIT?'<div class="notice">Showing first '+LIMIT+' of '+m.total.toLocaleString()+'. Keep typing to narrow.</div>':'');
   }
   function renderStudios(q){
@@ -154,11 +158,16 @@
     el.onclick = function(){ setTab(el.dataset.tab); };
     el.classList.toggle("on", el.dataset.tab===tab);
   });
-  // "See all N →" section links switch to that filtered tab
+  function openAddGame(){ DQ.openClaim({ mode:"addGame", prefillTitle: input.value.trim() }); }
+  // "See all N →" switches tab; "Add this game" opens the add-a-game modal
   results.addEventListener("click", function(e){
+    var add = e.target.closest && e.target.closest("[data-add]");
+    if(add){ e.preventDefault(); openAddGame(); return; }
     var a = e.target.closest && e.target.closest("[data-goto]");
     if(a){ e.preventDefault(); setTab(a.dataset.goto); }
   });
+  var agb = document.getElementById("addgamebtn");
+  if(agb) agb.onclick = openAddGame;
 
   var t;
   input.addEventListener("input", function(){ clearTimeout(t); t=setTimeout(function(){ ensure().then(function(ok){ if(ok) render(); }); }, 110); });
