@@ -1,0 +1,54 @@
+name: Credits catalogue pull (Wikidata)
+
+# Builds credits/data/games.json + studios.json from Wikidata (CC0).
+# Runs weekly, and can be run on demand from the Actions tab (Run workflow).
+# This is a scheduled batch import, not a runtime call: the site serves the
+# cached JSON and never live-depends on Wikidata.
+
+on:
+  workflow_dispatch:
+    inputs:
+      start:
+        description: "Start year (inclusive). Leave blank for full pull."
+        required: false
+      end:
+        description: "End year (exclusive). Leave blank for full pull."
+        required: false
+  schedule:
+    - cron: "0 5 * * 0"   # Sundays 05:00 UTC
+
+permissions:
+  contents: write
+
+concurrency:
+  group: credits-pull
+  cancel-in-progress: false
+
+jobs:
+  pull:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Pull games + studios from Wikidata
+        env:
+          START: ${{ github.event.inputs.start }}
+          END: ${{ github.event.inputs.end }}
+        run: node credits/tools/pull-wikidata.js
+
+      - name: Commit data if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add credits/data/games.json credits/data/studios.json
+          if git diff --staged --quiet; then
+            echo "No catalogue changes."
+          else
+            git commit -m "Credits: refresh Wikidata catalogue"
+            git push
+          fi
