@@ -167,9 +167,79 @@
     return { seeAll: seeAll };
   }
 
+  // ---- interim claim modal (beta: drafts a hand-reviewed email, no backend) --
+  var claimStyled = false;
+  function injectClaimStyles() {
+    if (claimStyled) return; claimStyled = true;
+    var css = [
+      ".dq-modal-ov{position:fixed;inset:0;z-index:200;background:rgba(4,6,10,.66);display:flex;align-items:flex-start;justify-content:center;padding:6vh 16px;overflow:auto}",
+      ".dq-modal{width:100%;max-width:520px;background:var(--panel,#141a23);border:1px solid var(--border,#242c38);border-radius:16px;padding:24px;box-shadow:0 30px 80px rgba(0,0,0,.6);position:relative}",
+      ".dq-x{position:absolute;top:10px;right:14px;background:none;border:none;color:var(--muted,#8b98a9);font-size:24px;cursor:pointer;line-height:1}",
+      ".dq-mh{font-size:20px;font-weight:850;letter-spacing:-.4px;margin:0 30px 6px 0}",
+      ".dq-sub{font-size:13.5px;color:var(--muted,#8b98a9);margin-bottom:16px}.dq-sub b{color:var(--text,#eef3fa)}",
+      ".dq-modal label{display:block;font-size:12px;font-weight:700;color:var(--text,#eef3fa);margin:12px 0 5px}",
+      ".dq-modal input,.dq-modal select,.dq-modal textarea{width:100%;background:var(--bg,#0b0e14);border:1px solid var(--border,#242c38);border-radius:9px;padding:10px 12px;color:var(--text,#eef3fa);font-size:14px;font-family:inherit;outline:none}",
+      ".dq-modal input:focus,.dq-modal select:focus,.dq-modal textarea:focus{border-color:var(--accent,#58a6ff)}",
+      ".dq-modal textarea{resize:vertical;min-height:54px}",
+      ".dq-row2{display:flex;gap:12px}.dq-row2>div{flex:1}",
+      ".dq-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:20px}",
+      ".dq-cancel{background:none;border:1px solid var(--border,#242c38);color:var(--text,#eef3fa);border-radius:10px;padding:10px 16px;font-weight:700;font-size:14px;cursor:pointer}",
+      ".dq-submit{background:linear-gradient(135deg,var(--accent,#58a6ff),var(--purple,#a371f7));color:#fff;border:none;border-radius:10px;padding:10px 18px;font-weight:800;font-size:14px;cursor:pointer}",
+      ".dq-submit:hover{filter:brightness(1.08)}",
+      ".dq-foot{font-size:12px;color:var(--muted,#8b98a9);margin-top:14px;text-align:center}.dq-foot a{color:var(--accent,#58a6ff)}"
+    ].join("");
+    var s = document.createElement("style"); s.textContent = css; document.head.appendChild(s);
+  }
+
+  function openClaim(opts) {
+    opts = opts || {}; injectClaimStyles();
+    var isGame = !!opts.game_title;
+    var ov = document.createElement("div"); ov.className = "dq-modal-ov";
+    ov.innerHTML = '<div class="dq-modal" role="dialog" aria-modal="true">' +
+      '<button class="dq-x" aria-label="Close">×</button>' +
+      '<div class="dq-mh">' + (isGame ? 'Claim your credit' : 'Claim this profile') + '</div>' +
+      '<div class="dq-sub">' + (isGame ? 'On <b>' + esc(opts.game_title) + '</b>. ' : '') +
+        'During the beta, claims are reviewed by a human. This drafts a prefilled email to us — we verify and add your credit, usually within a day.</div>' +
+      '<label>Your name (as it should be credited)</label><input id="dqc-name" value="' + esc(opts.person_name || "") + '" placeholder="Jane Doe">' +
+      '<label>Your email</label><input id="dqc-email" type="email" placeholder="you@example.com">' +
+      (isGame ? '<div class="dq-row2"><div><label>Your role</label><input id="dqc-role" placeholder="Gameplay Programmer"></div>' +
+        '<div><label>Credited as</label><select id="dqc-attr"><option value="credited">Credited</option><option value="special_thanks">Special thanks</option><option value="uncredited">Uncredited</option></select></div></div>' : '') +
+      '<label>Proof link — LinkedIn, studio page, press kit (optional)</label><input id="dqc-proof" placeholder="https://">' +
+      '<label>Note (optional)</label><textarea id="dqc-note" placeholder="Anything that helps us verify"></textarea>' +
+      '<div class="dq-actions"><button class="dq-cancel">Cancel</button><button class="dq-submit">Open email to submit →</button></div>' +
+      '<div class="dq-foot">Nothing is sent automatically — this just drafts an email. Or write <a href="mailto:studios@devquest.gg">studios@devquest.gg</a>.</div>' +
+      '</div>';
+    document.body.appendChild(ov);
+    function close() { ov.remove(); document.removeEventListener("keydown", onKey); }
+    function onKey(e) { if (e.key === "Escape") close(); }
+    document.addEventListener("keydown", onKey);
+    ov.addEventListener("click", function (e) { if (e.target === ov) close(); });
+    ov.querySelector(".dq-x").onclick = close;
+    ov.querySelector(".dq-cancel").onclick = close;
+    ov.querySelector(".dq-submit").onclick = function () {
+      function val(id) { var el = ov.querySelector("#" + id); return el ? el.value.trim() : ""; }
+      var name = val("dqc-name"), email = val("dqc-email"), role = val("dqc-role"),
+          attrEl = ov.querySelector("#dqc-attr"), attr = attrEl ? attrEl.value : "",
+          proof = val("dqc-proof"), note = val("dqc-note");
+      var subj = isGame ? ("Credit claim: " + opts.game_title) : ("Profile claim: " + (name || opts.person_name || ""));
+      var lines = ["DevQuest Credits — claim (beta, hand-reviewed)", ""];
+      if (isGame) { lines.push("Game: " + opts.game_title); if (opts.game_slug) lines.push("Slug: " + opts.game_slug); if (opts.game_qid) lines.push("Wikidata: " + opts.game_qid); }
+      else { lines.push("Profile: " + (opts.person_name || name)); }
+      lines.push("----------------------------------------", "");
+      lines.push("Name (as credited): " + name);
+      lines.push("Email: " + email);
+      if (isGame) { lines.push("Role: " + role); lines.push("Attribution: " + (attr || "credited")); }
+      lines.push("Proof link: " + proof);
+      lines.push("Note: " + note);
+      w.location.href = "mailto:studios@devquest.gg?subject=" + encodeURIComponent(subj) + "&body=" + encodeURIComponent(lines.join("\n"));
+      close();
+    };
+    var nameEl = ov.querySelector("#dqc-name"); if (nameEl) nameEl.focus();
+  }
+
   w.DQ = {
     bkt: bkt, qs: qs, getJSON: getJSON, loadEntity: loadEntity, loadIndex: loadIndex,
-    rank: rank, searchRows: searchRows, attachSuggest: attachSuggest,
+    rank: rank, searchRows: searchRows, attachSuggest: attachSuggest, openClaim: openClaim,
     esc: esc, initials: initials, slugify: slugify,
     ATTR_LABEL: { credited: "Credited", special_thanks: "Special thanks", uncredited: "Uncredited" },
     SIG_LABEL: {

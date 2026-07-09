@@ -67,11 +67,14 @@
         '<div class="rowhead"><div><div class="eyebrow">Gameography</div>'+
           '<h2 class="sec">Games worked on</h2>'+
           '<p class="secsub" style="margin:0">A credit page beats a résumé bullet — verified by the people you shipped with.</p></div>'+
-          '<span class="btn primary" onclick="alert(\'Claiming opens when the beta backend is live. Verify an email once, then a magic link lets you own and edit this page forever.\')">Is this you? Claim this page</span>'+
+          '<span class="btn primary" id="claimbtn">Is this you? Claim this page</span>'+
         '</div>'+
         rowsHTML +
         '<div class="notice">Only the person credited can claim and edit this page. Peers who shipped the same game can vouch for each credit.</div>'+
       '</div></section>';
+
+    var cb = document.getElementById("claimbtn");
+    if(cb) cb.onclick = function(){ DQ.openClaim({ person_name: p.name }); };
   }).catch(function(e){
     app.innerHTML = '<div class="container"><div class="empty">Something went wrong loading this profile.<br><span class="mut">'+DQ.esc(e.message)+'</span></div></div>';
   });

@@ -91,11 +91,14 @@
         '<div class="rowhead"><div><div class="eyebrow">Credits</div>'+
           '<h2 class="sec">'+(credits.length? credits.length+' credited' : 'Who made this game?')+'</h2>'+
           '<p class="secsub" style="margin:0">Claimed and peer-vouched credits appear here. Everything is opt-in and owned by the person credited.</p></div>'+
-          '<span class="btn primary" onclick="alert(\'Claiming opens when the beta backend is live. You will verify an email once, then a magic link lets you edit forever.\')">This is me — claim my credit</span>'+
+          '<span class="btn primary" id="claimbtn">This is me — claim my credit</span>'+
         '</div>'+
         creditsHTML +
         '<div class="notice">Source of truth is the person who did the work. Catalogue facts come from Wikidata (CC0); credits are added and vouched by developers.</div>'+
       '</div></section>';
+
+    var cb = document.getElementById("claimbtn");
+    if(cb) cb.onclick = function(){ DQ.openClaim({ game_slug: slug, game_title: g.title, game_qid: g.qid }); };
   }).catch(function(e){
     app.innerHTML = '<div class="container"><div class="empty">Something went wrong loading this game.<br><span class="mut">'+DQ.esc(e.message)+'</span></div></div>';
   });
