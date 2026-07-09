@@ -13,11 +13,12 @@
       "credits": [
         {
           "name": "Jane Doe",
-          "role": "Gameplay Programmer",
+          "role": "Content Lead",
+          "roles_other": ["Technical Support Lead", "Game Designer", "Content Manager"],
           "attribution": "credited",
           "verification": ["in_game_credits"],
           "source_url": "https://example.com/where-you-found-it",
-          "note": "EXAMPLE ENTRY - replace with real data"
+          "note": "EXAMPLE ENTRY - shows a multi-role credit: headline role + roles_other"
         },
         {
           "name": "John Smith",

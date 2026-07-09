@@ -21,7 +21,8 @@ Each game object:
 - `source`: "hand" | "wikidata"
 - `credits`: array of:
   - `name` (person as credited)
-  - `role` (what they did, e.g. "Gameplay Programmer")
+  - `role` (primary/headline title, e.g. "Content Lead" — the one shown everywhere)
+  - `roles_other` (optional array of other titles held on the same game, e.g. `["Technical Support Lead", "Game Designer", "Content Manager"]`; shown as a "+N more" affordance)
   - `attribution`: "credited" | "special_thanks" | "uncredited" (how the game credits them; see spec 4 and 5.3)
   - `verification`: array of signals: "in_game_credits" | "studio_website" | "press_kit" | "linkedin_self" | "peer_vouch" | "community" (see spec 15)
   - `source_url`: where the fact came from (provenance; required)
