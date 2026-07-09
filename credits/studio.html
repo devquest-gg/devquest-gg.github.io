@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Studio · DevQuest Credits</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<div class="topbar"><div class="container">
+  <div class="brand"><a class="brandhome" href="/credits/" data-tip="Back to Credits home" aria-label="DevQuest Credits home"><svg class="mark" viewBox="0 0 32 32" aria-hidden="true"><rect x="1" y="1" width="8" height="8" rx="2" fill="var(--gold)"/><rect x="12" y="1" width="8" height="8" rx="2" fill="#2d333b"/><rect x="23" y="1" width="8" height="8" rx="2" fill="#2d333b"/><rect x="1" y="12" width="8" height="8" rx="2" fill="#2d333b"/><rect x="12" y="12" width="8" height="8" rx="2" fill="var(--gold)"/><rect x="23" y="12" width="8" height="8" rx="2" fill="#2d333b"/><rect x="1" y="23" width="8" height="8" rx="2" fill="#2d333b"/><rect x="12" y="23" width="8" height="8" rx="2" fill="#2d333b"/><rect x="23" y="23" width="8" height="8" rx="2" fill="var(--gold)"/></svg><span class="wm">Dev<span class="q">Quest</span><span class="tld">.gg</span></span></a> <span class="cr">CREDITS</span> <span class="beta">BETA</span></div>
+  <div class="topnav">
+    <a href="/credits/#how">How it works</a>
+    <a class="back" href="/">← Jobs board</a>
+  </div>
+</div></div>
+
+<div class="container">
+  <div class="crumbs"><a href="/credits/">Credits</a><span class="sep">/</span><a href="search.html?tab=studios">Studios</a><span class="sep">/</span><span id="crumb" class="mut">…</span></div>
+</div>
+
+<div id="app"><div class="container"><div class="loading">Loading studio…</div></div></div>
+
+<footer><div class="container">
+  <div><b style="color:var(--text)">DevQuest.gg / Credits</b> · a companion to the game-industry job board</div>
+  <div><a href="/credits/">← Credits home</a> &nbsp;·&nbsp; <a href="mailto:studios@devquest.gg?subject=DevQuest%20Credits%20feedback&body=Bug%2C%20idea%2C%20or%20just%20a%20thought%3A%0A%0A">Feedback</a></div>
+</div></footer>
+
+<script src="app.js"></script>
+<script>
+(function(){
+  var slug = DQ.qs("slug"), app = document.getElementById("app");
+  if(!slug){ app.innerHTML = '<div class="container"><div class="empty">No studio specified.</div></div>'; return; }
+  var PAGE = 60, shown = 0, allGames = [];
+
+  DQ.loadEntity("studios", slug).then(function(s){
+    if(!s){
+      document.getElementById("crumb").textContent = "Not found";
+      app.innerHTML = '<div class="container"><div class="empty">We could not find that studio.<br><a class="btn ghost" style="margin-top:14px" href="search.html?tab=studios">Search studios</a></div></div>';
+      return;
+    }
+    document.title = s.name + " · DevQuest Credits";
+    document.getElementById("crumb").textContent = s.name;
+    allGames = s.games || [];
+
+    app.innerHTML =
+      '<div class="phead"><div class="container">'+
+        '<div style="margin-bottom:10px"><span class="badge official">◈ Studio</span></div>'+
+        '<h1>'+DQ.esc(s.name)+'</h1>'+
+        '<div class="meta">'+allGames.length.toLocaleString()+' game'+(allGames.length===1?'':'s')+' in the catalogue</div>'+
+      '</div></div>'+
+      '<section class="blk"><div class="container">'+
+        '<div class="rowhead"><div><div class="eyebrow">Gameography</div>'+
+          '<h2 class="sec">Games credited to this studio</h2>'+
+          '<p class="secsub" style="margin:0">Newest first. Open a game to see and claim its credits.</p></div></div>'+
+        '<div class="glist" id="glist"></div>'+
+        '<div style="text-align:center;margin-top:20px"><span class="btn ghost" id="more" style="display:none">Show more</span></div>'+
+      '</div></section>';
+
+    var glist = document.getElementById("glist"), moreBtn = document.getElementById("more");
+    function render(){
+      var slice = allGames.slice(shown, shown+PAGE);
+      glist.insertAdjacentHTML("beforeend", slice.map(function(g){
+        return '<a class="gtile" href="game.html?slug='+encodeURIComponent(g[0])+'"><div class="t">'+DQ.esc(g[1])+'</div>'+
+          '<div class="s">'+(g[2]?g[2]:'Year unknown')+'</div></a>';
+      }).join(""));
+      shown += slice.length;
+      moreBtn.style.display = shown < allGames.length ? "inline-flex" : "none";
+      moreBtn.textContent = "Show more ("+(allGames.length-shown).toLocaleString()+" left)";
+    }
+    moreBtn.onclick = render;
+    render();
+  }).catch(function(e){
+    app.innerHTML = '<div class="container"><div class="empty">Something went wrong loading this studio.<br><span class="mut">'+DQ.esc(e.message)+'</span></div></div>';
+  });
+})();
+</script>
+</body>
+</html>

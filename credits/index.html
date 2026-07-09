@@ -173,8 +173,8 @@
   <h1>Every game. Every dev.<br><span class="grad">Properly credited.</span></h1>
   <p class="lede">Your gameography, owned by you. Claim the games you built, prove your career, and let the peers you shipped with vouch for it. Not another wiki you can't edit.</p>
   <div class="searchwrap">
-    <div class="search"><span class="ic">🔍</span><input placeholder="Search a game, a studio, or your own name..."></div>
-    <span class="btn primary">Search</span>
+    <div class="search"><span class="ic">🔍</span><input id="hs" placeholder="Search a game, a studio, or your own name..." autocomplete="off"></div>
+    <span class="btn primary" id="hsbtn">Search</span>
   </div>
   <div class="trustline">Completely free · opt-in · <b>your data is exportable and yours</b></div>
 
@@ -185,20 +185,20 @@
   </div>
 
   <!-- stats: cold-start-safe (seeded catalogue scale, unclaimed framed as opportunity) -->
-  <div class="statslead">Seeded from public records at launch. The people who earned these credits claim them over time.</div>
+  <div class="statslead">The catalogue is seeded from public records (CC0, via Wikidata). Developers claim their own credits and add the ones missing.</div>
   <div class="stats">
-    <div class="stat hl"><b data-to="48210">0</b><span>credits waiting to be claimed</span></div>
-    <div class="stat"><b data-to="12904">0</b><span>games catalogued</span></div>
-    <div class="stat"><b data-to="1240">0</b><span>studios</span></div>
+    <div class="stat hl"><b data-to="0" id="st-games">0</b><span>games catalogued</span></div>
+    <div class="stat"><b data-to="0" id="st-studios">0</b><span>studios</span></div>
+    <div class="stat"><b data-to="0" id="st-credits">0</b><span>credits added by developers</span></div>
   </div>
 </div></div>
 
 <!-- TRENDING / MOST CREDITED GAMES -->
 <section class="blk" id="trending"><div class="container">
   <div class="rowhead">
-    <div><div class="eyebrow">Explore</div><h2 class="sec">Most credited games</h2>
-      <p class="secsub" style="margin:0">The biggest credit rolls in the catalogue, ready to explore.</p></div>
-    <a class="more" href="#">All 12,904 games →</a>
+    <div><div class="eyebrow">Explore</div><h2 class="sec">Fresh in the catalogue</h2>
+      <p class="secsub" style="margin:0">Recently released titles from the seeded catalogue. Open one to see and claim its credits.</p></div>
+    <a class="more" href="search.html" id="allgames">Browse all games →</a>
   </div>
   <div class="gcards" id="gcards"></div>
 </div></section>
@@ -208,7 +208,7 @@
   <div class="rowhead">
     <div><div class="eyebrow">The people</div><h2 class="sec">What a claimed profile looks like</h2>
       <p class="secsub" style="margin:0">A credit page beats a résumé bullet. Verified by the people you actually worked with.</p></div>
-    <a class="more" href="#">Browse people →</a>
+    <a class="more" href="search.html?tab=people">Browse people →</a>
   </div>
   <div class="dcards" id="dcards"></div>
 </div></section>
@@ -309,6 +309,48 @@
   var io=new IntersectionObserver(function(es){es.forEach(function(e){
     if(e.isIntersecting){animate(e.target);io.unobserve(e.target);}});},{threshold:.4});
   document.querySelectorAll('.stat b[data-to]').forEach(function(el){io.observe(el);});
+
+  // ---- search navigation ----
+  function goSearch(){var q=document.getElementById('hs').value.trim();location.href='search.html'+(q?'?q='+encodeURIComponent(q):'');}
+  document.getElementById('hsbtn').addEventListener('click',goSearch);
+  document.getElementById('hs').addEventListener('keydown',function(e){if(e.key==='Enter')goSearch();});
+
+  // ---- real data overlay (stats + fresh games) when the built site data exists ----
+  function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+  var PAL=[["#b23a48","#3a1720"],["#e0662a","#3a1a10"],["#7b3fb0","#1c1030"],["#4aa5e0","#10233a"],["#c8a23a","#2a2210"],["#4caf50","#12331a"],["#2a6fb0","#0f1c30"],["#3a8fb0","#10283a"],["#5a5fb0","#161a30"],["#c02a5a","#300f1c"]];
+  function grad(str){var h=0;for(var i=0;i<str.length;i++)h=(h*31+str.charCodeAt(i))>>>0;var p=PAL[h%PAL.length];return 'linear-gradient(160deg,'+p[0]+','+p[1]+')';}
+  function setStat(id,val){var el=document.getElementById(id);if(el){el.dataset.to=val;if(el.textContent==='0'||+el.textContent===0){el.textContent=Number(val).toLocaleString();}}}
+
+  fetch('data/site/stats.json').then(function(r){return r.ok?r.json():null;}).then(function(s){
+    if(!s)return; setStat('st-games',s.games); setStat('st-studios',s.studios); setStat('st-credits',s.credits);
+    var a=document.getElementById('allgames'); if(a)a.textContent='Browse all '+Number(s.games).toLocaleString()+' games →';
+  }).catch(function(){});
+
+  fetch('data/site/home.json').then(function(r){return r.ok?r.json():null;}).then(function(h){
+    if(!h)return;
+    if(h.covers&&h.covers.length){
+      var cov=h.covers.map(function(c){ // [slug,title,year,studio,genre]
+        return '<a class="cover" href="game.html?slug='+encodeURIComponent(c[0])+'" style="background:'+grad(c[1])+'">'+
+          '<span class="cgenre">'+esc(c[4]||'Game')+'</span><div class="ct">'+esc(c[1])+
+          '<span class="cc">'+esc(c[3]|| (c[2]?('· '+c[2]):''))+'</span></div></a>';
+      }).join('');
+      document.getElementById('m1').innerHTML=cov+cov;
+      var rc=h.covers.slice().reverse().map(function(c){
+        return '<a class="cover" href="game.html?slug='+encodeURIComponent(c[0])+'" style="background:'+grad(c[1])+'">'+
+          '<span class="cgenre">'+esc(c[4]||'Game')+'</span><div class="ct">'+esc(c[1])+
+          '<span class="cc">'+esc(c[3]|| (c[2]?('· '+c[2]):''))+'</span></div></a>';
+      }).join('');
+      document.getElementById('m2').innerHTML=rc+rc;
+    }
+    if(h.trendingGames&&h.trendingGames.length){
+      document.getElementById('gcards').innerHTML=h.trendingGames.map(function(g){ // [slug,title,year,studio,genre]
+        return '<a class="gcard" href="game.html?slug='+encodeURIComponent(g[0])+'"><div class="art" style="background:'+grad(g[1])+'">'+
+          '<span class="genre">'+esc(g[4]||'Game')+'</span><div class="bigt">'+esc(g[1])+'</div></div>'+
+          '<div class="body"><div class="gm">'+esc(g[3]||'')+(g[2]?' · '+g[2]:'')+'</div>'+
+          '<div class="gstat">View credits →</div></div></a>';
+      }).join('');
+    }
+  }).catch(function(){});
 </script>
 </body>
 </html>

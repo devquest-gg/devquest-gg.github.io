@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Person · DevQuest Credits</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<div class="topbar"><div class="container">
+  <div class="brand"><a class="brandhome" href="/credits/" data-tip="Back to Credits home" aria-label="DevQuest Credits home"><svg class="mark" viewBox="0 0 32 32" aria-hidden="true"><rect x="1" y="1" width="8" height="8" rx="2" fill="var(--gold)"/><rect x="12" y="1" width="8" height="8" rx="2" fill="#2d333b"/><rect x="23" y="1" width="8" height="8" rx="2" fill="#2d333b"/><rect x="1" y="12" width="8" height="8" rx="2" fill="#2d333b"/><rect x="12" y="12" width="8" height="8" rx="2" fill="var(--gold)"/><rect x="23" y="12" width="8" height="8" rx="2" fill="#2d333b"/><rect x="1" y="23" width="8" height="8" rx="2" fill="#2d333b"/><rect x="12" y="23" width="8" height="8" rx="2" fill="#2d333b"/><rect x="23" y="23" width="8" height="8" rx="2" fill="var(--gold)"/></svg><span class="wm">Dev<span class="q">Quest</span><span class="tld">.gg</span></span></a> <span class="cr">CREDITS</span> <span class="beta">BETA</span></div>
+  <div class="topnav">
+    <a href="/credits/#how">How it works</a>
+    <a class="back" href="/">← Jobs board</a>
+  </div>
+</div></div>
+
+<div class="container">
+  <div class="crumbs"><a href="/credits/">Credits</a><span class="sep">/</span><a href="search.html?tab=people">People</a><span class="sep">/</span><span id="crumb" class="mut">…</span></div>
+</div>
+
+<div id="app"><div class="container"><div class="loading">Loading profile…</div></div></div>
+
+<footer><div class="container">
+  <div><b style="color:var(--text)">DevQuest.gg / Credits</b> · a companion to the game-industry job board</div>
+  <div><a href="/credits/">← Credits home</a> &nbsp;·&nbsp; <a href="mailto:studios@devquest.gg?subject=DevQuest%20Credits%20feedback&body=Bug%2C%20idea%2C%20or%20just%20a%20thought%3A%0A%0A">Feedback</a></div>
+</div></footer>
+
+<script src="app.js"></script>
+<script>
+(function(){
+  var slug = DQ.qs("slug"), app = document.getElementById("app");
+  if(!slug){ app.innerHTML = '<div class="container"><div class="empty">No person specified.</div></div>'; return; }
+
+  DQ.loadEntity("people", slug).then(function(p){
+    if(!p){
+      document.getElementById("crumb").textContent = "Not found";
+      app.innerHTML = '<div class="container"><div class="empty">No profile yet for that name.<br>'+
+        '<span class="mut">People appear here once a credit is added or claimed.</span></div></div>';
+      return;
+    }
+    document.title = p.name + " · DevQuest Credits";
+    document.getElementById("crumb").textContent = p.name;
+
+    var credits = (p.credits||[]).slice().sort(function(a,b){ return (b.year||0)-(a.year||0); });
+    var rowsHTML = credits.length ? '<div class="rows">' + credits.map(function(c){
+      var attr = c.attribution||"credited";
+      var sigs = (c.verification||[]).map(function(s){ return '<span class="sig">'+DQ.esc(DQ.SIG_LABEL[s]||s)+'</span>'; }).join("");
+      return '<div class="row">'+
+        '<div class="rmain"><div class="rname"><a href="game.html?slug='+encodeURIComponent(c.game_slug)+'">'+DQ.esc(c.game_title)+'</a></div>'+
+          '<div class="rsub">'+DQ.esc(c.role||"Role not recorded")+(sigs?' &nbsp; '+sigs:'')+'</div></div>'+
+        '<div class="rright">'+(c.year?'<span class="yr">'+c.year+'</span>':'')+'<span class="badge '+attr+'">'+DQ.esc(DQ.ATTR_LABEL[attr]||attr)+'</span></div>'+
+      '</div>';
+    }).join("") + '</div>' : '<div class="empty">No credits on record yet.</div>';
+
+    app.innerHTML =
+      '<div class="phead"><div class="container">'+
+        '<div style="display:flex;align-items:center;gap:16px">'+
+          '<div class="row" style="padding:0;border:none"><div class="av" style="width:60px;height:60px;font-size:22px">'+DQ.esc(DQ.initials(p.name))+'</div></div>'+
+          '<div><h1 style="margin:0">'+DQ.esc(p.name)+'</h1>'+
+          '<div class="meta">'+credits.length+' credit'+(credits.length===1?'':'s')+' on record</div></div>'+
+        '</div>'+
+      '</div></div>'+
+      '<section class="blk"><div class="container">'+
+        '<div class="rowhead"><div><div class="eyebrow">Gameography</div>'+
+          '<h2 class="sec">Games worked on</h2>'+
+          '<p class="secsub" style="margin:0">A credit page beats a résumé bullet — verified by the people you shipped with.</p></div>'+
+          '<span class="btn primary" onclick="alert(\'Claiming opens when the beta backend is live. Verify an email once, then a magic link lets you own and edit this page forever.\')">Is this you? Claim this page</span>'+
+        '</div>'+
+        rowsHTML +
+        '<div class="notice">Only the person credited can claim and edit this page. Peers who shipped the same game can vouch for each credit.</div>'+
+      '</div></section>';
+  }).catch(function(e){
+    app.innerHTML = '<div class="container"><div class="empty">Something went wrong loading this profile.<br><span class="mut">'+DQ.esc(e.message)+'</span></div></div>';
+  });
+})();
+</script>
+</body>
+</html>

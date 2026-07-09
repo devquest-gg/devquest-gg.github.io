@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Search · DevQuest Credits</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="app.css">
+<style>
+  .tabs{display:flex;gap:6px;margin:18px 0 6px}
+  .tab{font-size:13.5px;font-weight:700;color:var(--muted);border:1px solid var(--border);background:var(--panel);border-radius:9px;padding:8px 15px;cursor:pointer}
+  .tab.on{color:var(--text);border-color:var(--accent);background:rgba(88,166,255,.08)}
+  .tab .n{color:var(--muted);font-weight:600;margin-left:5px}
+</style>
+</head>
+<body>
+<div class="topbar"><div class="container">
+  <div class="brand"><a class="brandhome" href="/credits/" data-tip="Back to Credits home" aria-label="DevQuest Credits home"><svg class="mark" viewBox="0 0 32 32" aria-hidden="true"><rect x="1" y="1" width="8" height="8" rx="2" fill="var(--gold)"/><rect x="12" y="1" width="8" height="8" rx="2" fill="#2d333b"/><rect x="23" y="1" width="8" height="8" rx="2" fill="#2d333b"/><rect x="1" y="12" width="8" height="8" rx="2" fill="#2d333b"/><rect x="12" y="12" width="8" height="8" rx="2" fill="var(--gold)"/><rect x="23" y="12" width="8" height="8" rx="2" fill="#2d333b"/><rect x="1" y="23" width="8" height="8" rx="2" fill="#2d333b"/><rect x="12" y="23" width="8" height="8" rx="2" fill="#2d333b"/><rect x="23" y="23" width="8" height="8" rx="2" fill="var(--gold)"/></svg><span class="wm">Dev<span class="q">Quest</span><span class="tld">.gg</span></span></a> <span class="cr">CREDITS</span> <span class="beta">BETA</span></div>
+  <div class="topnav">
+    <a href="/credits/#how">How it works</a>
+    <a class="back" href="/">← Jobs board</a>
+  </div>
+</div></div>
+
+<div class="container">
+  <div class="crumbs"><a href="/credits/">Credits</a><span class="sep">/</span><span class="mut">Search</span></div>
+  <div class="phead"><h1 style="font-size:30px;margin-bottom:14px">Search the catalogue</h1>
+    <div class="searchwrap" style="max-width:680px">
+      <div class="search"><span class="ic">🔍</span><input id="q" placeholder="Search a game, a studio, or a name…" autocomplete="off"></div>
+    </div>
+    <div class="tabs">
+      <span class="tab on" data-tab="games">Games<span class="n" id="ng"></span></span>
+      <span class="tab" data-tab="studios">Studios<span class="n" id="ns"></span></span>
+      <span class="tab" data-tab="people">People<span class="n" id="np"></span></span>
+    </div>
+  </div>
+</div>
+
+<section class="blk" style="padding-top:8px"><div class="container">
+  <div id="results"><div class="loading">Loading catalogue…</div></div>
+</div></section>
+
+<footer><div class="container">
+  <div><b style="color:var(--text)">DevQuest.gg / Credits</b> · a companion to the game-industry job board</div>
+  <div><a href="/credits/">← Credits home</a> &nbsp;·&nbsp; <a href="mailto:studios@devquest.gg?subject=DevQuest%20Credits%20feedback&body=Bug%2C%20idea%2C%20or%20just%20a%20thought%3A%0A%0A">Feedback</a></div>
+</div></footer>
+
+<script src="app.js"></script>
+<script>
+(function(){
+  var LIMIT = 60;
+  var input = document.getElementById("q"), results = document.getElementById("results");
+  var tab = (DQ.qs("tab") || "games"), q0 = DQ.qs("q");
+  var data = { games: null, studios: null, people: null };
+
+  function rank(hayLower, ql){
+    var i = hayLower.indexOf(ql);
+    if(i < 0) return -1;
+    if(i === 0) return 0;                                   // prefix
+    if(hayLower[i-1] === " ") return 1;                     // word start
+    return 2;                                               // substring
+  }
+  function search(rows, nameAt, ql){
+    var out = [];
+    for(var i=0;i<rows.length;i++){
+      var r = rank(String(rows[i][nameAt]).toLowerCase(), ql);
+      if(r >= 0){ out.push([r, rows[i]]); if(out.length > 4000) break; }
+    }
+    out.sort(function(a,b){ return a[0]-b[0] || String(a[1][nameAt]).length - String(b[1][nameAt]).length; });
+    return out.map(function(x){ return x[1]; });
+  }
+
+  function renderGames(q){
+    if(!q){ return '<div class="empty">Type to search '+ (data.games?data.games.length.toLocaleString():'') +' games.</div>'; }
+    var m = search(data.games, 1, q.toLowerCase());
+    document.getElementById("ng").textContent = m.length ? " "+Math.min(m.length,4000).toLocaleString()+(m.length>4000?"+":"") : "";
+    if(!m.length) return '<div class="empty">No games match “'+DQ.esc(q)+'”.</div>';
+    return '<div class="glist">'+ m.slice(0,LIMIT).map(function(g){
+      return '<a class="gtile" href="game.html?slug='+encodeURIComponent(g[0])+'"><div class="t">'+DQ.esc(g[1])+'</div>'+
+        '<div class="s">'+(g[3]?DQ.esc(g[3]):'Studio unknown')+(g[2]?' · '+g[2]:'')+'</div></a>';
+    }).join("") + '</div>' + (m.length>LIMIT?'<div class="notice">Showing first '+LIMIT+' of '+m.length.toLocaleString()+'. Keep typing to narrow.</div>':'');
+  }
+  function renderStudios(q){
+    if(!q) return '<div class="empty">Type to search '+ (data.studios?data.studios.length.toLocaleString():'') +' studios.</div>';
+    var m = search(data.studios, 1, q.toLowerCase());
+    document.getElementById("ns").textContent = m.length ? " "+m.length.toLocaleString() : "";
+    if(!m.length) return '<div class="empty">No studios match “'+DQ.esc(q)+'”.</div>';
+    return '<div class="glist">'+ m.slice(0,LIMIT).map(function(s){
+      return '<a class="gtile" href="studio.html?slug='+encodeURIComponent(s[0])+'"><div class="t">'+DQ.esc(s[1])+'</div>'+
+        '<div class="s">'+s[2].toLocaleString()+' game'+(s[2]===1?'':'s')+'</div></a>';
+    }).join("") + '</div>';
+  }
+  function renderPeople(q){
+    if(!data.people || !data.people.length) return '<div class="empty">No people are in the database yet. They appear as credits get added and claimed.</div>';
+    if(!q) return '<div class="empty">Type to search '+ data.people.length.toLocaleString() +' people.</div>';
+    var m = search(data.people, 1, q.toLowerCase());
+    document.getElementById("np").textContent = m.length ? " "+m.length.toLocaleString() : "";
+    if(!m.length) return '<div class="empty">No people match “'+DQ.esc(q)+'”.</div>';
+    return '<div class="rows">'+ m.slice(0,LIMIT).map(function(p){
+      return '<a class="row" href="person.html?slug='+encodeURIComponent(p[0])+'">'+
+        '<div class="av">'+DQ.esc(DQ.initials(p[1]))+'</div>'+
+        '<div class="rmain"><div class="rname">'+DQ.esc(p[1])+'</div>'+
+        '<div class="rsub">'+p[2]+' credit'+(p[2]===1?'':'s')+'</div></div></a>';
+    }).join("") + '</div>';
+  }
+
+  function render(){
+    var q = input.value.trim();
+    var html = tab === "studios" ? renderStudios(q) : tab === "people" ? renderPeople(q) : renderGames(q);
+    results.innerHTML = html;
+    var u = new URL(location.href); u.searchParams.set("tab", tab); q ? u.searchParams.set("q", q) : u.searchParams.delete("q");
+    history.replaceState(null, "", u);
+  }
+
+  // tab switching
+  document.querySelectorAll(".tab").forEach(function(el){
+    el.onclick = function(){
+      document.querySelectorAll(".tab").forEach(function(t){ t.classList.remove("on"); });
+      el.classList.add("on"); tab = el.dataset.tab; ensure().then(render);
+    };
+    if(el.dataset.tab === tab){ document.querySelectorAll(".tab").forEach(function(t){t.classList.remove("on");}); el.classList.add("on"); }
+  });
+
+  var t;
+  input.addEventListener("input", function(){ clearTimeout(t); t = setTimeout(render, 120); });
+  input.addEventListener("keydown", function(e){ if(e.key === "Enter"){ clearTimeout(t); render(); } });
+
+  // load only the index a tab needs, lazily
+  function ensure(){
+    var need = tab;
+    if(data[need]) return Promise.resolve();
+    var file = need === "games" ? "index.json" : need === "studios" ? "studios-index.json" : "people-index.json";
+    results.innerHTML = '<div class="loading">Loading '+need+'…</div>';
+    return DQ.getJSON("data/site/"+file).then(function(rows){ data[need] = rows; });
+  }
+
+  input.value = q0;
+  ensure().then(render);
+  input.focus();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Game · DevQuest Credits</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<div class="topbar"><div class="container">
+  <div class="brand"><a class="brandhome" href="/credits/" data-tip="Back to Credits home" aria-label="DevQuest Credits home"><svg class="mark" viewBox="0 0 32 32" aria-hidden="true"><rect x="1" y="1" width="8" height="8" rx="2" fill="var(--gold)"/><rect x="12" y="1" width="8" height="8" rx="2" fill="#2d333b"/><rect x="23" y="1" width="8" height="8" rx="2" fill="#2d333b"/><rect x="1" y="12" width="8" height="8" rx="2" fill="#2d333b"/><rect x="12" y="12" width="8" height="8" rx="2" fill="var(--gold)"/><rect x="23" y="12" width="8" height="8" rx="2" fill="#2d333b"/><rect x="1" y="23" width="8" height="8" rx="2" fill="#2d333b"/><rect x="12" y="23" width="8" height="8" rx="2" fill="#2d333b"/><rect x="23" y="23" width="8" height="8" rx="2" fill="var(--gold)"/></svg><span class="wm">Dev<span class="q">Quest</span><span class="tld">.gg</span></span></a> <span class="cr">CREDITS</span> <span class="beta">BETA</span></div>
+  <div class="topnav">
+    <a href="/credits/#how">How it works</a>
+    <a class="back" href="/">← Jobs board</a>
+  </div>
+</div></div>
+
+<div class="container">
+  <div class="crumbs"><a href="/credits/">Credits</a><span class="sep">/</span><a href="search.html">Games</a><span class="sep">/</span><span id="crumb" class="mut">…</span></div>
+</div>
+
+<div id="app"><div class="container"><div class="loading">Loading game…</div></div></div>
+
+<footer><div class="container">
+  <div><b style="color:var(--text)">DevQuest.gg / Credits</b> · a companion to the game-industry job board</div>
+  <div><a href="/credits/">← Credits home</a> &nbsp;·&nbsp; <a href="mailto:studios@devquest.gg?subject=DevQuest%20Credits%20feedback&body=Bug%2C%20idea%2C%20or%20just%20a%20thought%3A%0A%0A">Feedback</a></div>
+</div></footer>
+
+<script src="app.js"></script>
+<script>
+(function(){
+  var slug = DQ.qs("slug"), app = document.getElementById("app");
+  if(!slug){ app.innerHTML = '<div class="container"><div class="empty">No game specified.</div></div>'; return; }
+
+  DQ.loadEntity("games", slug).then(function(g){
+    if(!g){
+      document.getElementById("crumb").textContent = "Not found";
+      app.innerHTML = '<div class="container"><div class="empty">We could not find that game.<br><a class="btn ghost" style="margin-top:14px" href="search.html">Search the catalogue</a></div></div>';
+      return;
+    }
+    document.title = g.title + " · DevQuest Credits";
+    document.getElementById("crumb").textContent = g.title;
+
+    var studios = (g.studios||[]);
+    var studioLinks = studios.length
+      ? studios.map(function(n){ return '<a href="studio.html?slug='+encodeURIComponent(DQ.slugify(n))+'">'+DQ.esc(n)+'</a>'; }).join(", ")
+      : '<span class="mut">Studio not recorded</span>';
+    var metaBits = [studioLinks];
+    if(g.year) metaBits.push(String(g.year));
+    if(g.publishers && g.publishers.length) metaBits.push("Published by "+g.publishers.map(DQ.esc).join(", "));
+
+    var chips = "";
+    (g.platforms||[]).forEach(function(p){ chips += '<span class="chip plat">'+DQ.esc(p)+'</span>'; });
+    (g.genres||[]).forEach(function(x){ chips += '<span class="chip">'+DQ.esc(x)+'</span>'; });
+
+    var srcBadge = g.source === "hand"
+      ? '<span class="badge hand">✎ Community entry</span>'
+      : '<span class="badge official">◈ Catalogue (Wikidata)</span>';
+
+    // credits list
+    var credits = g.credits || [];
+    var creditsHTML;
+    if(credits.length){
+      creditsHTML = '<div class="rows">' + credits.map(function(c){
+        var pslug = DQ.slugify(c.name);
+        var sigs = (c.verification||[]).map(function(s){ return '<span class="sig">'+DQ.esc(DQ.SIG_LABEL[s]||s)+'</span>'; }).join("");
+        var attr = c.attribution || "credited";
+        return '<div class="row">'+
+          '<div class="av">'+DQ.esc(DQ.initials(c.name))+'</div>'+
+          '<div class="rmain"><div class="rname"><a href="person.html?slug='+encodeURIComponent(pslug)+'">'+DQ.esc(c.name)+'</a></div>'+
+            '<div class="rsub">'+DQ.esc(c.role||"Role not recorded")+(sigs?' &nbsp; '+sigs:'')+'</div></div>'+
+          '<div class="rright"><span class="badge '+attr+'">'+DQ.esc(DQ.ATTR_LABEL[attr]||attr)+'</span></div>'+
+        '</div>';
+      }).join("") + '</div>';
+    } else {
+      creditsHTML = '<div class="empty">No individual credits recorded yet.<br>'+
+        'This game is in the catalogue, but the people who made it have not been added. '+
+        'If you worked on it, you can be the first to claim your credit.</div>';
+    }
+
+    app.innerHTML =
+      '<div class="phead"><div class="container">'+
+        '<div style="margin-bottom:10px">'+srcBadge+'</div>'+
+        '<h1>'+DQ.esc(g.title)+'</h1>'+
+        '<div class="meta">'+metaBits.join(' · ')+'</div>'+
+        (chips?'<div class="chips">'+chips+'</div>':'')+
+      '</div></div>'+
+      '<section class="blk"><div class="container">'+
+        '<div class="rowhead"><div><div class="eyebrow">Credits</div>'+
+          '<h2 class="sec">'+(credits.length? credits.length+' credited' : 'Who made this game?')+'</h2>'+
+          '<p class="secsub" style="margin:0">Claimed and peer-vouched credits appear here. Everything is opt-in and owned by the person credited.</p></div>'+
+          '<span class="btn primary" onclick="alert(\'Claiming opens when the beta backend is live. You will verify an email once, then a magic link lets you edit forever.\')">This is me — claim my credit</span>'+
+        '</div>'+
+        creditsHTML +
+        '<div class="notice">Source of truth is the person who did the work. Catalogue facts come from Wikidata (CC0); credits are added and vouched by developers.</div>'+
+      '</div></section>';
+  }).catch(function(e){
+    app.innerHTML = '<div class="container"><div class="empty">Something went wrong loading this game.<br><span class="mut">'+DQ.esc(e.message)+'</span></div></div>';
+  });
+})();
+</script>
+</body>
+</html>
