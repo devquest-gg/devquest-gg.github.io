@@ -186,14 +186,53 @@
       ".dq-cancel{background:none;border:1px solid var(--border,#242c38);color:var(--text,#eef3fa);border-radius:10px;padding:10px 16px;font-weight:700;font-size:14px;cursor:pointer}",
       ".dq-submit{background:linear-gradient(135deg,var(--accent,#58a6ff),var(--purple,#a371f7));color:#fff;border:none;border-radius:10px;padding:10px 18px;font-weight:800;font-size:14px;cursor:pointer}",
       ".dq-submit:hover{filter:brightness(1.08)}",
-      ".dq-foot{font-size:12px;color:var(--muted,#8b98a9);margin-top:14px;text-align:center}.dq-foot a{color:var(--accent,#58a6ff)}"
+      ".dq-foot{font-size:12px;color:var(--muted,#8b98a9);margin-top:14px;text-align:center}.dq-foot a{color:var(--accent,#58a6ff)}",
+      ".dq-ac{position:absolute;top:calc(100% + 4px);left:0;right:0;z-index:210;background:var(--panel,#141a23);border:1px solid var(--border,#242c38);border-radius:9px;max-height:220px;overflow:auto;box-shadow:0 14px 40px rgba(0,0,0,.5)}",
+      ".dq-ac-row{display:block;width:100%;text-align:left;background:none;border:none;color:var(--text,#eef3fa);font-size:13.5px;padding:8px 11px;cursor:pointer;font-family:inherit}",
+      ".dq-ac-row:hover{background:rgba(88,166,255,.10)}",
+      ".dq-ac-sub{color:var(--muted,#8b98a9);font-size:11.5px;margin-left:6px}",
+      ".dq-ac-none{padding:9px 11px;color:var(--muted,#8b98a9);font-size:12.5px;font-style:italic}",
+      ".dq-warn{margin-top:8px;font-size:12.5px;color:#c4cfdd;background:rgba(224,178,58,.08);border:1px solid rgba(224,178,58,.3);border-radius:9px;padding:9px 11px}",
+      ".dq-warn a{color:var(--accent,#58a6ff);font-weight:600}.dq-warn b{color:var(--gold,#e0b23a)}"
     ].join("");
     var s = document.createElement("style"); s.textContent = css; document.head.appendChild(s);
+  }
+
+  var ROLES = ["Producer","Executive Producer","Associate Producer","Production Director","Game Designer","Lead Designer","Design Director","Systems Designer","Level Designer","Narrative Designer","Content Designer","Combat Designer","Encounter Designer","Programmer","Gameplay Programmer","Engine Programmer","Graphics Programmer","Network Programmer","Tools Programmer","AI Programmer","Lead Programmer","Technical Director","Artist","Concept Artist","Environment Artist","Character Artist","Technical Artist","Art Director","Animator","Lead Artist","VFX Artist","UI Artist","UI/UX Designer","Audio Designer","Composer","Sound Designer","Audio Director","Writer","Narrative Director","QA Tester","QA Lead","QA Analyst","Community Manager","Live Operations","Product Manager","Creative Director","Studio Head","Technical Support Lead","Localization","Marketing"];
+
+  function titleCase(s) {
+    var small = { a:1,an:1,and:1,as:1,at:1,but:1,by:1,for:1,from:1,if:1,in:1,into:1,nor:1,of:1,on:1,onto:1,or:1,over:1,the:1,to:1,vs:1,via:1,with:1 };
+    return String(s || "").trim().toLowerCase().split(/\s+/).filter(Boolean)
+      .map(function (w, i) { return (i > 0 && small[w]) ? w : w.charAt(0).toUpperCase() + w.slice(1); }).join(" ");
+  }
+
+  // Lightweight autocomplete for a modal text field. itemsFn(q) -> [{label,slug,sub}].
+  function mkAutocomplete(input, itemsFn, opts) {
+    opts = opts || {};
+    var wrap = input.parentNode; wrap.style.position = "relative";
+    var box = document.createElement("div"); box.className = "dq-ac"; box.style.display = "none"; wrap.appendChild(box);
+    var t;
+    function render() {
+      var q = input.value.trim();
+      if (opts.onType) opts.onType(q);
+      if (q.length < 2) { box.style.display = "none"; return; }
+      Promise.resolve(itemsFn(q)).then(function (items) {
+        items = items || [];
+        if (!items.length) { box.innerHTML = '<div class="dq-ac-none">' + esc(opts.noneText ? opts.noneText(q) : "No match — will be added as new (reviewed)") + '</div>'; }
+        else { box._items = items; box.innerHTML = items.map(function (it, i) { return '<button type="button" class="dq-ac-row" data-i="' + i + '">' + esc(it.label) + (it.sub ? ' <span class="dq-ac-sub">' + esc(it.sub) + '</span>' : '') + '</button>'; }).join(""); }
+        box.style.display = "block";
+      });
+    }
+    input.addEventListener("input", function () { clearTimeout(t); t = setTimeout(render, 140); });
+    input.addEventListener("focus", render);
+    box.addEventListener("click", function (e) { var r = e.target.closest && e.target.closest(".dq-ac-row"); if (r) { var it = box._items[+r.dataset.i]; input.value = it.label; box.style.display = "none"; if (opts.onSelect) opts.onSelect(it); } });
+    document.addEventListener("click", function (e) { if (!wrap.contains(e.target)) box.style.display = "none"; });
   }
 
   function openClaim(opts) {
     opts = opts || {}; injectClaimStyles();
     var isAdd = opts.mode === "addGame";
+    var selStudioSlug = null;
     var isGame = !!opts.game_title;
     var showRole = isGame || isAdd;
     var ov = document.createElement("div"); ov.className = "dq-modal-ov";
@@ -202,13 +241,13 @@
       '<div class="dq-mh">' + (isAdd ? 'Add a game and your credit' : isGame ? 'Claim your credit' : 'Claim this profile') + '</div>' +
       '<div class="dq-sub">' + (isAdd ? 'Not in the catalogue yet? Add the game and your role. ' : isGame ? 'On <b>' + esc(opts.game_title) + '</b>. ' : '') +
         'A person reviews every submission — nothing appears on the site until we verify it (usually within a day).</div>' +
-      (isAdd ? '<label>Game title</label><input id="dqc-gtitle" value="' + esc(opts.prefillTitle || "") + '" placeholder="e.g. City of Heroes">' +
-        '<div class="dq-row2"><div><label>Studio</label><input id="dqc-gstudio" placeholder="e.g. Paragon Studios"></div>' +
-        '<div><label>Year <span style="font-weight:400;color:var(--muted,#8b98a9)">— optional</span></label><input id="dqc-gyear" placeholder="2004"></div></div>' +
+      (isAdd ? '<label>Game title</label><input id="dqc-gtitle" autocomplete="off" value="' + esc(titleCase(opts.prefillTitle || "")) + '" placeholder="e.g. City of Heroes"><div id="dqc-gexist"></div>' +
+        '<div class="dq-row2"><div><label>Studio <span style="font-weight:400;color:var(--muted,#8b98a9)">— search existing</span></label><input id="dqc-gstudio" autocomplete="off" placeholder="Start typing…"></div>' +
+        '<div><label>Game\'s launch year <span style="font-weight:400;color:var(--muted,#8b98a9)">— optional</span></label><input id="dqc-gyear" placeholder="2004"></div></div>' +
         '<label>Platforms <span style="font-weight:400;color:var(--muted,#8b98a9)">— optional, comma-separated</span></label><input id="dqc-gplat" placeholder="Microsoft Windows">' : '') +
       '<label>Your name (as it should be credited)</label><input id="dqc-name" value="' + esc(opts.person_name || "") + '" placeholder="Jane Doe">' +
       '<label>Your email</label><input id="dqc-email" type="email" placeholder="you@example.com">' +
-      (showRole ? '<label>Your headline role <span style="font-weight:400;color:var(--muted,#8b98a9)">— the title to show first; your call</span></label><input id="dqc-role" placeholder="e.g. Content Lead">' +
+      (showRole ? '<label>Your headline role <span style="font-weight:400;color:var(--muted,#8b98a9)">— the title to show first; your call</span></label><input id="dqc-role" list="dqc-roles-list" autocomplete="off" placeholder="Start typing a role…"><datalist id="dqc-roles-list">' + ROLES.map(function (r) { return '<option value="' + esc(r) + '"></option>'; }).join("") + '</datalist>' +
         '<label>Other titles you held on this game <span style="font-weight:400;color:var(--muted,#8b98a9)">— optional, comma-separated</span></label><input id="dqc-roles2" placeholder="Technical Support Lead, Game Designer, Content Manager">' : '') +
       '<label>Links that help show this is you <span style="font-weight:400;color:var(--muted,#8b98a9)">— LinkedIn, portfolio / ArtStation, studio team page. One per line, optional</span></label><textarea id="dqc-proof" placeholder="https://linkedin.com/in/you&#10;https://yourstudio.com/team"></textarea>' +
       '<label>Anything else for our reviewer <span style="font-weight:400;color:var(--muted,#8b98a9)">— optional</span></label><textarea id="dqc-note" placeholder="Context that helps us verify you"></textarea>' +
@@ -234,7 +273,7 @@
       if (isAdd) {
         lines.push("NEW GAME (not yet in catalogue)");
         lines.push("Title: " + val("dqc-gtitle"));
-        lines.push("Studio: " + val("dqc-gstudio"));
+        lines.push("Studio: " + val("dqc-gstudio") + (selStudioSlug ? " (existing: " + selStudioSlug + ")" : " (new — needs adding)"));
         if (val("dqc-gyear")) lines.push("Year: " + val("dqc-gyear"));
         if (val("dqc-gplat")) lines.push("Platforms: " + val("dqc-gplat"));
       } else if (isGame) { lines.push("Game: " + opts.game_title); if (opts.game_slug) lines.push("Slug: " + opts.game_slug); if (opts.game_qid) lines.push("Wikidata: " + opts.game_qid); }
@@ -249,6 +288,30 @@
       w.location.href = "mailto:studios@devquest.gg?subject=" + encodeURIComponent(subj) + "&body=" + encodeURIComponent(lines.join("\n"));
       close();
     };
+    if (isAdd) {
+      var gstudio = ov.querySelector("#dqc-gstudio");
+      if (gstudio) mkAutocomplete(gstudio, function (q) {
+        return loadIndex("studios").then(function (rows) {
+          return searchRows(rows, 1, q, 8).rows.map(function (r) { return { label: r[1], slug: r[0], sub: (r[2] || 0) + " games" }; });
+        });
+      }, {
+        onSelect: function (it) { selStudioSlug = it.slug; },
+        onType: function () { selStudioSlug = null; },
+        noneText: function (q) { return "No studio matches “" + q + "” — it'll be added as new (reviewed)"; }
+      });
+      var gtitle = ov.querySelector("#dqc-gtitle"), gexist = ov.querySelector("#dqc-gexist"), gt;
+      var checkExist = function () {
+        var q = gtitle.value.trim();
+        if (q.length < 3) { gexist.innerHTML = ""; return; }
+        loadIndex("games").then(function (rows) {
+          var m = searchRows(rows, 1, q, 4).rows;
+          if (!m.length) { gexist.innerHTML = ""; return; }
+          gexist.innerHTML = '<div class="dq-warn"><b>Already in the catalogue?</b> If your game is here, claim it instead of adding a duplicate: ' +
+            m.map(function (r) { return '<a href="game.html?slug=' + encodeURIComponent(r[0]) + '" target="_blank" rel="noopener">' + esc(r[1]) + (r[3] ? ' · ' + esc(r[3]) : '') + '</a>'; }).join(" &nbsp;·&nbsp; ") + '</div>';
+        });
+      };
+      if (gtitle && gexist) { gtitle.addEventListener("input", function () { clearTimeout(gt); gt = setTimeout(checkExist, 300); }); checkExist(); }
+    }
     var firstEl = ov.querySelector(isAdd ? "#dqc-gtitle" : "#dqc-name"); if (firstEl) firstEl.focus();
   }
 
