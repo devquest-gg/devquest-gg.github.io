@@ -2,6 +2,22 @@
   "_readme": "Hand-entered / first-party seed credits. One object per game with a credits[] array. See README.md for the schema and the provenance rule. Merged with the Wikidata games catalogue by 'slug'. The single entry below is a clearly-marked EXAMPLE showing the format. Replace it with real games as they come in.",
   "games": [
     {
+      "slug": "dark-age-of-camelot",
+      "title": "Dark Age of Camelot",
+      "wikidata_qid": "Q1143206",
+      "source": "hand",
+      "credits": [
+        {
+          "name": "Destin Bales",
+          "role": "Producer",
+          "roles_other": ["Design Director", "Design Manager", "Content Designer"],
+          "verification": ["linkedin_self"],
+          "source_url": "https://www.linkedin.com/in/destinbales/details/experience/",
+          "note": "Self-claim (beta). Multiple roles across the game's live-service run."
+        }
+      ]
+    },
+    {
       "slug": "example-game",
       "title": "Example Game",
       "studio": "Example Studio",

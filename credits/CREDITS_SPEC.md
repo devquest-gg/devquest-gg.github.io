@@ -256,3 +256,19 @@ Display the strongest applicable signal and let confidence grow as signals accum
 **People-first, not game-first.** Optimise for verified career credits (the recruiting and identity value) rather than exhaustive game coverage. Game coverage can start smaller; a person's verified, vouched gameography is the durable asset.
 
 **Provenance:** record a source URL or note on every hand-entered or imported credit, so the honesty brand holds and we can always show where a fact came from.
+
+## 16. Abuse resistance, "proof," and approval at scale
+
+This section answers the practical questions the claim flow raises: what stops garbage names or roles, what the proof link actually proves, and who approves claims when there are thousands.
+
+**Two phases, very different exposure.**
+- **Interim (now):** the claim modal only drafts an email to us. Nothing a claimant types is ever public until a human transcribes it into `seed-credits.json`. Human review IS the moderation, impersonation check, and approval gate. This is safe but manual, and is sized for a private beta of dozens to low hundreds. It does not scale, and is not meant to. The day claim volume outgrows hand-processing is the trigger to ship the real backend.
+- **Real backend (planned):** self-serve, automated by default, with humans only on exceptions.
+
+**What "proof" actually is.** A pasted link proves almost nothing on its own (anyone can paste anyone's LinkedIn), so we never treat the link as proof, and the UI is worded that way ("links that help show this is you"). Identity assurance instead comes, in increasing strength, from: (1) an email magic-link (proves control of an email); (2) **peer vouches** from colleagues who shipped the same release, the strongest signal in an industry this small; (3) optional ownership challenges for a stronger check (post a one-time token on the linked profile, or verify a studio-domain email); and (4) reclaim/recovery, so the real person can always take back a page someone squatted. Claimants may provide multiple links (LinkedIn, portfolio/ArtStation, studio page); they are supporting signals, not gates.
+
+**Impersonation.** Claiming under someone else's name is caught by the same layer: an unvouched claim is shown clearly as unverified and never blended with sourced facts (Section 12); the genuine person can reclaim; a Report action flags it; and a name/link mismatch is a review flag. No single automated check "proves" identity; the vouch + reclaim + report loop does the work.
+
+**Profanity and junk in free-text fields.** Names and notes are the free-text risk (roles are picked from a controlled vocabulary, which keeps role junk out). We deliberately **flag for review, not hard-block**: naive word filters wrongly reject real names constantly (the "Scunthorpe problem"), which would itself be a form of the exclusion we exist to fight. So a slur/abuse screen raises a flag and withholds public display pending review, rather than rejecting outright. In the interim, the human gate covers this entirely.
+
+**Approval at scale (so the operator is not a bottleneck).** In the real backend, the common case — claiming a name already in the catalogue via email magic-link — is auto-approved with no human in the loop. Humans touch only exceptions: flagged (profanity/mismatch), reported, or contested claims. Supporting defenses: rate limits, disposable-email blocking, one active claim per identity per release, and the "unverified until vouched" labeling that makes an unreviewed claim low-stakes because it is visibly not yet trusted. Manual review is a safety net for the long tail, not the default path.

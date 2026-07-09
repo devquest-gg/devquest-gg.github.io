@@ -199,13 +199,13 @@
       '<button class="dq-x" aria-label="Close">×</button>' +
       '<div class="dq-mh">' + (isGame ? 'Claim your credit' : 'Claim this profile') + '</div>' +
       '<div class="dq-sub">' + (isGame ? 'On <b>' + esc(opts.game_title) + '</b>. ' : '') +
-        'During the beta, claims are reviewed by a human. This drafts a prefilled email to us — we verify and add your credit, usually within a day.</div>' +
+        'Every claim is reviewed by a person — nothing appears on the site until we verify it (usually within a day). This just drafts a prefilled email to us.</div>' +
       '<label>Your name (as it should be credited)</label><input id="dqc-name" value="' + esc(opts.person_name || "") + '" placeholder="Jane Doe">' +
       '<label>Your email</label><input id="dqc-email" type="email" placeholder="you@example.com">' +
       (isGame ? '<label>Your headline role <span style="font-weight:400;color:var(--muted,#8b98a9)">— the title to show first; your call</span></label><input id="dqc-role" placeholder="e.g. Content Lead">' +
         '<label>Other titles you held on this game <span style="font-weight:400;color:var(--muted,#8b98a9)">— optional, comma-separated</span></label><input id="dqc-roles2" placeholder="Technical Support Lead, Game Designer, Content Manager">' : '') +
-      '<label>Proof link — LinkedIn, studio page, press kit (optional)</label><input id="dqc-proof" placeholder="https://">' +
-      '<label>Note (optional)</label><textarea id="dqc-note" placeholder="Anything that helps us verify"></textarea>' +
+      '<label>Links that help show this is you <span style="font-weight:400;color:var(--muted,#8b98a9)">— LinkedIn, portfolio / ArtStation, studio team page. One per line, optional</span></label><textarea id="dqc-proof" placeholder="https://linkedin.com/in/you&#10;https://yourstudio.com/team"></textarea>' +
+      '<label>Anything else for our reviewer <span style="font-weight:400;color:var(--muted,#8b98a9)">— optional</span></label><textarea id="dqc-note" placeholder="Context that helps us verify you"></textarea>' +
       '<div class="dq-actions"><button class="dq-cancel">Cancel</button><button class="dq-submit">Open email to submit →</button></div>' +
       '<div class="dq-foot">Nothing is sent automatically — this just drafts an email. Or write <a href="mailto:studios@devquest.gg">studios@devquest.gg</a>.</div>' +
       '</div>';
@@ -229,7 +229,8 @@
       lines.push("Name (as credited): " + name);
       lines.push("Email: " + email);
       if (isGame) { lines.push("Headline role: " + role); if (rolesOther) lines.push("Other roles: " + rolesOther); }
-      lines.push("Proof link: " + proof);
+      if (proof) { lines.push("Proof links:"); proof.split(/\n+/).forEach(function (u) { u = u.trim(); if (u) lines.push("  " + u); }); }
+      else { lines.push("Proof links: (none provided)"); }
       lines.push("Note: " + note);
       w.location.href = "mailto:studios@devquest.gg?subject=" + encodeURIComponent(subj) + "&body=" + encodeURIComponent(lines.join("\n"));
       close();
