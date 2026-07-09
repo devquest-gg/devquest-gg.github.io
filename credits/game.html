@@ -71,7 +71,7 @@
         return '<div class="row">'+
           '<div class="av">'+DQ.esc(DQ.initials(c.name))+'</div>'+
           '<div class="rmain"><div class="rname"><a href="person.html?slug='+encodeURIComponent(pslug)+'">'+DQ.esc(c.name)+'</a></div>'+
-            '<div class="rsub">'+DQ.esc(c.role||"Role not recorded")+more+(sigs?' &nbsp; '+sigs:'')+'</div></div>'+
+            '<div class="rsub"><span class="rrole">'+DQ.esc(c.role||"Role not recorded")+'</span>'+more+(sigs?' &nbsp; '+sigs:'')+'</div></div>'+
         '</div>';
       }).join("") + '</div>';
     } else {

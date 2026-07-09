@@ -27,6 +27,13 @@ Each game object:
   - `source_url`: where the fact came from (provenance; required)
   - `note`: optional
 
+## People profiles (`people[]`, optional)
+A top-level `people` array (sibling of `games`) holds opt-in, public profile info for a person, keyed by `slug` (or `name`). This is separate from the private proof/verification links attached to individual credits — these are links the person wants shown on their public page.
+- `slug` (matches the person's derived slug, e.g. `destin-bales`) or `name`
+- `links`: array of `{ "type": "linkedin" | "portfolio" | "artstation" | "website" | "github" | ..., "url": "https://..." }`, rendered under the name
+
+Merged into the person's page by slug. A profile can exist with or without credits.
+
 ## Rules
 - **Provenance is required.** Every credit needs a `source_url` or a note saying where it came from.
 - **Clean sources only.** Primary/free sources and first-party contributions. Never systematic extraction from MobyGames, GameFAQs, or Giant Bomb, and never LinkedIn crawling (spec Section 15).

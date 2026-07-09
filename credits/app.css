@@ -79,7 +79,8 @@ h2.sec{font-size:24px;font-weight:800;letter-spacing:-.5px;margin:0 0 6px}
 .row .av{width:38px;height:38px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;color:#0b0e14;background:linear-gradient(135deg,var(--accent),var(--purple))}
 .row .rmain{flex:1;min-width:0}
 .row .rname{font-weight:700;font-size:15px}
-.row .rname a:hover{color:var(--accent)}
+.row .rname a{color:var(--accent)}
+.row .rname a:hover{color:#7cc0ff}
 .row .rsub{font-size:12.5px;color:var(--muted);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .row .rright{display:flex;align-items:center;gap:8px;flex:none}
 .row .yr{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
@@ -94,8 +95,16 @@ h2.sec{font-size:24px;font-weight:800;letter-spacing:-.5px;margin:0 0 6px}
 /* verification signal pills */
 .sig{display:inline-block;font-size:10.5px;font-weight:700;color:var(--muted);border:1px solid var(--border);border-radius:6px;padding:1px 7px;margin:0 3px 3px 0}
 
+/* headline role — the featured title, brand gold */
+.rrole{color:var(--gold);font-weight:700}
+
 /* "+N more roles" affordance (hover shows the full list via title) */
 .rmore{font-size:11px;font-weight:700;color:var(--accent);border:1px solid rgba(88,166,255,.3);background:rgba(88,166,255,.07);border-radius:6px;padding:0 6px;margin-left:5px;cursor:help}
+
+/* opt-in public profile links under a person's name */
+.plinks{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.plink{font-size:12.5px;font-weight:600;color:var(--accent);border:1px solid rgba(88,166,255,.3);background:rgba(88,166,255,.07);border-radius:8px;padding:4px 10px}
+.plink:hover{border-color:var(--accent);color:var(--text)}
 
 /* search box */
 .searchwrap{display:flex;gap:10px;max-width:640px;margin:6px 0 4px}

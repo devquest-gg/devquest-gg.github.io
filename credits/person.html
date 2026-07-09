@@ -51,23 +51,31 @@
       var more = others.length ? ' <span class="rmore" title="Also: '+DQ.esc(others.join(", "))+'">+'+others.length+' more</span>' : '';
       return '<div class="row">'+
         '<div class="rmain"><div class="rname"><a href="game.html?slug='+encodeURIComponent(c.game_slug)+'">'+DQ.esc(c.game_title)+'</a></div>'+
-          '<div class="rsub">'+DQ.esc(c.role||"Role not recorded")+more+(sigs?' &nbsp; '+sigs:'')+'</div></div>'+
+          '<div class="rsub"><span class="rrole">'+DQ.esc(c.role||"Role not recorded")+'</span>'+more+(sigs?' &nbsp; '+sigs:'')+'</div></div>'+
         '<div class="rright">'+(c.year?'<span class="yr">'+c.year+'</span>':'')+'</div>'+
       '</div>';
     }).join("") + '</div>' : '<div class="empty">No credits on record yet.</div>';
+
+    var links = p.links || [];
+    var LINK_LABEL = { linkedin:"LinkedIn", portfolio:"Portfolio", artstation:"ArtStation", website:"Website", site:"Website", personal:"Website", twitter:"Twitter", x:"X", bluesky:"Bluesky", github:"GitHub", itch:"itch.io", mastodon:"Mastodon" };
+    var linksHTML = links.length ? '<div class="plinks">'+links.map(function(l){
+      var label = LINK_LABEL[String(l.type||"").toLowerCase()] || l.label || l.type || "Link";
+      return '<a class="plink" href="'+DQ.esc(l.url)+'" target="_blank" rel="noopener noreferrer">'+DQ.esc(label)+' <span aria-hidden="true">↗</span></a>';
+    }).join("")+'</div>' : '';
 
     app.innerHTML =
       '<div class="phead"><div class="container">'+
         '<div style="display:flex;align-items:center;gap:16px">'+
           '<div class="row" style="padding:0;border:none"><div class="av" style="width:60px;height:60px;font-size:22px">'+DQ.esc(DQ.initials(p.name))+'</div></div>'+
           '<div><h1 style="margin:0">'+DQ.esc(p.name)+'</h1>'+
-          '<div class="meta">'+credits.length+' credit'+(credits.length===1?'':'s')+' on record</div></div>'+
+          '<div class="meta">'+credits.length+' credit'+(credits.length===1?'':'s')+' on record</div>'+
+          linksHTML +
+          '</div>'+
         '</div>'+
       '</div></div>'+
       '<section class="blk"><div class="container">'+
         '<div class="rowhead"><div><div class="eyebrow">Gameography</div>'+
-          '<h2 class="sec">Games worked on</h2>'+
-          '<p class="secsub" style="margin:0">A credit page beats a résumé bullet — verified by the people you shipped with.</p></div>'+
+          '<p class="secsub" style="margin:6px 0 0">A credit page beats a résumé bullet — verified by the people you shipped with.</p></div>'+
           '<span class="btn primary" id="claimbtn">Is this you? Claim this page</span>'+
         '</div>'+
         rowsHTML +

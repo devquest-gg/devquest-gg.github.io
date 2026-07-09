@@ -157,6 +157,17 @@ function writeShards(subdir, n, entries) {
       });
     }
   }
+  // Opt-in public profile info (links) from seed.people. Public and separate
+  // from the private proof/verification links attached to individual credits.
+  for (const pp of (seed.people || [])) {
+    if (!pp) continue;
+    const pslug = pp.slug || slugify(pp.name || "");
+    if (!pslug) continue;
+    let rec = people.get(pslug);
+    if (!rec) { rec = { name: pp.name || pslug, credits: [] }; people.set(pslug, rec); }
+    if (pp.name) rec.name = pp.name;
+    if (pp.links && pp.links.length) rec.links = pp.links;
+  }
   const peopleIndex = Array.from(people.entries())
     .map(([slug, v]) => [slug, v.name, v.credits.length])
     .sort((a, b) => String(a[1]).localeCompare(String(b[1])));
