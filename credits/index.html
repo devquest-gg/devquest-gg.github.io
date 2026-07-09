@@ -248,6 +248,7 @@
   <div><a href="/">← Back to jobs</a> &nbsp;·&nbsp; <a href="#">Open data &amp; exports</a> &nbsp;·&nbsp; <a href="#">Crediting guidelines</a> &nbsp;·&nbsp; <a href="mailto:studios@devquest.gg?subject=DevQuest%20Credits%20feedback&body=Bug%2C%20idea%2C%20or%20just%20a%20thought%3A%0A%0A">Feedback</a></div>
 </div></footer>
 
+<script src="app.js"></script>
 <script>
   // ---- cover wall (typographic covers: gradient + title + genre, no icons) ----
   var COVERS=[
@@ -310,10 +311,12 @@
     if(e.isIntersecting){animate(e.target);io.unobserve(e.target);}});},{threshold:.4});
   document.querySelectorAll('.stat b[data-to]').forEach(function(el){io.observe(el);});
 
-  // ---- search navigation ----
-  function goSearch(){var q=document.getElementById('hs').value.trim();location.href='search.html'+(q?'?q='+encodeURIComponent(q):'');}
+  // ---- search: live combined dropdown + see-all button ----
+  var hsIn=document.getElementById('hs');
+  var suggest=(window.DQ&&DQ.attachSuggest)?DQ.attachSuggest(hsIn):null;
+  function goSearch(){ if(suggest){suggest.seeAll();return;} var q=hsIn.value.trim();location.href='search.html'+(q?'?q='+encodeURIComponent(q):''); }
   document.getElementById('hsbtn').addEventListener('click',goSearch);
-  document.getElementById('hs').addEventListener('keydown',function(e){if(e.key==='Enter')goSearch();});
+  if(!suggest){ hsIn.addEventListener('keydown',function(e){if(e.key==='Enter')goSearch();}); }
 
   // ---- real data overlay (stats + fresh games) when the built site data exists ----
   function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}

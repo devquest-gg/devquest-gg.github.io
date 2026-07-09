@@ -30,7 +30,8 @@
       <div class="search"><span class="ic">🔍</span><input id="q" placeholder="Search a game, a studio, or a name…" autocomplete="off"></div>
     </div>
     <div class="tabs">
-      <span class="tab on" data-tab="games">Games<span class="n" id="ng"></span></span>
+      <span class="tab on" data-tab="all">All</span>
+      <span class="tab" data-tab="games">Games<span class="n" id="ng"></span></span>
       <span class="tab" data-tab="studios">Studios<span class="n" id="ns"></span></span>
       <span class="tab" data-tab="people">People<span class="n" id="np"></span></span>
     </div>
@@ -49,94 +50,122 @@
 <script src="app.js"></script>
 <script>
 (function(){
-  var LIMIT = 60;
+  var LIMIT = 60;                       // full-tab cap
   var input = document.getElementById("q"), results = document.getElementById("results");
-  var tab = (DQ.qs("tab") || "games"), q0 = DQ.qs("q");
+  var tab = (DQ.qs("tab") || "all"), q0 = DQ.qs("q");
   var data = { games: null, studios: null, people: null };
 
-  function rank(hayLower, ql){
-    var i = hayLower.indexOf(ql);
-    if(i < 0) return -1;
-    if(i === 0) return 0;                                   // prefix
-    if(hayLower[i-1] === " ") return 1;                     // word start
-    return 2;                                               // substring
+  // ---- row/tile builders ----
+  function gameTiles(rows){ return '<div class="glist">'+rows.map(function(g){
+    return '<a class="gtile" href="game.html?slug='+encodeURIComponent(g[0])+'"><div class="t">'+DQ.esc(g[1])+'</div>'+
+      '<div class="s">'+(g[3]?DQ.esc(g[3]):'Studio unknown')+(g[2]?' · '+g[2]:'')+'</div></a>';
+  }).join("")+'</div>'; }
+  function studioTiles(rows){ return '<div class="glist">'+rows.map(function(s){
+    return '<a class="gtile" href="studio.html?slug='+encodeURIComponent(s[0])+'"><div class="t">'+DQ.esc(s[1])+'</div>'+
+      '<div class="s">'+s[2].toLocaleString()+' game'+(s[2]===1?'':'s')+'</div></a>';
+  }).join("")+'</div>'; }
+  function peopleRows(rows){ return '<div class="rows">'+rows.map(function(p){
+    return '<a class="row" href="person.html?slug='+encodeURIComponent(p[0])+'">'+
+      '<div class="av">'+DQ.esc(DQ.initials(p[1]))+'</div>'+
+      '<div class="rmain"><div class="rname">'+DQ.esc(p[1])+'</div>'+
+      '<div class="rsub">'+p[2]+' credit'+(p[2]===1?'':'s')+'</div></div></a>';
+  }).join("")+'</div>'; }
+
+  function setCounts(g,s,p){
+    document.getElementById("ng").textContent = g?" "+g.toLocaleString():"";
+    document.getElementById("ns").textContent = s?" "+s.toLocaleString():"";
+    document.getElementById("np").textContent = p?" "+p.toLocaleString():"";
   }
-  function search(rows, nameAt, ql){
-    var out = [];
-    for(var i=0;i<rows.length;i++){
-      var r = rank(String(rows[i][nameAt]).toLowerCase(), ql);
-      if(r >= 0){ out.push([r, rows[i]]); if(out.length > 4000) break; }
-    }
-    out.sort(function(a,b){ return a[0]-b[0] || String(a[1][nameAt]).length - String(b[1][nameAt]).length; });
-    return out.map(function(x){ return x[1]; });
+  function section(label, res, goto, body){
+    return '<div class="csec"><div class="rowhead"><div class="eyebrow">'+label+'</div>'+
+      (res.total>res.rows.length?'<a class="morelink" data-goto="'+goto+'">See all '+res.total.toLocaleString()+' →</a>':'')+
+      '</div>'+body(res.rows)+'</div>';
   }
 
+  // ---- All (combined) ----
+  function renderAll(q){
+    if(!q) return '<div class="empty">Type to search '+ (data.games?data.games.length.toLocaleString():'') +' games, plus studios and people — all at once.</div>';
+    var g = DQ.searchRows(data.games,1,q,6),
+        s = DQ.searchRows(data.studios,1,q,6),
+        p = (data.people&&data.people.length)?DQ.searchRows(data.people,1,q,6):{total:0,rows:[]};
+    setCounts(g.total,s.total,p.total);
+    if(!g.total && !s.total && !p.total) return '<div class="empty">Nothing matches “'+DQ.esc(q)+'”.</div>';
+    var h="";
+    if(g.total) h += section("Games", g, "games", gameTiles);
+    if(s.total) h += section("Studios", s, "studios", studioTiles);
+    if(p.total) h += section("People", p, "people", peopleRows);
+    return h;
+  }
+
+  // ---- single-type tabs ----
   function renderGames(q){
-    if(!q){ return '<div class="empty">Type to search '+ (data.games?data.games.length.toLocaleString():'') +' games.</div>'; }
-    var m = search(data.games, 1, q.toLowerCase());
-    document.getElementById("ng").textContent = m.length ? " "+Math.min(m.length,4000).toLocaleString()+(m.length>4000?"+":"") : "";
-    if(!m.length) return '<div class="empty">No games match “'+DQ.esc(q)+'”.</div>';
-    return '<div class="glist">'+ m.slice(0,LIMIT).map(function(g){
-      return '<a class="gtile" href="game.html?slug='+encodeURIComponent(g[0])+'"><div class="t">'+DQ.esc(g[1])+'</div>'+
-        '<div class="s">'+(g[3]?DQ.esc(g[3]):'Studio unknown')+(g[2]?' · '+g[2]:'')+'</div></a>';
-    }).join("") + '</div>' + (m.length>LIMIT?'<div class="notice">Showing first '+LIMIT+' of '+m.length.toLocaleString()+'. Keep typing to narrow.</div>':'');
+    if(!q) return '<div class="empty">Type to search '+ (data.games?data.games.length.toLocaleString():'') +' games.</div>';
+    var m = DQ.searchRows(data.games,1,q,LIMIT);
+    document.getElementById("ng").textContent = m.total ? " "+m.total.toLocaleString() : "";
+    if(!m.total) return '<div class="empty">No games match “'+DQ.esc(q)+'”.</div>';
+    return gameTiles(m.rows) + (m.total>LIMIT?'<div class="notice">Showing first '+LIMIT+' of '+m.total.toLocaleString()+'. Keep typing to narrow.</div>':'');
   }
   function renderStudios(q){
     if(!q) return '<div class="empty">Type to search '+ (data.studios?data.studios.length.toLocaleString():'') +' studios.</div>';
-    var m = search(data.studios, 1, q.toLowerCase());
-    document.getElementById("ns").textContent = m.length ? " "+m.length.toLocaleString() : "";
-    if(!m.length) return '<div class="empty">No studios match “'+DQ.esc(q)+'”.</div>';
-    return '<div class="glist">'+ m.slice(0,LIMIT).map(function(s){
-      return '<a class="gtile" href="studio.html?slug='+encodeURIComponent(s[0])+'"><div class="t">'+DQ.esc(s[1])+'</div>'+
-        '<div class="s">'+s[2].toLocaleString()+' game'+(s[2]===1?'':'s')+'</div></a>';
-    }).join("") + '</div>';
+    var m = DQ.searchRows(data.studios,1,q,LIMIT);
+    document.getElementById("ns").textContent = m.total ? " "+m.total.toLocaleString() : "";
+    if(!m.total) return '<div class="empty">No studios match “'+DQ.esc(q)+'”.</div>';
+    return studioTiles(m.rows) + (m.total>LIMIT?'<div class="notice">Showing first '+LIMIT+' of '+m.total.toLocaleString()+'.</div>':'');
   }
   function renderPeople(q){
     if(!data.people || !data.people.length) return '<div class="empty">No people are in the database yet. They appear as credits get added and claimed.</div>';
     if(!q) return '<div class="empty">Type to search '+ data.people.length.toLocaleString() +' people.</div>';
-    var m = search(data.people, 1, q.toLowerCase());
-    document.getElementById("np").textContent = m.length ? " "+m.length.toLocaleString() : "";
-    if(!m.length) return '<div class="empty">No people match “'+DQ.esc(q)+'”.</div>';
-    return '<div class="rows">'+ m.slice(0,LIMIT).map(function(p){
-      return '<a class="row" href="person.html?slug='+encodeURIComponent(p[0])+'">'+
-        '<div class="av">'+DQ.esc(DQ.initials(p[1]))+'</div>'+
-        '<div class="rmain"><div class="rname">'+DQ.esc(p[1])+'</div>'+
-        '<div class="rsub">'+p[2]+' credit'+(p[2]===1?'':'s')+'</div></div></a>';
-    }).join("") + '</div>';
+    var m = DQ.searchRows(data.people,1,q,LIMIT);
+    document.getElementById("np").textContent = m.total ? " "+m.total.toLocaleString() : "";
+    if(!m.total) return '<div class="empty">No people match “'+DQ.esc(q)+'”.</div>';
+    return peopleRows(m.rows);
   }
 
   function render(){
     var q = input.value.trim();
-    var html = tab === "studios" ? renderStudios(q) : tab === "people" ? renderPeople(q) : renderGames(q);
+    var html = tab==="all" ? renderAll(q) : tab==="studios" ? renderStudios(q) : tab==="people" ? renderPeople(q) : renderGames(q);
     results.innerHTML = html;
     var u = new URL(location.href); u.searchParams.set("tab", tab); q ? u.searchParams.set("q", q) : u.searchParams.delete("q");
     history.replaceState(null, "", u);
   }
 
-  // tab switching
+  // which indexes the current tab needs
+  function neededKinds(){ return tab==="all" ? ["games","studios","people"] : [tab]; }
+  function ensure(){
+    var need = neededKinds().filter(function(k){ return !data[k]; });
+    if(!need.length) return Promise.resolve(true);
+    results.innerHTML = '<div class="loading">Loading…</div>';
+    return Promise.all(need.map(function(k){ return DQ.loadIndex(k).then(function(rows){ data[k]=rows; }); }))
+      .then(function(){ return true; })
+      .catch(function(e){
+        results.innerHTML = '<div class="empty">Could not load the search index.<br>'+
+          '<span class="mut">'+DQ.esc(e.message)+'</span><br>'+
+          'If the catalogue was just built, give it a minute and reload.</div>';
+        return false;
+      });
+  }
+
+  function setTab(t){
+    tab = t;
+    document.querySelectorAll(".tab").forEach(function(el){ el.classList.toggle("on", el.dataset.tab===t); });
+    ensure().then(function(ok){ if(ok) render(); });
+  }
   document.querySelectorAll(".tab").forEach(function(el){
-    el.onclick = function(){
-      document.querySelectorAll(".tab").forEach(function(t){ t.classList.remove("on"); });
-      el.classList.add("on"); tab = el.dataset.tab; ensure().then(render);
-    };
-    if(el.dataset.tab === tab){ document.querySelectorAll(".tab").forEach(function(t){t.classList.remove("on");}); el.classList.add("on"); }
+    el.onclick = function(){ setTab(el.dataset.tab); };
+    el.classList.toggle("on", el.dataset.tab===tab);
+  });
+  // "See all N →" section links switch to that filtered tab
+  results.addEventListener("click", function(e){
+    var a = e.target.closest && e.target.closest("[data-goto]");
+    if(a){ e.preventDefault(); setTab(a.dataset.goto); }
   });
 
   var t;
-  input.addEventListener("input", function(){ clearTimeout(t); t = setTimeout(render, 120); });
-  input.addEventListener("keydown", function(e){ if(e.key === "Enter"){ clearTimeout(t); render(); } });
-
-  // load only the index a tab needs, lazily
-  function ensure(){
-    var need = tab;
-    if(data[need]) return Promise.resolve();
-    var file = need === "games" ? "index.json" : need === "studios" ? "studios-index.json" : "people-index.json";
-    results.innerHTML = '<div class="loading">Loading '+need+'…</div>';
-    return DQ.getJSON("data/site/"+file).then(function(rows){ data[need] = rows; });
-  }
+  input.addEventListener("input", function(){ clearTimeout(t); t=setTimeout(function(){ ensure().then(function(ok){ if(ok) render(); }); }, 110); });
+  input.addEventListener("keydown", function(e){ if(e.key==="Enter"){ clearTimeout(t); ensure().then(function(ok){ if(ok) render(); }); } });
 
   input.value = q0;
-  ensure().then(render);
+  ensure().then(function(ok){ if(ok) render(); });
   input.focus();
 })();
 </script>
