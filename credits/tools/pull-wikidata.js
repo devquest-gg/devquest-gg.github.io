@@ -26,8 +26,14 @@ const path = require("path");
 const ENDPOINT = "https://query.wikidata.org/sparql";
 const UA = "DevQuestCredits/0.1 (https://devquest.gg; studios@devquest.gg)"; // set a real contact
 const OUT_DIR = path.join(__dirname, "..", "data");
-const START_YEAR = parseInt(process.env.START || "1970", 10);
-const END_YEAR = parseInt(process.env.END || String(new Date().getFullYear() + 1), 10); // exclusive
+function envYear(name, def) {
+  const n = parseInt(String(process.env[name] || "").trim(), 10);
+  return Number.isFinite(n) ? n : def; // empty / whitespace / junk -> default
+}
+// Defaults are a small recent window so a blank run is a safe, fast test.
+// For the FULL comprehensive pull, pass START=1970 (and END blank).
+const START_YEAR = envYear("START", new Date().getFullYear() - 1);
+const END_YEAR = envYear("END", new Date().getFullYear() + 1); // exclusive
 const REQ_TIMEOUT_MS = 60000; // Wikidata query timeout
 const SLEEP_MS = 1200;        // be polite between requests
 const MIN_SPAN_DAYS = 20;     // stop splitting a range narrower than this
@@ -149,6 +155,7 @@ function assignSlugs(list) {
 
 // ---- main -----------------------------------------------------------------
 (async function main() {
+  console.log(`raw env START=${JSON.stringify(process.env.START)} END=${JSON.stringify(process.env.END)}`);
   console.log(`Wikidata games pull: years ${START_YEAR}..${END_YEAR - 1}`);
   const games = new Map();
   for (let y = START_YEAR; y < END_YEAR; y++) {
