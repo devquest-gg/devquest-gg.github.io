@@ -41,14 +41,17 @@ jobs:
           END: ${{ github.event.inputs.end }}
         run: node credits/tools/pull-wikidata.js
 
+      - name: Build site data (index + shards)
+        run: node credits/tools/build-site.js
+
       - name: Commit data if changed
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add credits/data/games.json credits/data/studios.json
+          git add credits/data
           if git diff --staged --quiet; then
             echo "No catalogue changes."
           else
-            git commit -m "Credits: refresh Wikidata catalogue"
+            git commit -m "Credits: refresh Wikidata catalogue + rebuild site data"
             git push
           fi

@@ -1,0 +1,52 @@
+name: Credits build site data
+
+# Rebuilds credits/data/site/** (search index + sharded detail) from the
+# already-committed games.json/studios.json plus seed-credits.json.
+#
+# Runs when you edit seed credits (adding your own / first-party credits) or on
+# demand. The heavy Wikidata pull has its own workflow (credits-pull.yml) and
+# also rebuilds the site after each pull. Kept separate so a quick credit edit
+# does not trigger a full catalogue re-pull.
+#
+# No loop risk: this commits site/** only, and the path filter watches
+# seed-credits.json; pushes made with GITHUB_TOKEN do not trigger workflows.
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "credits/data/seed-credits.json"
+      - "credits/tools/build-site.js"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: credits-build
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Build site data (index + shards)
+        run: node credits/tools/build-site.js
+
+      - name: Commit site data if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add credits/data/site
+          if git diff --staged --quiet; then
+            echo "No site-data changes."
+          else
+            git commit -m "Credits: rebuild site data"
+            git push
+          fi
