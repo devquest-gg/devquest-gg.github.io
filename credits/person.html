@@ -61,7 +61,15 @@
     var byGame = {};
     ((stat && stat.credits) || []).forEach(function(c){ byGame[c.game_slug] = { game_slug:c.game_slug, game_title:c.game_title, year:c.year||null, role:c.role, roles_other:c.roles_other||[], verification:c.verification||[], vouch_count:0, live:false }; });
     ((api && api.credits) || []).forEach(function(c){ byGame[c.game_slug] = { id:c.id, game_slug:c.game_slug, game_title:c.game_title, year:c.year||null, role:c.role, roles_other:c.roles_other||[], verification:c.verification||[], links:c.links||[], vouch_count:c.vouch_count||0, live:true }; });
-    var credits = Object.keys(byGame).map(function(k){ return byGame[k]; }).sort(function(a,b){ return (b.year||0)-(a.year||0) || String(a.game_title).localeCompare(String(b.game_title)); });
+    var credits = Object.keys(byGame).map(function(k){ return byGame[k]; });
+
+    // Resolve missing launch years from the static catalogue (added games already
+    // carry a year; catalogue games get theirs from the shard), then sort + render.
+    Promise.all(credits.map(function(c){
+      if(c.year != null) return Promise.resolve();
+      return DQ.loadEntity("games", c.game_slug).then(function(gg){ if(gg && gg.year != null) c.year = gg.year; }).catch(function(){});
+    })).then(function(){
+    credits.sort(function(a,b){ return (b.year||0)-(a.year||0) || String(a.game_title).localeCompare(String(b.game_title)); });
 
     document.title = name + " · DevQuest Credits";
     document.getElementById("crumb").textContent = name;
@@ -144,6 +152,7 @@
           DQAPI.updateCredit(id, { role: nrole, roles_other: nothers, links: nlinks, verification: nverif }).then(function(){ location.reload(); });
         };
       };
+    });
     });
   }).catch(function(e){
     app.innerHTML = '<div class="container"><div class="empty">Something went wrong loading this profile.<br><span class="mut">'+DQ.esc(e && e.message)+'</span></div></div>';

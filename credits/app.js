@@ -283,7 +283,7 @@
     function close() { ov.remove(); document.removeEventListener("keydown", onKey); }
     function onKey(e) { if (e.key === "Escape") close(); }
     document.addEventListener("keydown", onKey);
-    ov.addEventListener("click", function (e) { if (e.target === ov) close(); });
+    // Intentionally NOT closing on backdrop click — too easy to lose a filled-in form.
     ov.querySelector(".dq-x").onclick = close;
     ov.querySelector(".dq-cancel").onclick = close;
     if (w.DQAPI) {
