@@ -137,6 +137,8 @@
       var label = LINK_LABEL[String(l.type||"").toLowerCase()] || l.label || l.type || "Link";
       return '<a class="plink" href="'+DQ.esc(l.url)+'" target="_blank" rel="noopener noreferrer">'+DQ.esc(label)+' <span aria-hidden="true">↗</span></a>';
     }).join("")+'</div>' : '';
+    // Owner-only affordance to add/edit the public profile links under the name.
+    var editLinksAff = isOwn ? '<span class="editlinks" id="editlinks">'+(links.length?'✎ Edit links':'+ Add profile links')+'</span>' : '';
 
     var cta = isOwn ? '<a class="btn primary" href="search.html">+ Add a credit</a>'
             : (window.DQAPI ? '' : '');
@@ -149,6 +151,8 @@
           '<div><h1 style="margin:0">'+DQ.esc(name)+'</h1>'+
           '<div class="meta">'+(credits.length? credits.length+' shipped '+(credits.length===1?'game':'games')+(span>0? ' · '+minY+'–'+maxY : '') : 'No credits on record yet')+'</div>'+
           linksHTML +
+          editLinksAff +
+          '<div id="linkedit"></div>'+
           '</div>'+
         '</div>'+
         snapshotHTML +
@@ -166,6 +170,49 @@
 
     var cb = document.getElementById("claimbtn");
     if(cb) cb.onclick = function(){ if(window.DQAPI) location.href = "signin.html"; else DQ.openClaim({ person_name: name }); };
+
+    // ---- Owner-only profile-links editor (saves via PATCH /me) ----
+    var elBtn = document.getElementById("editlinks");
+    if(elBtn) elBtn.onclick = function(){ openLinkEditor(links); };
+    function openLinkEditor(current){
+      var TYPES = [["linkedin","LinkedIn"],["portfolio","Portfolio"],["artstation","ArtStation"],["website","Website"],["github","GitHub"],["twitter","Twitter / X"],["bluesky","Bluesky"],["itch","itch.io"],["mastodon","Mastodon"]];
+      var box = document.getElementById("linkedit");
+      if(elBtn) elBtn.style.display = "none";
+      function rowHtml(type, url){
+        var opts = TYPES.map(function(t){ return '<option value="'+t[0]+'"'+(t[0]===type?' selected':'')+'>'+t[1]+'</option>'; }).join("");
+        return '<div class="le-row" style="display:flex;gap:8px;margin-bottom:8px">'+
+          '<select class="le-type" style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px 9px;color:var(--text);font-size:13px;font-family:inherit;flex:none;width:130px">'+opts+'</select>'+
+          '<input class="le-url" value="'+DQ.esc(url||"")+'" placeholder="https://…" style="flex:1;min-width:0;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px 11px;color:var(--text);font-size:13px;font-family:inherit">'+
+          '<span class="le-del" title="Remove" style="cursor:pointer;color:var(--muted);font-size:18px;line-height:1;padding:6px 4px;flex:none">×</span>'+
+        '</div>';
+      }
+      var startRows = (current && current.length) ? current : [{type:"linkedin",url:""}];
+      box.innerHTML = '<div class="panel" style="padding:14px;margin-top:12px;max-width:520px">'+
+        '<div style="font-size:12px;font-weight:700;margin-bottom:8px">Profile links <span style="font-weight:400;color:var(--muted)">— shown as chips under your name</span></div>'+
+        '<div class="le-rows">'+startRows.map(function(l){ return rowHtml(l.type, l.url); }).join("")+'</div>'+
+        '<span class="le-add" style="font-size:12.5px;font-weight:700;color:var(--accent);cursor:pointer">+ Add another</span>'+
+        '<div style="margin-top:12px;display:flex;gap:8px"><span class="btn primary le-save" style="padding:8px 16px">Save links</span><span class="btn ghost le-cancel" style="padding:8px 16px">Cancel</span></div>'+
+      '</div>';
+      function wireDels(){ Array.prototype.forEach.call(box.querySelectorAll(".le-del"), function(d){ d.onclick = function(){ var r=d.closest(".le-row"); if(r) r.parentNode.removeChild(r); }; }); }
+      wireDels();
+      box.querySelector(".le-add").onclick = function(){ var tmp=document.createElement("div"); tmp.innerHTML = rowHtml("website",""); box.querySelector(".le-rows").appendChild(tmp.firstChild); wireDels(); };
+      box.querySelector(".le-cancel").onclick = function(){ box.innerHTML=""; if(elBtn) elBtn.style.display=""; };
+      box.querySelector(".le-save").onclick = function(){
+        var out = [];
+        Array.prototype.forEach.call(box.querySelectorAll(".le-row"), function(r){
+          var type = r.querySelector(".le-type").value;
+          var url = r.querySelector(".le-url").value.trim();
+          if(!url) return;
+          if(!/^https?:\/\//i.test(url)) url = "https://"+url;
+          out.push({ type:type, url:url });
+        });
+        var sbtn = this; sbtn.textContent = "Saving…";
+        DQAPI.updateProfile({ links: out }).then(function(r){
+          if(r && r.ok){ location.reload(); }
+          else { sbtn.textContent = "Save links"; alert((r && r.data && r.data.error) || "Could not save links."); }
+        });
+      };
+    }
     Array.prototype.forEach.call(document.querySelectorAll(".rmvcredit"), function(el){
       el.onclick = function(){ if(!confirm("Remove this credit?")) return; DQAPI.deleteCredit(el.dataset.id).then(function(){ location.reload(); }); };
     });
