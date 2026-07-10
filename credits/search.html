@@ -58,7 +58,20 @@
   var LIMIT = 60;                       // full-tab cap
   var input = document.getElementById("q"), results = document.getElementById("results");
   var tab = (DQ.qs("tab") || "all"), q0 = DQ.qs("q");
-  var data = { games: null, studios: null, people: null };
+  var data = { games: null, studios: null, people: null, liveGames: null, liveStudios: null, livePeople: null };
+
+  // Merge static catalogue rows with live (API) rows, deduping by slug (catalogue wins).
+  function mergeRows(catRows, liveRows, cap){
+    var seen={}, out=[];
+    (catRows||[]).forEach(function(r){ var k=r[0]; if(!seen[k]){ seen[k]=1; out.push(r); } });
+    (liveRows||[]).forEach(function(r){ var k=r[0]; if(!seen[k]){ seen[k]=1; out.push(r); } });
+    return { rows: cap ? out.slice(0,cap) : out };
+  }
+  function liveFilter(rows,q){ if(!rows) return []; var ql=q.toLowerCase(); return rows.filter(function(r){ return String(r[1]||"").toLowerCase().indexOf(ql)!==-1; }); }
+  // Combine a catalogue searchRows() result with live tuples into {total, rows}.
+  function combine(catRes, liveTuples, cap){
+    return { total: catRes.total + liveTuples.length, rows: mergeRows(catRes.rows, liveTuples, cap).rows };
+  }
 
   // ---- row/tile builders ----
   function gameTiles(rows){ return '<div class="glist">'+rows.map(function(g){
@@ -87,84 +100,62 @@
       '</div>'+body(res.rows)+'</div>';
   }
 
-  // ---- All (combined) ----
+  // ---- All (combined) — static catalogue + live user-added, merged ----
   function renderAll(q){
-    if(!q) return '<div class="empty">Type to search '+ (data.games?data.games.length.toLocaleString():'') +' games, plus studios and people — all at once.</div>';
-    var g = DQ.searchRows(data.games,1,q,6),
-        s = DQ.searchRows(data.studios,1,q,6),
-        p = (data.people&&data.people.length)?DQ.searchRows(data.people,1,q,6):{total:0,rows:[]};
+    if(!q) return '<div class="empty">Type to search '+ (data.games?data.games.length.toLocaleString():'') +' games, plus studios and people, all at once.</div>';
+    var g = combine(DQ.searchRows(data.games,1,q,6), liveFilter(data.liveGames,q), 6),
+        s = combine(DQ.searchRows(data.studios,1,q,6), liveFilter(data.liveStudios,q), 6),
+        p = combine(data.people?DQ.searchRows(data.people,1,q,6):{total:0,rows:[]}, liveFilter(data.livePeople,q), 6);
     setCounts(g.total,s.total,p.total);
     if(!g.total && !s.total && !p.total) return '<div class="empty">Nothing matches “'+DQ.esc(q)+'”.<br><a class="btn ghost" data-add style="margin-top:14px">Add this game →</a></div>';
     var h="";
+    if(p.total) h += section("People", p, "people", peopleRows);
     if(g.total) h += section("Games", g, "games", gameTiles);
     if(s.total) h += section("Studios", s, "studios", studioTiles);
-    if(p.total) h += section("People", p, "people", peopleRows);
     return h;
   }
 
   // ---- single-type tabs ----
   function renderGames(q){
     if(!q) return '<div class="empty">Type to search '+ (data.games?data.games.length.toLocaleString():'') +' games.</div>';
-    var m = DQ.searchRows(data.games,1,q,LIMIT);
+    var m = combine(DQ.searchRows(data.games,1,q,LIMIT), liveFilter(data.liveGames,q), LIMIT);
     document.getElementById("ng").textContent = m.total ? " "+m.total.toLocaleString() : "";
     if(!m.total) return '<div class="empty">No games match “'+DQ.esc(q)+'”.<br><a class="btn ghost" data-add style="margin-top:14px">Add this game →</a></div>';
-    return gameTiles(m.rows) + (m.total>LIMIT?'<div class="notice">Showing first '+LIMIT+' of '+m.total.toLocaleString()+'. Keep typing to narrow.</div>':'');
+    return gameTiles(m.rows) + (m.total>m.rows.length?'<div class="notice">Showing first '+m.rows.length+' of '+m.total.toLocaleString()+'. Keep typing to narrow.</div>':'');
   }
   function renderStudios(q){
     if(!q) return '<div class="empty">Type to search '+ (data.studios?data.studios.length.toLocaleString():'') +' studios.</div>';
-    var m = DQ.searchRows(data.studios,1,q,LIMIT);
+    var m = combine(DQ.searchRows(data.studios,1,q,LIMIT), liveFilter(data.liveStudios,q), LIMIT);
     document.getElementById("ns").textContent = m.total ? " "+m.total.toLocaleString() : "";
     if(!m.total) return '<div class="empty">No studios match “'+DQ.esc(q)+'”.<br><span class="mut">Studios appear when you add a game made there.</span><br><a class="btn ghost" data-add-studio style="margin-top:14px">Add a game made here →</a></div>';
-    return studioTiles(m.rows) + (m.total>LIMIT?'<div class="notice">Showing first '+LIMIT+' of '+m.total.toLocaleString()+'.</div>':'');
+    return studioTiles(m.rows) + (m.total>m.rows.length?'<div class="notice">Showing first '+m.rows.length+' of '+m.total.toLocaleString()+'.</div>':'');
   }
   function renderPeople(q){
-    if(!data.people || !data.people.length) return '<div class="empty">No people in the database yet — they appear as credits get added.<br><a class="btn ghost" data-add-person style="margin-top:14px">Add a game you worked on →</a></div>';
-    if(!q) return '<div class="empty">Type to search '+ data.people.length.toLocaleString() +' people.</div>';
-    var m = DQ.searchRows(data.people,1,q,LIMIT);
+    if(!q) return '<div class="empty">Type to search people by name.</div>';
+    var m = combine(data.people?DQ.searchRows(data.people,1,q,LIMIT):{total:0,rows:[]}, liveFilter(data.livePeople,q), LIMIT);
     document.getElementById("np").textContent = m.total ? " "+m.total.toLocaleString() : "";
-    if(!m.total) return '<div class="empty">No people match “'+DQ.esc(q)+'”.<br><span class="mut">People appear when a credit names them.</span><br><a class="btn ghost" data-add-person style="margin-top:14px">Add a game you worked on →</a></div>';
+    if(!m.total) return '<div class="empty">No people match “'+DQ.esc(q)+'”.<br><span class="mut">People appear once a credit names them.</span><br><a class="btn ghost" data-add-person style="margin-top:14px">Add a game you worked on →</a></div>';
     return peopleRows(m.rows);
   }
 
-  // ---- live people (from the backend) ----
-  var peopleReq = 0;
-  function peopleRowsLive(ppl){
-    return '<div class="rows">'+ppl.map(function(p){
-      return '<a class="row" href="person.html?slug='+encodeURIComponent(p.slug)+'"><div class="av">'+DQ.esc(DQ.initials(p.name))+'</div>'+
-        '<div class="rmain"><div class="rname">'+DQ.esc(p.name)+'</div><div class="rsub">'+p.credit_count+' credit'+(p.credit_count===1?'':'s')+'</div></div></a>';
-    }).join("")+'</div>';
-  }
-  function renderPeopleLive(q){
-    document.getElementById("np").textContent="";
-    if(!q){ results.innerHTML='<div class="empty">Type to search people.</div>'; return; }
-    if(!window.DQAPI){ results.innerHTML='<div class="empty">People search needs the live service.</div>'; return; }
-    results.innerHTML='<div class="loading">Searching people…</div>';
-    var my=++peopleReq;
-    DQAPI.searchPeople(q).then(function(r){
-      if(my!==peopleReq) return;
-      var ppl=(r.data&&r.data.people)||[];
-      document.getElementById("np").textContent=ppl.length?" "+ppl.length:"";
-      results.innerHTML = ppl.length ? peopleRowsLive(ppl)
-        : '<div class="empty">No people match “'+DQ.esc(q)+'”.<br><span class="mut">People appear once they claim a credit.</span></div>';
-    }).catch(function(){ if(my===peopleReq) results.innerHTML='<div class="empty">Could not search people right now.</div>'; });
-  }
-  function appendLivePeople(q){
+  // Fetch live user-added results for the current query, then repaint.
+  var liveReq = 0;
+  function fetchLive(q){
     if(!q || !window.DQAPI) return;
-    var my=++peopleReq;
-    DQAPI.searchPeople(q).then(function(r){
-      if(my!==peopleReq) return;
-      var ppl=(r.data&&r.data.people)||[];
-      if(ppl.length) results.insertAdjacentHTML("beforeend", '<div class="csec"><div class="rowhead"><div class="eyebrow">People</div></div>'+peopleRowsLive(ppl)+'</div>');
-    }).catch(function(){});
+    var my = ++liveReq;
+    if(DQAPI.searchGames) DQAPI.searchGames(q).then(function(r){ if(my!==liveReq) return; data.liveGames=((r.data&&r.data.games)||[]).map(function(g){ return [g.slug,g.title,g.year||"",g.studio||""]; }); paint(q); }).catch(function(){});
+    if(DQAPI.searchStudios) DQAPI.searchStudios(q).then(function(r){ if(my!==liveReq) return; data.liveStudios=((r.data&&r.data.studios)||[]).map(function(s){ return [s.slug,s.name,s.count||0]; }); paint(q); }).catch(function(){});
+    if(DQAPI.searchPeople) DQAPI.searchPeople(q).then(function(r){ if(my!==liveReq) return; data.livePeople=((r.data&&r.data.people)||[]).map(function(p){ return [p.slug,p.name,p.credit_count||0]; }); paint(q); }).catch(function(){});
   }
-
+  function paint(q){
+    results.innerHTML = tab==="all" ? renderAll(q) : tab==="studios" ? renderStudios(q) : tab==="people" ? renderPeople(q) : renderGames(q);
+  }
   function render(){
     var q = input.value.trim();
     var u = new URL(location.href); u.searchParams.set("tab", tab); q ? u.searchParams.set("q", q) : u.searchParams.delete("q"); history.replaceState(null, "", u);
-    if(tab==="people"){ renderPeopleLive(q); return; }
-    var html = tab==="all" ? renderAll(q) : tab==="studios" ? renderStudios(q) : renderGames(q);
-    results.innerHTML = html;
-    if(tab==="all") appendLivePeople(q);
+    data.liveGames = data.liveStudios = data.livePeople = null;   // reset live results for the new query
+    paint(q);
+    fetchLive(q);
   }
 
   // which indexes the current tab needs
