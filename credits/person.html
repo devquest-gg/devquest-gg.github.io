@@ -66,14 +66,8 @@
     // Resolve missing launch years from the static catalogue (added games already
     // carry a year; catalogue games get theirs from the shard), then sort + render.
     Promise.all(credits.map(function(c){
-      if(c.year != null && c.studio) return Promise.resolve();
-      return DQ.loadEntity("games", c.game_slug).then(function(gg){
-        if(gg){
-          if(c.year == null && gg.year != null) c.year = gg.year;
-          if(!c.studio && gg.studios && gg.studios.length) c.studio = gg.studios[0];
-          else if(!c.studio && gg.studio) c.studio = gg.studio;
-        }
-      }).catch(function(){});
+      if(c.year != null) return Promise.resolve();
+      return DQ.loadEntity("games", c.game_slug).then(function(gg){ if(gg && gg.year != null) c.year = gg.year; }).catch(function(){});
     })).then(function(){
     credits.sort(function(a,b){
       var pa=(a.position!=null)?a.position:1e9, pb=(b.position!=null)?b.position:1e9;
@@ -89,14 +83,11 @@
     var minY = years.length ? Math.min.apply(null, years) : null;
     var maxY = years.length ? Math.max.apply(null, years) : null;
     var span = (minY && maxY) ? (maxY - minY) : 0;
-    var studioSet = {}; credits.forEach(function(c){ if(c.studio){ studioSet[String(c.studio).toLowerCase()] = 1; } });
-    var studioCount = Object.keys(studioSet).length;
     var liveCount = credits.filter(function(c){ return (c.releases||[]).some(function(rl){ return DQ.releaseClass(rl)==="live"; }); }).length;
     function snapStat(n, label, sub){ return '<div class="snap"><b>'+n+'</b><span>'+label+(sub?' <em>'+sub+'</em>':'')+'</span></div>'; }
     var snapItems = credits.length ? (
         snapStat(credits.length, 'shipped '+(credits.length===1?'game':'games')) +
         (span>0 ? snapStat(span, 'years in games', minY+'–'+maxY) : '') +
-        (studioCount>0 ? snapStat(studioCount, 'studio'+(studioCount===1?'':'s')) : '') +
         (liveCount>0 ? snapStat(liveCount, 'live-service '+(liveCount===1?'title':'titles')) : '')
       ) : '';
     var snapshotHTML = snapItems ? '<div class="snapshot">'+snapItems+'</div>' : '';
@@ -107,7 +98,8 @@
     // acquisition moment, so there the banner stays prominent.
     var claimed = !!api;
     var claimBanner = '';
-    if(!isOwn && window.DQAPI){
+    // Only signed-out visitors see a claim prompt — a signed-in person is not this page's subject.
+    if(!me && window.DQAPI){
       claimBanner = claimed
         ? '<div class="claimquiet">Is this your page? <span id="claimbtn">Claim it to edit →</span></div>'
         : '<div class="claimbanner"><div class="cbtext"><b>Is this you?</b> Claim this page to edit your credits, add the games you shipped, and get peer-vouched by teammates.</div><span class="btn primary" id="claimbtn">Claim this page →</span></div>';
@@ -151,6 +143,21 @@
             : (window.DQAPI ? '' : '');
     var ownBanner = isOwn ? '<div class="notice" style="color:var(--green)">This is your page — add credits and they appear here live.</div>' : '';
 
+    // ---- Unshipped & cancelled (count-only, NDA-safe, its own understated section) ----
+    var unshipped = (api && api.person && typeof api.person.unshipped === "number") ? api.person.unshipped : 0;
+    var unshippedHTML = '';
+    if(unshipped > 0 || isOwn){
+      var countLine = unshipped > 0
+        ? '<div class="unshipped"><span class="usdot">◇</span> <b>'+unshipped+'</b> '+(unshipped===1?'project that was cancelled or never shipped':'projects that were cancelled or never shipped')+' <span class="mut">— titles withheld</span></div>'
+        : (isOwn ? '<div class="mut" style="font-size:13px">No cancelled or unshipped projects recorded yet.</div>' : '');
+      var editUS = isOwn ? '<span class="editus" id="editus">'+(unshipped>0?'✎ Edit count':'+ Add count')+'</span><div id="usedit"></div>' : '';
+      unshippedHTML = '<section class="blk" style="padding-top:0"><div class="container">'+
+        '<div class="eyebrow" style="color:var(--muted)">Unshipped &amp; cancelled</div>'+
+        countLine + editUS +
+        '<div class="notice">Cancelled or never-released work — self-declared and kept name-free, since much of it is under NDA. Counted separately from the verified shipped record above.</div>'+
+      '</div></section>';
+    }
+
     app.innerHTML =
       '<div class="phead"><div class="container">'+
         '<div style="display:flex;align-items:center;gap:16px">'+
@@ -173,7 +180,8 @@
         ownBanner +
         rowsHTML +
         '<div class="notice"><b style="color:var(--green);font-style:normal">✓</b> marks credits confirmed by a teammate who shipped the same game — everything else is self-reported. Only the person credited can claim and edit this page.</div>'+
-      '</div></section>';
+      '</div></section>' +
+      unshippedHTML;
 
     var cb = document.getElementById("claimbtn");
     if(cb) cb.onclick = function(){ if(window.DQAPI) location.href = "signin.html"; else DQ.openClaim({ person_name: name }); };
@@ -220,6 +228,30 @@
         });
       };
     }
+
+    // ---- Owner-only unshipped/cancelled count editor (saves via PATCH /me) ----
+    var usBtn = document.getElementById("editus");
+    if(usBtn) usBtn.onclick = function(){
+      var box = document.getElementById("usedit");
+      usBtn.style.display = "none";
+      box.innerHTML = '<div class="panel" style="padding:14px;margin-top:12px;max-width:440px">'+
+        '<div style="font-size:12px;font-weight:700;margin-bottom:8px">Projects you worked on that were cancelled or never shipped</div>'+
+        '<div style="display:flex;align-items:center;gap:10px">'+
+          '<input class="us-num" type="number" min="0" max="999" value="'+(unshipped||0)+'" style="width:90px;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px 11px;color:var(--text);font-size:14px;font-family:inherit">'+
+          '<span class="mut" style="font-size:12.5px">Count only — no names are stored or shown.</span>'+
+        '</div>'+
+        '<div style="margin-top:12px;display:flex;gap:8px"><span class="btn primary us-save" style="padding:8px 16px">Save</span><span class="btn ghost us-cancel" style="padding:8px 16px">Cancel</span></div>'+
+      '</div>';
+      box.querySelector(".us-cancel").onclick = function(){ box.innerHTML=""; usBtn.style.display=""; };
+      box.querySelector(".us-save").onclick = function(){
+        var n = parseInt(box.querySelector(".us-num").value, 10); if(isNaN(n)||n<0) n=0; if(n>999) n=999;
+        var sbtn = this; sbtn.textContent = "Saving…";
+        DQAPI.updateProfile({ unshipped_count: n }).then(function(r){
+          if(r && r.ok){ location.reload(); }
+          else { sbtn.textContent = "Save"; alert((r && r.data && r.data.error) || "Could not save."); }
+        });
+      };
+    };
     Array.prototype.forEach.call(document.querySelectorAll(".rmvcredit"), function(el){
       el.onclick = function(){ if(!confirm("Remove this credit?")) return; DQAPI.deleteCredit(el.dataset.id).then(function(){ location.reload(); }); };
     });

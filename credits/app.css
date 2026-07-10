@@ -139,9 +139,14 @@ h2.sec{font-size:24px;font-weight:800;letter-spacing:-.5px;margin:0 0 6px}
 /* "+N more roles" affordance (hover shows the full list via title) */
 .rmore{font-size:11px;font-weight:700;color:var(--accent);border:1px solid rgba(88,166,255,.3);background:rgba(88,166,255,.07);border-radius:6px;padding:0 6px;margin-left:5px;cursor:help}
 
-/* owner-only "edit links" affordance under the name — a real, clickable pill */
-.editlinks{display:inline-flex;align-items:center;margin-top:12px;font-size:12.5px;font-weight:700;color:var(--accent);cursor:pointer;border:1px solid rgba(88,166,255,.35);background:rgba(88,166,255,.08);border-radius:8px;padding:6px 13px;transition:background .14s,border-color .14s}
-.editlinks:hover{border-color:var(--accent);background:rgba(88,166,255,.16)}
+/* owner-only "edit" affordances — real, clickable pills (profile links + unshipped count) */
+.editlinks,.editus{display:inline-flex;align-items:center;margin-top:12px;font-size:12.5px;font-weight:700;color:var(--accent);cursor:pointer;border:1px solid rgba(88,166,255,.35);background:rgba(88,166,255,.08);border-radius:8px;padding:6px 13px;transition:background .14s,border-color .14s}
+.editlinks:hover,.editus:hover{border-color:var(--accent);background:rgba(88,166,255,.16)}
+
+/* unshipped & cancelled — count-only, understated (no gradient, no shout) */
+.unshipped{font-size:14.5px;color:#c4cfdd;margin:2px 0 6px}
+.unshipped b{color:var(--text);font-weight:800}
+.usdot{color:var(--muted);font-weight:700;margin-right:3px}
 
 /* opt-in public profile links under a person's name */
 .plinks{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
