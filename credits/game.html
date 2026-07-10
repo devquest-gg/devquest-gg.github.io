@@ -83,7 +83,7 @@
     // merge credits by person — seed (static) + live (API), API wins
     var byPerson = {};
     ((g && g.credits) || []).forEach(function(c){ var ps=DQ.slugify(c.name); byPerson[ps]={person_slug:ps,name:c.name,role:c.role,roles_other:c.roles_other||[],verification:c.verification||[],vouch_count:0,live:false}; });
-    apiCredits.forEach(function(c){ byPerson[c.person_slug]={id:c.id,person_slug:c.person_slug,name:c.person_name,role:c.role,roles_other:c.roles_other||[],verification:c.verification||[],links:c.links||[],release:c.release||null,vouch_count:c.vouch_count||0,live:true}; });
+    apiCredits.forEach(function(c){ byPerson[c.person_slug]={id:c.id,person_slug:c.person_slug,name:c.person_name,role:c.role,roles_other:c.roles_other||[],verification:c.verification||[],links:c.links||[],releases:c.releases||[],vouch_count:c.vouch_count||0,live:true}; });
     var credits = Object.keys(byPerson).map(function(k){ return byPerson[k]; });
     var iHaveCredit = !!(me && credits.some(function(c){ return c.person_slug===me.slug; }));
 
@@ -97,7 +97,7 @@
         ? '<a class="vouchbtn" data-id="'+c.id+'" style="font-size:12px;font-weight:700;color:var(--green);border:1px solid rgba(63,185,80,.35);background:rgba(63,185,80,.08);border-radius:8px;padding:4px 11px;cursor:pointer">Vouch</a>' : '';
       return '<div class="row">'+
         '<div class="av">'+DQ.esc(DQ.initials(c.name))+'</div>'+
-        '<div class="rmain"><div class="rname"><a href="person.html?slug='+encodeURIComponent(c.person_slug)+'">'+DQ.esc(c.name)+'</a>'+(c.release?' <span class="reltag">'+DQ.esc(c.release)+'</span>':'')+'</div>'+
+        '<div class="rmain"><div class="rname"><a href="person.html?slug='+encodeURIComponent(c.person_slug)+'">'+DQ.esc(c.name)+'</a>'+((c.releases&&c.releases.length)?' '+c.releases.map(function(rl){return '<span class="reltag">'+DQ.esc(rl)+'</span>';}).join(' '):'')+'</div>'+
           '<div class="rsub"><span class="rrole">'+DQ.esc(c.role||"Role not recorded")+'</span>'+more+(sigs?' &nbsp; '+sigs:'')+(vouch?' &nbsp; '+vouch:'')+proof+'</div></div>'+
         '<div class="rright">'+vbtn+'</div>'+
       '</div>';

@@ -60,7 +60,7 @@
     // Merge credits by game_slug — live (API) wins over seed (static).
     var byGame = {};
     ((stat && stat.credits) || []).forEach(function(c){ byGame[c.game_slug] = { game_slug:c.game_slug, game_title:c.game_title, year:c.year||null, role:c.role, roles_other:c.roles_other||[], verification:c.verification||[], vouch_count:0, live:false }; });
-    ((api && api.credits) || []).forEach(function(c){ byGame[c.game_slug] = { id:c.id, game_slug:c.game_slug, game_title:c.game_title, year:c.year||null, role:c.role, roles_other:c.roles_other||[], verification:c.verification||[], links:c.links||[], position:(c.position!=null?c.position:null), release:c.release||null, vouch_count:c.vouch_count||0, live:true }; });
+    ((api && api.credits) || []).forEach(function(c){ byGame[c.game_slug] = { id:c.id, game_slug:c.game_slug, game_title:c.game_title, year:c.year||null, role:c.role, roles_other:c.roles_other||[], verification:c.verification||[], links:c.links||[], position:(c.position!=null?c.position:null), releases:c.releases||[], vouch_count:c.vouch_count||0, live:true }; });
     var credits = Object.keys(byGame).map(function(k){ return byGame[k]; });
 
     // Resolve missing launch years from the static catalogue (added games already
@@ -88,12 +88,12 @@
         ? '<span class="drag-grip" title="Drag to reorder" style="cursor:grab;color:var(--muted);font-size:16px;line-height:1;user-select:none;padding:0 10px 0 2px">⠿</span>'
         : '';
       var controls = (isOwn && c.live && c.id)
-        ? '<a class="editcredit" data-id="'+c.id+'" data-role="'+DQ.esc(c.role||"")+'" data-others="'+DQ.esc((c.roles_other||[]).join(", "))+'" data-links="'+DQ.esc((c.links||[]).join("\n"))+'" data-release="'+DQ.esc(c.release||"")+'" style="color:var(--accent);font-size:12px;cursor:pointer;margin-left:10px">Edit</a>'+
+        ? '<a class="editcredit" data-id="'+c.id+'" data-role="'+DQ.esc(c.role||"")+'" data-others="'+DQ.esc((c.roles_other||[]).join(", "))+'" data-links="'+DQ.esc((c.links||[]).join("\n"))+'" data-releases="'+DQ.esc((c.releases||[]).join(", "))+'" style="color:var(--accent);font-size:12px;cursor:pointer;margin-left:10px">Edit</a>'+
           '<a class="rmvcredit" data-id="'+c.id+'" style="color:var(--pink);font-size:12px;cursor:pointer;margin-left:10px">Remove</a>'
         : '';
       return '<div class="row"'+((isOwn&&c.live&&c.id)?' data-id="'+c.id+'"':'')+'>'+
         grip +
-        '<div class="rmain"><div class="rname"><a href="game.html?slug='+encodeURIComponent(c.game_slug)+'">'+DQ.esc(c.game_title)+'</a>'+(c.release?' <span class="reltag">'+DQ.esc(c.release)+'</span>':'')+'</div>'+
+        '<div class="rmain"><div class="rname"><a href="game.html?slug='+encodeURIComponent(c.game_slug)+'">'+DQ.esc(c.game_title)+'</a>'+((c.releases&&c.releases.length)?' '+c.releases.map(function(rl){return '<span class="reltag">'+DQ.esc(rl)+'</span>';}).join(' '):'')+'</div>'+
           '<div class="rsub"><span class="rrole">'+DQ.esc(c.role||"Role not recorded")+'</span>'+more+(sigs?' &nbsp; '+sigs:'')+(vouch?' &nbsp; '+vouch:'')+proof+'</div></div>'+
         '<div class="rright">'+(c.year?'<span class="yr">'+c.year+'</span>':'')+controls+'</div>'+
       '</div>';
@@ -143,14 +143,14 @@
           '<input class="ed-others" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:9px 11px;color:var(--text);font-size:14px;font-family:inherit">'+
           '<label style="font-size:12px;font-weight:700;display:block;margin:10px 0 4px">Proof links <span style="font-weight:400;color:var(--muted)">— LinkedIn, portfolio, press kit. One per line, optional</span></label>'+
           '<textarea class="ed-proof" style="width:100%;min-height:56px;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:9px 11px;color:var(--text);font-size:14px;font-family:inherit;resize:vertical"></textarea>'+
-          '<label style="font-size:12px;font-weight:700;display:block;margin:10px 0 4px">Which version?</label>'+
-          '<select class="ed-release" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:9px 11px;color:var(--text);font-size:14px;font-family:inherit"><option value="">Base game</option><option>PC port</option><option>Console port</option><option>Remaster</option><option>DLC / Expansion</option><option>Season / Live update</option><option>Other</option></select>'+
+          '<label style="font-size:12px;font-weight:700;display:block;margin:10px 0 4px">Releases / expansions <span style="font-weight:400;color:var(--muted)">— ports, remasters, named expansions. Comma-separated, optional</span></label>'+
+          '<input class="ed-release" list="ed-release-list" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:9px 11px;color:var(--text);font-size:14px;font-family:inherit" placeholder="PC port, Trials of Atlantis, Live service"><datalist id="ed-release-list"><option value="PC port"></option><option value="Console port"></option><option value="Remaster"></option><option value="Live service"></option><option value="DLC"></option><option value="Expansion"></option></datalist>'+
           '<div style="margin-top:12px;display:flex;gap:8px"><span class="btn primary ed-save" style="padding:8px 16px">Save</span><span class="btn ghost ed-cancel" style="padding:8px 16px">Cancel</span></div>'+
         '</div>';
         row.querySelector(".ed-role").value = el.dataset.role || "";
         row.querySelector(".ed-others").value = el.dataset.others || "";
         row.querySelector(".ed-proof").value = el.dataset.links || "";
-        row.querySelector(".ed-release").value = el.dataset.release || "";
+        row.querySelector(".ed-release").value = el.dataset.releases || "";
         row.querySelector(".ed-role").focus();
         row.querySelector(".ed-cancel").onclick = function(){ location.reload(); };
         row.querySelector(".ed-save").onclick = function(){
@@ -159,9 +159,9 @@
           var nothers = row.querySelector(".ed-others").value.split(",").map(function(s){return s.trim();}).filter(Boolean);
           var nlinks = row.querySelector(".ed-proof").value.split(/\n+/).map(function(s){return s.trim();}).filter(Boolean);
           var nverif = nlinks.some(function(u){return /linkedin\.com/i.test(u);}) ? ["linkedin_self"] : [];
-          var nrelease = row.querySelector(".ed-release").value;
+          var nreleases = row.querySelector(".ed-release").value.split(",").map(function(s){return s.trim();}).filter(Boolean);
           this.textContent = "Saving…";
-          DQAPI.updateCredit(id, { role: nrole, roles_other: nothers, links: nlinks, verification: nverif, release: nrelease }).then(function(){ location.reload(); });
+          DQAPI.updateCredit(id, { role: nrole, roles_other: nothers, links: nlinks, verification: nverif, releases: nreleases }).then(function(){ location.reload(); });
         };
       };
     });

@@ -275,7 +275,7 @@
       ((ident.name || ident.email) ? '<div class="dq-idnote">Name and email remembered on this device · <a data-clearid style="cursor:pointer">Clear</a></div>' : '') +
       (showRole ? '<label>Your headline role <span style="font-weight:400;color:var(--muted,#8b98a9)">— the title to show first; your call</span></label><input id="dqc-role" list="dqc-roles-list" autocomplete="off" placeholder="Start typing a role…"><datalist id="dqc-roles-list">' + ROLES.map(function (r) { return '<option value="' + esc(r) + '"></option>'; }).join("") + '</datalist>' +
         '<label>Other titles you held on this game <span style="font-weight:400;color:var(--muted,#8b98a9)">— optional, comma-separated</span></label><input id="dqc-roles2" placeholder="Technical Support Lead, Game Designer, Content Manager">' +
-        '<label>Which version? <span style="font-weight:400;color:var(--muted,#8b98a9)">— for ports, remasters, DLC</span></label><select id="dqc-release"><option value="">Base game</option><option>PC port</option><option>Console port</option><option>Remaster</option><option>DLC / Expansion</option><option>Season / Live update</option><option>Other</option></select>' : '') +
+        '<label>Releases / expansions <span style="font-weight:400;color:var(--muted,#8b98a9)">— ports, remasters, live service, named expansions. Comma-separated, optional</span></label><input id="dqc-release" list="dqc-release-list" autocomplete="off" placeholder="e.g. PC port  ·  Trials of Atlantis, Catacombs  ·  Live service"><datalist id="dqc-release-list"><option value="PC port"></option><option value="Console port"></option><option value="Remaster"></option><option value="Live service"></option><option value="DLC"></option><option value="Expansion"></option></datalist>' : '') +
       '<label>Links that help show this is you <span style="font-weight:400;color:var(--muted,#8b98a9)">— LinkedIn, portfolio / ArtStation, studio team page. One per line, optional</span></label><textarea id="dqc-proof" placeholder="https://linkedin.com/in/you&#10;https://yourstudio.com/team"></textarea>' +
       '<label>Anything else for our reviewer <span style="font-weight:400;color:var(--muted,#8b98a9)">— optional</span></label><textarea id="dqc-note" placeholder="Context that helps us verify you"></textarea>' +
       '<div class="dq-actions"><button class="dq-cancel">Cancel</button><button class="dq-submit">Save my credit →</button></div>' +
@@ -303,7 +303,8 @@
       var proofArr = proof ? proof.split(/\n+/).map(function (s) { return s.trim(); }).filter(Boolean) : [];
       var verification = proofArr.some(function (u) { return /linkedin\.com/i.test(u); }) ? ["linkedin_self"] : [];
       function payload() {
-        var p = { name: name, role: role, roles_other: rolesArr, verification: verification, source_url: proofArr[0] || "", links: proofArr, release: val("dqc-release") };
+        var relArr = val("dqc-release") ? val("dqc-release").split(",").map(function (s) { return s.trim(); }).filter(Boolean) : [];
+      var p = { name: name, role: role, roles_other: rolesArr, verification: verification, source_url: proofArr[0] || "", links: proofArr, releases: relArr };
         if (isAdd) {
           p.new_game = { title: val("dqc-gtitle"), studio: val("dqc-gstudio"), year: val("dqc-gyear"),
             platforms: val("dqc-gplat") ? val("dqc-gplat").split(",").map(function (s) { return s.trim(); }).filter(Boolean) : [] };
