@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Person · DevQuest Credits</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<div class="topbar"><div class="container">
+  <div class="brand"><a class="brandhome" href="/credits/" data-tip="Back to Credits home" aria-label="DevQuest Credits home"><svg class="mark" viewBox="0 0 32 32" aria-hidden="true"><rect x="1" y="1" width="8" height="8" rx="2" fill="var(--gold)"/><rect x="12" y="1" width="8" height="8" rx="2" fill="#2d333b"/><rect x="23" y="1" width="8" height="8" rx="2" fill="#2d333b"/><rect x="1" y="12" width="8" height="8" rx="2" fill="#2d333b"/><rect x="12" y="12" width="8" height="8" rx="2" fill="var(--gold)"/><rect x="23" y="12" width="8" height="8" rx="2" fill="#2d333b"/><rect x="1" y="23" width="8" height="8" rx="2" fill="#2d333b"/><rect x="12" y="23" width="8" height="8" rx="2" fill="#2d333b"/><rect x="23" y="23" width="8" height="8" rx="2" fill="var(--gold)"/></svg><span class="wm">Dev<span class="q">Quest</span><span class="tld">.gg</span></span></a> <span class="cr">CREDITS</span> <span class="beta">BETA</span></div>
+  <div class="topnav">
+    <a href="/credits/#how">How it works</a>
+    <a class="back" href="/">← Jobs board</a>
+  </div>
+</div></div>
+
+<div class="container">
+  <div class="crumbs"><a href="/credits/">Credits</a><span class="sep">/</span><a href="search.html?tab=people">People</a><span class="sep">/</span><span id="crumb" class="mut">…</span></div>
+</div>
+
+<div id="app"><div class="container"><div class="loading">Loading profile…</div></div></div>
+
+<footer><div class="container">
+  <div><b style="color:var(--text)">DevQuest.gg / Credits</b> · a companion to the game-industry job board</div>
+  <div><a href="/credits/">← Credits home</a> &nbsp;·&nbsp; <a href="mailto:studios@devquest.gg?subject=DevQuest%20Credits%20feedback&body=Bug%2C%20idea%2C%20or%20just%20a%20thought%3A%0A%0A">Feedback</a></div>
+</div></footer>
+
+<script src="api.js"></script>
+<script src="app.js"></script>
+<script>
+(function(){
+  var slug = DQ.qs("slug"), app = document.getElementById("app");
+  if(!slug){ app.innerHTML = '<div class="container"><div class="empty">No person specified.</div></div>'; return; }
+  var LINK_LABEL = { linkedin:"LinkedIn", portfolio:"Portfolio", artstation:"ArtStation", website:"Website", site:"Website", personal:"Website", twitter:"Twitter", x:"X", bluesky:"Bluesky", github:"GitHub", itch:"itch.io", mastodon:"Mastodon" };
+
+  // Load the static (seed) profile + the live (API) profile + who I am, in parallel.
+  var pStatic = DQ.loadEntity("people", slug).catch(function(){ return null; });
+  var pApi = (window.DQAPI ? DQAPI.personCredits(slug) : Promise.resolve({ok:false})).catch(function(){ return {ok:false}; });
+  var pMe  = (window.DQAPI && DQAPI.isSignedIn()) ? DQAPI.me().catch(function(){ return {ok:false}; }) : Promise.resolve({ok:false});
+
+  Promise.all([pStatic, pApi, pMe]).then(function(res){
+    var stat = res[0];
+    var api  = (res[1] && res[1].ok && res[1].data && res[1].data.person) ? res[1].data : null;
+    var me   = (res[2] && res[2].ok && res[2].data && res[2].data.authenticated) ? res[2].data.person : null;
+
+    if(!stat && !api){
+      document.getElementById("crumb").textContent = "Not found";
+      app.innerHTML = '<div class="container"><div class="empty">No profile yet for that name.<br>'+
+        '<span class="mut">People appear here once a credit is added or claimed.</span></div></div>';
+      return;
+    }
+
+    var name  = (api && api.person.name) || (stat && stat.name) || slug;
+    var links = (api && api.person.links && api.person.links.length) ? api.person.links : ((stat && stat.links) || []);
+    var isOwn = !!(me && api && me.slug === api.person.slug);
+
+    // Merge credits by game_slug — live (API) wins over seed (static).
+    var byGame = {};
+    ((stat && stat.credits) || []).forEach(function(c){ byGame[c.game_slug] = { game_slug:c.game_slug, game_title:c.game_title, year:c.year||null, role:c.role, roles_other:c.roles_other||[], verification:c.verification||[], vouch_count:0, live:false }; });
+    ((api && api.credits) || []).forEach(function(c){ byGame[c.game_slug] = { id:c.id, game_slug:c.game_slug, game_title:c.game_title, year:c.year||null, role:c.role, roles_other:c.roles_other||[], verification:c.verification||[], links:c.links||[], position:(c.position!=null?c.position:null), releases:c.releases||[], vouch_count:c.vouch_count||0, live:true }; });
+    var credits = Object.keys(byGame).map(function(k){ return byGame[k]; });
+
+    // Resolve missing launch years from the static catalogue (added games already
+    // carry a year; catalogue games get theirs from the shard), then sort + render.
+    Promise.all(credits.map(function(c){
+      if(c.year != null) return Promise.resolve();
+      return DQ.loadEntity("games", c.game_slug).then(function(gg){ if(gg && gg.year != null) c.year = gg.year; }).catch(function(){});
+    })).then(function(){
+    credits.sort(function(a,b){
+      var pa=(a.position!=null)?a.position:1e9, pb=(b.position!=null)?b.position:1e9;
+      if(pa!==pb) return pa-pb;
+      return (b.year||0)-(a.year||0) || String(a.game_title).localeCompare(String(b.game_title));
+    });
+
+    document.title = name + " · DevQuest Credits";
+    document.getElementById("crumb").textContent = name;
+
+    var rowsHTML = credits.length ? '<div class="rows">' + credits.map(function(c){
+      var sigs = (c.verification||[]).map(function(s){ return '<span class="sig">'+DQ.esc(DQ.SIG_LABEL[s]||s)+'</span>'; }).join("");
+      var others = c.roles_other || [];
+      var more = others.length ? ' <span class="rmore" title="Also: '+DQ.esc(others.join(", "))+'">+'+others.length+' more</span>' : '';
+      var vouch = c.vouch_count ? '<span class="sig" title="peer vouches">◈ '+c.vouch_count+'</span>' : '';
+      var proof = (c.links && c.links.length) ? ' <a class="sig" href="'+DQ.esc(c.links[0])+'" target="_blank" rel="noopener noreferrer" title="'+DQ.esc(c.links.join(", "))+'" style="text-decoration:none">proof ↗</a>' : '';
+      var grip = (isOwn && c.live && c.id && credits.length>1)
+        ? '<span class="drag-grip" title="Drag to reorder" style="cursor:grab;color:var(--muted);font-size:16px;line-height:1;user-select:none;padding:0 10px 0 2px">⠿</span>'
+        : '';
+      var controls = (isOwn && c.live && c.id)
+        ? '<a class="editcredit" data-id="'+c.id+'" data-role="'+DQ.esc(c.role||"")+'" data-others="'+DQ.esc((c.roles_other||[]).join(", "))+'" data-links="'+DQ.esc((c.links||[]).join("\n"))+'" data-releases="'+DQ.esc((c.releases||[]).join(", "))+'" style="color:var(--accent);font-size:12px;cursor:pointer;margin-left:10px">Edit</a>'+
+          '<a class="rmvcredit" data-id="'+c.id+'" style="color:var(--pink);font-size:12px;cursor:pointer;margin-left:10px">Remove</a>'
+        : '';
+      return '<div class="row"'+((isOwn&&c.live&&c.id)?' data-id="'+c.id+'"':'')+'>'+
+        grip +
+        '<div class="rmain"><div class="rname"><a href="game.html?slug='+encodeURIComponent(c.game_slug)+'">'+DQ.esc(c.game_title)+'</a>'+((c.releases&&c.releases.length)?' '+DQ.uniq(c.releases).map(function(rl){return '<span class="reltag '+DQ.releaseClass(rl)+'">'+DQ.esc(rl)+'</span>';}).join(' '):'')+'</div>'+
+          '<div class="rsub"><span class="rrole">'+DQ.esc(c.role||"Role not recorded")+'</span>'+more+(sigs?' &nbsp; '+sigs:'')+(vouch?' &nbsp; '+vouch:'')+proof+'</div></div>'+
+        '<div class="rright">'+(c.year?'<span class="yr">'+c.year+'</span>':'')+controls+'</div>'+
+      '</div>';
+    }).join("") + '</div>' : '<div class="empty">No credits on record yet.'+(isOwn?' Add the games you worked on.':'')+'</div>';
+
+    var linksHTML = links.length ? '<div class="plinks">'+links.map(function(l){
+      var label = LINK_LABEL[String(l.type||"").toLowerCase()] || l.label || l.type || "Link";
+      return '<a class="plink" href="'+DQ.esc(l.url)+'" target="_blank" rel="noopener noreferrer">'+DQ.esc(label)+' <span aria-hidden="true">↗</span></a>';
+    }).join("")+'</div>' : '';
+
+    var cta = isOwn ? '<a class="btn primary" href="search.html">+ Add a credit</a>'
+            : (window.DQAPI ? '<span class="btn primary" id="claimbtn">Is this you? Claim this page</span>' : '');
+    var ownBanner = isOwn ? '<div class="notice" style="color:var(--green)">This is your page — add credits and they appear here live.</div>' : '';
+
+    app.innerHTML =
+      '<div class="phead"><div class="container">'+
+        '<div style="display:flex;align-items:center;gap:16px">'+
+          '<div class="row" style="padding:0;border:none"><div class="av" style="width:60px;height:60px;font-size:22px">'+DQ.esc(DQ.initials(name))+'</div></div>'+
+          '<div><h1 style="margin:0">'+DQ.esc(name)+'</h1>'+
+          '<div class="meta">'+credits.length+' credit'+(credits.length===1?'':'s')+' on record</div>'+
+          linksHTML +
+          '</div>'+
+        '</div>'+
+      '</div></div>'+
+      '<section class="blk"><div class="container">'+
+        '<div class="rowhead"><div><div class="eyebrow">Gameography</div>'+
+          '<p class="secsub" style="margin:6px 0 0">A credit page beats a résumé bullet — verified by the people you shipped with.</p></div>'+
+          cta +
+        '</div>'+
+        ownBanner +
+        rowsHTML +
+        '<div class="notice">Only the person credited can claim and edit this page. Peers who shipped the same game can vouch for each credit.</div>'+
+      '</div></section>';
+
+    var cb = document.getElementById("claimbtn");
+    if(cb) cb.onclick = function(){ if(window.DQAPI) location.href = "signin.html"; else DQ.openClaim({ person_name: name }); };
+    Array.prototype.forEach.call(document.querySelectorAll(".rmvcredit"), function(el){
+      el.onclick = function(){ if(!confirm("Remove this credit?")) return; DQAPI.deleteCredit(el.dataset.id).then(function(){ location.reload(); }); };
+    });
+    Array.prototype.forEach.call(document.querySelectorAll(".editcredit"), function(el){
+      el.onclick = function(){
+        var row = el.closest(".row"), id = el.dataset.id;
+        row.innerHTML = '<div class="rmain" style="width:100%">'+
+          '<label style="font-size:12px;font-weight:700;display:block;margin-bottom:4px">Headline role</label>'+
+          '<input class="ed-role" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:9px 11px;color:var(--text);font-size:14px;font-family:inherit">'+
+          '<label style="font-size:12px;font-weight:700;display:block;margin:10px 0 4px">Other titles <span style="font-weight:400;color:var(--muted)">— comma-separated, optional</span></label>'+
+          '<input class="ed-others" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:9px 11px;color:var(--text);font-size:14px;font-family:inherit">'+
+          '<label style="font-size:12px;font-weight:700;display:block;margin:10px 0 4px">Proof links <span style="font-weight:400;color:var(--muted)">— LinkedIn, portfolio, press kit. One per line, optional</span></label>'+
+          '<textarea class="ed-proof" style="width:100%;min-height:56px;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:9px 11px;color:var(--text);font-size:14px;font-family:inherit;resize:vertical"></textarea>'+
+          '<label style="font-size:12px;font-weight:700;display:block;margin:10px 0 4px">Releases / expansions <span style="font-weight:400;color:var(--muted)">— ports, remasters, named expansions. Comma-separated, optional</span></label>'+
+          '<input class="ed-release" list="ed-release-list" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:9px 11px;color:var(--text);font-size:14px;font-family:inherit" placeholder="PC port, Trials of Atlantis, Live service"><datalist id="ed-release-list"><option value="PC port"></option><option value="Console port"></option><option value="Remaster"></option><option value="Live service"></option><option value="DLC"></option><option value="Expansion"></option></datalist>'+
+          '<div style="margin-top:12px;display:flex;gap:8px"><span class="btn primary ed-save" style="padding:8px 16px">Save</span><span class="btn ghost ed-cancel" style="padding:8px 16px">Cancel</span></div>'+
+        '</div>';
+        row.querySelector(".ed-role").value = el.dataset.role || "";
+        row.querySelector(".ed-others").value = el.dataset.others || "";
+        row.querySelector(".ed-proof").value = el.dataset.links || "";
+        row.querySelector(".ed-release").value = el.dataset.releases || "";
+        row.querySelector(".ed-role").focus();
+        row.querySelector(".ed-cancel").onclick = function(){ location.reload(); };
+        row.querySelector(".ed-save").onclick = function(){
+          var nrole = row.querySelector(".ed-role").value.trim();
+          if(!nrole){ alert("Role can't be empty."); return; }
+          var nothers = row.querySelector(".ed-others").value.split(",").map(function(s){return s.trim();}).filter(Boolean);
+          var nlinks = row.querySelector(".ed-proof").value.split(/\n+/).map(function(s){return s.trim();}).filter(Boolean);
+          var nverif = nlinks.some(function(u){return /linkedin\.com/i.test(u);}) ? ["linkedin_self"] : [];
+          var nreleases = DQ.uniq(row.querySelector(".ed-release").value.split(",").map(function(s){return s.trim();}).filter(Boolean));
+          this.textContent = "Saving…";
+          DQAPI.updateCredit(id, { role: nrole, roles_other: nothers, links: nlinks, verification: nverif, releases: nreleases }).then(function(){ location.reload(); });
+        };
+      };
+    });
+    // Drag-and-drop reorder (drag starts from the ⠿ grip so row links still click).
+    (function(){
+      var rowsEl = app.querySelector(".rows");
+      if(!isOwn || !rowsEl) return;
+      var rows = rowsEl.querySelectorAll(".row[data-id]");
+      if(rows.length < 2) return;
+      var dragged = null;
+      Array.prototype.forEach.call(rows, function(row){
+        var grip = row.querySelector(".drag-grip");
+        if(grip){
+          grip.addEventListener("mousedown", function(){ row.draggable = true; });
+          grip.addEventListener("mouseup", function(){ setTimeout(function(){ if(!dragged) row.draggable = false; }, 0); });
+        }
+        row.addEventListener("dragstart", function(e){ dragged = row; row.style.opacity = ".4"; if(e.dataTransfer) e.dataTransfer.effectAllowed = "move"; });
+        row.addEventListener("dragend", function(){ row.style.opacity = ""; row.draggable = false; var moved = dragged; dragged = null; if(moved) saveOrder(); });
+      });
+      rowsEl.addEventListener("dragover", function(e){
+        if(!dragged) return;
+        e.preventDefault();
+        var after = afterEl(e.clientY);
+        if(after == null) rowsEl.appendChild(dragged);
+        else rowsEl.insertBefore(dragged, after);
+      });
+      function afterEl(y){
+        var els = Array.prototype.slice.call(rowsEl.querySelectorAll(".row[data-id]"));
+        var closest = { offset: -Infinity, el: null };
+        els.forEach(function(el){ if(el === dragged) return; var b = el.getBoundingClientRect(); var off = y - b.top - b.height/2; if(off < 0 && off > closest.offset){ closest = { offset: off, el: el }; } });
+        return closest.el;
+      }
+      function saveOrder(){
+        var order = Array.prototype.map.call(rowsEl.querySelectorAll(".row[data-id]"), function(r){ return r.getAttribute("data-id"); });
+        DQAPI.reorderCredits(order).then(function(){ location.reload(); });
+      }
+    })();
+    });
+  }).catch(function(e){
+    app.innerHTML = '<div class="container"><div class="empty">Something went wrong loading this profile.<br><span class="mut">'+DQ.esc(e && e.message)+'</span></div></div>';
+  });
+})();
+</script>
+</body>
+</html>
