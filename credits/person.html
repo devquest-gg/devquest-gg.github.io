@@ -71,11 +71,14 @@
       var others = c.roles_other || [];
       var more = others.length ? ' <span class="rmore" title="Also: '+DQ.esc(others.join(", "))+'">+'+others.length+' more</span>' : '';
       var vouch = c.vouch_count ? '<span class="sig" title="peer vouches">◈ '+c.vouch_count+'</span>' : '';
-      var remove = (isOwn && c.live && c.id) ? '<a class="rmvcredit" data-id="'+c.id+'" style="color:var(--pink);font-size:12px;cursor:pointer;margin-left:10px">Remove</a>' : '';
+      var controls = (isOwn && c.live && c.id)
+        ? '<a class="editcredit" data-id="'+c.id+'" data-role="'+DQ.esc(c.role||"")+'" data-others="'+DQ.esc((c.roles_other||[]).join(", "))+'" style="color:var(--accent);font-size:12px;cursor:pointer;margin-left:10px">Edit</a>'+
+          '<a class="rmvcredit" data-id="'+c.id+'" style="color:var(--pink);font-size:12px;cursor:pointer;margin-left:10px">Remove</a>'
+        : '';
       return '<div class="row">'+
         '<div class="rmain"><div class="rname"><a href="game.html?slug='+encodeURIComponent(c.game_slug)+'">'+DQ.esc(c.game_title)+'</a></div>'+
           '<div class="rsub"><span class="rrole">'+DQ.esc(c.role||"Role not recorded")+'</span>'+more+(sigs?' &nbsp; '+sigs:'')+(vouch?' &nbsp; '+vouch:'')+'</div></div>'+
-        '<div class="rright">'+(c.year?'<span class="yr">'+c.year+'</span>':'')+remove+'</div>'+
+        '<div class="rright">'+(c.year?'<span class="yr">'+c.year+'</span>':'')+controls+'</div>'+
       '</div>';
     }).join("") + '</div>' : '<div class="empty">No credits on record yet.'+(isOwn?' Add the games you worked on.':'')+'</div>';
 
@@ -112,6 +115,29 @@
     if(cb) cb.onclick = function(){ if(window.DQAPI) location.href = "signin.html"; else DQ.openClaim({ person_name: name }); };
     Array.prototype.forEach.call(document.querySelectorAll(".rmvcredit"), function(el){
       el.onclick = function(){ if(!confirm("Remove this credit?")) return; DQAPI.deleteCredit(el.dataset.id).then(function(){ location.reload(); }); };
+    });
+    Array.prototype.forEach.call(document.querySelectorAll(".editcredit"), function(el){
+      el.onclick = function(){
+        var row = el.closest(".row"), id = el.dataset.id;
+        row.innerHTML = '<div class="rmain" style="width:100%">'+
+          '<label style="font-size:12px;font-weight:700;display:block;margin-bottom:4px">Headline role</label>'+
+          '<input class="ed-role" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:9px 11px;color:var(--text);font-size:14px;font-family:inherit">'+
+          '<label style="font-size:12px;font-weight:700;display:block;margin:10px 0 4px">Other titles <span style="font-weight:400;color:var(--muted)">— comma-separated, optional</span></label>'+
+          '<input class="ed-others" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:9px 11px;color:var(--text);font-size:14px;font-family:inherit">'+
+          '<div style="margin-top:12px;display:flex;gap:8px"><span class="btn primary ed-save" style="padding:8px 16px">Save</span><span class="btn ghost ed-cancel" style="padding:8px 16px">Cancel</span></div>'+
+        '</div>';
+        row.querySelector(".ed-role").value = el.dataset.role || "";
+        row.querySelector(".ed-others").value = el.dataset.others || "";
+        row.querySelector(".ed-role").focus();
+        row.querySelector(".ed-cancel").onclick = function(){ location.reload(); };
+        row.querySelector(".ed-save").onclick = function(){
+          var nrole = row.querySelector(".ed-role").value.trim();
+          if(!nrole){ alert("Role can't be empty."); return; }
+          var nothers = row.querySelector(".ed-others").value.split(",").map(function(s){return s.trim();}).filter(Boolean);
+          this.textContent = "Saving…";
+          DQAPI.updateCredit(id, { role: nrole, roles_other: nothers }).then(function(){ location.reload(); });
+        };
+      };
     });
   }).catch(function(e){
     app.innerHTML = '<div class="container"><div class="empty">Something went wrong loading this profile.<br><span class="mut">'+DQ.esc(e && e.message)+'</span></div></div>';

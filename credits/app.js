@@ -152,6 +152,20 @@
       var q = input.value.trim();
       if (!q) { box.style.display = "none"; box.innerHTML = ""; hi = -1; return; }
       box.innerHTML = build(q); box.style.display = "block"; hi = -1;
+      // live people from the backend (prepended, since name searches want people first)
+      if (w.DQAPI && w.DQAPI.searchPeople) {
+        var myq = q;
+        w.DQAPI.searchPeople(q).then(function (r) {
+          if (input.value.trim() !== myq || box.style.display === "none") return;
+          var ppl = (r.data && r.data.people) || [];
+          if (!ppl.length) return;
+          var h = '<div class="grp">People</div>' + ppl.slice(0, 4).map(function (p) {
+            return '<a class="dq-row" href="person.html?slug=' + encodeURIComponent(p.slug) + '"><span class="tag dq-tag-person">Person</span>' +
+              '<span class="txt"><span class="nm">' + esc(p.name) + '</span><span class="sb">' + p.credit_count + ' credit' + (p.credit_count === 1 ? '' : 's') + '</span></span></a>';
+          }).join("");
+          box.insertAdjacentHTML("afterbegin", h);
+        }).catch(function () {});
+      }
     }
     function seeAll() { var q = input.value.trim(); w.location.href = "search.html" + (q ? "?q=" + encodeURIComponent(q) : ""); }
     var t;
