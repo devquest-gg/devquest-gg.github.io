@@ -120,7 +120,7 @@
     wrap.style.position = "relative";
     var box = document.createElement("div"); box.className = "dq-suggest"; box.style.display = "none";
     wrap.appendChild(box);
-    var data = { games: null, studios: null, people: null }, hi = -1, loaded = false;
+    var data = { games: null, studios: null, people: null, liveGames: null, liveStudios: null, livePeople: null }, hi = -1, loaded = false;
 
     function preload() {
       if (loaded) return; loaded = true;
@@ -135,14 +135,26 @@
       els.forEach(function (e, i) { e.classList.toggle("hi", i === hi); });
       els[hi].scrollIntoView({ block: "nearest" });
     }
+    // Merge static catalogue rows with live (API) rows, deduping by slug (catalogue wins).
+    function mergeRows(catRows, liveRows, cap) {
+      var seen = {}, out = [];
+      (catRows || []).forEach(function (r) { var k = r[0]; if (!seen[k]) { seen[k] = 1; out.push(r); } });
+      (liveRows || []).forEach(function (r) { var k = r[0]; if (!seen[k]) { seen[k] = 1; out.push(r); } });
+      return { total: out.length, rows: out.slice(0, cap) };
+    }
+    function liveFilter(rows, q) {
+      if (!rows) return [];
+      var ql = q.toLowerCase();
+      return rows.filter(function (r) { return String(r[1] || "").toLowerCase().indexOf(ql) !== -1; });
+    }
     function build(q) {
-      var g = searchRows(data.games, 1, q, CAP.games),
-          s = searchRows(data.studios, 1, q, CAP.studios),
-          p = (data.people && data.people.length) ? searchRows(data.people, 1, q, CAP.people) : { total: 0, rows: [] };
+      var p = mergeRows(searchRows(data.people || [], 1, q, CAP.people * 4).rows, liveFilter(data.livePeople, q), CAP.people);
+      var g = mergeRows(searchRows(data.games, 1, q, CAP.games * 4).rows, liveFilter(data.liveGames, q), CAP.games);
+      var s = mergeRows(searchRows(data.studios, 1, q, CAP.studios * 4).rows, liveFilter(data.liveStudios, q), CAP.studios);
       var h = "";
+      if (p.total) h += '<div class="grp">People</div>' + p.rows.map(function (r) { return suggestRowHTML("people", r); }).join("");
       if (g.total) h += '<div class="grp">Games</div>' + g.rows.map(function (r) { return suggestRowHTML("games", r); }).join("");
       if (s.total) h += '<div class="grp">Studios</div>' + s.rows.map(function (r) { return suggestRowHTML("studios", r); }).join("");
-      if (p.total) h += '<div class="grp">People</div>' + p.rows.map(function (r) { return suggestRowHTML("people", r); }).join("");
       if (!h) h = '<div class="dq-empty">No matches' + (data.games ? '' : ' (loading catalogue…)') + '</div>';
       h += '<a class="dq-seeall" href="search.html?q=' + encodeURIComponent(q) + '">See all results for “' + esc(q) + '” →</a>';
       h += '<a class="dq-seeall dq-add" data-dqadd style="cursor:pointer">＋ Add a game you worked on</a>';
@@ -151,21 +163,15 @@
     function refresh() {
       var q = input.value.trim();
       if (!q) { box.style.display = "none"; box.innerHTML = ""; hi = -1; return; }
+      data.livePeople = data.liveGames = data.liveStudios = null;   // reset live results for the new query
       box.innerHTML = build(q); box.style.display = "block"; hi = -1;
-      // live people from the backend (prepended, since name searches want people first)
-      if (w.DQAPI && w.DQAPI.searchPeople) {
+      // Live user-added people, games, and studios from the backend, merged into the groups.
+      if (w.DQAPI) {
         var myq = q;
-        w.DQAPI.searchPeople(q).then(function (r) {
-          if (input.value.trim() !== myq || box.style.display === "none") return;
-          var ppl = (r.data && r.data.people) || [];
-          if (!ppl.length) return;
-          var h = '<div class="grp">People</div>' + ppl.slice(0, 4).map(function (p) {
-            return '<a class="dq-row" href="person.html?slug=' + encodeURIComponent(p.slug) + '"><span class="tag dq-tag-person">Person</span>' +
-              '<span class="txt"><span class="nm">' + esc(p.name) + '</span><span class="sb">' + p.credit_count + ' credit' + (p.credit_count === 1 ? '' : 's') + '</span></span></a>';
-          }).join("");
-          var ex = box.querySelector(".dq-people-live"); if (ex) ex.remove();  // avoid stacking on re-render
-          box.insertAdjacentHTML("afterbegin", '<div class="dq-people-live">' + h + '</div>');
-        }).catch(function () {});
+        var repaint = function () { if (input.value.trim() === myq && box.style.display !== "none") box.innerHTML = build(myq); };
+        if (w.DQAPI.searchPeople) w.DQAPI.searchPeople(q).then(function (r) { data.livePeople = ((r.data && r.data.people) || []).map(function (p) { return [p.slug, p.name, p.credit_count || 0]; }); repaint(); }).catch(function () {});
+        if (w.DQAPI.searchGames) w.DQAPI.searchGames(q).then(function (r) { data.liveGames = ((r.data && r.data.games) || []).map(function (g) { return [g.slug, g.title, g.year || "", g.studio || ""]; }); repaint(); }).catch(function () {});
+        if (w.DQAPI.searchStudios) w.DQAPI.searchStudios(q).then(function (r) { data.liveStudios = ((r.data && r.data.studios) || []).map(function (s) { return [s.slug, s.name, s.count || 0]; }); repaint(); }).catch(function () {});
       }
     }
     function seeAll() { var q = input.value.trim(); w.location.href = "search.html" + (q ? "?q=" + encodeURIComponent(q) : ""); }
