@@ -55,6 +55,7 @@
 
     var name  = (api && api.person.name) || (stat && stat.name) || slug;
     var links = (api && api.person.links && api.person.links.length) ? api.person.links : ((stat && stat.links) || []);
+    var headline = (api && api.person && api.person.headline) ? api.person.headline : '';
     var isOwn = !!(me && api && me.slug === api.person.slug);
 
     // Merge credits by game_slug — live (API) wins over seed (static).
@@ -137,8 +138,8 @@
       var label = LINK_LABEL[String(l.type||"").toLowerCase()] || l.label || l.type || "Link";
       return '<a class="plink" href="'+DQ.esc(l.url)+'" target="_blank" rel="noopener noreferrer">'+DQ.esc(label)+' <span aria-hidden="true">↗</span></a>';
     }).join("")+'</div>' : '';
-    // Owner-only affordance to add/edit the public profile links under the name.
-    var editLinksAff = isOwn ? '<span class="editlinks" id="editlinks">'+(links.length?'✎ Edit links':'+ Add profile links')+'</span>' : '';
+    // Owner-only affordance to add/edit the headline + public profile links under the name.
+    var editLinksAff = isOwn ? '<span class="editlinks" id="editlinks">'+((headline||links.length)?'✎ Edit profile':'+ Add your title & links')+'</span>' : '';
 
     var cta = isOwn ? '<a class="btn primary" href="search.html">+ Add a credit</a>'
             : (window.DQAPI ? '' : '');
@@ -164,7 +165,7 @@
         '<div style="display:flex;align-items:center;gap:16px">'+
           '<div class="row" style="padding:0;border:none"><div class="av" style="width:60px;height:60px;font-size:22px">'+DQ.esc(DQ.initials(name))+'</div></div>'+
           '<div><h1 style="margin:0">'+DQ.esc(name)+'</h1>'+
-          '<div class="meta">'+(credits.length ? (credits[0].role ? DQ.esc(credits[0].role) : '') : 'No credits on record yet')+'</div>'+
+          '<div class="meta">'+(headline ? DQ.esc(headline) : (credits.length ? '' : 'No credits on record yet'))+'</div>'+
           linksHTML +
           editLinksAff +
           '<div id="linkedit"></div>'+
@@ -204,10 +205,12 @@
       }
       var startRows = (current && current.length) ? current : [{type:"linkedin",url:""}];
       box.innerHTML = '<div class="panel" style="padding:14px;margin-top:12px;max-width:520px">'+
+        '<div style="font-size:12px;font-weight:700;margin-bottom:4px">Headline <span style="font-weight:400;color:var(--muted)">(your current title and studio)</span></div>'+
+        '<input class="le-headline" value="'+DQ.esc(headline||"")+'" placeholder="e.g. Director of Development Management at Insomniac Games" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px 11px;color:var(--text);font-size:13px;font-family:inherit;margin-bottom:16px">'+
         '<div style="font-size:12px;font-weight:700;margin-bottom:8px">Profile links <span style="font-weight:400;color:var(--muted)">(shown as chips under your name)</span></div>'+
         '<div class="le-rows">'+startRows.map(function(l){ return rowHtml(l.type, l.url); }).join("")+'</div>'+
         '<span class="le-add" style="font-size:12.5px;font-weight:700;color:var(--accent);cursor:pointer">+ Add another</span>'+
-        '<div style="margin-top:12px;display:flex;gap:8px"><span class="btn primary le-save" style="padding:8px 16px">Save links</span><span class="btn ghost le-cancel" style="padding:8px 16px">Cancel</span></div>'+
+        '<div style="margin-top:12px;display:flex;gap:8px"><span class="btn primary le-save" style="padding:8px 16px">Save profile</span><span class="btn ghost le-cancel" style="padding:8px 16px">Cancel</span></div>'+
       '</div>';
       function wireDels(){ Array.prototype.forEach.call(box.querySelectorAll(".le-del"), function(d){ d.onclick = function(){ var r=d.closest(".le-row"); if(r) r.parentNode.removeChild(r); }; }); }
       wireDels();
@@ -222,10 +225,11 @@
           if(!/^https?:\/\//i.test(url)) url = "https://"+url;
           out.push({ type:type, url:url });
         });
+        var hl = box.querySelector(".le-headline").value.trim();
         var sbtn = this; sbtn.textContent = "Saving…";
-        DQAPI.updateProfile({ links: out }).then(function(r){
+        DQAPI.updateProfile({ headline: hl, links: out }).then(function(r){
           if(r && r.ok){ location.reload(); }
-          else { sbtn.textContent = "Save links"; alert((r && r.data && r.data.error) || "Could not save links."); }
+          else { sbtn.textContent = "Save profile"; alert((r && r.data && r.data.error) || "Could not save."); }
         });
       };
     }
