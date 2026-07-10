@@ -35,8 +35,19 @@
   var slug = DQ.qs("slug"), app = document.getElementById("app");
   if(!slug){ app.innerHTML = '<div class="container"><div class="empty">No game specified.</div></div>'; return; }
 
-  DQ.loadEntity("games", slug).then(function(g){
-    if(!g){
+  var pStatic = DQ.loadEntity("games", slug).catch(function(){ return null; });
+  var pApi = window.DQAPI ? DQAPI.gameCredits(slug).catch(function(){ return {ok:false}; }) : Promise.resolve({ok:false});
+  var pMe  = (window.DQAPI && DQAPI.isSignedIn()) ? DQAPI.me().catch(function(){ return {ok:false}; }) : Promise.resolve({ok:false});
+
+  Promise.all([pStatic, pApi, pMe]).then(function(res){
+    var g = res[0];
+    var apiRes = (res[1] && res[1].ok && res[1].data) ? res[1].data : null;
+    var me = (res[2] && res[2].ok && res[2].data && res[2].data.authenticated) ? res[2].data.person : null;
+    var apiGame = apiRes && apiRes.game;
+    var apiCredits = (apiRes && apiRes.credits) || [];
+
+    var meta = g || apiGame;
+    if(!meta){
       document.getElementById("crumb").textContent = "Not found";
       app.innerHTML = '<div class="container"><div class="empty">We could not find that game.<br>'+
         '<a class="btn ghost" style="margin-top:14px" href="search.html">Search the catalogue</a> '+
@@ -45,50 +56,56 @@
       if(ab) ab.onclick = function(){ DQ.openClaim({ mode:"addGame", prefillTitle: slug.replace(/-/g," ").replace(/\b\w/g,function(c){return c.toUpperCase();}) }); };
       return;
     }
-    document.title = g.title + " · DevQuest Credits";
-    document.getElementById("crumb").textContent = g.title;
 
-    var studios = (g.studios||[]);
+    var title = meta.title, isCommunity = !g && !!apiGame;
+    var studios = g ? (g.studios||[]) : (apiGame && apiGame.studio ? [apiGame.studio] : []);
+    var year = meta.year || null, publishers = g ? (g.publishers||[]) : [];
+    var platforms = meta.platforms || [], genres = meta.genres || [], qid = g ? g.qid : "";
+
+    document.title = title + " · DevQuest Credits";
+    document.getElementById("crumb").textContent = title;
+
     var studioLinks = studios.length
       ? studios.map(function(n){ return '<a href="studio.html?slug='+encodeURIComponent(DQ.slugify(n))+'">'+DQ.esc(n)+'</a>'; }).join(", ")
       : '<span class="mut">Studio not recorded</span>';
     var metaBits = [studioLinks];
-    if(g.year) metaBits.push(String(g.year));
-    if(g.publishers && g.publishers.length) metaBits.push("Published by "+g.publishers.map(DQ.esc).join(", "));
+    if(year) metaBits.push(String(year));
+    if(publishers.length) metaBits.push("Published by "+publishers.map(DQ.esc).join(", "));
 
     var chips = "";
-    (g.platforms||[]).forEach(function(p){ chips += '<span class="chip plat">'+DQ.esc(p)+'</span>'; });
-    (g.genres||[]).forEach(function(x){ chips += '<span class="chip">'+DQ.esc(x)+'</span>'; });
+    platforms.forEach(function(p){ chips += '<span class="chip plat">'+DQ.esc(p)+'</span>'; });
+    genres.forEach(function(x){ chips += '<span class="chip">'+DQ.esc(x)+'</span>'; });
 
-    var srcBadge = g.source === "hand"
+    var srcBadge = isCommunity
       ? '<span class="badge hand">✎ Community entry</span>'
       : '<span class="badge official">◈ Catalogue (Wikidata)</span>';
 
-    // credits list
-    var credits = g.credits || [];
-    var creditsHTML;
-    if(credits.length){
-      creditsHTML = '<div class="rows">' + credits.map(function(c){
-        var pslug = DQ.slugify(c.name);
-        var sigs = (c.verification||[]).map(function(s){ return '<span class="sig">'+DQ.esc(DQ.SIG_LABEL[s]||s)+'</span>'; }).join("");
-        var others = c.roles_other || [];
-        var more = others.length ? ' <span class="rmore" title="Also: '+DQ.esc(others.join(", "))+'">+'+others.length+' more</span>' : '';
-        return '<div class="row">'+
-          '<div class="av">'+DQ.esc(DQ.initials(c.name))+'</div>'+
-          '<div class="rmain"><div class="rname"><a href="person.html?slug='+encodeURIComponent(pslug)+'">'+DQ.esc(c.name)+'</a></div>'+
-            '<div class="rsub"><span class="rrole">'+DQ.esc(c.role||"Role not recorded")+'</span>'+more+(sigs?' &nbsp; '+sigs:'')+'</div></div>'+
-        '</div>';
-      }).join("") + '</div>';
-    } else {
-      creditsHTML = '<div class="empty">No individual credits recorded yet.<br>'+
-        'This game is in the catalogue, but the people who made it have not been added. '+
-        'If you worked on it, you can be the first to claim your credit.</div>';
-    }
+    // merge credits by person — seed (static) + live (API), API wins
+    var byPerson = {};
+    ((g && g.credits) || []).forEach(function(c){ var ps=DQ.slugify(c.name); byPerson[ps]={person_slug:ps,name:c.name,role:c.role,roles_other:c.roles_other||[],verification:c.verification||[],vouch_count:0,live:false}; });
+    apiCredits.forEach(function(c){ byPerson[c.person_slug]={id:c.id,person_slug:c.person_slug,name:c.person_name,role:c.role,roles_other:c.roles_other||[],verification:c.verification||[],vouch_count:c.vouch_count||0,live:true}; });
+    var credits = Object.keys(byPerson).map(function(k){ return byPerson[k]; });
+    var iHaveCredit = !!(me && credits.some(function(c){ return c.person_slug===me.slug; }));
+
+    var creditsHTML = credits.length ? '<div class="rows">' + credits.map(function(c){
+      var sigs = (c.verification||[]).map(function(s){ return '<span class="sig">'+DQ.esc(DQ.SIG_LABEL[s]||s)+'</span>'; }).join("");
+      var others = c.roles_other || [];
+      var more = others.length ? ' <span class="rmore" title="Also: '+DQ.esc(others.join(", "))+'">+'+others.length+' more</span>' : '';
+      var vouch = c.vouch_count ? '<span class="sig" title="peer vouches">◈ '+c.vouch_count+' vouch'+(c.vouch_count===1?'':'es')+'</span>' : '';
+      var vbtn = (c.live && c.id && me && c.person_slug!==me.slug && iHaveCredit)
+        ? '<a class="vouchbtn" data-id="'+c.id+'" style="font-size:12px;font-weight:700;color:var(--green);border:1px solid rgba(63,185,80,.35);background:rgba(63,185,80,.08);border-radius:8px;padding:4px 11px;cursor:pointer">Vouch</a>' : '';
+      return '<div class="row">'+
+        '<div class="av">'+DQ.esc(DQ.initials(c.name))+'</div>'+
+        '<div class="rmain"><div class="rname"><a href="person.html?slug='+encodeURIComponent(c.person_slug)+'">'+DQ.esc(c.name)+'</a></div>'+
+          '<div class="rsub"><span class="rrole">'+DQ.esc(c.role||"Role not recorded")+'</span>'+more+(sigs?' &nbsp; '+sigs:'')+(vouch?' &nbsp; '+vouch:'')+'</div></div>'+
+        '<div class="rright">'+vbtn+'</div>'+
+      '</div>';
+    }).join("") + '</div>' : '<div class="empty">No individual credits recorded yet.<br>If you worked on it, be the first to claim your credit.</div>';
 
     app.innerHTML =
       '<div class="phead"><div class="container">'+
         '<div style="margin-bottom:10px">'+srcBadge+'</div>'+
-        '<h1>'+DQ.esc(g.title)+'</h1>'+
+        '<h1>'+DQ.esc(title)+'</h1>'+
         '<div class="meta">'+metaBits.join(' · ')+'</div>'+
         (chips?'<div class="chips">'+chips+'</div>':'')+
       '</div></div>'+
@@ -103,9 +120,15 @@
       '</div></section>';
 
     var cb = document.getElementById("claimbtn");
-    if(cb) cb.onclick = function(){ DQ.openClaim({ game_slug: slug, game_title: g.title, game_qid: g.qid }); };
+    if(cb) cb.onclick = function(){
+      if(window.DQAPI && !DQAPI.isSignedIn()){ location.href = "signin.html"; return; }
+      DQ.openClaim({ game_slug: slug, game_title: title, game_qid: qid });
+    };
+    Array.prototype.forEach.call(document.querySelectorAll(".vouchbtn"), function(el){
+      el.onclick = function(){ el.textContent = "…"; DQAPI.vouch(el.dataset.id).then(function(r){ if(r.ok){ location.reload(); } else { el.textContent="Vouch"; alert((r.data&&r.data.error)||"Could not vouch."); } }).catch(function(){ el.textContent="Vouch"; }); };
+    });
   }).catch(function(e){
-    app.innerHTML = '<div class="container"><div class="empty">Something went wrong loading this game.<br><span class="mut">'+DQ.esc(e.message)+'</span></div></div>';
+    app.innerHTML = '<div class="container"><div class="empty">Something went wrong loading this game.<br><span class="mut">'+DQ.esc(e && e.message)+'</span></div></div>';
   });
 })();
 </script>
