@@ -262,8 +262,8 @@
         '<label>Other titles you held on this game <span style="font-weight:400;color:var(--muted,#8b98a9)">— optional, comma-separated</span></label><input id="dqc-roles2" placeholder="Technical Support Lead, Game Designer, Content Manager">' : '') +
       '<label>Links that help show this is you <span style="font-weight:400;color:var(--muted,#8b98a9)">— LinkedIn, portfolio / ArtStation, studio team page. One per line, optional</span></label><textarea id="dqc-proof" placeholder="https://linkedin.com/in/you&#10;https://yourstudio.com/team"></textarea>' +
       '<label>Anything else for our reviewer <span style="font-weight:400;color:var(--muted,#8b98a9)">— optional</span></label><textarea id="dqc-note" placeholder="Context that helps us verify you"></textarea>' +
-      '<div class="dq-actions"><button class="dq-cancel">Cancel</button><button class="dq-submit">Open email to submit →</button></div>' +
-      '<div class="dq-foot">Nothing is sent automatically — this just drafts an email. Or write <a href="mailto:studios@devquest.gg">studios@devquest.gg</a>.</div>' +
+      '<div class="dq-actions"><button class="dq-cancel">Cancel</button><button class="dq-submit">Save my credit →</button></div>' +
+      '<div class="dq-foot">Saved to your account — you can edit or remove it anytime.</div>' +
       '</div>';
     document.body.appendChild(ov);
     function close() { ov.remove(); document.removeEventListener("keydown", onKey); }
@@ -312,20 +312,8 @@
         return;
       }
 
-      // --- fallback: draft an email (no API available) ---
-      var subj = isAdd ? ("New game + credit: " + (val("dqc-gtitle") || "(untitled)"))
-              : isGame ? ("Credit claim: " + opts.game_title) : ("Profile claim: " + (name || opts.person_name || ""));
-      var lines = ["DevQuest Credits — " + (isAdd ? "new game + claim" : "claim") + " (beta, hand-reviewed)", ""];
-      if (isAdd) { lines.push("NEW GAME (not yet in catalogue)"); lines.push("Title: " + val("dqc-gtitle")); lines.push("Studio: " + val("dqc-gstudio") + (selStudioSlug ? " (existing: " + selStudioSlug + ")" : " (new — needs adding)")); if (val("dqc-gyear")) lines.push("Year: " + val("dqc-gyear")); if (val("dqc-gplat")) lines.push("Platforms: " + val("dqc-gplat")); }
-      else if (isGame) { lines.push("Game: " + opts.game_title); if (opts.game_slug) lines.push("Slug: " + opts.game_slug); if (opts.game_qid) lines.push("Wikidata: " + opts.game_qid); }
-      else { lines.push("Profile: " + (opts.person_name || name)); }
-      lines.push("----------------------------------------", "");
-      lines.push("Name (as credited): " + name); lines.push("Email: " + email);
-      if (showRole) { lines.push("Headline role: " + role); if (rolesOther) lines.push("Other roles: " + rolesOther); }
-      if (proofArr.length) { lines.push("Proof links:"); proofArr.forEach(function (u) { lines.push("  " + u); }); } else { lines.push("Proof links: (none provided)"); }
-      lines.push("Note: " + note);
-      w.location.href = "mailto:studios@devquest.gg?subject=" + encodeURIComponent(subj) + "&body=" + encodeURIComponent(lines.join("\n"));
-      close();
+      // No API present (shouldn't happen once deployed). NEVER open an email client.
+      alert("Couldn't reach the sign-in service. Please reload the page and try again.");
     };
     if (isAdd) {
       var gstudio = ov.querySelector("#dqc-gstudio");
