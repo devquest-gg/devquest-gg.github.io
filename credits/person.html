@@ -28,46 +28,71 @@
   <div><a href="/credits/">← Credits home</a> &nbsp;·&nbsp; <a href="mailto:studios@devquest.gg?subject=DevQuest%20Credits%20feedback&body=Bug%2C%20idea%2C%20or%20just%20a%20thought%3A%0A%0A">Feedback</a></div>
 </div></footer>
 
+<script src="api.js"></script>
 <script src="app.js"></script>
 <script>
 (function(){
   var slug = DQ.qs("slug"), app = document.getElementById("app");
   if(!slug){ app.innerHTML = '<div class="container"><div class="empty">No person specified.</div></div>'; return; }
+  var LINK_LABEL = { linkedin:"LinkedIn", portfolio:"Portfolio", artstation:"ArtStation", website:"Website", site:"Website", personal:"Website", twitter:"Twitter", x:"X", bluesky:"Bluesky", github:"GitHub", itch:"itch.io", mastodon:"Mastodon" };
 
-  DQ.loadEntity("people", slug).then(function(p){
-    if(!p){
+  // Load the static (seed) profile + the live (API) profile + who I am, in parallel.
+  var pStatic = DQ.loadEntity("people", slug).catch(function(){ return null; });
+  var pApi = (window.DQAPI ? DQAPI.personCredits(slug) : Promise.resolve({ok:false})).catch(function(){ return {ok:false}; });
+  var pMe  = (window.DQAPI && DQAPI.isSignedIn()) ? DQAPI.me().catch(function(){ return {ok:false}; }) : Promise.resolve({ok:false});
+
+  Promise.all([pStatic, pApi, pMe]).then(function(res){
+    var stat = res[0];
+    var api  = (res[1] && res[1].ok && res[1].data && res[1].data.person) ? res[1].data : null;
+    var me   = (res[2] && res[2].ok && res[2].data && res[2].data.authenticated) ? res[2].data.person : null;
+
+    if(!stat && !api){
       document.getElementById("crumb").textContent = "Not found";
       app.innerHTML = '<div class="container"><div class="empty">No profile yet for that name.<br>'+
         '<span class="mut">People appear here once a credit is added or claimed.</span></div></div>';
       return;
     }
-    document.title = p.name + " · DevQuest Credits";
-    document.getElementById("crumb").textContent = p.name;
 
-    var credits = (p.credits||[]).slice().sort(function(a,b){ return (b.year||0)-(a.year||0); });
+    var name  = (api && api.person.name) || (stat && stat.name) || slug;
+    var links = (api && api.person.links && api.person.links.length) ? api.person.links : ((stat && stat.links) || []);
+    var isOwn = !!(me && api && me.slug === api.person.slug);
+
+    // Merge credits by game_slug — live (API) wins over seed (static).
+    var byGame = {};
+    ((stat && stat.credits) || []).forEach(function(c){ byGame[c.game_slug] = { game_slug:c.game_slug, game_title:c.game_title, year:c.year||null, role:c.role, roles_other:c.roles_other||[], verification:c.verification||[], vouch_count:0, live:false }; });
+    ((api && api.credits) || []).forEach(function(c){ byGame[c.game_slug] = { id:c.id, game_slug:c.game_slug, game_title:c.game_title, year:c.year||null, role:c.role, roles_other:c.roles_other||[], verification:c.verification||[], vouch_count:c.vouch_count||0, live:true }; });
+    var credits = Object.keys(byGame).map(function(k){ return byGame[k]; }).sort(function(a,b){ return (b.year||0)-(a.year||0) || String(a.game_title).localeCompare(String(b.game_title)); });
+
+    document.title = name + " · DevQuest Credits";
+    document.getElementById("crumb").textContent = name;
+
     var rowsHTML = credits.length ? '<div class="rows">' + credits.map(function(c){
       var sigs = (c.verification||[]).map(function(s){ return '<span class="sig">'+DQ.esc(DQ.SIG_LABEL[s]||s)+'</span>'; }).join("");
       var others = c.roles_other || [];
       var more = others.length ? ' <span class="rmore" title="Also: '+DQ.esc(others.join(", "))+'">+'+others.length+' more</span>' : '';
+      var vouch = c.vouch_count ? '<span class="sig" title="peer vouches">◈ '+c.vouch_count+'</span>' : '';
+      var remove = (isOwn && c.live && c.id) ? '<a class="rmvcredit" data-id="'+c.id+'" style="color:var(--pink);font-size:12px;cursor:pointer;margin-left:10px">Remove</a>' : '';
       return '<div class="row">'+
         '<div class="rmain"><div class="rname"><a href="game.html?slug='+encodeURIComponent(c.game_slug)+'">'+DQ.esc(c.game_title)+'</a></div>'+
-          '<div class="rsub"><span class="rrole">'+DQ.esc(c.role||"Role not recorded")+'</span>'+more+(sigs?' &nbsp; '+sigs:'')+'</div></div>'+
-        '<div class="rright">'+(c.year?'<span class="yr">'+c.year+'</span>':'')+'</div>'+
+          '<div class="rsub"><span class="rrole">'+DQ.esc(c.role||"Role not recorded")+'</span>'+more+(sigs?' &nbsp; '+sigs:'')+(vouch?' &nbsp; '+vouch:'')+'</div></div>'+
+        '<div class="rright">'+(c.year?'<span class="yr">'+c.year+'</span>':'')+remove+'</div>'+
       '</div>';
-    }).join("") + '</div>' : '<div class="empty">No credits on record yet.</div>';
+    }).join("") + '</div>' : '<div class="empty">No credits on record yet.'+(isOwn?' Add the games you worked on.':'')+'</div>';
 
-    var links = p.links || [];
-    var LINK_LABEL = { linkedin:"LinkedIn", portfolio:"Portfolio", artstation:"ArtStation", website:"Website", site:"Website", personal:"Website", twitter:"Twitter", x:"X", bluesky:"Bluesky", github:"GitHub", itch:"itch.io", mastodon:"Mastodon" };
     var linksHTML = links.length ? '<div class="plinks">'+links.map(function(l){
       var label = LINK_LABEL[String(l.type||"").toLowerCase()] || l.label || l.type || "Link";
       return '<a class="plink" href="'+DQ.esc(l.url)+'" target="_blank" rel="noopener noreferrer">'+DQ.esc(label)+' <span aria-hidden="true">↗</span></a>';
     }).join("")+'</div>' : '';
 
+    var cta = isOwn ? '<a class="btn primary" href="search.html">+ Add a credit</a>'
+            : (window.DQAPI ? '<span class="btn primary" id="claimbtn">Is this you? Claim this page</span>' : '');
+    var ownBanner = isOwn ? '<div class="notice" style="color:var(--green)">This is your page — add credits and they appear here live.</div>' : '';
+
     app.innerHTML =
       '<div class="phead"><div class="container">'+
         '<div style="display:flex;align-items:center;gap:16px">'+
-          '<div class="row" style="padding:0;border:none"><div class="av" style="width:60px;height:60px;font-size:22px">'+DQ.esc(DQ.initials(p.name))+'</div></div>'+
-          '<div><h1 style="margin:0">'+DQ.esc(p.name)+'</h1>'+
+          '<div class="row" style="padding:0;border:none"><div class="av" style="width:60px;height:60px;font-size:22px">'+DQ.esc(DQ.initials(name))+'</div></div>'+
+          '<div><h1 style="margin:0">'+DQ.esc(name)+'</h1>'+
           '<div class="meta">'+credits.length+' credit'+(credits.length===1?'':'s')+' on record</div>'+
           linksHTML +
           '</div>'+
@@ -76,16 +101,20 @@
       '<section class="blk"><div class="container">'+
         '<div class="rowhead"><div><div class="eyebrow">Gameography</div>'+
           '<p class="secsub" style="margin:6px 0 0">A credit page beats a résumé bullet — verified by the people you shipped with.</p></div>'+
-          '<span class="btn primary" id="claimbtn">Is this you? Claim this page</span>'+
+          cta +
         '</div>'+
+        ownBanner +
         rowsHTML +
         '<div class="notice">Only the person credited can claim and edit this page. Peers who shipped the same game can vouch for each credit.</div>'+
       '</div></section>';
 
     var cb = document.getElementById("claimbtn");
-    if(cb) cb.onclick = function(){ DQ.openClaim({ person_name: p.name }); };
+    if(cb) cb.onclick = function(){ if(window.DQAPI) location.href = "signin.html"; else DQ.openClaim({ person_name: name }); };
+    Array.prototype.forEach.call(document.querySelectorAll(".rmvcredit"), function(el){
+      el.onclick = function(){ if(!confirm("Remove this credit?")) return; DQAPI.deleteCredit(el.dataset.id).then(function(){ location.reload(); }); };
+    });
   }).catch(function(e){
-    app.innerHTML = '<div class="container"><div class="empty">Something went wrong loading this profile.<br><span class="mut">'+DQ.esc(e.message)+'</span></div></div>';
+    app.innerHTML = '<div class="container"><div class="empty">Something went wrong loading this profile.<br><span class="mut">'+DQ.esc(e && e.message)+'</span></div></div>';
   });
 })();
 </script>

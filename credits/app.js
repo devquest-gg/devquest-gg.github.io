@@ -272,30 +272,57 @@
     ov.addEventListener("click", function (e) { if (e.target === ov) close(); });
     ov.querySelector(".dq-x").onclick = close;
     ov.querySelector(".dq-cancel").onclick = close;
+    if (w.DQAPI) {
+      var sb0 = ov.querySelector(".dq-submit"); if (sb0) sb0.textContent = (isGame || isAdd) ? "Save my credit →" : "Sign in →";
+      var ft0 = ov.querySelector(".dq-foot"); if (ft0) ft0.innerHTML = (isGame || isAdd) ? "Saved to your account — you can edit or remove it anytime." : "You'll sign in to manage your page.";
+    }
     ov.querySelector(".dq-submit").onclick = function () {
+      var submitBtn = this;
       function val(id) { var el = ov.querySelector("#" + id); return el ? el.value.trim() : ""; }
       var name = val("dqc-name"), email = val("dqc-email"), role = val("dqc-role"),
           rolesOther = val("dqc-roles2"),
           proof = val("dqc-proof"), note = val("dqc-note");
       setIdentity(name, email);
+      var rolesArr = rolesOther ? rolesOther.split(",").map(function (s) { return s.trim(); }).filter(Boolean) : [];
+      var proofArr = proof ? proof.split(/\n+/).map(function (s) { return s.trim(); }).filter(Boolean) : [];
+      var verification = proofArr.some(function (u) { return /linkedin\.com/i.test(u); }) ? ["linkedin_self"] : [];
+      function payload() {
+        var p = { name: name, role: role, roles_other: rolesArr, verification: verification, source_url: proofArr[0] || "" };
+        if (isAdd) {
+          p.new_game = { title: val("dqc-gtitle"), studio: val("dqc-gstudio"), year: val("dqc-gyear"),
+            platforms: val("dqc-gplat") ? val("dqc-gplat").split(",").map(function (s) { return s.trim(); }).filter(Boolean) : [] };
+          p.game_title = val("dqc-gtitle"); p.studio = val("dqc-gstudio");
+        } else if (isGame) { p.game_slug = opts.game_slug; p.game_title = opts.game_title; p.studio = opts.studio || null; }
+        return p;
+      }
+
+      // --- live API path: save the credit for real ---
+      if (w.DQAPI) {
+        if (!isGame && !isAdd) { w.location.href = "signin.html"; return; }         // profile claim = sign in
+        if (!role) { alert("Add your headline role first."); return; }
+        if (!w.DQAPI.isSignedIn()) { w.location.href = "signin.html"; return; }
+        submitBtn.disabled = true; submitBtn.textContent = "Saving…";
+        w.DQAPI.createCredit(payload()).then(function (r) {
+          if (r.status === 201 || r.ok) {
+            var slug = r.data && r.data.person_slug; close();
+            w.location.href = slug ? ("person.html?slug=" + encodeURIComponent(slug)) : "/credits/";
+          } else if (r.status === 401) { w.location.href = "signin.html"; }
+          else { submitBtn.disabled = false; submitBtn.textContent = "Save my credit →"; alert((r.data && r.data.error) || "Could not save. Try again."); }
+        }).catch(function () { submitBtn.disabled = false; submitBtn.textContent = "Save my credit →"; alert("Network error. Try again."); });
+        return;
+      }
+
+      // --- fallback: draft an email (no API available) ---
       var subj = isAdd ? ("New game + credit: " + (val("dqc-gtitle") || "(untitled)"))
-              : isGame ? ("Credit claim: " + opts.game_title)
-              : ("Profile claim: " + (name || opts.person_name || ""));
+              : isGame ? ("Credit claim: " + opts.game_title) : ("Profile claim: " + (name || opts.person_name || ""));
       var lines = ["DevQuest Credits — " + (isAdd ? "new game + claim" : "claim") + " (beta, hand-reviewed)", ""];
-      if (isAdd) {
-        lines.push("NEW GAME (not yet in catalogue)");
-        lines.push("Title: " + val("dqc-gtitle"));
-        lines.push("Studio: " + val("dqc-gstudio") + (selStudioSlug ? " (existing: " + selStudioSlug + ")" : " (new — needs adding)"));
-        if (val("dqc-gyear")) lines.push("Year: " + val("dqc-gyear"));
-        if (val("dqc-gplat")) lines.push("Platforms: " + val("dqc-gplat"));
-      } else if (isGame) { lines.push("Game: " + opts.game_title); if (opts.game_slug) lines.push("Slug: " + opts.game_slug); if (opts.game_qid) lines.push("Wikidata: " + opts.game_qid); }
+      if (isAdd) { lines.push("NEW GAME (not yet in catalogue)"); lines.push("Title: " + val("dqc-gtitle")); lines.push("Studio: " + val("dqc-gstudio") + (selStudioSlug ? " (existing: " + selStudioSlug + ")" : " (new — needs adding)")); if (val("dqc-gyear")) lines.push("Year: " + val("dqc-gyear")); if (val("dqc-gplat")) lines.push("Platforms: " + val("dqc-gplat")); }
+      else if (isGame) { lines.push("Game: " + opts.game_title); if (opts.game_slug) lines.push("Slug: " + opts.game_slug); if (opts.game_qid) lines.push("Wikidata: " + opts.game_qid); }
       else { lines.push("Profile: " + (opts.person_name || name)); }
       lines.push("----------------------------------------", "");
-      lines.push("Name (as credited): " + name);
-      lines.push("Email: " + email);
+      lines.push("Name (as credited): " + name); lines.push("Email: " + email);
       if (showRole) { lines.push("Headline role: " + role); if (rolesOther) lines.push("Other roles: " + rolesOther); }
-      if (proof) { lines.push("Proof links:"); proof.split(/\n+/).forEach(function (u) { u = u.trim(); if (u) lines.push("  " + u); }); }
-      else { lines.push("Proof links: (none provided)"); }
+      if (proofArr.length) { lines.push("Proof links:"); proofArr.forEach(function (u) { lines.push("  " + u); }); } else { lines.push("Proof links: (none provided)"); }
       lines.push("Note: " + note);
       w.location.href = "mailto:studios@devquest.gg?subject=" + encodeURIComponent(subj) + "&body=" + encodeURIComponent(lines.join("\n"));
       close();
@@ -339,4 +366,21 @@
       linkedin_self: "LinkedIn (self)", peer_vouch: "Peer vouch", community: "Community"
     }
   };
+
+  // Inject a Sign in / Account link into the top nav (any page that loads app.js).
+  (function () {
+    var nav = document.querySelector(".topnav");
+    if (!nav || !w.DQAPI) return;
+    var a = document.createElement("a");
+    a.className = "back"; a.style.cursor = "pointer";
+    a.textContent = w.DQAPI.isSignedIn() ? "Account" : "Sign in";
+    a.href = "signin.html";
+    nav.insertBefore(a, nav.firstChild);
+    if (w.DQAPI.isSignedIn()) {
+      w.DQAPI.me().then(function (r) {
+        if (r.ok && r.data.authenticated) { a.textContent = "✓ " + r.data.person.name; a.href = "person.html?slug=" + encodeURIComponent(r.data.person.slug); }
+        else { w.DQAPI.clearToken(); a.textContent = "Sign in"; }
+      }).catch(function () {});
+    }
+  })();
 })(window);

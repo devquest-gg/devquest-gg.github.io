@@ -51,6 +51,7 @@
   <div><a href="/credits/">← Credits home</a> &nbsp;·&nbsp; <a href="mailto:studios@devquest.gg?subject=DevQuest%20Credits%20feedback&body=Bug%2C%20idea%2C%20or%20just%20a%20thought%3A%0A%0A">Feedback</a></div>
 </div></footer>
 
+<script src="api.js"></script>
 <script src="app.js"></script>
 <script>
 (function(){
@@ -113,15 +114,15 @@
     if(!q) return '<div class="empty">Type to search '+ (data.studios?data.studios.length.toLocaleString():'') +' studios.</div>';
     var m = DQ.searchRows(data.studios,1,q,LIMIT);
     document.getElementById("ns").textContent = m.total ? " "+m.total.toLocaleString() : "";
-    if(!m.total) return '<div class="empty">No studios match “'+DQ.esc(q)+'”.</div>';
+    if(!m.total) return '<div class="empty">No studios match “'+DQ.esc(q)+'”.<br><span class="mut">Studios appear when you add a game made there.</span><br><a class="btn ghost" data-add-studio style="margin-top:14px">Add a game made here →</a></div>';
     return studioTiles(m.rows) + (m.total>LIMIT?'<div class="notice">Showing first '+LIMIT+' of '+m.total.toLocaleString()+'.</div>':'');
   }
   function renderPeople(q){
-    if(!data.people || !data.people.length) return '<div class="empty">No people are in the database yet. They appear as credits get added and claimed.</div>';
+    if(!data.people || !data.people.length) return '<div class="empty">No people in the database yet — they appear as credits get added.<br><a class="btn ghost" data-add-person style="margin-top:14px">Add a game you worked on →</a></div>';
     if(!q) return '<div class="empty">Type to search '+ data.people.length.toLocaleString() +' people.</div>';
     var m = DQ.searchRows(data.people,1,q,LIMIT);
     document.getElementById("np").textContent = m.total ? " "+m.total.toLocaleString() : "";
-    if(!m.total) return '<div class="empty">No people match “'+DQ.esc(q)+'”.</div>';
+    if(!m.total) return '<div class="empty">No people match “'+DQ.esc(q)+'”.<br><span class="mut">People appear when a credit names them.</span><br><a class="btn ghost" data-add-person style="margin-top:14px">Add a game you worked on →</a></div>';
     return peopleRows(m.rows);
   }
 
@@ -158,16 +159,19 @@
     el.onclick = function(){ setTab(el.dataset.tab); };
     el.classList.toggle("on", el.dataset.tab===tab);
   });
-  function openAddGame(){ DQ.openClaim({ mode:"addGame", prefillTitle: input.value.trim() }); }
-  // "See all N →" switches tab; "Add this game" opens the add-a-game modal
+  function openAddGame(o){ o = o || {}; o.mode = "addGame"; DQ.openClaim(o); }
+  function qt(){ return input.value.trim(); }
+  // "See all N →" switches tab; the "Add …" buttons open add-a-game with the
+  // right field pre-filled (game title, or studio, or your name).
   results.addEventListener("click", function(e){
-    var add = e.target.closest && e.target.closest("[data-add]");
-    if(add){ e.preventDefault(); openAddGame(); return; }
+    if(e.target.closest && e.target.closest("[data-add]")){ e.preventDefault(); openAddGame({ prefillTitle: qt() }); return; }
+    if(e.target.closest && e.target.closest("[data-add-studio]")){ e.preventDefault(); openAddGame({ prefillStudio: qt() }); return; }
+    if(e.target.closest && e.target.closest("[data-add-person]")){ e.preventDefault(); openAddGame({ prefillName: qt() }); return; }
     var a = e.target.closest && e.target.closest("[data-goto]");
     if(a){ e.preventDefault(); setTab(a.dataset.goto); }
   });
   var agb = document.getElementById("addgamebtn");
-  if(agb) agb.onclick = openAddGame;
+  if(agb) agb.onclick = function(){ openAddGame({ prefillTitle: qt() }); };
 
   var t;
   input.addEventListener("input", function(){ clearTimeout(t); t=setTimeout(function(){ ensure().then(function(ok){ if(ok) render(); }); }, 110); });
