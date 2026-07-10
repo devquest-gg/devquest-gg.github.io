@@ -145,6 +145,7 @@
       if (p.total) h += '<div class="grp">People</div>' + p.rows.map(function (r) { return suggestRowHTML("people", r); }).join("");
       if (!h) h = '<div class="dq-empty">No matches' + (data.games ? '' : ' (loading catalogue…)') + '</div>';
       h += '<a class="dq-seeall" href="search.html?q=' + encodeURIComponent(q) + '">See all results for “' + esc(q) + '” →</a>';
+      h += '<a class="dq-seeall dq-add" data-dqadd style="cursor:pointer">＋ Add a game you worked on</a>';
       return h;
     }
     function refresh() {
@@ -160,9 +161,10 @@
       if (box.style.display === "none") { if (e.key === "Enter") seeAll(); return; }
       if (e.key === "ArrowDown") { e.preventDefault(); setHi(hi + 1); }
       else if (e.key === "ArrowUp") { e.preventDefault(); setHi(hi - 1); }
-      else if (e.key === "Enter") { var els = items(); if (hi >= 0 && els[hi]) { e.preventDefault(); w.location.href = els[hi].getAttribute("href"); } else { seeAll(); } }
+      else if (e.key === "Enter") { var els = items(); if (hi >= 0 && els[hi]) { e.preventDefault(); if (els[hi].hasAttribute("data-dqadd")) { box.style.display = "none"; openClaim({ mode: "addGame", prefillTitle: input.value.trim() }); } else { w.location.href = els[hi].getAttribute("href"); } } else { seeAll(); } }
       else if (e.key === "Escape") { box.style.display = "none"; hi = -1; }
     });
+    box.addEventListener("click", function (e) { if (e.target.closest && e.target.closest("[data-dqadd]")) { e.preventDefault(); box.style.display = "none"; openClaim({ mode: "addGame", prefillTitle: input.value.trim() }); } });
     document.addEventListener("click", function (e) { if (!wrap.contains(e.target)) { box.style.display = "none"; hi = -1; } });
     return { seeAll: seeAll };
   }
@@ -193,10 +195,17 @@
       ".dq-ac-sub{color:var(--muted,#8b98a9);font-size:11.5px;margin-left:6px}",
       ".dq-ac-none{padding:9px 11px;color:var(--muted,#8b98a9);font-size:12.5px;font-style:italic}",
       ".dq-warn{margin-top:8px;font-size:12.5px;color:#c4cfdd;background:rgba(224,178,58,.08);border:1px solid rgba(224,178,58,.3);border-radius:9px;padding:9px 11px}",
-      ".dq-warn a{color:var(--accent,#58a6ff);font-weight:600}.dq-warn b{color:var(--gold,#e0b23a)}"
+      ".dq-warn a{color:var(--accent,#58a6ff);font-weight:600}.dq-warn b{color:var(--gold,#e0b23a)}",
+      ".dq-idnote{font-size:11.5px;color:var(--muted,#8b98a9);margin-top:6px}.dq-idnote a{color:var(--accent,#58a6ff)}"
     ].join("");
     var s = document.createElement("style"); s.textContent = css; document.head.appendChild(s);
   }
+
+  // Remember the person's name+email on THIS device so they don't retype it on
+  // every claim. Stays local until they submit an email; cleared on demand.
+  function getIdentity() { try { return JSON.parse(w.localStorage.getItem("dq_identity") || "null") || {}; } catch (e) { return {}; } }
+  function setIdentity(name, email) { try { if (name && email) w.localStorage.setItem("dq_identity", JSON.stringify({ name: name, email: email })); } catch (e) {} }
+  function clearIdentity() { try { w.localStorage.removeItem("dq_identity"); } catch (e) {} }
 
   var ROLES = ["Producer","Executive Producer","Associate Producer","Production Director","Game Designer","Lead Designer","Design Director","Systems Designer","Level Designer","Narrative Designer","Content Designer","Combat Designer","Encounter Designer","Programmer","Gameplay Programmer","Engine Programmer","Graphics Programmer","Network Programmer","Tools Programmer","AI Programmer","Lead Programmer","Technical Director","Artist","Concept Artist","Environment Artist","Character Artist","Technical Artist","Art Director","Animator","Lead Artist","VFX Artist","UI Artist","UI/UX Designer","Audio Designer","Composer","Sound Designer","Audio Director","Writer","Narrative Director","QA Tester","QA Lead","QA Analyst","Community Manager","Live Operations","Product Manager","Creative Director","Studio Head","Technical Support Lead","Localization","Marketing"];
 
@@ -233,6 +242,7 @@
     opts = opts || {}; injectClaimStyles();
     var isAdd = opts.mode === "addGame";
     var selStudioSlug = null;
+    var ident = getIdentity();
     var isGame = !!opts.game_title;
     var showRole = isGame || isAdd;
     var ov = document.createElement("div"); ov.className = "dq-modal-ov";
@@ -242,11 +252,12 @@
       '<div class="dq-sub">' + (isAdd ? 'Not in the catalogue yet? Add the game and your role. ' : isGame ? 'On <b>' + esc(opts.game_title) + '</b>. ' : '') +
         'A person reviews every submission — nothing appears on the site until we verify it (usually within a day).</div>' +
       (isAdd ? '<label>Game title</label><input id="dqc-gtitle" autocomplete="off" value="' + esc(titleCase(opts.prefillTitle || "")) + '" placeholder="e.g. City of Heroes"><div id="dqc-gexist"></div>' +
-        '<div class="dq-row2"><div><label>Studio <span style="font-weight:400;color:var(--muted,#8b98a9)">— search existing</span></label><input id="dqc-gstudio" autocomplete="off" placeholder="Start typing…"></div>' +
+        '<div class="dq-row2"><div><label>Studio <span style="font-weight:400;color:var(--muted,#8b98a9)">— search existing</span></label><input id="dqc-gstudio" autocomplete="off" value="' + esc(opts.prefillStudio || "") + '" placeholder="Start typing…"></div>' +
         '<div><label>Game\'s launch year <span style="font-weight:400;color:var(--muted,#8b98a9)">— optional</span></label><input id="dqc-gyear" placeholder="2004"></div></div>' +
         '<label>Platforms <span style="font-weight:400;color:var(--muted,#8b98a9)">— optional, comma-separated</span></label><input id="dqc-gplat" placeholder="Microsoft Windows">' : '') +
-      '<label>Your name (as it should be credited)</label><input id="dqc-name" value="' + esc(opts.person_name || "") + '" placeholder="Jane Doe">' +
-      '<label>Your email</label><input id="dqc-email" type="email" placeholder="you@example.com">' +
+      '<label>Your name (as it should be credited)</label><input id="dqc-name" value="' + esc(opts.prefillName || opts.person_name || ident.name || "") + '" placeholder="Jane Doe">' +
+      '<label>Your email</label><input id="dqc-email" type="email" value="' + esc(ident.email || "") + '" placeholder="you@example.com">' +
+      ((ident.name || ident.email) ? '<div class="dq-idnote">Name and email remembered on this device · <a data-clearid style="cursor:pointer">Clear</a></div>' : '') +
       (showRole ? '<label>Your headline role <span style="font-weight:400;color:var(--muted,#8b98a9)">— the title to show first; your call</span></label><input id="dqc-role" list="dqc-roles-list" autocomplete="off" placeholder="Start typing a role…"><datalist id="dqc-roles-list">' + ROLES.map(function (r) { return '<option value="' + esc(r) + '"></option>'; }).join("") + '</datalist>' +
         '<label>Other titles you held on this game <span style="font-weight:400;color:var(--muted,#8b98a9)">— optional, comma-separated</span></label><input id="dqc-roles2" placeholder="Technical Support Lead, Game Designer, Content Manager">' : '') +
       '<label>Links that help show this is you <span style="font-weight:400;color:var(--muted,#8b98a9)">— LinkedIn, portfolio / ArtStation, studio team page. One per line, optional</span></label><textarea id="dqc-proof" placeholder="https://linkedin.com/in/you&#10;https://yourstudio.com/team"></textarea>' +
@@ -266,6 +277,7 @@
       var name = val("dqc-name"), email = val("dqc-email"), role = val("dqc-role"),
           rolesOther = val("dqc-roles2"),
           proof = val("dqc-proof"), note = val("dqc-note");
+      setIdentity(name, email);
       var subj = isAdd ? ("New game + credit: " + (val("dqc-gtitle") || "(untitled)"))
               : isGame ? ("Credit claim: " + opts.game_title)
               : ("Profile claim: " + (name || opts.person_name || ""));
@@ -312,7 +324,10 @@
       };
       if (gtitle && gexist) { gtitle.addEventListener("input", function () { clearTimeout(gt); gt = setTimeout(checkExist, 300); }); checkExist(); }
     }
-    var firstEl = ov.querySelector(isAdd ? "#dqc-gtitle" : "#dqc-name"); if (firstEl) firstEl.focus();
+    var clr = ov.querySelector("[data-clearid]");
+    if (clr) clr.onclick = function (e) { e.preventDefault(); clearIdentity(); var n = ov.querySelector("#dqc-name"), em = ov.querySelector("#dqc-email"), nt = ov.querySelector(".dq-idnote"); if (n) n.value = ""; if (em) em.value = ""; if (nt) nt.remove(); if (n) n.focus(); };
+    // if we already know who you are, jump focus to the game (add) or role
+    var firstEl = ov.querySelector(isAdd ? "#dqc-gtitle" : ((ident.name && ident.email && showRole) ? "#dqc-role" : "#dqc-name")); if (firstEl) firstEl.focus();
   }
 
   w.DQ = {

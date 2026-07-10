@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sign in · DevQuest Credits</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="app.css">
+<style>
+  .signcard{max-width:440px;margin:8vh auto 0;background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:30px}
+  .signcard h1{font-size:24px;font-weight:850;letter-spacing:-.5px;margin:0 0 8px}
+  .signcard p{color:var(--muted);font-size:14.5px;margin:0 0 18px}
+  .signcard input{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:12px 14px;color:var(--text);font-size:15px;font-family:inherit;outline:none}
+  .signcard input:focus{border-color:var(--accent)}
+  .signcard .btn{width:100%;justify-content:center;margin-top:14px;font-size:15px;padding:12px}
+  .msg{font-size:13.5px;margin-top:14px}
+  .msg.err{color:var(--pink)} .msg.ok{color:var(--green)}
+  .who{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+  .who .av{width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;color:#0b0e14;background:var(--accent)}
+</style>
+</head>
+<body>
+<div class="topbar"><div class="container">
+  <div class="brand"><a class="brandhome" href="/credits/" aria-label="DevQuest Credits home"><svg class="mark" viewBox="0 0 32 32" aria-hidden="true"><rect x="1" y="1" width="8" height="8" rx="2" fill="var(--gold)"/><rect x="12" y="1" width="8" height="8" rx="2" fill="#2d333b"/><rect x="23" y="1" width="8" height="8" rx="2" fill="#2d333b"/><rect x="1" y="12" width="8" height="8" rx="2" fill="#2d333b"/><rect x="12" y="12" width="8" height="8" rx="2" fill="var(--gold)"/><rect x="23" y="12" width="8" height="8" rx="2" fill="#2d333b"/><rect x="1" y="23" width="8" height="8" rx="2" fill="#2d333b"/><rect x="12" y="23" width="8" height="8" rx="2" fill="#2d333b"/><rect x="23" y="23" width="8" height="8" rx="2" fill="var(--gold)"/></svg><span class="wm">Dev<span class="q">Quest</span><span class="tld">.gg</span></span></a> <span class="cr">CREDITS</span> <span class="beta">BETA</span></div>
+  <div class="topnav"><a class="back" href="/credits/">← Credits</a></div>
+</div></div>
+
+<div class="container"><div class="signcard" id="card"><div class="loading">Loading…</div></div></div>
+
+<script src="api.js"></script>
+<script>
+(function(){
+  var card = document.getElementById("card");
+  function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});}
+  function initials(n){return String(n||"?").trim().split(/\s+/).slice(0,2).map(function(x){return x[0]||"";}).join("").toUpperCase()||"?";}
+
+  // 1) Arriving from a magic link: #token=...&slug=...
+  var hash = location.hash.replace(/^#/, "");
+  if(hash.indexOf("token=") >= 0){
+    var params = {};
+    hash.split("&").forEach(function(kv){ var i=kv.indexOf("="); if(i>0) params[kv.slice(0,i)]=decodeURIComponent(kv.slice(i+1)); });
+    if(params.token){
+      DQAPI.setToken(params.token);
+      history.replaceState(null, "", location.pathname); // strip token from URL
+    }
+  }
+
+  // 2) Bounced back from an expired/invalid link
+  var q = new URLSearchParams(location.search);
+  var errNote = q.get("signin") === "expired" ? "That sign-in link expired. Request a new one below."
+              : q.get("signin") === "invalid" ? "That sign-in link wasn't valid. Request a new one below." : "";
+
+  // 3) Already signed in?
+  function showSignedIn(person){
+    card.innerHTML =
+      '<div class="who"><div class="av">' + esc(initials(person.name)) + '</div>' +
+      '<div><div style="font-weight:800;font-size:16px">' + esc(person.name) + '</div>' +
+      '<div class="mut" style="font-size:13px">' + esc(person.email || "") + '</div></div></div>' +
+      '<p>You’re signed in.</p>' +
+      '<a class="btn primary" href="person.html?slug=' + encodeURIComponent(person.slug) + '">Go to my page</a>' +
+      '<a class="btn ghost" id="signout" style="margin-top:10px;justify-content:center;width:100%">Sign out</a>';
+    document.getElementById("signout").onclick = function(){ DQAPI.logout().then(function(){ location.reload(); }); };
+  }
+  function showForm(){
+    card.innerHTML =
+      '<h1>Sign in to claim your credits</h1>' +
+      '<p>Enter your email and we’ll send you a one-time sign-in link. No password.</p>' +
+      '<input id="email" type="email" placeholder="you@example.com" autocomplete="email">' +
+      '<button class="btn primary" id="send">Email me a link →</button>' +
+      '<div class="msg" id="msg">' + (errNote ? '<span class="err">' + esc(errNote) + '</span>' : '') + '</div>';
+    var email = document.getElementById("email"), btn = document.getElementById("send"), msg = document.getElementById("msg");
+    email.focus();
+    function send(){
+      var v = (email.value || "").trim();
+      if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v)){ msg.innerHTML = '<span class="err">Enter a valid email.</span>'; return; }
+      btn.disabled = true; btn.textContent = "Sending…";
+      DQAPI.requestLink(v).then(function(r){
+        if(r.ok){ card.innerHTML = '<h1>Check your inbox ✉</h1><p>We sent a sign-in link to <b style="color:var(--text)">' + esc(v) + '</b>. It works once and expires in 15 minutes. You can close this tab after clicking it.</p>'; }
+        else { btn.disabled = false; btn.textContent = "Email me a link →"; msg.innerHTML = '<span class="err">' + esc((r.data && r.data.error) || "Something went wrong. Try again.") + '</span>'; }
+      }).catch(function(){ btn.disabled = false; btn.textContent = "Email me a link →"; msg.innerHTML = '<span class="err">Network error. Try again.</span>'; });
+    }
+    btn.onclick = send;
+    email.addEventListener("keydown", function(e){ if(e.key === "Enter") send(); });
+  }
+
+  if(DQAPI.isSignedIn()){
+    DQAPI.me().then(function(r){ if(r.ok && r.data.authenticated){ showSignedIn(r.data.person); } else { DQAPI.clearToken(); showForm(); } }).catch(showForm);
+  } else {
+    showForm();
+  }
+})();
+</script>
+</body>
+</html>
