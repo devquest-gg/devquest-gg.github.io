@@ -99,7 +99,7 @@
         '<div class="av">'+DQ.esc(DQ.initials(c.name))+'</div>'+
         '<div class="rmain"><div class="rname"><a href="person.html?slug='+encodeURIComponent(c.person_slug)+'">'+DQ.esc(c.name)+'</a>'+((c.releases&&c.releases.length)?' '+DQ.uniq(c.releases).map(function(rl){return '<span class="reltag '+DQ.releaseClass(rl)+'">'+DQ.esc(rl)+'</span>';}).join(' '):'')+'</div>'+
           '<div class="rsub"><span class="rrole">'+DQ.esc(c.role||"Role not recorded")+'</span>'+more+(sigs?' &nbsp; '+sigs:'')+(vouch?' &nbsp; '+vouch:'')+proof+'</div></div>'+
-        '<div class="rright">'+vbtn+'</div>'+
+        '<div class="rright">'+vbtn+'<a class="reportlink" href="mailto:studios@devquest.gg?subject='+encodeURIComponent("Report: "+title)+'&body='+encodeURIComponent("Reporting a credit on "+title+" by "+c.name+".\n\nReason:\n")+'" title="Report this credit" style="color:var(--muted);font-size:12px;margin-left:12px;text-decoration:none">⚑</a></div>'+
       '</div>';
     }).join("") + '</div>' : '<div class="empty">No individual credits recorded yet.<br>If you worked on it, be the first to claim your credit.</div>';
 

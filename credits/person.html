@@ -160,8 +160,11 @@
           var nlinks = row.querySelector(".ed-proof").value.split(/\n+/).map(function(s){return s.trim();}).filter(Boolean);
           var nverif = nlinks.some(function(u){return /linkedin\.com/i.test(u);}) ? ["linkedin_self"] : [];
           var nreleases = DQ.uniq(row.querySelector(".ed-release").value.split(",").map(function(s){return s.trim();}).filter(Boolean));
-          this.textContent = "Saving…";
-          DQAPI.updateCredit(id, { role: nrole, roles_other: nothers, links: nlinks, verification: nverif, releases: nreleases }).then(function(){ location.reload(); });
+          var sbtn = this; sbtn.textContent = "Saving…";
+          DQAPI.updateCredit(id, { role: nrole, roles_other: nothers, links: nlinks, verification: nverif, releases: nreleases }).then(function(r){
+            if(r && r.ok){ location.reload(); }
+            else { sbtn.textContent = "Save"; alert((r && r.data && r.data.error) || "Could not save."); }
+          });
         };
       };
     });
