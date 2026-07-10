@@ -98,6 +98,9 @@ h2.sec{font-size:24px;font-weight:800;letter-spacing:-.5px;margin:0 0 6px}
 /* headline role — the featured title, brand gold */
 .rrole{color:var(--gold);font-weight:700}
 
+/* release/version tag (PC port, Remaster, DLC…) next to a game title */
+.reltag{font-size:10.5px;font-weight:700;color:var(--purple);border:1px solid rgba(163,113,247,.35);background:rgba(163,113,247,.09);border-radius:6px;padding:1px 7px;margin-left:8px;vertical-align:middle;white-space:nowrap}
+
 /* "+N more roles" affordance (hover shows the full list via title) */
 .rmore{font-size:11px;font-weight:700;color:var(--accent);border:1px solid rgba(88,166,255,.3);background:rgba(88,166,255,.07);border-radius:6px;padding:0 6px;margin-left:5px;cursor:help}
 
