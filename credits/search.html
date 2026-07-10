@@ -126,12 +126,45 @@
     return peopleRows(m.rows);
   }
 
+  // ---- live people (from the backend) ----
+  var peopleReq = 0;
+  function peopleRowsLive(ppl){
+    return '<div class="rows">'+ppl.map(function(p){
+      return '<a class="row" href="person.html?slug='+encodeURIComponent(p.slug)+'"><div class="av">'+DQ.esc(DQ.initials(p.name))+'</div>'+
+        '<div class="rmain"><div class="rname">'+DQ.esc(p.name)+'</div><div class="rsub">'+p.credit_count+' credit'+(p.credit_count===1?'':'s')+'</div></div></a>';
+    }).join("")+'</div>';
+  }
+  function renderPeopleLive(q){
+    document.getElementById("np").textContent="";
+    if(!q){ results.innerHTML='<div class="empty">Type to search people.</div>'; return; }
+    if(!window.DQAPI){ results.innerHTML='<div class="empty">People search needs the live service.</div>'; return; }
+    results.innerHTML='<div class="loading">Searching people…</div>';
+    var my=++peopleReq;
+    DQAPI.searchPeople(q).then(function(r){
+      if(my!==peopleReq) return;
+      var ppl=(r.data&&r.data.people)||[];
+      document.getElementById("np").textContent=ppl.length?" "+ppl.length:"";
+      results.innerHTML = ppl.length ? peopleRowsLive(ppl)
+        : '<div class="empty">No people match “'+DQ.esc(q)+'”.<br><span class="mut">People appear once they claim a credit.</span></div>';
+    }).catch(function(){ if(my===peopleReq) results.innerHTML='<div class="empty">Could not search people right now.</div>'; });
+  }
+  function appendLivePeople(q){
+    if(!q || !window.DQAPI) return;
+    var my=++peopleReq;
+    DQAPI.searchPeople(q).then(function(r){
+      if(my!==peopleReq) return;
+      var ppl=(r.data&&r.data.people)||[];
+      if(ppl.length) results.insertAdjacentHTML("beforeend", '<div class="csec"><div class="rowhead"><div class="eyebrow">People</div></div>'+peopleRowsLive(ppl)+'</div>');
+    }).catch(function(){});
+  }
+
   function render(){
     var q = input.value.trim();
-    var html = tab==="all" ? renderAll(q) : tab==="studios" ? renderStudios(q) : tab==="people" ? renderPeople(q) : renderGames(q);
+    var u = new URL(location.href); u.searchParams.set("tab", tab); q ? u.searchParams.set("q", q) : u.searchParams.delete("q"); history.replaceState(null, "", u);
+    if(tab==="people"){ renderPeopleLive(q); return; }
+    var html = tab==="all" ? renderAll(q) : tab==="studios" ? renderStudios(q) : renderGames(q);
     results.innerHTML = html;
-    var u = new URL(location.href); u.searchParams.set("tab", tab); q ? u.searchParams.set("q", q) : u.searchParams.delete("q");
-    history.replaceState(null, "", u);
+    if(tab==="all") appendLivePeople(q);
   }
 
   // which indexes the current tab needs

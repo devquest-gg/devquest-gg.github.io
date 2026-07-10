@@ -34,6 +34,7 @@
     // reads
     gameCredits: function (slug) { return req("GET", "/credits/game/" + encodeURIComponent(slug)); },
     personCredits: function (slug) { return req("GET", "/credits/person/" + encodeURIComponent(slug)); },
+    searchPeople: function (q) { return req("GET", "/people/search?q=" + encodeURIComponent(q)); },
     // writes
     createCredit: function (payload) { return req("POST", "/credits", payload); },
     updateCredit: function (id, payload) { return req("PATCH", "/credits/" + id, payload); },
