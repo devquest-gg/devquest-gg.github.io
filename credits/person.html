@@ -93,7 +93,7 @@
         : '';
       return '<div class="row"'+((isOwn&&c.live&&c.id)?' data-id="'+c.id+'"':'')+'>'+
         grip +
-        '<div class="rmain"><div class="rname"><a href="game.html?slug='+encodeURIComponent(c.game_slug)+'">'+DQ.esc(c.game_title)+'</a>'+((c.releases&&c.releases.length)?' '+c.releases.map(function(rl){return '<span class="reltag">'+DQ.esc(rl)+'</span>';}).join(' '):'')+'</div>'+
+        '<div class="rmain"><div class="rname"><a href="game.html?slug='+encodeURIComponent(c.game_slug)+'">'+DQ.esc(c.game_title)+'</a>'+((c.releases&&c.releases.length)?' '+DQ.uniq(c.releases).map(function(rl){return '<span class="reltag '+DQ.releaseClass(rl)+'">'+DQ.esc(rl)+'</span>';}).join(' '):'')+'</div>'+
           '<div class="rsub"><span class="rrole">'+DQ.esc(c.role||"Role not recorded")+'</span>'+more+(sigs?' &nbsp; '+sigs:'')+(vouch?' &nbsp; '+vouch:'')+proof+'</div></div>'+
         '<div class="rright">'+(c.year?'<span class="yr">'+c.year+'</span>':'')+controls+'</div>'+
       '</div>';
@@ -159,7 +159,7 @@
           var nothers = row.querySelector(".ed-others").value.split(",").map(function(s){return s.trim();}).filter(Boolean);
           var nlinks = row.querySelector(".ed-proof").value.split(/\n+/).map(function(s){return s.trim();}).filter(Boolean);
           var nverif = nlinks.some(function(u){return /linkedin\.com/i.test(u);}) ? ["linkedin_self"] : [];
-          var nreleases = row.querySelector(".ed-release").value.split(",").map(function(s){return s.trim();}).filter(Boolean);
+          var nreleases = DQ.uniq(row.querySelector(".ed-release").value.split(",").map(function(s){return s.trim();}).filter(Boolean));
           this.textContent = "Saving…";
           DQAPI.updateCredit(id, { role: nrole, roles_other: nothers, links: nlinks, verification: nverif, releases: nreleases }).then(function(){ location.reload(); });
         };

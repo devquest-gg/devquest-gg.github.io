@@ -303,7 +303,7 @@
       var proofArr = proof ? proof.split(/\n+/).map(function (s) { return s.trim(); }).filter(Boolean) : [];
       var verification = proofArr.some(function (u) { return /linkedin\.com/i.test(u); }) ? ["linkedin_self"] : [];
       function payload() {
-        var relArr = val("dqc-release") ? val("dqc-release").split(",").map(function (s) { return s.trim(); }).filter(Boolean) : [];
+        var relArr = uniq(val("dqc-release") ? val("dqc-release").split(",").map(function (s) { return s.trim(); }).filter(Boolean) : []);
       var p = { name: name, role: role, roles_other: rolesArr, verification: verification, source_url: proofArr[0] || "", links: proofArr, releases: relArr };
         if (isAdd) {
           p.new_game = { title: val("dqc-gtitle"), studio: val("dqc-gstudio"), year: val("dqc-gyear"),
@@ -362,9 +362,25 @@
     var firstEl = ov.querySelector(isAdd ? "#dqc-gtitle" : ((ident.name && ident.email && showRole) ? "#dqc-role" : "#dqc-name")); if (firstEl) firstEl.focus();
   }
 
+  // De-dupe a list case-insensitively, keeping first + trimmed.
+  function uniq(arr) {
+    var seen = {}, out = [];
+    (arr || []).forEach(function (x) { var t = String(x).trim(), k = t.toLowerCase(); if (!t || seen[k]) return; seen[k] = 1; out.push(t); });
+    return out;
+  }
+  // Classify a release pill into one of four restrained categories.
+  function releaseClass(label) {
+    var s = String(label || "").toLowerCase();
+    if (/\bport\b|remaster/.test(s)) return "port";
+    if (/live|season|update|patch/.test(s)) return "live";
+    if (/xdev|x-dev|outsourc|co-?dev|external|support studio/.test(s)) return "xdev";
+    return "content";                                   // DLC, expansions, named releases
+  }
+
   w.DQ = {
     bkt: bkt, qs: qs, getJSON: getJSON, loadEntity: loadEntity, loadIndex: loadIndex,
     rank: rank, searchRows: searchRows, attachSuggest: attachSuggest, openClaim: openClaim,
+    uniq: uniq, releaseClass: releaseClass,
     esc: esc, initials: initials, slugify: slugify,
     SIG_LABEL: {
       in_game_credits: "In-game credits", studio_website: "Studio site", press_kit: "Press kit",

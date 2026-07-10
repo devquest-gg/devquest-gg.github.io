@@ -98,8 +98,12 @@ h2.sec{font-size:24px;font-weight:800;letter-spacing:-.5px;margin:0 0 6px}
 /* headline role — the featured title, brand gold */
 .rrole{color:var(--gold);font-weight:700}
 
-/* release/version tag (PC port, Remaster, DLC…) next to a game title */
-.reltag{font-size:10.5px;font-weight:700;color:var(--purple);border:1px solid rgba(163,113,247,.35);background:rgba(163,113,247,.09);border-radius:6px;padding:1px 7px;margin-left:8px;vertical-align:middle;white-space:nowrap}
+/* release/version tags next to a game title. Base = content (DLC/expansions,
+   purple); category classes recolor for live service / ports / external work. */
+.reltag{font-size:10.5px;font-weight:700;border-radius:6px;padding:1px 7px;margin-left:8px;vertical-align:middle;white-space:nowrap;color:var(--purple);border:1px solid rgba(163,113,247,.35);background:rgba(163,113,247,.09)}
+.reltag.live{color:var(--green);border-color:rgba(63,185,80,.35);background:rgba(63,185,80,.09)}
+.reltag.port{color:var(--accent);border-color:rgba(88,166,255,.35);background:rgba(88,166,255,.09)}
+.reltag.xdev{color:var(--gold);border-color:rgba(224,178,58,.35);background:rgba(224,178,58,.09)}
 
 /* "+N more roles" affordance (hover shows the full list via title) */
 .rmore{font-size:11px;font-weight:700;color:var(--accent);border:1px solid rgba(88,166,255,.3);background:rgba(88,166,255,.07);border-radius:6px;padding:0 6px;margin-left:5px;cursor:help}

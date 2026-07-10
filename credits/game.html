@@ -97,7 +97,7 @@
         ? '<a class="vouchbtn" data-id="'+c.id+'" style="font-size:12px;font-weight:700;color:var(--green);border:1px solid rgba(63,185,80,.35);background:rgba(63,185,80,.08);border-radius:8px;padding:4px 11px;cursor:pointer">Vouch</a>' : '';
       return '<div class="row">'+
         '<div class="av">'+DQ.esc(DQ.initials(c.name))+'</div>'+
-        '<div class="rmain"><div class="rname"><a href="person.html?slug='+encodeURIComponent(c.person_slug)+'">'+DQ.esc(c.name)+'</a>'+((c.releases&&c.releases.length)?' '+c.releases.map(function(rl){return '<span class="reltag">'+DQ.esc(rl)+'</span>';}).join(' '):'')+'</div>'+
+        '<div class="rmain"><div class="rname"><a href="person.html?slug='+encodeURIComponent(c.person_slug)+'">'+DQ.esc(c.name)+'</a>'+((c.releases&&c.releases.length)?' '+DQ.uniq(c.releases).map(function(rl){return '<span class="reltag '+DQ.releaseClass(rl)+'">'+DQ.esc(rl)+'</span>';}).join(' '):'')+'</div>'+
           '<div class="rsub"><span class="rrole">'+DQ.esc(c.role||"Role not recorded")+'</span>'+more+(sigs?' &nbsp; '+sigs:'')+(vouch?' &nbsp; '+vouch:'')+proof+'</div></div>'+
         '<div class="rright">'+vbtn+'</div>'+
       '</div>';
