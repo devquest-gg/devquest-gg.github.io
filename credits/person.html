@@ -84,17 +84,18 @@
       var more = others.length ? ' <span class="rmore" title="Also: '+DQ.esc(others.join(", "))+'">+'+others.length+' more</span>' : '';
       var vouch = c.vouch_count ? '<span class="sig" title="peer vouches">◈ '+c.vouch_count+'</span>' : '';
       var proof = (c.links && c.links.length) ? ' <a class="sig" href="'+DQ.esc(c.links[0])+'" target="_blank" rel="noopener noreferrer" title="'+DQ.esc(c.links.join(", "))+'" style="text-decoration:none">proof ↗</a>' : '';
-      var move = (isOwn && c.live && c.id && credits.length>1)
-        ? '<a class="mvup" data-id="'+c.id+'" title="Move up" style="color:var(--muted);cursor:pointer;font-size:13px;margin-right:2px">▲</a><a class="mvdn" data-id="'+c.id+'" title="Move down" style="color:var(--muted);cursor:pointer;font-size:13px;margin-right:10px">▼</a>'
+      var grip = (isOwn && c.live && c.id && credits.length>1)
+        ? '<span class="drag-grip" title="Drag to reorder" style="cursor:grab;color:var(--muted);font-size:16px;line-height:1;user-select:none;padding:0 10px 0 2px">⠿</span>'
         : '';
       var controls = (isOwn && c.live && c.id)
         ? '<a class="editcredit" data-id="'+c.id+'" data-role="'+DQ.esc(c.role||"")+'" data-others="'+DQ.esc((c.roles_other||[]).join(", "))+'" data-links="'+DQ.esc((c.links||[]).join("\n"))+'" style="color:var(--accent);font-size:12px;cursor:pointer;margin-left:10px">Edit</a>'+
           '<a class="rmvcredit" data-id="'+c.id+'" style="color:var(--pink);font-size:12px;cursor:pointer;margin-left:10px">Remove</a>'
         : '';
-      return '<div class="row">'+
+      return '<div class="row"'+((isOwn&&c.live&&c.id)?' data-id="'+c.id+'"':'')+'>'+
+        grip +
         '<div class="rmain"><div class="rname"><a href="game.html?slug='+encodeURIComponent(c.game_slug)+'">'+DQ.esc(c.game_title)+'</a></div>'+
           '<div class="rsub"><span class="rrole">'+DQ.esc(c.role||"Role not recorded")+'</span>'+more+(sigs?' &nbsp; '+sigs:'')+(vouch?' &nbsp; '+vouch:'')+proof+'</div></div>'+
-        '<div class="rright">'+move+(c.year?'<span class="yr">'+c.year+'</span>':'')+controls+'</div>'+
+        '<div class="rright">'+(c.year?'<span class="yr">'+c.year+'</span>':'')+controls+'</div>'+
       '</div>';
     }).join("") + '</div>' : '<div class="empty">No credits on record yet.'+(isOwn?' Add the games you worked on.':'')+'</div>';
 
@@ -160,15 +161,40 @@
         };
       };
     });
-    var liveOrder = credits.filter(function(c){ return c.live && c.id; }).map(function(c){ return String(c.id); });
-    function moveCredit(id, delta){
-      var i = liveOrder.indexOf(String(id)), j = i + delta;
-      if(i < 0 || j < 0 || j >= liveOrder.length) return;
-      var t = liveOrder[i]; liveOrder[i] = liveOrder[j]; liveOrder[j] = t;
-      DQAPI.reorderCredits(liveOrder).then(function(){ location.reload(); });
-    }
-    Array.prototype.forEach.call(document.querySelectorAll(".mvup"), function(el){ el.onclick = function(){ moveCredit(el.dataset.id, -1); }; });
-    Array.prototype.forEach.call(document.querySelectorAll(".mvdn"), function(el){ el.onclick = function(){ moveCredit(el.dataset.id, 1); }; });
+    // Drag-and-drop reorder (drag starts from the ⠿ grip so row links still click).
+    (function(){
+      var rowsEl = app.querySelector(".rows");
+      if(!isOwn || !rowsEl) return;
+      var rows = rowsEl.querySelectorAll(".row[data-id]");
+      if(rows.length < 2) return;
+      var dragged = null;
+      Array.prototype.forEach.call(rows, function(row){
+        var grip = row.querySelector(".drag-grip");
+        if(grip){
+          grip.addEventListener("mousedown", function(){ row.draggable = true; });
+          grip.addEventListener("mouseup", function(){ setTimeout(function(){ if(!dragged) row.draggable = false; }, 0); });
+        }
+        row.addEventListener("dragstart", function(e){ dragged = row; row.style.opacity = ".4"; if(e.dataTransfer) e.dataTransfer.effectAllowed = "move"; });
+        row.addEventListener("dragend", function(){ row.style.opacity = ""; row.draggable = false; var moved = dragged; dragged = null; if(moved) saveOrder(); });
+      });
+      rowsEl.addEventListener("dragover", function(e){
+        if(!dragged) return;
+        e.preventDefault();
+        var after = afterEl(e.clientY);
+        if(after == null) rowsEl.appendChild(dragged);
+        else rowsEl.insertBefore(dragged, after);
+      });
+      function afterEl(y){
+        var els = Array.prototype.slice.call(rowsEl.querySelectorAll(".row[data-id]"));
+        var closest = { offset: -Infinity, el: null };
+        els.forEach(function(el){ if(el === dragged) return; var b = el.getBoundingClientRect(); var off = y - b.top - b.height/2; if(off < 0 && off > closest.offset){ closest = { offset: off, el: el }; } });
+        return closest.el;
+      }
+      function saveOrder(){
+        var order = Array.prototype.map.call(rowsEl.querySelectorAll(".row[data-id]"), function(r){ return r.getAttribute("data-id"); });
+        DQAPI.reorderCredits(order).then(function(){ location.reload(); });
+      }
+    })();
     });
   }).catch(function(e){
     app.innerHTML = '<div class="container"><div class="empty">Something went wrong loading this profile.<br><span class="mut">'+DQ.esc(e && e.message)+'</span></div></div>';

@@ -163,7 +163,8 @@
             return '<a class="dq-row" href="person.html?slug=' + encodeURIComponent(p.slug) + '"><span class="tag dq-tag-person">Person</span>' +
               '<span class="txt"><span class="nm">' + esc(p.name) + '</span><span class="sb">' + p.credit_count + ' credit' + (p.credit_count === 1 ? '' : 's') + '</span></span></a>';
           }).join("");
-          box.insertAdjacentHTML("afterbegin", h);
+          var ex = box.querySelector(".dq-people-live"); if (ex) ex.remove();  // avoid stacking on re-render
+          box.insertAdjacentHTML("afterbegin", '<div class="dq-people-live">' + h + '</div>');
         }).catch(function () {});
       }
     }
