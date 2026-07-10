@@ -39,6 +39,7 @@
     createCredit: function (payload) { return req("POST", "/credits", payload); },
     updateCredit: function (id, payload) { return req("PATCH", "/credits/" + id, payload); },
     deleteCredit: function (id) { return req("DELETE", "/credits/" + id); },
+    reorderCredits: function (order) { return req("POST", "/credits/reorder", { order: order }); },
     vouch: function (creditId) { return req("POST", "/vouch", { credit_id: creditId }); },
     unvouch: function (creditId) { return req("DELETE", "/vouch", { credit_id: creditId }); },
     updateProfile: function (payload) { return req("PATCH", "/me", payload); },
