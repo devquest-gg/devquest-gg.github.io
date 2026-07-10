@@ -59,15 +59,21 @@
 
     // Merge credits by game_slug — live (API) wins over seed (static).
     var byGame = {};
-    ((stat && stat.credits) || []).forEach(function(c){ byGame[c.game_slug] = { game_slug:c.game_slug, game_title:c.game_title, year:c.year||null, role:c.role, roles_other:c.roles_other||[], verification:c.verification||[], vouch_count:0, live:false }; });
-    ((api && api.credits) || []).forEach(function(c){ byGame[c.game_slug] = { id:c.id, game_slug:c.game_slug, game_title:c.game_title, year:c.year||null, role:c.role, roles_other:c.roles_other||[], verification:c.verification||[], links:c.links||[], position:(c.position!=null?c.position:null), releases:c.releases||[], vouch_count:c.vouch_count||0, live:true }; });
+    ((stat && stat.credits) || []).forEach(function(c){ byGame[c.game_slug] = { game_slug:c.game_slug, game_title:c.game_title, year:c.year||null, studio:c.studio||null, role:c.role, roles_other:c.roles_other||[], verification:c.verification||[], vouch_count:0, live:false }; });
+    ((api && api.credits) || []).forEach(function(c){ byGame[c.game_slug] = { id:c.id, game_slug:c.game_slug, game_title:c.game_title, year:c.year||null, studio:c.studio||null, role:c.role, roles_other:c.roles_other||[], verification:c.verification||[], links:c.links||[], position:(c.position!=null?c.position:null), releases:c.releases||[], vouch_count:c.vouch_count||0, live:true }; });
     var credits = Object.keys(byGame).map(function(k){ return byGame[k]; });
 
     // Resolve missing launch years from the static catalogue (added games already
     // carry a year; catalogue games get theirs from the shard), then sort + render.
     Promise.all(credits.map(function(c){
-      if(c.year != null) return Promise.resolve();
-      return DQ.loadEntity("games", c.game_slug).then(function(gg){ if(gg && gg.year != null) c.year = gg.year; }).catch(function(){});
+      if(c.year != null && c.studio) return Promise.resolve();
+      return DQ.loadEntity("games", c.game_slug).then(function(gg){
+        if(gg){
+          if(c.year == null && gg.year != null) c.year = gg.year;
+          if(!c.studio && gg.studios && gg.studios.length) c.studio = gg.studios[0];
+          else if(!c.studio && gg.studio) c.studio = gg.studio;
+        }
+      }).catch(function(){});
     })).then(function(){
     credits.sort(function(a,b){
       var pa=(a.position!=null)?a.position:1e9, pb=(b.position!=null)?b.position:1e9;
@@ -78,12 +84,38 @@
     document.title = name + " · DevQuest Credits";
     document.getElementById("crumb").textContent = name;
 
+    // ---- Career Snapshot: honest, computable, ungameable stats only ----
+    var years = credits.map(function(c){ return c.year; }).filter(function(y){ return y; });
+    var minY = years.length ? Math.min.apply(null, years) : null;
+    var maxY = years.length ? Math.max.apply(null, years) : null;
+    var span = (minY && maxY) ? (maxY - minY) : 0;
+    var studioSet = {}; credits.forEach(function(c){ if(c.studio){ studioSet[String(c.studio).toLowerCase()] = 1; } });
+    var studioCount = Object.keys(studioSet).length;
+    var liveCount = credits.filter(function(c){ return (c.releases||[]).some(function(rl){ return DQ.releaseClass(rl)==="live"; }); }).length;
+    function snapStat(n, label, sub){ return '<div class="snap"><b>'+n+'</b><span>'+label+(sub?' <em>'+sub+'</em>':'')+'</span></div>'; }
+    var snapItems = credits.length ? (
+        snapStat(credits.length, 'shipped '+(credits.length===1?'game':'games')) +
+        (span>0 ? snapStat(span, 'years in games', minY+'–'+maxY) : '') +
+        (studioCount>0 ? snapStat(studioCount, 'studio'+(studioCount===1?'':'s')) : '') +
+        (liveCount>0 ? snapStat(liveCount, 'live-service '+(liveCount===1?'title':'titles')) : '')
+      ) : '';
+    var snapshotHTML = snapItems ? '<div class="snapshot">'+snapItems+'</div>' : '';
+
+    // ---- Prominent Claim CTA (for the person looking themselves up) ----
+    var claimBanner = (!isOwn && window.DQAPI)
+      ? '<div class="claimbanner"><div class="cbtext"><b>Is this you?</b> Claim this page to edit your credits, add the games you shipped, and get peer-vouched by teammates.</div><span class="btn primary" id="claimbtn">Claim this page →</span></div>'
+      : '';
+
     var rowsHTML = credits.length ? '<div class="rows">' + credits.map(function(c){
       var sigs = (c.verification||[]).map(function(s){ return '<span class="sig">'+DQ.esc(DQ.SIG_LABEL[s]||s)+'</span>'; }).join("");
       var others = c.roles_other || [];
       var more = others.length ? ' <span class="rmore" title="Also: '+DQ.esc(others.join(", "))+'">+'+others.length+' more</span>' : '';
-      var vouch = c.vouch_count ? '<span class="sig" title="peer vouches">◈ '+c.vouch_count+'</span>' : '';
-      var proof = (c.links && c.links.length) ? ' <a class="sig" href="'+DQ.esc(c.links[0])+'" target="_blank" rel="noopener noreferrer" title="'+DQ.esc(c.links.join(", "))+'" style="text-decoration:none">proof ↗</a>' : '';
+      // Honest verification tiers: peer vouches are the loud, real signal.
+      // Self-provided links stay quietly labeled — they are not "verified".
+      var trust = c.vouch_count
+        ? '<span class="sig vouched" title="Confirmed by teammates who shipped the same game">✓ Verified by '+c.vouch_count+' teammate'+(c.vouch_count===1?'':'s')+'</span>'
+        : (c.live ? '<span class="sig awaiting" title="No peer vouch yet — teammates who shipped this game can confirm it">🟡 Awaiting peer confirmation</span>' : '');
+      var proof = (c.links && c.links.length) ? ' <a class="sig" href="'+DQ.esc(c.links[0])+'" target="_blank" rel="noopener noreferrer" title="'+DQ.esc(c.links.join(", "))+'" style="text-decoration:none">self-added proof ↗</a>' : '';
       var grip = (isOwn && c.live && c.id && credits.length>1)
         ? '<span class="drag-grip" title="Drag to reorder" style="cursor:grab;color:var(--muted);font-size:16px;line-height:1;user-select:none;padding:0 10px 0 2px">⠿</span>'
         : '';
@@ -94,8 +126,8 @@
       return '<div class="row"'+((isOwn&&c.live&&c.id)?' data-id="'+c.id+'"':'')+'>'+
         grip +
         '<div class="rmain"><div class="rname"><a href="game.html?slug='+encodeURIComponent(c.game_slug)+'">'+DQ.esc(c.game_title)+'</a>'+((c.releases&&c.releases.length)?' '+DQ.uniq(c.releases).map(function(rl){return '<span class="reltag '+DQ.releaseClass(rl)+'">'+DQ.esc(rl)+'</span>';}).join(' '):'')+'</div>'+
-          '<div class="rsub"><span class="rrole">'+DQ.esc(c.role||"Role not recorded")+'</span>'+more+(sigs?' &nbsp; '+sigs:'')+(vouch?' &nbsp; '+vouch:'')+proof+'</div></div>'+
-        '<div class="rright">'+(c.year?'<span class="yr">'+c.year+'</span>':'')+controls+'</div>'+
+          '<div class="rsub"><span class="rrole">'+DQ.esc(c.role||"Role not recorded")+'</span>'+more+(sigs?' &nbsp; '+sigs:'')+(trust?' &nbsp; '+trust:'')+proof+'</div></div>'+
+        '<div class="rright">'+(c.year?'<span class="yr" title="Game release year"><span class="yrlbl">Released</span> '+c.year+'</span>':'')+controls+'</div>'+
       '</div>';
     }).join("") + '</div>' : '<div class="empty">No credits on record yet.'+(isOwn?' Add the games you worked on.':'')+'</div>';
 
@@ -105,7 +137,7 @@
     }).join("")+'</div>' : '';
 
     var cta = isOwn ? '<a class="btn primary" href="search.html">+ Add a credit</a>'
-            : (window.DQAPI ? '<span class="btn primary" id="claimbtn">Is this you? Claim this page</span>' : '');
+            : (window.DQAPI ? '' : '');
     var ownBanner = isOwn ? '<div class="notice" style="color:var(--green)">This is your page — add credits and they appear here live.</div>' : '';
 
     app.innerHTML =
@@ -113,14 +145,16 @@
         '<div style="display:flex;align-items:center;gap:16px">'+
           '<div class="row" style="padding:0;border:none"><div class="av" style="width:60px;height:60px;font-size:22px">'+DQ.esc(DQ.initials(name))+'</div></div>'+
           '<div><h1 style="margin:0">'+DQ.esc(name)+'</h1>'+
-          '<div class="meta">'+credits.length+' credit'+(credits.length===1?'':'s')+' on record</div>'+
+          '<div class="meta">'+(credits.length? credits.length+' shipped '+(credits.length===1?'game':'games')+(span>0? ' · '+minY+'–'+maxY : '') : 'No credits on record yet')+'</div>'+
           linksHTML +
           '</div>'+
         '</div>'+
+        snapshotHTML +
+        claimBanner +
       '</div></div>'+
       '<section class="blk"><div class="container">'+
         '<div class="rowhead"><div><div class="eyebrow">Gameography</div>'+
-          '<p class="secsub" style="margin:6px 0 0">A credit page beats a résumé bullet — verified by the people you shipped with.</p></div>'+
+          '<p class="secsub" style="margin:6px 0 0">A verified record of the games you\'ve helped create. <span class="mut">Year shown is each game\'s release date.</span></p></div>'+
           cta +
         '</div>'+
         ownBanner +
