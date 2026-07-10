@@ -96,9 +96,10 @@ h2.sec{font-size:24px;font-weight:800;letter-spacing:-.5px;margin:0 0 6px}
 .sig{display:inline-block;font-size:10.5px;font-weight:700;color:var(--muted);border:1px solid var(--border);border-radius:6px;padding:1px 7px;margin:0 3px 3px 0}
 /* peer vouch = the one real "verified" signal (loud green) */
 .sig.vouched{color:var(--green);border-color:rgba(63,185,80,.45);background:rgba(63,185,80,.10)}
-/* per-credit proof — a bare, muted link (no pill chrome). Self-reported is the
-   default state, stated once in the footer, so rows stay lean. */
-.proofln{font-size:10.5px;font-weight:600;color:var(--muted);opacity:.7;white-space:nowrap;text-decoration:none}
+/* per-credit proof — a single unobtrusive source icon. We still collect proof at
+   creation (peers/moderators can check it); it just doesn't shout on every row.
+   Self-reported is the default state, stated once in the footer. */
+.proofln{font-size:12px;font-weight:700;color:var(--muted);opacity:.5;text-decoration:none;padding:0 5px;margin-left:2px}
 .proofln:hover{opacity:1;color:var(--accent)}
 
 /* Career Snapshot — honest, computable stats above the gameography */
@@ -117,6 +118,11 @@ h2.sec{font-size:24px;font-weight:800;letter-spacing:-.5px;margin:0 0 6px}
 .claimbanner .cbtext b{color:var(--text)}
 .claimbanner .btn{white-space:nowrap}
 
+/* quiet claim line for pages that are already claimed & curated */
+.claimquiet{margin:14px 0 2px;font-size:13px;color:var(--muted)}
+.claimquiet span{color:var(--accent);font-weight:700;cursor:pointer}
+.claimquiet span:hover{text-decoration:underline}
+
 /* "Released <year>" label on each credit row */
 .row .yr .yrlbl{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);opacity:.75;margin-right:3px}
 
@@ -133,9 +139,9 @@ h2.sec{font-size:24px;font-weight:800;letter-spacing:-.5px;margin:0 0 6px}
 /* "+N more roles" affordance (hover shows the full list via title) */
 .rmore{font-size:11px;font-weight:700;color:var(--accent);border:1px solid rgba(88,166,255,.3);background:rgba(88,166,255,.07);border-radius:6px;padding:0 6px;margin-left:5px;cursor:help}
 
-/* owner-only "edit links" affordance under the name */
-.editlinks{display:inline-block;margin-top:10px;font-size:12.5px;font-weight:600;color:var(--muted);cursor:pointer}
-.editlinks:hover{color:var(--accent)}
+/* owner-only "edit links" affordance under the name — a real, clickable pill */
+.editlinks{display:inline-flex;align-items:center;margin-top:12px;font-size:12.5px;font-weight:700;color:var(--accent);cursor:pointer;border:1px solid rgba(88,166,255,.35);background:rgba(88,166,255,.08);border-radius:8px;padding:6px 13px;transition:background .14s,border-color .14s}
+.editlinks:hover{border-color:var(--accent);background:rgba(88,166,255,.16)}
 
 /* opt-in public profile links under a person's name */
 .plinks{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
