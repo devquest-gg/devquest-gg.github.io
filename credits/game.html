@@ -83,7 +83,7 @@
     // merge credits by person — seed (static) + live (API), API wins
     var byPerson = {};
     ((g && g.credits) || []).forEach(function(c){ var ps=DQ.slugify(c.name); byPerson[ps]={person_slug:ps,name:c.name,role:c.role,roles_other:c.roles_other||[],verification:c.verification||[],vouch_count:0,live:false}; });
-    apiCredits.forEach(function(c){ byPerson[c.person_slug]={id:c.id,person_slug:c.person_slug,name:c.person_name,role:c.role,roles_other:c.roles_other||[],verification:c.verification||[],vouch_count:c.vouch_count||0,live:true}; });
+    apiCredits.forEach(function(c){ byPerson[c.person_slug]={id:c.id,person_slug:c.person_slug,name:c.person_name,role:c.role,roles_other:c.roles_other||[],verification:c.verification||[],links:c.links||[],vouch_count:c.vouch_count||0,live:true}; });
     var credits = Object.keys(byPerson).map(function(k){ return byPerson[k]; });
     var iHaveCredit = !!(me && credits.some(function(c){ return c.person_slug===me.slug; }));
 
@@ -92,12 +92,13 @@
       var others = c.roles_other || [];
       var more = others.length ? ' <span class="rmore" title="Also: '+DQ.esc(others.join(", "))+'">+'+others.length+' more</span>' : '';
       var vouch = c.vouch_count ? '<span class="sig" title="peer vouches">◈ '+c.vouch_count+' vouch'+(c.vouch_count===1?'':'es')+'</span>' : '';
+      var proof = (c.links && c.links.length) ? ' <a class="sig" href="'+DQ.esc(c.links[0])+'" target="_blank" rel="noopener noreferrer" title="'+DQ.esc(c.links.join(", "))+'" style="text-decoration:none">proof ↗</a>' : '';
       var vbtn = (c.live && c.id && me && c.person_slug!==me.slug && iHaveCredit)
         ? '<a class="vouchbtn" data-id="'+c.id+'" style="font-size:12px;font-weight:700;color:var(--green);border:1px solid rgba(63,185,80,.35);background:rgba(63,185,80,.08);border-radius:8px;padding:4px 11px;cursor:pointer">Vouch</a>' : '';
       return '<div class="row">'+
         '<div class="av">'+DQ.esc(DQ.initials(c.name))+'</div>'+
         '<div class="rmain"><div class="rname"><a href="person.html?slug='+encodeURIComponent(c.person_slug)+'">'+DQ.esc(c.name)+'</a></div>'+
-          '<div class="rsub"><span class="rrole">'+DQ.esc(c.role||"Role not recorded")+'</span>'+more+(sigs?' &nbsp; '+sigs:'')+(vouch?' &nbsp; '+vouch:'')+'</div></div>'+
+          '<div class="rsub"><span class="rrole">'+DQ.esc(c.role||"Role not recorded")+'</span>'+more+(sigs?' &nbsp; '+sigs:'')+(vouch?' &nbsp; '+vouch:'')+proof+'</div></div>'+
         '<div class="rright">'+vbtn+'</div>'+
       '</div>';
     }).join("") + '</div>' : '<div class="empty">No individual credits recorded yet.<br>If you worked on it, be the first to claim your credit.</div>';

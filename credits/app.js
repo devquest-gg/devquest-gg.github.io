@@ -301,7 +301,7 @@
       var proofArr = proof ? proof.split(/\n+/).map(function (s) { return s.trim(); }).filter(Boolean) : [];
       var verification = proofArr.some(function (u) { return /linkedin\.com/i.test(u); }) ? ["linkedin_self"] : [];
       function payload() {
-        var p = { name: name, role: role, roles_other: rolesArr, verification: verification, source_url: proofArr[0] || "" };
+        var p = { name: name, role: role, roles_other: rolesArr, verification: verification, source_url: proofArr[0] || "", links: proofArr };
         if (isAdd) {
           p.new_game = { title: val("dqc-gtitle"), studio: val("dqc-gstudio"), year: val("dqc-gyear"),
             platforms: val("dqc-gplat") ? val("dqc-gplat").split(",").map(function (s) { return s.trim(); }).filter(Boolean) : [] };
