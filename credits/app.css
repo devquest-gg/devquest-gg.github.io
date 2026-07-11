@@ -194,3 +194,42 @@ footer a:hover{color:var(--text)}
 @media(max-width:860px){
   .phead h1{font-size:30px}.glist{grid-template-columns:1fr}.topnav a:not(.back){display:none}
 }
+
+/* ---- phones ---- */
+@media(max-width:600px){
+  .container{padding:0 14px}
+  .topbar .container{height:54px}
+  .brand .wm{font-size:18px}
+  .topnav{gap:12px}
+  .topnav .back{padding:6px 11px;font-size:12.5px}
+  .crumbs{padding:16px 0 0;font-size:12px}
+  .phead{padding:14px 0 6px}
+  .phead h1{font-size:25px;letter-spacing:-.4px;margin-bottom:8px}
+  .phead .meta{font-size:14px}
+  section.blk{padding:22px 0}
+  h2.sec{font-size:21px}
+  .secsub{font-size:13.5px;margin-bottom:16px}
+  .snapshot{gap:8px}
+  .snap{padding:11px 14px;min-width:0;flex:1 1 calc(50% - 8px)}
+  .snap b{font-size:22px}
+  /* credit rows: let text wrap, and drop the action column onto its own line */
+  .row{padding:12px 13px;gap:11px;flex-wrap:wrap}
+  .row .av{width:34px;height:34px;font-size:13px}
+  .row .rsub{white-space:normal}
+  .row .rright{flex-basis:100%;justify-content:flex-end;gap:12px;margin-top:6px}
+  .row .rright:empty{display:none;margin:0}
+  .row .yr .yrlbl{display:none}
+  .rowhead{margin-bottom:14px;gap:10px}
+  .verifystrip{font-size:13px;padding:11px 14px}
+  .claimbanner{padding:14px 16px}.claimbanner .cbtext{font-size:13.5px}
+  .searchwrap{gap:8px}.search{padding:11px 14px}.search input{font-size:15px}
+  footer{padding:26px 0;margin-top:28px}
+}
+@media(max-width:440px){
+  .brand .cr,.brand .beta{display:none}
+  .brand .wm{font-size:16px}
+  .brand .mark{width:22px;height:22px}
+  .topnav{gap:8px}.topnav .back{padding:5px 9px;font-size:12px}
+  .phead h1{font-size:22px}
+  .snap{flex:1 1 100%}
+}

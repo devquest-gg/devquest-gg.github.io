@@ -224,7 +224,8 @@
       ".dq-ac-none{padding:9px 11px;color:var(--muted,#8b98a9);font-size:12.5px;font-style:italic}",
       ".dq-warn{margin-top:8px;font-size:12.5px;color:#c4cfdd;background:rgba(224,178,58,.08);border:1px solid rgba(224,178,58,.3);border-radius:9px;padding:9px 11px}",
       ".dq-warn a{color:var(--accent,#58a6ff);font-weight:600}.dq-warn b{color:var(--gold,#e0b23a)}",
-      ".dq-idnote{font-size:11.5px;color:var(--muted,#8b98a9);margin-top:6px}.dq-idnote a{color:var(--accent,#58a6ff)}"
+      ".dq-idnote{font-size:11.5px;color:var(--muted,#8b98a9);margin-top:6px}.dq-idnote a{color:var(--accent,#58a6ff)}",
+      "@media(max-width:600px){.dq-modal-ov{padding:3vh 10px}.dq-modal{padding:18px}.dq-mh{font-size:18px;margin-right:26px}.dq-row2{flex-direction:column;gap:0}}"
     ].join("");
     var s = document.createElement("style"); s.textContent = css; document.head.appendChild(s);
   }
