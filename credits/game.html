@@ -156,7 +156,7 @@
         '<div class="rowhead"><div><div class="eyebrow">Credits</div>'+
           '<h2 class="sec">'+(credits.length? credits.length+' credited' : 'Who made this game?')+'</h2>'+
           '<p class="secsub" style="margin:0">Claimed and peer-vouched credits appear here. Everything is opt-in and owned by the person credited.</p></div>'+
-          '<span class="btn primary" id="claimbtn">This is me — claim my credit</span>'+
+          (iHaveCredit ? '' : '<span class="btn primary" id="claimbtn">This is me — claim my credit</span>')+
         '</div>'+
         creditsHTML +
         pendingHTML +
