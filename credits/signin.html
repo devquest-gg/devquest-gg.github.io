@@ -64,11 +64,12 @@
   }
   function showForm(){
     card.innerHTML =
-      '<h1>Sign in to claim your credits</h1>' +
-      '<p>Enter your email and we’ll send you a one-time sign-in link. No password.</p>' +
+      '<h1>Sign in to DevQuest Credits</h1>' +
+      '<p>Enter your email and we’ll send a one-time sign-in link. No password.<br><span style="color:var(--text);font-weight:600">Returning?</span> Use the same email you claimed with and your profile comes right back.</p>' +
       '<input id="email" type="email" placeholder="you@example.com" autocomplete="email">' +
       '<button class="btn primary" id="send">Email me a link →</button>' +
-      '<div class="msg" id="msg">' + (errNote ? '<span class="err">' + esc(errNote) + '</span>' : '') + '</div>';
+      '<div class="msg" id="msg">' + (errNote ? '<span class="err">' + esc(errNote) + '</span>' : '') + '</div>' +
+      '<p style="font-size:12.5px;margin:16px 0 0">Can’t access that email, or not sure which one you used? <a href="mailto:studios@devquest.gg?subject=DevQuest%20Credits%20account%20recovery&body=I%20need%20help%20getting%20back%20into%20my%20DevQuest%20Credits%20profile.%0A%0AName%3A%0AProfile%20URL%20(if%20known)%3A%0AEmails%20I%20might%20have%20used%3A%0A" style="color:var(--accent);font-weight:600">Contact us</a> and we’ll help you recover it.</p>';
     var email = document.getElementById("email"), btn = document.getElementById("send"), msg = document.getElementById("msg");
     email.focus();
     function send(){
