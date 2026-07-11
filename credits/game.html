@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<base href="/credits/">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Game · DevQuest Credits</title>
 <meta name="robots" content="noindex, nofollow">
@@ -230,7 +231,7 @@
         if(window.DQAPI && DQAPI.isSignedIn()){
           el.textContent = "…";
           DQAPI.claimAttribution(id).then(function(r){
-            if(r.ok){ location.href = "person.html?slug=" + encodeURIComponent(r.data.person_slug); }
+            if(r.ok){ location.href = "/credits/person.html?slug=" + encodeURIComponent(r.data.person_slug); }
             else { el.textContent = "Is this you? Claim"; alert((r.data&&r.data.error)||"Could not claim right now."); }
           }).catch(function(){ el.textContent = "Is this you? Claim"; });
         } else {

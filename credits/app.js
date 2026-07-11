@@ -26,7 +26,7 @@
   // Load one entity by slug from its shard. kind = "games" | "studios" | "people".
   function loadEntity(kind, slug) {
     var n = SHARDS[kind];
-    return getJSON("data/site/" + kind + "/" + bkt(slug, n) + ".json").then(function (m) { return m[slug] || null; });
+    return getJSON("/credits/data/site/" + kind + "/" + bkt(slug, n) + ".json").then(function (m) { return m[slug] || null; });
   }
 
   // Only allow safe link schemes into an href. Blocks javascript:, data:, etc.,
@@ -53,7 +53,7 @@
   function loadIndex(kind) {
     if (idxCache[kind]) return idxCache[kind];
     var f = kind === "games" ? "index.json" : kind === "studios" ? "studios-index.json" : "people-index.json";
-    idxCache[kind] = getJSON("data/site/" + f);
+    idxCache[kind] = getJSON("/credits/data/site/" + f);
     return idxCache[kind];
   }
 
@@ -345,7 +345,7 @@
         w.DQAPI.createCredit(payload()).then(function (r) {
           if (r.status === 201 || r.ok) {
             var slug = r.data && r.data.person_slug; close();
-            w.location.href = slug ? ("person.html?slug=" + encodeURIComponent(slug)) : "/credits/";
+            w.location.href = slug ? ("/credits/person.html?slug=" + encodeURIComponent(slug)) : "/credits/";
           } else if (r.status === 401) { w.location.href = "signin.html"; }
           else { submitBtn.disabled = false; submitBtn.textContent = "Save my credit →"; alert((r.data && r.data.error) || "Could not save. Try again."); }
         }).catch(function () { submitBtn.disabled = false; submitBtn.textContent = "Save my credit →"; alert("Network error. Try again."); });
