@@ -75,15 +75,15 @@
 
   // ---- row/tile builders ----
   function gameTiles(rows){ return '<div class="glist">'+rows.map(function(g){
-    return '<a class="gtile" href="game.html?slug='+encodeURIComponent(g[0])+'"><div class="t">'+DQ.esc(g[1])+'</div>'+
+    return '<a class="gtile" href="/credits/game/'+encodeURIComponent(g[0])+'"><div class="t">'+DQ.esc(g[1])+'</div>'+
       '<div class="s">'+(g[3]?DQ.esc(g[3]):'Studio unknown')+(g[2]?' · '+g[2]:'')+'</div></a>';
   }).join("")+'</div>'; }
   function studioTiles(rows){ return '<div class="glist">'+rows.map(function(s){
-    return '<a class="gtile" href="studio.html?slug='+encodeURIComponent(s[0])+'"><div class="t">'+DQ.esc(s[1])+'</div>'+
+    return '<a class="gtile" href="/credits/studio/'+encodeURIComponent(s[0])+'"><div class="t">'+DQ.esc(s[1])+'</div>'+
       '<div class="s">'+s[2].toLocaleString()+' game'+(s[2]===1?'':'s')+'</div></a>';
   }).join("")+'</div>'; }
   function peopleRows(rows){ return '<div class="rows">'+rows.map(function(p){
-    return '<a class="row" href="person.html?slug='+encodeURIComponent(p[0])+'">'+
+    return '<a class="row" href="/credits/'+encodeURIComponent(p[0])+'">'+
       '<div class="av">'+DQ.esc(DQ.initials(p[1]))+'</div>'+
       '<div class="rmain"><div class="rname">'+DQ.esc(p[1])+'</div>'+
       '<div class="rsub">'+p[2]+' credit'+(p[2]===1?'':'s')+'</div></div></a>';

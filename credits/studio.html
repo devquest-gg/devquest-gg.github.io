@@ -64,7 +64,7 @@
     function render(){
       var slice = allGames.slice(shown, shown+PAGE);
       glist.insertAdjacentHTML("beforeend", slice.map(function(g){
-        return '<a class="gtile" href="game.html?slug='+encodeURIComponent(g[0])+'"><div class="t">'+DQ.esc(g[1])+'</div>'+
+        return '<a class="gtile" href="/credits/game/'+encodeURIComponent(g[0])+'"><div class="t">'+DQ.esc(g[1])+'</div>'+
           '<div class="s">'+(g[2]?g[2]:'Year unknown')+'</div></a>';
       }).join(""));
       shown += slice.length;

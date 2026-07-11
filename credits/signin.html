@@ -126,7 +126,7 @@
       '<div class="who"><div class="av">' + esc(initials(person.name)) + '</div>' +
       '<div><div style="font-weight:800;font-size:16px">' + esc(person.name) + '</div>' +
       '<div class="mut" style="font-size:13px">Signed in</div></div></div>' +
-      '<a class="btn primary" href="person.html?slug=' + encodeURIComponent(person.slug) + '">Go to my page</a>' +
+      '<a class="btn primary" href="/credits/' + encodeURIComponent(person.slug) + '">Go to my page</a>' +
       '<div style="margin-top:24px"><div style="font-size:13px;font-weight:800;margin-bottom:6px">Your emails</div>' +
       '<p style="font-size:12.5px;margin:0 0 8px">Any confirmed email here can sign you in. Add a backup so you never lose access to your account.</p>' +
       '<div id="emails">' + emails.map(emailRow).join("") + '</div>' +

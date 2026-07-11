@@ -376,13 +376,13 @@
     if(!h)return;
     if(h.covers&&h.covers.length){
       var cov=h.covers.map(function(c){ // [slug,title,year,studio,genre]
-        return '<a class="cover" href="game.html?slug='+encodeURIComponent(c[0])+'" style="background:'+grad(c[1])+'">'+
+        return '<a class="cover" href="/credits/game/'+encodeURIComponent(c[0])+'" style="background:'+grad(c[1])+'">'+
           '<span class="cgenre">'+esc(c[4]||'Game')+'</span><div class="ct">'+esc(c[1])+
           '<span class="cc">'+esc(c[3]|| (c[2]?('· '+c[2]):''))+'</span></div></a>';
       }).join('');
       document.getElementById('m1').innerHTML=cov+cov;
       var rc=h.covers.slice().reverse().map(function(c){
-        return '<a class="cover" href="game.html?slug='+encodeURIComponent(c[0])+'" style="background:'+grad(c[1])+'">'+
+        return '<a class="cover" href="/credits/game/'+encodeURIComponent(c[0])+'" style="background:'+grad(c[1])+'">'+
           '<span class="cgenre">'+esc(c[4]||'Game')+'</span><div class="ct">'+esc(c[1])+
           '<span class="cc">'+esc(c[3]|| (c[2]?('· '+c[2]):''))+'</span></div></a>';
       }).join('');
@@ -390,7 +390,7 @@
     }
     if(h.trendingGames&&h.trendingGames.length){
       document.getElementById('gcards').innerHTML=h.trendingGames.map(function(g){ // [slug,title,year,studio,genre]
-        return '<a class="gcard" href="game.html?slug='+encodeURIComponent(g[0])+'"><div class="art" style="background:'+grad(g[1])+'">'+
+        return '<a class="gcard" href="/credits/game/'+encodeURIComponent(g[0])+'"><div class="art" style="background:'+grad(g[1])+'">'+
           '<span class="genre">'+esc(g[4]||'Game')+'</span><div class="bigt">'+esc(g[1])+'</div></div>'+
           '<div class="body"><div class="gm">'+esc(g[3]||'')+(g[2]?' · '+g[2]:'')+'</div>'+
           '<div class="gstat">View credits →</div></div></a>';

@@ -105,14 +105,14 @@
   function suggestRowHTML(kind, r) {
     if (kind === "games") {
       var sub = (r[3] || "") + (r[2] ? (r[3] ? " · " : "") + r[2] : "");
-      return '<a class="dq-row" href="game.html?slug=' + encodeURIComponent(r[0]) + '"><span class="tag dq-tag-game">Game</span>' +
+      return '<a class="dq-row" href="/credits/game/' + encodeURIComponent(r[0]) + '"><span class="tag dq-tag-game">Game</span>' +
         '<span class="txt"><span class="nm">' + esc(r[1]) + '</span>' + (sub ? '<span class="sb">' + esc(sub) + '</span>' : '') + '</span></a>';
     }
     if (kind === "studios") {
-      return '<a class="dq-row" href="studio.html?slug=' + encodeURIComponent(r[0]) + '"><span class="tag dq-tag-studio">Studio</span>' +
+      return '<a class="dq-row" href="/credits/studio/' + encodeURIComponent(r[0]) + '"><span class="tag dq-tag-studio">Studio</span>' +
         '<span class="txt"><span class="nm">' + esc(r[1]) + '</span><span class="sb">' + Number(r[2]).toLocaleString() + ' game' + (r[2] === 1 ? '' : 's') + '</span></span></a>';
     }
-    return '<a class="dq-row" href="person.html?slug=' + encodeURIComponent(r[0]) + '"><span class="tag dq-tag-person">Person</span>' +
+    return '<a class="dq-row" href="/credits/' + encodeURIComponent(r[0]) + '"><span class="tag dq-tag-person">Person</span>' +
       '<span class="txt"><span class="nm">' + esc(r[1]) + '</span><span class="sb">' + r[2] + ' credit' + (r[2] === 1 ? '' : 's') + '</span></span></a>';
   }
 
@@ -374,7 +374,7 @@
           var m = searchRows(rows, 1, q, 4).rows;
           if (!m.length) { gexist.innerHTML = ""; return; }
           gexist.innerHTML = '<div class="dq-warn"><b>Already in the catalogue?</b> If your game is here, claim it instead of adding a duplicate: ' +
-            m.map(function (r) { return '<a href="game.html?slug=' + encodeURIComponent(r[0]) + '" target="_blank" rel="noopener">' + esc(r[1]) + (r[3] ? ' · ' + esc(r[3]) : '') + '</a>'; }).join(" &nbsp;·&nbsp; ") + '</div>';
+            m.map(function (r) { return '<a href="/credits/game/' + encodeURIComponent(r[0]) + '" target="_blank" rel="noopener">' + esc(r[1]) + (r[3] ? ' · ' + esc(r[3]) : '') + '</a>'; }).join(" &nbsp;·&nbsp; ") + '</div>';
         });
       };
       if (gtitle && gexist) { gtitle.addEventListener("input", function () { clearTimeout(gt); gt = setTimeout(checkExist, 300); }); checkExist(); }
@@ -427,4 +427,19 @@
       }).catch(function () {});
     }
   })();
+
+  // Clean-URL links (/credits/<slug>, /credits/game/<slug>, /credits/studio/<slug>) are what
+  // we render for copy/hover/share, but the real files live at *.html?slug=. Intercept a
+  // plain left-click and go straight to the real file, so internal navigation skips the
+  // 404-redirect bounce. Modified clicks and new-tab opens fall through to the clean URL,
+  // which the 404.html router resolves.
+  document.addEventListener("click", function (e) {
+    var a = e.target && e.target.closest ? e.target.closest("a") : null;
+    if (!a || a.target === "_blank" || e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    var href = a.getAttribute("href") || "", m, real = null;
+    if ((m = href.match(/^\/credits\/game\/([^\/?#]+)$/))) real = "/credits/game.html?slug=" + m[1];
+    else if ((m = href.match(/^\/credits\/studio\/([^\/?#]+)$/))) real = "/credits/studio.html?slug=" + m[1];
+    else if ((m = href.match(/^\/credits\/([^\/?#.]+)$/))) real = "/credits/person.html?slug=" + m[1];
+    if (real) { e.preventDefault(); w.location.href = real; }
+  });
 })(window);

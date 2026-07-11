@@ -67,7 +67,7 @@
     document.getElementById("crumb").textContent = title;
 
     var studioLinks = studios.length
-      ? studios.map(function(n){ return '<a href="studio.html?slug='+encodeURIComponent(DQ.slugify(n))+'">'+DQ.esc(n)+'</a>'; }).join(", ")
+      ? studios.map(function(n){ return '<a href="/credits/studio/'+encodeURIComponent(DQ.slugify(n))+'">'+DQ.esc(n)+'</a>'; }).join(", ")
       : '<span class="mut">Studio not recorded</span>';
     var metaBits = [studioLinks];
     if(year) metaBits.push(String(year));
@@ -147,7 +147,7 @@
         : '';
       return '<div class="row">'+
         '<div class="av">'+DQ.esc(DQ.initials(c.name))+'</div>'+
-        '<div class="rmain"><div class="rname"><a href="person.html?slug='+encodeURIComponent(c.person_slug)+'">'+DQ.esc(c.name)+'</a>'+ast+seal+'</div>'+
+        '<div class="rmain"><div class="rname"><a href="/credits/'+encodeURIComponent(c.person_slug)+'">'+DQ.esc(c.name)+'</a>'+ast+seal+'</div>'+
           '<div class="rsub"><span class="rrole">'+DQ.esc(c.role||"Role not recorded")+'</span>'+more+(sigs?' &nbsp; '+sigs:'')+proof+'</div></div>'+
         '<div class="rright">'+vbtn+'<a class="reportlink" href="mailto:studios@devquest.gg?subject='+encodeURIComponent("Report: "+title)+'&body='+encodeURIComponent("Reporting a credit on "+title+" by "+c.name+".\n\nReason:\n")+'" title="Report this credit" style="color:var(--muted);font-size:12px;margin-left:12px;text-decoration:none">⚑</a></div>'+
       '</div>';
