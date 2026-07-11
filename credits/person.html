@@ -115,17 +115,19 @@
       // third-party signals and peer vouches earn a visible mark.
       var sigs = (c.verification||[]).filter(function(s){ return String(s).indexOf("_self")===-1; }).map(function(s){ return '<span class="sig">'+DQ.esc(DQ.SIG_LABEL[s]||s)+'</span>'; }).join("");
       var others = c.roles_other || [];
-      var more = others.length ? ' <span class="rmore2">· also '+DQ.esc(others.join(", "))+'</span>' : '';
+      var more = others.length ? ' <span class="rmore2" style="color:var(--muted);font-weight:400">· also '+DQ.esc(others.join(", "))+'</span>' : '';
       // Releases, reframed: ports are quiet inline context, expansions get an "Also shipped"
       // line, and live-service drops out (it's a scope, not a named release).
       var rels = DQ.uniq(c.releases || []);
       var relPorts = rels.filter(function(r){ var k=DQ.releaseClass(r); return k==="port"||k==="xdev"; });
       var relContent = rels.filter(function(r){ return DQ.releaseClass(r)==="content"; });
-      var portNote = relPorts.length ? ' <span class="rmore2">· '+DQ.esc(relPorts.join(", "))+'</span>' : '';
+      var portNote = relPorts.length ? ' <span class="rmore2" style="color:var(--muted);font-weight:400">· '+DQ.esc(relPorts.join(", "))+'</span>' : '';
       var shipNote = relContent.length ? '<div class="relnote" style="font-size:11px;font-weight:400;color:var(--muted);margin-top:3px">Also shipped: '+DQ.esc(relContent.join(", "))+'</div>' : '';
       var seal = c.vouch_count
         ? ' <span class="vseal" title="Verified by '+c.vouch_count+' teammate'+(c.vouch_count===1?'':'s')+' who shipped this game" aria-label="Peer-verified by '+c.vouch_count+' teammate'+(c.vouch_count===1?'':'s')+'">✓</span>'
         : '';
+      var astWhat = relPorts.concat(relContent);
+      var ast = c.partial ? ' <span class="ast" style="color:var(--muted);font-weight:700;cursor:help" title="'+DQ.esc('Worked on '+(astWhat.length?astWhat.join(", "):'a specific part')+', not the base game')+'" aria-label="Worked on a specific part, not the base game">*</span>' : '';
       var trust = (!c.vouch_count && isOwn && c.live && c.id)
         ? '<a class="getconf" href="game.html?slug='+encodeURIComponent(c.game_slug)+'" title="Add the teammates you shipped with; once they claim, they can confirm this credit">Get confirmed →</a>'
         : '';
@@ -139,7 +141,7 @@
         : '';
       return '<div class="row"'+((isOwn&&c.live&&c.id)?' data-id="'+c.id+'"':'')+'>'+
         grip +
-        '<div class="rmain"><div class="rname"><a href="game.html?slug='+encodeURIComponent(c.game_slug)+'">'+DQ.esc(c.game_title)+'</a>'+seal+'</div>'+
+        '<div class="rmain"><div class="rname"><a href="game.html?slug='+encodeURIComponent(c.game_slug)+'">'+DQ.esc(c.game_title)+'</a>'+ast+seal+'</div>'+
           '<div class="rsub"><span class="rrole">'+DQ.esc(c.role||"Role not recorded")+'</span>'+more+portNote+(trust?' &nbsp; '+trust:'')+(sigs?' &nbsp; '+sigs:'')+(proof?' &nbsp; '+proof:'')+'</div>'+shipNote+'</div>'+
         '<div class="rright">'+(c.year?'<span class="yr" title="Game release year"><span class="yrlbl">Released</span> '+c.year+'</span>':'')+controls+'</div>'+
       '</div>';
