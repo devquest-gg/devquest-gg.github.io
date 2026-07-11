@@ -3,7 +3,7 @@
  * app shell (online visitors always get the freshest index.html, so deploys show immediately), with
  * a cached copy as an offline fallback only. The live data files (jobs.js / jobs.json / trends.json /
  * seen.json) and any API calls are never intercepted, so jobs are always fresh. Bump CACHE to flush. */
-const CACHE = "devquest-shell-v1";
+const CACHE = "devquest-shell-v2";
 const SHELL = ["/", "/index.html", "/favicon.svg", "/icon-192.png", "/manifest.webmanifest"];
 
 self.addEventListener("install", (e) => {
@@ -24,6 +24,13 @@ self.addEventListener("fetch", (e) => {
   const url = req.url;
   // Never touch live data or cross-origin/API requests — let the network handle them (always fresh).
   if (!url.startsWith(self.location.origin)) return;
+  // Beta: the Credits app is under active development, so never cache it. Force a fresh,
+  // no-store network fetch for anything under /credits/ so deploys show up on a normal
+  // refresh with no hard-reload dance. (No offline support for /credits/, fine during beta.)
+  if (url.includes("/credits/")) {
+    e.respondWith(fetch(req, { cache: "no-store" }).catch(() => fetch(req)));
+    return;
+  }
   if (/\.(json|js)(\?|$)/i.test(url) || url.includes("/cdn-cgi/")) return;
   // Network-first for everything else (HTML, icons, css-in-html): fresh when online, cache when offline.
   e.respondWith(
