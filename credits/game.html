@@ -86,6 +86,27 @@
     apiCredits.forEach(function(c){ byPerson[c.person_slug]={id:c.id,person_slug:c.person_slug,name:c.person_name,role:c.role,roles_other:c.roles_other||[],verification:c.verification||[],links:c.links||[],releases:c.releases||[],vouch_count:c.vouch_count||0,live:true}; });
     var credits = Object.keys(byPerson).map(function(k){ return byPerson[k]; });
     var iHaveCredit = !!(me && credits.some(function(c){ return c.person_slug===me.slug; }));
+    var pending = (apiRes && apiRes.pending) || [];
+
+    // Unclaimed teammate attributions (added by a member, awaiting the named person).
+    var pendingHTML = pending.length ? '<div class="rows" style="margin-top:14px">' + pending.map(function(pc){
+      var mine = !!(me && pc.added_by_slug === me.slug);
+      var acts = mine
+        ? '<a class="copyinvite" data-name="'+DQ.esc(pc.name)+'" style="font-size:12px;font-weight:700;color:var(--accent);cursor:pointer">Copy invite link</a>'+
+          '<a class="rmvattr" data-id="'+pc.id+'" style="font-size:12px;color:var(--pink);margin-left:12px;cursor:pointer">Remove</a>'
+        : '';
+      return '<div class="row">'+
+        '<div class="av" style="opacity:.55">'+DQ.esc(DQ.initials(pc.name))+'</div>'+
+        '<div class="rmain"><div class="rname">'+DQ.esc(pc.name)+' <span class="sig" style="color:var(--muted)">unclaimed</span></div>'+
+          '<div class="rsub"><span class="rrole">'+DQ.esc(pc.role||"Contributor")+'</span> &nbsp; <span class="mut">added by '+DQ.esc(pc.added_by_name)+'</span></div></div>'+
+        '<div class="rright">'+acts+'</div>'+
+      '</div>';
+    }).join("") + '</div>' : '';
+
+    // "Add a teammate" is available to anyone who holds a credit on this game.
+    var addTeamHTML = iHaveCredit
+      ? '<div style="margin-top:16px"><span class="btn ghost" id="addteammate" style="font-size:13px">+ Add a teammate you shipped with</span><div id="teamform"></div></div>'
+      : '';
 
     var creditsHTML = credits.length ? '<div class="rows">' + credits.map(function(c){
       var sigs = (c.verification||[]).map(function(s){ return '<span class="sig">'+DQ.esc(DQ.SIG_LABEL[s]||s)+'</span>'; }).join("");
@@ -117,7 +138,9 @@
           '<span class="btn primary" id="claimbtn">This is me — claim my credit</span>'+
         '</div>'+
         creditsHTML +
-        '<div class="notice">Source of truth is the person who did the work. Catalogue facts come from Wikidata (CC0); credits are added and vouched by developers.</div>'+
+        pendingHTML +
+        addTeamHTML +
+        '<div class="notice">Source of truth is the person who did the work. Catalogue facts come from Wikidata (CC0); credits are added and vouched by developers. Teammate additions are unclaimed until that person confirms them.</div>'+
       '</div></section>';
 
     var cb = document.getElementById("claimbtn");
@@ -127,6 +150,46 @@
     };
     Array.prototype.forEach.call(document.querySelectorAll(".vouchbtn"), function(el){
       el.onclick = function(){ el.textContent = "…"; DQAPI.vouch(el.dataset.id).then(function(r){ if(r.ok){ location.reload(); } else { el.textContent="Vouch"; alert((r.data&&r.data.error)||"Could not vouch."); } }).catch(function(){ el.textContent="Vouch"; }); };
+    });
+
+    // --- Add a teammate → generates a copyable claim link (you send it yourself) ---
+    var atb = document.getElementById("addteammate");
+    if(atb) atb.onclick = function(){
+      var box = document.getElementById("teamform");
+      atb.style.display = "none";
+      box.innerHTML = '<div class="panel" style="padding:14px;margin-top:12px;max-width:520px">'+
+        '<div style="font-size:12px;font-weight:700;margin-bottom:6px">Teammate\'s name</div>'+
+        '<input class="tm-name" placeholder="e.g. Mark Davis" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:9px 11px;color:var(--text);font-size:14px;font-family:inherit">'+
+        '<div style="font-size:12px;font-weight:700;margin:10px 0 6px">Their role <span style="font-weight:400;color:var(--muted)">(optional)</span></div>'+
+        '<input class="tm-role" placeholder="e.g. Programmer" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:9px 11px;color:var(--text);font-size:14px;font-family:inherit">'+
+        '<div style="margin-top:12px;display:flex;gap:8px"><span class="btn primary tm-save" style="padding:8px 16px">Add teammate</span><span class="btn ghost tm-cancel" style="padding:8px 16px">Cancel</span></div>'+
+        '<div class="tm-msg" style="font-size:13px;margin-top:10px"></div></div>';
+      box.querySelector(".tm-cancel").onclick = function(){ box.innerHTML=""; atb.style.display=""; };
+      box.querySelector(".tm-name").focus();
+      box.querySelector(".tm-save").onclick = function(){
+        var nm = box.querySelector(".tm-name").value.trim(), rl = box.querySelector(".tm-role").value.trim(), msg = box.querySelector(".tm-msg");
+        if(!nm){ msg.innerHTML='<span style="color:var(--pink)">Enter their name.</span>'; return; }
+        var sb = this; sb.textContent = "Adding…";
+        DQAPI.attributeTeammate({ game_slug: slug, game_title: title, studio: (studios[0]||null), name: nm, role: rl||null }).then(function(r){
+          if((r.status===201 || r.ok) && r.data && r.data.claim_url){
+            var url = r.data.claim_url;
+            box.innerHTML = '<div class="panel" style="padding:14px;margin-top:12px;max-width:560px">'+
+              '<div style="font-weight:700;margin-bottom:6px;color:var(--green)">Added '+DQ.esc(nm)+' to '+DQ.esc(title)+'.</div>'+
+              '<p style="font-size:13px;color:var(--muted);margin:0 0 10px">Send them this link so they can claim it. Adding them to more games reuses the same link.</p>'+
+              '<div style="display:flex;gap:8px"><input class="tm-url" readonly value="'+DQ.esc(url)+'" style="flex:1;min-width:0;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:9px 11px;color:var(--text);font-size:13px;font-family:inherit"><span class="btn primary tm-copy" style="padding:8px 14px;white-space:nowrap">Copy</span></div>'+
+              '<div style="margin-top:12px;display:flex;gap:8px"><span class="btn ghost tm-again" style="padding:7px 14px;font-size:13px">Add another</span><span class="btn ghost tm-done" style="padding:7px 14px;font-size:13px">Done</span></div></div>';
+            box.querySelector(".tm-copy").onclick = function(){ var i=box.querySelector(".tm-url"); i.select(); try{ navigator.clipboard.writeText(url); }catch(e){ try{ document.execCommand("copy"); }catch(e2){} } box.querySelector(".tm-copy").textContent="Copied ✓"; };
+            box.querySelector(".tm-again").onclick = function(){ atb.style.display=""; atb.onclick(); };
+            box.querySelector(".tm-done").onclick = function(){ location.reload(); };
+          } else { sb.textContent="Add teammate"; msg.innerHTML='<span style="color:var(--pink)">'+DQ.esc((r.data&&r.data.error)||"Could not add.")+'</span>'; }
+        }).catch(function(){ sb.textContent="Add teammate"; msg.innerHTML='<span style="color:var(--pink)">Network error. Try again.</span>'; });
+      };
+    };
+    Array.prototype.forEach.call(document.querySelectorAll(".rmvattr"), function(el){
+      el.onclick = function(){ if(!confirm("Remove this teammate attribution?")) return; DQAPI.removeAttribution(el.dataset.id).then(function(r){ if(r.ok) location.reload(); else alert((r.data&&r.data.error)||"Could not remove."); }); };
+    });
+    Array.prototype.forEach.call(document.querySelectorAll(".copyinvite"), function(el){
+      el.onclick = function(){ var nm=el.dataset.name; el.textContent="…"; DQAPI.myInvites().then(function(r){ var inv=((r.data&&r.data.invites)||[]).filter(function(x){return x.invitee_name===nm;})[0]; if(inv){ try{ navigator.clipboard.writeText(inv.claim_url); }catch(e){} el.textContent="Copied ✓"; } else { el.textContent="Copy invite link"; alert("Could not find the link."); } }).catch(function(){ el.textContent="Copy invite link"; }); };
     });
   }).catch(function(e){
     app.innerHTML = '<div class="container"><div class="empty">Something went wrong loading this game.<br><span class="mut">'+DQ.esc(e && e.message)+'</span></div></div>';

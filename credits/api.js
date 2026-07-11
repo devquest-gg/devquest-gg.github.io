@@ -49,5 +49,11 @@
     addEmail: function (email) { return req("POST", "/me/emails", { email: email }); },
     removeEmail: function (id) { return req("DELETE", "/me/emails/" + id); },
     setPrimaryEmail: function (id) { return req("POST", "/me/emails/" + id + "/primary"); },
+    // teammate attributions
+    attributeTeammate: function (payload) { return req("POST", "/credits/attribute", payload); },
+    getInvite: function (token) { return req("GET", "/invite/" + encodeURIComponent(token)); },
+    claimInvite: function (token) { return req("POST", "/invite/" + encodeURIComponent(token) + "/claim"); },
+    removeAttribution: function (id) { return req("DELETE", "/credits/attribute/" + id); },
+    myInvites: function () { return req("GET", "/me/invites"); },
   };
 })(window);

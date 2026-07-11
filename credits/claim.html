@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Claim your credits · DevQuest Credits</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="app.css">
+<style>
+  .signcard{max-width:460px;margin:8vh auto 0;background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:30px}
+  .signcard h1{font-size:24px;font-weight:850;letter-spacing:-.5px;margin:0 0 8px}
+  .signcard p{color:var(--muted);font-size:14.5px;margin:0 0 16px}
+  .signcard .btn{width:100%;justify-content:center;margin-top:14px;font-size:15px;padding:12px}
+  .clist{border:1px solid var(--border);border-radius:12px;overflow:hidden;margin:0 0 4px}
+  .crow{padding:11px 14px;border-bottom:1px solid var(--border);font-size:14px}
+  .crow:last-child{border-bottom:none}
+  .crow b{color:var(--text);font-weight:700}
+</style>
+</head>
+<body>
+<div class="topbar"><div class="container">
+  <div class="brand"><a class="brandhome" href="/credits/" aria-label="DevQuest Credits home"><svg class="mark" viewBox="0 0 32 32" aria-hidden="true"><rect x="1" y="1" width="8" height="8" rx="2" fill="var(--gold)"/><rect x="12" y="1" width="8" height="8" rx="2" fill="#2d333b"/><rect x="23" y="1" width="8" height="8" rx="2" fill="#2d333b"/><rect x="1" y="12" width="8" height="8" rx="2" fill="#2d333b"/><rect x="12" y="12" width="8" height="8" rx="2" fill="var(--gold)"/><rect x="23" y="12" width="8" height="8" rx="2" fill="#2d333b"/><rect x="1" y="23" width="8" height="8" rx="2" fill="#2d333b"/><rect x="12" y="23" width="8" height="8" rx="2" fill="#2d333b"/><rect x="23" y="23" width="8" height="8" rx="2" fill="var(--gold)"/></svg><span class="wm">Dev<span class="q">Quest</span><span class="tld">.gg</span></span></a> <span class="cr">CREDITS</span> <span class="beta">BETA</span></div>
+  <div class="topnav"><a class="back" href="/credits/">← Credits</a></div>
+</div></div>
+
+<div class="container"><div class="signcard" id="card"><div class="loading">Loading…</div></div></div>
+
+<script src="api.js"></script>
+<script>
+(function(){
+  var card = document.getElementById("card");
+  function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});}
+  var token = new URLSearchParams(location.search).get("token") || "";
+  if(!token){ card.innerHTML = '<h1>Missing link</h1><p>This claim link has no code. Ask your teammate to resend it.</p><a class="btn ghost" href="/credits/">Go to Credits</a>'; return; }
+
+  function needSignin(intro){
+    try{ localStorage.setItem("dq_pending_claim", token); }catch(e){}
+    card.innerHTML = intro +
+      '<p>Sign in to claim them. It takes one email link, no password, and you can use any email you like.</p>' +
+      '<a class="btn primary" href="signin.html">Sign in to claim →</a>';
+  }
+
+  DQAPI.getInvite(token).then(function(r){
+    if(!r.ok || !r.data || !r.data.invite){
+      card.innerHTML = '<h1>Link not available</h1><p>This claim link is no longer valid, or every credit on it has already been claimed.</p><a class="btn ghost" href="/credits/">Go to Credits</a>';
+      return;
+    }
+    var inv = r.data.invite;
+    var list = '<div class="clist">' + inv.credits.map(function(c){
+      return '<div class="crow"><b>'+esc(c.game_title)+'</b>'+(c.suggested_role?' <span class="mut">as '+esc(c.suggested_role)+'</span>':'')+'</div>';
+    }).join("") + '</div>';
+    var intro = '<h1>Claim your credits</h1>' +
+      '<p><b style="color:var(--text)">'+esc(inv.added_by_name)+'</b> added <b style="color:var(--text)">'+esc(inv.invitee_name)+'</b> to these games:</p>' + list;
+
+    if(DQAPI.isSignedIn()){
+      DQAPI.me().then(function(mr){
+        if(mr.ok && mr.data.authenticated){
+          card.innerHTML = intro +
+            '<a class="btn primary" id="claim">Claim these credits</a>' +
+            '<a class="btn ghost" href="/credits/">This isn\'t me</a>';
+          document.getElementById("claim").onclick = function(){
+            var b = this; b.textContent = "Claiming…";
+            DQAPI.claimInvite(token).then(function(cr){
+              if(cr.ok){ location.href = "person.html?slug=" + encodeURIComponent(cr.data.person_slug); }
+              else { b.textContent = "Claim these credits"; alert((cr.data && cr.data.error) || "Could not claim right now."); }
+            }).catch(function(){ b.textContent = "Claim these credits"; alert("Network error. Try again."); });
+          };
+        } else { needSignin(intro); }
+      }).catch(function(){ needSignin(intro); });
+    } else { needSignin(intro); }
+  }).catch(function(){ card.innerHTML = '<h1>Something went wrong</h1><p>Please try the link again in a moment.</p>'; });
+})();
+</script>
+</body>
+</html>

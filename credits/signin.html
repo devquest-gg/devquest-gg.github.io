@@ -56,6 +56,14 @@
     }
   }
 
+  // 1a) If we arrived here to finish claiming a teammate invite, resume it.
+  var pendingClaim = null; try{ pendingClaim = localStorage.getItem("dq_pending_claim"); }catch(e){}
+  if(pendingClaim && DQAPI.isSignedIn()){
+    try{ localStorage.removeItem("dq_pending_claim"); }catch(e){}
+    location.href = "claim.html?token=" + encodeURIComponent(pendingClaim);
+    return;
+  }
+
   // 1b) Flash flags carried on the fragment (added=1) or query (email=taken)
   var flash = "";
   if(location.hash.indexOf("added=1") >= 0){ flash = "ok:Backup email confirmed and added to your account."; }
