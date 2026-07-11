@@ -208,6 +208,7 @@
       ".dq-sub{font-size:13.5px;color:var(--muted,#8b98a9);margin-bottom:16px}.dq-sub b{color:var(--text,#eef3fa)}",
       ".dq-modal label{display:block;font-size:12px;font-weight:700;color:var(--text,#eef3fa);margin:12px 0 5px}",
       ".dq-modal input,.dq-modal select,.dq-modal textarea{width:100%;background:var(--bg,#0b0e14);border:1px solid var(--border,#242c38);border-radius:9px;padding:10px 12px;color:var(--text,#eef3fa);font-size:14px;font-family:inherit;outline:none}",
+      ".dq-modal input[type=checkbox],.dq-modal input[type=radio]{width:auto;background:none;border:0;border-radius:0;padding:0;margin:0 7px 0 0;vertical-align:-1px}",
       ".dq-modal input:focus,.dq-modal select:focus,.dq-modal textarea:focus{border-color:var(--accent,#58a6ff)}",
       ".dq-modal textarea{resize:vertical;min-height:54px}",
       ".dq-row2{display:flex;gap:12px}.dq-row2>div{flex:1}",
