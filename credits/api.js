@@ -56,6 +56,8 @@
     claimInvite: function (token) { return req("POST", "/invite/" + encodeURIComponent(token) + "/claim"); },
     claimAttribution: function (id) { return req("POST", "/credits/attribute/" + id + "/claim"); },
     removeAttribution: function (id) { return req("DELETE", "/credits/attribute/" + id); },
+    vouchAttribution: function (id) { return req("POST", "/credits/attribute/" + id + "/vouch"); },
+    unvouchAttribution: function (id) { return req("DELETE", "/credits/attribute/" + id + "/vouch"); },
     myInvites: function () { return req("GET", "/me/invites"); },
   };
 })(window);

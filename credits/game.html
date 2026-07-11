@@ -99,13 +99,26 @@
     // Unclaimed teammate attributions (added by a member, awaiting the named person).
     var pendingHTML = pending.length ? '<div class="rows" style="margin-top:14px">' + pending.map(function(pc){
       var mine = !!(me && pc.added_by_slug === me.slug);
-      var acts = mine
-        ? '<a class="copyinvite" data-name="'+DQ.esc(pc.name)+'" style="font-size:12px;font-weight:700;color:var(--accent);cursor:pointer">Copy invite link</a>'+
-          '<a class="rmvattr" data-id="'+pc.id+'" style="font-size:12px;color:var(--pink);margin-left:12px;cursor:pointer">Remove</a>'
-        : '<a class="claimattr" data-id="'+pc.id+'" style="font-size:12px;font-weight:700;color:var(--accent);cursor:pointer">Is this you? Claim</a>';
+      var iVouched = !!(me && (pc.voucher_slugs||[]).indexOf(me.slug) >= 0);
+      // The attributor is an implicit first confirmation, so the total is 1 + peers.
+      var confN = 1 + (pc.vouch_count||0);
+      var acts;
+      if (mine) {
+        acts = '<a class="copyinvite" data-name="'+DQ.esc(pc.name)+'" style="font-size:12px;font-weight:700;color:var(--accent);cursor:pointer">Copy invite link</a>'+
+          '<a class="rmvattr" data-id="'+pc.id+'" style="font-size:12px;color:var(--pink);margin-left:12px;cursor:pointer">Remove</a>';
+      } else if (iVouched) {
+        acts = '<a class="unvouchattr" data-id="'+pc.id+'" title="Withdraw confirmation" style="font-size:12px;font-weight:700;color:var(--green);cursor:pointer">✓ Confirmed</a>';
+      } else if (iHaveCredit) {
+        acts = '<a class="vouchattr" data-id="'+pc.id+'" style="font-size:12px;font-weight:700;color:var(--green);border:1px solid rgba(63,185,80,.4);background:rgba(63,185,80,.08);border-radius:8px;padding:4px 11px;cursor:pointer">Confirm</a>';
+      } else {
+        acts = '<a class="claimattr" data-id="'+pc.id+'" style="font-size:12px;font-weight:700;color:var(--accent);cursor:pointer">Is this you? Claim</a>';
+      }
+      var confHTML = (pc.vouch_count>0)
+        ? ' &nbsp; <span class="sig vouched" style="color:var(--green)">✓ Confirmed by '+confN+' teammates</span>'
+        : '';
       return '<div class="row">'+
         '<div class="av" style="opacity:.55">'+DQ.esc(DQ.initials(pc.name))+'</div>'+
-        '<div class="rmain"><div class="rname">'+DQ.esc(pc.name)+' <span class="sig" style="color:var(--muted)">unclaimed</span></div>'+
+        '<div class="rmain"><div class="rname">'+DQ.esc(pc.name)+' <span class="sig" style="color:var(--muted)">unclaimed</span>'+confHTML+'</div>'+
           '<div class="rsub"><span class="rrole">'+DQ.esc(pc.role||"Contributor")+'</span> &nbsp; <span class="mut">added by '+DQ.esc(pc.added_by_name)+'</span></div></div>'+
         '<div class="rright">'+acts+'</div>'+
       '</div>';
@@ -214,6 +227,19 @@
           location.href = "signin.html";
         }
       };
+    });
+    // Confirm an unclaimed teammate you shipped alongside.
+    Array.prototype.forEach.call(document.querySelectorAll(".vouchattr"), function(el){
+      el.onclick = function(){
+        el.textContent = "…";
+        DQAPI.vouchAttribution(el.dataset.id).then(function(r){
+          if(r.ok) location.reload();
+          else { el.textContent = "Confirm"; alert((r.data&&r.data.error)||"Could not confirm right now."); }
+        }).catch(function(){ el.textContent = "Confirm"; });
+      };
+    });
+    Array.prototype.forEach.call(document.querySelectorAll(".unvouchattr"), function(el){
+      el.onclick = function(){ if(!confirm("Withdraw your confirmation of this teammate?")) return; DQAPI.unvouchAttribution(el.dataset.id).then(function(r){ if(r.ok) location.reload(); else alert((r.data&&r.data.error)||"Could not update."); }); };
     });
   }).catch(function(e){
     app.innerHTML = '<div class="container"><div class="empty">Something went wrong loading this game.<br><span class="mut">'+DQ.esc(e && e.message)+'</span></div></div>';
