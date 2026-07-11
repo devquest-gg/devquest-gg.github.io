@@ -199,27 +199,27 @@
       if(career>0) cells.push([String(career), 'years in games']);
       if(liveCount>0) cells.push([String(liveCount), liveCount===1?'live-service title':'live-service titles']);
       var statSVG=cells.map(function(s,i){ var cx=M+i*322;
-        return '<text x="'+cx+'" y="470" font-family="'+F+'" font-size="64" font-weight="800" fill="url(#g1)">'+X(s[0])+'</text>'+
-               '<text x="'+cx+'" y="504" font-family="'+F+'" font-size="21" fill="#8b98a9">'+X(s[1])+'</text>'; }).join('');
-      var rows=credits.slice(0,5), y0=606, rh=82;
+        return '<text x="'+cx+'" y="384" font-family="'+F+'" font-size="60" font-weight="800" fill="url(#g1)">'+X(s[0])+'</text>'+
+               '<text x="'+cx+'" y="418" font-family="'+F+'" font-size="21" fill="#8b98a9">'+X(s[1])+'</text>'; }).join('');
+      var rows=credits.slice(0,5), y0=566, rh=86;
       var rowSVG=rows.map(function(c,i){
         var y=y0+i*rh, out='';
-        if(i>0) out+='<line x1="'+M+'" y1="'+(y-30)+'" x2="'+(W-M)+'" y2="'+(y-30)+'" stroke="#242c38" stroke-width="1"/>';
-        out+='<text x="'+M+'" y="'+y+'" font-family="'+F+'" font-size="33" font-weight="800" fill="#eef3fa">'+X(cTrunc(c.game_title,26))+'</text>';
-        out+='<text x="'+M+'" y="'+(y+33)+'" font-family="'+F+'" font-size="22" font-weight="700" fill="#e0b23a">'+X(cTrunc(c.role||'Contributor',32))+'</text>';
-        var rel=(c.releases&&c.releases.length)?c.releases[0]:'';
-        if(rel){ var cls=DQ.releaseClass(rel), col=CARD_PILL[cls]||CARD_PILL.content, rl=cTrunc(rel,20);
-          var pw=Math.min(String(rl).length*13+34,320), px=(W-M)-pw, py=y-27;
+        if(i>0) out+='<line x1="'+M+'" y1="'+(y-32)+'" x2="'+(W-M)+'" y2="'+(y-32)+'" stroke="#242c38" stroke-width="1"/>';
+        out+='<text x="'+M+'" y="'+y+'" font-family="'+F+'" font-size="30" font-weight="800" fill="#eef3fa">'+X(cTrunc(c.game_title,34))+'</text>';
+        out+='<text x="'+M+'" y="'+(y+33)+'" font-family="'+F+'" font-size="22" font-weight="700" fill="#e0b23a">'+X(cTrunc(c.role||'Contributor',40))+'</text>';
+        // Simplified: a single green "Live service" pill, and only when it applies.
+        var isLive=(c.releases||[]).some(function(rl){ return DQ.releaseClass(rl)==="live"; });
+        if(isLive){ var col='#3fb950', pw=170, px=(W-M)-pw, py=y-27;
           out+='<rect x="'+px+'" y="'+py+'" width="'+pw+'" height="34" rx="8" fill="'+col+'" fill-opacity="0.14" stroke="'+col+'" stroke-opacity="0.55"/>'+
-               '<text x="'+(px+pw/2)+'" y="'+(py+23)+'" text-anchor="middle" font-family="'+F+'" font-size="18" font-weight="700" fill="'+col+'">'+X(rl)+'</text>'; }
+               '<text x="'+(px+pw/2)+'" y="'+(py+23)+'" text-anchor="middle" font-family="'+F+'" font-size="18" font-weight="700" fill="'+col+'">Live service</text>'; }
         if(c.vouch_count) out+='<text x="'+(W-M)+'" y="'+(y+33)+'" text-anchor="end" font-family="'+F+'" font-size="19" font-weight="700" fill="#3fb950">✓ Verified by '+c.vouch_count+'</text>';
         return out;
       }).join('');
       var moreN=credits.length-rows.length;
-      var moreLine=moreN>0 ? '<text x="'+M+'" y="'+(y0+rows.length*rh-26)+'" font-family="'+F+'" font-size="21" fill="#8b98a9">+ '+moreN+' more on the full profile</text>' : '';
+      var moreLine=moreN>0 ? '<text x="'+M+'" y="980" font-family="'+F+'" font-size="21" fill="#8b98a9">+ '+moreN+' more on the full profile</text>' : '';
       var mark=''; [[0,0,'#e0b23a'],[1,0,'#2d333b'],[2,0,'#2d333b'],[0,1,'#2d333b'],[1,1,'#e0b23a'],[2,1,'#2d333b'],[0,2,'#2d333b'],[1,2,'#2d333b'],[2,2,'#e0b23a']].forEach(function(r){ mark+='<rect x="'+(M+r[0]*13)+'" y="'+(60+r[1]*13)+'" width="10" height="10" rx="2" fill="'+r[2]+'"/>'; });
       var nameSize=name.length>18?46:60;
-      var hl=headline ? '<text x="212" y="258" font-family="'+F+'" font-size="25" fill="#8b98a9">'+X(cTrunc(headline,62))+'</text>' : '';
+      var hl=headline ? '<text x="212" y="240" font-family="'+F+'" font-size="25" fill="#8b98a9">'+X(cTrunc(headline,62))+'</text>' : '';
       return '<svg xmlns="http://www.w3.org/2000/svg" width="'+W+'" height="'+H+'" viewBox="0 0 '+W+' '+H+'">'+
         '<defs>'+
           '<linearGradient id="g1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7cc0ff"/><stop offset="1" stop-color="#a371f7"/></linearGradient>'+
@@ -230,15 +230,16 @@
         mark+
         '<text x="'+(M+45)+'" y="80" font-family="'+F+'" font-size="26" font-weight="800" fill="#eef3fa">DevQuest<tspan fill="#e0b23a">.gg</tspan></text>'+
         '<text x="'+(M+218)+'" y="80" font-family="'+F+'" font-size="15" font-weight="800" fill="#58a6ff" letter-spacing="2">CREDITS</text>'+
-        '<circle cx="'+(M+56)+'" cy="200" r="56" fill="url(#g1)"/>'+
-        '<text x="'+(M+56)+'" y="216" text-anchor="middle" font-family="'+F+'" font-size="40" font-weight="800" fill="#0b0e14">'+X(DQ.initials(name))+'</text>'+
-        '<text x="212" y="202" font-family="'+F+'" font-size="'+nameSize+'" font-weight="850" fill="#eef3fa">'+X(name)+'</text>'+ hl+
+        '<circle cx="'+(M+56)+'" cy="184" r="56" fill="url(#g1)"/>'+
+        '<text x="'+(M+56)+'" y="200" text-anchor="middle" font-family="'+F+'" font-size="40" font-weight="800" fill="#0b0e14">'+X(DQ.initials(name))+'</text>'+
+        '<text x="212" y="186" font-family="'+F+'" font-size="'+nameSize+'" font-weight="850" fill="#eef3fa">'+X(name)+'</text>'+ hl+
+        '<line x1="'+M+'" y1="300" x2="'+(W-M)+'" y2="300" stroke="#242c38" stroke-width="1"/>'+
         statSVG+
-        '<line x1="'+M+'" y1="540" x2="'+(W-M)+'" y2="540" stroke="#242c38" stroke-width="1"/>'+
-        '<text x="'+M+'" y="574" font-family="'+F+'" font-size="16" font-weight="800" fill="#58a6ff" letter-spacing="3">GAMEOGRAPHY</text>'+
+        '<line x1="'+M+'" y1="474" x2="'+(W-M)+'" y2="474" stroke="#242c38" stroke-width="1"/>'+
+        '<text x="'+M+'" y="512" font-family="'+F+'" font-size="16" font-weight="800" fill="#58a6ff" letter-spacing="3">GAMEOGRAPHY</text>'+
         rowSVG+ moreLine+
-        '<text x="'+M+'" y="1032" font-family="'+F+'" font-size="23" fill="#8b98a9">The verified record of who made the games.</text>'+
-        '<text x="'+(W-M)+'" y="1032" text-anchor="end" font-family="'+F+'" font-size="23" font-weight="800" fill="#58a6ff">devquest.gg/credits</text>'+
+        '<text x="'+M+'" y="1036" font-family="'+F+'" font-size="23" fill="#8b98a9">The verified record of who made the games.</text>'+
+        '<text x="'+(W-M)+'" y="1036" text-anchor="end" font-family="'+F+'" font-size="23" font-weight="800" fill="#58a6ff">devquest.gg/credits</text>'+
       '</svg>';
     }
     function downloadCard(btn){
