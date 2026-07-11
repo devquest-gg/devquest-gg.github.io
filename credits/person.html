@@ -122,7 +122,7 @@
       var relPorts = rels.filter(function(r){ var k=DQ.releaseClass(r); return k==="port"||k==="xdev"; });
       var relContent = rels.filter(function(r){ return DQ.releaseClass(r)==="content"; });
       var portNote = relPorts.length ? ' <span class="rmore2">· '+DQ.esc(relPorts.join(", "))+'</span>' : '';
-      var shipNote = relContent.length ? '<div class="relnote">Also shipped: '+DQ.esc(relContent.join(", "))+'</div>' : '';
+      var shipNote = relContent.length ? '<div class="relnote" style="font-size:11px;font-weight:400;color:var(--muted);margin-top:3px">Also shipped: '+DQ.esc(relContent.join(", "))+'</div>' : '';
       var seal = c.vouch_count
         ? ' <span class="vseal" title="Verified by '+c.vouch_count+' teammate'+(c.vouch_count===1?'':'s')+' who shipped this game" aria-label="Peer-verified by '+c.vouch_count+' teammate'+(c.vouch_count===1?'':'s')+'">✓</span>'
         : '';
