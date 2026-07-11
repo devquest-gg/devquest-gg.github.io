@@ -129,7 +129,7 @@
       var isExternal = rels.some(function(r){ return DQ.releaseClass(r)==="xdev"; });
       var workList = didWork.length ? DQ.esc(didWork.join(", ")) : "";
       var workBody = isExternal
-        ? (workList ? (c.partial?"Worked as an outsourcer on: ":"Also worked as an outsourcer on: ")+workList : "Worked as an outsourcer")
+        ? (workList ? "Worked as an outsourcer on: "+workList : "Worked as an outsourcer")
         : (workList ? (c.partial?"Worked on: ":"Also worked on: ")+workList : "");
       var workNote = workBody ? '<div class="relnote" style="font-size:11px;font-weight:400;color:var(--muted);margin-top:3px">'+workBody+'</div>' : '';
       var seal = c.vouch_count
