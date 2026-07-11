@@ -18,6 +18,16 @@
   .msg.err{color:var(--pink)} .msg.ok{color:var(--green)}
   .who{display:flex;align-items:center;gap:12px;margin-bottom:16px}
   .who .av{width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;color:#0b0e14;background:var(--accent)}
+  .erow{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border)}
+  .erow:last-child{border-bottom:none}
+  .erow .em{font-size:13.5px;word-break:break-all}
+  .eb{font-size:10px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;border-radius:6px;padding:1px 6px;margin-left:6px;vertical-align:middle}
+  .eb.primary{color:var(--green);border:1px solid rgba(63,185,80,.4);background:rgba(63,185,80,.08)}
+  .eb.unv{color:var(--gold);border:1px solid rgba(224,178,58,.4);background:rgba(224,178,58,.08)}
+  .eacts{display:flex;gap:10px;flex:none}
+  .eact{font-size:12px;font-weight:700;color:var(--accent);cursor:pointer;white-space:nowrap}
+  .eact:hover{text-decoration:underline}
+  .eact.del{color:var(--pink)}
 </style>
 </head>
 <body>
@@ -46,21 +56,71 @@
     }
   }
 
+  // 1b) Flash flags carried on the fragment (added=1) or query (email=taken)
+  var flash = "";
+  if(location.hash.indexOf("added=1") >= 0){ flash = "ok:Backup email confirmed and added to your account."; }
+
   // 2) Bounced back from an expired/invalid link
   var q = new URLSearchParams(location.search);
   var errNote = q.get("signin") === "expired" ? "That sign-in link expired. Request a new one below."
               : q.get("signin") === "invalid" ? "That sign-in link wasn't valid. Request a new one below." : "";
+  if(q.get("email") === "taken"){ flash = "err:That email is already linked to another profile."; }
 
-  // 3) Already signed in?
-  function showSignedIn(person){
-    card.innerHTML =
+  // 3) Already signed in? Show the Account screen (profile + emails).
+  function flashHTML(){
+    if(!flash) return "";
+    var i = flash.indexOf(":"), kind = flash.slice(0,i), txt = flash.slice(i+1);
+    return '<div class="msg" style="margin:0 0 14px"><span class="'+(kind==="ok"?"ok":"err")+'">'+esc(txt)+'</span></div>';
+  }
+  function emailRow(e){
+    var badges = (e.primary ? '<span class="eb primary">Primary</span>' : '') + (e.verified ? '' : '<span class="eb unv">Unverified</span>');
+    var actions = '';
+    if(!e.primary && e.verified) actions += '<a class="eact" data-primary="'+e.id+'">Make primary</a>';
+    if(!e.primary) actions += '<a class="eact del" data-remove="'+e.id+'">Remove</a>';
+    return '<div class="erow"><div class="em">'+esc(e.email)+badges+'</div><div class="eacts">'+actions+'</div></div>';
+  }
+  function reloadAccount(){ DQAPI.me().then(function(r){ if(r.ok && r.data.authenticated){ showAccount(r.data); } else { DQAPI.clearToken(); showForm(); } }); }
+  function showAccount(data){
+    if(!data.person){
+      // Provisional: signed in on a verified email, but no profile yet (orphan fix).
+      card.innerHTML = flashHTML() +
+        '<h1>You’re signed in</h1>' +
+        '<p>Signed in as <b style="color:var(--text)">' + esc(data.email || "") + '</b>. You don’t have a profile yet. Claim a credit on any game you worked on and your page starts automatically.</p>' +
+        '<a class="btn primary" href="/credits/">Find a game to claim →</a>' +
+        '<a class="btn ghost" id="signout" style="margin-top:10px;justify-content:center;width:100%">Sign out</a>';
+      document.getElementById("signout").onclick = function(){ DQAPI.logout().then(function(){ location.reload(); }); };
+      return;
+    }
+    var person = data.person, emails = person.emails || [];
+    card.innerHTML = flashHTML() +
       '<div class="who"><div class="av">' + esc(initials(person.name)) + '</div>' +
       '<div><div style="font-weight:800;font-size:16px">' + esc(person.name) + '</div>' +
-      '<div class="mut" style="font-size:13px">' + esc(person.email || "") + '</div></div></div>' +
-      '<p>You’re signed in.</p>' +
+      '<div class="mut" style="font-size:13px">Signed in</div></div></div>' +
       '<a class="btn primary" href="person.html?slug=' + encodeURIComponent(person.slug) + '">Go to my page</a>' +
-      '<a class="btn ghost" id="signout" style="margin-top:10px;justify-content:center;width:100%">Sign out</a>';
+      '<div style="margin-top:24px"><div style="font-size:13px;font-weight:800;margin-bottom:6px">Your emails</div>' +
+      '<p style="font-size:12.5px;margin:0 0 8px">Any confirmed email here can sign you in. Add a backup so you never lose access to your account.</p>' +
+      '<div id="emails">' + emails.map(emailRow).join("") + '</div>' +
+      '<div style="display:flex;gap:8px;margin-top:14px"><input id="newemail" type="email" placeholder="backup@example.com" style="flex:1;min-width:0"><button class="btn ghost" id="addemail" style="white-space:nowrap;padding:10px 14px">Add email</button></div>' +
+      '<div class="msg" id="emsg"></div></div>' +
+      '<a class="btn ghost" id="signout" style="margin-top:18px;justify-content:center;width:100%">Sign out</a>';
     document.getElementById("signout").onclick = function(){ DQAPI.logout().then(function(){ location.reload(); }); };
+    var emsg = document.getElementById("emsg");
+    document.getElementById("addemail").onclick = function(){
+      var v = (document.getElementById("newemail").value || "").trim();
+      if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v)){ emsg.innerHTML = '<span class="err">Enter a valid email.</span>'; return; }
+      var b = this; b.disabled = true; b.textContent = "Sending…";
+      DQAPI.addEmail(v).then(function(r){
+        b.disabled = false; b.textContent = "Add email";
+        if(r.ok){ emsg.innerHTML = '<span class="ok">Confirmation link sent to ' + esc(v) + '. Click it from that inbox to add the email.</span>'; document.getElementById("newemail").value = ""; }
+        else { emsg.innerHTML = '<span class="err">' + esc((r.data && r.data.error) || "Could not add that email.") + '</span>'; }
+      }).catch(function(){ b.disabled = false; b.textContent = "Add email"; emsg.innerHTML = '<span class="err">Network error. Try again.</span>'; });
+    };
+    Array.prototype.forEach.call(card.querySelectorAll("[data-primary]"), function(a){
+      a.onclick = function(){ DQAPI.setPrimaryEmail(a.getAttribute("data-primary")).then(function(r){ if(r.ok){ flash=""; reloadAccount(); } else emsg.innerHTML = '<span class="err">' + esc((r.data && r.data.error) || "Could not update.") + '</span>'; }); };
+    });
+    Array.prototype.forEach.call(card.querySelectorAll("[data-remove]"), function(a){
+      a.onclick = function(){ if(!confirm("Remove this email from your account?")) return; DQAPI.removeEmail(a.getAttribute("data-remove")).then(function(r){ if(r.ok){ flash=""; reloadAccount(); } else emsg.innerHTML = '<span class="err">' + esc((r.data && r.data.error) || "Could not remove.") + '</span>'; }); };
+    });
   }
   function showForm(){
     card.innerHTML =
@@ -86,7 +146,7 @@
   }
 
   if(DQAPI.isSignedIn()){
-    DQAPI.me().then(function(r){ if(r.ok && r.data.authenticated){ showSignedIn(r.data.person); } else { DQAPI.clearToken(); showForm(); } }).catch(showForm);
+    DQAPI.me().then(function(r){ if(r.ok && r.data.authenticated){ showAccount(r.data); } else { DQAPI.clearToken(); showForm(); } }).catch(showForm);
   } else {
     showForm();
   }
