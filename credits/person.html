@@ -83,13 +83,14 @@
     var years = credits.map(function(c){ return c.year; }).filter(function(y){ return y; });
     var minY = years.length ? Math.min.apply(null, years) : null;
     var maxY = years.length ? Math.max.apply(null, years) : null;
-    var nowY = new Date().getFullYear();
-    var career = minY ? (nowY - minY) : 0;
+    // Honest, self-limiting: span of shipped work (first to last shipped year).
+    // Never overcounts, freezes when you stop shipping, extends when you ship again.
+    var span = (minY && maxY) ? (maxY - minY) : 0;
     var liveCount = credits.filter(function(c){ return (c.releases||[]).some(function(rl){ return DQ.releaseClass(rl)==="live"; }); }).length;
     function snapStat(n, label, sub){ return '<div class="snap"><b>'+n+'</b><span>'+label+(sub?' <em>'+sub+'</em>':'')+'</span></div>'; }
     var snapItems = credits.length ? (
         snapStat(credits.length, 'shipped '+(credits.length===1?'game':'games')) +
-        (career>0 ? snapStat(career, 'years in the industry', 'since '+minY) : '') +
+        (span>0 ? snapStat(span, 'years shipping games', minY+'–'+maxY) : '') +
         (liveCount>0 ? snapStat(liveCount, 'live-service '+(liveCount===1?'title':'titles')) : '')
       ) : '';
     var snapshotHTML = snapItems ? '<div class="snapshot">'+snapItems+'</div>' : '';
@@ -123,7 +124,8 @@
         ? '<span class="drag-grip" title="Drag to reorder" style="cursor:grab;color:var(--muted);font-size:16px;line-height:1;user-select:none;padding:0 10px 0 2px">⠿</span>'
         : '';
       var controls = (isOwn && c.live && c.id)
-        ? '<a class="editcredit" data-id="'+c.id+'" data-role="'+DQ.esc(c.role||"")+'" data-others="'+DQ.esc((c.roles_other||[]).join(", "))+'" data-links="'+DQ.esc((c.links||[]).join("\n"))+'" data-releases="'+DQ.esc((c.releases||[]).join(", "))+'" style="color:var(--accent);font-size:12px;cursor:pointer;margin-left:10px">Edit</a>'+
+        ? '<a class="featstar" data-id="'+c.id+'" data-on="'+(c.featured?1:0)+'" title="'+(c.featured?'Featured on your share card':'Feature on your share card')+'" style="color:'+(c.featured?'var(--gold)':'var(--muted)')+';font-size:15px;cursor:pointer;margin-left:8px;line-height:1">'+(c.featured?'★':'☆')+'</a>'+
+          '<a class="editcredit" data-id="'+c.id+'" data-role="'+DQ.esc(c.role||"")+'" data-others="'+DQ.esc((c.roles_other||[]).join(", "))+'" data-links="'+DQ.esc((c.links||[]).join("\n"))+'" data-releases="'+DQ.esc((c.releases||[]).join(", "))+'" style="color:var(--accent);font-size:12px;cursor:pointer;margin-left:10px">Edit</a>'+
           '<a class="rmvcredit" data-id="'+c.id+'" style="color:var(--pink);font-size:12px;cursor:pointer;margin-left:10px">Remove</a>'
         : '';
       return '<div class="row"'+((isOwn&&c.live&&c.id)?' data-id="'+c.id+'"':'')+'>'+
@@ -196,31 +198,37 @@
     function buildCardSVG(){
       var X=DQ.esc, W=1080, H=1080, M=64, F=CARD_FONT;
       var cells=[[String(credits.length), credits.length===1?'shipped game':'shipped games']];
-      if(career>0) cells.push([String(career), 'years in games']);
+      if(span>0) cells.push([String(span), 'years shipping']);
       if(liveCount>0) cells.push([String(liveCount), liveCount===1?'live-service title':'live-service titles']);
       var statSVG=cells.map(function(s,i){ var cx=M+i*322;
         return '<text x="'+cx+'" y="384" font-family="'+F+'" font-size="60" font-weight="800" fill="url(#g1)">'+X(s[0])+'</text>'+
                '<text x="'+cx+'" y="418" font-family="'+F+'" font-size="21" fill="#8b98a9">'+X(s[1])+'</text>'; }).join('');
-      var rows=credits.slice(0,6), y0=556, rh=72;
+      // Curated highlight: featured credits if any, else profile order; capped so the
+      // card never scrolls, with the true total kept honest in "+N more" and the stat.
+      var featured=credits.filter(function(c){ return c.featured; });
+      var cardList=featured.length?featured:credits;
+      var rows=cardList.slice(0,7), n=rows.length;
+      var y0=556, rh=n>1?Math.min(74,Math.floor(354/(n-1))):74, sep=Math.round(rh*0.39);
       var rowSVG=rows.map(function(c,i){
         var y=y0+i*rh, out='';
-        if(i>0) out+='<line x1="'+M+'" y1="'+(y-28)+'" x2="'+(W-M)+'" y2="'+(y-28)+'" stroke="#242c38" stroke-width="1"/>';
+        if(i>0) out+='<line x1="'+M+'" y1="'+(y-sep)+'" x2="'+(W-M)+'" y2="'+(y-sep)+'" stroke="#242c38" stroke-width="1"/>';
         var title=cTrunc(c.game_title,30);
         out+='<text x="'+M+'" y="'+y+'" font-family="'+F+'" font-size="28" font-weight="800" fill="#eef3fa">'+X(title)+'</text>';
-        // Small colored release tag inline after the title (first release; keeps context
-        // like "PC port" so nothing is misrepresented). Same taxonomy as the profile.
-        var rel=(c.releases&&c.releases.length)?c.releases[0]:'';
-        if(rel){ var cls=DQ.releaseClass(rel), col=CARD_PILL[cls]||CARD_PILL.content, rl=cTrunc(rel,22);
-          var tx=M+Math.round(title.length*15.2)+14, pw=Math.round(String(rl).length*8.4)+22, py=y-19;
+        // Up to two colored release tags inline (then "+N"), so context like "Live service"
+        // AND "Mac Port" both show and nothing is misrepresented. Same taxonomy as the profile.
+        var rels=DQ.uniq(c.releases||[]), tx=M+Math.round(title.length*15.2)+14;
+        rels.slice(0,2).forEach(function(rel){ var cls=DQ.releaseClass(rel), col=CARD_PILL[cls]||CARD_PILL.content, rl=cTrunc(rel,20), pw=Math.round(String(rl).length*8.2)+20, py=y-19;
           out+='<rect x="'+tx+'" y="'+py+'" width="'+pw+'" height="26" rx="6" fill="'+col+'" fill-opacity="0.15" stroke="'+col+'" stroke-opacity="0.5"/>'+
-               '<text x="'+(tx+pw/2)+'" y="'+(py+18)+'" text-anchor="middle" font-family="'+F+'" font-size="15" font-weight="700" fill="'+col+'">'+X(rl)+'</text>'; }
+               '<text x="'+(tx+pw/2)+'" y="'+(py+18)+'" text-anchor="middle" font-family="'+F+'" font-size="15" font-weight="700" fill="'+col+'">'+X(rl)+'</text>';
+          tx+=pw+8; });
+        if(rels.length>2) out+='<text x="'+tx+'" y="'+(y-1)+'" font-family="'+F+'" font-size="15" font-weight="700" fill="#8b98a9">+'+(rels.length-2)+'</text>';
         out+='<text x="'+M+'" y="'+(y+30)+'" font-family="'+F+'" font-size="21" font-weight="700" fill="#e0b23a">'+X(cTrunc(c.role||'Contributor',40))+'</text>';
-        if(c.year) out+='<text x="'+(W-M)+'" y="'+y+'" text-anchor="end" font-family="'+F+'" font-size="22" fill="#8b98a9" font-variant-numeric="tabular-nums">'+c.year+'</text>';
+        if(c.year) out+='<text x="'+(W-M)+'" y="'+y+'" text-anchor="end" font-family="'+F+'" font-size="22" fill="#8b98a9">'+c.year+'</text>';
         if(c.vouch_count) out+='<text x="'+(W-M)+'" y="'+(y+30)+'" text-anchor="end" font-family="'+F+'" font-size="18" font-weight="700" fill="#3fb950">✓ Verified by '+c.vouch_count+'</text>';
         return out;
       }).join('');
       var moreN=credits.length-rows.length;
-      var moreLine=moreN>0 ? '<text x="'+M+'" y="982" font-family="'+F+'" font-size="21" fill="#8b98a9">+ '+moreN+' more on the full profile</text>' : '';
+      var moreLine=moreN>0 ? '<text x="'+M+'" y="'+(y0+(n-1)*rh+72)+'" font-family="'+F+'" font-size="21" fill="#8b98a9">+ '+moreN+' more on the full profile</text>' : '';
       var mark=''; [[0,0,'#e0b23a'],[1,0,'#2d333b'],[2,0,'#2d333b'],[0,1,'#2d333b'],[1,1,'#e0b23a'],[2,1,'#2d333b'],[0,2,'#2d333b'],[1,2,'#2d333b'],[2,2,'#e0b23a']].forEach(function(r){ mark+='<rect x="'+(M+r[0]*13)+'" y="'+(60+r[1]*13)+'" width="10" height="10" rx="2" fill="'+r[2]+'"/>'; });
       var nameSize=name.length>18?46:60;
       var hl=headline ? '<text x="212" y="240" font-family="'+F+'" font-size="25" fill="#8b98a9">'+X(cTrunc(headline,62))+'</text>' : '';
@@ -336,6 +344,9 @@
     };
     Array.prototype.forEach.call(document.querySelectorAll(".rmvcredit"), function(el){
       el.onclick = function(){ if(!confirm("Remove this credit?")) return; DQAPI.deleteCredit(el.dataset.id).then(function(){ location.reload(); }); };
+    });
+    Array.prototype.forEach.call(document.querySelectorAll(".featstar"), function(el){
+      el.onclick = function(){ var on=el.dataset.on==="1"; el.style.pointerEvents="none"; DQAPI.updateCredit(el.dataset.id, { featured: !on }).then(function(r){ if(r&&r.ok){ location.reload(); } else { el.style.pointerEvents=""; alert((r&&r.data&&r.data.error)||"Could not update."); } }).catch(function(){ el.style.pointerEvents=""; }); };
     });
     Array.prototype.forEach.call(document.querySelectorAll(".editcredit"), function(el){
       el.onclick = function(){
