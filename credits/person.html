@@ -196,7 +196,7 @@
     function cTrunc(s,n){ s=String(s==null?'':s); return s.length>n ? s.slice(0,n-1)+'…' : s; }
     function buildCardSVG(){
       var X=DQ.esc, W=1080, H=1080, M=64, F=CARD_FONT;
-      var cx=540;
+      var cx=540, cardSlug=(api&&api.person&&api.person.slug)||slug||'';
       var stats=[[String(credits.length), credits.length===1?'shipped game':'shipped games']];
       if(span>0) stats.push([String(span), 'years shipping']);
       if(liveCount>0) stats.push([String(liveCount), liveCount===1?'live-service title':'live-service titles']);
@@ -234,7 +234,7 @@
         '<text x="'+cx+'" y="462" text-anchor="middle" font-family="'+F+'" font-size="'+nameSize+'" font-weight="850" fill="#eef3fa">'+X(name)+'</text>'+ hl+
         vouch+ statSVG+
         '<text x="'+cx+'" y="868" text-anchor="middle" font-family="'+F+'" font-size="25" fill="#c4cfdd">The developer-owned, peer-verified record of who made the games.</text>'+
-        '<text x="'+cx+'" y="954" text-anchor="middle" font-family="'+F+'" font-size="30" font-weight="800" fill="#58a6ff">devquest.gg/credits</text>'+
+        '<text x="'+cx+'" y="954" text-anchor="middle" font-family="'+F+'" font-size="30" font-weight="800" fill="#58a6ff">devquest.gg/credits/'+X(cardSlug)+'</text>'+
       '</svg>';
     }
     function downloadCard(btn){
