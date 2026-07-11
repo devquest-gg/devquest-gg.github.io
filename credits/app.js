@@ -405,7 +405,7 @@
     nav.insertBefore(a, nav.firstChild);
     if (w.DQAPI.isSignedIn()) {
       w.DQAPI.me().then(function (r) {
-        if (r.ok && r.data.authenticated) { a.textContent = "✓ " + r.data.person.name; a.href = "person.html?slug=" + encodeURIComponent(r.data.person.slug); }
+        if (r.ok && r.data.authenticated) { a.textContent = r.data.person ? ("✓ " + r.data.person.name) : "Account"; a.href = "signin.html"; }
         else { w.DQAPI.clearToken(); a.textContent = "Sign in"; }
       }).catch(function () {});
     }
