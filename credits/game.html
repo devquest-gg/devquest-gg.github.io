@@ -88,6 +88,14 @@
     var iHaveCredit = !!(me && credits.some(function(c){ return c.person_slug===me.slug; }));
     var pending = (apiRes && apiRes.pending) || [];
 
+    // Order: your own claimed credit floats to the top when you're signed in; everyone
+    // else is alphabetical by last name (neutral, scannable, implies no hierarchy).
+    // Unclaimed teammate additions sort the same way, in their own section below.
+    function lastName(n){ var p=String(n||'').trim().split(/\s+/); return (p[p.length-1]||'').toLowerCase(); }
+    function cmpLast(na,nb){ return lastName(na).localeCompare(lastName(nb)) || String(na||'').localeCompare(String(nb||'')); }
+    credits.sort(function(a,b){ var am=(me&&a.person_slug===me.slug)?0:1, bm=(me&&b.person_slug===me.slug)?0:1; return (am-bm) || cmpLast(a.name,b.name); });
+    pending.sort(function(a,b){ return cmpLast(a.name,b.name); });
+
     // Unclaimed teammate attributions (added by a member, awaiting the named person).
     var pendingHTML = pending.length ? '<div class="rows" style="margin-top:14px">' + pending.map(function(pc){
       var mine = !!(me && pc.added_by_slug === me.slug);
