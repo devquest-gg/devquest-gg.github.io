@@ -110,6 +110,9 @@
       '<div id="emails">' + emails.map(emailRow).join("") + '</div>' +
       '<div style="display:flex;gap:8px;margin-top:14px;align-items:stretch"><input id="newemail" type="email" placeholder="backup@example.com" style="flex:1 1 auto;min-width:0;margin-top:0;background:var(--bg)"><button class="btn ghost" id="addemail" style="white-space:nowrap;padding:10px 16px;width:auto;flex:0 0 auto;margin-top:0">Add email</button></div>' +
       '<div class="msg" id="emsg"></div></div>' +
+      '<div style="margin-top:24px"><div style="font-size:13px;font-weight:800;margin-bottom:6px">Teammate invites</div>' +
+      '<p style="font-size:12.5px;margin:0 0 8px">People you added to games, waiting to claim. Copy a link to resend it.</p>' +
+      '<div id="invites"><div class="mut" style="font-size:13px">Loading…</div></div></div>' +
       '<a class="btn ghost" id="signout" style="margin-top:18px;justify-content:center;width:100%">Sign out</a>';
     document.getElementById("signout").onclick = function(){ DQAPI.logout().then(function(){ location.reload(); }); };
     var emsg = document.getElementById("emsg");
@@ -129,6 +132,20 @@
     Array.prototype.forEach.call(card.querySelectorAll("[data-remove]"), function(a){
       a.onclick = function(){ if(!confirm("Remove this email from your account?")) return; DQAPI.removeEmail(a.getAttribute("data-remove")).then(function(r){ if(r.ok){ flash=""; reloadAccount(); } else emsg.innerHTML = '<span class="err">' + esc((r.data && r.data.error) || "Could not remove.") + '</span>'; }); };
     });
+    // Outstanding teammate invites — load and let the user re-copy each link.
+    DQAPI.myInvites().then(function(r){
+      var box = document.getElementById("invites"); if(!box) return;
+      var invs = (r.data && r.data.invites) || [];
+      if(!invs.length){ box.innerHTML = '<div class="mut" style="font-size:13px">No outstanding invites.</div>'; return; }
+      box.innerHTML = invs.map(function(iv){
+        var n = iv.games.length;
+        return '<div class="erow"><div class="em">' + esc(iv.invitee_name) + ' <span class="mut">' + n + ' game' + (n===1?'':'s') + '</span></div>' +
+          '<div class="eacts"><a class="eact copyinv" data-url="' + esc(iv.claim_url) + '">Copy link</a></div></div>';
+      }).join("");
+      Array.prototype.forEach.call(box.querySelectorAll(".copyinv"), function(a){
+        a.onclick = function(){ try{ navigator.clipboard.writeText(a.getAttribute("data-url")); }catch(e){} a.textContent = "Copied ✓"; };
+      });
+    }).catch(function(){ var box = document.getElementById("invites"); if(box) box.innerHTML = '<div class="mut" style="font-size:13px">Could not load invites right now.</div>'; });
   }
   function showForm(){
     card.innerHTML =
