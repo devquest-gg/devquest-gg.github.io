@@ -329,7 +329,11 @@
       if (w.DQAPI) {
         if (!isGame && !isAdd) { w.location.href = "signin.html"; return; }         // profile claim = sign in
         if (!role) { alert("Add your headline role first."); return; }
-        if (!w.DQAPI.isSignedIn()) { w.location.href = "signin.html"; return; }
+        if (!w.DQAPI.isSignedIn()) {
+          // Stash the whole credit so sign-in can finish it, instead of losing the game.
+          try { w.localStorage.setItem("dq_pending_credit", JSON.stringify(payload())); } catch (e) {}
+          w.location.href = "signin.html"; return;
+        }
         submitBtn.disabled = true; submitBtn.textContent = "Saving…";
         w.DQAPI.createCredit(payload()).then(function (r) {
           if (r.status === 201 || r.ok) {

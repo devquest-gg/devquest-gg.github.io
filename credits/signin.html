@@ -73,6 +73,19 @@
     return;
   }
 
+  // 1a3) Or to finish claiming your own credit on a game (create it now).
+  var pendingNew = null; try{ pendingNew = localStorage.getItem("dq_pending_credit"); }catch(e){}
+  if(pendingNew && DQAPI.isSignedIn()){
+    try{ localStorage.removeItem("dq_pending_credit"); }catch(e){}
+    var pl = null; try{ pl = JSON.parse(pendingNew); }catch(e){ pl = null; }
+    if(pl){
+      DQAPI.createCredit(pl).then(function(r){
+        location.href = (r && (r.status===201 || r.ok) && r.data && r.data.person_slug) ? ("person.html?slug=" + encodeURIComponent(r.data.person_slug)) : "/credits/";
+      }).catch(function(){ location.href = "/credits/"; });
+      return;
+    }
+  }
+
   // 1b) Flash flags carried on the fragment (added=1) or query (email=taken)
   var flash = "";
   if(location.hash.indexOf("added=1") >= 0){ flash = "ok:Backup email confirmed and added to your account."; }
