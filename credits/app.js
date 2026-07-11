@@ -393,7 +393,7 @@
     bkt: bkt, qs: qs, getJSON: getJSON, loadEntity: loadEntity, loadIndex: loadIndex,
     rank: rank, searchRows: searchRows, attachSuggest: attachSuggest, openClaim: openClaim,
     uniq: uniq, releaseClass: releaseClass,
-    esc: esc, initials: initials, slugify: slugify,
+    esc: esc, safeUrl: safeUrl, initials: initials, slugify: slugify,
     SIG_LABEL: {
       in_game_credits: "In-game credits", studio_website: "Studio site", press_kit: "Press kit",
       linkedin_self: "LinkedIn (self)", peer_vouch: "Peer vouch", community: "Community"
