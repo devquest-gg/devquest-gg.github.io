@@ -29,6 +29,12 @@
     return getJSON("data/site/" + kind + "/" + bkt(slug, n) + ".json").then(function (m) { return m[slug] || null; });
   }
 
+  // Only allow safe link schemes into an href. Blocks javascript:, data:, etc.,
+  // which esc() alone would not (it escapes quotes/brackets, not the scheme).
+  function safeUrl(u) {
+    u = String(u == null ? "" : u).trim();
+    return /^(https?:\/\/|mailto:)/i.test(u) ? u : "#";
+  }
   function esc(s) {
     return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
       return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
