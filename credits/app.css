@@ -104,6 +104,8 @@ h2.sec{font-size:24px;font-weight:800;letter-spacing:-.5px;margin:0 0 6px}
 .verifystrip.on b{color:var(--green)}
 .verifystrip.cta{color:#e8ddc4;border:1px solid rgba(224,178,58,.4);background:rgba(224,178,58,.07)}
 .verifystrip.cta b{color:var(--gold)}
+/* peer-verified seal — a distinct green check after the game title, not a pill */
+.vseal{display:inline-flex;align-items:center;justify-content:center;width:17px;height:17px;border-radius:50%;background:var(--green);color:#0d1117;font-size:11px;font-weight:800;line-height:1;vertical-align:middle;margin-left:2px;cursor:default}
 /* owner-only per-credit nudge to go collect a peer confirmation */
 .getconf{font-size:11px;font-weight:700;color:var(--gold);text-decoration:none;white-space:nowrap}
 .getconf:hover{text-decoration:underline}
