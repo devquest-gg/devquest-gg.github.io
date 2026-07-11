@@ -115,7 +115,7 @@
       // third-party signals and peer vouches earn a visible mark.
       var sigs = (c.verification||[]).filter(function(s){ return String(s).indexOf("_self")===-1; }).map(function(s){ return '<span class="sig">'+DQ.esc(DQ.SIG_LABEL[s]||s)+'</span>'; }).join("");
       var others = c.roles_other || [];
-      var more = others.length ? ' <span class="rmore" title="Also: '+DQ.esc(others.join(", "))+'">+'+others.length+' more</span>' : '';
+      var more = others.length ? ' <span class="rmore2">· also '+DQ.esc(others.join(", "))+'</span>' : '';
       var seal = c.vouch_count
         ? ' <span class="vseal" title="Verified by '+c.vouch_count+' teammate'+(c.vouch_count===1?'':'s')+' who shipped this game" aria-label="Peer-verified by '+c.vouch_count+' teammate'+(c.vouch_count===1?'':'s')+'">✓</span>'
         : '';
