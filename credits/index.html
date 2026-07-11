@@ -124,6 +124,16 @@
   .dcard .tl .v{color:var(--green);font-size:11.5px}
   .dcard .skills{margin-top:12px}
   .skchip{display:inline-block;font-size:11px;color:var(--accent);border:1px solid rgba(88,166,255,.3);background:rgba(88,166,255,.08);border-radius:999px;padding:2px 9px;margin:2px 4px 0 0}
+  /* redesigned profile-preview card (mirrors the live person page) */
+  .dcard .hl{font-size:12px;color:var(--muted);margin-top:3px;line-height:1.35}
+  .dcard .snap{font-size:11.5px;color:#c4cfdd;margin-top:9px;font-variant-numeric:tabular-nums}
+  .dcard .gocred{margin-top:13px;display:flex;flex-direction:column;gap:10px}
+  .dcard .cr .crtop{font-size:12.5px;font-weight:700;color:#e6edf5;display:flex;align-items:center;flex-wrap:wrap;gap:6px}
+  .dcard .cr .crrole{font-size:11.5px;color:var(--gold);font-weight:700;margin-top:1px}
+  .dcard .cv{color:var(--green);font-size:11px;font-weight:700;margin-left:auto;white-space:nowrap}
+  .dpill{font-size:10px;font-weight:700;border-radius:5px;padding:1px 6px;color:var(--purple);border:1px solid rgba(163,113,247,.35);background:rgba(163,113,247,.09)}
+  .dpill.live{color:var(--green);border-color:rgba(63,185,80,.35);background:rgba(63,185,80,.09)}
+  .dpill.port{color:var(--accent);border-color:rgba(88,166,255,.35);background:rgba(88,166,255,.09)}
 
   /* how it works */
   .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
@@ -285,31 +295,60 @@
       '<div class="gstat"><b>'+g[4]+'</b> people credited</div></div></div>';
   }).join('');
 
-  // ---- dev spotlight cards ----
+  // ---- profile-preview cards (mirror the live person page: headline, snapshot,
+  //      gameography rows with release pills, gold roles, green peer-verified) ----
   var DEVS=[
-    ["Marco Alvarez","Gameplay Programmer","#58a6ff",[["Ghost of Tsushima","◈8"],["Days Gone","◈5"]],["C++","Combat","Netcode"]],
-    ["Priya Anand","Environment Artist","#a371f7",[["Elden Ring","◈14"],["Sekiro","◈9"]],["Substance","World-building","Lighting"]],
-    ["Sam Rivera","Audio Director","#3fb950",[["Hades","◈11"],["Pyre","◈6"]],["Wwise","Adaptive music","VO"]]
+    {name:"Marco Alvarez", hl:"Lead Gameplay Programmer at Sucker Punch", color:"#58a6ff", snap:"7 shipped games · since 2009",
+      credits:[
+        {g:"Ghost of Tsushima", pill:"Live service", cls:"live", role:"Lead Gameplay Programmer", v:8},
+        {g:"Days Gone", pill:"PC port", cls:"port", role:"Gameplay Programmer", v:5}
+      ]},
+    {name:"Priya Anand", hl:"Senior Environment Artist at FromSoftware", color:"#a371f7", snap:"5 shipped games · since 2013",
+      credits:[
+        {g:"Elden Ring", pill:"Shadow of the Erdtree", cls:"", role:"Senior Environment Artist", v:14},
+        {g:"Sekiro", pill:"", cls:"", role:"Environment Artist", v:9}
+      ]},
+    {name:"Sam Rivera", hl:"Audio Director at Supergiant", color:"#3fb950", snap:"4 shipped games · since 2011",
+      credits:[
+        {g:"Hades", pill:"Live service", cls:"live", role:"Audio Director", v:11},
+        {g:"Pyre", pill:"", cls:"", role:"Sound Designer", v:6}
+      ]}
   ];
   document.getElementById('dcards').innerHTML=DEVS.map(function(d){
-    var titles=d[3].map(function(t){return '<div class="tl"><span>'+t[0]+'</span><span class="v">'+t[1]+' vouch</span></div>';}).join('');
-    var skills=d[4].map(function(s){return '<span class="skchip">'+s+'</span>';}).join('');
-    return '<div class="dcard"><div class="halo" style="background:'+d[2]+'"></div>'+
-      '<div class="av" style="background:'+d[2]+'">'+d[0].split(' ').map(function(w){return w[0];}).join('')+'</div>'+
-      '<div class="nm">'+d[0]+' <span class="verified">✓</span></div><div class="rl">'+d[1]+'</div>'+
-      '<div class="titles">'+titles+'</div><div class="skills">'+skills+'</div></div>';
+    var initials=d.name.split(' ').map(function(w){return w[0];}).join('');
+    var rows=d.credits.map(function(c){
+      var pill=c.pill?' <span class="dpill'+(c.cls?' '+c.cls:'')+'">'+c.pill+'</span>':'';
+      var v=c.v?'<span class="cv">✓ '+c.v+'</span>':'';
+      return '<div class="cr"><div class="crtop"><span>'+c.g+'</span>'+pill+v+'</div><div class="crrole">'+c.role+'</div></div>';
+    }).join('');
+    return '<div class="dcard"><div class="halo" style="background:'+d.color+'"></div>'+
+      '<div class="av" style="background:'+d.color+'">'+initials+'</div>'+
+      '<div class="nm">'+d.name+' <span class="verified">✓</span></div>'+
+      '<div class="hl">'+d.hl+'</div>'+
+      '<div class="snap">'+d.snap+'</div>'+
+      '<div class="gocred">'+rows+'</div></div>';
   }).join('');
 
   // ---- animated counters ----
-  function animate(el){
-    var to=+el.dataset.to,start=null,dur=1400;
+  // Only ever animate a stat once it has a real (>0) target AND is in view, so a
+  // slow/failed data load can never leave it counting up to a fake zero.
+  var statsInView=false;
+  function countUp(el,to){
+    var start=null,dur=1200;
     function step(ts){if(!start)start=ts;var p=Math.min((ts-start)/dur,1);
-      var v=Math.floor((1-Math.pow(1-p,3))*to);el.textContent=v.toLocaleString();
-      if(p<1)requestAnimationFrame(step);}
+      el.textContent=Math.floor((1-Math.pow(1-p,3))*to).toLocaleString();
+      if(p<1)requestAnimationFrame(step); else el.textContent=to.toLocaleString();}
     requestAnimationFrame(step);
   }
+  function runCounters(){
+    if(!statsInView) return;
+    document.querySelectorAll('.stat b[data-to]').forEach(function(el){
+      var to=+el.dataset.to||0;
+      if(to>0 && !el._done){ el._done=true; countUp(el,to); }
+    });
+  }
   var io=new IntersectionObserver(function(es){es.forEach(function(e){
-    if(e.isIntersecting){animate(e.target);io.unobserve(e.target);}});},{threshold:.4});
+    if(e.isIntersecting){ statsInView=true; io.unobserve(e.target); runCounters(); }});},{threshold:.3});
   document.querySelectorAll('.stat b[data-to]').forEach(function(el){io.observe(el);});
 
   // ---- search: live combined dropdown + see-all button ----
@@ -323,12 +362,15 @@
   function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
   var PAL=[["#b23a48","#3a1720"],["#e0662a","#3a1a10"],["#7b3fb0","#1c1030"],["#4aa5e0","#10233a"],["#c8a23a","#2a2210"],["#4caf50","#12331a"],["#2a6fb0","#0f1c30"],["#3a8fb0","#10283a"],["#5a5fb0","#161a30"],["#c02a5a","#300f1c"]];
   function grad(str){var h=0;for(var i=0;i<str.length;i++)h=(h*31+str.charCodeAt(i))>>>0;var p=PAL[h%PAL.length];return 'linear-gradient(160deg,'+p[0]+','+p[1]+')';}
-  function setStat(id,val){var el=document.getElementById(id);if(el){el.dataset.to=val;if(el.textContent==='0'||+el.textContent===0){el.textContent=Number(val).toLocaleString();}}}
+  function setStat(id,val){var el=document.getElementById(id);if(el){el.dataset.to=val;runCounters();}}
 
+  // Catalogue counts (games, studios) come from the static build; the developer
+  // credit count is live from the API (the static file only ever saw seed data).
   fetch('data/site/stats.json').then(function(r){return r.ok?r.json():null;}).then(function(s){
-    if(!s)return; setStat('st-games',s.games); setStat('st-studios',s.studios); setStat('st-credits',s.credits);
+    if(!s)return; setStat('st-games',s.games); setStat('st-studios',s.studios);
     var a=document.getElementById('allgames'); if(a)a.textContent='Browse all '+Number(s.games).toLocaleString()+' games →';
   }).catch(function(){});
+  if(window.DQAPI&&DQAPI.stats){ DQAPI.stats().then(function(r){ if(r&&r.ok&&r.data){ setStat('st-credits', r.data.credits||0); } }).catch(function(){}); }
 
   fetch('data/site/home.json').then(function(r){return r.ok?r.json():null;}).then(function(h){
     if(!h)return;

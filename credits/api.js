@@ -32,6 +32,7 @@
     me: function () { return req("GET", "/auth/me"); },
     logout: function () { clearToken(); return req("POST", "/auth/logout"); },
     // reads
+    stats: function () { return req("GET", "/stats"); },
     gameCredits: function (slug) { return req("GET", "/credits/game/" + encodeURIComponent(slug)); },
     personCredits: function (slug) { return req("GET", "/credits/person/" + encodeURIComponent(slug)); },
     searchPeople: function (q) { return req("GET", "/people/search?q=" + encodeURIComponent(q)); },
