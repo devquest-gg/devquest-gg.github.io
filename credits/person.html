@@ -136,7 +136,7 @@
         ? '<span class="drag-grip" title="Drag to reorder" style="cursor:grab;color:var(--muted);font-size:16px;line-height:1;user-select:none;padding:0 10px 0 2px">⠿</span>'
         : '';
       var controls = (isOwn && c.live && c.id)
-        ? '<a class="editcredit" data-id="'+c.id+'" data-role="'+DQ.esc(c.role||"")+'" data-others="'+DQ.esc((c.roles_other||[]).join(", "))+'" data-links="'+DQ.esc((c.links||[]).join("\n"))+'" data-releases="'+DQ.esc((c.releases||[]).join(", "))+'" style="color:var(--accent);font-size:12px;cursor:pointer;margin-left:10px">Edit</a>'+
+        ? '<a class="editcredit" data-id="'+c.id+'" data-role="'+DQ.esc(c.role||"")+'" data-others="'+DQ.esc((c.roles_other||[]).join(", "))+'" data-links="'+DQ.esc((c.links||[]).join("\n"))+'" data-releases="'+DQ.esc((c.releases||[]).join(", "))+'" data-partial="'+(c.partial?"1":"")+'" style="color:var(--accent);font-size:12px;cursor:pointer;margin-left:10px">Edit</a>'+
           '<a class="rmvcredit" data-id="'+c.id+'" style="color:var(--pink);font-size:12px;cursor:pointer;margin-left:10px">Remove</a>'
         : '';
       return '<div class="row"'+((isOwn&&c.live&&c.id)?' data-id="'+c.id+'"':'')+'>'+
@@ -364,12 +364,17 @@
           '<textarea class="ed-proof" style="width:100%;min-height:56px;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:9px 11px;color:var(--text);font-size:14px;font-family:inherit;resize:vertical"></textarea>'+
           '<label style="font-size:12px;font-weight:700;display:block;margin:10px 0 4px">Releases / expansions <span style="font-weight:400;color:var(--muted)">(ports, remasters, named expansions. Comma-separated, optional)</span></label>'+
           '<input class="ed-release" list="ed-release-list" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:9px 11px;color:var(--text);font-size:14px;font-family:inherit" placeholder="PC port, Trials of Atlantis, Live service"><datalist id="ed-release-list"><option value="PC port"></option><option value="Console port"></option><option value="Remaster"></option><option value="Live service"></option><option value="DLC"></option><option value="Expansion"></option></datalist>'+
+          '<label style="font-size:12px;font-weight:700;display:block;margin:10px 0 4px">What did you work on?</label>'+
+          '<label style="display:block;font-weight:400;font-size:13px;margin:4px 0;cursor:pointer"><input type="radio" name="ed-scope" value="base" style="margin-right:7px;vertical-align:-1px">The base game <span style="color:var(--muted)">— including if you also worked on expansions, ports, or live service</span></label>'+
+          '<label style="display:block;font-weight:400;font-size:13px;margin:4px 0;cursor:pointer"><input type="radio" name="ed-scope" value="partial" style="margin-right:7px;vertical-align:-1px">Only a specific part, not the base game <span style="color:var(--muted)">— a port, an expansion, or the live-service era</span></label>'+
           '<div style="margin-top:12px;display:flex;gap:8px"><span class="btn primary ed-save" style="padding:8px 16px">Save</span><span class="btn ghost ed-cancel" style="padding:8px 16px">Cancel</span></div>'+
         '</div>';
         row.querySelector(".ed-role").value = el.dataset.role || "";
         row.querySelector(".ed-others").value = el.dataset.others || "";
         row.querySelector(".ed-proof").value = el.dataset.links || "";
         row.querySelector(".ed-release").value = el.dataset.releases || "";
+        var scopeSel = row.querySelector('input[name="ed-scope"][value="'+(el.dataset.partial ? "partial" : "base")+'"]');
+        if(scopeSel) scopeSel.checked = true;
         row.querySelector(".ed-role").focus();
         row.querySelector(".ed-cancel").onclick = function(){ location.reload(); };
         row.querySelector(".ed-save").onclick = function(){
@@ -379,8 +384,10 @@
           var nlinks = row.querySelector(".ed-proof").value.split(/\n+/).map(function(s){return s.trim();}).filter(Boolean);
           var nverif = nlinks.some(function(u){return /linkedin\.com/i.test(u);}) ? ["linkedin_self"] : [];
           var nreleases = DQ.uniq(row.querySelector(".ed-release").value.split(",").map(function(s){return s.trim();}).filter(Boolean));
+          var nscopeEl = row.querySelector('input[name="ed-scope"]:checked');
+          var nscope = nscopeEl ? nscopeEl.value : "base";
           var sbtn = this; sbtn.textContent = "Saving…";
-          DQAPI.updateCredit(id, { role: nrole, roles_other: nothers, links: nlinks, verification: nverif, releases: nreleases }).then(function(r){
+          DQAPI.updateCredit(id, { role: nrole, roles_other: nothers, links: nlinks, verification: nverif, releases: nreleases, scope: nscope }).then(function(r){
             if(r && r.ok){ location.reload(); }
             else { sbtn.textContent = "Save"; alert((r && r.data && r.data.error) || "Could not save."); }
           });
