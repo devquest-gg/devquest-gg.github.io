@@ -123,10 +123,15 @@
       // The asterisk (partial scope) is the only thing that ranks them: "Worked on" for a
       // scoped credit, "Also worked on" for a base-game credit. No ports-vs-expansions split.
       var rels = DQ.uniq(c.releases || []);
-      var relNamed = rels.filter(function(r){ var k=DQ.releaseClass(r); return k==="port"||k==="xdev"||k==="content"; });
+      var relNamed = rels.filter(function(r){ var k=DQ.releaseClass(r); return k==="port"||k==="content"; });
       var didWork = relNamed.slice();
       if(rels.some(function(r){ return DQ.releaseClass(r)==="live"; })) didWork.push("the live-service era");
-      var workNote = didWork.length ? '<div class="relnote" style="font-size:11px;font-weight:400;color:var(--muted);margin-top:3px">'+(c.partial?"Worked on: ":"Also worked on: ")+DQ.esc(didWork.join(", "))+'</div>' : '';
+      var isExternal = rels.some(function(r){ return DQ.releaseClass(r)==="xdev"; });
+      var workList = didWork.length ? DQ.esc(didWork.join(", ")) : "";
+      var workBody = isExternal
+        ? (workList ? (c.partial?"Worked as an outsourcer on: ":"Also worked as an outsourcer on: ")+workList : "Worked as an outsourcer")
+        : (workList ? (c.partial?"Worked on: ":"Also worked on: ")+workList : "");
+      var workNote = workBody ? '<div class="relnote" style="font-size:11px;font-weight:400;color:var(--muted);margin-top:3px">'+workBody+'</div>' : '';
       var seal = c.vouch_count
         ? ' <span class="vseal" title="Verified by '+c.vouch_count+' teammate'+(c.vouch_count===1?'':'s')+' who shipped this game" aria-label="Peer-verified by '+c.vouch_count+' teammate'+(c.vouch_count===1?'':'s')+'">✓</span>'
         : '';
@@ -368,17 +373,20 @@
           '<label style="font-size:12px;font-weight:700;display:block;margin:10px 0 4px">Releases / expansions <span style="font-weight:400;color:var(--muted)">(ports, remasters, named expansions. Comma-separated, optional)</span></label>'+
           '<input class="ed-release" list="ed-release-list" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:9px 11px;color:var(--text);font-size:14px;font-family:inherit" placeholder="PC port, Trials of Atlantis, Catacombs"><datalist id="ed-release-list"><option value="PC port"></option><option value="Console port"></option><option value="Remaster"></option><option value="DLC"></option><option value="Expansion"></option></datalist>'+
           '<label style="display:block;font-weight:400;font-size:13px;margin:8px 0;cursor:pointer"><input type="checkbox" class="ed-live" style="margin-right:7px;vertical-align:-1px">I worked on this game\'s live-service / post-launch period</label>'+
+          '<label style="display:block;font-weight:400;font-size:13px;margin:8px 0;cursor:pointer"><input type="checkbox" class="ed-external" style="margin-right:7px;vertical-align:-1px">I worked on this as an outsourced or external contributor</label>'+
           '<label style="font-size:12px;font-weight:700;display:block;margin:10px 0 4px">What did you work on?</label>'+
           '<label style="display:block;font-weight:400;font-size:13px;margin:4px 0;cursor:pointer"><input type="radio" name="ed-scope" value="base" style="margin-right:7px;vertical-align:-1px">The base game <span style="color:var(--muted)">— including if you also worked on expansions, ports, or live service</span></label>'+
           '<label style="display:block;font-weight:400;font-size:13px;margin:4px 0;cursor:pointer"><input type="radio" name="ed-scope" value="partial" style="margin-right:7px;vertical-align:-1px">Only a specific part, not the base game <span style="color:var(--muted)">— a port, an expansion, or the live-service era</span></label>'+
+          '<div style="font-size:11px;color:var(--muted);margin-top:10px;line-height:1.4">Only add work you\'re free to disclose. Leave off anything under NDA or not publicly announced.</div>'+
           '<div style="margin-top:12px;display:flex;gap:8px"><span class="btn primary ed-save" style="padding:8px 16px">Save</span><span class="btn ghost ed-cancel" style="padding:8px 16px">Cancel</span></div>'+
         '</div>';
         row.querySelector(".ed-role").value = el.dataset.role || "";
         row.querySelector(".ed-others").value = el.dataset.others || "";
         row.querySelector(".ed-proof").value = el.dataset.links || "";
         var edAll = (el.dataset.releases || "").split(",").map(function(s){return s.trim();}).filter(Boolean);
-        row.querySelector(".ed-release").value = edAll.filter(function(r){ return DQ.releaseClass(r) !== "live"; }).join(", ");
+        row.querySelector(".ed-release").value = edAll.filter(function(r){ var k=DQ.releaseClass(r); return k !== "live" && k !== "xdev"; }).join(", ");
         var edLiveCk = row.querySelector(".ed-live"); if(edLiveCk) edLiveCk.checked = edAll.some(function(r){ return DQ.releaseClass(r) === "live"; });
+        var edExtCk = row.querySelector(".ed-external"); if(edExtCk) edExtCk.checked = edAll.some(function(r){ return DQ.releaseClass(r) === "xdev"; });
         var scopeSel = row.querySelector('input[name="ed-scope"][value="'+(el.dataset.partial ? "partial" : "base")+'"]');
         if(scopeSel) scopeSel.checked = true;
         row.querySelector(".ed-role").focus();
@@ -392,6 +400,8 @@
           var nreleases = DQ.uniq(row.querySelector(".ed-release").value.split(",").map(function(s){return s.trim();}).filter(Boolean));
           var edLiveOn = row.querySelector(".ed-live");
           if(edLiveOn && edLiveOn.checked && nreleases.indexOf("Live service") === -1) nreleases.push("Live service");
+          var edExtOn = row.querySelector(".ed-external");
+          if(edExtOn && edExtOn.checked && nreleases.indexOf("External contributor") === -1) nreleases.push("External contributor");
           var nscopeEl = row.querySelector('input[name="ed-scope"]:checked');
           var nscope = nscopeEl ? nscopeEl.value : "base";
           var sbtn = this; sbtn.textContent = "Saving…";
