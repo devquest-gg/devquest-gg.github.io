@@ -127,7 +127,10 @@
         ? ' <span class="vseal" title="Verified by '+c.vouch_count+' teammate'+(c.vouch_count===1?'':'s')+' who shipped this game" aria-label="Peer-verified by '+c.vouch_count+' teammate'+(c.vouch_count===1?'':'s')+'">✓</span>'
         : '';
       var astWhat = relPorts.concat(relContent);
-      var ast = c.partial ? ' <span class="ast" style="color:var(--muted);font-weight:700;cursor:help" title="'+DQ.esc('Worked on '+(astWhat.length?astWhat.join(", "):'a specific part')+', not the base game')+'" aria-label="Worked on a specific part, not the base game">*</span>' : '';
+      var astTip = astWhat.length ? ('Worked on '+astWhat.join(", ")+', not the base game')
+        : (rels.some(function(r){ return DQ.releaseClass(r)==="live"; }) ? 'Worked on the live-service era, not the original release'
+        : 'Worked on a specific part, not the base game');
+      var ast = c.partial ? ' <span class="ast" style="color:var(--muted);font-weight:700;cursor:help" title="'+DQ.esc(astTip)+'" aria-label="Worked on a specific part, not the base game">*</span>' : '';
       var trust = (!c.vouch_count && isOwn && c.live && c.id)
         ? '<a class="getconf" href="game.html?slug='+encodeURIComponent(c.game_slug)+'" title="Add the teammates you shipped with; once they claim, they can confirm this credit">Get confirmed →</a>'
         : '';
