@@ -94,7 +94,7 @@
       var acts = mine
         ? '<a class="copyinvite" data-name="'+DQ.esc(pc.name)+'" style="font-size:12px;font-weight:700;color:var(--accent);cursor:pointer">Copy invite link</a>'+
           '<a class="rmvattr" data-id="'+pc.id+'" style="font-size:12px;color:var(--pink);margin-left:12px;cursor:pointer">Remove</a>'
-        : '';
+        : '<a class="claimattr" data-id="'+pc.id+'" style="font-size:12px;font-weight:700;color:var(--accent);cursor:pointer">Is this you? Claim</a>';
       return '<div class="row">'+
         '<div class="av" style="opacity:.55">'+DQ.esc(DQ.initials(pc.name))+'</div>'+
         '<div class="rmain"><div class="rname">'+DQ.esc(pc.name)+' <span class="sig" style="color:var(--muted)">unclaimed</span></div>'+
@@ -190,6 +190,22 @@
     });
     Array.prototype.forEach.call(document.querySelectorAll(".copyinvite"), function(el){
       el.onclick = function(){ var nm=el.dataset.name; el.textContent="…"; DQAPI.myInvites().then(function(r){ var inv=((r.data&&r.data.invites)||[]).filter(function(x){return x.invitee_name===nm;})[0]; if(inv){ try{ navigator.clipboard.writeText(inv.claim_url); }catch(e){} el.textContent="Copied ✓"; } else { el.textContent="Copy invite link"; alert("Could not find the link."); } }).catch(function(){ el.textContent="Copy invite link"; }); };
+    });
+    // Claim an unclaimed teammate row directly (no link needed).
+    Array.prototype.forEach.call(document.querySelectorAll(".claimattr"), function(el){
+      el.onclick = function(){
+        var id = el.dataset.id;
+        if(window.DQAPI && DQAPI.isSignedIn()){
+          el.textContent = "…";
+          DQAPI.claimAttribution(id).then(function(r){
+            if(r.ok){ location.href = "person.html?slug=" + encodeURIComponent(r.data.person_slug); }
+            else { el.textContent = "Is this you? Claim"; alert((r.data&&r.data.error)||"Could not claim right now."); }
+          }).catch(function(){ el.textContent = "Is this you? Claim"; });
+        } else {
+          try{ localStorage.setItem("dq_pending_claim_credit", id); }catch(e){}
+          location.href = "signin.html";
+        }
+      };
     });
   }).catch(function(e){
     app.innerHTML = '<div class="container"><div class="empty">Something went wrong loading this game.<br><span class="mut">'+DQ.esc(e && e.message)+'</span></div></div>';

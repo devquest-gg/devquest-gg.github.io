@@ -53,6 +53,7 @@
     attributeTeammate: function (payload) { return req("POST", "/credits/attribute", payload); },
     getInvite: function (token) { return req("GET", "/invite/" + encodeURIComponent(token)); },
     claimInvite: function (token) { return req("POST", "/invite/" + encodeURIComponent(token) + "/claim"); },
+    claimAttribution: function (id) { return req("POST", "/credits/attribute/" + id + "/claim"); },
     removeAttribution: function (id) { return req("DELETE", "/credits/attribute/" + id); },
     myInvites: function () { return req("GET", "/me/invites"); },
   };
