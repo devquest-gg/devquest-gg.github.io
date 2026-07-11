@@ -124,8 +124,7 @@
         ? '<span class="drag-grip" title="Drag to reorder" style="cursor:grab;color:var(--muted);font-size:16px;line-height:1;user-select:none;padding:0 10px 0 2px">⠿</span>'
         : '';
       var controls = (isOwn && c.live && c.id)
-        ? '<a class="featstar" data-id="'+c.id+'" data-on="'+(c.featured?1:0)+'" title="'+(c.featured?'Featured on your share card':'Feature on your share card')+'" style="color:'+(c.featured?'var(--gold)':'var(--muted)')+';font-size:15px;cursor:pointer;margin-left:8px;line-height:1">'+(c.featured?'★':'☆')+'</a>'+
-          '<a class="editcredit" data-id="'+c.id+'" data-role="'+DQ.esc(c.role||"")+'" data-others="'+DQ.esc((c.roles_other||[]).join(", "))+'" data-links="'+DQ.esc((c.links||[]).join("\n"))+'" data-releases="'+DQ.esc((c.releases||[]).join(", "))+'" style="color:var(--accent);font-size:12px;cursor:pointer;margin-left:10px">Edit</a>'+
+        ? '<a class="editcredit" data-id="'+c.id+'" data-role="'+DQ.esc(c.role||"")+'" data-others="'+DQ.esc((c.roles_other||[]).join(", "))+'" data-links="'+DQ.esc((c.links||[]).join("\n"))+'" data-releases="'+DQ.esc((c.releases||[]).join(", "))+'" style="color:var(--accent);font-size:12px;cursor:pointer;margin-left:10px">Edit</a>'+
           '<a class="rmvcredit" data-id="'+c.id+'" style="color:var(--pink);font-size:12px;cursor:pointer;margin-left:10px">Remove</a>'
         : '';
       return '<div class="row"'+((isOwn&&c.live&&c.id)?' data-id="'+c.id+'"':'')+'>'+
@@ -197,61 +196,45 @@
     function cTrunc(s,n){ s=String(s==null?'':s); return s.length>n ? s.slice(0,n-1)+'…' : s; }
     function buildCardSVG(){
       var X=DQ.esc, W=1080, H=1080, M=64, F=CARD_FONT;
-      var cells=[[String(credits.length), credits.length===1?'shipped game':'shipped games']];
-      if(span>0) cells.push([String(span), 'years shipping']);
-      if(liveCount>0) cells.push([String(liveCount), liveCount===1?'live-service title':'live-service titles']);
-      var statSVG=cells.map(function(s,i){ var cx=M+i*322;
-        return '<text x="'+cx+'" y="384" font-family="'+F+'" font-size="60" font-weight="800" fill="url(#g1)">'+X(s[0])+'</text>'+
-               '<text x="'+cx+'" y="418" font-family="'+F+'" font-size="21" fill="#8b98a9">'+X(s[1])+'</text>'; }).join('');
-      // Curated highlight: featured credits if any, else profile order; capped so the
-      // card never scrolls, with the true total kept honest in "+N more" and the stat.
-      var featured=credits.filter(function(c){ return c.featured; });
-      var cardList=featured.length?featured:credits;
-      var rows=cardList.slice(0,7), n=rows.length;
-      var y0=556, rh=n>1?Math.min(74,Math.floor(354/(n-1))):74, sep=Math.round(rh*0.39);
-      var rowSVG=rows.map(function(c,i){
-        var y=y0+i*rh, out='';
-        if(i>0) out+='<line x1="'+M+'" y1="'+(y-sep)+'" x2="'+(W-M)+'" y2="'+(y-sep)+'" stroke="#242c38" stroke-width="1"/>';
-        var title=cTrunc(c.game_title,30);
-        out+='<text x="'+M+'" y="'+y+'" font-family="'+F+'" font-size="28" font-weight="800" fill="#eef3fa">'+X(title)+'</text>';
-        // Up to two colored release tags inline (then "+N"), so context like "Live service"
-        // AND "Mac Port" both show and nothing is misrepresented. Same taxonomy as the profile.
-        var rels=DQ.uniq(c.releases||[]), tx=M+Math.round(title.length*15.2)+14;
-        rels.slice(0,2).forEach(function(rel){ var cls=DQ.releaseClass(rel), col=CARD_PILL[cls]||CARD_PILL.content, rl=cTrunc(rel,20), pw=Math.round(String(rl).length*8.2)+20, py=y-19;
-          out+='<rect x="'+tx+'" y="'+py+'" width="'+pw+'" height="26" rx="6" fill="'+col+'" fill-opacity="0.15" stroke="'+col+'" stroke-opacity="0.5"/>'+
-               '<text x="'+(tx+pw/2)+'" y="'+(py+18)+'" text-anchor="middle" font-family="'+F+'" font-size="15" font-weight="700" fill="'+col+'">'+X(rl)+'</text>';
-          tx+=pw+8; });
-        if(rels.length>2) out+='<text x="'+tx+'" y="'+(y-1)+'" font-family="'+F+'" font-size="15" font-weight="700" fill="#8b98a9">+'+(rels.length-2)+'</text>';
-        out+='<text x="'+M+'" y="'+(y+30)+'" font-family="'+F+'" font-size="21" font-weight="700" fill="#e0b23a">'+X(cTrunc(c.role||'Contributor',40))+'</text>';
-        if(c.year) out+='<text x="'+(W-M)+'" y="'+y+'" text-anchor="end" font-family="'+F+'" font-size="22" fill="#8b98a9">'+c.year+'</text>';
-        if(c.vouch_count) out+='<text x="'+(W-M)+'" y="'+(y+30)+'" text-anchor="end" font-family="'+F+'" font-size="18" font-weight="700" fill="#3fb950">✓ Verified by '+c.vouch_count+'</text>';
-        return out;
-      }).join('');
-      var moreN=credits.length-rows.length;
-      var moreLine=moreN>0 ? '<text x="'+M+'" y="'+(y0+(n-1)*rh+72)+'" font-family="'+F+'" font-size="21" fill="#8b98a9">+ '+moreN+' more on the full profile</text>' : '';
-      var mark=''; [[0,0,'#e0b23a'],[1,0,'#2d333b'],[2,0,'#2d333b'],[0,1,'#2d333b'],[1,1,'#e0b23a'],[2,1,'#2d333b'],[0,2,'#2d333b'],[1,2,'#2d333b'],[2,2,'#e0b23a']].forEach(function(r){ mark+='<rect x="'+(M+r[0]*13)+'" y="'+(60+r[1]*13)+'" width="10" height="10" rx="2" fill="'+r[2]+'"/>'; });
-      var nameSize=name.length>18?46:60;
-      var hl=headline ? '<text x="212" y="240" font-family="'+F+'" font-size="25" fill="#8b98a9">'+X(cTrunc(headline,62))+'</text>' : '';
+      var cx=540;
+      var stats=[[String(credits.length), credits.length===1?'shipped game':'shipped games']];
+      if(span>0) stats.push([String(span), 'years shipping']);
+      if(liveCount>0) stats.push([String(liveCount), liveCount===1?'live-service title':'live-service titles']);
+      var sx=stats.length===3?[270,540,810]:(stats.length===2?[380,700]:[540]);
+      var statSVG=stats.map(function(s,i){ var x=sx[i];
+        return '<text x="'+x+'" y="712" text-anchor="middle" font-family="'+F+'" font-size="80" font-weight="800" fill="url(#g1)">'+X(s[0])+'</text>'+
+               '<text x="'+x+'" y="748" text-anchor="middle" font-family="'+F+'" font-size="22" fill="#8b98a9">'+X(s[1])+'</text>'; }).join('');
+      // "N credits peer-verified" = credits with at least one peer vouch (max = your count). Hidden at 0.
+      var vN=credits.filter(function(c){ return c.vouch_count>0; }).length;
+      var vouch=''; if(vN>0){ var vt='✓ '+vN+' credit'+(vN===1?'':'s')+' peer-verified', vpw=Math.round(vt.length*12.2)+40, vpx=cx-vpw/2;
+        vouch='<rect x="'+vpx+'" y="556" width="'+vpw+'" height="40" rx="20" fill="#3fb950" fill-opacity="0.12" stroke="#3fb950" stroke-opacity="0.5"/>'+
+              '<text x="'+cx+'" y="582" text-anchor="middle" font-family="'+F+'" font-size="21" font-weight="700" fill="#3fb950">'+vt+'</text>'; }
+      // Faint ghost of the credits-page layout: colored like the real UI, far too faint to read.
+      var ghost='<g opacity="0.03"><rect x="64" y="66" width="240" height="16" rx="5" fill="#8b98a9"/><circle cx="112" cy="176" r="44" fill="#7cc0ff"/><rect x="182" y="150" width="330" height="32" rx="8" fill="#c8d2de"/><rect x="182" y="196" width="440" height="18" rx="6" fill="#8b98a9"/>';
+      [64,376,688].forEach(function(x){ ghost+='<rect x="'+x+'" y="286" width="64" height="56" rx="6" fill="#a371f7"/><rect x="'+x+'" y="356" width="150" height="15" rx="5" fill="#8b98a9"/>'; });
+      for(var gi=0;gi<7;gi++){ var gy=452+gi*80, gpc=['#3fb950','#58a6ff','#a371f7'][gi%3];
+        ghost+='<rect x="64" y="'+gy+'" width="'+(340+((gi*53)%250))+'" height="26" rx="6" fill="#c8d2de"/><rect x="64" y="'+(gy+38)+'" width="'+(210+((gi*37)%150))+'" height="16" rx="5" fill="#e0b23a"/><rect x="'+(560+((gi*29)%170))+'" y="'+(gy-2)+'" width="96" height="26" rx="6" fill="'+gpc+'"/><rect x="972" y="'+gy+'" width="44" height="20" rx="5" fill="#8b98a9"/>'; }
+      ghost+='</g>';
+      var mark=''; [[0,0,'#e0b23a'],[1,0,'#2d333b'],[2,0,'#2d333b'],[0,1,'#2d333b'],[1,1,'#e0b23a'],[2,1,'#2d333b'],[0,2,'#2d333b'],[1,2,'#2d333b'],[2,2,'#e0b23a']].forEach(function(r){ mark+='<rect x="'+(M+r[0]*13)+'" y="'+(64+r[1]*13)+'" width="10" height="10" rx="2" fill="'+r[2]+'"/>'; });
+      var nameSize=name.length>22?46:(name.length>16?56:70);
+      var hl=headline ? '<text x="'+cx+'" y="508" text-anchor="middle" font-family="'+F+'" font-size="26" fill="#8b98a9">'+X(cTrunc(headline,60))+'</text>' : '';
       return '<svg xmlns="http://www.w3.org/2000/svg" width="'+W+'" height="'+H+'" viewBox="0 0 '+W+' '+H+'">'+
         '<defs>'+
           '<linearGradient id="g1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7cc0ff"/><stop offset="1" stop-color="#a371f7"/></linearGradient>'+
-          '<radialGradient id="glow1" cx="0.18" cy="0.08" r="0.55"><stop offset="0" stop-color="#58a6ff" stop-opacity="0.18"/><stop offset="1" stop-color="#58a6ff" stop-opacity="0"/></radialGradient>'+
-          '<radialGradient id="glow2" cx="0.86" cy="0.06" r="0.55"><stop offset="0" stop-color="#a371f7" stop-opacity="0.16"/><stop offset="1" stop-color="#a371f7" stop-opacity="0"/></radialGradient>'+
+          '<radialGradient id="gl1" cx="0.15" cy="0.1" r="0.6"><stop offset="0" stop-color="#58a6ff" stop-opacity="0.2"/><stop offset="1" stop-color="#58a6ff" stop-opacity="0"/></radialGradient>'+
+          '<radialGradient id="gl2" cx="0.88" cy="0.05" r="0.6"><stop offset="0" stop-color="#a371f7" stop-opacity="0.18"/><stop offset="1" stop-color="#a371f7" stop-opacity="0"/></radialGradient>'+
         '</defs>'+
-        '<rect width="'+W+'" height="'+H+'" fill="#0b0e14"/><rect width="'+W+'" height="'+H+'" fill="url(#glow1)"/><rect width="'+W+'" height="'+H+'" fill="url(#glow2)"/>'+
+        '<rect width="'+W+'" height="'+H+'" fill="#0b0e14"/>'+ ghost +
+        '<rect width="'+W+'" height="'+H+'" fill="url(#gl1)"/><rect width="'+W+'" height="'+H+'" fill="url(#gl2)"/>'+
         mark+
-        '<text x="'+(M+45)+'" y="80" font-family="'+F+'" font-size="26" font-weight="800" fill="#eef3fa">DevQuest<tspan fill="#e0b23a">.gg</tspan></text>'+
-        '<text x="'+(M+218)+'" y="80" font-family="'+F+'" font-size="15" font-weight="800" fill="#58a6ff" letter-spacing="2">CREDITS</text>'+
-        '<circle cx="'+(M+56)+'" cy="184" r="56" fill="url(#g1)"/>'+
-        '<text x="'+(M+56)+'" y="200" text-anchor="middle" font-family="'+F+'" font-size="40" font-weight="800" fill="#0b0e14">'+X(DQ.initials(name))+'</text>'+
-        '<text x="212" y="186" font-family="'+F+'" font-size="'+nameSize+'" font-weight="850" fill="#eef3fa">'+X(name)+'</text>'+ hl+
-        '<line x1="'+M+'" y1="300" x2="'+(W-M)+'" y2="300" stroke="#242c38" stroke-width="1"/>'+
-        statSVG+
-        '<line x1="'+M+'" y1="474" x2="'+(W-M)+'" y2="474" stroke="#242c38" stroke-width="1"/>'+
-        '<text x="'+M+'" y="512" font-family="'+F+'" font-size="16" font-weight="800" fill="#58a6ff" letter-spacing="3">GAMEOGRAPHY</text>'+
-        rowSVG+ moreLine+
-        '<text x="'+M+'" y="1036" font-family="'+F+'" font-size="23" fill="#8b98a9">The verified record of who made the games.</text>'+
-        '<text x="'+(W-M)+'" y="1036" text-anchor="end" font-family="'+F+'" font-size="23" font-weight="800" fill="#58a6ff">devquest.gg/credits</text>'+
+        '<text x="'+(M+45)+'" y="84" font-family="'+F+'" font-size="24" font-weight="800" fill="#eef3fa">DevQuest<tspan fill="#e0b23a">.gg</tspan></text>'+
+        '<text x="'+(M+210)+'" y="84" font-family="'+F+'" font-size="15" font-weight="800" fill="#58a6ff" letter-spacing="2">CREDITS</text>'+
+        '<circle cx="'+cx+'" cy="300" r="90" fill="url(#g1)"/>'+
+        '<text x="'+cx+'" y="322" text-anchor="middle" font-family="'+F+'" font-size="64" font-weight="800" fill="#0b0e14">'+X(DQ.initials(name))+'</text>'+
+        '<text x="'+cx+'" y="462" text-anchor="middle" font-family="'+F+'" font-size="'+nameSize+'" font-weight="850" fill="#eef3fa">'+X(name)+'</text>'+ hl+
+        vouch+ statSVG+
+        '<text x="'+cx+'" y="868" text-anchor="middle" font-family="'+F+'" font-size="25" fill="#c4cfdd">The developer-owned, peer-verified record of who made the games.</text>'+
+        '<text x="'+cx+'" y="954" text-anchor="middle" font-family="'+F+'" font-size="30" font-weight="800" fill="#58a6ff">devquest.gg/credits</text>'+
       '</svg>';
     }
     function downloadCard(btn){
@@ -344,9 +327,6 @@
     };
     Array.prototype.forEach.call(document.querySelectorAll(".rmvcredit"), function(el){
       el.onclick = function(){ if(!confirm("Remove this credit?")) return; DQAPI.deleteCredit(el.dataset.id).then(function(){ location.reload(); }); };
-    });
-    Array.prototype.forEach.call(document.querySelectorAll(".featstar"), function(el){
-      el.onclick = function(){ var on=el.dataset.on==="1"; el.style.pointerEvents="none"; DQAPI.updateCredit(el.dataset.id, { featured: !on }).then(function(r){ if(r&&r.ok){ location.reload(); } else { el.style.pointerEvents=""; alert((r&&r.data&&r.data.error)||"Could not update."); } }).catch(function(){ el.style.pointerEvents=""; }); };
     });
     Array.prototype.forEach.call(document.querySelectorAll(".editcredit"), function(el){
       el.onclick = function(){
