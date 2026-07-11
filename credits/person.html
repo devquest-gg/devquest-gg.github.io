@@ -201,22 +201,26 @@
       var statSVG=cells.map(function(s,i){ var cx=M+i*322;
         return '<text x="'+cx+'" y="384" font-family="'+F+'" font-size="60" font-weight="800" fill="url(#g1)">'+X(s[0])+'</text>'+
                '<text x="'+cx+'" y="418" font-family="'+F+'" font-size="21" fill="#8b98a9">'+X(s[1])+'</text>'; }).join('');
-      var rows=credits.slice(0,5), y0=566, rh=86;
+      var rows=credits.slice(0,6), y0=556, rh=72;
       var rowSVG=rows.map(function(c,i){
         var y=y0+i*rh, out='';
-        if(i>0) out+='<line x1="'+M+'" y1="'+(y-32)+'" x2="'+(W-M)+'" y2="'+(y-32)+'" stroke="#242c38" stroke-width="1"/>';
-        out+='<text x="'+M+'" y="'+y+'" font-family="'+F+'" font-size="30" font-weight="800" fill="#eef3fa">'+X(cTrunc(c.game_title,34))+'</text>';
-        out+='<text x="'+M+'" y="'+(y+33)+'" font-family="'+F+'" font-size="22" font-weight="700" fill="#e0b23a">'+X(cTrunc(c.role||'Contributor',40))+'</text>';
-        // Simplified: a single green "Live service" pill, and only when it applies.
-        var isLive=(c.releases||[]).some(function(rl){ return DQ.releaseClass(rl)==="live"; });
-        if(isLive){ var col='#3fb950', pw=170, px=(W-M)-pw, py=y-27;
-          out+='<rect x="'+px+'" y="'+py+'" width="'+pw+'" height="34" rx="8" fill="'+col+'" fill-opacity="0.14" stroke="'+col+'" stroke-opacity="0.55"/>'+
-               '<text x="'+(px+pw/2)+'" y="'+(py+23)+'" text-anchor="middle" font-family="'+F+'" font-size="18" font-weight="700" fill="'+col+'">Live service</text>'; }
-        if(c.vouch_count) out+='<text x="'+(W-M)+'" y="'+(y+33)+'" text-anchor="end" font-family="'+F+'" font-size="19" font-weight="700" fill="#3fb950">✓ Verified by '+c.vouch_count+'</text>';
+        if(i>0) out+='<line x1="'+M+'" y1="'+(y-28)+'" x2="'+(W-M)+'" y2="'+(y-28)+'" stroke="#242c38" stroke-width="1"/>';
+        var title=cTrunc(c.game_title,30);
+        out+='<text x="'+M+'" y="'+y+'" font-family="'+F+'" font-size="28" font-weight="800" fill="#eef3fa">'+X(title)+'</text>';
+        // Small colored release tag inline after the title (first release; keeps context
+        // like "PC port" so nothing is misrepresented). Same taxonomy as the profile.
+        var rel=(c.releases&&c.releases.length)?c.releases[0]:'';
+        if(rel){ var cls=DQ.releaseClass(rel), col=CARD_PILL[cls]||CARD_PILL.content, rl=cTrunc(rel,22);
+          var tx=M+Math.round(title.length*15.2)+14, pw=Math.round(String(rl).length*8.4)+22, py=y-19;
+          out+='<rect x="'+tx+'" y="'+py+'" width="'+pw+'" height="26" rx="6" fill="'+col+'" fill-opacity="0.15" stroke="'+col+'" stroke-opacity="0.5"/>'+
+               '<text x="'+(tx+pw/2)+'" y="'+(py+18)+'" text-anchor="middle" font-family="'+F+'" font-size="15" font-weight="700" fill="'+col+'">'+X(rl)+'</text>'; }
+        out+='<text x="'+M+'" y="'+(y+30)+'" font-family="'+F+'" font-size="21" font-weight="700" fill="#e0b23a">'+X(cTrunc(c.role||'Contributor',40))+'</text>';
+        if(c.year) out+='<text x="'+(W-M)+'" y="'+y+'" text-anchor="end" font-family="'+F+'" font-size="22" fill="#8b98a9" font-variant-numeric="tabular-nums">'+c.year+'</text>';
+        if(c.vouch_count) out+='<text x="'+(W-M)+'" y="'+(y+30)+'" text-anchor="end" font-family="'+F+'" font-size="18" font-weight="700" fill="#3fb950">✓ Verified by '+c.vouch_count+'</text>';
         return out;
       }).join('');
       var moreN=credits.length-rows.length;
-      var moreLine=moreN>0 ? '<text x="'+M+'" y="980" font-family="'+F+'" font-size="21" fill="#8b98a9">+ '+moreN+' more on the full profile</text>' : '';
+      var moreLine=moreN>0 ? '<text x="'+M+'" y="982" font-family="'+F+'" font-size="21" fill="#8b98a9">+ '+moreN+' more on the full profile</text>' : '';
       var mark=''; [[0,0,'#e0b23a'],[1,0,'#2d333b'],[2,0,'#2d333b'],[0,1,'#2d333b'],[1,1,'#e0b23a'],[2,1,'#2d333b'],[0,2,'#2d333b'],[1,2,'#2d333b'],[2,2,'#e0b23a']].forEach(function(r){ mark+='<rect x="'+(M+r[0]*13)+'" y="'+(60+r[1]*13)+'" width="10" height="10" rx="2" fill="'+r[2]+'"/>'; });
       var nameSize=name.length>18?46:60;
       var hl=headline ? '<text x="212" y="240" font-family="'+F+'" font-size="25" fill="#8b98a9">'+X(cTrunc(headline,62))+'</text>' : '';
