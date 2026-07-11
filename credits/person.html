@@ -168,6 +168,7 @@
           '<div class="meta">'+(headline ? DQ.esc(headline) : (credits.length ? '' : 'No credits on record yet'))+'</div>'+
           linksHTML +
           editLinksAff +
+          (credits.length ? '<span class="editlinks" id="sharecard" style="margin-left:8px">⬇ Share card</span>' : '') +
           '<div id="linkedit"></div>'+
           '</div>'+
         '</div>'+
@@ -187,6 +188,77 @@
 
     var cb = document.getElementById("claimbtn");
     if(cb) cb.onclick = function(){ if(window.DQAPI) location.href = "signin.html"; else DQ.openClaim({ person_name: name }); };
+
+    // ---- Shareable credits card (client-side SVG → PNG, no backend) ----
+    var CARD_FONT = "'Segoe UI', system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif";
+    var CARD_PILL = { content:'#a371f7', live:'#3fb950', port:'#58a6ff', xdev:'#e0b23a' };
+    function cTrunc(s,n){ s=String(s==null?'':s); return s.length>n ? s.slice(0,n-1)+'…' : s; }
+    function buildCardSVG(){
+      var X=DQ.esc, W=1080, H=1080, M=64, F=CARD_FONT;
+      var cells=[[String(credits.length), credits.length===1?'shipped game':'shipped games']];
+      if(career>0) cells.push([String(career), 'years in games']);
+      if(liveCount>0) cells.push([String(liveCount), liveCount===1?'live-service title':'live-service titles']);
+      var statSVG=cells.map(function(s,i){ var cx=M+i*322;
+        return '<text x="'+cx+'" y="470" font-family="'+F+'" font-size="64" font-weight="800" fill="url(#g1)">'+X(s[0])+'</text>'+
+               '<text x="'+cx+'" y="504" font-family="'+F+'" font-size="21" fill="#8b98a9">'+X(s[1])+'</text>'; }).join('');
+      var rows=credits.slice(0,5), y0=606, rh=82;
+      var rowSVG=rows.map(function(c,i){
+        var y=y0+i*rh, out='';
+        if(i>0) out+='<line x1="'+M+'" y1="'+(y-30)+'" x2="'+(W-M)+'" y2="'+(y-30)+'" stroke="#242c38" stroke-width="1"/>';
+        out+='<text x="'+M+'" y="'+y+'" font-family="'+F+'" font-size="33" font-weight="800" fill="#eef3fa">'+X(cTrunc(c.game_title,26))+'</text>';
+        out+='<text x="'+M+'" y="'+(y+33)+'" font-family="'+F+'" font-size="22" font-weight="700" fill="#e0b23a">'+X(cTrunc(c.role||'Contributor',32))+'</text>';
+        var rel=(c.releases&&c.releases.length)?c.releases[0]:'';
+        if(rel){ var cls=DQ.releaseClass(rel), col=CARD_PILL[cls]||CARD_PILL.content, rl=cTrunc(rel,20);
+          var pw=Math.min(String(rl).length*13+34,320), px=(W-M)-pw, py=y-27;
+          out+='<rect x="'+px+'" y="'+py+'" width="'+pw+'" height="34" rx="8" fill="'+col+'" fill-opacity="0.14" stroke="'+col+'" stroke-opacity="0.55"/>'+
+               '<text x="'+(px+pw/2)+'" y="'+(py+23)+'" text-anchor="middle" font-family="'+F+'" font-size="18" font-weight="700" fill="'+col+'">'+X(rl)+'</text>'; }
+        if(c.vouch_count) out+='<text x="'+(W-M)+'" y="'+(y+33)+'" text-anchor="end" font-family="'+F+'" font-size="19" font-weight="700" fill="#3fb950">✓ Verified by '+c.vouch_count+'</text>';
+        return out;
+      }).join('');
+      var moreN=credits.length-rows.length;
+      var moreLine=moreN>0 ? '<text x="'+M+'" y="'+(y0+rows.length*rh-26)+'" font-family="'+F+'" font-size="21" fill="#8b98a9">+ '+moreN+' more on the full profile</text>' : '';
+      var mark=''; [[0,0,'#e0b23a'],[1,0,'#2d333b'],[2,0,'#2d333b'],[0,1,'#2d333b'],[1,1,'#e0b23a'],[2,1,'#2d333b'],[0,2,'#2d333b'],[1,2,'#2d333b'],[2,2,'#e0b23a']].forEach(function(r){ mark+='<rect x="'+(M+r[0]*13)+'" y="'+(60+r[1]*13)+'" width="10" height="10" rx="2" fill="'+r[2]+'"/>'; });
+      var nameSize=name.length>18?46:60;
+      var hl=headline ? '<text x="212" y="258" font-family="'+F+'" font-size="25" fill="#8b98a9">'+X(cTrunc(headline,62))+'</text>' : '';
+      return '<svg xmlns="http://www.w3.org/2000/svg" width="'+W+'" height="'+H+'" viewBox="0 0 '+W+' '+H+'">'+
+        '<defs>'+
+          '<linearGradient id="g1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7cc0ff"/><stop offset="1" stop-color="#a371f7"/></linearGradient>'+
+          '<radialGradient id="glow1" cx="0.18" cy="0.08" r="0.55"><stop offset="0" stop-color="#58a6ff" stop-opacity="0.18"/><stop offset="1" stop-color="#58a6ff" stop-opacity="0"/></radialGradient>'+
+          '<radialGradient id="glow2" cx="0.86" cy="0.06" r="0.55"><stop offset="0" stop-color="#a371f7" stop-opacity="0.16"/><stop offset="1" stop-color="#a371f7" stop-opacity="0"/></radialGradient>'+
+        '</defs>'+
+        '<rect width="'+W+'" height="'+H+'" fill="#0b0e14"/><rect width="'+W+'" height="'+H+'" fill="url(#glow1)"/><rect width="'+W+'" height="'+H+'" fill="url(#glow2)"/>'+
+        mark+
+        '<text x="'+(M+45)+'" y="80" font-family="'+F+'" font-size="26" font-weight="800" fill="#eef3fa">DevQuest<tspan fill="#e0b23a">.gg</tspan></text>'+
+        '<text x="'+(M+218)+'" y="80" font-family="'+F+'" font-size="15" font-weight="800" fill="#58a6ff" letter-spacing="2">CREDITS</text>'+
+        '<circle cx="'+(M+56)+'" cy="200" r="56" fill="url(#g1)"/>'+
+        '<text x="'+(M+56)+'" y="216" text-anchor="middle" font-family="'+F+'" font-size="40" font-weight="800" fill="#0b0e14">'+X(DQ.initials(name))+'</text>'+
+        '<text x="212" y="202" font-family="'+F+'" font-size="'+nameSize+'" font-weight="850" fill="#eef3fa">'+X(name)+'</text>'+ hl+
+        statSVG+
+        '<line x1="'+M+'" y1="540" x2="'+(W-M)+'" y2="540" stroke="#242c38" stroke-width="1"/>'+
+        '<text x="'+M+'" y="574" font-family="'+F+'" font-size="16" font-weight="800" fill="#58a6ff" letter-spacing="3">GAMEOGRAPHY</text>'+
+        rowSVG+ moreLine+
+        '<text x="'+M+'" y="1032" font-family="'+F+'" font-size="23" fill="#8b98a9">The verified record of who made the games.</text>'+
+        '<text x="'+(W-M)+'" y="1032" text-anchor="end" font-family="'+F+'" font-size="23" font-weight="800" fill="#58a6ff">devquest.gg/credits</text>'+
+      '</svg>';
+    }
+    function downloadCard(btn){
+      var svg=buildCardSVG(), img=new Image();
+      img.onload=function(){
+        var scale=2, S=1080, cv=document.createElement("canvas"); cv.width=S*scale; cv.height=S*scale;
+        var ctx=cv.getContext("2d"); ctx.scale(scale,scale); ctx.drawImage(img,0,0,S,S);
+        cv.toBlob(function(blob){
+          if(!blob){ if(btn) btn.textContent="⬇ Share card"; alert("Could not generate the card. Try again."); return; }
+          var a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=(DQ.slugify(name)||"devquest")+"-credits.png";
+          document.body.appendChild(a); a.click(); document.body.removeChild(a);
+          setTimeout(function(){ URL.revokeObjectURL(a.href); },1000);
+          if(btn) btn.textContent="⬇ Share card";
+        }, "image/png");
+      };
+      img.onerror=function(){ if(btn) btn.textContent="⬇ Share card"; alert("Could not generate the card. Try again."); };
+      img.src="data:image/svg+xml;charset=utf-8,"+encodeURIComponent(svg);
+    }
+    var scb=document.getElementById("sharecard");
+    if(scb) scb.onclick=function(){ scb.textContent="Generating…"; downloadCard(scb); };
 
     // ---- Owner-only profile-links editor (saves via PATCH /me) ----
     var elBtn = document.getElementById("editlinks");
