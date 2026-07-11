@@ -33,6 +33,7 @@
 <script>
 (function(){
   var slug = DQ.qs("slug"), app = document.getElementById("app");
+  try { if (slug) history.replaceState(null, "", "/credits/game/" + encodeURIComponent(slug)); } catch (e) {}
   if(!slug){ app.innerHTML = '<div class="container"><div class="empty">No game specified.</div></div>'; return; }
 
   var pStatic = DQ.loadEntity("games", slug).catch(function(){ return null; });

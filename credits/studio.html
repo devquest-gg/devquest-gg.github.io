@@ -32,6 +32,7 @@
 <script>
 (function(){
   var slug = DQ.qs("slug"), app = document.getElementById("app");
+  try { if (slug) history.replaceState(null, "", "/credits/studio/" + encodeURIComponent(slug)); } catch (e) {}
   if(!slug){ app.innerHTML = '<div class="container"><div class="empty">No studio specified.</div></div>'; return; }
   var PAGE = 60, shown = 0, allGames = [];
 

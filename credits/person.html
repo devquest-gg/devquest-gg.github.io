@@ -33,6 +33,9 @@
 <script>
 (function(){
   var slug = DQ.qs("slug"), app = document.getElementById("app");
+  // Keep the address bar on the pretty URL (/credits/<slug>) even when reached via
+  // person.html?slug=... The 404.html router redirects clean URLs here; this rewrites back.
+  try { if (slug) history.replaceState(null, "", "/credits/" + encodeURIComponent(slug)); } catch (e) {}
   if(!slug){ app.innerHTML = '<div class="container"><div class="empty">No person specified.</div></div>'; return; }
   var LINK_LABEL = { linkedin:"LinkedIn", portfolio:"Portfolio", artstation:"ArtStation", website:"Website", site:"Website", personal:"Website", twitter:"Twitter", x:"X", bluesky:"Bluesky", github:"GitHub", itch:"itch.io", mastodon:"Mastodon" };
 
