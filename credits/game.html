@@ -83,7 +83,7 @@
     // merge credits by person — seed (static) + live (API), API wins
     var byPerson = {};
     ((g && g.credits) || []).forEach(function(c){ var ps=DQ.slugify(c.name); byPerson[ps]={person_slug:ps,name:c.name,role:c.role,roles_other:c.roles_other||[],verification:c.verification||[],vouch_count:0,live:false}; });
-    apiCredits.forEach(function(c){ byPerson[c.person_slug]={id:c.id,person_slug:c.person_slug,name:c.person_name,role:c.role,roles_other:c.roles_other||[],verification:c.verification||[],links:c.links||[],releases:c.releases||[],vouch_count:c.vouch_count||0,voucher_slugs:c.voucher_slugs||[],live:true}; });
+    apiCredits.forEach(function(c){ byPerson[c.person_slug]={id:c.id,person_slug:c.person_slug,name:c.person_name,role:c.role,roles_other:c.roles_other||[],verification:c.verification||[],links:c.links||[],releases:c.releases||[],vouch_count:c.vouch_count||0,voucher_slugs:c.voucher_slugs||[],partial:!!c.partial,live:true}; });
     var credits = Object.keys(byPerson).map(function(k){ return byPerson[k]; });
     var iHaveCredit = !!(me && credits.some(function(c){ return c.person_slug===me.slug; }));
     var pending = (apiRes && apiRes.pending) || [];
