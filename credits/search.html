@@ -83,10 +83,14 @@
       '<div class="s">'+s[2].toLocaleString()+' game'+(s[2]===1?'':'s')+'</div></a>';
   }).join("")+'</div>'; }
   function peopleRows(rows){ return '<div class="rows">'+rows.map(function(p){
-    return '<a class="row" href="/credits/'+encodeURIComponent(p[0])+'">'+
-      '<div class="av">'+DQ.esc(DQ.initials(p[1]))+'</div>'+
-      '<div class="rmain"><div class="rname">'+DQ.esc(p[1])+'</div>'+
-      '<div class="rsub">'+p[2]+' credit'+(p[2]===1?'':'s')+'</div></div></a>';
+    var un = p[3];
+    var href = un ? ('/credits/game/'+encodeURIComponent(un)) : ('/credits/'+encodeURIComponent(p[0]));
+    var name = DQ.esc(p[1]) + (un ? ' <span class="sig" style="color:var(--muted)">unclaimed</span>' : '');
+    var sub = un ? 'Attributed by a teammate — tap to claim' : (p[2]+' credit'+(p[2]===1?'':'s'));
+    return '<a class="row" href="'+href+'">'+
+      '<div class="av"'+(un?' style="opacity:.55"':'')+'>'+DQ.esc(DQ.initials(p[1]))+'</div>'+
+      '<div class="rmain"><div class="rname">'+name+'</div>'+
+      '<div class="rsub">'+sub+'</div></div></a>';
   }).join("")+'</div>'; }
 
   function setCounts(g,s,p){
@@ -145,7 +149,7 @@
     var my = ++liveReq;
     if(DQAPI.searchGames) DQAPI.searchGames(q).then(function(r){ if(my!==liveReq) return; data.liveGames=((r.data&&r.data.games)||[]).map(function(g){ return [g.slug,g.title,g.year||"",g.studio||""]; }); paint(q); }).catch(function(){});
     if(DQAPI.searchStudios) DQAPI.searchStudios(q).then(function(r){ if(my!==liveReq) return; data.liveStudios=((r.data&&r.data.studios)||[]).map(function(s){ return [s.slug,s.name,s.count||0]; }); paint(q); }).catch(function(){});
-    if(DQAPI.searchPeople) DQAPI.searchPeople(q).then(function(r){ if(my!==liveReq) return; data.livePeople=((r.data&&r.data.people)||[]).map(function(p){ return [p.slug,p.name,p.credit_count||0]; }); paint(q); }).catch(function(){});
+    if(DQAPI.searchPeople) DQAPI.searchPeople(q).then(function(r){ if(my!==liveReq) return; var pl=((r.data&&r.data.people)||[]).map(function(p){ return [p.slug,p.name,p.credit_count||0,""]; }); var ul=((r.data&&r.data.unclaimed)||[]).map(function(p){ return ["u:"+String(p.name).toLowerCase(),p.name,p.credit_count||0,p.game_slug||""]; }); data.livePeople=pl.concat(ul); paint(q); }).catch(function(){});
   }
   function paint(q){
     results.innerHTML = tab==="all" ? renderAll(q) : tab==="studios" ? renderStudios(q) : tab==="people" ? renderPeople(q) : renderGames(q);

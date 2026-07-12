@@ -112,8 +112,11 @@
       return '<a class="dq-row" href="/credits/studio/' + encodeURIComponent(r[0]) + '"><span class="tag dq-tag-studio">Studio</span>' +
         '<span class="txt"><span class="nm">' + esc(r[1]) + '</span><span class="sb">' + Number(r[2]).toLocaleString() + ' game' + (r[2] === 1 ? '' : 's') + '</span></span></a>';
     }
-    return '<a class="dq-row" href="/credits/' + encodeURIComponent(r[0]) + '"><span class="tag dq-tag-person">Person</span>' +
-      '<span class="txt"><span class="nm">' + esc(r[1]) + '</span><span class="sb">' + r[2] + ' credit' + (r[2] === 1 ? '' : 's') + '</span></span></a>';
+    var un = r[3];
+    var phref = un ? ('/credits/game/' + encodeURIComponent(un)) : ('/credits/' + encodeURIComponent(r[0]));
+    var psub = un ? 'Unclaimed — tap to claim' : (r[2] + ' credit' + (r[2] === 1 ? '' : 's'));
+    return '<a class="dq-row" href="' + phref + '"><span class="tag dq-tag-person">Person</span>' +
+      '<span class="txt"><span class="nm">' + esc(r[1]) + '</span><span class="sb">' + psub + '</span></span></a>';
   }
 
   // Attach a live grouped dropdown to a text input. Jumps straight to an entity
@@ -175,7 +178,7 @@
       if (w.DQAPI) {
         var myq = q;
         var repaint = function () { if (input.value.trim() === myq && box.style.display !== "none") box.innerHTML = build(myq); };
-        if (w.DQAPI.searchPeople) w.DQAPI.searchPeople(q).then(function (r) { data.livePeople = ((r.data && r.data.people) || []).map(function (p) { return [p.slug, p.name, p.credit_count || 0]; }); repaint(); }).catch(function () {});
+        if (w.DQAPI.searchPeople) w.DQAPI.searchPeople(q).then(function (r) { var pl = ((r.data && r.data.people) || []).map(function (p) { return [p.slug, p.name, p.credit_count || 0, ""]; }); var ul = ((r.data && r.data.unclaimed) || []).map(function (p) { return ["u:" + String(p.name).toLowerCase(), p.name, p.credit_count || 0, p.game_slug || ""]; }); data.livePeople = pl.concat(ul); repaint(); }).catch(function () {});
         if (w.DQAPI.searchGames) w.DQAPI.searchGames(q).then(function (r) { data.liveGames = ((r.data && r.data.games) || []).map(function (g) { return [g.slug, g.title, g.year || "", g.studio || ""]; }); repaint(); }).catch(function () {});
         if (w.DQAPI.searchStudios) w.DQAPI.searchStudios(q).then(function (r) { data.liveStudios = ((r.data && r.data.studios) || []).map(function (s) { return [s.slug, s.name, s.count || 0]; }); repaint(); }).catch(function () {});
       }
