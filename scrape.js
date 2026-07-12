@@ -109,6 +109,8 @@ const DIRECTORY = [
   // ---- July 2026 additions: real studios on unsupported ATSes (link-outs until a fetcher exists) ----
   { name: "Nitro Games", url: "https://nitrogames.careers.haileyhr.app", note: "Nasdaq-listed mobile studio — HaileyHR board (no fetcher yet)", city: "Helsinki, Finland" },
   { name: "Enduring Games", url: "https://enduring.games/jobs/", note: "Console co-dev & ports — email apply, no ATS feed", city: "Austin, TX" },
+  { name: "Tarsier Studios", url: "https://tarsier.recruitment.simployer.com/careers", note: "Little Nightmares 1 & 2 — Simployer ATS (no scrapeable feed)", city: "Malmö, Sweden" },
+  { name: "Room 8 Studio", url: "https://room8studio.com/careers/", note: "Game art & co-development services (CoD, Diablo, AC) — WordPress careers, no ATS feed", city: "" },
   // (Torpor Games promoted to mainland 2026-07-05 — HiBob (Bob) ATS, /api/job-ad JSON; see fetchHibob.)
   // (Flix Interactive promoted to mainland 2026-07-05 — self-hosted WP careers page (.vacancy-card list); see fetchFlix.)
   // (Anshar Studios promoted to mainland 2026-07-05 — WP careers page → Traffit board; see fetchTraffit.)
@@ -547,6 +549,10 @@ const STUDIOS = [
   { name: "Com2uS", type: "personio", token: "gvc2u", city: "Seoul, South Korea" },                          // Summoners War (KR)
   { name: "KING Art", type: "personio", token: "king-art-gmbh", city: "Bremen, Germany" },                   // Iron Harvest, The Dwarves
   { name: "Travian Games", type: "personio", token: "traviangames", city: "Munich, Germany" },               // Travian
+  // ---- July 2026 batch (user-submitted) ----
+  { name: "Game District", type: "jazzhr", token: "gamedistrict", city: "Lahore, Pakistan" },                // Pakistani mobile game dev/publisher (JazzHR board, gamedistrict.applytojob.com)
+  { name: "Ares Interactive", type: "rippling", token: "ares-interactive-careers", city: "San Francisco, CA" }, // The Walking Dead: Aftermath — game dev/publisher, SF + Berlin (Rippling ATS)
+  { name: "Lightfox Games", type: "lightfox", token: "lightfox", city: "Seattle, WA" },                      // ex-King Seattle vets; mobile studio, Seattle + Vancouver (self-hosted /roles.json)
 ];
 
 // ---- Studio type tags (Michelle's idea) ------------------------------------
@@ -3212,6 +3218,46 @@ async function fetchMicrosoftCareers(studio) {
   return out;
 }
 
+// ---- Lightfox Games (Seattle/Vancouver mobile studio) — self-hosted roles.json --------------
+// The careers page (lightfoxgames.com) renders from a static JSON file at /roles.json: an array of
+// { id, title, department, location, type, workModel, applyUrl, datePosted, description, visible,
+// status, ... }. We keep only live roles (visible !== false AND status === "active"); "icebox"/
+// hidden entries are pipeline placeholders, not real openings. Reusable for any studio that ships a
+// roles.json in this shape via studio.feedUrl.
+async function fetchLightfox(studio) {
+  const feed = studio.feedUrl || "https://www.lightfoxgames.com/roles.json";
+  const base = studio.base || feed.replace(/\/[^/]*$/, "/");   // site root for relative applyUrls
+  const data = SAMPLE_FILE ? loadSample(studio) : await fetchJson(feed);
+  const roles = Array.isArray(data) ? data : (data && data.roles) || [];
+  return roles
+    .filter(r => r && r.title && r.visible !== false && (r.status || "active") === "active")
+    .map(r => {
+      const location = cleanLocation(r.location || "Unlisted");
+      const desc = stripHtml(r.description || "");
+      const wm = (r.workModel || r.workType || "").toLowerCase();
+      const workType = wm.includes("hybrid") ? "Hybrid" : wm.includes("remote") ? "Remote"
+        : (wm.includes("onsite") || wm.includes("on-site") || wm.includes("in office")) ? "Onsite"
+        : inferWorkType(r.title, location, [], desc.slice(0, 1200));
+      const apply = r.applyUrl || r.url || "";
+      const url = /^https?:/i.test(apply) ? apply : base + String(apply).replace(/^\//, "");
+      return {
+        id: `lightfox-${studio.token}-${r.id}`,
+        title: r.title,
+        tech: extractTech(r.title + " " + desc),
+        studio: studio.name,
+        discipline: mapDiscipline(r.department, r.title),
+        workType,
+        location,
+        region: inferRegion(location),
+        seniority: inferSeniority(r.title),
+        salary: extractSalary(desc),
+        yoe: extractYoe(desc),
+        postedAt: r.datePosted || r.postedAt || null,
+        url: url || base,
+      };
+    });
+}
+
 // ---- HRworks (Kalypso Media + other German employers) — SSR careers portal ------------------
 // HRworks job portals (custom domain, e.g. jobs.kalypsomedia.com/en) server-render each posting in a
 // full-width Bootstrap wrapper (class "col-xs-12 col-sm-12 col-md-12 col-lg-12", one per job, never
@@ -4565,7 +4611,7 @@ async function fetchTrailmix(studio) {
   }
   return out;
 }
-const FETCHERS = { greenhouse: fetchGreenhouse, lever: fetchLever, workday: fetchWorkday, avature: fetchAvature, smartrecruiters: fetchSmartRecruiters, workable: fetchWorkable, phenom: fetchPhenom, teamtailor: fetchTeamtailor, eightfold: fetchEightfold, amazonjobs: fetchAmazonJobs, ashby: fetchAshby, zenimax: fetchZenimax, bamboohr: fetchBambooHr, jobscore: fetchJobScore, jazzhr: fetchJazzHr, jobvite: fetchJobvite, recruitee: fetchRecruitee, personio: fetchPersonio, rippling: fetchRippling, breezy: fetchBreezy, manatal: fetchManatal, sumodigital: fetchSumoDigital, pinpoint: fetchPinpoint, playground: fetchPlayground, obsidian: fetchObsidian, techland: fetchTechland, oracle: fetchOracle, cig: fetchCig, critpath: fetchCritpath, krafton: fetchKrafton, eidos: fetchEidos, hiringthing: fetchHiringThing, segacareers: fetchSegaCareers, turn10: fetchTurn10, mscareers: fetchMicrosoftCareers, hrworks: fetchHRworks, smilegate: fetchSmilegate, cygames: fetchCygames, hrmos: fetchHrmos, garena: fetchGarena, shiftup: fetchShiftUp, miniclip: fetchMiniclip, playrix: fetchPlayrix, superplay: fetchSuperPlay, atlus: fetchAtlus, kojima: fetchKojima, owlcat: fetchOwlcat, comeet: fetchComeet, huntflow: fetchHuntflow, keka: fetchKeka, traffit: fetchTraffit, nekki: fetchNekki, plarium: fetchPlarium, hellogames: fetchHelloGames, hibob: fetchHibob, flix: fetchFlix, fromsoftware: fetchFromSoftware, grindinggear: fetchGrindingGear, konami: fetchKonami, madhead: fetchMadHead, kenjo: fetchKenjo, trailmix: fetchTrailmix };
+const FETCHERS = { greenhouse: fetchGreenhouse, lever: fetchLever, workday: fetchWorkday, avature: fetchAvature, smartrecruiters: fetchSmartRecruiters, workable: fetchWorkable, phenom: fetchPhenom, teamtailor: fetchTeamtailor, eightfold: fetchEightfold, amazonjobs: fetchAmazonJobs, ashby: fetchAshby, zenimax: fetchZenimax, bamboohr: fetchBambooHr, jobscore: fetchJobScore, jazzhr: fetchJazzHr, jobvite: fetchJobvite, recruitee: fetchRecruitee, personio: fetchPersonio, rippling: fetchRippling, breezy: fetchBreezy, manatal: fetchManatal, sumodigital: fetchSumoDigital, pinpoint: fetchPinpoint, playground: fetchPlayground, obsidian: fetchObsidian, techland: fetchTechland, oracle: fetchOracle, cig: fetchCig, critpath: fetchCritpath, krafton: fetchKrafton, eidos: fetchEidos, hiringthing: fetchHiringThing, segacareers: fetchSegaCareers, turn10: fetchTurn10, mscareers: fetchMicrosoftCareers, lightfox: fetchLightfox, hrworks: fetchHRworks, smilegate: fetchSmilegate, cygames: fetchCygames, hrmos: fetchHrmos, garena: fetchGarena, shiftup: fetchShiftUp, miniclip: fetchMiniclip, playrix: fetchPlayrix, superplay: fetchSuperPlay, atlus: fetchAtlus, kojima: fetchKojima, owlcat: fetchOwlcat, comeet: fetchComeet, huntflow: fetchHuntflow, keka: fetchKeka, traffit: fetchTraffit, nekki: fetchNekki, plarium: fetchPlarium, hellogames: fetchHelloGames, hibob: fetchHibob, flix: fetchFlix, fromsoftware: fetchFromSoftware, grindinggear: fetchGrindingGear, konami: fetchKonami, madhead: fetchMadHead, kenjo: fetchKenjo, trailmix: fetchTrailmix };
 
 // ---- Ghost-job tracking -----------------------------------------------------
 // Because we scrape on a schedule, we can see how long a listing has REALLY been
