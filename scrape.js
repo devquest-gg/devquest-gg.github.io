@@ -296,7 +296,12 @@ const STUDIOS = [
   // ---- Promoted from the directory by the June 7 2026 island re-audit ----
   { name: "Nintendo", type: "greenhouse", token: "nintendo", titleExclude: "\\(Retro Studios\\)" }, // shares its Greenhouse board with subsidiary studios tagged in the title; Retro Studios is listed separately, so exclude its roles here to avoid duplicates
   { name: "Retro Studios", type: "greenhouse", token: "nintendo", titleInclude: "\\(Retro Studios\\)", titleStrip: "\\s*\\(Retro Studios\\)\\s*", city: "Austin, TX", parentCompany: "Nintendo" }, // Metroid Prime, Donkey Kong — Nintendo subsidiary; roles live on the shared Nintendo Greenhouse board tagged "(Retro Studios)". ~6 Austin roles (Art/Animation/Eng). Promoted from Island 2026-07-05 — spot-check first scrape
-  { name: "Mojang Studios", type: "greenhouse", token: "mojangab" },
+  // Mojang moved its Redmond hiring onto Microsoft's central careers board (Xbox first-party). The old
+  // Greenhouse board ("mojangab" / jobs.mojang.com) now carries only Stockholm roles and sits empty today,
+  // which is why the greenhouse feed read as "failing". Scrape the live Redmond roles from MS Careers via a
+  // keyword query; titleInclude keeps it to Minecraft/Mojang. Re-add the Greenhouse board as a 2nd source if
+  // Stockholm reopens. (fixed 2026-07-12)
+  { name: "Mojang Studios", type: "mscareers", query: "Mojang", titleInclude: "minecraft|mojang", token: "mojang" },
   { name: "Bandai Namco", type: "greenhouse", token: "bandainamco" },
   { name: "Firaxis Games", type: "greenhouse", token: "firaxis" },
   { name: "That's No Moon", type: "greenhouse", token: "thatsnomoonentertainment" },
@@ -1250,6 +1255,16 @@ function cleanLocation(loc) {
 
 function inferRegion(location) {
   const l = location.toLowerCase();
+  // Leading ISO country-code prefix like "IL - Tel Aviv" / "ES - Spain" / "US - ...".
+  // Must run before the US-state check, else "IL"(Israel) matches Illinois, "IN"(India) Indiana, etc.
+  const pm = l.match(/^([a-z]{2})\s*[-–]\s+/);
+  if (pm) {
+    const CC = { us: "North America", ca: "North America", mx: "Latin America", br: "Latin America", ar: "Latin America", cl: "Latin America", co: "Latin America",
+      gb: "Europe", uk: "Europe", ie: "Europe", fr: "Europe", de: "Europe", es: "Europe", pt: "Europe", pl: "Europe", ro: "Europe", nl: "Europe", be: "Europe", fi: "Europe", se: "Europe", cz: "Europe", cy: "Europe", ua: "Europe", rs: "Europe", it: "Europe", ch: "Europe", at: "Europe", dk: "Europe", no: "Europe", tr: "Europe",
+      il: "Middle East & Africa", ae: "Middle East & Africa", sa: "Middle East & Africa", za: "Middle East & Africa", ma: "Middle East & Africa", eg: "Middle East & Africa",
+      in: "Asia-Pacific", jp: "Asia-Pacific", cn: "Asia-Pacific", kr: "Asia-Pacific", sg: "Asia-Pacific", au: "Asia-Pacific", nz: "Asia-Pacific", vn: "Asia-Pacific", th: "Asia-Pacific", my: "Asia-Pacific", ph: "Asia-Pacific", id: "Asia-Pacific", tw: "Asia-Pacific", hk: "Asia-Pacific", bd: "Asia-Pacific" };
+    if (CC[pm[1]]) return CC[pm[1]];
+  }
   if (/(united states|usa|\b(ca|wa|tx|ny|md|fl|il|ma|nc|ga)\b|los angeles|seattle|austin|new york|san (francisco|mateo|diego)|bellevue|irvine|burbank|santa monica|redmond|mercer island|atlanta|chicago|boston|novato)/.test(l)) return "North America";
   if (/(canada|montreal|montréal|toronto|vancouver|quebec)/.test(l)) return "North America";
   if (/(mexico|brazil|são paulo|sao paulo|argentina|chile|colombia)/.test(l)) return "Latin America";
@@ -3123,6 +3138,80 @@ async function fetchTurn10(studio) {
   return out;
 }
 
+// ---- Microsoft Careers (Xbox first-party studios on MS's central board) ----------------------
+// Mojang and other Xbox-owned studios that don't run their own ATS post on Microsoft's central
+// careers portal, apply.careers.microsoft.com — an Eightfold "pcsx" board (same platform as our
+// Hasbro feed). The central board can't tag a job by studio, but a keyword search (studio.query,
+// e.g. "Mojang") returns exactly that studio's roles: each title carries the franchise ("…,
+// Minecraft") and the JD opens with the studio's own overview. Optional studio.titleInclude is a
+// safety net that keeps only matching titles. Microsoft publishes real, legally-required pay ranges
+// on each detail page, so we backfill salary/yoe/tech from position_details (bounded by detailMax).
+//   list:   /api/pcsx/search?query=<kw>&domain=microsoft.com&hl=en&pgSz=&start=   -> data.positions[]
+//   detail: /api/pcsx/position_details?position_id=<id>&domain=microsoft.com&hl=en -> data.jobDescription
+// The list is 200-with-0-results when a studio has no open roles (valid, returns []); only a real
+// transport failure (non-200) throws, so an empty board never false-flags as "failing".
+async function msCareersJson(url) {
+  const res = await fetchRetry(url, { headers: {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36",
+    "Accept": "application/json",
+    "Referer": "https://apply.careers.microsoft.com/careers",
+  } });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.json();
+}
+async function fetchMicrosoftCareers(studio) {
+  const domain = studio.domain || "microsoft.com";
+  const q = encodeURIComponent(studio.query || studio.name);
+  const data = SAMPLE_FILE ? loadSample(studio)
+    : await msCareersJson(`https://apply.careers.microsoft.com/api/pcsx/search?query=${q}&domain=${domain}&hl=en&pgSz=50&start=0`);
+  if (!data) return [];
+  const positions = (data.data && data.data.positions) || [];
+  const filt = studio.titleInclude ? new RegExp(studio.titleInclude, "i") : null;
+  const picked = positions.filter(p => p && p.name && (!filt || filt.test(p.name)));
+  const detailMax = studio.detailMax ?? 40;         // cap per-run detail fetches (salary backfill)
+  const details = (data && data.details) || {};     // sample-mode: descriptions keyed by position id
+  const out = [];
+  for (let i = 0; i < picked.length; i++) {
+    const p = picked[i];
+    const location = cleanLocation(
+      (Array.isArray(p.standardizedLocations) && p.standardizedLocations.join("; ")) ||
+      (Array.isArray(p.locations) && p.locations.join("; ")) || "Unlisted");
+    // High-trust work-site signal straight from the API; inference only as a fallback.
+    const wlo = ((p.workLocationOption || "") + " " + (p.locationFlexibility || "")).toLowerCase();
+    let workType = wlo.includes("hybrid") ? "Hybrid" : wlo.includes("remote") ? "Remote"
+      : (wlo.includes("onsite") || /on-?site|in office/.test(wlo)) ? "Onsite" : null;
+    // Detail page carries the real pay band + full description (for salary / yoe / tech).
+    let desc = "";
+    if (SAMPLE_FILE) {
+      desc = stripHtml(details[p.id] || details[String(p.id)] || "");
+    } else if (i < detailMax) {
+      try {
+        const dj = await msCareersJson(`https://apply.careers.microsoft.com/api/pcsx/position_details?position_id=${p.id}&domain=${domain}&hl=en`);
+        desc = stripHtml((dj.data && dj.data.jobDescription) || "");
+      } catch { /* detail is best-effort; the list fields still stand */ }
+      await sleep(200);   // polite throttle between detail fetches
+    }
+    if (!workType) workType = inferWorkType(p.name, location, [], desc.slice(0, 1200));
+    out.push({
+      id: `mscareers-${p.id}`,
+      title: p.name,
+      tech: extractTech(p.name + " " + desc),
+      studio: studio.name,
+      discipline: mapDiscipline(p.department, p.name),
+      workType,
+      location,
+      region: inferRegion(location),
+      seniority: inferSeniority(p.name),
+      salary: extractSalary(desc),
+      yoe: extractYoe(desc),
+      postedAt: p.postedTs ? new Date(p.postedTs * 1000).toISOString()
+        : (p.creationTs ? new Date(p.creationTs * 1000).toISOString() : null),
+      url: p.publicUrl || `https://apply.careers.microsoft.com/careers/job/${p.id}`,
+    });
+  }
+  return out;
+}
+
 // ---- HRworks (Kalypso Media + other German employers) — SSR careers portal ------------------
 // HRworks job portals (custom domain, e.g. jobs.kalypsomedia.com/en) server-render each posting in a
 // full-width Bootstrap wrapper (class "col-xs-12 col-sm-12 col-md-12 col-lg-12", one per job, never
@@ -4476,7 +4565,7 @@ async function fetchTrailmix(studio) {
   }
   return out;
 }
-const FETCHERS = { greenhouse: fetchGreenhouse, lever: fetchLever, workday: fetchWorkday, avature: fetchAvature, smartrecruiters: fetchSmartRecruiters, workable: fetchWorkable, phenom: fetchPhenom, teamtailor: fetchTeamtailor, eightfold: fetchEightfold, amazonjobs: fetchAmazonJobs, ashby: fetchAshby, zenimax: fetchZenimax, bamboohr: fetchBambooHr, jobscore: fetchJobScore, jazzhr: fetchJazzHr, jobvite: fetchJobvite, recruitee: fetchRecruitee, personio: fetchPersonio, rippling: fetchRippling, breezy: fetchBreezy, manatal: fetchManatal, sumodigital: fetchSumoDigital, pinpoint: fetchPinpoint, playground: fetchPlayground, obsidian: fetchObsidian, techland: fetchTechland, oracle: fetchOracle, cig: fetchCig, critpath: fetchCritpath, krafton: fetchKrafton, eidos: fetchEidos, hiringthing: fetchHiringThing, segacareers: fetchSegaCareers, turn10: fetchTurn10, hrworks: fetchHRworks, smilegate: fetchSmilegate, cygames: fetchCygames, hrmos: fetchHrmos, garena: fetchGarena, shiftup: fetchShiftUp, miniclip: fetchMiniclip, playrix: fetchPlayrix, superplay: fetchSuperPlay, atlus: fetchAtlus, kojima: fetchKojima, owlcat: fetchOwlcat, comeet: fetchComeet, huntflow: fetchHuntflow, keka: fetchKeka, traffit: fetchTraffit, nekki: fetchNekki, plarium: fetchPlarium, hellogames: fetchHelloGames, hibob: fetchHibob, flix: fetchFlix, fromsoftware: fetchFromSoftware, grindinggear: fetchGrindingGear, konami: fetchKonami, madhead: fetchMadHead, kenjo: fetchKenjo, trailmix: fetchTrailmix };
+const FETCHERS = { greenhouse: fetchGreenhouse, lever: fetchLever, workday: fetchWorkday, avature: fetchAvature, smartrecruiters: fetchSmartRecruiters, workable: fetchWorkable, phenom: fetchPhenom, teamtailor: fetchTeamtailor, eightfold: fetchEightfold, amazonjobs: fetchAmazonJobs, ashby: fetchAshby, zenimax: fetchZenimax, bamboohr: fetchBambooHr, jobscore: fetchJobScore, jazzhr: fetchJazzHr, jobvite: fetchJobvite, recruitee: fetchRecruitee, personio: fetchPersonio, rippling: fetchRippling, breezy: fetchBreezy, manatal: fetchManatal, sumodigital: fetchSumoDigital, pinpoint: fetchPinpoint, playground: fetchPlayground, obsidian: fetchObsidian, techland: fetchTechland, oracle: fetchOracle, cig: fetchCig, critpath: fetchCritpath, krafton: fetchKrafton, eidos: fetchEidos, hiringthing: fetchHiringThing, segacareers: fetchSegaCareers, turn10: fetchTurn10, mscareers: fetchMicrosoftCareers, hrworks: fetchHRworks, smilegate: fetchSmilegate, cygames: fetchCygames, hrmos: fetchHrmos, garena: fetchGarena, shiftup: fetchShiftUp, miniclip: fetchMiniclip, playrix: fetchPlayrix, superplay: fetchSuperPlay, atlus: fetchAtlus, kojima: fetchKojima, owlcat: fetchOwlcat, comeet: fetchComeet, huntflow: fetchHuntflow, keka: fetchKeka, traffit: fetchTraffit, nekki: fetchNekki, plarium: fetchPlarium, hellogames: fetchHelloGames, hibob: fetchHibob, flix: fetchFlix, fromsoftware: fetchFromSoftware, grindinggear: fetchGrindingGear, konami: fetchKonami, madhead: fetchMadHead, kenjo: fetchKenjo, trailmix: fetchTrailmix };
 
 // ---- Ghost-job tracking -----------------------------------------------------
 // Because we scrape on a schedule, we can see how long a listing has REALLY been
