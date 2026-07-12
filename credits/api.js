@@ -59,5 +59,10 @@
     vouchAttribution: function (id) { return req("POST", "/credits/attribute/" + id + "/vouch"); },
     unvouchAttribution: function (id) { return req("DELETE", "/credits/attribute/" + id + "/vouch"); },
     myInvites: function () { return req("GET", "/me/invites"); },
+    // catalogue moderation
+    reportEntity: function (payload) { return req("POST", "/report", payload); },
+    getOverride: function (type, slug) { return req("GET", "/override/" + type + "/" + encodeURIComponent(slug)); },
+    adminListReports: function () { return req("GET", "/admin/reports"); },
+    adminResolveReport: function (id, payload) { return req("POST", "/admin/reports/" + id, payload); },
   };
 })(window);

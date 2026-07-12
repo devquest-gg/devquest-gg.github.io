@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Moderation · DevQuest Credits</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" href="/credits/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<div class="topbar"><div class="container">
+  <div class="brand"><a class="brandhome" href="/credits/" aria-label="DevQuest Credits home"><svg class="mark" viewBox="0 0 32 32" aria-hidden="true"><rect x="1" y="1" width="8" height="8" rx="2" fill="var(--gold)"/><rect x="12" y="1" width="8" height="8" rx="2" fill="#2d333b"/><rect x="23" y="1" width="8" height="8" rx="2" fill="#2d333b"/><rect x="1" y="12" width="8" height="8" rx="2" fill="#2d333b"/><rect x="12" y="12" width="8" height="8" rx="2" fill="var(--gold)"/><rect x="23" y="12" width="8" height="8" rx="2" fill="#2d333b"/><rect x="1" y="23" width="8" height="8" rx="2" fill="#2d333b"/><rect x="12" y="23" width="8" height="8" rx="2" fill="#2d333b"/><rect x="23" y="23" width="8" height="8" rx="2" fill="var(--gold)"/></svg><span class="wm">Dev<span class="q">Quest</span><span class="tld">.gg</span></span></a> <span class="cr">CREDITS</span> <span class="beta">BETA</span></div>
+  <div class="topnav"><a class="back" href="/credits/">← Credits home</a></div>
+</div></div>
+
+<div class="container">
+  <div class="crumbs"><a href="/credits/">Credits</a><span class="sep">/</span><span class="mut">Moderation</span></div>
+</div>
+
+<div id="app"><div class="container"><div class="loading">Loading moderation queue…</div></div></div>
+
+<footer><div class="container">
+  <div><b style="color:var(--text)">DevQuest.gg / Credits</b> · moderation</div>
+  <div><a href="/credits/">← Credits home</a></div>
+</div></footer>
+
+<script src="api.js"></script>
+<script src="app.js"></script>
+<script>
+(function(){
+  var app = document.getElementById("app");
+  if(!window.DQAPI || !DQAPI.isSignedIn()){
+    app.innerHTML = '<div class="container"><section class="blk"><div class="empty">You need to sign in as a moderator to view this page.<br><a class="btn primary" style="margin-top:14px" href="signin.html">Sign in</a></div></section></div>';
+    return;
+  }
+  var REASONS = { not_real:"Not real / should not exist", wrong_name:"Wrong name (typo)", wrong_studio:"Wrong studio", other:"Other" };
+  DQAPI.adminListReports().then(function(r){
+    if(!(r && r.ok)){
+      var msg = (r && r.status===403) ? "Not authorized. This page is for moderators only." : "Could not load the queue. Try again.";
+      app.innerHTML = '<div class="container"><section class="blk"><div class="empty">'+msg+'</div></section></div>';
+      return;
+    }
+    render((r.data && r.data.reports) || []);
+  }).catch(function(){ app.innerHTML = '<div class="container"><section class="blk"><div class="empty">Network error loading the queue.</div></section></div>'; });
+
+  function render(reports){
+    if(!reports.length){
+      app.innerHTML = '<div class="container"><section class="blk"><div class="eyebrow">Moderation</div><h2 class="sec">Reports queue</h2><div class="empty">No open reports. All clear.</div></section></div>';
+      return;
+    }
+    var cards = reports.map(card).join("");
+    app.innerHTML = '<div class="container"><section class="blk"><div class="eyebrow">Moderation</div><h2 class="sec">'+reports.length+' open report'+(reports.length===1?'':'s')+'</h2>'+
+      '<p class="secsub">Approve a fix (which stores an override applied over the catalogue), or dismiss.</p>'+cards+'</section></div>';
+    wire();
+  }
+
+  function card(rep){
+    var reason = REASONS[rep.reason] || rep.reason;
+    var url = rep.type==="studio" ? '/credits/studio/'+encodeURIComponent(rep.slug) : '/credits/game/'+encodeURIComponent(rep.slug);
+    var cur = rep.current || {};
+    var curBits = [];
+    if(cur.hidden) curBits.push("hidden");
+    if(cur.name) curBits.push('renamed to "'+DQ.esc(cur.name)+'"');
+    if(cur.studio) curBits.push('studio → "'+DQ.esc(cur.studio)+'"');
+    var curLine = curBits.length ? '<div style="margin-top:6px;font-size:12px;color:var(--green)">Current override: '+curBits.join(" · ")+'</div>' : '';
+    var inStyle = 'background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:7px 10px;color:var(--text);font-size:13px;width:160px;font-family:inherit';
+    var btnStyle = 'padding:7px 12px;font-size:13px';
+    return '<div class="panel modcard" data-id="'+rep.id+'" style="padding:16px 18px;margin-bottom:14px">'+
+      '<div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;align-items:center">'+
+        '<div><span class="badge '+(rep.type==="studio"?"official":"hand")+'">'+rep.type+'</span> '+
+          '<a href="'+url+'" target="_blank" rel="noopener" style="color:var(--accent);font-weight:700;margin-left:6px">'+DQ.esc(rep.name||rep.slug)+' ↗</a></div>'+
+        '<div class="mut" style="font-size:12px">'+DQ.esc(rep.created_at||"")+'</div>'+
+      '</div>'+
+      '<div style="margin-top:8px;font-size:13.5px"><b style="color:var(--gold)">'+reason+'</b>'+(rep.suggested?' &nbsp;·&nbsp; suggested: <b>'+DQ.esc(rep.suggested)+'</b>':'')+'</div>'+
+      (rep.note?'<div class="mut" style="margin-top:4px;font-size:13px">“'+DQ.esc(rep.note)+'”</div>':'')+
+      curLine+
+      '<div style="margin-top:13px;display:flex;flex-wrap:wrap;gap:8px;align-items:center">'+
+        '<span class="btn ghost act" data-a="hide" style="'+btnStyle+'">Hide</span>'+
+        '<span class="btn ghost act" data-a="unhide" style="'+btnStyle+'">Unhide</span>'+
+        '<input class="rename-in" placeholder="corrected name" value="'+DQ.esc(rep.reason==="wrong_name"&&rep.suggested?rep.suggested:"")+'" style="'+inStyle+'"><span class="btn ghost act" data-a="rename" style="'+btnStyle+'">Rename</span>'+
+        (rep.type==="game" ? '<input class="reassign-in" placeholder="correct studio" value="'+DQ.esc(rep.reason==="wrong_studio"&&rep.suggested?rep.suggested:"")+'" style="'+inStyle+'"><span class="btn ghost act" data-a="reassign" style="'+btnStyle+'">Reassign</span>' : '')+
+        '<span class="btn ghost act" data-a="clear" style="'+btnStyle+';color:var(--muted)">Clear overrides</span>'+
+        '<span class="btn ghost act" data-a="dismiss" style="'+btnStyle+';color:var(--pink)">Dismiss</span>'+
+      '</div>'+
+    '</div>';
+  }
+
+  function wire(){
+    Array.prototype.forEach.call(document.querySelectorAll(".modcard"), function(cardEl){
+      var id = cardEl.getAttribute("data-id");
+      Array.prototype.forEach.call(cardEl.querySelectorAll(".act"), function(btn){
+        btn.onclick = function(){
+          var a = btn.getAttribute("data-a"), value = "";
+          if(a==="rename"){ var ri=cardEl.querySelector(".rename-in"); value = ri?ri.value.trim():""; if(!value){ alert("Enter the corrected name."); return; } }
+          if(a==="reassign"){ var si=cardEl.querySelector(".reassign-in"); value = si?si.value.trim():""; if(!value){ alert("Enter the correct studio."); return; } }
+          var label = btn.textContent; btn.textContent = "…";
+          DQAPI.adminResolveReport(id, { action:a, value:value }).then(function(r){
+            if(r && r.ok){
+              cardEl.style.opacity = ".45"; cardEl.style.pointerEvents = "none";
+              cardEl.insertAdjacentHTML("beforeend", '<div style="color:var(--green);font-size:12px;margin-top:10px;font-weight:700">✓ Applied: '+a+(value?' → '+DQ.esc(value):'')+'</div>');
+            } else { btn.textContent = label; alert((r && r.data && r.data.error) || "Could not apply."); }
+          }).catch(function(){ btn.textContent = label; alert("Network error."); });
+        };
+      });
+    });
+  }
+})();
+</script>
+</body>
+</html>

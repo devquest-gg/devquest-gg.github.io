@@ -37,20 +37,31 @@
   if(!slug){ app.innerHTML = '<div class="container"><div class="empty">No studio specified.</div></div>'; return; }
   var PAGE = 60, shown = 0, allGames = [];
 
-  DQ.loadEntity("studios", slug).then(function(s){
+  Promise.all([
+    DQ.loadEntity("studios", slug),
+    (window.DQAPI ? DQAPI.getOverride("studio", slug).catch(function(){ return {ok:false}; }) : Promise.resolve({ok:false}))
+  ]).then(function(resArr){
+    var s = resArr[0];
+    var ov = (resArr[1] && resArr[1].ok && resArr[1].data) ? resArr[1].data.override : null;
     if(!s){
       document.getElementById("crumb").textContent = "Not found";
       app.innerHTML = '<div class="container"><div class="empty">We could not find that studio.<br><a class="btn ghost" style="margin-top:14px" href="search.html?tab=studios">Search studios</a></div></div>';
       return;
     }
-    document.title = s.name + " · DevQuest Credits";
-    document.getElementById("crumb").textContent = s.name;
+    if(ov && ov.hidden){
+      document.getElementById("crumb").textContent = "Removed";
+      app.innerHTML = '<div class="container"><div class="empty">This entry has been removed.<br><span class="mut">It was reported and taken down by a moderator.</span><br><a class="btn ghost" style="margin-top:14px" href="/credits/">Back to Credits</a></div></div>';
+      return;
+    }
+    var sname = (ov && ov.name) ? ov.name : s.name;
+    document.title = sname + " · DevQuest Credits";
+    document.getElementById("crumb").textContent = sname;
     allGames = s.games || [];
 
     app.innerHTML =
       '<div class="phead"><div class="container">'+
-        '<div style="margin-bottom:10px"><span class="badge official">◈ Studio</span></div>'+
-        '<h1>'+DQ.esc(s.name)+'</h1>'+
+        '<div style="margin-bottom:10px"><span class="badge official">◈ Studio</span> <a id="reportstudio" class="reportlink" style="cursor:pointer;color:var(--muted);font-size:12px;margin-left:8px">⚑ Report or suggest a fix</a></div>'+
+        '<h1>'+DQ.esc(sname)+'</h1>'+
         '<div class="meta">'+allGames.length.toLocaleString()+' game'+(allGames.length===1?'':'s')+' in the catalogue</div>'+
       '</div></div>'+
       '<section class="blk"><div class="container">'+
@@ -61,6 +72,8 @@
         '<div style="text-align:center;margin-top:20px"><span class="btn ghost" id="more" style="display:none">Show more</span></div>'+
       '</div></section>';
 
+    var rsb = document.getElementById("reportstudio");
+    if(rsb) rsb.onclick = function(){ DQ.openReport("studio", slug, sname); };
     var glist = document.getElementById("glist"), moreBtn = document.getElementById("more");
     function render(){
       var slice = allGames.slice(shown, shown+PAGE);

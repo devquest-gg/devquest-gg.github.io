@@ -59,8 +59,14 @@
       return;
     }
 
-    var title = meta.title, isCommunity = !g && !!apiGame;
-    var studios = g ? (g.studios||[]) : (apiGame && apiGame.studio ? [apiGame.studio] : []);
+    var ov = apiRes && apiRes.override;
+    if(ov && ov.hidden){
+      document.getElementById("crumb").textContent = "Removed";
+      app.innerHTML = '<div class="container"><div class="empty">This entry has been removed.<br><span class="mut">It was reported and taken down by a moderator.</span><br><a class="btn ghost" style="margin-top:14px" href="/credits/">Back to Credits</a></div></div>';
+      return;
+    }
+    var title = (ov && ov.name) ? ov.name : meta.title, isCommunity = !g && !!apiGame;
+    var studios = (ov && ov.studio) ? [ov.studio] : (g ? (g.studios||[]) : (apiGame && apiGame.studio ? [apiGame.studio] : []));
     var year = meta.year || null, publishers = g ? (g.publishers||[]) : [];
     var platforms = meta.platforms || [], genres = meta.genres || [], qid = g ? g.qid : "";
 
@@ -159,7 +165,7 @@
 
     app.innerHTML =
       '<div class="phead"><div class="container">'+
-        '<div style="margin-bottom:10px">'+srcBadge+'</div>'+
+        '<div style="margin-bottom:10px">'+srcBadge+' <a id="reportgame" class="reportlink" style="cursor:pointer;color:var(--muted);font-size:12px;margin-left:8px">⚑ Report or suggest a fix</a></div>'+
         '<h1>'+DQ.esc(title)+'</h1>'+
         '<div class="meta">'+metaBits.join(' · ')+'</div>'+
         (chips?'<div class="chips">'+chips+'</div>':'')+
@@ -181,6 +187,8 @@
       if(window.DQAPI && !DQAPI.isSignedIn()){ location.href = "signin.html"; return; }
       DQ.openClaim({ game_slug: slug, game_title: title, game_qid: qid });
     };
+    var rgb = document.getElementById("reportgame");
+    if(rgb) rgb.onclick = function(){ DQ.openReport("game", slug, title); };
     Array.prototype.forEach.call(document.querySelectorAll(".vouchbtn"), function(el){
       el.onclick = function(){ el.textContent = "…"; DQAPI.vouch(el.dataset.id).then(function(r){ if(r.ok){ location.reload(); } else { el.textContent="Vouch"; alert((r.data&&r.data.error)||"Could not vouch. Are you still signed in?"); } }).catch(function(){ el.textContent="Vouch"; alert("Network error. Try reloading the page and signing in again."); }); };
     });

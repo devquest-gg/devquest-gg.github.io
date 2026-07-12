@@ -406,8 +406,47 @@
     return "content";                                   // DLC, expansions, named releases
   }
 
+  // Report / suggest-a-fix modal for a catalogue game or studio. Anyone can file one.
+  function openReport(type, slug, name) {
+    injectClaimStyles();
+    var label = type === "studio" ? "studio" : "game";
+    var ov = document.createElement("div"); ov.className = "dq-modal-ov";
+    ov.innerHTML = '<div class="dq-modal" role="dialog" aria-modal="true">' +
+      '<button class="dq-x" aria-label="Close">×</button>' +
+      '<div class="dq-mh">Report or suggest a fix</div>' +
+      '<div class="dq-sub">For <b>' + esc(name || slug) + '</b>. A moderator reviews every report.</div>' +
+      '<label>What\'s wrong?</label>' +
+      '<label style="display:block;font-weight:400;font-size:13px;margin:5px 0;cursor:pointer"><input type="radio" name="dqr-reason" value="not_real" checked style="margin-right:7px;vertical-align:-1px">This ' + label + ' is not real / should not exist</label>' +
+      '<label style="display:block;font-weight:400;font-size:13px;margin:5px 0;cursor:pointer"><input type="radio" name="dqr-reason" value="wrong_name" style="margin-right:7px;vertical-align:-1px">The name is wrong (typo)</label>' +
+      (type === "game" ? '<label style="display:block;font-weight:400;font-size:13px;margin:5px 0;cursor:pointer"><input type="radio" name="dqr-reason" value="wrong_studio" style="margin-right:7px;vertical-align:-1px">It\'s under the wrong studio</label>' : "") +
+      '<label style="display:block;font-weight:400;font-size:13px;margin:5px 0;cursor:pointer"><input type="radio" name="dqr-reason" value="other" style="margin-right:7px;vertical-align:-1px">Something else</label>' +
+      '<label>Suggested correction <span style="font-weight:400;color:var(--muted,#8b98a9)">— optional (the correct name or studio)</span></label><input id="dqr-suggested" placeholder="Correct name or studio">' +
+      '<label>Details <span style="font-weight:400;color:var(--muted,#8b98a9)">— optional</span></label><textarea id="dqr-note" placeholder="Anything that helps us verify"></textarea>' +
+      '<div class="dq-actions"><button class="dq-cancel">Cancel</button><button class="dq-submit">Send report</button></div>' +
+      '</div>';
+    document.body.appendChild(ov);
+    function close() { ov.remove(); }
+    ov.querySelector(".dq-x").onclick = close;
+    ov.querySelector(".dq-cancel").onclick = close;
+    ov.querySelector(".dq-submit").onclick = function () {
+      var btn = this;
+      var reasonEl = ov.querySelector('input[name="dqr-reason"]:checked');
+      var reason = reasonEl ? reasonEl.value : "other";
+      var suggested = (ov.querySelector("#dqr-suggested") || {}).value || "";
+      var note = (ov.querySelector("#dqr-note") || {}).value || "";
+      if (!w.DQAPI) { alert("Reporting isn't available right now."); return; }
+      btn.disabled = true; btn.textContent = "Sending…";
+      w.DQAPI.reportEntity({ type: type, slug: slug, name: name || "", reason: reason, suggested: suggested, note: note }).then(function (r) {
+        if (r && r.ok) {
+          ov.querySelector(".dq-modal").innerHTML = '<button class="dq-x" aria-label="Close">×</button><div class="dq-mh">Thanks</div><div class="dq-sub">Your report was sent to the moderators.</div><div class="dq-actions"><button class="dq-cancel">Close</button></div>';
+          ov.querySelector(".dq-x").onclick = close; ov.querySelector(".dq-cancel").onclick = close;
+        } else { btn.disabled = false; btn.textContent = "Send report"; alert((r && r.data && r.data.error) || "Could not send. Try again."); }
+      }).catch(function () { btn.disabled = false; btn.textContent = "Send report"; alert("Network error. Try again."); });
+    };
+  }
+
   w.DQ = {
-    bkt: bkt, qs: qs, getJSON: getJSON, loadEntity: loadEntity, loadIndex: loadIndex,
+    bkt: bkt, qs: qs, getJSON: getJSON, loadEntity: loadEntity, loadIndex: loadIndex, openReport: openReport,
     rank: rank, searchRows: searchRows, attachSuggest: attachSuggest, openClaim: openClaim,
     uniq: uniq, releaseClass: releaseClass,
     esc: esc, safeUrl: safeUrl, initials: initials, slugify: slugify,
