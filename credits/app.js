@@ -113,7 +113,7 @@
         '<span class="txt"><span class="nm">' + esc(r[1]) + '</span><span class="sb">' + Number(r[2]).toLocaleString() + ' game' + (r[2] === 1 ? '' : 's') + '</span></span></a>';
     }
     var un = r[3];
-    var phref = un ? ('/credits/game/' + encodeURIComponent(un)) : ('/credits/' + encodeURIComponent(r[0]));
+    var phref = un ? ('/credits/person.html?name=' + encodeURIComponent(r[1])) : ('/credits/' + encodeURIComponent(r[0]));
     var psub = un ? 'Unclaimed — tap to claim' : (r[2] + ' credit' + (r[2] === 1 ? '' : 's'));
     return '<a class="dq-row" href="' + phref + '"><span class="tag dq-tag-person">Person</span>' +
       '<span class="txt"><span class="nm">' + esc(r[1]) + '</span><span class="sb">' + psub + '</span></span></a>';

@@ -84,7 +84,7 @@
   }).join("")+'</div>'; }
   function peopleRows(rows){ return '<div class="rows">'+rows.map(function(p){
     var un = p[3];
-    var href = un ? ('/credits/game/'+encodeURIComponent(un)) : ('/credits/'+encodeURIComponent(p[0]));
+    var href = un ? ('/credits/person.html?name='+encodeURIComponent(p[1])) : ('/credits/'+encodeURIComponent(p[0]));
     var name = DQ.esc(p[1]) + (un ? ' <span class="sig" style="color:var(--muted)">unclaimed</span>' : '');
     var sub = un ? 'Attributed by a teammate — tap to claim' : (p[2]+' credit'+(p[2]===1?'':'s'));
     return '<a class="row" href="'+href+'">'+

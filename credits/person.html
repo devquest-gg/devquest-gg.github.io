@@ -32,11 +32,76 @@
 <script src="app.js"></script>
 <script>
 (function(){
-  var slug = DQ.qs("slug"), app = document.getElementById("app");
+  var slug = DQ.qs("slug"), uname = DQ.qs("name"), app = document.getElementById("app");
   // Keep the address bar on the pretty URL (/credits/<slug>) even when reached via
   // person.html?slug=... The 404.html router redirects clean URLs here; this rewrites back.
   try { if (slug) history.replaceState(null, "", "/credits/" + encodeURIComponent(slug)); } catch (e) {}
-  if(!slug){ app.innerHTML = '<div class="container"><div class="empty">No person specified.</div></div>'; return; }
+  if(!slug){
+    // No claimed slug, but a ?name= means an unclaimed person — someone a teammate
+    // attributed who hasn't signed in yet. Show every title attributed to that name.
+    if(uname && window.DQAPI){ renderUnclaimed(uname); return; }
+    app.innerHTML = '<div class="container"><div class="empty">No person specified.</div></div>'; return;
+  }
+
+  // ---- Unclaimed profile: aggregates every pending attribution for a name ----
+  function renderUnclaimed(name){
+    document.getElementById("crumb").textContent = name;
+    document.title = name + " · DevQuest Credits";
+    var pProf = DQAPI.unclaimedProfile(name).catch(function(){ return {ok:false}; });
+    var pMe = DQAPI.isSignedIn() ? DQAPI.me().catch(function(){ return {ok:false}; }) : Promise.resolve({ok:false});
+    Promise.all([pProf, pMe]).then(function(res){
+      var data = (res[0] && res[0].ok && res[0].data) ? res[0].data : null;
+      var signedIn = !!(res[1] && res[1].ok && res[1].data && res[1].data.authenticated);
+      var atts = (data && data.attributions) || [];
+      var disp = (data && data.name) || name;
+      document.getElementById("crumb").textContent = disp;
+      document.title = disp + " · DevQuest Credits";
+      if(!atts.length){
+        app.innerHTML = '<div class="container"><div class="empty">No profile yet for that name.<br>'+
+          '<span class="mut">People appear here once a teammate attributes a credit, or once they claim their own.</span></div></div>';
+        return;
+      }
+      var rows = atts.map(function(a){
+        return '<div class="row">'+
+          '<div class="rmain"><div class="rname"><a href="/credits/game/'+encodeURIComponent(a.game_slug)+'">'+DQ.esc(a.game_title)+'</a></div>'+
+            '<div class="rsub"><span class="rrole">'+DQ.esc(a.role||"Contributor")+'</span>'+
+            '<span class="mut"> &nbsp;·&nbsp; added by '+DQ.esc(a.added_by_name||"a teammate")+'</span></div></div>'+
+        '</div>';
+      }).join("");
+      var cta = '<span class="btn primary" id="claimun">This is me — claim '+(atts.length===1?'this credit':'these '+atts.length+' credits')+' →</span>';
+      app.innerHTML =
+        '<div class="phead"><div class="container">'+
+          '<div style="display:flex;align-items:center;gap:16px">'+
+            '<div class="row" style="padding:0;border:none"><div class="av" style="width:60px;height:60px;font-size:22px">'+DQ.esc(DQ.initials(disp))+'</div></div>'+
+            '<div><h1 style="margin:0">'+DQ.esc(disp)+' <span class="beta" style="background:var(--border);color:var(--muted);vertical-align:middle">UNCLAIMED</span></h1>'+
+            '<div class="meta">Attributed by teammates · not yet claimed</div></div>'+
+          '</div>'+
+          '<div class="claimbanner" style="margin-top:16px"><div class="cbtext"><b>Is this you?</b> A teammate credited you on the '+(atts.length===1?'game':'games')+' below. Claim this page to confirm your credits, add the rest of what you shipped, and get peer-vouched.</div>'+cta+'</div>'+
+        '</div></div>'+
+        '<section class="blk"><div class="container">'+
+          '<div class="eyebrow">Attributed credits</div>'+
+          '<p class="secsub" style="margin:6px 0 14px">Titles a teammate has credited to this name. They become a verified record once claimed.</p>'+
+          '<div class="rows">'+rows+'</div>'+
+          '<div class="notice">These credits were added by teammates and are unclaimed. Only the person credited can claim and edit this page.</div>'+
+        '</div></section>';
+      var cbtn = document.getElementById("claimun");
+      if(cbtn) cbtn.onclick = function(){
+        if(DQAPI.isSignedIn()){
+          cbtn.textContent = "Claiming…";
+          var i = 0, lastSlug = null;
+          (function nextClaim(){
+            if(i >= atts.length){ location.href = lastSlug ? ("/credits/person.html?slug=" + encodeURIComponent(lastSlug)) : "/credits/"; return; }
+            DQAPI.claimAttribution(atts[i].id).then(function(rr){ if(rr.ok && rr.data && rr.data.person_slug) lastSlug = rr.data.person_slug; i++; nextClaim(); }).catch(function(){ i++; nextClaim(); });
+          })();
+        } else {
+          try{ localStorage.setItem("dq_pending_claim_name", disp); }catch(e){}
+          location.href = "signin.html";
+        }
+      };
+    }).catch(function(e){
+      app.innerHTML = '<div class="container"><div class="empty">Something went wrong loading this profile.<br><span class="mut">'+DQ.esc(e && e.message)+'</span></div></div>';
+    });
+  }
   var LINK_LABEL = { linkedin:"LinkedIn", portfolio:"Portfolio", artstation:"ArtStation", website:"Website", site:"Website", personal:"Website", twitter:"Twitter", x:"X", bluesky:"Bluesky", github:"GitHub", itch:"itch.io", mastodon:"Mastodon" };
 
   // Load the static (seed) profile + the live (API) profile + who I am, in parallel.

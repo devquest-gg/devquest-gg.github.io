@@ -35,6 +35,7 @@
     stats: function () { return req("GET", "/stats"); },
     gameCredits: function (slug) { return req("GET", "/credits/game/" + encodeURIComponent(slug)); },
     personCredits: function (slug) { return req("GET", "/credits/person/" + encodeURIComponent(slug)); },
+    unclaimedProfile: function (name) { return req("GET", "/credits/unclaimed?name=" + encodeURIComponent(name)); },
     searchPeople: function (q) { return req("GET", "/people/search?q=" + encodeURIComponent(q)); },
     searchGames: function (q) { return req("GET", "/games/search?q=" + encodeURIComponent(q)); },
     searchStudios: function (q) { return req("GET", "/studios/search?q=" + encodeURIComponent(q)); },

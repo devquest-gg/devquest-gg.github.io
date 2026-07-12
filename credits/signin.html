@@ -73,6 +73,22 @@
     return;
   }
 
+  // 1a2b) Or to claim an entire unclaimed profile (every attributed title for a name).
+  var pendingName = null; try{ pendingName = localStorage.getItem("dq_pending_claim_name"); }catch(e){}
+  if(pendingName && DQAPI.isSignedIn()){
+    try{ localStorage.removeItem("dq_pending_claim_name"); }catch(e){}
+    DQAPI.unclaimedProfile(pendingName).then(function(r){
+      var atts = (r.data && r.data.attributions) || [];
+      if(!atts.length){ location.href = "/credits/"; return; }
+      var i = 0, lastSlug = null;
+      (function next(){
+        if(i >= atts.length){ location.href = lastSlug ? ("person.html?slug=" + encodeURIComponent(lastSlug)) : "/credits/"; return; }
+        DQAPI.claimAttribution(atts[i].id).then(function(rr){ if(rr.ok && rr.data && rr.data.person_slug) lastSlug = rr.data.person_slug; i++; next(); }).catch(function(){ i++; next(); });
+      })();
+    }).catch(function(){ location.href = "/credits/"; });
+    return;
+  }
+
   // 1a3) Or to finish claiming your own credit on a game (create it now).
   var pendingNew = null; try{ pendingNew = localStorage.getItem("dq_pending_credit"); }catch(e){}
   if(pendingNew && DQAPI.isSignedIn()){
