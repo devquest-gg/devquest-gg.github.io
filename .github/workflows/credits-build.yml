@@ -48,5 +48,10 @@ jobs:
             echo "No site-data changes."
           else
             git commit -m "Credits: rebuild site data"
-            git push
+            # The remote can move while this runs; rebase onto it and retry the push.
+            for i in 1 2 3 4 5; do
+              git pull --rebase --autostash origin main && git push && { echo "pushed"; exit 0; }
+              echo "push rejected — retry $i"; sleep 5
+            done
+            echo "push still failing after 5 tries"; exit 1
           fi
