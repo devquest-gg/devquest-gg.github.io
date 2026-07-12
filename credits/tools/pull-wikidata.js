@@ -158,6 +158,19 @@ function assignSlugs(list) {
   console.log(`raw env START=${JSON.stringify(process.env.START)} END=${JSON.stringify(process.env.END)}`);
   console.log(`Wikidata games pull: years ${START_YEAR}..${END_YEAR - 1}`);
   const games = new Map();
+  // Merge mode: seed from the existing catalogue so a windowed (e.g. weekly 2-year)
+  // or partially-failed pull can only ADD or refresh games, never shrink the catalogue.
+  try {
+    const prev = JSON.parse(fs.readFileSync(path.join(OUT_DIR, "games.json"), "utf8"));
+    for (const g of prev) {
+      if (g && g.wikidata_qid) games.set(g.wikidata_qid, {
+        wikidata_qid: g.wikidata_qid, title: g.title, year: (g.year != null ? g.year : null),
+        studios: g.studios || [], publishers: g.publishers || [], platforms: g.platforms || [], genres: g.genres || [],
+        source: g.source || "wikidata",
+      });
+    }
+    console.log(`Seeded ${games.size} existing games (merge mode).`);
+  } catch (e) { console.log("No existing games.json to merge — fresh build."); }
   for (let y = START_YEAR; y < END_YEAR; y++) {
     await pullRange(new Date(`${y}-01-01T00:00:00Z`), new Date(`${y + 1}-01-01T00:00:00Z`), games);
   }
