@@ -276,8 +276,11 @@ const STUDIOS = [
     queries: ["games", "game", "luna", "gameplay"], teams: ["team-games", "team-luna"] },
   // Wizards of the Coast = Hasbro's games division (Magic, D&D). Hasbro runs Eightfold
   // on the "pcsx" search endpoint; keep ONLY department "WIZARDS" (drops toys/corporate).
-  { name: "Wizards of the Coast", type: "eightfold", token: "wotc", host: "careers.hasbro.com",
-    domain: "hasbro.com", api: "pcsx", departments: ["WIZARDS"] },
+  // Hasbro retired its Eightfold board (careers.hasbro.com now errors "Group ID not found: hasbro.com") and
+  // moved ALL brands onto one Greenhouse board (token "hasbro", ~141 roles incl. toys + corporate). Keep only
+  // Wizards of the Coast's game brands via deptInclude. (fixed 2026-07-12 — was eightfold/careers.hasbro.com)
+  { name: "Wizards of the Coast", type: "greenhouse", token: "hasbro", city: "Renton, WA",
+    deptInclude: "wizards|magic the gathering|dungeons ?& ?dragons|marketing: ?d&d|\\barena\\b|skeleton key|digital games" },
   // Warner Bros. Games = the games studios on WBD's all-divisions Phenom board
   // (Rocksteady, NetherRealm, Avalanche, TT Games, WB Games Montreal). Keep only
   // category "Game Development" so we don't pull WBD's ~415 non-game roles.
@@ -427,7 +430,7 @@ const STUDIOS = [
   { name: "Eleventh Hour Games", type: "greenhouse", token: "eleventhhourgames" }, // Last Epoch — ARPG (Chicago/remote)
   { name: "Homa Games", type: "workable", token: "homa-games" },                   // mobile publisher (Paris)
   { name: "Amanotes", type: "lever", token: "amanotes" },                          // #1 music games (Ho Chi Minh City)
-  { name: "Scorewarrior", type: "recruitee", token: "scorewarrior" },              // Total Battle — MMO strategy (Limassol)
+  { name: "Scorewarrior", type: "ashby", token: "scorewarrior" },                  // Total Battle — MMO strategy (Limassol). Migrated recruitee→Ashby (old recruitee board 404s); fixed 2026-07-12
 
   // ---- June 2026: community / requested studios (verified ATS feeds) ----
   { name: "Counterplay Games", type: "breezy", token: "counterplay-games-inc" },   // Godfall, Duelyst — fully remote (board may sit at 0)
@@ -1492,6 +1495,9 @@ async function fetchGreenhouse(studio) {
   // titleStrip removes the now-redundant tag from the displayed title.
   if (studio.titleInclude) { const re = new RegExp(studio.titleInclude, "i"); jobs = jobs.filter(j => re.test(j.title || "")); }
   if (studio.titleExclude) { const re = new RegExp(studio.titleExclude, "i"); jobs = jobs.filter(j => !re.test(j.title || "")); }
+  // Multi-brand corporate boards (e.g. Hasbro hosts toys + corporate + all game brands on one board).
+  // deptInclude keeps only the departments belonging to the studio we actually want (regex on dept name).
+  if (studio.deptInclude) { const re = new RegExp(studio.deptInclude, "i"); jobs = jobs.filter(j => (j.departments || []).some(d => re.test(d.name || ""))); }
   return jobs.map(j => {
     const location = j.location?.name || "Unlisted";
     const craft = ["Craft", "Career Page - Sub Department", "Job Family", "Job Family Group"]
