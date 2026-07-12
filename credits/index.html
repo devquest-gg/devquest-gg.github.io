@@ -134,6 +134,11 @@
   .dpill{font-size:10px;font-weight:700;border-radius:5px;padding:1px 6px;color:var(--purple);border:1px solid rgba(163,113,247,.35);background:rgba(163,113,247,.09)}
   .dpill.live{color:var(--green);border-color:rgba(63,185,80,.35);background:rgba(63,185,80,.09)}
   .dpill.port{color:var(--accent);border-color:rgba(88,166,255,.35);background:rgba(88,166,255,.09)}
+  /* profile-preview cards mirror the real profile: no pills, green seal, muted worked-on */
+  .crg{color:var(--accent);font-weight:700}
+  .dseal{display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;border-radius:50%;background:var(--green);color:#0b0e14;font-size:9px;font-weight:800;line-height:1;vertical-align:middle}
+  .dwork{font-size:11px;color:var(--muted);margin-top:2px}
+  .dverify{font-size:11.5px;font-weight:600;color:var(--green);background:rgba(63,185,80,.08);border:1px solid rgba(63,185,80,.28);border-radius:8px;padding:5px 10px;margin-top:11px}
 
   /* how it works */
   .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
@@ -330,32 +335,34 @@
   var DEVS=[
     {name:"Marco Alvarez", hl:"Lead Gameplay Programmer at Sucker Punch", color:"#58a6ff", snap:"7 shipped games · since 2009",
       credits:[
-        {g:"Ghost of Tsushima", pill:"Live service", cls:"live", role:"Lead Gameplay Programmer", v:8},
-        {g:"Days Gone", pill:"PC port", cls:"port", role:"Gameplay Programmer", v:5}
+        {g:"Ghost of Tsushima", verified:true, role:"Lead Gameplay Programmer", worked:"the live-service era"},
+        {g:"Days Gone", verified:true, role:"Gameplay Programmer"}
       ]},
     {name:"Priya Anand", hl:"Senior Environment Artist at FromSoftware", color:"#a371f7", snap:"5 shipped games · since 2013",
       credits:[
-        {g:"Elden Ring", pill:"Shadow of the Erdtree", cls:"", role:"Senior Environment Artist", v:14},
-        {g:"Sekiro", pill:"", cls:"", role:"Environment Artist", v:9}
+        {g:"Elden Ring", verified:true, role:"Senior Environment Artist", worked:"Shadow of the Erdtree"},
+        {g:"Sekiro: Shadows Die Twice", verified:true, role:"Environment Artist"}
       ]},
     {name:"Sam Rivera", hl:"Audio Director at Supergiant", color:"#3fb950", snap:"4 shipped games · since 2011",
       credits:[
-        {g:"Hades", pill:"Live service", cls:"live", role:"Audio Director", v:11},
-        {g:"Pyre", pill:"", cls:"", role:"Sound Designer", v:6}
+        {g:"Hades", verified:true, role:"Audio Director", worked:"the live-service era"},
+        {g:"Pyre", verified:false, role:"Sound Designer"}
       ]}
   ];
   document.getElementById('dcards').innerHTML=DEVS.map(function(d){
     var initials=d.name.split(' ').map(function(w){return w[0];}).join('');
+    var vcount=d.credits.filter(function(c){return c.verified;}).length;
     var rows=d.credits.map(function(c){
-      var pill=c.pill?' <span class="dpill'+(c.cls?' '+c.cls:'')+'">'+c.pill+'</span>':'';
-      var v=c.v?'<span class="cv">✓ '+c.v+'</span>':'';
-      return '<div class="cr"><div class="crtop"><span>'+c.g+'</span>'+pill+v+'</div><div class="crrole">'+c.role+'</div></div>';
+      var seal=c.verified?' <span class="dseal" title="Verified by a teammate who shipped the same game">✓</span>':'';
+      var worked=c.worked?'<div class="dwork">Also worked on: '+c.worked+'</div>':'';
+      return '<div class="cr"><div class="crtop"><span class="crg">'+c.g+'</span>'+seal+'</div><div class="crrole">'+c.role+'</div>'+worked+'</div>';
     }).join('');
     return '<div class="dcard"><div class="halo" style="background:'+d.color+'"></div>'+
       '<div class="av" style="background:'+d.color+'">'+initials+'</div>'+
-      '<div class="nm">'+d.name+' <span class="verified">✓</span></div>'+
+      '<div class="nm">'+d.name+'</div>'+
       '<div class="hl">'+d.hl+'</div>'+
       '<div class="snap">'+d.snap+'</div>'+
+      '<div class="dverify">✓ '+vcount+' of '+d.credits.length+' credits peer-verified</div>'+
       '<div class="gocred">'+rows+'</div></div>';
   }).join('');
 
