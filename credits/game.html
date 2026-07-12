@@ -159,7 +159,7 @@
         '<div class="av">'+DQ.esc(DQ.initials(c.name))+'</div>'+
         '<div class="rmain"><div class="rname"><a href="/credits/'+encodeURIComponent(c.person_slug)+'">'+DQ.esc(c.name)+'</a>'+ast+seal+'</div>'+
           '<div class="rsub"><span class="rrole">'+DQ.esc(c.role||"Role not recorded")+'</span>'+more+extNote+(sigs?' &nbsp; '+sigs:'')+proof+'</div></div>'+
-        '<div class="rright">'+vbtn+'<a class="reportlink" href="mailto:studios@devquest.gg?subject='+encodeURIComponent("Report: "+title)+'&body='+encodeURIComponent("Reporting a credit on "+title+" by "+c.name+".\n\nReason:\n")+'" title="Report this credit" style="color:var(--muted);font-size:12px;margin-left:12px;text-decoration:none">⚑</a></div>'+
+        '<div class="rright">'+vbtn+'<a class="reportcredit reportlink" data-name="'+DQ.esc(c.name)+'" data-cid="'+(c.id||"")+'" title="Report this credit" style="color:var(--muted);font-size:12px;margin-left:12px;text-decoration:none;cursor:pointer">⚑</a></div>'+
       '</div>';
     }).join("") + '</div>' : '<div class="empty">No individual credits recorded yet.<br>If you worked on it, be the first to claim your credit.</div>';
 
@@ -189,6 +189,9 @@
     };
     var rgb = document.getElementById("reportgame");
     if(rgb) rgb.onclick = function(){ DQ.openReport("game", slug, title); };
+    Array.prototype.forEach.call(document.querySelectorAll(".reportcredit"), function(el){
+      el.onclick = function(){ DQ.openReport("credit", slug, el.getAttribute("data-name"), { gameTitle: title, creditId: el.getAttribute("data-cid") }); };
+    });
     Array.prototype.forEach.call(document.querySelectorAll(".vouchbtn"), function(el){
       el.onclick = function(){ el.textContent = "…"; DQAPI.vouch(el.dataset.id).then(function(r){ if(r.ok){ location.reload(); } else { el.textContent="Vouch"; alert((r.data&&r.data.error)||"Could not vouch. Are you still signed in?"); } }).catch(function(){ el.textContent="Vouch"; alert("Network error. Try reloading the page and signing in again."); }); };
     });

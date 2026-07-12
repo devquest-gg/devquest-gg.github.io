@@ -406,21 +406,29 @@
     return "content";                                   // DLC, expansions, named releases
   }
 
-  // Report / suggest-a-fix modal for a catalogue game or studio. Anyone can file one.
-  function openReport(type, slug, name) {
+  // Report / suggest-a-fix modal for a catalogue game or studio, or a person's credit
+  // on a game (type "credit"). Anyone can file one. opts.gameTitle gives context for credits.
+  function openReport(type, slug, name, opts) {
+    opts = opts || {};
     injectClaimStyles();
+    var isCredit = type === "credit";
     var label = type === "studio" ? "studio" : "game";
+    var subj = isCredit ? (esc(name) + (opts.gameTitle ? " on " + esc(opts.gameTitle) : "")) : esc(name || slug);
+    var reasons = isCredit
+      ? [["not_worked", "This person didn't work on this game"], ["wrong_role", "The role or details are wrong"], ["spam", "Not a real person / spam"], ["other", "Something else"]]
+      : [["not_real", "This " + label + " is not real / should not exist"], ["wrong_name", "The name is wrong (typo)"]]
+          .concat(type === "game" ? [["wrong_studio", "It's under the wrong studio"]] : [])
+          .concat([["other", "Something else"]]);
+    var reasonHTML = reasons.map(function (r, i) {
+      return '<label style="display:block;font-weight:400;font-size:13px;margin:5px 0;cursor:pointer"><input type="radio" name="dqr-reason" value="' + r[0] + '"' + (i === 0 ? " checked" : "") + ' style="margin-right:7px;vertical-align:-1px">' + r[1] + '</label>';
+    }).join("");
     var ov = document.createElement("div"); ov.className = "dq-modal-ov";
     ov.innerHTML = '<div class="dq-modal" role="dialog" aria-modal="true">' +
       '<button class="dq-x" aria-label="Close">×</button>' +
-      '<div class="dq-mh">Report or suggest a fix</div>' +
-      '<div class="dq-sub">For <b>' + esc(name || slug) + '</b>. A moderator reviews every report.</div>' +
-      '<label>What\'s wrong?</label>' +
-      '<label style="display:block;font-weight:400;font-size:13px;margin:5px 0;cursor:pointer"><input type="radio" name="dqr-reason" value="not_real" checked style="margin-right:7px;vertical-align:-1px">This ' + label + ' is not real / should not exist</label>' +
-      '<label style="display:block;font-weight:400;font-size:13px;margin:5px 0;cursor:pointer"><input type="radio" name="dqr-reason" value="wrong_name" style="margin-right:7px;vertical-align:-1px">The name is wrong (typo)</label>' +
-      (type === "game" ? '<label style="display:block;font-weight:400;font-size:13px;margin:5px 0;cursor:pointer"><input type="radio" name="dqr-reason" value="wrong_studio" style="margin-right:7px;vertical-align:-1px">It\'s under the wrong studio</label>' : "") +
-      '<label style="display:block;font-weight:400;font-size:13px;margin:5px 0;cursor:pointer"><input type="radio" name="dqr-reason" value="other" style="margin-right:7px;vertical-align:-1px">Something else</label>' +
-      '<label>Suggested correction <span style="font-weight:400;color:var(--muted,#8b98a9)">— optional (the correct name or studio)</span></label><input id="dqr-suggested" placeholder="Correct name or studio">' +
+      '<div class="dq-mh">' + (isCredit ? "Report this credit" : "Report or suggest a fix") + '</div>' +
+      '<div class="dq-sub">For <b>' + subj + '</b>. A moderator reviews every report.</div>' +
+      '<label>What\'s wrong?</label>' + reasonHTML +
+      (isCredit ? "" : '<label>Suggested correction <span style="font-weight:400;color:var(--muted,#8b98a9)">— optional (the correct name or studio)</span></label><input id="dqr-suggested" placeholder="Correct name or studio">') +
       '<label>Details <span style="font-weight:400;color:var(--muted,#8b98a9)">— optional</span></label><textarea id="dqr-note" placeholder="Anything that helps us verify"></textarea>' +
       '<div class="dq-actions"><button class="dq-cancel">Cancel</button><button class="dq-submit">Send report</button></div>' +
       '</div>';
@@ -434,6 +442,7 @@
       var reason = reasonEl ? reasonEl.value : "other";
       var suggested = (ov.querySelector("#dqr-suggested") || {}).value || "";
       var note = (ov.querySelector("#dqr-note") || {}).value || "";
+      if (isCredit && opts.gameTitle) note = "On " + opts.gameTitle + (opts.creditId ? " (credit #" + opts.creditId + ")" : "") + ". " + note;
       if (!w.DQAPI) { alert("Reporting isn't available right now."); return; }
       btn.disabled = true; btn.textContent = "Sending…";
       w.DQAPI.reportEntity({ type: type, slug: slug, name: name || "", reason: reason, suggested: suggested, note: note }).then(function (r) {

@@ -34,7 +34,8 @@
     app.innerHTML = '<div class="container"><section class="blk"><div class="empty">You need to sign in as a moderator to view this page.<br><a class="btn primary" style="margin-top:14px" href="signin.html">Sign in</a></div></section></div>';
     return;
   }
-  var REASONS = { not_real:"Not real / should not exist", wrong_name:"Wrong name (typo)", wrong_studio:"Wrong studio", other:"Other" };
+  var REASONS = { not_real:"Not real / should not exist", wrong_name:"Wrong name (typo)", wrong_studio:"Wrong studio", other:"Other",
+    not_worked:"Person didn't work on this game", wrong_role:"Wrong role / details", spam:"Not a real person / spam" };
   DQAPI.adminListReports().then(function(r){
     if(!(r && r.ok)){
       var msg = (r && r.status===403) ? "Not authorized. This page is for moderators only." : "Could not load the queue. Try again.";
@@ -75,14 +76,17 @@
       '<div style="margin-top:8px;font-size:13.5px"><b style="color:var(--gold)">'+reason+'</b>'+(rep.suggested?' &nbsp;·&nbsp; suggested: <b>'+DQ.esc(rep.suggested)+'</b>':'')+'</div>'+
       (rep.note?'<div class="mut" style="margin-top:4px;font-size:13px">“'+DQ.esc(rep.note)+'”</div>':'')+
       curLine+
-      '<div style="margin-top:13px;display:flex;flex-wrap:wrap;gap:8px;align-items:center">'+
-        '<span class="btn ghost act" data-a="hide" style="'+btnStyle+'">Hide</span>'+
-        '<span class="btn ghost act" data-a="unhide" style="'+btnStyle+'">Unhide</span>'+
-        '<input class="rename-in" placeholder="corrected name" value="'+DQ.esc(rep.reason==="wrong_name"&&rep.suggested?rep.suggested:"")+'" style="'+inStyle+'"><span class="btn ghost act" data-a="rename" style="'+btnStyle+'">Rename</span>'+
-        (rep.type==="game" ? '<input class="reassign-in" placeholder="correct studio" value="'+DQ.esc(rep.reason==="wrong_studio"&&rep.suggested?rep.suggested:"")+'" style="'+inStyle+'"><span class="btn ghost act" data-a="reassign" style="'+btnStyle+'">Reassign</span>' : '')+
-        '<span class="btn ghost act" data-a="clear" style="'+btnStyle+';color:var(--muted)">Clear overrides</span>'+
-        '<span class="btn ghost act" data-a="dismiss" style="'+btnStyle+';color:var(--pink)">Dismiss</span>'+
-      '</div>'+
+      (rep.type==="credit"
+        ? '<div style="margin-top:8px;font-size:12px;color:#8b949e">Credit report. Review it on the game page, contest or remove the credit there, then dismiss this.</div>'+
+          '<div style="margin-top:10px"><span class="btn ghost act" data-a="dismiss" style="'+btnStyle+';color:var(--pink)">Dismiss</span></div>'
+        : '<div style="margin-top:13px;display:flex;flex-wrap:wrap;gap:8px;align-items:center">'+
+          '<span class="btn ghost act" data-a="hide" style="'+btnStyle+'">Hide</span>'+
+          '<span class="btn ghost act" data-a="unhide" style="'+btnStyle+'">Unhide</span>'+
+          '<input class="rename-in" placeholder="corrected name" value="'+DQ.esc(rep.reason==="wrong_name"&&rep.suggested?rep.suggested:"")+'" style="'+inStyle+'"><span class="btn ghost act" data-a="rename" style="'+btnStyle+'">Rename</span>'+
+          (rep.type==="game" ? '<input class="reassign-in" placeholder="correct studio" value="'+DQ.esc(rep.reason==="wrong_studio"&&rep.suggested?rep.suggested:"")+'" style="'+inStyle+'"><span class="btn ghost act" data-a="reassign" style="'+btnStyle+'">Reassign</span>' : '')+
+          '<span class="btn ghost act" data-a="clear" style="'+btnStyle+';color:var(--muted)">Clear overrides</span>'+
+          '<span class="btn ghost act" data-a="dismiss" style="'+btnStyle+';color:var(--pink)">Dismiss</span>'+
+        '</div>')+
     '</div>';
   }
 
