@@ -198,9 +198,11 @@
           '<div class="row" style="padding:0;border:none"><div class="av" style="width:60px;height:60px;font-size:22px">'+DQ.esc(DQ.initials(name))+'</div></div>'+
           '<div><h1 style="margin:0">'+DQ.esc(name)+'</h1>'+
           '<div class="meta">'+(headline ? DQ.esc(headline) : (credits.length ? '' : 'No credits on record yet'))+'</div>'+
-          linksHTML +
-          editLinksAff +
-          (credits.length ? '<span class="editlinks" id="sharecard" style="margin-left:8px">⬆ Share my credits</span>' : '') +
+          '<div class="phactions">'+
+            linksHTML +
+            editLinksAff +
+            (credits.length ? '<span class="editlinks" id="sharecard">⬆ Share my credits</span>' : '') +
+          '</div>'+
           '<div id="linkedit"></div>'+
           '</div>'+
         '</div>'+

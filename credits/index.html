@@ -170,6 +170,7 @@
     .topbar .container{height:54px}
     .brand .wm{font-size:18px}
     .topnav{gap:12px}
+    .topnav .claimcta{display:none}
     .hero{padding:34px 0 24px}
     .hero h1{font-size:31px;letter-spacing:-.6px;margin-bottom:14px}
     .hero p.lede{font-size:15.5px;margin-bottom:20px}
@@ -181,6 +182,7 @@
     .rowhead{margin-bottom:16px}
     .stats{gap:10px;padding:18px 0}.stat{min-width:calc(50% - 10px)}.stat b{font-size:26px}
     .gcards{gap:12px}.gcard .art{height:104px}
+    .gcards .gcard:nth-child(n+5){display:none}
     .manifesto{padding:26px;border-radius:16px}.manifesto h2{font-size:22px}.manifesto p{font-size:14.5px}
     .cta{padding:36px 18px}.cta h2{font-size:24px}.cta p{font-size:14px}
     footer{margin-top:34px;padding:26px 0}
@@ -201,7 +203,7 @@
   <div class="topnav">
     <a href="#trending">Games</a><a href="#devs">People</a><a href="#how">How it works</a>
     <a class="back" href="/">← Jobs board</a>
-    <span class="btn primary">Claim your credits</span>
+    <span class="btn primary claimcta">Claim your credits</span>
   </div>
 </div></div>
 
@@ -277,7 +279,7 @@
   <div class="cta"><div class="glow"></div>
     <h2>Your work deserves your name on it.</h2>
     <p>Find your credits, claim your page, and take it with you wherever you go next.</p>
-    <span class="btn primary" style="font-size:15px;padding:12px 22px">Claim your credits</span>
+    <span class="btn primary claimcta" style="font-size:15px;padding:12px 22px">Claim your credits</span>
   </div>
 </div></section>
 
@@ -385,6 +387,8 @@
   function goSearch(){ if(suggest){suggest.seeAll();return;} var q=hsIn.value.trim();location.href='search.html'+(q?'?q='+encodeURIComponent(q):''); }
   document.getElementById('hsbtn').addEventListener('click',goSearch);
   if(!suggest){ hsIn.addEventListener('keydown',function(e){if(e.key==='Enter')goSearch();}); }
+  // "Claim your credits" buttons → jump to the search box (finding your name is step one).
+  document.querySelectorAll('.claimcta').forEach(function(b){ b.style.cursor='pointer'; b.addEventListener('click',function(){ window.scrollTo({top:0,behavior:'smooth'}); if(hsIn){ setTimeout(function(){ hsIn.focus(); },350); } }); });
 
   // ---- real data overlay (stats + fresh games) when the built site data exists ----
   function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
