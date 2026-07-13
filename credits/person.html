@@ -151,15 +151,18 @@
     var years = credits.map(function(c){ return c.year; }).filter(function(y){ return y; });
     var minY = years.length ? Math.min.apply(null, years) : null;
     var maxY = years.length ? Math.max.apply(null, years) : null;
-    // Honest, self-limiting: span of shipped work (first to last shipped year).
-    // Never overcounts, freezes when you stop shipping, extends when you ship again.
-    var span = (minY && maxY) ? (maxY - minY) : 0;
+    // Show the honest first-to-latest release range as a plain fact, NOT a "years shipping"
+    // count: a min-to-max span falsely implies continuous activity, misreading career gaps or
+    // breaks as either inactivity or overstated tenure. Recent unshipped work is surfaced too.
+    var relRange = (minY && maxY) ? (minY===maxY ? String(minY) : (minY+'–'+maxY)) : '';
     var liveCount = credits.filter(function(c){ return (c.releases||[]).some(function(rl){ return DQ.releaseClass(rl)==="live"; }); }).length;
+    var unshippedCount = (api && api.person && typeof api.person.unshipped === "number") ? api.person.unshipped : 0;
     function snapStat(n, label, sub){ return '<div class="snap"><b>'+n+'</b><span>'+label+(sub?' <em>'+sub+'</em>':'')+'</span></div>'; }
     var snapItems = credits.length ? (
         snapStat(credits.length, 'shipped '+(credits.length===1?'game':'games')) +
-        (span>0 ? snapStat(span, 'years shipping games', minY+'–'+maxY) : '') +
-        (liveCount>0 ? snapStat(liveCount, 'live-service '+(liveCount===1?'title':'titles')) : '')
+        (relRange ? snapStat(relRange, 'release '+(minY===maxY?'year':'years')) : '') +
+        (liveCount>0 ? snapStat(liveCount, 'live-service '+(liveCount===1?'title':'titles')) : '') +
+        (unshippedCount>0 ? snapStat(unshippedCount, 'cancelled / unshipped') : '')
       ) : '';
     var snapshotHTML = snapItems ? '<div class="snapshot">'+snapItems+'</div>' : '';
 
@@ -237,12 +240,12 @@
     if(unshipped > 0 || isOwn){
       var countLine = unshipped > 0
         ? '<div class="unshipped"><span class="usdot">◇</span> <b>'+unshipped+'</b> '+(unshipped===1?'project that was cancelled or never shipped':'projects that were cancelled or never shipped')+' <span class="mut">(titles withheld)</span></div>'
-        : (isOwn ? '<div class="mut" style="font-size:13px">No cancelled or unshipped projects recorded yet.</div>' : '');
-      var editUS = isOwn ? '<span class="editus" id="editus">'+(unshipped>0?'✎ Edit count':'+ Add count')+'</span><div id="usedit"></div>' : '';
+        : (isOwn ? '<div style="font-size:13px;color:var(--text)">Worked on games that were cancelled or never shipped? <b>Add them here.</b> They count as recent experience and keep your record from looking inactive, even when the title can\'t be named.</div>' : '');
+      var editUS = isOwn ? '<span class="editus" id="editus">'+(unshipped>0?'✎ Edit count':'+ Add cancelled / unshipped')+'</span><div id="usedit"></div>' : '';
       unshippedHTML = '<section class="blk" style="padding-top:0"><div class="container">'+
-        '<div class="eyebrow" style="color:var(--muted)">Unshipped &amp; cancelled</div>'+
+        '<div class="eyebrow">Unshipped &amp; cancelled</div>'+
         countLine + editUS +
-        '<div class="notice">Cancelled or never-released work: self-declared and kept name-free, since much of it is under NDA. Counted separately from the verified shipped record above.</div>'+
+        '<div class="notice">Cancelled or never-released work: self-declared and kept name-free, since much of it is under NDA. Counted separately from the verified shipped record above, and shown as a stat on your page so gaps between shipped titles don\'t read as time off.</div>'+
       '</div></section>';
     }
 
@@ -297,7 +300,7 @@
       var X=DQ.esc, W=1080, H=1080, M=64, F=CARD_FONT;
       var cx=540, cardSlug=(api&&api.person&&api.person.slug)||slug||'';
       var stats=[[String(credits.length), credits.length===1?'shipped game':'shipped games']];
-      if(span>0) stats.push([String(span), 'years shipping']);
+      if(relRange) stats.push([relRange, 'release '+(minY===maxY?'year':'years')]);
       if(liveCount>0) stats.push([String(liveCount), liveCount===1?'live-service title':'live-service titles']);
       var sx=stats.length===3?[270,540,810]:(stats.length===2?[380,700]:[540]);
       var statSVG=stats.map(function(s,i){ var x=sx[i];
@@ -430,7 +433,14 @@
     Array.prototype.forEach.call(document.querySelectorAll(".editcredit"), function(el){
       el.onclick = function(){
         var row = el.closest(".row"), id = el.dataset.id;
+        // Grab the game title (and year) from the row before we replace it, so the editor
+        // shows what's being edited instead of a blank, context-free form.
+        var gtEl = row.querySelector(".rname a"); var gtitle = gtEl ? gtEl.textContent : "";
+        var yrEl = row.querySelector(".yr"); var gyear = yrEl ? yrEl.textContent.replace(/[^0-9]/g,"") : "";
+        var curRole = el.dataset.role || "";
         row.innerHTML = '<div class="rmain" style="width:100%">'+
+          '<div style="font-weight:800;font-size:16px;line-height:1.25">'+DQ.esc(gtitle)+(gyear?' <span style="font-weight:400;color:var(--muted);font-size:13px">('+DQ.esc(gyear)+')</span>':'')+'</div>'+
+          '<div style="font-size:12px;color:var(--muted);margin:2px 0 14px">Editing your credit'+(curRole?' — currently listed as “'+DQ.esc(curRole)+'”':'')+'</div>'+
           '<label style="font-size:12px;font-weight:700;display:block;margin-bottom:4px">Headline role</label>'+
           '<input class="ed-role" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:9px 11px;color:var(--text);font-size:14px;font-family:inherit">'+
           '<label style="font-size:12px;font-weight:700;display:block;margin:10px 0 4px">Other titles <span style="font-weight:400;color:var(--muted)">(comma-separated, optional)</span></label>'+
