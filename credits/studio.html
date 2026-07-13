@@ -46,7 +46,11 @@
     var s = resArr[0];
     var ov = (resArr[1] && resArr[1].ok && resArr[1].data) ? resArr[1].data.override : null;
     // Games linked to this studio by moderation but not yet baked into the static build.
-    var linked = (resArr[2] && resArr[2].ok && resArr[2].data && resArr[2].data.games) ? resArr[2].data.games : [];
+    var linkData = (resArr[2] && resArr[2].ok && resArr[2].data) ? resArr[2].data : null;
+    var linked = (linkData && linkData.games) ? linkData.games : [];
+    // A brand-new studio may exist only via a moderation link (no catalogue entry yet,
+    // pending the next rebuild). Synthesize a page for it from the link data.
+    if(!s && linked.length){ s = { name: (linkData && linkData.name) || slug, games: [] }; }
     if(!s){
       document.getElementById("crumb").textContent = "Not found";
       app.innerHTML = '<div class="container"><div class="empty">We could not find that studio.<br><a class="btn ghost" style="margin-top:14px" href="search.html?tab=studios">Search studios</a></div></div>';
