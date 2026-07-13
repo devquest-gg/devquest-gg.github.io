@@ -7,6 +7,21 @@
 <meta name="robots" content="noindex, nofollow">
 <link rel="icon" href="/credits/favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="app.css">
+<style>
+  .gvtabs{display:flex;justify-content:flex-end;margin:0 0 16px}
+  .gvtab{padding:6px 14px;font-size:13px;font-weight:700;color:var(--muted,#8b98a9);cursor:pointer;border:1px solid var(--border,#2d333b);background:var(--panel,#11161d);user-select:none}
+  .gvtab:first-child{border-radius:8px 0 0 8px}
+  .gvtab:last-child{border-radius:0 8px 8px 0;border-left:none}
+  .gvtab.on{background:#20293a;color:var(--text,#e6edf3)}
+  .ggrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:16px}
+  .gtile{text-decoration:none;color:inherit;display:block}
+  .gcov{position:relative;aspect-ratio:2/3;border-radius:10px;overflow:hidden;border:1px solid var(--border,#2d333b);display:flex;align-items:flex-end;box-shadow:0 6px 16px rgba(0,0,0,.4)}
+  .gcov img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+  .gfb{position:relative;z-index:1;padding:9px;font-size:12px;font-weight:800;color:#fff;line-height:1.15;text-shadow:0 2px 8px rgba(0,0,0,.7)}
+  .gvb{position:absolute;top:7px;right:7px;z-index:2;width:22px;height:22px;border-radius:50%;background:rgba(63,185,80,.92);color:#04220f;font-size:13px;font-weight:900;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(0,0,0,.5)}
+  .gcap{margin-top:7px;font-size:11.5px;color:var(--muted,#8b98a9)}
+  .gcap b{color:var(--text,#e6edf3);font-weight:600;display:block;font-size:12.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+</style>
 </head>
 <body>
 <div class="topbar"><div class="container">
@@ -141,8 +156,7 @@
     // Resolve missing launch years from the static catalogue (added games already
     // carry a year; catalogue games get theirs from the shard), then sort + render.
     Promise.all([ Promise.all(credits.map(function(c){
-      if(c.year != null) return Promise.resolve();
-      return DQ.loadEntity("games", c.game_slug).then(function(gg){ if(gg && gg.year != null) c.year = gg.year; }).catch(function(){});
+      return DQ.loadEntity("games", c.game_slug).then(function(gg){ if(gg){ if(c.year==null && gg.year!=null) c.year = gg.year; if(gg.steam) c.steam = gg.steam; } }).catch(function(){});
     })), pMyGames ]).then(function(_res){
     var myGames = _res[1] || {};
     // Credits on games the viewer also shipped, that they haven't confirmed yet.
@@ -247,6 +261,20 @@
       '</div>';
     }).join("") + '</div>' : '<div class="empty">No credits on record yet.'+(isOwn?' Add the games you worked on.':'')+'</div>';
 
+    // ---- Visual (cover) view of the same gameography ----
+    var GRADS=['linear-gradient(150deg,#3a1c5e,#c2185b)','linear-gradient(150deg,#0d3b66,#1d9e75)','linear-gradient(150deg,#4a1e0c,#b5470f)','linear-gradient(150deg,#12324f,#2a6f97)','linear-gradient(150deg,#2b1a4d,#5a3a9e)'];
+    var gridHTML = credits.length ? '<div class="ggrid">' + credits.map(function(c,i){
+      var cov = c.steam ? '<img loading="lazy" referrerpolicy="no-referrer" src="https://cdn.cloudflare.steamstatic.com/steam/apps/'+encodeURIComponent(c.steam)+'/library_600x900.jpg" onerror="this.remove()" alt="">' : '';
+      var vbadge = c.vouch_count ? '<span class="gvb" title="Peer-verified by a teammate">✓</span>' : '';
+      var astg = c.partial ? ' <span style="color:#cdd8e6" title="Worked on a specific part">*</span>' : '';
+      return '<a class="gtile" href="/credits/game/'+encodeURIComponent(c.game_slug)+'">'+
+        '<div class="gcov" style="background:'+GRADS[i%GRADS.length]+'">'+cov+'<span class="gfb">'+DQ.esc(c.game_title)+'</span>'+vbadge+'</div>'+
+        '<div class="gcap"><b>'+DQ.esc(c.role||"Role not recorded")+astg+'</b>'+(c.year?('<span>'+c.year+'</span>'):'<span class="mut">Year unknown</span>')+'</div>'+
+      '</a>';
+    }).join("") + '</div>' : '';
+    var gameView='list'; try{ gameView = localStorage.getItem('dq_gameview')||'list'; }catch(e){}
+    var tabsHTML = credits.length ? '<div class="gvtabs"><span class="gvtab'+(gameView==='list'?' on':'')+'" data-v="list">☰ List</span><span class="gvtab'+(gameView==='visual'?' on':'')+'" data-v="visual">▦ Visual</span></div>' : '';
+
     var linksHTML = links.length ? '<div class="plinks">'+links.map(function(l){
       var label = LINK_LABEL[String(l.type||"").toLowerCase()] || l.label || l.type || "Link";
       return '<a class="plink" href="'+DQ.esc(DQ.safeUrl(l.url))+'" target="_blank" rel="noopener noreferrer">'+DQ.esc(label)+' <span aria-hidden="true">↗</span></a>';
@@ -314,14 +342,28 @@
           '<p class="secsub" style="margin:6px 0 0">A verified record of the games you\'ve helped create. <span class="mut">Year shown is each game\'s release date.</span></p></div>'+
           cta +
         '</div>'+
+        tabsHTML +
         ownBanner +
-        rowsHTML +
+        '<div id="gv-list"'+(gameView==='visual'?' style="display:none"':'')+'>'+rowsHTML+'</div>'+
+        '<div id="gv-visual"'+(gameView==='visual'?'':' style="display:none"')+'>'+gridHTML+'</div>'+
         '<div class="notice"><b style="color:var(--green);font-style:normal">✓</b> marks credits confirmed by a teammate who shipped the same game. Everything else is self-reported. Only the person credited can claim and edit this page.</div>'+
       '</div></section>' +
       unshippedHTML;
 
     var cb = document.getElementById("claimbtn");
     if(cb) cb.onclick = function(){ if(window.DQAPI) location.href = "signin.html"; else DQ.openClaim({ person_name: name }); };
+
+    // List / Visual gameography toggle (choice remembered per device).
+    Array.prototype.forEach.call(document.querySelectorAll(".gvtab"), function(t){
+      t.onclick = function(){
+        var v = t.getAttribute("data-v");
+        try{ localStorage.setItem("dq_gameview", v); }catch(e){}
+        Array.prototype.forEach.call(document.querySelectorAll(".gvtab"), function(x){ x.classList.toggle("on", x===t); });
+        var lv=document.getElementById("gv-list"), gv=document.getElementById("gv-visual");
+        if(lv) lv.style.display = v==="visual"?"none":"";
+        if(gv) gv.style.display = v==="visual"?"":"none";
+      };
+    });
 
     // ---- Shareable credits card (client-side SVG → PNG, no backend) ----
     var CARD_FONT = "'Segoe UI', system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif";
