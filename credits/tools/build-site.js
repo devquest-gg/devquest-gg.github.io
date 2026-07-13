@@ -137,7 +137,7 @@ function writeShards(subdir, n, entries) {
     title: g.title, year: g.year || null,
     studios: g.studios || [], publishers: g.publishers || [],
     platforms: g.platforms || [], genres: g.genres || [],
-    qid: g.wikidata_qid || "", source: g.source || "wikidata",
+    qid: g.wikidata_qid || "", steam: g.steam || null, source: g.source || "wikidata",
     credits: g.credits || [],
   }]);
 

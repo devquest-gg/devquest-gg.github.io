@@ -49,6 +49,7 @@ SELECT ?game ?gameLabel (MIN(?year) AS ?minYear)
   (GROUP_CONCAT(DISTINCT ?pubLabel; separator="||") AS ?pubs)
   (GROUP_CONCAT(DISTINCT ?platLabel; separator="||") AS ?plats)
   (GROUP_CONCAT(DISTINCT ?genreLabel; separator="||") AS ?genres)
+  (SAMPLE(?steamId) AS ?steam)
 WHERE {
   ?game wdt:P31 wd:Q7889 ; wdt:P577 ?date .
   FILTER(?date >= "${startISO}"^^xsd:dateTime && ?date < "${endISO}"^^xsd:dateTime)
@@ -58,6 +59,7 @@ WHERE {
   OPTIONAL { ?game wdt:P123 ?pub .   ?pub   rdfs:label ?pubLabel .   FILTER(LANG(?pubLabel)="en") }
   OPTIONAL { ?game wdt:P400 ?plat .  ?plat  rdfs:label ?platLabel .  FILTER(LANG(?platLabel)="en") }
   OPTIONAL { ?game wdt:P136 ?genre . ?genre rdfs:label ?genreLabel . FILTER(LANG(?genreLabel)="en") }
+  OPTIONAL { ?game wdt:P1733 ?steamId }
 }
 GROUP BY ?game ?gameLabel`;
 }
@@ -131,6 +133,7 @@ function addGame(games, row) {
     publishers: splitList(row.pubs && row.pubs.value),
     platforms: splitList(row.plats && row.plats.value),
     genres: splitList(row.genres && row.genres.value),
+    steam: (row.steam && row.steam.value) || null,
     source: "wikidata",
   };
   if (!existing) { games.set(id, rec); return; }
@@ -139,6 +142,7 @@ function addGame(games, row) {
   for (const k of ["studios", "publishers", "platforms", "genres"]) {
     existing[k] = Array.from(new Set([...existing[k], ...rec[k]]));
   }
+  if (rec.steam && !existing.steam) existing.steam = rec.steam;
 }
 
 function assignSlugs(list) {
@@ -166,6 +170,7 @@ function assignSlugs(list) {
       if (g && g.wikidata_qid) games.set(g.wikidata_qid, {
         wikidata_qid: g.wikidata_qid, title: g.title, year: (g.year != null ? g.year : null),
         studios: g.studios || [], publishers: g.publishers || [], platforms: g.platforms || [], genres: g.genres || [],
+        steam: g.steam || null,
         source: g.source || "wikidata",
       });
     }
