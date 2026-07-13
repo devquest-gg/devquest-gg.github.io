@@ -63,6 +63,7 @@
     // catalogue moderation
     reportEntity: function (payload) { return req("POST", "/report", payload); },
     getOverride: function (type, slug) { return req("GET", "/override/" + type + "/" + encodeURIComponent(slug)); },
+    studioLinked: function (slug) { return req("GET", "/studios/" + encodeURIComponent(slug) + "/linked"); },
     adminListReports: function () { return req("GET", "/admin/reports"); },
     adminResolveReport: function (id, payload) { return req("POST", "/admin/reports/" + id, payload); },
   };

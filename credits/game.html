@@ -75,7 +75,7 @@
 
     var studioLinks = studios.length
       ? studios.map(function(n){ return '<a href="/credits/studio/'+encodeURIComponent(DQ.slugify(n))+'">'+DQ.esc(n)+'</a>'; }).join(", ")
-      : '<span class="mut">Studio not recorded</span>';
+      : '<span class="mut">Studio not recorded</span> <a id="addstudio" class="reportlink" style="cursor:pointer;color:var(--accent);font-size:12px">— know it? Add the studio</a>';
     var metaBits = [studioLinks];
     if(year) metaBits.push(String(year));
     if(publishers.length) metaBits.push("Published by "+publishers.map(DQ.esc).join(", "));
@@ -189,6 +189,8 @@
     };
     var rgb = document.getElementById("reportgame");
     if(rgb) rgb.onclick = function(){ DQ.openReport("game", slug, title); };
+    var asb = document.getElementById("addstudio");
+    if(asb) asb.onclick = function(){ DQ.openReport("game", slug, title, { reason: "wrong_studio" }); };
     Array.prototype.forEach.call(document.querySelectorAll(".reportcredit"), function(el){
       el.onclick = function(){ DQ.openReport("credit", slug, el.getAttribute("data-name"), { gameTitle: title, creditId: el.getAttribute("data-cid") }); };
     });

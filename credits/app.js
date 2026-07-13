@@ -421,10 +421,11 @@
     var reasons = isCredit
       ? [["not_worked", "This person didn't work on this game"], ["wrong_role", "The role or details are wrong"], ["spam", "Not a real person / spam"], ["other", "Something else"]]
       : [["not_real", "This " + label + " is not real / should not exist"], ["wrong_name", "The name is wrong (typo)"]]
-          .concat(type === "game" ? [["wrong_studio", "It's under the wrong studio"]] : [])
+          .concat(type === "game" ? [["wrong_studio", "It's under the wrong studio, or has none"]] : [])
           .concat([["other", "Something else"]]);
     var reasonHTML = reasons.map(function (r, i) {
-      return '<label style="display:block;font-weight:400;font-size:13px;margin:5px 0;cursor:pointer"><input type="radio" name="dqr-reason" value="' + r[0] + '"' + (i === 0 ? " checked" : "") + ' style="margin-right:7px;vertical-align:-1px">' + r[1] + '</label>';
+      var checked = opts.reason ? (r[0] === opts.reason) : (i === 0);
+      return '<label style="display:block;font-weight:400;font-size:13px;margin:5px 0;cursor:pointer"><input type="radio" name="dqr-reason" value="' + r[0] + '"' + (checked ? " checked" : "") + ' style="margin-right:7px;vertical-align:-1px">' + r[1] + '</label>';
     }).join("");
     var ov = document.createElement("div"); ov.className = "dq-modal-ov";
     ov.innerHTML = '<div class="dq-modal" role="dialog" aria-modal="true">' +

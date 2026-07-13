@@ -34,7 +34,7 @@
     app.innerHTML = '<div class="container"><section class="blk"><div class="empty">You need to sign in as a moderator to view this page.<br><a class="btn primary" style="margin-top:14px" href="signin.html">Sign in</a></div></section></div>';
     return;
   }
-  var REASONS = { not_real:"Not real / should not exist", wrong_name:"Wrong name (typo)", wrong_studio:"Wrong studio", other:"Other",
+  var REASONS = { not_real:"Not real / should not exist", wrong_name:"Wrong name (typo)", wrong_studio:"Wrong or missing studio", other:"Other",
     not_worked:"Person didn't work on this game", wrong_role:"Wrong role / details", spam:"Not a real person / spam" };
   DQAPI.adminListReports().then(function(r){
     if(!(r && r.ok)){

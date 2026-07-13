@@ -39,10 +39,13 @@
 
   Promise.all([
     DQ.loadEntity("studios", slug),
-    (window.DQAPI ? DQAPI.getOverride("studio", slug).catch(function(){ return {ok:false}; }) : Promise.resolve({ok:false}))
+    (window.DQAPI ? DQAPI.getOverride("studio", slug).catch(function(){ return {ok:false}; }) : Promise.resolve({ok:false})),
+    (window.DQAPI ? DQAPI.studioLinked(slug).catch(function(){ return {ok:false}; }) : Promise.resolve({ok:false}))
   ]).then(function(resArr){
     var s = resArr[0];
     var ov = (resArr[1] && resArr[1].ok && resArr[1].data) ? resArr[1].data.override : null;
+    // Games linked to this studio by moderation but not yet baked into the static build.
+    var linked = (resArr[2] && resArr[2].ok && resArr[2].data && resArr[2].data.games) ? resArr[2].data.games : [];
     if(!s){
       document.getElementById("crumb").textContent = "Not found";
       app.innerHTML = '<div class="container"><div class="empty">We could not find that studio.<br><a class="btn ghost" style="margin-top:14px" href="search.html?tab=studios">Search studios</a></div></div>';
@@ -56,7 +59,13 @@
     var sname = (ov && ov.name) ? ov.name : s.name;
     document.title = sname + " · DevQuest Credits";
     document.getElementById("crumb").textContent = sname;
-    allGames = s.games || [];
+    allGames = (s.games || []).slice();
+    // Merge in moderation-linked games not already in the static roster (dedupe by slug).
+    if(linked.length){
+      var have = {}; allGames.forEach(function(g){ have[g[0]] = 1; });
+      linked.forEach(function(g){ if(!have[g[0]]){ have[g[0]] = 1; allGames.push(g); } });
+      allGames.sort(function(a,b){ return (b[2]||0)-(a[2]||0) || String(a[1]).localeCompare(String(b[1])); });
+    }
 
     app.innerHTML =
       '<div class="phead"><div class="container">'+
