@@ -126,18 +126,27 @@
     var headline = (api && api.person && api.person.headline) ? api.person.headline : '';
     var isOwn = !!(me && api && me.slug === api.person.slug);
 
+    // If a signed-in viewer is looking at someone else, fetch their own credits so we know
+    // which games they *both* shipped — those are the credits the viewer can confirm/vouch for.
+    var pMyGames = (me && api && me.slug !== api.person.slug)
+      ? DQAPI.personCredits(me.slug).then(function(r){ var s={}; (((r.data&&r.data.credits)||[])).forEach(function(c){ s[c.game_slug]=1; }); return s; }).catch(function(){ return {}; })
+      : Promise.resolve({});
+
     // Merge credits by game_slug — live (API) wins over seed (static).
     var byGame = {};
     ((stat && stat.credits) || []).forEach(function(c){ byGame[c.game_slug] = { game_slug:c.game_slug, game_title:c.game_title, year:c.year||null, studio:c.studio||null, role:c.role, roles_other:c.roles_other||[], verification:c.verification||[], vouch_count:0, live:false }; });
-    ((api && api.credits) || []).forEach(function(c){ byGame[c.game_slug] = { id:c.id, game_slug:c.game_slug, game_title:c.game_title, year:c.year||null, studio:c.studio||null, role:c.role, roles_other:c.roles_other||[], verification:c.verification||[], links:c.links||[], position:(c.position!=null?c.position:null), releases:c.releases||[], vouch_count:c.vouch_count||0, partial:!!c.partial, live:true }; });
+    ((api && api.credits) || []).forEach(function(c){ byGame[c.game_slug] = { id:c.id, game_slug:c.game_slug, game_title:c.game_title, year:c.year||null, studio:c.studio||null, role:c.role, roles_other:c.roles_other||[], verification:c.verification||[], links:c.links||[], position:(c.position!=null?c.position:null), releases:c.releases||[], vouch_count:c.vouch_count||0, voucher_slugs:c.voucher_slugs||[], partial:!!c.partial, live:true }; });
     var credits = Object.keys(byGame).map(function(k){ return byGame[k]; });
 
     // Resolve missing launch years from the static catalogue (added games already
     // carry a year; catalogue games get theirs from the shard), then sort + render.
-    Promise.all(credits.map(function(c){
+    Promise.all([ Promise.all(credits.map(function(c){
       if(c.year != null) return Promise.resolve();
       return DQ.loadEntity("games", c.game_slug).then(function(gg){ if(gg && gg.year != null) c.year = gg.year; }).catch(function(){});
-    })).then(function(){
+    })), pMyGames ]).then(function(_res){
+    var myGames = _res[1] || {};
+    // Credits on games the viewer also shipped, that they haven't confirmed yet.
+    var confirmable = credits.filter(function(c){ return me && !isOwn && c.live && c.id && myGames[c.game_slug] && (c.voucher_slugs||[]).indexOf(me.slug) < 0; });
     credits.sort(function(a,b){
       var pa=(a.position!=null)?a.position:1e9, pb=(b.position!=null)?b.position:1e9;
       if(pa!==pb) return pa-pb;
@@ -211,15 +220,30 @@
       var grip = (isOwn && c.live && c.id && credits.length>1)
         ? '<span class="drag-grip" title="Drag to reorder" style="cursor:grab;color:var(--muted);font-size:16px;line-height:1;user-select:none;padding:0 10px 0 2px">⠿</span>'
         : '';
+      var editAttrs = 'data-id="'+c.id+'" data-role="'+DQ.esc(c.role||"")+'" data-others="'+DQ.esc((c.roles_other||[]).join(", "))+'" data-links="'+DQ.esc((c.links||[]).join("\n"))+'" data-releases="'+DQ.esc((c.releases||[]).join(", "))+'" data-partial="'+(c.partial?"1":"")+'"';
+      // Owner nudge: a claimed credit still sitting at the "Contributor" placeholder (or blank)
+      // gets an invite to set a real title — the common case after claiming a teammate's add.
+      var isPlaceholderRole = isOwn && c.live && c.id && (!String(c.role||"").trim() || /^contributor$/i.test(String(c.role||"").trim()));
+      var roleHTML = isPlaceholderRole
+        ? '<span class="rrole" style="color:var(--muted)">'+DQ.esc(c.role||"Role not recorded")+'</span> <a class="editcredit" '+editAttrs+' style="color:var(--gold);font-weight:700;font-size:12px;cursor:pointer">+ add your real title</a>'
+        : '<span class="rrole">'+DQ.esc(c.role||"Role not recorded")+'</span>';
+      // Viewer who shipped this same game can confirm this credit right from the profile.
+      var iVouchedThis = !!(me && (c.voucher_slugs||[]).indexOf(me.slug) >= 0);
+      var canConfirm = !!(me && !isOwn && c.live && c.id && myGames[c.game_slug]);
+      var confirmBtn = canConfirm
+        ? (iVouchedThis
+            ? '<a class="unvouchp" data-id="'+c.id+'" title="Withdraw your confirmation" style="font-size:12px;font-weight:700;color:var(--green);cursor:pointer;white-space:nowrap;margin-left:8px">✓ Confirmed</a>'
+            : '<a class="vouchp" data-id="'+c.id+'" title="Confirm you shipped this game with '+DQ.esc(name)+'" style="font-size:12px;font-weight:700;color:var(--green);border:1px solid rgba(63,185,80,.4);background:rgba(63,185,80,.08);border-radius:8px;padding:4px 11px;cursor:pointer;white-space:nowrap;margin-left:8px">Confirm ✓</a>')
+        : '';
       var controls = (isOwn && c.live && c.id)
-        ? '<a class="editcredit" data-id="'+c.id+'" data-role="'+DQ.esc(c.role||"")+'" data-others="'+DQ.esc((c.roles_other||[]).join(", "))+'" data-links="'+DQ.esc((c.links||[]).join("\n"))+'" data-releases="'+DQ.esc((c.releases||[]).join(", "))+'" data-partial="'+(c.partial?"1":"")+'" style="color:var(--accent);font-size:12px;cursor:pointer;margin-left:10px">Edit</a>'+
+        ? '<a class="editcredit" '+editAttrs+' style="color:var(--accent);font-size:12px;cursor:pointer;margin-left:10px">Edit</a>'+
           '<a class="rmvcredit" data-id="'+c.id+'" style="color:var(--pink);font-size:12px;cursor:pointer;margin-left:10px">Remove</a>'
         : '';
       return '<div class="row"'+((isOwn&&c.live&&c.id)?' data-id="'+c.id+'"':'')+'>'+
         grip +
         '<div class="rmain"><div class="rname"><a href="/credits/game/'+encodeURIComponent(c.game_slug)+'">'+DQ.esc(c.game_title)+'</a>'+ast+seal+'</div>'+
-          '<div class="rsub"><span class="rrole">'+DQ.esc(c.role||"Role not recorded")+'</span>'+more+(sigs?' &nbsp; '+sigs:'')+(proof?' &nbsp; '+proof:'')+'</div>'+workNote+'</div>'+
-        '<div class="rright">'+(trust?'<span style="margin-right:6px">'+trust+'</span>':'')+(c.year?'<span class="yr" title="Game release year"><span class="yrlbl">Released</span> '+c.year+'</span>':'')+controls+'</div>'+
+          '<div class="rsub">'+roleHTML+more+(sigs?' &nbsp; '+sigs:'')+(proof?' &nbsp; '+proof:'')+'</div>'+workNote+'</div>'+
+        '<div class="rright">'+(trust?'<span style="margin-right:6px">'+trust+'</span>':'')+(c.year?'<span class="yr" title="Game release year"><span class="yrlbl">Released</span> '+c.year+'</span>':'')+confirmBtn+controls+'</div>'+
       '</div>';
     }).join("") + '</div>' : '<div class="empty">No credits on record yet.'+(isOwn?' Add the games you worked on.':'')+'</div>';
 
@@ -260,6 +284,12 @@
       }
     }
 
+    // ---- Viewer invitation: turn a profile visit into a vouch. If the signed-in viewer
+    // shipped some of these same games, invite them to confirm this person right here. ----
+    var confirmBanner = confirmable.length
+      ? '<div class="verifystrip cta"><b>You shipped '+confirmable.length+' of these game'+(confirmable.length===1?'':'s')+' with '+DQ.esc(name)+'.</b> Confirm the credit'+(confirmable.length===1?'':'s')+' you can vouch for — your confirmation is what turns a self-reported credit into a peer-verified one. Use the green <b>Confirm&nbsp;✓</b> button'+(confirmable.length===1?'':'s')+' on those rows below.</div>'
+      : '';
+
     app.innerHTML =
       '<div class="phead"><div class="container">'+
         '<div style="display:flex;align-items:center;gap:16px">'+
@@ -276,6 +306,7 @@
         '</div>'+
         snapshotHTML +
         verifyHTML +
+        confirmBanner +
         claimBanner +
       '</div></div>'+
       '<section class="blk"><div class="container">'+
@@ -427,6 +458,13 @@
         });
       };
     };
+    // Viewer confirms/vouches for this person's credit on a game they both shipped.
+    Array.prototype.forEach.call(document.querySelectorAll(".vouchp"), function(el){
+      el.onclick = function(){ el.textContent = "…"; DQAPI.vouch(el.dataset.id).then(function(r){ if(r.ok){ location.reload(); } else { el.textContent="Confirm ✓"; alert((r.data&&r.data.error)||"Could not confirm. You can only confirm someone on a game you also shipped."); } }).catch(function(){ el.textContent="Confirm ✓"; alert("Network error. Try again."); }); };
+    });
+    Array.prototype.forEach.call(document.querySelectorAll(".unvouchp"), function(el){
+      el.onclick = function(){ if(!confirm("Withdraw your confirmation of this credit?")) return; DQAPI.unvouch(el.dataset.id).then(function(r){ if(r.ok) location.reload(); else alert((r.data&&r.data.error)||"Could not update."); }); };
+    });
     Array.prototype.forEach.call(document.querySelectorAll(".rmvcredit"), function(el){
       el.onclick = function(){ if(!confirm("Remove this credit?")) return; DQAPI.deleteCredit(el.dataset.id).then(function(){ location.reload(); }); };
     });

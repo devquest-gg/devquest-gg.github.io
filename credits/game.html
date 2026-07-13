@@ -163,6 +163,13 @@
       '</div>';
     }).join("") + '</div>' : '<div class="empty">No individual credits recorded yet.<br>If you worked on it, be the first to claim your credit.</div>';
 
+    // People who shipped this game get a clear invitation to confirm the teammates they
+    // worked with — vouching was previously just an unexplained button nobody discovered.
+    var confirmableHere = (me && iHaveCredit) ? credits.filter(function(c){ return c.live && c.id && c.person_slug!==me.slug && (c.voucher_slugs||[]).indexOf(me.slug) < 0; }).length : 0;
+    var vouchInvite = confirmableHere
+      ? '<div style="margin:14px 0;padding:12px 14px;border:1px solid rgba(63,185,80,.35);background:rgba(63,185,80,.07);border-radius:10px;font-size:13.5px;line-height:1.5"><b style="color:var(--green)">You shipped this game.</b> Confirm the teammates you actually worked with — tap the green <b>Vouch</b> button on their row. Your vouch is what turns a self-reported credit into a peer-verified one. Only confirm people you genuinely worked alongside.</div>'
+      : '';
+
     app.innerHTML =
       '<div class="phead"><div class="container">'+
         '<div style="margin-bottom:10px">'+srcBadge+' <a id="reportgame" class="reportlink" style="cursor:pointer;color:var(--muted);font-size:12px;margin-left:8px">⚑ Report or suggest a fix</a></div>'+
@@ -176,6 +183,7 @@
           '<p class="secsub" style="margin:0">A developer-owned, peer-verified record of who made this game. Roles reflect each person\'s full time on the title, not a single moment. Listed alphabetically.</p></div>'+
           (iHaveCredit ? '' : '<span class="btn primary" id="claimbtn">This is me — claim my credit</span>')+
         '</div>'+
+        vouchInvite +
         creditsHTML +
         pendingHTML +
         addTeamHTML +
