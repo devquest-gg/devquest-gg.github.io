@@ -111,6 +111,23 @@ function writeShards(subdir, n, entries) {
     );
   }
 
+  // ---- moderation studio links -------------------------------------------
+  // Games an admin linked to a studio the import missed (or mis-attributed), exported
+  // from the live DB into studio-links.json by the build workflow. Adding the studio
+  // name to the game's `studios` makes the studio aggregation below pick it up, and sets
+  // a primary studio if the game had none — so the link becomes permanent after rebuild.
+  const linkData = readJSON("studio-links.json", { links: [] });
+  let linkedCount = 0;
+  for (const lk of (linkData && linkData.links) || []) {
+    if (!lk || !lk.game_slug || !lk.studio_name) continue;
+    const g = bySlug.get(lk.game_slug);
+    if (!g) continue;
+    g.studios = g.studios || [];
+    if (!g.studios.some((n) => slugify(n) === slugify(lk.studio_name))) { g.studios.push(lk.studio_name); linkedCount++; }
+    if (!g.studio) g.studio = lk.studio_name;
+  }
+  if (linkedCount) console.log(`  applied ${linkedCount} moderation studio link(s)`);
+
   // ---- search index (all games) ------------------------------------------
   // Compact positional rows: [slug, title, year, primaryStudio].
   const index = games.map((g) => [g.slug, g.title, g.year || null, g.studio || (g.studios && g.studios[0]) || ""]);
