@@ -287,39 +287,9 @@
 <script src="api.js"></script>
 <script src="app.js"></script>
 <script>
-  // ---- cover wall (typographic covers: gradient + title + genre, no icons) ----
-  var COVERS=[
-    ["Ghost of Tsushima","247 credited","Action","linear-gradient(160deg,#b23a48,#3a1720)"],
-    ["Hades","121 credited","Roguelike","linear-gradient(160deg,#e0662a,#3a1a10)"],
-    ["Baldur's Gate 3","1,904 credited","RPG","linear-gradient(160deg,#7b3fb0,#1c1030)"],
-    ["Celeste","44 credited","Platformer","linear-gradient(160deg,#4aa5e0,#10233a)"],
-    ["Elden Ring","1,540 credited","Action RPG","linear-gradient(160deg,#c8a23a,#2a2210)"],
-    ["Stardew Valley","3 credited","Sim","linear-gradient(160deg,#4caf50,#12331a)"],
-    ["Cyberpunk 2077","2,110 credited","RPG","linear-gradient(160deg,#c9b23a,#33300f)"],
-    ["Hollow Knight","62 credited","Metroidvania","linear-gradient(160deg,#2a6fb0,#0f1c30)"],
-    ["God of War","1,320 credited","Action","linear-gradient(160deg,#b0532a,#301810)"],
-    ["Disco Elysium","78 credited","RPG","linear-gradient(160deg,#3a8fb0,#10283a)"],
-    ["Alan Wake 2","640 credited","Horror","linear-gradient(160deg,#5a5fb0,#161a30)"],
-    ["Balatro","1 credited","Deckbuilder","linear-gradient(160deg,#c02a5a,#300f1c)"]
-  ];
-  function coverHTML(c){return '<div class="cover" style="background:'+c[3]+'"><span class="cgenre">'+c[2]+'</span><div class="ct">'+c[0]+'<span class="cc">'+c[1]+'</span></div></div>';}
-  var half=COVERS.map(coverHTML).join('');
-  document.getElementById('m1').innerHTML=half+half;
-  var rev=COVERS.slice().reverse().map(coverHTML).join('');
-  document.getElementById('m2').innerHTML=rev+rev;
-
-  // ---- most-credited game cards (typographic) ----
-  var GAMES=[
-    ["Baldur's Gate 3","Larian · 2023","RPG","linear-gradient(160deg,#7b3fb0,#1c1030)","1,904"],
-    ["Cyberpunk 2077","CD Projekt Red · 2020","RPG","linear-gradient(160deg,#c9b23a,#33300f)","2,110"],
-    ["Elden Ring","FromSoftware · 2022","Action RPG","linear-gradient(160deg,#c8a23a,#2a2210)","1,540"],
-    ["Ghost of Tsushima","Sucker Punch · 2020","Action","linear-gradient(160deg,#b23a48,#3a1720)","247"]
-  ];
-  document.getElementById('gcards').innerHTML=GAMES.map(function(g){
-    return '<div class="gcard"><div class="art" style="background:'+g[3]+'"><span class="genre">'+g[2]+'</span><div class="bigt">'+g[0]+'</div></div>'+
-      '<div class="body"><div class="gm">'+g[1]+'</div>'+
-      '<div class="gstat"><b>'+g[4]+'</b> people credited</div></div></div>';
-  }).join('');
+  // Cover wall (m1/m2) is populated below from the real data/site/home.json (well-known games).
+  // The old hardcoded COVERS/GAMES placeholder blocks were removed: the games grid was cut, and
+  // its leftover render threw on the missing #gcards element, halting the whole script.
 
   // ---- profile-preview cards (mirror the live person page: headline, snapshot,
   //      gameography rows with release pills, gold roles, green peer-verified) ----
