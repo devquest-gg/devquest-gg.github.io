@@ -17,10 +17,10 @@
   .gtile{text-decoration:none;color:inherit;display:block}
   .gcov{position:relative;aspect-ratio:2/3;border-radius:10px;overflow:hidden;border:1px solid var(--border,#2d333b);display:flex;align-items:flex-end;box-shadow:0 6px 16px rgba(0,0,0,.4)}
   .gcov img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
-  .gfb{position:relative;z-index:1;padding:9px;font-size:12px;font-weight:800;color:#fff;line-height:1.15;text-shadow:0 2px 8px rgba(0,0,0,.7)}
   .gvb{position:absolute;top:7px;right:7px;z-index:2;width:22px;height:22px;border-radius:50%;background:rgba(63,185,80,.92);color:#04220f;font-size:13px;font-weight:900;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(0,0,0,.5)}
-  .gcap{margin-top:7px;font-size:11.5px;color:var(--muted,#8b98a9)}
-  .gcap b{color:var(--text,#e6edf3);font-weight:600;display:block;font-size:12.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .gcap{margin-top:8px}
+  .gtt{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;color:var(--text,#e6edf3);font-weight:600;font-size:12.5px;line-height:1.25}
+  .gmt{display:block;color:var(--muted,#8b98a9);font-size:11.5px;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 </style>
 </head>
 <body>
@@ -264,12 +264,14 @@
     // ---- Visual (cover) view of the same gameography ----
     var GRADS=['linear-gradient(150deg,#3a1c5e,#c2185b)','linear-gradient(150deg,#0d3b66,#1d9e75)','linear-gradient(150deg,#4a1e0c,#b5470f)','linear-gradient(150deg,#12324f,#2a6f97)','linear-gradient(150deg,#2b1a4d,#5a3a9e)'];
     var gridHTML = credits.length ? '<div class="ggrid">' + credits.map(function(c,i){
+      // Overlay the title only on a placeholder tile (no cover art). Real cover art already
+      // has its own title, so we keep the art clean and put the title in the caption below.
       var cov = c.steam ? '<img loading="lazy" referrerpolicy="no-referrer" src="https://cdn.cloudflare.steamstatic.com/steam/apps/'+encodeURIComponent(c.steam)+'/library_600x900.jpg" onerror="this.remove()" alt="">' : '';
       var vbadge = c.vouch_count ? '<span class="gvb" title="Peer-verified by a teammate">✓</span>' : '';
-      var astg = c.partial ? ' <span style="color:#cdd8e6" title="Worked on a specific part">*</span>' : '';
+      var astg = c.partial ? ' <span title="Worked on a specific part">*</span>' : '';
       return '<a class="gtile" href="/credits/game/'+encodeURIComponent(c.game_slug)+'">'+
-        '<div class="gcov" style="background:'+GRADS[i%GRADS.length]+'">'+cov+'<span class="gfb">'+DQ.esc(c.game_title)+'</span>'+vbadge+'</div>'+
-        '<div class="gcap"><b>'+DQ.esc(c.role||"Role not recorded")+astg+'</b>'+(c.year?('<span>'+c.year+'</span>'):'<span class="mut">Year unknown</span>')+'</div>'+
+        '<div class="gcov" style="background:'+GRADS[i%GRADS.length]+'">'+cov+vbadge+'</div>'+
+        '<div class="gcap"><b class="gtt">'+DQ.esc(c.game_title)+'</b><span class="gmt">'+DQ.esc(c.role||"Role not recorded")+astg+' · '+(c.year?c.year:'—')+'</span></div>'+
       '</a>';
     }).join("") + '</div>' : '';
     var gameView='list'; try{ gameView = localStorage.getItem('dq_gameview')||'list'; }catch(e){}

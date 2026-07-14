@@ -8,6 +8,13 @@
 <meta name="robots" content="noindex, nofollow">
 <link rel="icon" href="/credits/favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="app.css">
+<style>
+  .gpheadrow{display:flex;gap:24px;align-items:flex-start}
+  .gpheadtext{flex:1;min-width:0}
+  .gpcover{flex:none;width:130px;aspect-ratio:2/3;border-radius:10px;overflow:hidden;position:relative;border:1px solid var(--border,#2d333b);background:#161b22;box-shadow:0 8px 22px rgba(0,0,0,.45)}
+  .gpcover img{width:100%;height:100%;object-fit:cover;display:block}
+  @media(max-width:560px){.gpcover{width:96px}.gpheadrow{gap:14px}}
+</style>
 </head>
 <body>
 <div class="topbar"><div class="container">
@@ -170,12 +177,22 @@
       ? '<div style="margin:14px 0;padding:12px 14px;border:1px solid rgba(63,185,80,.35);background:rgba(63,185,80,.07);border-radius:10px;font-size:13.5px;line-height:1.5"><b style="color:var(--green)">You shipped this game.</b> Confirm the teammates you actually worked with — tap the green <b>Vouch</b> button on their row. Your vouch is what turns a self-reported credit into a peer-verified one. Only confirm people you genuinely worked alongside.</div>'
       : '';
 
+    // Cover art in the header (Steam capsule). Shown only when real art exists; a broken
+    // image removes the whole frame so we never leave an empty box next to the title.
+    var gsteam = (g && g.steam) || null;
+    var coverHTML = gsteam
+      ? '<div class="gpcover"><img loading="lazy" referrerpolicy="no-referrer" src="https://cdn.cloudflare.steamstatic.com/steam/apps/'+encodeURIComponent(gsteam)+'/library_600x900.jpg" onerror="var c=this.closest(\'.gpcover\'); if(c) c.remove();" alt="Cover art"></div>'
+      : '';
+
     app.innerHTML =
-      '<div class="phead"><div class="container">'+
-        '<div style="margin-bottom:10px">'+srcBadge+' <a id="reportgame" class="reportlink" style="cursor:pointer;color:var(--muted);font-size:12px;margin-left:8px">⚑ Report or suggest a fix</a></div>'+
-        '<h1>'+DQ.esc(title)+'</h1>'+
-        '<div class="meta">'+metaBits.join(' · ')+'</div>'+
-        (chips?'<div class="chips">'+chips+'</div>':'')+
+      '<div class="phead"><div class="container gpheadrow">'+
+        '<div class="gpheadtext">'+
+          '<div style="margin-bottom:10px">'+srcBadge+' <a id="reportgame" class="reportlink" style="cursor:pointer;color:var(--muted);font-size:12px;margin-left:8px">⚑ Report or suggest a fix</a></div>'+
+          '<h1>'+DQ.esc(title)+'</h1>'+
+          '<div class="meta">'+metaBits.join(' · ')+'</div>'+
+          (chips?'<div class="chips">'+chips+'</div>':'')+
+        '</div>'+
+        coverHTML +
       '</div></div>'+
       '<section class="blk"><div class="container">'+
         '<div class="rowhead"><div><div class="eyebrow">Credits</div>'+
