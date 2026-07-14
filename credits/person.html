@@ -634,49 +634,57 @@
     var CARD_FONT = "'Segoe UI', system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif";
     var CARD_PILL = { content:'#a371f7', live:'#3fb950', port:'#58a6ff', xdev:'#e0b23a' };
     function cTrunc(s,n){ s=String(s==null?'':s); return s.length>n ? s.slice(0,n-1)+'…' : s; }
-    // Top-three hero covers for the card. Steam/Wikimedia-hosted art embeds cleanly; other
-    // hosts (e.g. Amazon) can't be drawn cross-origin, so those slots stay an empty frame.
-    var heroCovers = visualCredits.slice(0,3).map(function(c){ return c.cover ? DQ.safeUrl(c.cover) : (c.steam ? 'https://cdn.cloudflare.steamstatic.com/steam/apps/'+encodeURIComponent(c.steam)+'/library_600x900.jpg' : null); });
-    var HERO_SLOTS = (function(){ var n=heroCovers.length; if(!n) return []; var w=152,h=228,g=26,tot=n*w+(n-1)*g,sx=(1080-tot)/2,out=[]; for(var i=0;i<n;i++) out.push({x:sx+i*(w+g),y:684,w:w,h:h}); return out; })();
+    // Covers for the 4:5 (1080x1350) share card: three large "highlight" covers, then up to
+    // six smaller covers for the rest of the gameography — the whole portfolio on one card.
+    // Steam/Wikimedia embed cleanly; other hosts are proxied at draw time; a missing cover
+    // just stays an empty frame.
+    function _cardCover(c){ return c.cover ? DQ.safeUrl(c.cover) : (c.steam ? 'https://cdn.cloudflare.steamstatic.com/steam/apps/'+encodeURIComponent(c.steam)+'/library_600x900.jpg' : null); }
+    var heroCovers = visualCredits.slice(0,3).map(_cardCover);
+    var restCovers = visualCredits.slice(3,9).map(_cardCover);
+    var cardExtra = Math.max(0, visualCredits.length - 9);
+    var HERO_SLOTS = (function(){ var n=heroCovers.length; if(!n) return []; var w=168,h=252,g=28,tot=n*w+(n-1)*g,sx=(1080-tot)/2,out=[]; for(var i=0;i<n;i++) out.push({x:sx+i*(w+g),y:646,w:w,h:h}); return out; })();
+    var REST_SLOTS = (function(){ var n=restCovers.length; if(!n) return []; var w=96,h=144,g=18,tot=n*w+(n-1)*g,sx=(1080-tot)/2,out=[]; for(var i=0;i<n;i++) out.push({x:sx+i*(w+g),y:946,w:w,h:h}); return out; })();
     function buildCardSVG(){
-      var X=DQ.esc, W=1080, H=1080, M=64, F=CARD_FONT;
+      var X=DQ.esc, W=1080, H=1350, M=64, F=CARD_FONT;
       var cx=540, cardSlug=(api&&api.person&&api.person.slug)||slug||'';
       var stats=[[String(credits.length), credits.length===1?'shipped game':'shipped games']];
       if(liveCount>0) stats.push([String(liveCount), liveCount===1?'live-service title':'live-service titles']);
       if(unshippedCount>0) stats.push([String(unshippedCount), 'cancelled / unshipped']);
-      var sx=stats.length===3?[300,540,780]:(stats.length===2?[390,690]:[540]);
-      var statSVG=stats.map(function(s,i){ var x=sx[i];
-        return '<text x="'+x+'" y="600" text-anchor="middle" font-family="'+F+'" font-size="74" font-weight="800" fill="url(#g1)">'+X(s[0])+'</text>'+
-               '<text x="'+x+'" y="636" text-anchor="middle" font-family="'+F+'" font-size="21" fill="#8b98a9">'+X(s[1])+'</text>'; }).join('');
+      var sxs=stats.length===3?[300,540,780]:(stats.length===2?[390,690]:[540]);
+      var statSVG=stats.map(function(s,i){ var x=sxs[i];
+        return '<text x="'+x+'" y="566" text-anchor="middle" font-family="'+F+'" font-size="74" font-weight="800" fill="url(#g1)">'+X(s[0])+'</text>'+
+               '<text x="'+x+'" y="602" text-anchor="middle" font-family="'+F+'" font-size="21" fill="#8b98a9">'+X(s[1])+'</text>'; }).join('');
       // "N credits peer-verified" = credits with at least one peer vouch (max = your count). Hidden at 0.
       var vN=credits.filter(function(c){ return c.vouch_count>0; }).length;
       var vouch=''; if(vN>0){ var vt='✓ '+vN+' credit'+(vN===1?'':'s')+' peer-verified', vpw=Math.round(vt.length*12.2)+40, vpx=cx-vpw/2;
-        vouch='<rect x="'+vpx+'" y="484" width="'+vpw+'" height="40" rx="20" fill="#3fb950" fill-opacity="0.14" stroke="#3fb950" stroke-opacity="0.5"/>'+
-              '<text x="'+cx+'" y="510" text-anchor="middle" font-family="'+F+'" font-size="21" font-weight="700" fill="#3fb950">'+vt+'</text>'; }
-      var rangeLine = relRange ? '<text x="'+cx+'" y="452" text-anchor="middle" font-family="'+F+'" font-size="21" fill="#8b98a9">'+(minY===maxY?'Shipped in ':'Shipping ')+X(relRange)+'</text>' : '';
-      var heroFrames = HERO_SLOTS.map(function(s){ return '<rect x="'+s.x+'" y="'+s.y+'" width="'+s.w+'" height="'+s.h+'" rx="12" fill="#1b2130" stroke="#2d333b" stroke-width="1.5"/>'; }).join('');
+        vouch='<rect x="'+vpx+'" y="446" width="'+vpw+'" height="40" rx="20" fill="#3fb950" fill-opacity="0.14" stroke="#3fb950" stroke-opacity="0.5"/>'+
+              '<text x="'+cx+'" y="472" text-anchor="middle" font-family="'+F+'" font-size="21" font-weight="700" fill="#3fb950">'+vt+'</text>'; }
+      var rangeLine = relRange ? '<text x="'+cx+'" y="414" text-anchor="middle" font-family="'+F+'" font-size="21" fill="#8b98a9">'+(minY===maxY?'Shipped in ':'Shipping ')+X(relRange)+'</text>' : '';
+      var heroFrames = HERO_SLOTS.map(function(s){ return '<rect x="'+s.x+'" y="'+s.y+'" width="'+s.w+'" height="'+s.h+'" rx="14" fill="#1b2130" stroke="#2d333b" stroke-width="1.5"/>'; }).join('');
+      var restFrames = REST_SLOTS.map(function(s){ return '<rect x="'+s.x+'" y="'+s.y+'" width="'+s.w+'" height="'+s.h+'" rx="10" fill="#1b2130" stroke="#2d333b" stroke-width="1.25"/>'; }).join('');
+      var extraTxt = cardExtra>0 ? '<text x="'+cx+'" y="1128" text-anchor="middle" font-family="'+F+'" font-size="20" fill="#8b98a9">+ '+cardExtra+' more title'+(cardExtra===1?'':'s')+'</text>' : '';
       var mark=''; [[0,0,'#e0b23a'],[1,0,'#2d333b'],[2,0,'#2d333b'],[0,1,'#2d333b'],[1,1,'#e0b23a'],[2,1,'#2d333b'],[0,2,'#2d333b'],[1,2,'#2d333b'],[2,2,'#e0b23a']].forEach(function(r){ mark+='<rect x="'+(M+r[0]*13)+'" y="'+(64+r[1]*13)+'" width="10" height="10" rx="2" fill="'+r[2]+'"/>'; });
       var nameSize=name.length>22?44:(name.length>16?54:66);
-      var hl=headline ? '<text x="'+cx+'" y="418" text-anchor="middle" font-family="'+F+'" font-size="25" fill="#8b98a9">'+X(cTrunc(headline,60))+'</text>' : '';
+      var hl=headline ? '<text x="'+cx+'" y="384" text-anchor="middle" font-family="'+F+'" font-size="25" fill="#8b98a9">'+X(cTrunc(headline,60))+'</text>' : '';
       return '<svg xmlns="http://www.w3.org/2000/svg" width="'+W+'" height="'+H+'" viewBox="0 0 '+W+' '+H+'">'+
         '<defs><linearGradient id="g1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7cc0ff"/><stop offset="1" stop-color="#a371f7"/></linearGradient></defs>'+
         '<rect width="'+W+'" height="'+H+'" fill="#0c0f17"/>'+
         mark+
         '<text x="'+(M+45)+'" y="84" font-family="'+F+'" font-size="24" font-weight="800" fill="#eef3fa">Dev<tspan fill="#58a6ff">Quest</tspan><tspan fill="#e0b23a">.gg</tspan></text>'+
         '<text x="'+(M+210)+'" y="84" font-family="'+F+'" font-size="15" font-weight="800" fill="#58a6ff" letter-spacing="2">CREDITS</text>'+
-        '<circle cx="'+cx+'" cy="228" r="76" fill="url(#g1)"/>'+
-        '<text x="'+cx+'" y="248" text-anchor="middle" font-family="'+F+'" font-size="56" font-weight="800" fill="#0b0e14">'+X(DQ.initials(name))+'</text>'+
-        '<text x="'+cx+'" y="378" text-anchor="middle" font-family="'+F+'" font-size="'+nameSize+'" font-weight="850" fill="#eef3fa">'+X(name)+'</text>'+ hl + rangeLine +
-        vouch + heroFrames + statSVG +
-        '<text x="'+cx+'" y="962" text-anchor="middle" font-family="'+F+'" font-size="24" fill="#c4cfdd">The developer-owned, peer-verified record of who made the games.</text>'+
-        '<text x="'+cx+'" y="1018" text-anchor="middle" font-family="'+F+'" font-size="29" font-weight="800" fill="#58a6ff">devquest.gg/credits/'+X(cardSlug)+'</text>'+
+        '<circle cx="'+cx+'" cy="206" r="70" fill="url(#g1)"/>'+
+        '<text x="'+cx+'" y="225" text-anchor="middle" font-family="'+F+'" font-size="52" font-weight="800" fill="#0b0e14">'+X(DQ.initials(name))+'</text>'+
+        '<text x="'+cx+'" y="344" text-anchor="middle" font-family="'+F+'" font-size="'+nameSize+'" font-weight="850" fill="#eef3fa">'+X(name)+'</text>'+ hl + rangeLine +
+        vouch + heroFrames + restFrames + extraTxt + statSVG +
+        '<text x="'+cx+'" y="1188" text-anchor="middle" font-family="'+F+'" font-size="24" fill="#c4cfdd">The developer-owned, peer-verified record of who made the games.</text>'+
+        '<text x="'+cx+'" y="1244" text-anchor="middle" font-family="'+F+'" font-size="29" font-weight="800" fill="#58a6ff">devquest.gg/credits/'+X(cardSlug)+'</text>'+
       '</svg>';
     }
     function downloadCard(btn){
       var svg=buildCardSVG(), img=new Image();
       img.onload=function(){
-        var scale=2, S=1080, cv=document.createElement("canvas"); cv.width=S*scale; cv.height=S*scale;
-        var ctx=cv.getContext("2d"); ctx.scale(scale,scale); ctx.drawImage(img,0,0,S,S);
+        var scale=2, CW=1080, CH=1350, cv=document.createElement("canvas"); cv.width=CW*scale; cv.height=CH*scale;
+        var ctx=cv.getContext("2d"); ctx.scale(scale,scale); ctx.drawImage(img,0,0,CW,CH);
         // Draw the hero covers into their frames. Cross-origin-friendly hosts (Steam, Wikimedia)
         // load with crossOrigin and keep the canvas clean; others just fail and leave the frame.
         function loadImg(u){ return new Promise(function(resolve,reject){ var ci=new Image(); ci.crossOrigin="anonymous"; ci.onload=function(){ resolve(ci); }; ci.onerror=function(){ reject(); }; ci.src=u; setTimeout(reject,7000); }); }
@@ -694,7 +702,9 @@
           var proxied="https://wsrv.nl/?url="+encodeURIComponent(url)+"&w=440&output=jpg";
           loadImg(url).catch(function(){ return loadImg(proxied); }).then(function(ci){ paint(ci,slot); res(); }).catch(function(){ res(); });
         }); }
-        Promise.all(HERO_SLOTS.map(function(s,i){ return drawCover(s,heroCovers[i]); })).then(function(){
+        var coverJobs = HERO_SLOTS.map(function(s,i){ return drawCover(s,heroCovers[i]); })
+          .concat(REST_SLOTS.map(function(s,i){ return drawCover(s,restCovers[i]); }));
+        Promise.all(coverJobs).then(function(){
           cv.toBlob(function(blob){
             if(!blob){ if(btn) btn.textContent="⬆ Share my credits"; alert("Could not generate the card. Try again."); return; }
             var a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=(DQ.slugify(name)||"devquest")+"-credits.png";
