@@ -41,6 +41,11 @@ jobs:
           curl -fsS https://devquest-credits-api.balesdestin.workers.dev/export/studio-links \
             -o credits/data/studio-links.json || echo '{"links":[]}' > credits/data/studio-links.json
 
+      - name: Pull admin game covers
+        run: |
+          curl -fsS https://devquest-credits-api.balesdestin.workers.dev/export/game-covers \
+            -o credits/data/game-covers.json || echo '{"covers":[]}' > credits/data/game-covers.json
+
       - name: Build site data (index + shards)
         run: node credits/tools/build-site.js
 
