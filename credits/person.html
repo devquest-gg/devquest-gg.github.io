@@ -16,6 +16,10 @@
   .ggrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:16px;align-items:start}
   .ggrid.ggrid-hero{grid-template-columns:repeat(auto-fill,minmax(158px,1fr));max-width:560px;gap:18px}
   .gvhead{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted,#8b98a9);font-weight:700;margin:2px 0 12px}
+  .gvgrip{position:absolute;top:6px;left:7px;z-index:3;font-size:15px;line-height:1;color:#fff;opacity:0;background:rgba(0,0,0,.5);border-radius:6px;padding:2px 4px;cursor:grab;transition:opacity .12s}
+  .dragtile:hover .gvgrip{opacity:.9}
+  .dragtile.dragging{opacity:.4}
+  .ggrid.dragover-zone{outline:2px dashed rgba(224,178,58,.5);outline-offset:4px;border-radius:12px}
   @media(max-width:600px){.ggrid.ggrid-hero{grid-template-columns:repeat(2,1fr);max-width:none}}
   .gtile{text-decoration:none;color:inherit;display:block}
   .gcov{position:relative;aspect-ratio:2/3;border-radius:12px;overflow:hidden;display:flex;align-items:flex-end;box-shadow:0 6px 18px rgba(0,0,0,.5), inset 0 1.5px 1px rgba(255,255,255,.22), inset 0 -3px 5px rgba(0,0,0,.45), inset 0 0 0 1px rgba(255,255,255,.06);transition:transform .13s ease, box-shadow .13s ease}
@@ -279,21 +283,22 @@
       var cov = _covsrc ? '<img loading="lazy" referrerpolicy="no-referrer" src="'+DQ.esc(_covsrc)+'" onerror="this.remove()" alt="">' : '';
       var vbadge = c.vouch_count ? '<span class="gvb" title="Peer-verified by a teammate">✓</span>' : '';
       var astg = c.partial ? ' <span title="Worked on a specific part">*</span>' : '';
-      return '<a class="gtile" href="/credits/game/'+encodeURIComponent(c.game_slug)+'">'+
-        '<div class="gcov" style="background:'+PH_BG+'">'+cov+vbadge+'</div>'+
+      var canDrag = isOwn && c.live && c.id;
+      return '<a class="gtile'+(canDrag?' dragtile':'')+'"'+(canDrag?' draggable="true" data-id="'+c.id+'"':'')+' href="/credits/game/'+encodeURIComponent(c.game_slug)+'">'+
+        '<div class="gcov" style="background:'+PH_BG+'">'+cov+vbadge+(canDrag?'<span class="gvgrip" title="Drag to reorder">⠿</span>':'')+'</div>'+
         '<div class="gcap"><b class="gtt" title="'+DQ.esc(c.game_title)+'">'+DQ.esc(c.game_title)+'</b><span class="gmt">'+DQ.esc(c.role||"Role not recorded")+astg+' <span class="y">· '+(c.year?c.year:'—')+'</span></span></div>'+
       '</a>';
     }
     // Hero row: the first three credits render larger. Order is the shared credit order
     // (reorder in List view for now; drag-in-Visual is a fast-follow).
-    var heroHint = (isOwn && credits.length>3) ? ' <span class="mut" style="font-weight:400;letter-spacing:0;text-transform:none;font-size:12px">· reorder in the List tab to choose your top three</span>' : '';
+    var heroHint = (isOwn && credits.length>3) ? ' <span class="mut" style="font-weight:400;letter-spacing:0;text-transform:none;font-size:12px">· drag a cover to reorder; your top three feature here</span>' : '';
     var gridHTML;
     if(!credits.length){ gridHTML = ''; }
-    else if(credits.length <= 3){ gridHTML = '<div class="ggrid ggrid-hero">'+credits.map(visTile).join("")+'</div>'; }
+    else if(credits.length <= 3){ gridHTML = '<div class="ggrid ggrid-hero" id="gv-hero">'+credits.map(visTile).join("")+'</div>'; }
     else {
       gridHTML = '<div class="gvhead">Featured'+heroHint+'</div>'+
-        '<div class="ggrid ggrid-hero">'+credits.slice(0,3).map(visTile).join("")+'</div>'+
-        '<div class="ggrid" style="margin-top:18px">'+credits.slice(3).map(visTile).join("")+'</div>';
+        '<div class="ggrid ggrid-hero" id="gv-hero">'+credits.slice(0,3).map(visTile).join("")+'</div>'+
+        '<div class="ggrid" id="gv-rest" style="margin-top:18px">'+credits.slice(3).map(visTile).join("")+'</div>';
     }
     var gameView='list'; try{ gameView = localStorage.getItem('dq_gameview')||'list'; }catch(e){}
     var tabsHTML = credits.length ? '<div class="gvtabs"><span class="gvtab'+(gameView==='list'?' on':'')+'" data-v="list">☰ List</span><span class="gvtab'+(gameView==='visual'?' on':'')+'" data-v="visual">▦ Visual</span></div>' : '';
@@ -387,6 +392,52 @@
         if(gv) gv.style.display = v==="visual"?"":"none";
       };
     });
+
+    // ---- Drag-to-reorder in the Visual grid (owner only) ----
+    // Reuses reorderCredits; the top 3 in the resulting order are the hero row, and dragging
+    // a cover into the hero zone promotes it (the row re-splits to hold exactly 3).
+    (function(){
+      if(!isOwn) return;
+      var vis = document.getElementById("gv-visual");
+      if(!vis || vis.querySelectorAll(".dragtile").length < 2) return;
+      var dragged = null;
+      function clearZones(){ Array.prototype.forEach.call(vis.querySelectorAll(".ggrid"), function(z){ z.classList.remove("dragover-zone"); }); }
+      vis.addEventListener("dragstart", function(e){
+        var t = e.target && e.target.closest ? e.target.closest(".dragtile") : null;
+        if(!t){ return; }
+        dragged = t; t.classList.add("dragging");
+        if(e.dataTransfer){ e.dataTransfer.effectAllowed = "move"; try{ e.dataTransfer.setData("text/plain", t.getAttribute("data-id")||""); }catch(_){} }
+      });
+      vis.addEventListener("dragover", function(e){
+        if(!dragged) return; e.preventDefault();
+        if(e.dataTransfer) e.dataTransfer.dropEffect = "move";
+        var zone = e.target && e.target.closest ? e.target.closest(".ggrid") : null;
+        Array.prototype.forEach.call(vis.querySelectorAll(".ggrid"), function(z){ z.classList.toggle("dragover-zone", z===zone); });
+      });
+      vis.addEventListener("drop", function(e){
+        if(!dragged) return; e.preventDefault();
+        var target = e.target && e.target.closest ? e.target.closest(".dragtile") : null;
+        if(target && target !== dragged){
+          var r = target.getBoundingClientRect();
+          var after = (e.clientY > r.top + r.height*0.6) || (e.clientY > r.top && e.clientX > r.left + r.width/2);
+          target.parentNode.insertBefore(dragged, after ? target.nextSibling : target);
+        } else {
+          var zone = e.target && e.target.closest ? e.target.closest(".ggrid") : null;
+          if(zone) zone.appendChild(dragged);
+        }
+      });
+      vis.addEventListener("dragend", function(){
+        clearZones();
+        if(!dragged) return;
+        dragged.classList.remove("dragging"); dragged = null;
+        var hero = document.getElementById("gv-hero"), rest = document.getElementById("gv-rest");
+        var order = [];
+        Array.prototype.forEach.call(vis.querySelectorAll(".dragtile"), function(t){ order.push(t.getAttribute("data-id")); });
+        // Re-split so the hero row holds exactly the first three.
+        if(hero && rest){ order.forEach(function(id, idx){ var el = vis.querySelector('.dragtile[data-id="'+id+'"]'); if(el){ (idx < 3 ? hero : rest).appendChild(el); } }); }
+        if(window.DQAPI && DQAPI.reorderCredits){ DQAPI.reorderCredits(order).catch(function(){}); }
+      });
+    })();
 
     // ---- Shareable credits card (client-side SVG → PNG, no backend) ----
     var CARD_FONT = "'Segoe UI', system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif";
