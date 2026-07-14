@@ -14,24 +14,39 @@
   .gvtab:first-child{border-radius:8px 0 0 8px}
   .gvtab:last-child{border-radius:0 8px 8px 0;border-left:none}
   .gvtab.on{background:#20293a;color:var(--text,#e6edf3)}
-  .ggrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:16px;align-items:start}
-  .ggrid.ggrid-hero{grid-template-columns:repeat(auto-fill,minmax(158px,1fr));max-width:560px;gap:18px}
+  .ggrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:18px;align-items:start}
+  .ggrid.ggrid-hero{grid-template-columns:repeat(3,1fr);max-width:none;gap:20px}
   .gvhead{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted,#8b98a9);font-weight:700;margin:2px 0 12px}
-  .gvgrip{position:absolute;top:6px;left:7px;z-index:3;font-size:15px;line-height:1;color:#fff;opacity:0;background:rgba(0,0,0,.5);border-radius:6px;padding:2px 4px;cursor:grab;transition:opacity .12s}
-  .dragtile:hover .gvgrip{opacity:.9}
-  .dragtile.dragging{opacity:.4}
   @media (pointer:coarse){.gvgrip{display:none}}
-  .ggrid.dragover-zone{outline:2px dashed rgba(224,178,58,.5);outline-offset:4px;border-radius:12px}
-  @media(max-width:600px){.ggrid.ggrid-hero{grid-template-columns:repeat(2,1fr);max-width:none}}
-  .gtile{text-decoration:none;color:inherit;display:block}
-  .gcov{position:relative;aspect-ratio:2/3;border-radius:12px;overflow:hidden;display:flex;align-items:flex-end;box-shadow:0 6px 18px rgba(0,0,0,.5), inset 0 1.5px 1px rgba(255,255,255,.22), inset 0 -3px 5px rgba(0,0,0,.45), inset 0 0 0 1px rgba(255,255,255,.06);transition:transform .13s ease, box-shadow .13s ease}
-  .gtile:hover .gcov{transform:translateY(-3px);box-shadow:0 12px 26px rgba(0,0,0,.65), inset 0 1.5px 1px rgba(255,255,255,.28), inset 0 -3px 5px rgba(0,0,0,.5), inset 0 0 0 1px rgba(255,255,255,.10)}
-  .gcov img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
-  .gvb{position:absolute;top:7px;right:7px;z-index:2;width:22px;height:22px;border-radius:50%;background:rgba(63,185,80,.92);color:#04220f;font-size:13px;font-weight:900;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(0,0,0,.5)}
-  .gcap{min-height:44px;margin-top:9px}
-  .gtt{color:var(--text,#e6edf3);font-weight:600;font-size:12.5px;line-height:1.25;overflow-wrap:break-word}
-  .gmt{display:block;color:var(--muted,#8b98a9);font-size:11.5px;margin-top:4px;line-height:1.35;overflow-wrap:break-word}
-  .gmt .y{white-space:nowrap}
+  @media(max-width:600px){.ggrid.ggrid-hero{grid-template-columns:1fr 1fr}}
+  /* Cover tile: caption sits ON the art via a bottom scrim, so full titles/roles never clip. */
+  .gtile{text-decoration:none;color:inherit;display:block;-webkit-user-drag:none}
+  .gcov{position:relative;aspect-ratio:2/3;border-radius:14px;overflow:hidden;display:block;background:#141b26;box-shadow:0 8px 22px rgba(0,0,0,.5), inset 0 0 0 1px rgba(255,255,255,.06);transition:transform .14s ease, box-shadow .14s ease}
+  .gtile:hover .gcov{transform:translateY(-4px);box-shadow:0 16px 34px rgba(0,0,0,.6), inset 0 0 0 1px rgba(255,255,255,.13)}
+  .gcov img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1;-webkit-user-drag:none;user-select:none}
+  .gph{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:14px;text-align:center;font-size:12.5px;font-weight:800;letter-spacing:.11em;text-transform:uppercase;color:rgba(255,255,255,.30);line-height:1.3}
+  .gscrim{position:absolute;left:0;right:0;bottom:0;z-index:2;padding:34px 13px 12px;background:linear-gradient(to top,rgba(4,7,12,.95) 12%,rgba(4,7,12,.70) 55%,transparent);pointer-events:none}
+  .gtt{display:block;color:#fff;font-weight:750;font-size:13.5px;line-height:1.22;margin-bottom:4px;overflow-wrap:break-word}
+  .gmt{display:block;color:#cdd6e2;font-size:11.5px;line-height:1.32;overflow-wrap:break-word}
+  .gmt .y{white-space:nowrap;color:#8b98a9}
+  .ggrid-hero .gtt{font-size:16px}
+  .ggrid-hero .gmt{font-size:12.5px}
+  .ggrid-hero .gscrim{padding:44px 15px 14px}
+  .grank{display:none;position:absolute;top:6px;left:13px;z-index:2;font-size:38px;font-weight:900;color:rgba(255,255,255,.22);line-height:1;pointer-events:none;text-shadow:0 1px 6px rgba(0,0,0,.5)}
+  .ggrid-hero{counter-reset:rank}
+  .ggrid-hero .grank{display:block;counter-increment:rank}
+  .ggrid-hero .grank::before{content:counter(rank)}
+  .gvb{position:absolute;top:9px;right:9px;z-index:3;width:24px;height:24px;border-radius:50%;background:rgba(63,185,80,.95);color:#04220f;font-size:14px;font-weight:900;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 5px rgba(0,0,0,.5)}
+  .gvgrip{position:absolute;top:8px;left:9px;z-index:4;font-size:15px;line-height:1;color:rgba(255,255,255,.82);opacity:0;background:rgba(0,0,0,.5);border-radius:6px;padding:2px 5px;cursor:grab;transition:opacity .12s}
+  .dragtile:hover .gvgrip{opacity:1}
+  .dragtile.dragging{opacity:.45}
+  .gv-nav-lock{cursor:grabbing !important}
+  /* Career snapshot as a light hairline strip (overrides the boxed cards in app.css). */
+  .snapshot{display:flex;gap:34px;margin:22px 0 4px;padding:17px 2px;border-top:1px solid var(--border,#2d333b);border-bottom:1px solid var(--border,#2d333b);flex-wrap:wrap}
+  .snap{background:none;border:none;border-radius:0;padding:0;min-width:0}
+  .snap b{font-size:27px}
+  .snap span{margin-top:6px}
+  @media(max-width:600px){.snapshot{gap:20px 22px;padding:14px 2px}.snap{flex:0 0 auto;text-align:left;padding:0}}
 </style>
 </head>
 <body>
@@ -288,13 +303,19 @@
     function visTile(c){
       // Admin-set cover wins over the Steam capsule (which may be dead for a delisted game).
       var _covsrc = c.cover ? DQ.safeUrl(c.cover) : (c.steam ? 'https://cdn.cloudflare.steamstatic.com/steam/apps/'+encodeURIComponent(c.steam)+'/library_600x900.jpg' : '');
-      var cov = _covsrc ? '<img loading="lazy" referrerpolicy="no-referrer" src="'+DQ.esc(_covsrc)+'" onerror="this.remove()" alt="">' : '';
+      // Title watermark always sits behind; a real cover (when present) paints over it. If the
+      // image 404s, onerror removes it and the watermark shows through instead of a blank box.
+      var art = '<span class="gph">'+DQ.esc(c.game_title)+'</span>' +
+        (_covsrc ? '<img loading="lazy" referrerpolicy="no-referrer" src="'+DQ.esc(_covsrc)+'" onerror="this.remove()" alt="">' : '');
       var vbadge = c.vouch_count ? '<span class="gvb" title="Peer-verified by a teammate">✓</span>' : '';
+      // Rank badge is empty: a CSS counter numbers the hero row 1..3 by live DOM order, so
+      // dragging a cover into the featured row renumbers everything without any JS.
       var astg = c.partial ? ' <span title="Worked on a specific part">*</span>' : '';
       var canDrag = isOwn && c.live && c.id;
-      return '<a class="gtile'+(canDrag?' dragtile':'')+'"'+(canDrag?' draggable="true" data-id="'+c.id+'"':'')+' href="/credits/game/'+encodeURIComponent(c.game_slug)+'">'+
-        '<div class="gcov" style="background:'+PH_BG+'">'+cov+vbadge+(canDrag?'<span class="gvgrip" title="Drag to reorder">⠿</span>':'')+'</div>'+
-        '<div class="gcap"><b class="gtt" title="'+DQ.esc(c.game_title)+'">'+DQ.esc(c.game_title)+'</b><span class="gmt">'+DQ.esc(c.role||"Role not recorded")+astg+' <span class="y">· '+(c.year?c.year:'—')+'</span></span></div>'+
+      return '<a class="gtile'+(canDrag?' dragtile':'')+'"'+(canDrag?' data-id="'+c.id+'" draggable="false"':'')+' href="/credits/game/'+encodeURIComponent(c.game_slug)+'">'+
+        '<div class="gcov"><span class="grank"></span>'+art+vbadge+(canDrag?'<span class="gvgrip" title="Drag to reorder">⠿</span>':'')+
+          '<div class="gscrim"><b class="gtt">'+DQ.esc(c.game_title)+'</b><span class="gmt">'+DQ.esc(c.role||"Role not recorded")+astg+' <span class="y">· '+(c.year?c.year:'—')+'</span></span></div>'+
+        '</div>'+
       '</a>';
     }
     // Hero row: the first three of the Visual (drag/showcase) order render larger. This order
@@ -406,52 +427,70 @@
       };
     });
 
-    // ---- Drag-to-reorder in the Visual grid (owner only) ----
-    // Reuses reorderCredits; the top 3 in the resulting order are the hero row, and dragging
-    // a cover into the hero zone promotes it (the row re-splits to hold exactly 3).
+    // ---- Drag-to-reorder in the Visual grid (owner only, pointer-based) ----
+    // Native HTML5 drag was imprecise about drop targets. This uses mouse events + nearest-
+    // centre hit-testing across both grids, reorders live, and re-splits so the hero row always
+    // holds the first three. A short move threshold keeps a plain click navigating to the game.
     (function(){
-      if(!isOwn) return;
+      if(!isOwn || isTouch) return;
       var vis = document.getElementById("gv-visual");
-      if(!vis || vis.querySelectorAll(".dragtile").length < 2) return;
-      // Touch devices: HTML5 drag doesn't work, so strip it and leave covers as plain links.
-      if(isTouch){ Array.prototype.forEach.call(vis.querySelectorAll(".dragtile"), function(t){ t.removeAttribute("draggable"); t.classList.remove("dragtile"); }); return; }
-      var dragged = null;
-      function clearZones(){ Array.prototype.forEach.call(vis.querySelectorAll(".ggrid"), function(z){ z.classList.remove("dragover-zone"); }); }
-      vis.addEventListener("dragstart", function(e){
-        var t = e.target && e.target.closest ? e.target.closest(".dragtile") : null;
-        if(!t){ return; }
-        dragged = t; t.classList.add("dragging");
-        if(e.dataTransfer){ e.dataTransfer.effectAllowed = "move"; try{ e.dataTransfer.setData("text/plain", t.getAttribute("data-id")||""); }catch(_){} }
-      });
-      vis.addEventListener("dragover", function(e){
-        if(!dragged) return; e.preventDefault();
-        if(e.dataTransfer) e.dataTransfer.dropEffect = "move";
-        var zone = e.target && e.target.closest ? e.target.closest(".ggrid") : null;
-        Array.prototype.forEach.call(vis.querySelectorAll(".ggrid"), function(z){ z.classList.toggle("dragover-zone", z===zone); });
-      });
-      vis.addEventListener("drop", function(e){
-        if(!dragged) return; e.preventDefault();
-        var target = e.target && e.target.closest ? e.target.closest(".dragtile") : null;
-        if(target && target !== dragged){
-          var r = target.getBoundingClientRect();
-          var after = (e.clientY > r.top + r.height*0.6) || (e.clientY > r.top && e.clientX > r.left + r.width/2);
-          target.parentNode.insertBefore(dragged, after ? target.nextSibling : target);
-        } else {
-          var zone = e.target && e.target.closest ? e.target.closest(".ggrid") : null;
-          if(zone) zone.appendChild(dragged);
+      if(!vis) return;
+      var hero = document.getElementById("gv-hero"), rest = document.getElementById("gv-rest");
+      function tiles(){ return Array.prototype.slice.call(vis.querySelectorAll(".dragtile")); }
+      if(tiles().length < 2) return;
+
+      var drag=null, sx=0, sy=0, active=false;
+
+      // Append in sequence: first three go to the hero row, the rest below. Only called when
+      // the order actually changed (guarded by the caller), so re-appends stay cheap.
+      function applyOrder(order){ order.forEach(function(el,i){ (i<3?hero:(rest||hero)).appendChild(el); }); }
+
+      function onMove(e){
+        if(!drag) return;
+        if(!active){
+          if(Math.abs(e.clientX-sx)+Math.abs(e.clientY-sy) < 6) return;
+          active=true; drag.classList.add("dragging"); document.body.classList.add("gv-nav-lock"); document.body.style.userSelect="none";
         }
+        e.preventDefault();
+        var others = tiles().filter(function(x){ return x!==drag; });
+        var best=null, bestD=Infinity, after=false;
+        others.forEach(function(x){
+          var r=x.getBoundingClientRect(), cxp=r.left+r.width/2, cyp=r.top+r.height/2;
+          var d=(e.clientX-cxp)*(e.clientX-cxp)+(e.clientY-cyp)*(e.clientY-cyp);
+          if(d<bestD){ bestD=d; best=x; after=(e.clientY>cyp+r.height*0.15)||(Math.abs(e.clientY-cyp)<=r.height*0.5 && e.clientX>cxp); }
+        });
+        if(!best) return;
+        var order = others.slice(); var idx = order.indexOf(best); if(after) idx++;
+        order.splice(idx,0,drag);
+        var cur = tiles();
+        var same = order.length===cur.length && order.every(function(el,i){ return el===cur[i]; });
+        if(!same) applyOrder(order);
+      }
+      function onUp(){
+        document.removeEventListener("mousemove", onMove, true);
+        document.removeEventListener("mouseup", onUp, true);
+        document.body.classList.remove("gv-nav-lock"); document.body.style.userSelect="";
+        var was=active, d=drag; drag=null; active=false;
+        if(d) d.classList.remove("dragging");
+        if(was && d){
+          // Swallow the click that fires right after a drag so we don't navigate to the game.
+          var swallow=function(ev){ ev.preventDefault(); ev.stopPropagation(); };
+          vis.addEventListener("click", swallow, true);
+          setTimeout(function(){ vis.removeEventListener("click", swallow, true); }, 60);
+          var order = tiles().map(function(el){ return el.getAttribute("data-id"); });
+          if(window.DQAPI && DQAPI.reorderCredits) DQAPI.reorderCredits(order).catch(function(){});
+        }
+      }
+      vis.addEventListener("mousedown", function(e){
+        if(e.button && e.button!==0) return;
+        var t = e.target && e.target.closest ? e.target.closest(".dragtile") : null;
+        if(!t) return;
+        drag=t; sx=e.clientX; sy=e.clientY; active=false;
+        document.addEventListener("mousemove", onMove, true);
+        document.addEventListener("mouseup", onUp, true);
       });
-      vis.addEventListener("dragend", function(){
-        clearZones();
-        if(!dragged) return;
-        dragged.classList.remove("dragging"); dragged = null;
-        var hero = document.getElementById("gv-hero"), rest = document.getElementById("gv-rest");
-        var order = [];
-        Array.prototype.forEach.call(vis.querySelectorAll(".dragtile"), function(t){ order.push(t.getAttribute("data-id")); });
-        // Re-split so the hero row holds exactly the first three.
-        if(hero && rest){ order.forEach(function(id, idx){ var el = vis.querySelector('.dragtile[data-id="'+id+'"]'); if(el){ (idx < 3 ? hero : rest).appendChild(el); } }); }
-        if(window.DQAPI && DQAPI.reorderCredits){ DQAPI.reorderCredits(order).catch(function(){}); }
-      });
+      // Belt-and-suspenders: cancel any native image/link dragging inside the grid.
+      vis.addEventListener("dragstart", function(e){ e.preventDefault(); });
     })();
 
     // ---- Shareable credits card (client-side SVG → PNG, no backend) ----
@@ -672,40 +711,8 @@
         };
       };
     });
-    // Drag-and-drop reorder (drag starts from the ⠿ grip so row links still click).
-    (function(){
-      var rowsEl = app.querySelector(".rows");
-      if(!isOwn || !rowsEl) return;
-      var rows = rowsEl.querySelectorAll(".row[data-id]");
-      if(rows.length < 2) return;
-      var dragged = null;
-      Array.prototype.forEach.call(rows, function(row){
-        var grip = row.querySelector(".drag-grip");
-        if(grip){
-          grip.addEventListener("mousedown", function(){ row.draggable = true; });
-          grip.addEventListener("mouseup", function(){ setTimeout(function(){ if(!dragged) row.draggable = false; }, 0); });
-        }
-        row.addEventListener("dragstart", function(e){ dragged = row; row.style.opacity = ".4"; if(e.dataTransfer) e.dataTransfer.effectAllowed = "move"; });
-        row.addEventListener("dragend", function(){ row.style.opacity = ""; row.draggable = false; var moved = dragged; dragged = null; if(moved) saveOrder(); });
-      });
-      rowsEl.addEventListener("dragover", function(e){
-        if(!dragged) return;
-        e.preventDefault();
-        var after = afterEl(e.clientY);
-        if(after == null) rowsEl.appendChild(dragged);
-        else rowsEl.insertBefore(dragged, after);
-      });
-      function afterEl(y){
-        var els = Array.prototype.slice.call(rowsEl.querySelectorAll(".row[data-id]"));
-        var closest = { offset: -Infinity, el: null };
-        els.forEach(function(el){ if(el === dragged) return; var b = el.getBoundingClientRect(); var off = y - b.top - b.height/2; if(off < 0 && off > closest.offset){ closest = { offset: off, el: el }; } });
-        return closest.el;
-      }
-      function saveOrder(){
-        var order = Array.prototype.map.call(rowsEl.querySelectorAll(".row[data-id]"), function(r){ return r.getAttribute("data-id"); });
-        DQAPI.reorderCredits(order).then(function(){ location.reload(); });
-      }
-    })();
+    // (List view no longer supports manual drag: it's a fixed most-recent-first timeline.
+    // Reordering lives in the Visual view, which persists the showcase order.)
     });
   }).catch(function(e){
     app.innerHTML = '<div class="container"><div class="empty">Something went wrong loading this profile.<br><span class="mut">'+DQ.esc(e && e.message)+'</span></div></div>';
