@@ -181,7 +181,8 @@
     // image removes the whole frame so we never leave an empty box next to the title.
     var gsteam = (g && g.steam) || null;
     var gcover = (ov && ov.cover) || (g && g.cover) || null;
-    var coverSrc = gsteam ? 'https://cdn.cloudflare.steamstatic.com/steam/apps/'+encodeURIComponent(gsteam)+'/library_600x900.jpg' : (gcover ? DQ.safeUrl(gcover) : null);
+    // Admin-set cover wins over the Steam capsule (delisted games have a dead capsule).
+    var coverSrc = gcover ? DQ.safeUrl(gcover) : (gsteam ? 'https://cdn.cloudflare.steamstatic.com/steam/apps/'+encodeURIComponent(gsteam)+'/library_600x900.jpg' : null);
     var coverHTML = coverSrc
       ? '<div class="gpcover"><img loading="lazy" referrerpolicy="no-referrer" src="'+DQ.esc(coverSrc)+'" onerror="var c=this.closest(\'.gpcover\'); if(c) c.remove();" alt="Cover art"></div>'
       : '';

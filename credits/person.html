@@ -163,7 +163,7 @@
     })), pMyGames, pCovers ]).then(function(_res){
     var myGames = _res[1] || {};
     var _covMap = _res[2] || {};
-    credits.forEach(function(c){ if(!c.steam && _covMap[c.game_slug]) c.cover = _covMap[c.game_slug]; });
+    credits.forEach(function(c){ if(_covMap[c.game_slug]) c.cover = _covMap[c.game_slug]; });
     // Credits on games the viewer also shipped, that they haven't confirmed yet.
     var confirmable = credits.filter(function(c){ return me && !isOwn && c.live && c.id && myGames[c.game_slug] && (c.voucher_slugs||[]).indexOf(me.slug) < 0; });
     credits.sort(function(a,b){
@@ -271,9 +271,9 @@
     var gridHTML = credits.length ? '<div class="ggrid">' + credits.map(function(c,i){
       // Overlay the title only on a placeholder tile (no cover art). Real cover art already
       // has its own title, so we keep the art clean and put the title in the caption below.
-      var cov = c.steam
-        ? '<img loading="lazy" referrerpolicy="no-referrer" src="https://cdn.cloudflare.steamstatic.com/steam/apps/'+encodeURIComponent(c.steam)+'/library_600x900.jpg" onerror="this.remove()" alt="">'
-        : (c.cover ? '<img loading="lazy" referrerpolicy="no-referrer" src="'+DQ.esc(DQ.safeUrl(c.cover))+'" onerror="this.remove()" alt="">' : '');
+      // An admin-set cover wins over the Steam capsule (which may be dead for a delisted game).
+      var _covsrc = c.cover ? DQ.safeUrl(c.cover) : (c.steam ? 'https://cdn.cloudflare.steamstatic.com/steam/apps/'+encodeURIComponent(c.steam)+'/library_600x900.jpg' : '');
+      var cov = _covsrc ? '<img loading="lazy" referrerpolicy="no-referrer" src="'+DQ.esc(_covsrc)+'" onerror="this.remove()" alt="">' : '';
       var vbadge = c.vouch_count ? '<span class="gvb" title="Peer-verified by a teammate">✓</span>' : '';
       var astg = c.partial ? ' <span title="Worked on a specific part">*</span>' : '';
       return '<a class="gtile" href="/credits/game/'+encodeURIComponent(c.game_slug)+'">'+

@@ -112,16 +112,19 @@
   }
 
   // ---- Missing artwork: games with credits but no Steam capsule and no admin cover ----
+  function testCapsule(appid){ return new Promise(function(res){ var i=new Image(); i.onload=function(){ res(true); }; i.onerror=function(){ res(false); }; i.src="https://cdn.cloudflare.steamstatic.com/steam/apps/"+appid+"/library_600x900.jpg"; setTimeout(function(){ res(false); }, 6000); }); }
+
   function loadMissingArt(){
     DQAPI.adminCreditedGames().then(function(r){
       if(!(r && r.ok)) return;
       var games = (r.data && r.data.games) || [];
       Promise.all(games.map(function(g){
-        return DQ.loadEntity("games", g.game_slug).then(function(gg){ g.steam = (gg && gg.steam) ? gg.steam : null; }).catch(function(){ g.steam = null; });
+        return DQ.loadEntity("games", g.game_slug).then(function(gg){ g.steam = (gg && gg.steam) ? gg.steam : null; }).catch(function(){ g.steam = null; })
+          .then(function(){ if(!g.steam){ g.hasCapsule = false; return; } return testCapsule(g.steam).then(function(ok){ g.hasCapsule = ok; }); });
       })).then(function(){
-        // Every credited game that has no Steam capsule — whether or not a cover is set —
-        // so a bad/broken cover stays editable. Games still needing one sort to the top.
-        var list = games.filter(function(g){ return !g.steam; });
+        // Games with no *working* Steam capsule — no Steam ID, or a delisted one whose capsule
+        // image is gone (e.g. Warhammer Online). Cover-set ones stay editable; needy ones on top.
+        var list = games.filter(function(g){ return !g.hasCapsule; });
         list.sort(function(a,b){ return (a.cover?1:0)-(b.cover?1:0) || String(a.game_title).localeCompare(String(b.game_title)); });
         renderMissingArt(list);
       });
