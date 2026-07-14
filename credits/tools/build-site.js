@@ -216,38 +216,44 @@ function writeShards(subdir, n, entries) {
 
   // ---- home.json: tiny curated payload so the landing page stays light ----
   const byYear = games.slice().sort((a, b) => (b.year || 0) - (a.year || 0) || String(a.title).localeCompare(String(b.title)));
-  // Marquee = well-known games, so the catalogue reads as familiar rather than a pile of unknowns.
-  // We match each famous TITLE against the real catalogue (by a punctuation-insensitive key) and
-  // use its actual slug — so links are always valid. Anything not in the catalogue is skipped;
-  // recent titles pad out to 24 so the wall is always full. Curated list, not a popularity signal.
+  // Marquee = well-known games WITH box art. We match each famous title against the real catalogue
+  // (by a punctuation-insensitive key) so links are valid, prefer the catalogue entry that actually
+  // has art (Steam capsule or admin cover — e.g. God of War 2018 over the pre-Steam 2005 one), and
+  // keep ONLY games that have art. A big list means ~30 unique covers, so the wall rarely repeats.
   const normKey = (t) => String(t).toLowerCase().replace(/[^a-z0-9]+/g, "");
+  const artUrl = (g) => coverMap[g.slug] || (g.steam ? "https://cdn.cloudflare.steamstatic.com/steam/apps/" + encodeURIComponent(g.steam) + "/library_600x900.jpg" : null);
   const FEATURED = [
-    "Elden Ring", "God of War", "The Witcher 3: Wild Hunt", "Baldur's Gate 3", "Cyberpunk 2077",
-    "Red Dead Redemption 2", "The Legend of Zelda: Breath of the Wild", "Hades", "Stardew Valley",
-    "Minecraft", "Portal 2", "Dark Souls III", "Hollow Knight", "Celeste", "Grand Theft Auto V",
-    "Doom Eternal", "Half-Life 2", "Bloodborne", "Sekiro: Shadows Die Twice", "Disco Elysium",
-    "Death Stranding", "Persona 5", "Cuphead", "The Last of Us Part II"
+    "Elden Ring", "Cyberpunk 2077", "The Witcher 3: Wild Hunt", "Baldur's Gate 3", "Red Dead Redemption 2",
+    "Grand Theft Auto V", "God of War", "Hades", "Stardew Valley", "Portal 2", "Dark Souls III",
+    "Sekiro: Shadows Die Twice", "Hollow Knight", "Celeste", "Doom Eternal", "Half-Life 2",
+    "Disco Elysium", "Death Stranding", "Cuphead", "Persona 5 Royal", "Nier: Automata",
+    "Resident Evil 4", "Monster Hunter: World", "Devil May Cry 5", "Terraria", "Deep Rock Galactic",
+    "Sea of Thieves", "Subnautica", "Dead Cells", "Slay the Spire", "Vampire Survivors", "Outer Wilds",
+    "Divinity: Original Sin 2", "Kingdom Come: Deliverance", "Control", "It Takes Two", "Titanfall 2",
+    "The Elder Scrolls V: Skyrim", "Fallout: New Vegas", "XCOM 2", "Sid Meier's Civilization VI",
+    "Undertale", "Risk of Rain 2", "Return of the Obra Dinn", "A Plague Tale: Requiem",
+    "Ori and the Will of the Wisps", "Frostpunk", "Hollow Knight: Silksong", "Balatro", "The Last of Us Part I"
   ];
   const byNorm = new Map();
   for (const g of games) {
     if (!g.title) continue;
-    const k = normKey(g.title);
-    const prev = byNorm.get(k);
-    // Prefer the canonical entry (the un-suffixed, shortest slug wins over "…-2" duplicates).
-    if (!prev || String(g.slug).length < String(prev.slug).length) byNorm.set(k, g);
+    const k = normKey(g.title), prev = byNorm.get(k);
+    // Prefer the entry that HAS art; then the un-suffixed (shortest) slug over "…-2" duplicates.
+    if (!prev) { byNorm.set(k, g); continue; }
+    const gArt = !!artUrl(g), pArt = !!artUrl(prev);
+    if ((gArt && !pArt) || (gArt === pArt && String(g.slug).length < String(prev.slug).length)) byNorm.set(k, g);
   }
   const seen = new Set();
-  const featuredGames = [];
-  for (const t of FEATURED) { const g = byNorm.get(normKey(t)); if (g && !seen.has(g.slug)) { seen.add(g.slug); featuredGames.push(g); } }
-  for (const g of byYear) { if (featuredGames.length >= 24) break; if (g.title && !seen.has(g.slug)) { seen.add(g.slug); featuredGames.push(g); } }
-  const covers = featuredGames.slice(0, 24)
-    .map((g) => {
-      // Real box art for the wall: admin-set cover first, then the Steam capsule (74% of the
-      // catalogue has a Steam app id via Wikidata). Games never on Steam (Nintendo/Minecraft)
-      // get null here and fall back to the gradient card in the homepage render.
-      const art = coverMap[g.slug] || (g.steam ? "https://cdn.cloudflare.steamstatic.com/steam/apps/" + encodeURIComponent(g.steam) + "/library_600x900.jpg" : null);
-      return [g.slug, g.title, g.year || null, g.studio || "", (g.genres && g.genres[0]) || "", art];
-    });
+  const covers = [];
+  for (const t of FEATURED) {
+    const g = byNorm.get(normKey(t));
+    if (!g || seen.has(g.slug)) continue;
+    const art = artUrl(g);
+    if (!art) continue; // no box art → leave it out of the wall entirely
+    seen.add(g.slug);
+    covers.push([g.slug, g.title, g.year || null, g.studio || "", (g.genres && g.genres[0]) || "", art]);
+    if (covers.length >= 30) break;
+  }
   const topStudios = studioIndex.slice().sort((a, b) => b[2] - a[2]).slice(0, 12);
   writeJSON("home.json", { covers: covers, trendingGames: [], topStudios: topStudios });
 
