@@ -14,13 +14,16 @@
   .gvtab:last-child{border-radius:0 8px 8px 0;border-left:none}
   .gvtab.on{background:#20293a;color:var(--text,#e6edf3)}
   .ggrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:16px;align-items:start}
+  .ggrid.ggrid-hero{grid-template-columns:repeat(auto-fill,minmax(158px,1fr));max-width:560px;gap:18px}
+  .gvhead{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted,#8b98a9);font-weight:700;margin:2px 0 12px}
+  @media(max-width:600px){.ggrid.ggrid-hero{grid-template-columns:repeat(2,1fr);max-width:none}}
   .gtile{text-decoration:none;color:inherit;display:block}
-  .gcov{position:relative;aspect-ratio:2/3;border-radius:10px;overflow:hidden;display:flex;align-items:flex-end;box-shadow:0 6px 18px rgba(0,0,0,.5), inset 0 0 0 1.5px rgba(224,178,58,.6);transition:transform .13s ease, box-shadow .13s ease}
-  .gtile:hover .gcov{transform:translateY(-3px);box-shadow:0 12px 26px rgba(0,0,0,.65), inset 0 0 0 2px rgba(224,178,58,.95)}
+  .gcov{position:relative;aspect-ratio:2/3;border-radius:12px;overflow:hidden;display:flex;align-items:flex-end;box-shadow:0 6px 18px rgba(0,0,0,.5), inset 0 1.5px 1px rgba(255,255,255,.22), inset 0 -3px 5px rgba(0,0,0,.45), inset 0 0 0 1px rgba(255,255,255,.06);transition:transform .13s ease, box-shadow .13s ease}
+  .gtile:hover .gcov{transform:translateY(-3px);box-shadow:0 12px 26px rgba(0,0,0,.65), inset 0 1.5px 1px rgba(255,255,255,.28), inset 0 -3px 5px rgba(0,0,0,.5), inset 0 0 0 1px rgba(255,255,255,.10)}
   .gcov img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
   .gvb{position:absolute;top:7px;right:7px;z-index:2;width:22px;height:22px;border-radius:50%;background:rgba(63,185,80,.92);color:#04220f;font-size:13px;font-weight:900;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(0,0,0,.5)}
-  .gcap{height:68px;margin-top:8px;display:flex;flex-direction:column;justify-content:flex-start}
-  .gtt{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;color:var(--text,#e6edf3);font-weight:600;font-size:12.5px;line-height:1.25}
+  .gcap{min-height:44px;margin-top:9px}
+  .gtt{color:var(--text,#e6edf3);font-weight:600;font-size:12.5px;line-height:1.25;overflow-wrap:break-word}
   .gmt{display:flex;gap:6px;color:var(--muted,#8b98a9);font-size:11.5px;margin-top:4px}
   .gmt .r{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .gmt .y{flex:none}
@@ -271,10 +274,8 @@
 
     // ---- Visual (cover) view of the same gameography ----
     var PH_BG='linear-gradient(160deg,#232c3b,#141b26)';
-    var gridHTML = credits.length ? '<div class="ggrid">' + credits.map(function(c,i){
-      // Overlay the title only on a placeholder tile (no cover art). Real cover art already
-      // has its own title, so we keep the art clean and put the title in the caption below.
-      // An admin-set cover wins over the Steam capsule (which may be dead for a delisted game).
+    function visTile(c){
+      // Admin-set cover wins over the Steam capsule (which may be dead for a delisted game).
       var _covsrc = c.cover ? DQ.safeUrl(c.cover) : (c.steam ? 'https://cdn.cloudflare.steamstatic.com/steam/apps/'+encodeURIComponent(c.steam)+'/library_600x900.jpg' : '');
       var cov = _covsrc ? '<img loading="lazy" referrerpolicy="no-referrer" src="'+DQ.esc(_covsrc)+'" onerror="this.remove()" alt="">' : '';
       var vbadge = c.vouch_count ? '<span class="gvb" title="Peer-verified by a teammate">✓</span>' : '';
@@ -283,7 +284,18 @@
         '<div class="gcov" style="background:'+PH_BG+'">'+cov+vbadge+'</div>'+
         '<div class="gcap"><b class="gtt" title="'+DQ.esc(c.game_title)+'">'+DQ.esc(c.game_title)+'</b><span class="gmt"><span class="r">'+DQ.esc(c.role||"Role not recorded")+astg+'</span><span class="y">'+(c.year?c.year:'—')+'</span></span></div>'+
       '</a>';
-    }).join("") + '</div>' : '';
+    }
+    // Hero row: the first three credits render larger. Order is the shared credit order
+    // (reorder in List view for now; drag-in-Visual is a fast-follow).
+    var heroHint = (isOwn && credits.length>3) ? ' <span class="mut" style="font-weight:400;letter-spacing:0;text-transform:none;font-size:12px">· reorder in the List tab to choose your top three</span>' : '';
+    var gridHTML;
+    if(!credits.length){ gridHTML = ''; }
+    else if(credits.length <= 3){ gridHTML = '<div class="ggrid ggrid-hero">'+credits.map(visTile).join("")+'</div>'; }
+    else {
+      gridHTML = '<div class="gvhead">Featured'+heroHint+'</div>'+
+        '<div class="ggrid ggrid-hero">'+credits.slice(0,3).map(visTile).join("")+'</div>'+
+        '<div class="ggrid" style="margin-top:18px">'+credits.slice(3).map(visTile).join("")+'</div>';
+    }
     var gameView='list'; try{ gameView = localStorage.getItem('dq_gameview')||'list'; }catch(e){}
     var tabsHTML = credits.length ? '<div class="gvtabs"><span class="gvtab'+(gameView==='list'?' on':'')+'" data-v="list">☰ List</span><span class="gvtab'+(gameView==='visual'?' on':'')+'" data-v="visual">▦ Visual</span></div>' : '';
 
