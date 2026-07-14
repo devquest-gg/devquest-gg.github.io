@@ -117,21 +117,25 @@
       if(!(r && r.ok)) return;
       var games = (r.data && r.data.games) || [];
       Promise.all(games.map(function(g){
-        if(g.cover){ g.steam = null; return Promise.resolve(); }
         return DQ.loadEntity("games", g.game_slug).then(function(gg){ g.steam = (gg && gg.steam) ? gg.steam : null; }).catch(function(){ g.steam = null; });
       })).then(function(){
-        renderMissingArt(games.filter(function(g){ return !g.cover && !g.steam; }));
+        // Every credited game that has no Steam capsule — whether or not a cover is set —
+        // so a bad/broken cover stays editable. Games still needing one sort to the top.
+        var list = games.filter(function(g){ return !g.steam; });
+        list.sort(function(a,b){ return (a.cover?1:0)-(b.cover?1:0) || String(a.game_title).localeCompare(String(b.game_title)); });
+        renderMissingArt(list);
       });
     }).catch(function(){});
   }
 
-  function renderMissingArt(missing){
-    var body = missing.length ? missing.map(artCard).join("")
-      : '<div class="empty">Every credited game has cover art or a Steam capsule.</div>';
+  function renderMissingArt(list){
+    var need = list.filter(function(g){ return !g.cover; }).length;
+    var body = list.length ? list.map(artCard).join("")
+      : '<div class="empty">Every credited game has a Steam capsule.</div>';
     app.insertAdjacentHTML("beforeend",
       '<div class="container"><section class="blk"><div class="eyebrow">Artwork</div>'+
-      '<h2 class="sec">'+missing.length+' game'+(missing.length===1?'':'s')+' missing cover art</h2>'+
-      '<p class="secsub">Credited games with no Steam capsule. Paste an <b>https</b> image URL — ideally a tall 2:3 cover. It appears on the game page and on profiles (crops to fit, never stretches).</p>'+
+      '<h2 class="sec">Cover art</h2>'+
+      '<p class="secsub"><b>'+need+'</b> of '+list.length+' non-Steam game'+(list.length===1?'':'s')+' still '+(need===1?'needs':'need')+' a cover. Paste a <b>direct image link</b> (right-click a cover and choose &ldquo;Copy image address&rdquo; &mdash; it ends in .jpg or .png), <b>not</b> a store page. Ideally a tall 2:3 cover; it crops to fit on the game page and profiles. Leave the box empty and Save to remove a cover.</p>'+
       body+'</section></div>');
     wireArt();
   }
@@ -142,31 +146,54 @@
       '<div class="artprev" style="flex:none;width:68px;aspect-ratio:2/3;border-radius:8px;overflow:hidden;background:#161b22;border:1px solid var(--border)"></div>'+
       '<div style="flex:1;min-width:0">'+
         '<a href="'+url+'" target="_blank" rel="noopener" style="color:var(--accent);font-weight:700">'+DQ.esc(g.game_title)+' ↗</a>'+
-        '<div class="mut" style="font-size:12px;margin-top:2px">'+(g.people||0)+' credited</div>'+
+        '<div class="mut" style="font-size:12px;margin-top:2px">'+(g.people||0)+' credited'+(g.cover?' · <span style="color:var(--green)">cover set</span>':'')+'</div>'+
         '<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">'+
-          '<input class="cover-in" placeholder="https://…/cover.jpg" style="flex:1;min-width:220px;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px 11px;color:var(--text);font-size:13px;font-family:inherit">'+
+          '<input class="cover-in" value="'+DQ.esc(g.cover||"")+'" placeholder="https://…/cover.jpg" style="flex:1;min-width:220px;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px 11px;color:var(--text);font-size:13px;font-family:inherit">'+
           '<span class="btn ghost prev-btn" style="padding:8px 12px;font-size:13px">Preview</span>'+
           '<span class="btn primary save-btn" style="padding:8px 14px;font-size:13px">Save</span>'+
         '</div>'+
+        '<div class="prev-status" style="font-size:12px;margin-top:7px;min-height:15px"></div>'+
       '</div>'+
     '</div>';
   }
 
   function wireArt(){
     Array.prototype.forEach.call(document.querySelectorAll(".artcard"), function(card){
-      var input = card.querySelector(".cover-in"), prev = card.querySelector(".artprev");
-      function showPrev(){ var u=input.value.trim(); if(u) prev.innerHTML='<img src="'+DQ.esc(DQ.safeUrl(u))+'" referrerpolicy="no-referrer" style="width:100%;height:100%;object-fit:cover" onerror="this.parentNode.innerHTML=\'\'">'; }
-      card.querySelector(".prev-btn").onclick = showPrev;
-      input.addEventListener("blur", showPrev);
-      card.querySelector(".save-btn").onclick = function(){
+      var input = card.querySelector(".cover-in"), prev = card.querySelector(".artprev"), st = card.querySelector(".prev-status");
+      var lastState = "empty"; // empty | loading | ok | bad
+      function setStatus(txt, color){ st.textContent = txt; st.style.color = color || "var(--muted)"; }
+      // Load the URL as an actual image so we can tell the admin whether it's a real image
+      // link (a store/product page will fail here exactly like it would on the live site).
+      function showPrev(cb){
+        var u = input.value.trim();
+        if(!u){ prev.innerHTML=""; setStatus(""); lastState="empty"; if(cb) cb("empty"); return; }
+        if(!/^https:\/\//i.test(u)){ setStatus("Must start with https://", "var(--pink)"); lastState="bad"; if(cb) cb("bad"); return; }
+        setStatus("Loading…"); lastState="loading";
+        var img = new Image(); img.referrerPolicy = "no-referrer";
+        img.onload = function(){ prev.innerHTML=""; img.style.width="100%"; img.style.height="100%"; img.style.objectFit="cover"; prev.appendChild(img); setStatus("Looks good", "var(--green)"); lastState="ok"; if(cb) cb("ok"); };
+        img.onerror = function(){ prev.innerHTML=""; setStatus("That's not a direct image link. Right-click the cover on the store/game page and choose “Copy image address”.", "var(--pink)"); lastState="bad"; if(cb) cb("bad"); };
+        img.src = DQ.safeUrl(u);
+      }
+      card.querySelector(".prev-btn").onclick = function(){ showPrev(); };
+      input.addEventListener("blur", function(){ showPrev(); });
+      function doSave(){
         var u = input.value.trim();
         if(u && !/^https:\/\//i.test(u)){ alert("Cover URL must start with https://"); return; }
-        var btn=this, label=btn.textContent; btn.textContent="…";
+        var btn = card.querySelector(".save-btn"), label = btn.textContent; btn.textContent="…";
         DQAPI.adminSetGameCover({ game_slug: card.getAttribute("data-slug"), game_title: card.getAttribute("data-title"), cover_url: u }).then(function(r){
-          if(r && r.ok){ card.style.opacity=".55"; card.style.pointerEvents="none"; card.insertAdjacentHTML("beforeend",'<div style="color:var(--green);font-size:12px;margin-top:8px;font-weight:700">✓ Cover saved</div>'); }
-          else { btn.textContent=label; alert((r && r.data && r.data.error) || "Could not save."); }
+          btn.textContent = label;
+          if(r && r.ok){ setStatus(u ? "Saved — live now (refresh a profile to see it)" : "Cover removed", "var(--green)"); }
+          else { alert((r && r.data && r.data.error) || "Could not save."); }
         }).catch(function(){ btn.textContent=label; alert("Network error."); });
+      }
+      card.querySelector(".save-btn").onclick = function(){
+        // Verify it's a loadable image first; warn (don't block) if not.
+        showPrev(function(state){
+          if(state === "ok" || state === "empty"){ doSave(); }
+          else if(confirm("That link didn't load as an image, so the cover probably won't show. Save it anyway?")){ doSave(); }
+        });
       };
+      if(input.value.trim()) showPrev(); // preview an already-set cover on load
     });
   }
 })();
