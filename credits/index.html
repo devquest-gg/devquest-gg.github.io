@@ -377,17 +377,18 @@
   fetch('data/site/home.json?t='+Date.now()).then(function(r){return r.ok?r.json():null;}).then(function(h){
     if(!h)return;
     if(h.covers&&h.covers.length){
-      var cov=h.covers.map(function(c){ // [slug,title,year,studio,genre]
-        return '<a class="cover" href="/credits/game/'+encodeURIComponent(c[0])+'" style="background:'+grad(c[1])+'">'+
+      // [slug,title,year,studio,genre,art] — real box art when we have it (Steam capsule or an
+      // admin cover); the gradient stays as the card background so a missing/failed image just
+      // shows the typographic card instead of a blank.
+      function coverCard(c){
+        var art=c[5]?'<img loading="lazy" referrerpolicy="no-referrer" src="'+esc(c[5])+'" onerror="this.remove()" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover">':'';
+        return '<a class="cover" href="/credits/game/'+encodeURIComponent(c[0])+'" style="background:'+grad(c[1])+'">'+art+
           '<span class="cgenre">'+esc(c[4]||'Game')+'</span><div class="ct">'+esc(c[1])+
           '<span class="cc">'+esc(c[3]|| (c[2]?('· '+c[2]):''))+'</span></div></a>';
-      }).join('');
+      }
+      var cov=h.covers.map(coverCard).join('');
       document.getElementById('m1').innerHTML=cov+cov;
-      var rc=h.covers.slice().reverse().map(function(c){
-        return '<a class="cover" href="/credits/game/'+encodeURIComponent(c[0])+'" style="background:'+grad(c[1])+'">'+
-          '<span class="cgenre">'+esc(c[4]||'Game')+'</span><div class="ct">'+esc(c[1])+
-          '<span class="cc">'+esc(c[3]|| (c[2]?('· '+c[2]):''))+'</span></div></a>';
-      }).join('');
+      var rc=h.covers.slice().reverse().map(coverCard).join('');
       document.getElementById('m2').innerHTML=rc+rc;
     }
   }).catch(function(){});
