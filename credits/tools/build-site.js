@@ -128,6 +128,12 @@ function writeShards(subdir, n, entries) {
   }
   if (linkedCount) console.log(`  applied ${linkedCount} moderation studio link(s)`);
 
+  // Admin-set cover art (games with no Steam capsule), exported from the live DB.
+  const coverData = readJSON("game-covers.json", { covers: [] });
+  const coverMap = {};
+  for (const cv of (coverData && coverData.covers) || []) { if (cv && cv.game_slug && cv.cover_url) coverMap[cv.game_slug] = cv.cover_url; }
+  if (Object.keys(coverMap).length) console.log(`  applied ${Object.keys(coverMap).length} admin cover(s)`);
+
   // ---- search index (all games) ------------------------------------------
   // Compact positional rows: [slug, title, year, primaryStudio].
   const index = games.map((g) => [g.slug, g.title, g.year || null, g.studio || (g.studios && g.studios[0]) || ""]);
@@ -137,7 +143,7 @@ function writeShards(subdir, n, entries) {
     title: g.title, year: g.year || null,
     studios: g.studios || [], publishers: g.publishers || [],
     platforms: g.platforms || [], genres: g.genres || [],
-    qid: g.wikidata_qid || "", steam: g.steam || null, source: g.source || "wikidata",
+    qid: g.wikidata_qid || "", steam: g.steam || null, cover: coverMap[g.slug] || null, source: g.source || "wikidata",
     credits: g.credits || [],
   }]);
 
