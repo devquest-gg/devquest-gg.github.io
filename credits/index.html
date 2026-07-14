@@ -398,13 +398,13 @@
 
   // Catalogue counts (games, studios) come from the static build; the developer
   // credit count is live from the API (the static file only ever saw seed data).
-  fetch('data/site/stats.json').then(function(r){return r.ok?r.json():null;}).then(function(s){
+  fetch('data/site/stats.json?t='+Date.now()).then(function(r){return r.ok?r.json():null;}).then(function(s){
     if(!s)return; setStat('st-games',s.games); setStat('st-studios',s.studios);
     var a=document.getElementById('allgames'); if(a)a.textContent='Browse all '+Number(s.games).toLocaleString()+' games →';
   }).catch(function(){});
   if(window.DQAPI&&DQAPI.stats){ DQAPI.stats().then(function(r){ if(r&&r.ok&&r.data){ setStat('st-credits', r.data.credits||0); } }).catch(function(){}); }
 
-  fetch('data/site/home.json').then(function(r){return r.ok?r.json():null;}).then(function(h){
+  fetch('data/site/home.json?t='+Date.now()).then(function(r){return r.ok?r.json():null;}).then(function(h){
     if(!h)return;
     if(h.covers&&h.covers.length){
       var cov=h.covers.map(function(c){ // [slug,title,year,studio,genre]
