@@ -43,6 +43,7 @@
       return;
     }
     render((r.data && r.data.reports) || []);
+    loadMissingArt();
   }).catch(function(){ app.innerHTML = '<div class="container"><section class="blk"><div class="empty">Network error loading the queue.</div></section></div>'; });
 
   function render(reports){
@@ -107,6 +108,65 @@
           }).catch(function(){ btn.textContent = label; alert("Network error."); });
         };
       });
+    });
+  }
+
+  // ---- Missing artwork: games with credits but no Steam capsule and no admin cover ----
+  function loadMissingArt(){
+    DQAPI.adminCreditedGames().then(function(r){
+      if(!(r && r.ok)) return;
+      var games = (r.data && r.data.games) || [];
+      Promise.all(games.map(function(g){
+        if(g.cover){ g.steam = null; return Promise.resolve(); }
+        return DQ.loadEntity("games", g.game_slug).then(function(gg){ g.steam = (gg && gg.steam) ? gg.steam : null; }).catch(function(){ g.steam = null; });
+      })).then(function(){
+        renderMissingArt(games.filter(function(g){ return !g.cover && !g.steam; }));
+      });
+    }).catch(function(){});
+  }
+
+  function renderMissingArt(missing){
+    var body = missing.length ? missing.map(artCard).join("")
+      : '<div class="empty">Every credited game has cover art or a Steam capsule.</div>';
+    app.insertAdjacentHTML("beforeend",
+      '<div class="container"><section class="blk"><div class="eyebrow">Artwork</div>'+
+      '<h2 class="sec">'+missing.length+' game'+(missing.length===1?'':'s')+' missing cover art</h2>'+
+      '<p class="secsub">Credited games with no Steam capsule. Paste an <b>https</b> image URL — ideally a tall 2:3 cover. It appears on the game page and on profiles (crops to fit, never stretches).</p>'+
+      body+'</section></div>');
+    wireArt();
+  }
+
+  function artCard(g){
+    var url = '/credits/game/'+encodeURIComponent(g.game_slug);
+    return '<div class="panel artcard" data-slug="'+DQ.esc(g.game_slug)+'" data-title="'+DQ.esc(g.game_title)+'" style="padding:14px 16px;margin-bottom:12px;display:flex;gap:14px;align-items:flex-start">'+
+      '<div class="artprev" style="flex:none;width:68px;aspect-ratio:2/3;border-radius:8px;overflow:hidden;background:#161b22;border:1px solid var(--border)"></div>'+
+      '<div style="flex:1;min-width:0">'+
+        '<a href="'+url+'" target="_blank" rel="noopener" style="color:var(--accent);font-weight:700">'+DQ.esc(g.game_title)+' ↗</a>'+
+        '<div class="mut" style="font-size:12px;margin-top:2px">'+(g.people||0)+' credited</div>'+
+        '<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">'+
+          '<input class="cover-in" placeholder="https://…/cover.jpg" style="flex:1;min-width:220px;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px 11px;color:var(--text);font-size:13px;font-family:inherit">'+
+          '<span class="btn ghost prev-btn" style="padding:8px 12px;font-size:13px">Preview</span>'+
+          '<span class="btn primary save-btn" style="padding:8px 14px;font-size:13px">Save</span>'+
+        '</div>'+
+      '</div>'+
+    '</div>';
+  }
+
+  function wireArt(){
+    Array.prototype.forEach.call(document.querySelectorAll(".artcard"), function(card){
+      var input = card.querySelector(".cover-in"), prev = card.querySelector(".artprev");
+      function showPrev(){ var u=input.value.trim(); if(u) prev.innerHTML='<img src="'+DQ.esc(DQ.safeUrl(u))+'" referrerpolicy="no-referrer" style="width:100%;height:100%;object-fit:cover" onerror="this.parentNode.innerHTML=\'\'">'; }
+      card.querySelector(".prev-btn").onclick = showPrev;
+      input.addEventListener("blur", showPrev);
+      card.querySelector(".save-btn").onclick = function(){
+        var u = input.value.trim();
+        if(u && !/^https:\/\//i.test(u)){ alert("Cover URL must start with https://"); return; }
+        var btn=this, label=btn.textContent; btn.textContent="…";
+        DQAPI.adminSetGameCover({ game_slug: card.getAttribute("data-slug"), game_title: card.getAttribute("data-title"), cover_url: u }).then(function(r){
+          if(r && r.ok){ card.style.opacity=".55"; card.style.pointerEvents="none"; card.insertAdjacentHTML("beforeend",'<div style="color:var(--green);font-size:12px;margin-top:8px;font-weight:700">✓ Cover saved</div>'); }
+          else { btn.textContent=label; alert((r && r.data && r.data.error) || "Could not save."); }
+        }).catch(function(){ btn.textContent=label; alert("Network error."); });
+      };
     });
   }
 })();

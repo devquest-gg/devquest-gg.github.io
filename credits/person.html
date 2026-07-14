@@ -13,14 +13,14 @@
   .gvtab:first-child{border-radius:8px 0 0 8px}
   .gvtab:last-child{border-radius:0 8px 8px 0;border-left:none}
   .gvtab.on{background:#20293a;color:var(--text,#e6edf3)}
-  .ggrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:16px}
+  .ggrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:16px;align-items:start}
   .gtile{text-decoration:none;color:inherit;display:block}
   .gcov{position:relative;aspect-ratio:2/3;border-radius:10px;overflow:hidden;border:1px solid var(--border,#2d333b);display:flex;align-items:flex-end;box-shadow:0 6px 16px rgba(0,0,0,.4)}
   .gcov img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
   .gvb{position:absolute;top:7px;right:7px;z-index:2;width:22px;height:22px;border-radius:50%;background:rgba(63,185,80,.92);color:#04220f;font-size:13px;font-weight:900;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(0,0,0,.5)}
   .gcap{margin-top:8px}
-  .gtt{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;color:var(--text,#e6edf3);font-weight:600;font-size:12.5px;line-height:1.25}
-  .gmt{display:block;color:var(--muted,#8b98a9);font-size:11.5px;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .gtt{display:block;color:var(--text,#e6edf3);font-weight:600;font-size:12.5px;line-height:1.25;overflow-wrap:break-word}
+  .gmt{display:block;color:var(--muted,#8b98a9);font-size:11.5px;margin-top:2px;line-height:1.3;overflow-wrap:break-word}
 </style>
 </head>
 <body>
@@ -155,10 +155,15 @@
 
     // Resolve missing launch years from the static catalogue (added games already
     // carry a year; catalogue games get theirs from the shard), then sort + render.
+    // Admin-set covers for games without a Steam capsule (instant, ahead of the next rebuild).
+    var _coverSlugs = credits.map(function(c){ return c.game_slug; });
+    var pCovers = (_coverSlugs.length && window.DQAPI && DQAPI.gameCovers) ? DQAPI.gameCovers(_coverSlugs).then(function(r){ return (r.data && r.data.covers) || {}; }).catch(function(){ return {}; }) : Promise.resolve({});
     Promise.all([ Promise.all(credits.map(function(c){
-      return DQ.loadEntity("games", c.game_slug).then(function(gg){ if(gg){ if(c.year==null && gg.year!=null) c.year = gg.year; if(gg.steam) c.steam = gg.steam; } }).catch(function(){});
-    })), pMyGames ]).then(function(_res){
+      return DQ.loadEntity("games", c.game_slug).then(function(gg){ if(gg){ if(c.year==null && gg.year!=null) c.year = gg.year; if(gg.steam) c.steam = gg.steam; if(gg.cover) c.cover = gg.cover; } }).catch(function(){});
+    })), pMyGames, pCovers ]).then(function(_res){
     var myGames = _res[1] || {};
+    var _covMap = _res[2] || {};
+    credits.forEach(function(c){ if(!c.steam && _covMap[c.game_slug]) c.cover = _covMap[c.game_slug]; });
     // Credits on games the viewer also shipped, that they haven't confirmed yet.
     var confirmable = credits.filter(function(c){ return me && !isOwn && c.live && c.id && myGames[c.game_slug] && (c.voucher_slugs||[]).indexOf(me.slug) < 0; });
     credits.sort(function(a,b){
@@ -266,7 +271,9 @@
     var gridHTML = credits.length ? '<div class="ggrid">' + credits.map(function(c,i){
       // Overlay the title only on a placeholder tile (no cover art). Real cover art already
       // has its own title, so we keep the art clean and put the title in the caption below.
-      var cov = c.steam ? '<img loading="lazy" referrerpolicy="no-referrer" src="https://cdn.cloudflare.steamstatic.com/steam/apps/'+encodeURIComponent(c.steam)+'/library_600x900.jpg" onerror="this.remove()" alt="">' : '';
+      var cov = c.steam
+        ? '<img loading="lazy" referrerpolicy="no-referrer" src="https://cdn.cloudflare.steamstatic.com/steam/apps/'+encodeURIComponent(c.steam)+'/library_600x900.jpg" onerror="this.remove()" alt="">'
+        : (c.cover ? '<img loading="lazy" referrerpolicy="no-referrer" src="'+DQ.esc(DQ.safeUrl(c.cover))+'" onerror="this.remove()" alt="">' : '');
       var vbadge = c.vouch_count ? '<span class="gvb" title="Peer-verified by a teammate">✓</span>' : '';
       var astg = c.partial ? ' <span title="Worked on a specific part">*</span>' : '';
       return '<a class="gtile" href="/credits/game/'+encodeURIComponent(c.game_slug)+'">'+

@@ -180,8 +180,10 @@
     // Cover art in the header (Steam capsule). Shown only when real art exists; a broken
     // image removes the whole frame so we never leave an empty box next to the title.
     var gsteam = (g && g.steam) || null;
-    var coverHTML = gsteam
-      ? '<div class="gpcover"><img loading="lazy" referrerpolicy="no-referrer" src="https://cdn.cloudflare.steamstatic.com/steam/apps/'+encodeURIComponent(gsteam)+'/library_600x900.jpg" onerror="var c=this.closest(\'.gpcover\'); if(c) c.remove();" alt="Cover art"></div>'
+    var gcover = (ov && ov.cover) || (g && g.cover) || null;
+    var coverSrc = gsteam ? 'https://cdn.cloudflare.steamstatic.com/steam/apps/'+encodeURIComponent(gsteam)+'/library_600x900.jpg' : (gcover ? DQ.safeUrl(gcover) : null);
+    var coverHTML = coverSrc
+      ? '<div class="gpcover"><img loading="lazy" referrerpolicy="no-referrer" src="'+DQ.esc(coverSrc)+'" onerror="var c=this.closest(\'.gpcover\'); if(c) c.remove();" alt="Cover art"></div>'
       : '';
 
     app.innerHTML =

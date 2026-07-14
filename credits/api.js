@@ -63,8 +63,11 @@
     // catalogue moderation
     reportEntity: function (payload) { return req("POST", "/report", payload); },
     getOverride: function (type, slug) { return req("GET", "/override/" + type + "/" + encodeURIComponent(slug)); },
-    studioLinked: function (slug) { return req("GET", "/studios/" + encodeURIComponent(slug) + "/linked"); },
+    studioLinked: function (slug) { return req("GET", "/studios/" + encodeURIComponent(slug) + "/linked?t=" + Date.now()); },
+    gameCovers: function (slugs) { return req("GET", "/covers?slugs=" + encodeURIComponent(slugs.join(",")) + "&t=" + Date.now()); },
     adminListReports: function () { return req("GET", "/admin/reports"); },
     adminResolveReport: function (id, payload) { return req("POST", "/admin/reports/" + id, payload); },
+    adminCreditedGames: function () { return req("GET", "/admin/credited-games"); },
+    adminSetGameCover: function (payload) { return req("POST", "/admin/game-cover", payload); },
   };
 })(window);
