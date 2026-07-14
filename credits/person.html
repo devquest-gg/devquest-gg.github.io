@@ -207,6 +207,14 @@
     var api  = (res[1] && res[1].ok && res[1].data && res[1].data.person) ? res[1].data : null;
     var me   = (res[2] && res[2].ok && res[2].data && res[2].data.authenticated) ? res[2].data.person : null;
 
+    // Admin takedown: a hidden profile shows a removed notice instead of any content, even if
+    // a stale static shard still has it.
+    if(api && api.person && api.person.hidden){
+      document.getElementById("crumb").textContent = "Removed";
+      app.innerHTML = '<div class="container"><div class="empty">This profile has been removed.<br><span class="mut">It was reported and taken down by a moderator.</span><br><a class="btn ghost" style="margin-top:14px" href="/credits/">Back to Credits</a></div></div>';
+      return;
+    }
+
     if(!stat && !api){
       document.getElementById("crumb").textContent = "Not found";
       app.innerHTML = '<div class="container"><div class="empty">No profile yet for that name.<br>'+
@@ -520,6 +528,7 @@
             linksHTML +
             editLinksAff +
             (credits.length ? '<span class="editlinks" id="sharecard">⬆ Share my credits</span>' : '') +
+            (!isOwn ? '<span class="editlinks" id="reportprofile" style="color:var(--muted)" title="Report this profile to a moderator">⚑ Report</span>' : '') +
           '</div>'+
           '<div id="linkedit"></div>'+
           snapshotHTML +
@@ -729,6 +738,8 @@
     }
     var scb=document.getElementById("sharecard");
     if(scb) scb.onclick=function(){ scb.textContent="Generating…"; downloadCard(scb); };
+    var rpb=document.getElementById("reportprofile");
+    if(rpb && window.DQ && DQ.openReport) rpb.onclick=function(){ DQ.openReport("person", slug, name); };
 
     // ---- Owner-only profile-links editor (saves via PATCH /me) ----
     var elBtn = document.getElementById("editlinks");

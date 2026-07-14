@@ -35,7 +35,8 @@
     return;
   }
   var REASONS = { not_real:"Not real / should not exist", wrong_name:"Wrong name (typo)", wrong_studio:"Wrong or missing studio", other:"Other",
-    not_worked:"Person didn't work on this game", wrong_role:"Wrong role / details", spam:"Not a real person / spam" };
+    not_worked:"Person didn't work on this game", wrong_role:"Wrong role / details", spam:"Not a real person / spam",
+    impersonation:"Impersonation", harassment:"Harassment / abusive content", false_credits:"Claiming credits they didn't work on", private_info:"Posting private information" };
   DQAPI.adminListReports().then(function(r){
     if(!(r && r.ok)){
       var msg = (r && r.status===403) ? "Not authorized. This page is for moderators only." : "Could not load the queue. Try again.";
@@ -59,7 +60,7 @@
 
   function card(rep){
     var reason = REASONS[rep.reason] || rep.reason;
-    var url = rep.type==="studio" ? '/credits/studio/'+encodeURIComponent(rep.slug) : '/credits/game/'+encodeURIComponent(rep.slug);
+    var url = rep.type==="studio" ? '/credits/studio/'+encodeURIComponent(rep.slug) : (rep.type==="person" ? '/credits/'+encodeURIComponent(rep.slug) : '/credits/game/'+encodeURIComponent(rep.slug));
     var cur = rep.current || {};
     var curBits = [];
     if(cur.hidden) curBits.push("hidden");
