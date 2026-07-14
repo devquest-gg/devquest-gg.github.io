@@ -217,7 +217,7 @@
     // Merge credits by game_slug — live (API) wins over seed (static).
     var byGame = {};
     ((stat && stat.credits) || []).forEach(function(c){ byGame[c.game_slug] = { game_slug:c.game_slug, game_title:c.game_title, year:c.year||null, studio:c.studio||null, role:c.role, roles_other:c.roles_other||[], verification:c.verification||[], vouch_count:0, live:false }; });
-    ((api && api.credits) || []).forEach(function(c){ byGame[c.game_slug] = { id:c.id, game_slug:c.game_slug, game_title:c.game_title, year:c.year||null, studio:c.studio||null, role:c.role, roles_other:c.roles_other||[], verification:c.verification||[], links:c.links||[], position:(c.position!=null?c.position:null), releases:c.releases||[], vouch_count:c.vouch_count||0, voucher_slugs:c.voucher_slugs||[], partial:!!c.partial, live:true }; });
+    ((api && api.credits) || []).forEach(function(c){ byGame[c.game_slug] = { id:c.id, game_slug:c.game_slug, game_title:c.game_title, year:c.year||null, studio:c.studio||null, role:c.role, roles_other:c.roles_other||[], verification:c.verification||[], links:c.links||[], position:(c.position!=null?c.position:null), releases:c.releases||[], vouch_count:c.vouch_count||0, voucher_slugs:c.voucher_slugs||[], partial:!!c.partial, work_start:(c.work_start!=null?c.work_start:null), work_end:(c.work_end!=null?c.work_end:null), live:true }; });
     var credits = Object.keys(byGame).map(function(k){ return byGame[k]; });
 
     // Resolve missing launch years from the static catalogue (added games already
