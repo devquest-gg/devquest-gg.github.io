@@ -236,17 +236,8 @@
     <div class="stat"><b data-to="0" id="st-studios">0</b><span>studios</span></div>
     <div class="stat"><b data-to="0" id="st-credits">0</b><span>credits added by developers</span></div>
   </div>
+  <div style="text-align:center;margin-top:26px"><a class="more" href="search.html" id="allgames" style="font-size:15px">Browse all games →</a></div>
 </div></div>
-
-<!-- TRENDING / MOST CREDITED GAMES -->
-<section class="blk" id="trending"><div class="container">
-  <div class="rowhead">
-    <div><div class="eyebrow">Explore</div><h2 class="sec">Fresh in the catalogue</h2>
-      <p class="secsub" style="margin:0">Recently released titles from the seeded catalogue. Open one to see and claim its credits.</p></div>
-    <a class="more" href="search.html" id="allgames">Browse all games →</a>
-  </div>
-  <div class="gcards" id="gcards"></div>
-</div></section>
 
 <!-- DEV SPOTLIGHT -->
 <section class="blk" id="devs"><div class="container">
@@ -428,14 +419,6 @@
           '<span class="cc">'+esc(c[3]|| (c[2]?('· '+c[2]):''))+'</span></div></a>';
       }).join('');
       document.getElementById('m2').innerHTML=rc+rc;
-    }
-    if(h.trendingGames&&h.trendingGames.length){
-      document.getElementById('gcards').innerHTML=h.trendingGames.map(function(g){ // [slug,title,year,studio,genre]
-        return '<a class="gcard" href="/credits/game/'+encodeURIComponent(g[0])+'"><div class="art" style="background:'+grad(g[1])+'">'+
-          '<span class="genre">'+esc(g[4]||'Game')+'</span><div class="bigt">'+esc(g[1])+'</div></div>'+
-          '<div class="body"><div class="gm">'+esc(g[3]||'')+(g[2]?' · '+g[2]:'')+'</div>'+
-          '<div class="gstat">View credits →</div></div></a>';
-      }).join('');
     }
   }).catch(function(){});
 </script>
