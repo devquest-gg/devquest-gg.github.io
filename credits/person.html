@@ -19,6 +19,7 @@
   .gvgrip{position:absolute;top:6px;left:7px;z-index:3;font-size:15px;line-height:1;color:#fff;opacity:0;background:rgba(0,0,0,.5);border-radius:6px;padding:2px 4px;cursor:grab;transition:opacity .12s}
   .dragtile:hover .gvgrip{opacity:.9}
   .dragtile.dragging{opacity:.4}
+  @media (pointer:coarse){.gvgrip{display:none}}
   .ggrid.dragover-zone{outline:2px dashed rgba(224,178,58,.5);outline-offset:4px;border-radius:12px}
   @media(max-width:600px){.ggrid.ggrid-hero{grid-template-columns:repeat(2,1fr);max-width:none}}
   .gtile{text-decoration:none;color:inherit;display:block}
@@ -291,7 +292,8 @@
     }
     // Hero row: the first three credits render larger. Order is the shared credit order
     // (reorder in List view for now; drag-in-Visual is a fast-follow).
-    var heroHint = (isOwn && credits.length>3) ? ' <span class="mut" style="font-weight:400;letter-spacing:0;text-transform:none;font-size:12px">· drag a cover to reorder; your top three feature here</span>' : '';
+    var isTouch = !!(window.matchMedia && window.matchMedia('(pointer:coarse)').matches);
+    var heroHint = (isOwn && credits.length>3 && !isTouch) ? ' <span class="mut" style="font-weight:400;letter-spacing:0;text-transform:none;font-size:12px">· drag a cover to reorder; your top three feature here</span>' : '';
     var gridHTML;
     if(!credits.length){ gridHTML = ''; }
     else if(credits.length <= 3){ gridHTML = '<div class="ggrid ggrid-hero" id="gv-hero">'+credits.map(visTile).join("")+'</div>'; }
@@ -400,6 +402,8 @@
       if(!isOwn) return;
       var vis = document.getElementById("gv-visual");
       if(!vis || vis.querySelectorAll(".dragtile").length < 2) return;
+      // Touch devices: HTML5 drag doesn't work, so strip it and leave covers as plain links.
+      if(isTouch){ Array.prototype.forEach.call(vis.querySelectorAll(".dragtile"), function(t){ t.removeAttribute("draggable"); t.classList.remove("dragtile"); }); return; }
       var dragged = null;
       function clearZones(){ Array.prototype.forEach.call(vis.querySelectorAll(".ggrid"), function(z){ z.classList.remove("dragover-zone"); }); }
       vis.addEventListener("dragstart", function(e){
