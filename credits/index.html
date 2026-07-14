@@ -331,21 +331,22 @@
 
   // ---- profile-preview cards (mirror the live person page: headline, snapshot,
   //      gameography rows with release pills, gold roles, green peer-verified) ----
+  // Real claimed profiles (not mock-ups). Data mirrors the live person pages.
   var DEVS=[
-    {name:"Marco Alvarez", hl:"Lead Gameplay Programmer at Sucker Punch", color:"#58a6ff", snap:"7 shipped games · since 2009",
+    {name:"Destin Bales", slug:"destin-bales", hl:"Director of Development Management at Insomniac Games", color:"#58a6ff", snap:"9 shipped games · since 2001",
       credits:[
-        {g:"Ghost of Tsushima", verified:true, role:"Lead Gameplay Programmer", worked:"the live-service era"},
-        {g:"Days Gone", verified:true, role:"Gameplay Programmer"}
+        {g:"Tom Clancy's Rainbow Six Siege", verified:false, role:"Vice President of Production", worked:"the live-service era"},
+        {g:"Dark Age of Camelot", verified:true, role:"Producer"}
       ]},
-    {name:"Priya Anand", hl:"Senior Environment Artist at FromSoftware", color:"#a371f7", snap:"5 shipped games · since 2013",
+    {name:"Mark Davis", slug:"mark-davis", hl:"Production Director", color:"#a371f7", snap:"5 shipped games · since 2001",
       credits:[
-        {g:"Elden Ring", verified:true, role:"Senior Environment Artist", worked:"Shadow of the Erdtree"},
-        {g:"Sekiro: Shadows Die Twice", verified:true, role:"Environment Artist"}
+        {g:"Hogwarts Legacy", verified:false, role:"Production Director"},
+        {g:"Warhammer Online: Age of Reckoning", verified:true, role:"Contributor"}
       ]},
-    {name:"Sam Rivera", hl:"Audio Director at Supergiant", color:"#3fb950", snap:"4 shipped games · since 2011",
+    {name:"Ellisa Barr", slug:"ellisa-barr", hl:"Senior Producer, Studio Drydock", color:"#3fb950", snap:"3 shipped games · since 2001",
       credits:[
-        {g:"Hades", verified:true, role:"Audio Director", worked:"the live-service era"},
-        {g:"Pyre", verified:false, role:"Sound Designer"}
+        {g:"Dark Age of Camelot", verified:true, role:"Quest Designer", worked:"the live-service era"},
+        {g:"City of Heroes", verified:true, role:"Producer", worked:"the live-service era"}
       ]}
   ];
   document.getElementById('dcards').innerHTML=DEVS.map(function(d){
@@ -356,13 +357,14 @@
       var worked=c.worked?'<div class="dwork">Also worked on: '+c.worked+'</div>':'';
       return '<div class="cr"><div class="crtop"><span class="crg">'+c.g+'</span>'+seal+'</div><div class="crrole">'+c.role+'</div>'+worked+'</div>';
     }).join('');
-    return '<div class="dcard"><div class="halo" style="background:'+d.color+'"></div>'+
+    var href = d.slug ? ' href="/credits/'+encodeURIComponent(d.slug)+'"' : '';
+    return '<a class="dcard"'+href+' style="text-decoration:none;color:inherit"><div class="halo" style="background:'+d.color+'"></div>'+
       '<div class="av" style="background:'+d.color+'">'+initials+'</div>'+
       '<div class="nm">'+d.name+'</div>'+
       '<div class="hl">'+d.hl+'</div>'+
       '<div class="snap">'+d.snap+'</div>'+
       '<div class="dverify">✓ '+vcount+' of '+d.credits.length+' credits peer-verified</div>'+
-      '<div class="gocred">'+rows+'</div></div>';
+      '<div class="gocred">'+rows+'</div></a>';
   }).join('');
 
   // ---- animated counters ----
