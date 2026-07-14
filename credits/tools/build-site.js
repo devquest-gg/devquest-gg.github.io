@@ -241,7 +241,13 @@ function writeShards(subdir, n, entries) {
   for (const t of FEATURED) { const g = byNorm.get(normKey(t)); if (g && !seen.has(g.slug)) { seen.add(g.slug); featuredGames.push(g); } }
   for (const g of byYear) { if (featuredGames.length >= 24) break; if (g.title && !seen.has(g.slug)) { seen.add(g.slug); featuredGames.push(g); } }
   const covers = featuredGames.slice(0, 24)
-    .map((g) => [g.slug, g.title, g.year || null, g.studio || "", (g.genres && g.genres[0]) || ""]);
+    .map((g) => {
+      // Real box art for the wall: admin-set cover first, then the Steam capsule (74% of the
+      // catalogue has a Steam app id via Wikidata). Games never on Steam (Nintendo/Minecraft)
+      // get null here and fall back to the gradient card in the homepage render.
+      const art = coverMap[g.slug] || (g.steam ? "https://cdn.cloudflare.steamstatic.com/steam/apps/" + encodeURIComponent(g.steam) + "/library_600x900.jpg" : null);
+      return [g.slug, g.title, g.year || null, g.studio || "", (g.genres && g.genres[0]) || "", art];
+    });
   const topStudios = studioIndex.slice().sort((a, b) => b[2] - a[2]).slice(0, 12);
   writeJSON("home.json", { covers: covers, trendingGames: [], topStudios: topStudios });
 
