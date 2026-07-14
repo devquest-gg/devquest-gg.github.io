@@ -216,12 +216,34 @@ function writeShards(subdir, n, entries) {
 
   // ---- home.json: tiny curated payload so the landing page stays light ----
   const byYear = games.slice().sort((a, b) => (b.year || 0) - (a.year || 0) || String(a.title).localeCompare(String(b.title)));
-  const covers = byYear.filter((g) => g.title).slice(0, 24)
+  // Marquee = well-known games, so the catalogue reads as familiar rather than a pile of unknowns.
+  // We match each famous TITLE against the real catalogue (by a punctuation-insensitive key) and
+  // use its actual slug — so links are always valid. Anything not in the catalogue is skipped;
+  // recent titles pad out to 24 so the wall is always full. Curated list, not a popularity signal.
+  const normKey = (t) => String(t).toLowerCase().replace(/[^a-z0-9]+/g, "");
+  const FEATURED = [
+    "Elden Ring", "God of War", "The Witcher 3: Wild Hunt", "Baldur's Gate 3", "Cyberpunk 2077",
+    "Red Dead Redemption 2", "The Legend of Zelda: Breath of the Wild", "Hades", "Stardew Valley",
+    "Minecraft", "Portal 2", "Dark Souls III", "Hollow Knight", "Celeste", "Grand Theft Auto V",
+    "Doom Eternal", "Half-Life 2", "Bloodborne", "Sekiro: Shadows Die Twice", "Disco Elysium",
+    "Death Stranding", "Persona 5", "Cuphead", "The Last of Us Part II"
+  ];
+  const byNorm = new Map();
+  for (const g of games) {
+    if (!g.title) continue;
+    const k = normKey(g.title);
+    const prev = byNorm.get(k);
+    // Prefer the canonical entry (the un-suffixed, shortest slug wins over "…-2" duplicates).
+    if (!prev || String(g.slug).length < String(prev.slug).length) byNorm.set(k, g);
+  }
+  const seen = new Set();
+  const featuredGames = [];
+  for (const t of FEATURED) { const g = byNorm.get(normKey(t)); if (g && !seen.has(g.slug)) { seen.add(g.slug); featuredGames.push(g); } }
+  for (const g of byYear) { if (featuredGames.length >= 24) break; if (g.title && !seen.has(g.slug)) { seen.add(g.slug); featuredGames.push(g); } }
+  const covers = featuredGames.slice(0, 24)
     .map((g) => [g.slug, g.title, g.year || null, g.studio || "", (g.genres && g.genres[0]) || ""]);
-  const trendingGames = byYear.filter((g) => g.studio && g.genres && g.genres.length).slice(0, 8)
-    .map((g) => [g.slug, g.title, g.year || null, g.studio, g.genres[0]]);
   const topStudios = studioIndex.slice().sort((a, b) => b[2] - a[2]).slice(0, 12);
-  writeJSON("home.json", { covers: covers, trendingGames: trendingGames, topStudios: topStudios });
+  writeJSON("home.json", { covers: covers, trendingGames: [], topStudios: topStudios });
 
   console.log(`  index: ${index.length} games`);
   console.log(`  game shards: ${GAME_SHARDS}, studio shards: ${STUDIO_SHARDS}, people shards: ${PEOPLE_SHARDS}`);
