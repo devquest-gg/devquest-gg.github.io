@@ -12,7 +12,8 @@
   .rhactions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end}
   .gvtab{padding:6px 14px;font-size:13px;font-weight:700;color:var(--muted,#8b98a9);cursor:pointer;border:1px solid var(--border,#2d333b);background:var(--panel,#11161d);user-select:none}
   .gvtab:first-child{border-radius:8px 0 0 8px}
-  .gvtab:last-child{border-radius:0 8px 8px 0;border-left:none}
+  .gvtab:last-child{border-radius:0 8px 8px 0}
+  .gvtab + .gvtab{border-left:none}
   .gvtab.on{background:#20293a;color:var(--text,#e6edf3)}
   .ggrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:18px;align-items:start}
   .ggrid.ggrid-hero{grid-template-columns:repeat(3,1fr);max-width:none;gap:20px}
@@ -29,6 +30,8 @@
   .gtt{display:block;color:#fff;font-weight:750;font-size:13.5px;line-height:1.22;margin-bottom:4px;overflow-wrap:break-word}
   .gmt{display:block;color:#cdd6e2;font-size:11.5px;line-height:1.32;overflow-wrap:break-word}
   .gmt .y{white-space:nowrap;color:#8b98a9}
+  .gsub{display:block;color:#8b98a9;font-size:10.5px;margin-top:3px;line-height:1.3;overflow-wrap:break-word;font-variant-numeric:tabular-nums}
+  .ggrid-hero .gsub{font-size:11.5px}
   .ggrid-hero .gtt{font-size:16px}
   .ggrid-hero .gmt{font-size:12.5px}
   .ggrid-hero .gscrim{padding:44px 15px 14px}
@@ -49,6 +52,41 @@
   .snap span{margin-top:6px}
   /* Peer-verified strip hugs its text too, rather than stretching across the page. */
   .verifystrip{width:fit-content;max-width:100%}
+  /* Peer-verification trust block — the product's core signal, so give it real presence. */
+  .vblock{display:flex;gap:13px;align-items:flex-start;margin:16px 0 2px;padding:13px 17px 13px 14px;border-radius:12px;width:fit-content;max-width:560px;border:1px solid rgba(63,185,80,.42);background:rgba(63,185,80,.09)}
+  .vblock .vbadge{flex:none;width:30px;height:30px;border-radius:50%;background:var(--green,#3fb950);color:#04220f;font-size:17px;font-weight:900;display:flex;align-items:center;justify-content:center;margin-top:1px;box-shadow:0 1px 5px rgba(0,0,0,.35)}
+  .vblock .vlbl{font-size:11px;font-weight:800;letter-spacing:.13em;text-transform:uppercase;color:var(--green,#3fb950);margin-bottom:4px}
+  .vblock .vtxt{font-size:13.5px;line-height:1.5;color:#cdefd5}
+  .vblock .vtxt b{color:#fff;font-weight:750}
+  .vblock .vtxt .mut{color:#8b98a9}
+  .vblock.cta{border-color:rgba(224,178,58,.42);background:rgba(224,178,58,.08)}
+  .vblock.cta .vbadge{background:var(--gold,#e0b23a)}
+  .vblock.cta .vlbl{color:var(--gold,#e0b23a)}
+  .vblock.cta .vtxt{color:#e8ddc4}
+  /* "Known for" chip row under the headline. */
+  .knownfor{display:flex;flex-wrap:wrap;gap:7px;align-items:center;margin:11px 0 2px}
+  .knownfor .kflabel{font-size:11px;font-weight:800;letter-spacing:.11em;text-transform:uppercase;color:var(--muted,#8b98a9);margin-right:3px}
+  .kchip{font-size:12.5px;font-weight:600;color:var(--text,#e6edf3);text-decoration:none;background:var(--panel,#11161d);border:1px solid var(--border,#2d333b);border-radius:999px;padding:4px 12px;transition:border-color .12s,background .12s}
+  .kchip:hover{border-color:#3b4654;background:#171d27}
+  /* Timeline view: year rail down the left, dots per credit, progression top to bottom. */
+  .tl{margin-top:2px}
+  .tlrow{display:grid;grid-template-columns:58px 22px 1fr;align-items:start}
+  .tlyear{font-variant-numeric:tabular-nums;font-weight:800;font-size:15px;color:var(--accent,#58a6ff);padding-top:1px}
+  .tlrail{position:relative;display:flex;justify-content:center;align-self:stretch}
+  .tlrail::before{content:"";position:absolute;top:0;bottom:0;width:2px;background:var(--border,#2d333b)}
+  .tlrow:first-child .tlrail::before{top:9px}
+  .tlrow:last-child .tlrail::before{bottom:auto;height:9px}
+  .tldot{position:relative;z-index:1;width:11px;height:11px;border-radius:50%;background:var(--accent,#58a6ff);margin-top:4px;box-shadow:0 0 0 4px var(--bg,#0b0e14)}
+  .tlmain{padding:0 0 22px 14px;min-width:0}
+  .tlname{font-weight:700;font-size:15px;color:var(--accent,#58a6ff);text-decoration:none}
+  .tlname:hover{color:#7cc0ff}
+  .tlsub{font-size:12.5px;color:var(--muted,#8b98a9);margin-top:3px}
+  .tlst{color:var(--muted,#8b98a9)}
+  .tl .vseal{color:var(--green,#3fb950);font-weight:800}
+  .tlspan{font-size:11px;color:var(--muted,#8b98a9);font-variant-numeric:tabular-nums;white-space:nowrap;border:1px solid var(--border,#2d333b);border-radius:999px;padding:1px 8px;margin-left:2px;vertical-align:1px}
+  .tlhint{font-size:12.5px;color:var(--muted,#8b98a9);line-height:1.5;background:var(--panel,#11161d);border:1px solid var(--border,#2d333b);border-radius:10px;padding:10px 13px;margin:0 0 16px;max-width:560px}
+  .tlhint b{color:var(--text,#e6edf3);font-weight:700}
+  @media(max-width:600px){.tlrow{grid-template-columns:46px 20px 1fr}.tlyear{font-size:14px}}
   @media(max-width:600px){.snapshot{gap:16px 20px;padding:14px 2px}.snap{flex:0 0 auto;padding:0}}
 </style>
 </head>
@@ -274,7 +312,7 @@
       // No drag handle in List view: it's a fixed chronological timeline now. Reordering
       // lives in the Visual view, where the owner curates their showcase order.
       var grip = '';
-      var editAttrs = 'data-id="'+c.id+'" data-role="'+DQ.esc(c.role||"")+'" data-others="'+DQ.esc((c.roles_other||[]).join(", "))+'" data-links="'+DQ.esc((c.links||[]).join("\n"))+'" data-releases="'+DQ.esc((c.releases||[]).join(", "))+'" data-partial="'+(c.partial?"1":"")+'"';
+      var editAttrs = 'data-id="'+c.id+'" data-role="'+DQ.esc(c.role||"")+'" data-others="'+DQ.esc((c.roles_other||[]).join(", "))+'" data-links="'+DQ.esc((c.links||[]).join("\n"))+'" data-releases="'+DQ.esc((c.releases||[]).join(", "))+'" data-partial="'+(c.partial?"1":"")+'" data-workstart="'+(c.work_start||"")+'" data-workend="'+(c.work_end||"")+'"';
       // Owner nudge: a claimed credit still sitting at the "Contributor" placeholder (or blank)
       // gets an invite to set a real title — the common case after claiming a teammate's add.
       var isPlaceholderRole = isOwn && c.live && c.id && (!String(c.role||"").trim() || /^contributor$/i.test(String(c.role||"").trim()));
@@ -315,9 +353,10 @@
       // dragging a cover into the featured row renumbers everything without any JS.
       var astg = c.partial ? ' <span title="Worked on a specific part">*</span>' : '';
       var canDrag = isOwn && c.live && c.id;
+      var metaLine = (c.studio ? DQ.esc(c.studio)+'  ·  ' : '') + (c.year?c.year:'—');
       return '<a class="gtile'+(canDrag?' dragtile':'')+'"'+(canDrag?' data-id="'+c.id+'" draggable="false"':'')+' href="/credits/game/'+encodeURIComponent(c.game_slug)+'">'+
         '<div class="gcov"><span class="grank"></span>'+art+vbadge+(canDrag?'<span class="gvgrip" title="Drag to reorder">⠿</span>':'')+
-          '<div class="gscrim"><b class="gtt">'+DQ.esc(c.game_title)+'</b><span class="gmt">'+DQ.esc(c.role||"Role not recorded")+astg+' <span class="y">· '+(c.year?c.year:'—')+'</span></span></div>'+
+          '<div class="gscrim"><b class="gtt">'+DQ.esc(c.game_title)+'</b><span class="gmt">'+DQ.esc(c.role||"Role not recorded")+astg+'</span><span class="gsub">'+metaLine+'</span></div>'+
         '</div>'+
       '</a>';
     }
@@ -338,8 +377,42 @@
         '<div class="gvhead" style="margin-top:28px">'+restHead+'</div>'+
         '<div class="ggrid" id="gv-rest">'+visualCredits.slice(3).map(visTile).join("")+'</div>';
     }
+    // ---- Timeline view: the gameography as a year-railed progression, oldest to newest.
+    // Each game is placed by the years the person actually worked on it (work_start/work_end)
+    // when set, falling back to the game's release year otherwise. ----
+    function tlAnchor(c){ return c.work_start || c.year || 9999; }
+    var timelineCredits = credits.slice().sort(function(a,b){ return tlAnchor(a)-tlAnchor(b) || String(a.game_title).localeCompare(String(b.game_title)); });
+    var tlMissing = isOwn && credits.some(function(c){ return !c.work_start; });
+    var tlHint = tlMissing ? '<div class="tlhint">Games land by the years you worked them. Set those on any credit in the <b>List</b> view (Edit) — until then, a game sits at its release year.</div>' : '';
+    var timelineHTML = credits.length ? tlHint + '<div class="tl">'+timelineCredits.map(function(c){
+      var seal = c.vouch_count ? ' <span class="vseal" title="Peer-verified by '+c.vouch_count+' teammate'+(c.vouch_count===1?'':'s')+'">✓</span>' : '';
+      var astg = c.partial ? ' <span class="ast" style="color:var(--muted);font-weight:700" title="Worked on a specific part">*</span>' : '';
+      var startY = c.work_start || null;
+      var yearLabel = startY ? startY : (c.year || '—');
+      var yearTip = startY ? 'When you worked on it' : 'Game release year';
+      // "to 2021" / "to present" only when the work period actually extends past its start year.
+      var span = '';
+      if(startY){
+        if(c.work_end && c.work_end !== startY) span = 'to '+c.work_end;
+        else if(!c.work_end) span = 'to present';
+      }
+      var spanHTML = span ? ' <span class="tlspan">'+span+'</span>' : '';
+      var sub = DQ.esc(c.role||"Role not recorded") + (c.studio ? ' <span class="tlst">·</span> '+DQ.esc(c.studio) : '');
+      return '<div class="tlrow">'+
+        '<div class="tlyear" title="'+yearTip+'">'+yearLabel+'</div>'+
+        '<div class="tlrail"><span class="tldot"></span></div>'+
+        '<div class="tlmain"><a class="tlname" href="/credits/game/'+encodeURIComponent(c.game_slug)+'">'+DQ.esc(c.game_title)+'</a>'+astg+seal+spanHTML+
+          '<div class="tlsub">'+sub+'</div></div>'+
+      '</div>';
+    }).join('')+'</div>' : '';
+
     var gameView='list'; try{ gameView = localStorage.getItem('dq_gameview')||'list'; }catch(e){}
-    var tabsHTML = credits.length ? '<div class="gvtabs" style="margin:0"><span class="gvtab'+(gameView==='list'?' on':'')+'" data-v="list">☰ List</span><span class="gvtab'+(gameView==='visual'?' on':'')+'" data-v="visual">▦ Visual</span></div>' : '';
+    if(['list','visual','timeline'].indexOf(gameView)<0) gameView='list';
+    var tabsHTML = credits.length ? '<div class="gvtabs" style="margin:0">'+
+      '<span class="gvtab'+(gameView==='list'?' on':'')+'" data-v="list">☰ List</span>'+
+      '<span class="gvtab'+(gameView==='visual'?' on':'')+'" data-v="visual">▦ Visual</span>'+
+      '<span class="gvtab'+(gameView==='timeline'?' on':'')+'" data-v="timeline">↕ Timeline</span>'+
+    '</div>' : '';
 
     var linksHTML = links.length ? '<div class="plinks">'+links.map(function(l){
       var label = LINK_LABEL[String(l.type||"").toLowerCase()] || l.label || l.type || "Link";
@@ -372,9 +445,19 @@
     var verifyHTML = '';
     if(credits.length){
       if(vN>0){
-        verifyHTML = '<div class="verifystrip on"><span class="vcheck">✓</span> <b>'+vN+' of '+credits.length+'</b> credit'+(credits.length===1?'':'s')+' peer-verified'+(isOwn&&vN<credits.length?' <span class="mut">· get the rest confirmed below</span>':'')+'</div>';
+        verifyHTML = '<div class="vblock">'+
+          '<div class="vbadge">✓</div>'+
+          '<div class="vbody"><div class="vlbl">Verified by teammates</div>'+
+            '<div class="vtxt"><b>'+vN+' of '+credits.length+'</b> credit'+(credits.length===1?'':'s')+' confirmed by a teammate who shipped the same game.'+(isOwn&&vN<credits.length?' <span class="mut">Get the rest confirmed below.</span>':'')+'</div>'+
+          '</div>'+
+        '</div>';
       } else if(isOwn){
-        verifyHTML = '<div class="verifystrip cta"><b>Get your credits peer-verified.</b> Confirmation from the teammates you shipped with is what turns this from a résumé into a verified record. On each game below, add the people you worked with. Once they claim, they can vouch for your credit and it earns a green check.</div>';
+        verifyHTML = '<div class="vblock cta">'+
+          '<div class="vbadge">✓</div>'+
+          '<div class="vbody"><div class="vlbl">Not yet peer-verified</div>'+
+            '<div class="vtxt"><b>Get your credits confirmed by teammates.</b> Confirmation from the people you shipped with is what turns this from a résumé into a verified record. On each game below, add the teammates you worked with; once they claim, they can vouch and it earns a green check.</div>'+
+          '</div>'+
+        '</div>';
       }
     }
 
@@ -384,6 +467,15 @@
       ? '<div class="verifystrip cta"><b>You shipped '+confirmable.length+' of these game'+(confirmable.length===1?'':'s')+' with '+DQ.esc(name)+'.</b> Confirm the credit'+(confirmable.length===1?'':'s')+' you can vouch for — your confirmation is what turns a self-reported credit into a peer-verified one. Use the green <b>Confirm&nbsp;✓</b> button'+(confirmable.length===1?'':'s')+' on those rows below.</div>'
       : '';
 
+    // ---- "Known for" chips: the marquee titles (the owner's own showcase order) as quick,
+    // clickable context right under the headline, so a visitor gets the gist in a glance. ----
+    var knownFor = visualCredits.slice(0, Math.min(5, visualCredits.length));
+    var knownForHTML = (knownFor.length >= 2)
+      ? '<div class="knownfor"><span class="kflabel">Known for</span>'+
+          knownFor.map(function(c){ return '<a class="kchip" href="/credits/game/'+encodeURIComponent(c.game_slug)+'">'+DQ.esc(c.game_title)+'</a>'; }).join('')+
+        '</div>'
+      : '';
+
     app.innerHTML =
       '<div class="phead"><div class="container">'+
         '<div style="display:flex;align-items:flex-start;gap:16px">'+
@@ -391,6 +483,7 @@
           '<div style="flex:1;min-width:0">'+
           '<h1 style="margin:0">'+DQ.esc(name)+'</h1>'+
           '<div class="meta">'+(headline ? DQ.esc(headline) : (credits.length ? '' : 'No credits on record yet'))+'</div>'+
+          knownForHTML +
           '<div class="phactions">'+
             linksHTML +
             editLinksAff +
@@ -410,8 +503,9 @@
           '<div class="rhactions">'+ tabsHTML + cta +'</div>'+
         '</div>'+
         ownBanner +
-        '<div id="gv-list"'+(gameView==='visual'?' style="display:none"':'')+'>'+rowsHTML+'</div>'+
+        '<div id="gv-list"'+(gameView==='list'?'':' style="display:none"')+'>'+rowsHTML+'</div>'+
         '<div id="gv-visual"'+(gameView==='visual'?'':' style="display:none"')+'>'+gridHTML+'</div>'+
+        '<div id="gv-timeline"'+(gameView==='timeline'?'':' style="display:none"')+'>'+timelineHTML+'</div>'+
         '<div class="notice"><b style="color:var(--green);font-style:normal">✓</b> marks credits confirmed by a teammate who shipped the same game. Everything else is self-reported. Only the person credited can claim and edit this page.</div>'+
       '</div></section>' +
       unshippedHTML;
@@ -419,15 +513,14 @@
     var cb = document.getElementById("claimbtn");
     if(cb) cb.onclick = function(){ if(window.DQAPI) location.href = "signin.html"; else DQ.openClaim({ person_name: name }); };
 
-    // List / Visual gameography toggle (choice remembered per device).
+    // List / Visual / Timeline gameography toggle (choice remembered per device).
     Array.prototype.forEach.call(document.querySelectorAll(".gvtab"), function(t){
       t.onclick = function(){
         var v = t.getAttribute("data-v");
         try{ localStorage.setItem("dq_gameview", v); }catch(e){}
         Array.prototype.forEach.call(document.querySelectorAll(".gvtab"), function(x){ x.classList.toggle("on", x===t); });
-        var lv=document.getElementById("gv-list"), gv=document.getElementById("gv-visual");
-        if(lv) lv.style.display = v==="visual"?"none":"";
-        if(gv) gv.style.display = v==="visual"?"":"none";
+        var views = { list:"gv-list", visual:"gv-visual", timeline:"gv-timeline" };
+        Object.keys(views).forEach(function(k){ var el=document.getElementById(views[k]); if(el) el.style.display = (k===v)?"":"none"; });
       };
     });
 
@@ -675,6 +768,13 @@
           '<textarea class="ed-proof" style="width:100%;min-height:56px;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:9px 11px;color:var(--text);font-size:14px;font-family:inherit;resize:vertical"></textarea>'+
           '<label style="font-size:12px;font-weight:700;display:block;margin:10px 0 4px">Releases / expansions <span style="font-weight:400;color:var(--muted)">(ports, remasters, named expansions. Comma-separated, optional)</span></label>'+
           '<input class="ed-release" list="ed-release-list" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:9px 11px;color:var(--text);font-size:14px;font-family:inherit" placeholder="PC port, Trials of Atlantis, Catacombs"><datalist id="ed-release-list"><option value="PC port"></option><option value="Console port"></option><option value="Remaster"></option><option value="DLC"></option><option value="Expansion"></option></datalist>'+
+          '<label style="font-size:12px;font-weight:700;display:block;margin:10px 0 4px">Years you worked on it <span style="font-weight:400;color:var(--muted)">(optional — places this on your Timeline. Leave the end blank if ongoing)</span></label>'+
+          '<div style="display:flex;align-items:center;gap:8px">'+
+            '<input class="ed-wstart" type="number" min="1970" max="2100" placeholder="From" style="width:110px;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:9px 11px;color:var(--text);font-size:14px;font-family:inherit">'+
+            '<span style="color:var(--muted)">to</span>'+
+            '<input class="ed-wend" type="number" min="1970" max="2100" placeholder="Present" style="width:110px;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:9px 11px;color:var(--text);font-size:14px;font-family:inherit">'+
+          '</div>'+
+          '<div style="font-size:11px;color:var(--muted);margin-top:6px;line-height:1.4">When you actually worked on this game, which can differ from its release year. This is your own note; the green check still comes from a teammate vouch.</div>'+
           '<label style="display:block;font-weight:400;font-size:13px;margin:8px 0;cursor:pointer"><input type="checkbox" class="ed-live" style="margin-right:7px;vertical-align:-1px">I worked on this game\'s live-service / post-launch period</label>'+
           '<label style="display:block;font-weight:400;font-size:13px;margin:8px 0;cursor:pointer"><input type="checkbox" class="ed-external" style="margin-right:7px;vertical-align:-1px">I worked on this as an outsourced or external contributor</label>'+
           '<label style="font-size:12px;font-weight:700;display:block;margin:10px 0 4px">What did you work on?</label>'+
@@ -692,6 +792,8 @@
         var edExtCk = row.querySelector(".ed-external"); if(edExtCk) edExtCk.checked = edAll.some(function(r){ return DQ.releaseClass(r) === "xdev"; });
         var scopeSel = row.querySelector('input[name="ed-scope"][value="'+(el.dataset.partial ? "partial" : "base")+'"]');
         if(scopeSel) scopeSel.checked = true;
+        row.querySelector(".ed-wstart").value = el.dataset.workstart || "";
+        row.querySelector(".ed-wend").value = el.dataset.workend || "";
         row.querySelector(".ed-role").focus();
         row.querySelector(".ed-cancel").onclick = function(){ location.reload(); };
         row.querySelector(".ed-save").onclick = function(){
@@ -707,8 +809,12 @@
           if(edExtOn && edExtOn.checked && nreleases.indexOf("External contributor") === -1) nreleases.push("External contributor");
           var nscopeEl = row.querySelector('input[name="ed-scope"]:checked');
           var nscope = nscopeEl ? nscopeEl.value : "base";
+          // Work period (optional). Empty string clears it on the server; blank end = present.
+          var wsRaw = row.querySelector(".ed-wstart").value.trim();
+          var weRaw = row.querySelector(".ed-wend").value.trim();
+          if(wsRaw && weRaw && parseInt(weRaw,10) < parseInt(wsRaw,10)){ alert("The end year can't be before the start year."); return; }
           var sbtn = this; sbtn.textContent = "Saving…";
-          DQAPI.updateCredit(id, { role: nrole, roles_other: nothers, links: nlinks, verification: nverif, releases: nreleases, scope: nscope }).then(function(r){
+          DQAPI.updateCredit(id, { role: nrole, roles_other: nothers, links: nlinks, verification: nverif, releases: nreleases, scope: nscope, work_start: wsRaw, work_end: weRaw }).then(function(r){
             if(r && r.ok){ location.reload(); }
             else { sbtn.textContent = "Save"; alert((r && r.data && r.data.error) || "Could not save."); }
           });
