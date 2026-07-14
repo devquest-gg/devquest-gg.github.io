@@ -42,11 +42,14 @@
   .dragtile.dragging{opacity:.45}
   .gv-nav-lock{cursor:grabbing !important}
   /* Career snapshot as a light hairline strip (overrides the boxed cards in app.css). */
-  .snapshot{display:flex;gap:34px;margin:22px 0 4px;padding:17px 2px;border-top:1px solid var(--border,#2d333b);border-bottom:1px solid var(--border,#2d333b);flex-wrap:wrap}
-  .snap{background:none;border:none;border-radius:0;padding:0;min-width:0}
+  /* width:fit-content makes the top/bottom rules hug the stats instead of spanning full width. */
+  .snapshot{display:flex;gap:30px;margin:22px 0 4px;padding:16px 2px;border-top:1px solid var(--border,#2d333b);border-bottom:1px solid var(--border,#2d333b);flex-wrap:wrap;width:fit-content;max-width:100%}
+  .snap{background:none;border:none;border-radius:0;padding:0;min-width:0;text-align:center}
   .snap b{font-size:27px}
   .snap span{margin-top:6px}
-  @media(max-width:600px){.snapshot{gap:20px 22px;padding:14px 2px}.snap{flex:0 0 auto;text-align:left;padding:0}}
+  /* Peer-verified strip hugs its text too, rather than stretching across the page. */
+  .verifystrip{width:fit-content;max-width:100%}
+  @media(max-width:600px){.snapshot{gap:16px 20px;padding:14px 2px}.snap{flex:0 0 auto;padding:0}}
 </style>
 </head>
 <body>
@@ -383,9 +386,10 @@
 
     app.innerHTML =
       '<div class="phead"><div class="container">'+
-        '<div style="display:flex;align-items:center;gap:16px">'+
+        '<div style="display:flex;align-items:flex-start;gap:16px">'+
           '<div class="row" style="padding:0;border:none"><div class="av" style="width:60px;height:60px;font-size:22px">'+DQ.esc(DQ.initials(name))+'</div></div>'+
-          '<div><h1 style="margin:0">'+DQ.esc(name)+'</h1>'+
+          '<div style="flex:1;min-width:0">'+
+          '<h1 style="margin:0">'+DQ.esc(name)+'</h1>'+
           '<div class="meta">'+(headline ? DQ.esc(headline) : (credits.length ? '' : 'No credits on record yet'))+'</div>'+
           '<div class="phactions">'+
             linksHTML +
@@ -393,12 +397,12 @@
             (credits.length ? '<span class="editlinks" id="sharecard">⬆ Share my credits</span>' : '') +
           '</div>'+
           '<div id="linkedit"></div>'+
+          snapshotHTML +
+          verifyHTML +
+          confirmBanner +
+          claimBanner +
           '</div>'+
         '</div>'+
-        snapshotHTML +
-        verifyHTML +
-        confirmBanner +
-        claimBanner +
       '</div></div>'+
       '<section class="blk"><div class="container">'+
         '<div class="rowhead"><div><div class="eyebrow">Gameography</div>'+
