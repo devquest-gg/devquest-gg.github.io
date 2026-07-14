@@ -76,10 +76,20 @@
   .tlrail::before{content:"";position:absolute;top:0;bottom:0;width:2px;background:var(--border,#2d333b)}
   .tlrow:first-child .tlrail::before{top:9px}
   .tlrow:last-child .tlrail::before{bottom:auto;height:9px}
-  .tldot{position:relative;z-index:1;width:11px;height:11px;border-radius:50%;background:var(--accent,#58a6ff);margin-top:4px;box-shadow:0 0 0 4px var(--bg,#0b0e14)}
-  .tlmain{padding:0 0 22px 14px;min-width:0}
-  .tlname{font-weight:700;font-size:15px;color:var(--accent,#58a6ff);text-decoration:none}
+  .tldot{position:relative;z-index:1;width:11px;height:11px;border-radius:50%;background:var(--accent,#58a6ff);margin-top:5px;box-shadow:0 0 0 4px var(--bg,#0b0e14)}
+  .tldot.feat{background:var(--gold,#e0b23a);box-shadow:0 0 0 4px var(--bg,#0b0e14),0 0 9px rgba(224,178,58,.55)}
+  .tlcard{display:flex;gap:14px;align-items:flex-start;padding:0 0 22px 14px;min-width:0}
+  .tlthumb{position:relative;flex:none;width:56px;aspect-ratio:2/3;border-radius:8px;overflow:hidden;background:#141b26;box-shadow:0 4px 12px rgba(0,0,0,.5),inset 0 0 0 1px rgba(255,255,255,.06);display:block}
+  .tlthumb img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+  .tlph{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:5px;text-align:center;font-size:8.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:rgba(255,255,255,.32);line-height:1.25}
+  .tlbody{min-width:0}
+  .tlnameline{line-height:1.3}
+  .tlname{font-weight:750;font-size:15px;color:var(--accent,#58a6ff);text-decoration:none}
   .tlname:hover{color:#7cc0ff}
+  .tlact{margin-top:8px}
+  .tlfeat{font-size:11px;font-weight:700;color:var(--gold,#e0b23a);letter-spacing:.02em}
+  .tlfeatbtn{display:inline-block;font-size:11.5px;font-weight:700;color:var(--muted,#8b98a9);cursor:pointer;border:1px solid var(--border,#2d333b);border-radius:999px;padding:2px 11px;transition:border-color .12s,color .12s;user-select:none}
+  .tlfeatbtn:hover{color:var(--gold,#e0b23a);border-color:rgba(224,178,58,.5)}
   .tlsub{font-size:12.5px;color:var(--muted,#8b98a9);margin-top:3px}
   .tlst{color:var(--muted,#8b98a9)}
   .tl .vseal{color:var(--green,#3fb950);font-weight:800}
@@ -365,53 +375,65 @@
     var isTouch = !!(window.matchMedia && window.matchMedia('(pointer:coarse)').matches);
     function gvSub(t){ return ' <span class="mut" style="font-weight:400;letter-spacing:0;text-transform:none;font-size:12px">· '+t+'</span>'; }
     var hiSub = isOwn
-      ? gvSub('the three you\'re proudest of'+((!isTouch)?' — drag any cover to choose them':''))
+      ? gvSub('the three you\'re proudest of'+((!isTouch)?' — drag to reorder; swap one in with “Make a highlight” below':''))
       : gvSub('their proudest work');
-    var restHead = isOwn ? 'The rest of your gameography' : 'The rest of the gameography';
-    var gridHTML;
-    if(!credits.length){ gridHTML = ''; }
-    else if(credits.length <= 3){ gridHTML = '<div class="ggrid ggrid-hero" id="gv-hero">'+visualCredits.map(visTile).join("")+'</div>'; }
-    else {
-      gridHTML = '<div class="gvhead">Highlights'+hiSub+'</div>'+
-        '<div class="ggrid ggrid-hero" id="gv-hero">'+visualCredits.slice(0,3).map(visTile).join("")+'</div>'+
-        '<div class="gvhead" style="margin-top:28px">'+restHead+'</div>'+
-        '<div class="ggrid" id="gv-rest">'+visualCredits.slice(3).map(visTile).join("")+'</div>';
-    }
-    // ---- Timeline view: the gameography as a year-railed progression, oldest to newest.
-    // Each game is placed by the years the person actually worked on it (work_start/work_end)
-    // when set, falling back to the game's release year otherwise. ----
+    // ---- Merged Portfolio view: curated Highlights trio + a cover-rich career timeline.
+    // The trio is the pride order (top 3 by position, drag to reorder). The timeline places
+    // every game by the years worked (work_start/work_end), falling back to the release year.
+    function coverSrc(c){ return c.cover ? DQ.safeUrl(c.cover) : (c.steam ? 'https://cdn.cloudflare.steamstatic.com/steam/apps/'+encodeURIComponent(c.steam)+'/library_600x900.jpg' : ''); }
     function tlAnchor(c){ return c.work_start || c.year || 9999; }
     var timelineCredits = credits.slice().sort(function(a,b){ return tlAnchor(a)-tlAnchor(b) || String(a.game_title).localeCompare(String(b.game_title)); });
+    var featuredIds = {}; visualCredits.slice(0,3).forEach(function(c){ if(c.id) featuredIds[c.id]=1; });
+    // Full ordered list of live credit ids — every reorder (drag or feature) rewrites the
+    // whole order, so positions stay contiguous and the "top 3 = featured" rule holds.
+    var fullOrderIds = visualCredits.filter(function(c){ return c.live && c.id; }).map(function(c){ return String(c.id); });
     var tlMissing = isOwn && credits.some(function(c){ return !c.work_start; });
     var tlHint = tlMissing ? '<div class="tlhint">Games land by the years you worked them. Set those on any credit in the <b>List</b> view (Edit) — until then, a game sits at its release year.</div>' : '';
-    var timelineHTML = credits.length ? tlHint + '<div class="tl">'+timelineCredits.map(function(c){
+    function tlRow(c){
       var seal = c.vouch_count ? ' <span class="vseal" title="Peer-verified by '+c.vouch_count+' teammate'+(c.vouch_count===1?'':'s')+'">✓</span>' : '';
       var astg = c.partial ? ' <span class="ast" style="color:var(--muted);font-weight:700" title="Worked on a specific part">*</span>' : '';
       var startY = c.work_start || null;
       var yearLabel = startY ? startY : (c.year || '—');
       var yearTip = startY ? 'When you worked on it' : 'Game release year';
-      // "to 2021" / "to present" only when the work period actually extends past its start year.
-      var span = '';
-      if(startY){
-        if(c.work_end && c.work_end !== startY) span = 'to '+c.work_end;
-        else if(!c.work_end) span = 'to present';
-      }
+      var span = ''; if(startY){ if(c.work_end && c.work_end !== startY) span = 'to '+c.work_end; else if(!c.work_end) span = 'to present'; }
       var spanHTML = span ? ' <span class="tlspan">'+span+'</span>' : '';
       var sub = DQ.esc(c.role||"Role not recorded") + (c.studio ? ' <span class="tlst">·</span> '+DQ.esc(c.studio) : '');
-      return '<div class="tlrow">'+
+      var _cs = coverSrc(c);
+      var thumb = '<span class="tlph">'+DQ.esc(c.game_title)+'</span>'+(_cs?'<img loading="lazy" referrerpolicy="no-referrer" src="'+DQ.esc(_cs)+'" onerror="this.remove()" alt="">':'');
+      var isFeat = !!(c.id && featuredIds[c.id]);
+      var star = (isOwn && c.live && c.id)
+        ? (isFeat ? '<span class="tlfeat" title="One of your Highlights above">★ Highlight</span>' : '<a class="tlfeatbtn" data-id="'+c.id+'" title="Feature this in your Highlights">☆ Make a highlight</a>')
+        : '';
+      var gurl = '/credits/game/'+encodeURIComponent(c.game_slug);
+      return '<div class="tlrow'+(isFeat?' isfeat':'')+'">'+
         '<div class="tlyear" title="'+yearTip+'">'+yearLabel+'</div>'+
-        '<div class="tlrail"><span class="tldot"></span></div>'+
-        '<div class="tlmain"><a class="tlname" href="/credits/game/'+encodeURIComponent(c.game_slug)+'">'+DQ.esc(c.game_title)+'</a>'+astg+seal+spanHTML+
-          '<div class="tlsub">'+sub+'</div></div>'+
+        '<div class="tlrail"><span class="tldot'+(isFeat?' feat':'')+'"></span></div>'+
+        '<div class="tlcard">'+
+          '<a class="tlthumb" href="'+gurl+'">'+thumb+'</a>'+
+          '<div class="tlbody"><div class="tlnameline"><a class="tlname" href="'+gurl+'">'+DQ.esc(c.game_title)+'</a>'+astg+seal+spanHTML+'</div>'+
+            '<div class="tlsub">'+sub+'</div>'+(star?'<div class="tlact">'+star+'</div>':'')+'</div>'+
+        '</div>'+
       '</div>';
-    }).join('')+'</div>' : '';
+    }
+    var portfolioHTML;
+    if(!credits.length){ portfolioHTML = ''; }
+    else if(credits.length <= 3){ portfolioHTML = '<div class="ggrid ggrid-hero" id="gv-hero">'+visualCredits.map(visTile).join("")+'</div>'; }
+    else {
+      portfolioHTML = '<div class="gvhead">Highlights'+hiSub+'</div>'+
+        '<div class="ggrid ggrid-hero" id="gv-hero">'+visualCredits.slice(0,3).map(visTile).join("")+'</div>'+
+        '<div class="gvhead" style="margin-top:34px">Career timeline'+gvSub('by the years you worked on each game')+'</div>'+
+        tlHint +
+        '<div class="tl" id="gv-tl">'+timelineCredits.map(tlRow).join("")+'</div>';
+    }
 
-    var gameView='list'; try{ gameView = localStorage.getItem('dq_gameview')||'list'; }catch(e){}
-    if(['list','visual','timeline'].indexOf(gameView)<0) gameView='list';
+    // Default to the Portfolio (visual) view — it's the shareable, "why care" impression.
+    // Migrate the old 'timeline' choice (now folded into Portfolio) to 'visual'.
+    var gameView='visual'; try{ gameView = localStorage.getItem('dq_gameview')||'visual'; }catch(e){}
+    if(gameView==='timeline') gameView='visual';
+    if(['list','visual'].indexOf(gameView)<0) gameView='visual';
     var tabsHTML = credits.length ? '<div class="gvtabs" style="margin:0">'+
+      '<span class="gvtab'+(gameView==='visual'?' on':'')+'" data-v="visual">▦ Portfolio</span>'+
       '<span class="gvtab'+(gameView==='list'?' on':'')+'" data-v="list">☰ List</span>'+
-      '<span class="gvtab'+(gameView==='visual'?' on':'')+'" data-v="visual">▦ Visual</span>'+
-      '<span class="gvtab'+(gameView==='timeline'?' on':'')+'" data-v="timeline">↕ Timeline</span>'+
     '</div>' : '';
 
     var linksHTML = links.length ? '<div class="plinks">'+links.map(function(l){
@@ -499,13 +521,12 @@
       '</div></div>'+
       '<section class="blk"><div class="container">'+
         '<div class="rowhead"><div><div class="eyebrow">Gameography</div>'+
-          '<p class="secsub" style="margin:6px 0 0">A verified record of the games you\'ve helped create. <span class="mut">Year shown is each game\'s release date.</span></p></div>'+
+          '<p class="secsub" style="margin:6px 0 0">A verified record of the games you\'ve helped create.</p></div>'+
           '<div class="rhactions">'+ tabsHTML + cta +'</div>'+
         '</div>'+
         ownBanner +
+        '<div id="gv-visual"'+(gameView==='visual'?'':' style="display:none"')+'>'+portfolioHTML+'</div>'+
         '<div id="gv-list"'+(gameView==='list'?'':' style="display:none"')+'>'+rowsHTML+'</div>'+
-        '<div id="gv-visual"'+(gameView==='visual'?'':' style="display:none"')+'>'+gridHTML+'</div>'+
-        '<div id="gv-timeline"'+(gameView==='timeline'?'':' style="display:none"')+'>'+timelineHTML+'</div>'+
         '<div class="notice"><b style="color:var(--green);font-style:normal">✓</b> marks credits confirmed by a teammate who shipped the same game. Everything else is self-reported. Only the person credited can claim and edit this page.</div>'+
       '</div></section>' +
       unshippedHTML;
@@ -519,7 +540,7 @@
         var v = t.getAttribute("data-v");
         try{ localStorage.setItem("dq_gameview", v); }catch(e){}
         Array.prototype.forEach.call(document.querySelectorAll(".gvtab"), function(x){ x.classList.toggle("on", x===t); });
-        var views = { list:"gv-list", visual:"gv-visual", timeline:"gv-timeline" };
+        var views = { list:"gv-list", visual:"gv-visual" };
         Object.keys(views).forEach(function(k){ var el=document.getElementById(views[k]); if(el) el.style.display = (k===v)?"":"none"; });
       };
     });
@@ -574,8 +595,12 @@
           var swallow=function(ev){ ev.preventDefault(); ev.stopPropagation(); };
           vis.addEventListener("click", swallow, true);
           setTimeout(function(){ vis.removeEventListener("click", swallow, true); }, 60);
-          var order = tiles().map(function(el){ return el.getAttribute("data-id"); });
-          if(window.DQAPI && DQAPI.reorderCredits) DQAPI.reorderCredits(order).catch(function(){});
+          // Send the FULL order (reordered hero three, then everyone else) so positions stay
+          // contiguous and "top 3 = featured" holds. Reordering the trio doesn't change which
+          // games are featured, so no reload is needed — the CSS counter renumbers 1/2/3 live.
+          var heroIds = tiles().map(function(el){ return String(el.getAttribute("data-id")); });
+          var fullOrder = heroIds.concat(fullOrderIds.filter(function(x){ return heroIds.indexOf(x) < 0; }));
+          if(window.DQAPI && DQAPI.reorderCredits) DQAPI.reorderCredits(fullOrder).catch(function(){});
         }
       }
       vis.addEventListener("mousedown", function(e){
@@ -589,6 +614,21 @@
       // Belt-and-suspenders: cancel any native image/link dragging inside the grid.
       vis.addEventListener("dragstart", function(e){ e.preventDefault(); });
     })();
+
+    // ---- "Make a highlight": promote a timeline game into the featured trio. Works on touch
+    // too (it's a tap, not a drag). Inserts the game at slot 3, keeping the current #1 and #2,
+    // and rewrites the full order so positions stay contiguous. ----
+    Array.prototype.forEach.call(document.querySelectorAll(".tlfeatbtn"), function(btn){
+      btn.onclick = function(e){
+        e.preventDefault(); e.stopPropagation();
+        if(!(window.DQAPI && DQAPI.reorderCredits)) return;
+        var id = String(btn.getAttribute("data-id"));
+        var rest = fullOrderIds.filter(function(x){ return x !== id; });
+        var newOrder = rest.slice(0,2).concat([id]).concat(rest.slice(2));
+        btn.textContent = "…";
+        DQAPI.reorderCredits(newOrder).then(function(){ location.reload(); }).catch(function(){ location.reload(); });
+      };
+    });
 
     // ---- Shareable credits card (client-side SVG → PNG, no backend) ----
     var CARD_FONT = "'Segoe UI', system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif";
