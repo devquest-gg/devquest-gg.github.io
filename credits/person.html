@@ -9,6 +9,7 @@
 <link rel="stylesheet" href="app.css">
 <style>
   .gvtabs{display:flex;justify-content:flex-end;margin:0 0 16px}
+  .rhactions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end}
   .gvtab{padding:6px 14px;font-size:13px;font-weight:700;color:var(--muted,#8b98a9);cursor:pointer;border:1px solid var(--border,#2d333b);background:var(--panel,#11161d);user-select:none}
   .gvtab:first-child{border-radius:8px 0 0 8px}
   .gvtab:last-child{border-radius:0 8px 8px 0;border-left:none}
@@ -176,10 +177,16 @@
     credits.forEach(function(c){ if(_covMap[c.game_slug]) c.cover = _covMap[c.game_slug]; });
     // Credits on games the viewer also shipped, that they haven't confirmed yet.
     var confirmable = credits.filter(function(c){ return me && !isOwn && c.live && c.id && myGames[c.game_slug] && (c.voucher_slugs||[]).indexOf(me.slug) < 0; });
-    credits.sort(function(a,b){
+    // Two independent orderings. The List view is a stable career timeline (most recent
+    // release first) and ignores the drag order. The Visual view is the owner's own
+    // showcase: drag-to-reorder, top three featured, and it's what the share card pulls
+    // its hero covers from. They no longer share a single order.
+    function byRecent(a,b){ return (b.year||0)-(a.year||0) || String(a.game_title).localeCompare(String(b.game_title)); }
+    var listCredits = credits.slice().sort(byRecent);
+    var visualCredits = credits.slice().sort(function(a,b){
       var pa=(a.position!=null)?a.position:1e9, pb=(b.position!=null)?b.position:1e9;
       if(pa!==pb) return pa-pb;
-      return (b.year||0)-(a.year||0) || String(a.game_title).localeCompare(String(b.game_title));
+      return byRecent(a,b);
     });
 
     document.title = name + " · DevQuest Credits";
@@ -217,7 +224,7 @@
         : '<div class="claimbanner"><div class="cbtext"><b>Is this you?</b> Claim this page to edit your credits, add the games you shipped, and get peer-vouched by teammates.</div><span class="btn primary" id="claimbtn">Claim this page →</span></div>';
     }
 
-    var rowsHTML = credits.length ? '<div class="rows">' + credits.map(function(c){
+    var rowsHTML = credits.length ? '<div class="rows">' + listCredits.map(function(c){
       // State the rule once (in the footer note); mark only the exceptions here.
       // Self-provided signals (LinkedIn self, etc.) are dropped from the row —
       // they're implied by "self-reported" + the proof link. Only genuine
@@ -246,9 +253,9 @@
         ? '<a class="getconf" href="/credits/game/'+encodeURIComponent(c.game_slug)+'" title="Add the teammates you shipped with; once they claim, they can confirm this credit">Get confirmed →</a>'
         : '';
       var proof = (c.links && c.links.length) ? '<a class="proofln" href="'+DQ.esc(DQ.safeUrl(c.links[0]))+'" target="_blank" rel="noopener noreferrer" title="Source for this credit (self-reported): '+DQ.esc(c.links.join(", "))+'" aria-label="View source for this credit">↗</a>' : '';
-      var grip = (isOwn && c.live && c.id && credits.length>1)
-        ? '<span class="drag-grip" title="Drag to reorder" style="cursor:grab;color:var(--muted);font-size:16px;line-height:1;user-select:none;padding:0 10px 0 2px">⠿</span>'
-        : '';
+      // No drag handle in List view: it's a fixed chronological timeline now. Reordering
+      // lives in the Visual view, where the owner curates their showcase order.
+      var grip = '';
       var editAttrs = 'data-id="'+c.id+'" data-role="'+DQ.esc(c.role||"")+'" data-others="'+DQ.esc((c.roles_other||[]).join(", "))+'" data-links="'+DQ.esc((c.links||[]).join("\n"))+'" data-releases="'+DQ.esc((c.releases||[]).join(", "))+'" data-partial="'+(c.partial?"1":"")+'"';
       // Owner nudge: a claimed credit still sitting at the "Contributor" placeholder (or blank)
       // gets an invite to set a real title — the common case after claiming a teammate's add.
@@ -290,20 +297,25 @@
         '<div class="gcap"><b class="gtt" title="'+DQ.esc(c.game_title)+'">'+DQ.esc(c.game_title)+'</b><span class="gmt">'+DQ.esc(c.role||"Role not recorded")+astg+' <span class="y">· '+(c.year?c.year:'—')+'</span></span></div>'+
       '</a>';
     }
-    // Hero row: the first three credits render larger. Order is the shared credit order
-    // (reorder in List view for now; drag-in-Visual is a fast-follow).
+    // Hero row: the first three of the Visual (drag/showcase) order render larger. This order
+    // is independent of the List view, which is a fixed most-recent-first career timeline.
     var isTouch = !!(window.matchMedia && window.matchMedia('(pointer:coarse)').matches);
-    var heroHint = (isOwn && credits.length>3 && !isTouch) ? ' <span class="mut" style="font-weight:400;letter-spacing:0;text-transform:none;font-size:12px">· drag a cover to reorder; your top three feature here</span>' : '';
+    function gvSub(t){ return ' <span class="mut" style="font-weight:400;letter-spacing:0;text-transform:none;font-size:12px">· '+t+'</span>'; }
+    var hiSub = isOwn
+      ? gvSub('the three you\'re proudest of'+((!isTouch)?' — drag any cover to choose them':''))
+      : gvSub('their proudest work');
+    var restHead = isOwn ? 'The rest of your gameography' : 'The rest of the gameography';
     var gridHTML;
     if(!credits.length){ gridHTML = ''; }
-    else if(credits.length <= 3){ gridHTML = '<div class="ggrid ggrid-hero" id="gv-hero">'+credits.map(visTile).join("")+'</div>'; }
+    else if(credits.length <= 3){ gridHTML = '<div class="ggrid ggrid-hero" id="gv-hero">'+visualCredits.map(visTile).join("")+'</div>'; }
     else {
-      gridHTML = '<div class="gvhead">Featured'+heroHint+'</div>'+
-        '<div class="ggrid ggrid-hero" id="gv-hero">'+credits.slice(0,3).map(visTile).join("")+'</div>'+
-        '<div class="ggrid" id="gv-rest" style="margin-top:18px">'+credits.slice(3).map(visTile).join("")+'</div>';
+      gridHTML = '<div class="gvhead">Highlights'+hiSub+'</div>'+
+        '<div class="ggrid ggrid-hero" id="gv-hero">'+visualCredits.slice(0,3).map(visTile).join("")+'</div>'+
+        '<div class="gvhead" style="margin-top:28px">'+restHead+'</div>'+
+        '<div class="ggrid" id="gv-rest">'+visualCredits.slice(3).map(visTile).join("")+'</div>';
     }
     var gameView='list'; try{ gameView = localStorage.getItem('dq_gameview')||'list'; }catch(e){}
-    var tabsHTML = credits.length ? '<div class="gvtabs"><span class="gvtab'+(gameView==='list'?' on':'')+'" data-v="list">☰ List</span><span class="gvtab'+(gameView==='visual'?' on':'')+'" data-v="visual">▦ Visual</span></div>' : '';
+    var tabsHTML = credits.length ? '<div class="gvtabs" style="margin:0"><span class="gvtab'+(gameView==='list'?' on':'')+'" data-v="list">☰ List</span><span class="gvtab'+(gameView==='visual'?' on':'')+'" data-v="visual">▦ Visual</span></div>' : '';
 
     var linksHTML = links.length ? '<div class="plinks">'+links.map(function(l){
       var label = LINK_LABEL[String(l.type||"").toLowerCase()] || l.label || l.type || "Link";
@@ -370,9 +382,8 @@
       '<section class="blk"><div class="container">'+
         '<div class="rowhead"><div><div class="eyebrow">Gameography</div>'+
           '<p class="secsub" style="margin:6px 0 0">A verified record of the games you\'ve helped create. <span class="mut">Year shown is each game\'s release date.</span></p></div>'+
-          cta +
+          '<div class="rhactions">'+ tabsHTML + cta +'</div>'+
         '</div>'+
-        tabsHTML +
         ownBanner +
         '<div id="gv-list"'+(gameView==='visual'?' style="display:none"':'')+'>'+rowsHTML+'</div>'+
         '<div id="gv-visual"'+(gameView==='visual'?'':' style="display:none"')+'>'+gridHTML+'</div>'+
@@ -449,7 +460,7 @@
     function cTrunc(s,n){ s=String(s==null?'':s); return s.length>n ? s.slice(0,n-1)+'…' : s; }
     // Top-three hero covers for the card. Steam/Wikimedia-hosted art embeds cleanly; other
     // hosts (e.g. Amazon) can't be drawn cross-origin, so those slots stay an empty frame.
-    var heroCovers = credits.slice(0,3).map(function(c){ return c.cover ? DQ.safeUrl(c.cover) : (c.steam ? 'https://cdn.cloudflare.steamstatic.com/steam/apps/'+encodeURIComponent(c.steam)+'/library_600x900.jpg' : null); });
+    var heroCovers = visualCredits.slice(0,3).map(function(c){ return c.cover ? DQ.safeUrl(c.cover) : (c.steam ? 'https://cdn.cloudflare.steamstatic.com/steam/apps/'+encodeURIComponent(c.steam)+'/library_600x900.jpg' : null); });
     var HERO_SLOTS = (function(){ var n=heroCovers.length; if(!n) return []; var w=152,h=228,g=26,tot=n*w+(n-1)*g,sx=(1080-tot)/2,out=[]; for(var i=0;i<n;i++) out.push({x:sx+i*(w+g),y:684,w:w,h:h}); return out; })();
     function buildCardSVG(){
       var X=DQ.esc, W=1080, H=1080, M=64, F=CARD_FONT;
