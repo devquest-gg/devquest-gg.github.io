@@ -68,6 +68,7 @@
   .knownfor .kflabel{font-size:11px;font-weight:800;letter-spacing:.11em;text-transform:uppercase;color:var(--muted,#8b98a9);margin-right:3px}
   .kchip{font-size:12.5px;font-weight:600;color:var(--text,#e6edf3);text-decoration:none;background:var(--panel,#11161d);border:1px solid var(--border,#2d333b);border-radius:999px;padding:4px 12px;transition:border-color .12s,background .12s}
   .kchip:hover{border-color:#3b4654;background:#171d27}
+  .phead .metastudio{color:var(--muted,#8b98a9);font-size:13.5px;margin-top:2px}
   /* Timeline view: year rail down the left, dots per credit, progression top to bottom. */
   .tl{margin-top:2px}
   .tlrow{display:grid;grid-template-columns:58px 22px 1fr;align-items:start}
@@ -498,13 +499,22 @@
         '</div>'
       : '';
 
+    // Headline as two stacked lines: role on top, studio beneath — cleaner than a long
+    // "Role at Studio" that wraps. Split on the " at " the edit form standardises on.
+    var metaHTML = (function(){
+      if(!headline) return credits.length ? '' : '<div class="meta">No credits on record yet</div>';
+      var i=headline.toLowerCase().lastIndexOf(' at ');
+      var t=i>0?headline.slice(0,i):headline, s=i>0?headline.slice(i+4):'';
+      return '<div class="meta">'+DQ.esc(t)+'</div>'+(s?'<div class="metastudio">'+DQ.esc(s)+'</div>':'');
+    })();
+
     app.innerHTML =
       '<div class="phead"><div class="container">'+
         '<div style="display:flex;align-items:flex-start;gap:16px">'+
           '<div class="row" style="padding:0;border:none"><div class="av" style="width:60px;height:60px;font-size:22px">'+DQ.esc(DQ.initials(name))+'</div></div>'+
           '<div style="flex:1;min-width:0">'+
           '<h1 style="margin:0">'+DQ.esc(name)+'</h1>'+
-          '<div class="meta">'+(headline ? DQ.esc(headline) : (credits.length ? '' : 'No credits on record yet'))+'</div>'+
+          metaHTML +
           knownForHTML +
           '<div class="phactions">'+
             linksHTML +
@@ -736,9 +746,15 @@
         '</div>';
       }
       var startRows = (current && current.length) ? current : [{type:"linkedin",url:""}];
+      // Split any existing free-text headline on the " at " we standardise on, so re-editing an
+      // old headline keeps the two-field structure instead of dumping it all in the title box.
+      var _h=(headline||'').trim(), _ati=_h.toLowerCase().lastIndexOf(' at ');
+      var _title=_ati>0?_h.slice(0,_ati):_h, _studio=_ati>0?_h.slice(_ati+4):'';
       box.innerHTML = '<div class="panel" style="padding:14px;margin-top:12px;max-width:520px">'+
-        '<div style="font-size:12px;font-weight:700;margin-bottom:4px">Headline <span style="font-weight:400;color:var(--muted)">(your current title and studio)</span></div>'+
-        '<input class="le-headline" value="'+DQ.esc(headline||"")+'" placeholder="e.g. Director of Development Management at Insomniac Games" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px 11px;color:var(--text);font-size:13px;font-family:inherit;margin-bottom:16px">'+
+        '<div style="font-size:12px;font-weight:700;margin-bottom:4px">Current title <span style="font-weight:400;color:var(--muted)">(your role)</span></div>'+
+        '<input class="le-title" value="'+DQ.esc(_title)+'" placeholder="e.g. Senior Producer" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px 11px;color:var(--text);font-size:13px;font-family:inherit;margin-bottom:10px">'+
+        '<div style="font-size:12px;font-weight:700;margin-bottom:4px">Studio <span style="font-weight:400;color:var(--muted)">(optional — leave blank if freelance or between roles)</span></div>'+
+        '<input class="le-studio" value="'+DQ.esc(_studio)+'" placeholder="e.g. Insomniac Games" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px 11px;color:var(--text);font-size:13px;font-family:inherit;margin-bottom:16px">'+
         '<div style="font-size:12px;font-weight:700;margin-bottom:8px">Profile links <span style="font-weight:400;color:var(--muted)">(shown as chips under your name)</span></div>'+
         '<div class="le-rows">'+startRows.map(function(l){ return rowHtml(l.type, l.url); }).join("")+'</div>'+
         '<span class="le-add" style="font-size:12.5px;font-weight:700;color:var(--accent);cursor:pointer">+ Add another</span>'+
@@ -757,7 +773,9 @@
           if(!/^https?:\/\//i.test(url)) url = "https://"+url;
           out.push({ type:type, url:url });
         });
-        var hl = box.querySelector(".le-headline").value.trim();
+        // Standardise: "Title at Studio" (or just the title when no studio is given).
+        var _t=box.querySelector(".le-title").value.trim(), _s=box.querySelector(".le-studio").value.trim();
+        var hl = _t + (_s ? ' at ' + _s : '');
         var sbtn = this; sbtn.textContent = "Saving…";
         DQAPI.updateProfile({ headline: hl, links: out }).then(function(r){
           if(r && r.ok){ location.reload(); }

@@ -126,6 +126,7 @@
   .skchip{display:inline-block;font-size:11px;color:var(--accent);border:1px solid rgba(88,166,255,.3);background:rgba(88,166,255,.08);border-radius:999px;padding:2px 9px;margin:2px 4px 0 0}
   /* redesigned profile-preview card (mirrors the live person page) */
   .dcard .hl{font-size:12px;color:var(--muted);margin-top:3px;line-height:1.35}
+  .dcard .hlst{font-size:12px;color:#c4cfdd;margin-top:1px;line-height:1.35}
   .dcard .snap{font-size:11.5px;color:#c4cfdd;margin-top:9px;font-variant-numeric:tabular-nums}
   .dcard .gocred{margin-top:13px;display:flex;flex-direction:column;gap:10px}
   .dcard .cr .crtop{font-size:12.5px;font-weight:700;color:#e6edf5;display:flex;align-items:center;flex-wrap:wrap;gap:6px}
@@ -333,17 +334,17 @@
   //      gameography rows with release pills, gold roles, green peer-verified) ----
   // Real claimed profiles (not mock-ups). Data mirrors the live person pages.
   var DEVS=[
-    {name:"Destin Bales", slug:"destin-bales", hl:"Director of Development Management at Insomniac Games", color:"#58a6ff", snap:"9 shipped games · since 2001",
+    {name:"Destin Bales", slug:"destin-bales", title:"Director of Development Management", studio:"Insomniac Games", color:"#58a6ff", snap:"9 shipped games · since 2001",
       credits:[
         {g:"Tom Clancy's Rainbow Six Siege", verified:false, role:"Vice President of Production", worked:"the live-service era"},
         {g:"Dark Age of Camelot", verified:true, role:"Producer"}
       ]},
-    {name:"Mark Davis", slug:"mark-davis", hl:"Production Director", color:"#a371f7", snap:"5 shipped games · since 2001",
+    {name:"Mark Davis", slug:"mark-davis", title:"Production Director", studio:"Certain Affinity", color:"#a371f7", snap:"5 shipped games · since 2001",
       credits:[
         {g:"Hogwarts Legacy", verified:false, role:"Production Director"},
         {g:"Warhammer Online: Age of Reckoning", verified:true, role:"Contributor"}
       ]},
-    {name:"Ellisa Barr", slug:"ellisa-barr", hl:"Senior Producer, Studio Drydock", color:"#3fb950", snap:"3 shipped games · since 2001",
+    {name:"Ellisa Barr", slug:"ellisa-barr", title:"Senior Producer", studio:"Studio Drydock", color:"#3fb950", snap:"3 shipped games · since 2001",
       credits:[
         {g:"Dark Age of Camelot", verified:true, role:"Quest Designer", worked:"the live-service era"},
         {g:"City of Heroes", verified:true, role:"Producer", worked:"the live-service era"}
@@ -361,7 +362,7 @@
     return '<a class="dcard"'+href+' style="text-decoration:none;color:inherit"><div class="halo" style="background:'+d.color+'"></div>'+
       '<div class="av" style="background:'+d.color+'">'+initials+'</div>'+
       '<div class="nm">'+d.name+'</div>'+
-      '<div class="hl">'+d.hl+'</div>'+
+      '<div class="hl">'+d.title+'</div>'+(d.studio?'<div class="hlst">'+d.studio+'</div>':'')+
       '<div class="snap">'+d.snap+'</div>'+
       '<div class="dverify">✓ '+vcount+' of '+d.credits.length+' credits peer-verified</div>'+
       '<div class="gocred">'+rows+'</div></a>';
