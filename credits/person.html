@@ -450,7 +450,7 @@
     // Top-three hero covers for the card. Steam/Wikimedia-hosted art embeds cleanly; other
     // hosts (e.g. Amazon) can't be drawn cross-origin, so those slots stay an empty frame.
     var heroCovers = credits.slice(0,3).map(function(c){ return c.cover ? DQ.safeUrl(c.cover) : (c.steam ? 'https://cdn.cloudflare.steamstatic.com/steam/apps/'+encodeURIComponent(c.steam)+'/library_600x900.jpg' : null); });
-    var HERO_SLOTS = (function(){ var n=heroCovers.length; if(!n) return []; var w=152,h=228,g=26,tot=n*w+(n-1)*g,sx=(1080-tot)/2,out=[]; for(var i=0;i<n;i++) out.push({x:sx+i*(w+g),y:552,w:w,h:h}); return out; })();
+    var HERO_SLOTS = (function(){ var n=heroCovers.length; if(!n) return []; var w=152,h=228,g=26,tot=n*w+(n-1)*g,sx=(1080-tot)/2,out=[]; for(var i=0;i<n;i++) out.push({x:sx+i*(w+g),y:684,w:w,h:h}); return out; })();
     function buildCardSVG(){
       var X=DQ.esc, W=1080, H=1080, M=64, F=CARD_FONT;
       var cx=540, cardSlug=(api&&api.person&&api.person.slug)||slug||'';
@@ -459,8 +459,8 @@
       if(unshippedCount>0) stats.push([String(unshippedCount), 'cancelled / unshipped']);
       var sx=stats.length===3?[300,540,780]:(stats.length===2?[390,690]:[540]);
       var statSVG=stats.map(function(s,i){ var x=sx[i];
-        return '<text x="'+x+'" y="866" text-anchor="middle" font-family="'+F+'" font-size="74" font-weight="800" fill="url(#g1)">'+X(s[0])+'</text>'+
-               '<text x="'+x+'" y="902" text-anchor="middle" font-family="'+F+'" font-size="21" fill="#8b98a9">'+X(s[1])+'</text>'; }).join('');
+        return '<text x="'+x+'" y="600" text-anchor="middle" font-family="'+F+'" font-size="74" font-weight="800" fill="url(#g1)">'+X(s[0])+'</text>'+
+               '<text x="'+x+'" y="636" text-anchor="middle" font-family="'+F+'" font-size="21" fill="#8b98a9">'+X(s[1])+'</text>'; }).join('');
       // "N credits peer-verified" = credits with at least one peer vouch (max = your count). Hidden at 0.
       var vN=credits.filter(function(c){ return c.vouch_count>0; }).length;
       var vouch=''; if(vN>0){ var vt='✓ '+vN+' credit'+(vN===1?'':'s')+' peer-verified', vpw=Math.round(vt.length*12.2)+40, vpx=cx-vpw/2;
@@ -492,18 +492,20 @@
         var ctx=cv.getContext("2d"); ctx.scale(scale,scale); ctx.drawImage(img,0,0,S,S);
         // Draw the hero covers into their frames. Cross-origin-friendly hosts (Steam, Wikimedia)
         // load with crossOrigin and keep the canvas clean; others just fail and leave the frame.
+        function loadImg(u){ return new Promise(function(resolve,reject){ var ci=new Image(); ci.crossOrigin="anonymous"; ci.onload=function(){ resolve(ci); }; ci.onerror=function(){ reject(); }; ci.src=u; setTimeout(reject,7000); }); }
+        function paint(ci,slot){ try{
+          ctx.save();
+          if(ctx.roundRect){ ctx.beginPath(); ctx.roundRect(slot.x,slot.y,slot.w,slot.h,12); ctx.clip(); } else { ctx.beginPath(); ctx.rect(slot.x,slot.y,slot.w,slot.h); ctx.clip(); }
+          var ar=ci.naturalWidth/ci.naturalHeight, sar=slot.w/slot.h, dw,dh,dx,dy;
+          if(ar>sar){ dh=slot.h; dw=dh*ar; dx=slot.x-(dw-slot.w)/2; dy=slot.y; } else { dw=slot.w; dh=dw/ar; dx=slot.x; dy=slot.y-(dh-slot.h)/2; }
+          ctx.drawImage(ci,dx,dy,dw,dh); ctx.restore();
+        }catch(e){} }
         function drawCover(slot,url){ return new Promise(function(res){
           if(!url){ res(); return; }
-          var ci=new Image(); ci.crossOrigin="anonymous";
-          ci.onload=function(){ try{
-            ctx.save();
-            if(ctx.roundRect){ ctx.beginPath(); ctx.roundRect(slot.x,slot.y,slot.w,slot.h,12); ctx.clip(); } else { ctx.beginPath(); ctx.rect(slot.x,slot.y,slot.w,slot.h); ctx.clip(); }
-            var ar=ci.naturalWidth/ci.naturalHeight, sar=slot.w/slot.h, dw,dh,dx,dy;
-            if(ar>sar){ dh=slot.h; dw=dh*ar; dx=slot.x-(dw-slot.w)/2; dy=slot.y; } else { dw=slot.w; dh=dw/ar; dx=slot.x; dy=slot.y-(dh-slot.h)/2; }
-            ctx.drawImage(ci,dx,dy,dw,dh); ctx.restore();
-          }catch(e){} res(); };
-          ci.onerror=function(){ res(); };
-          ci.src=url; setTimeout(res,7000);
+          // Try the URL directly (works for CORS-friendly hosts like Steam/Wikimedia); if the
+          // host blocks cross-origin, retry via a proxy that re-serves it with the right headers.
+          var proxied="https://wsrv.nl/?url="+encodeURIComponent(url)+"&w=440&output=jpg";
+          loadImg(url).catch(function(){ return loadImg(proxied); }).then(function(ci){ paint(ci,slot); res(); }).catch(function(){ res(); });
         }); }
         Promise.all(HERO_SLOTS.map(function(s,i){ return drawCover(s,heroCovers[i]); })).then(function(){
           cv.toBlob(function(blob){
