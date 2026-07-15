@@ -44,6 +44,7 @@
       return;
     }
     render((r.data && r.data.reports) || []);
+    renderMerge();
     loadMissingArt();
   }).catch(function(){ app.innerHTML = '<div class="container"><section class="blk"><div class="empty">Network error loading the queue.</div></section></div>'; });
 
@@ -199,6 +200,68 @@
       };
       if(input.value.trim()) showPrev(); // preview an already-set cover on load
     });
+  }
+
+  // ---- Merge duplicate games -------------------------------------------------
+  function renderMerge(){
+    app.insertAdjacentHTML("beforeend",
+      '<div class="container"><section class="blk"><div class="eyebrow">Merge</div>'+
+      '<h2 class="sec">Merge duplicate games</h2>'+
+      '<p class="secsub">Move every credit from a duplicate entry into the one you want to keep, reparent its expansions, then retire the duplicate. Enter each game’s <b>slug</b> (the last part of its page URL, <span class="mut">/credits/game/&lt;slug&gt;</span>). Hit <b>Preview</b> first to confirm you picked the right two.</p>'+
+      '<div class="panel" style="padding:16px 18px;max-width:660px">'+
+        '<div style="font-size:12px;font-weight:700;margin-bottom:4px;color:var(--pink)">Duplicate to remove (loser)</div>'+
+        '<input id="mg-from" placeholder="e.g. dark-age-of-camelot-2" style="width:100%;box-sizing:border-box;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:9px 11px;color:var(--text);font-size:14px;font-family:inherit">'+
+        '<div id="mg-from-info" class="mut" style="font-size:12px;margin:5px 0 12px;min-height:16px"></div>'+
+        '<div style="font-size:12px;font-weight:700;margin-bottom:4px;color:var(--green)">Keep (winner)</div>'+
+        '<input id="mg-into" placeholder="e.g. dark-age-of-camelot" style="width:100%;box-sizing:border-box;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:9px 11px;color:var(--text);font-size:14px;font-family:inherit">'+
+        '<div id="mg-into-info" class="mut" style="font-size:12px;margin:5px 0 12px;min-height:16px"></div>'+
+        '<div style="display:flex;gap:8px"><span class="btn ghost" id="mg-preview" style="padding:8px 14px;font-size:13px">Preview</span><span class="btn primary" id="mg-merge" style="padding:8px 16px;font-size:13px">Merge →</span></div>'+
+        '<div id="mg-status" style="font-size:13px;margin-top:12px;min-height:16px"></div>'+
+      '</div></section></div>');
+    wireMerge();
+  }
+
+  // Resolve a slug to a title + credit/expansion counts so the admin can confirm the pick.
+  function previewGame(slug, el){
+    slug = String(slug||"").trim();
+    if(!slug){ el.textContent=""; return; }
+    el.textContent = "Checking…";
+    Promise.all([
+      DQ.loadEntity("games", slug).catch(function(){ return null; }),
+      DQAPI.gameCredits(slug).catch(function(){ return {}; })
+    ]).then(function(res){
+      var g=res[0], api=(res[1]&&res[1].data)||{};
+      var title = (api.game&&api.game.title) || (g&&g.title) || null;
+      var n = (api.credits||[]).length;
+      if(!title && !n){ el.innerHTML = '<span style="color:var(--pink)">No catalogue game or credits found for “'+DQ.esc(slug)+'”.</span>'; return; }
+      var kids = ((g&&g.children)||[]).length + ((api.children||[]).length);
+      el.innerHTML = '<a href="/credits/game/'+encodeURIComponent(slug)+'" target="_blank" rel="noopener" style="color:var(--accent);font-weight:700">'+DQ.esc(title||slug)+' ↗</a> · '+n+' credit'+(n===1?'':'s')+(kids?(' · '+kids+' linked expansion'+(kids===1?'':'s')):'');
+    });
+  }
+
+  function wireMerge(){
+    var from=document.getElementById("mg-from"), into=document.getElementById("mg-into");
+    var fi=document.getElementById("mg-from-info"), ii=document.getElementById("mg-into-info"), st=document.getElementById("mg-status");
+    var t1,t2;
+    from.addEventListener("input", function(){ clearTimeout(t1); t1=setTimeout(function(){ previewGame(from.value, fi); }, 400); });
+    into.addEventListener("input", function(){ clearTimeout(t2); t2=setTimeout(function(){ previewGame(into.value, ii); }, 400); });
+    document.getElementById("mg-preview").onclick=function(){ previewGame(from.value, fi); previewGame(into.value, ii); };
+    document.getElementById("mg-merge").onclick=function(){
+      var f=from.value.trim(), i=into.value.trim(), btn=this;
+      if(!f||!i){ st.innerHTML='<span style="color:var(--pink)">Enter both slugs.</span>'; return; }
+      if(f===i){ st.innerHTML='<span style="color:var(--pink)">Pick two different games.</span>'; return; }
+      if(!confirm("Move all credits from \""+f+"\" into \""+i+"\", reparent its expansions, and retire \""+f+"\"? This cannot be undone.")) return;
+      btn.textContent="Merging…";
+      DQAPI.adminMergeGames({ from_slug:f, into_slug:i }).then(function(r){
+        btn.textContent="Merge →";
+        if(r&&r.ok){
+          st.innerHTML='<span style="color:var(--green)">✓ Merged into <b>'+DQ.esc(r.data.into_title||i)+'</b>. Moved '+r.data.moved+' credit'+(r.data.moved===1?'':'s')+(r.data.dropped?(', dropped '+r.data.dropped+' duplicate'+(r.data.dropped===1?'':'s')):'')+'. The duplicate is now hidden; a catalogue rebuild removes it from search.</span>';
+          from.value=""; into.value=""; fi.textContent=""; ii.textContent="";
+        } else {
+          st.innerHTML='<span style="color:var(--pink)">'+DQ.esc((r&&r.data&&r.data.error)||"Could not merge.")+'</span>';
+        }
+      }).catch(function(){ btn.textContent="Merge →"; st.innerHTML='<span style="color:var(--pink)">Network error.</span>'; });
+    };
   }
 })();
 </script>

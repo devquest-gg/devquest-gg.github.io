@@ -69,5 +69,6 @@
     adminResolveReport: function (id, payload) { return req("POST", "/admin/reports/" + id, payload); },
     adminCreditedGames: function () { return req("GET", "/admin/credited-games"); },
     adminSetGameCover: function (payload) { return req("POST", "/admin/game-cover", payload); },
+    adminMergeGames: function (payload) { return req("POST", "/admin/merge-games", payload); },
   };
 })(window);
