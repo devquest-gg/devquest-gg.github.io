@@ -33,7 +33,7 @@
 
 <footer><div class="container">
   <div><b style="color:var(--text)">DevQuest.gg / Credits</b> · a companion to the game-industry job board</div>
-  <div><a href="/credits/">← Credits home</a> &nbsp;·&nbsp; <a href="mailto:studios@devquest.gg?subject=DevQuest%20Credits%20feedback&body=Bug%2C%20idea%2C%20or%20just%20a%20thought%3A%0A%0A">Feedback</a></div>
+  <div><a href="/credits/">← Credits home</a> &nbsp;·&nbsp; <a href="https://igda.org/sigs/credits/" target="_blank" rel="noopener">IGDA crediting guidelines ↗</a> &nbsp;·&nbsp; <a href="mailto:studios@devquest.gg?subject=DevQuest%20Credits%20feedback&body=Bug%2C%20idea%2C%20or%20just%20a%20thought%3A%0A%0A">Feedback</a></div>
 </div></footer>
 
 <script src="api.js"></script>
@@ -239,6 +239,7 @@
         '<input class="tm-name" placeholder="e.g. Mark Davis" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:9px 11px;color:var(--text);font-size:14px;font-family:inherit">'+
         '<div style="font-size:12px;font-weight:700;margin:10px 0 6px">Their role <span style="font-weight:400;color:var(--muted)">(optional)</span></div>'+
         '<input class="tm-role" placeholder="e.g. Programmer" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:9px 11px;color:var(--text);font-size:14px;font-family:inherit">'+
+        '<div style="font-size:11.5px;color:var(--muted);margin-top:6px">Use a standard title where you can, per the <a href="https://igda.org/sigs/credits/" target="_blank" rel="noopener" style="color:var(--accent)">IGDA crediting guide ↗</a>.</div>'+
         '<div style="margin-top:12px;display:flex;gap:8px"><span class="btn primary tm-save" style="padding:8px 16px">Add teammate</span><span class="btn ghost tm-cancel" style="padding:8px 16px">Cancel</span></div>'+
         '<div class="tm-msg" style="font-size:13px;margin-top:10px"></div></div>';
       box.querySelector(".tm-cancel").onclick = function(){ box.innerHTML=""; atb.style.display=""; };
