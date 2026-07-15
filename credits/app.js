@@ -391,6 +391,22 @@
       });
       var gtitle = ov.querySelector("#dqc-gtitle"), gexist = ov.querySelector("#dqc-gexist"), gt;
       var gpchip = ov.querySelector("#dqc-gparent-chip"), gpwrap = ov.querySelector("#dqc-gparent-wrap"), gparent = ov.querySelector("#dqc-gparent");
+      // Search BOTH the static Wikidata index and D1 user-added games (games_added),
+      // deduped by slug (static first), so user-added titles like "City of Heroes"
+      // are found by the expansion auto-detect, the manual picker, and the dup warning.
+      function findGames(q, cap) {
+        cap = cap || 8;
+        var statP = loadIndex("games").then(function (rows) { return searchRows(rows, 1, q, cap * 3).rows; }).catch(function () { return []; });
+        var liveP = (w.DQAPI && w.DQAPI.searchGames)
+          ? w.DQAPI.searchGames(q).then(function (r) { return ((r.data && r.data.games) || []).map(function (g) { return [g.slug, g.title, g.year || "", g.studio || ""]; }); }).catch(function () { return []; })
+          : Promise.resolve([]);
+        return Promise.all([statP, liveP]).then(function (res) {
+          var seen = {}, out = [];
+          (res[0] || []).forEach(function (r) { var k = r[0]; if (k && !seen[k]) { seen[k] = 1; out.push(r); } });
+          (res[1] || []).forEach(function (r) { var k = r[0]; if (k && !seen[k]) { seen[k] = 1; out.push(r); } });
+          return out.slice(0, cap);
+        });
+      }
       // Show either the confirmed, clearable "Expansion of X" chip or the manual picker.
       function renderParent() {
         if (!gpchip || !gpwrap) return;
@@ -420,9 +436,9 @@
           if (autoDetected) { selParentSlug = selParentTitle = null; selParentStudio = ""; autoDetected = false; renderParent(); }
           return;
         }
-        loadIndex("games").then(function (rows) {
+        findGames(base, 8).then(function (m) {
           if (parentTouched || (selParentSlug && !autoDetected)) return;
-          var bl = base.toLowerCase(), m = searchRows(rows, 1, base, 8).rows, hit = null;
+          var bl = base.toLowerCase(), hit = null;
           for (var i = 0; i < m.length; i++) { if (String(m[i][1]).toLowerCase() === bl) { hit = m[i]; break; } }  // exact title wins
           if (!hit && m.length && rank(String(m[0][1]).toLowerCase(), bl) === 0) hit = m[0];                       // else top prefix hit
           if (hit) { selParentSlug = hit[0]; selParentTitle = hit[1]; selParentStudio = hit[3] || ""; autoDetected = true; renderParent(); }
@@ -431,8 +447,8 @@
       }
       // Manual search-picker for when the guess is wrong or absent.
       if (gparent) mkAutocomplete(gparent, function (q) {
-        return loadIndex("games").then(function (rows) {
-          return searchRows(rows, 1, q, 8).rows.map(function (r) {
+        return findGames(q, 8).then(function (rows) {
+          return rows.map(function (r) {
             return { label: r[1], slug: r[0], studio: r[3] || "", sub: (r[3] || "") + (r[2] ? (r[3] ? " · " : "") + r[2] : "") };
           });
         });
@@ -452,8 +468,7 @@
       var checkExist = function () {
         var q = gtitle.value.trim();
         if (q.length < 3) { gexist.innerHTML = ""; return; }
-        loadIndex("games").then(function (rows) {
-          var m = searchRows(rows, 1, q, 4).rows;
+        findGames(q, 4).then(function (m) {
           if (!m.length) { gexist.innerHTML = ""; return; }
           gexist.innerHTML = '<div class="dq-warn"><b>Already in the catalogue?</b> If your game is here, claim it instead of adding a duplicate: ' +
             m.map(function (r) { return '<a href="/credits/game/' + encodeURIComponent(r[0]) + '" target="_blank" rel="noopener">' + esc(r[1]) + (r[3] ? ' · ' + esc(r[3]) : '') + '</a>'; }).join(" &nbsp;·&nbsp; ") + '</div>';
