@@ -141,6 +141,49 @@
   .dwork{font-size:11px;color:var(--muted);margin-top:2px}
   .dverify{font-size:11.5px;font-weight:600;color:var(--green);background:rgba(63,185,80,.08);border:1px solid rgba(63,185,80,.28);border-radius:8px;padding:5px 10px;margin-top:11px}
 
+  /* featured profile: one real profile shown the way its live page looks (cover hero + timeline) */
+  .featframe{background:var(--panel);border:1px solid var(--border);border-radius:18px;overflow:hidden;position:relative}
+  .ftint{position:absolute;top:-70px;right:-50px;width:230px;height:230px;border-radius:50%;filter:blur(48px);opacity:.32;pointer-events:none;z-index:0}
+  .fhead{display:flex;align-items:center;gap:16px;padding:22px 24px 18px;border-bottom:1px solid var(--border);position:relative;z-index:1;flex-wrap:wrap}
+  .fav{width:56px;height:56px;flex:none;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:20px;color:#0b0e14}
+  .fident{min-width:0;flex:1}
+  .fname{font-weight:800;font-size:20px;letter-spacing:-.3px}
+  .fhl{font-size:13px;color:var(--muted);margin-top:2px}
+  .fhl b{color:#c4cfdd;font-weight:600}
+  .fmeta{display:flex;gap:8px;flex-wrap:wrap;margin-top:9px}
+  .fchip{font-size:11.5px;font-weight:600;color:#c4cfdd;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:999px;padding:3px 11px;font-variant-numeric:tabular-nums}
+  .fchip.vf{color:var(--green);border-color:rgba(63,185,80,.3);background:rgba(63,185,80,.08)}
+  .fview{margin-left:auto;font-size:13px;font-weight:700;color:var(--accent);white-space:nowrap;align-self:center}
+  .fbody{padding:20px 24px 24px;position:relative;z-index:1}
+  .feyebrow{font-size:11px;letter-spacing:1.4px;text-transform:uppercase;color:var(--muted);font-weight:700;margin:0 0 12px}
+  .feathero{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  .ftile{text-decoration:none;color:inherit;display:block}
+  .fcov{position:relative;aspect-ratio:2/3;border-radius:13px;overflow:hidden;background:#141b26;box-shadow:0 8px 22px rgba(0,0,0,.5),inset 0 0 0 1px rgba(255,255,255,.06);transition:transform .14s ease,box-shadow .14s ease}
+  .ftile:hover .fcov{transform:translateY(-4px);box-shadow:0 16px 34px rgba(0,0,0,.6),inset 0 0 0 1px rgba(255,255,255,.13)}
+  .fcov img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1}
+  .fph{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:14px;text-align:center;font-size:12.5px;font-weight:800;letter-spacing:.11em;text-transform:uppercase;color:rgba(255,255,255,.30);line-height:1.3}
+  .fscrim{position:absolute;left:0;right:0;bottom:0;z-index:2;padding:40px 13px 12px;background:linear-gradient(to top,rgba(4,7,12,.96) 12%,rgba(4,7,12,.70) 55%,transparent);pointer-events:none}
+  .ftt{display:block;color:#fff;font-weight:750;font-size:15px;line-height:1.2;margin-bottom:4px;overflow-wrap:break-word}
+  .fmt{display:block;color:var(--gold);font-weight:700;font-size:12px;line-height:1.3}
+  .fsub{display:block;color:#8b98a9;font-size:11px;margin-top:3px;font-variant-numeric:tabular-nums}
+  .fvb{position:absolute;top:9px;right:9px;z-index:3;width:24px;height:24px;border-radius:50%;background:rgba(63,185,80,.95);color:#04220f;font-size:14px;font-weight:900;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 5px rgba(0,0,0,.5)}
+  .ftl{margin-top:6px}
+  .ftlrow{display:grid;grid-template-columns:52px 20px 1fr;align-items:start}
+  .ftlyear{font-variant-numeric:tabular-nums;font-weight:800;font-size:14px;color:var(--accent);padding-top:2px}
+  .ftlrail{position:relative;display:flex;justify-content:center;align-self:stretch}
+  .ftlrail::before{content:"";position:absolute;top:0;bottom:0;width:2px;background:var(--border)}
+  .ftlrow:first-child .ftlrail::before{top:10px}
+  .ftlrow:last-child .ftlrail::before{bottom:auto;height:10px}
+  .ftldot{position:relative;z-index:1;width:10px;height:10px;border-radius:50%;background:var(--accent);margin-top:6px;box-shadow:0 0 0 4px var(--panel)}
+  .ftlcard{display:flex;gap:12px;align-items:center;padding:0 0 16px 12px;min-width:0}
+  .ftlthumb{position:relative;flex:none;width:40px;aspect-ratio:2/3;border-radius:6px;overflow:hidden;background:#141b26;box-shadow:0 3px 9px rgba(0,0,0,.5),inset 0 0 0 1px rgba(255,255,255,.06);display:block}
+  .ftlthumb img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+  .ftlph{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:3px;text-align:center;font-size:7px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:rgba(255,255,255,.32);line-height:1.2}
+  .ftlbody{min-width:0}
+  .ftlname{font-weight:750;font-size:14px;color:#e6edf5;display:flex;align-items:center;gap:6px}
+  .ftlrole{font-size:12px;color:var(--muted);margin-top:1px}
+  @media(max-width:600px){.feathero{grid-template-columns:1fr 1fr}}
+
   /* how it works */
   .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
   .step{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:22px}
@@ -243,10 +286,10 @@
 <section class="blk" id="devs"><div class="container">
   <div class="rowhead">
     <div><div class="eyebrow">The people</div><h2 class="sec">What a claimed profile looks like</h2>
-      <p class="secsub" style="margin:0">A credit page beats a résumé bullet. Verified by the people you actually worked with.</p></div>
+      <p class="secsub" style="margin:0">Not a résumé bullet: a cover-rich, peer-verified page owned by the person who did the work. A real one from the catalogue, refresh to see another.</p></div>
     <a class="more" href="search.html?tab=people">Browse people →</a>
   </div>
-  <div class="dcards" id="dcards"></div>
+  <div class="featframe" id="featwrap"><div class="fbody"><div style="color:var(--muted);padding:16px 2px">Loading a profile…</div></div></div>
 </div></section>
 
 <!-- HOW IT WORKS -->
@@ -291,66 +334,91 @@
   // The old hardcoded COVERS/GAMES placeholder blocks were removed: the games grid was cut, and
   // its leftover render threw on the missing #gcards element, halting the whole script.
 
-  // ---- profile-preview cards (mirror the live person page: headline, snapshot,
-  //      gameography rows with release pills, gold roles, green peer-verified) ----
-  // Real claimed profiles (not mock-ups). Data mirrors the live person pages.
-  var DEVS=[
-    {name:"Destin Bales", slug:"destin-bales", title:"Director of Development Management", studio:"Insomniac Games", color:"#58a6ff", snap:"9 shipped games · since 2001", verified:1, total:9,
-      credits:[
-        {g:"Tom Clancy's Rainbow Six Siege", verified:false, role:"Vice President of Production", worked:"the live-service era"},
-        {g:"Dark Age of Camelot", verified:true, role:"Producer"}
-      ]},
-    {name:"Mark Davis", slug:"mark-davis", title:"Production Director", studio:"Certain Affinity", color:"#a371f7", snap:"5 shipped games · since 2001", verified:2, total:5,
-      credits:[
-        {g:"Hogwarts Legacy", verified:false, role:"Production Director"},
-        {g:"Warhammer Online: Age of Reckoning", verified:true, role:"Contributor"}
-      ]},
-    {name:"Ellisa Barr", slug:"ellisa-barr", title:"Senior Producer", studio:"Studio Drydock", color:"#3fb950", snap:"3 shipped games · since 2001", verified:3, total:3,
-      credits:[
-        {g:"Dark Age of Camelot", verified:true, role:"Quest Designer", worked:"the live-service era"},
-        {g:"City of Heroes", verified:true, role:"Producer", worked:"the live-service era"}
-      ]}
-  ];
-  var COLORS=['#58a6ff','#a371f7','#3fb950','#e0b23a','#f778ba'];
+  // ---- Featured profile: one REAL claimed profile, rendered the way its live page looks
+  //      (a cover-art hero row + a career timeline), reshuffled to a new developer per refresh.
+  //      Covers come free from Steam capsules and admin covers, same pipeline as the person page.
   function dEsc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
-  function devCard(d, idx){
-    var initials=String(d.name||'?').trim().split(/\s+/).slice(0,2).map(function(w){return w[0]||'';}).join('').toUpperCase();
-    var color=d.color||COLORS[idx%COLORS.length];
-    var rows=(d.credits||[]).map(function(c){
-      var seal=c.verified?' <span class="dseal" title="Verified by a teammate who shipped the same game">✓</span>':'';
-      var worked=c.worked?'<div class="dwork">Also worked on: '+dEsc(c.worked)+'</div>':'';
-      return '<div class="cr"><div class="crtop"><span class="crg">'+dEsc(c.g)+'</span>'+seal+'</div><div class="crrole">'+dEsc(c.role)+'</div>'+worked+'</div>';
-    }).join('');
-    var href = d.slug ? ' href="/credits/'+encodeURIComponent(d.slug)+'"' : '';
-    return '<a class="dcard"'+href+' style="text-decoration:none;color:inherit"><div class="halo" style="background:'+color+'"></div>'+
-      '<div class="av" style="background:'+color+'">'+dEsc(initials)+'</div>'+
-      '<div class="nm">'+dEsc(d.name)+'</div>'+
-      '<div class="hl">'+dEsc(d.title)+'</div>'+(d.studio?'<div class="hlst">'+dEsc(d.studio)+'</div>':'')+
-      '<div class="snap">'+dEsc(d.snap)+'</div>'+
-      '<div class="dverify">✓ '+(d.verified||0)+' of '+(d.total||0)+' credits peer-verified</div>'+
-      '<div class="gocred">'+rows+'</div></a>';
-  }
-  function renderDevs(list){ document.getElementById('dcards').innerHTML=list.map(devCard).join(''); }
   function dShuffle(a){ a=a.slice(); for(var i=a.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)),t=a[i];a[i]=a[j];a[j]=t; } return a; }
-  function apiToCard(p){
-    var h=String(p.headline||'').trim(), i=h.toLowerCase().lastIndexOf(' at ');
-    return { name:p.name, slug:p.slug,
-      title: i>0?h.slice(0,i):(h||'Developer'), studio: i>0?h.slice(i+4):'',
-      snap: (p.total||0)+' shipped '+((p.total===1)?'game':'games'),
-      verified:p.verified||0, total:p.total||0,
-      credits:(p.credits||[]).map(function(c){ return {g:c.g, verified:!!c.verified, role:c.role||'', worked:c.worked||null}; }) };
+  function fHash(s){ s=String(s||''); var h=0; for(var i=0;i<s.length;i++){ h=(h*31+s.charCodeAt(i))|0; } return h; }
+  var FEATEL=document.getElementById('featwrap');
+  var FCOLORS=['#58a6ff','#a371f7','#3fb950','#e0b23a','#f778ba'];
+  var STEAMCAP='https://cdn.cloudflare.steamstatic.com/steam/apps/';
+  function coverSrc(c){ return c.cover ? DQ.safeUrl(c.cover) : (c.steam ? STEAMCAP+encodeURIComponent(c.steam)+'/library_600x900.jpg' : ''); }
+  function hasCover(c){ return !!coverSrc(c); }
+  function fHeroTile(c){
+    var src=coverSrc(c);
+    var art='<span class="fph">'+dEsc(c.game_title)+'</span>'+(src?'<img loading="lazy" referrerpolicy="no-referrer" src="'+dEsc(src)+'" onerror="this.remove()" alt="">':'');
+    var vb=c.vouch_count?'<span class="fvb" title="Peer-verified by a teammate who shipped this game">✓</span>':'';
+    var meta=(c.studio?dEsc(c.studio)+'  ·  ':'')+(c.year?c.year:'—');
+    return '<a class="ftile" href="/credits/game/'+encodeURIComponent(c.game_slug)+'"><div class="fcov">'+art+vb+
+      '<div class="fscrim"><b class="ftt">'+dEsc(c.game_title)+'</b><span class="fmt">'+dEsc(c.role||'Role not recorded')+'</span><span class="fsub">'+meta+'</span></div></div></a>';
   }
-  // Show curated samples immediately (no empty flash), then upgrade to a fresh random trio of
-  // REAL claimed profiles from the DB. Pads with samples if the quality pool is thin in beta.
-  renderDevs(dShuffle(DEVS).slice(0,3));
-  if(window.DQAPI && DQAPI.spotlight){
+  function fTlRow(c){
+    var src=coverSrc(c);
+    var thumb='<span class="ftlph">'+dEsc(c.game_title)+'</span>'+(src?'<img loading="lazy" referrerpolicy="no-referrer" src="'+dEsc(src)+'" onerror="this.remove()" alt="">':'');
+    var seal=c.vouch_count?' <span class="dseal" title="Peer-verified by a teammate">✓</span>':'';
+    return '<div class="ftlrow"><div class="ftlyear">'+(c.year||'—')+'</div><div class="ftlrail"><span class="ftldot"></span></div>'+
+      '<div class="ftlcard"><a class="ftlthumb" href="/credits/game/'+encodeURIComponent(c.game_slug)+'">'+thumb+'</a>'+
+      '<div class="ftlbody"><div class="ftlname">'+dEsc(c.game_title)+seal+'</div><div class="ftlrole">'+dEsc(c.role||'Role not recorded')+'</div></div></div></div>';
+  }
+  function fRender(p, credits){
+    if(!FEATEL) return;
+    var initials=String(p.name||'?').trim().split(/\s+/).slice(0,2).map(function(w){return w[0]||'';}).join('').toUpperCase();
+    var color=FCOLORS[Math.abs(fHash(p.slug||p.name))%FCOLORS.length];
+    var h=String(p.headline||'').trim(), ai=h.toLowerCase().lastIndexOf(' at ');
+    var title=ai>0?h.slice(0,ai):(h||'Developer'), studio=ai>0?h.slice(ai+4):'';
+    var total=credits.length, verified=credits.filter(function(c){return c.vouch_count;}).length;
+    var hero=credits.filter(hasCover).concat(credits.filter(function(c){return !hasCover(c);})).slice(0,3);
+    var tl=credits.slice().sort(function(a,b){ return ((a.year||a.work_start||9999)-(b.year||b.work_start||9999)) || String(a.game_title).localeCompare(String(b.game_title)); }).slice(0,6);
+    var vchip=verified?'<span class="fchip vf">✓ '+verified+' of '+total+' peer-verified</span>':'';
+    FEATEL.innerHTML=
+      '<div class="ftint" style="background:radial-gradient(closest-side,'+color+',transparent)"></div>'+
+      '<div class="fhead"><div class="fav" style="background:'+color+'">'+dEsc(initials)+'</div>'+
+        '<div class="fident"><div class="fname">'+dEsc(p.name)+'</div>'+
+          '<div class="fhl"><b>'+dEsc(title)+'</b>'+(studio?' · '+dEsc(studio):'')+'</div>'+
+          '<div class="fmeta"><span class="fchip">'+total+' shipped '+(total===1?'title':'titles')+'</span>'+vchip+'</div></div>'+
+        '<a class="fview" href="/credits/'+encodeURIComponent(p.slug)+'">View full profile →</a></div>'+
+      '<div class="fbody"><div class="feyebrow">Proudest work</div>'+
+        '<div class="feathero">'+hero.map(fHeroTile).join('')+'</div>'+
+        (tl.length>1?'<div class="feyebrow" style="margin-top:22px">Career timeline</div><div class="ftl">'+tl.map(fTlRow).join('')+'</div>':'')+
+      '</div>';
+  }
+  // Enrich a person's credits with cover art + release year from the static shards and admin
+  // covers (the exact pipeline the live person page uses). Mutates and resolves the array.
+  function fEnrich(cr){
+    var slugs=cr.map(function(c){return c.game_slug;});
+    var pc=(slugs.length&&window.DQAPI&&DQAPI.gameCovers)?DQAPI.gameCovers(slugs).then(function(rr){return (rr.data&&rr.data.covers)||{};}).catch(function(){return {};}):Promise.resolve({});
+    var ps=Promise.all(cr.map(function(c){ return DQ.loadEntity('games',c.game_slug).then(function(gg){ if(gg){ if(c.year==null&&gg.year!=null)c.year=gg.year; if(gg.steam)c.steam=gg.steam; if(gg.cover)c.cover=gg.cover; } }).catch(function(){}); }));
+    return Promise.all([pc,ps]).then(function(rz){ var cov=rz[0]||{}; cr.forEach(function(c){ if(cov[c.game_slug]) c.cover=cov[c.game_slug]; }); return cr; });
+  }
+  // Sample shown instantly (real games with Steam covers) so the section never flashes empty;
+  // upgraded to a live random profile the moment the spotlight pool resolves.
+  var SAMPLE={ p:{name:'Destin Bales', slug:'destin-bales', headline:'Director of Development Management at Insomniac Games'},
+    cr:[ {game_slug:'tom-clancys-rainbow-six-siege', game_title:"Tom Clancy's Rainbow Six Siege", role:'Vice President of Production', studio:'Ubisoft Montreal', year:2015, steam:'359550', vouch_count:0},
+         {game_slug:'hogwarts-legacy', game_title:'Hogwarts Legacy', role:'Production Director', studio:'Avalanche Software', year:2023, steam:'990080', vouch_count:1},
+         {game_slug:'dark-age-of-camelot', game_title:'Dark Age of Camelot', role:'Producer', studio:'Mythic Entertainment', year:2001, steam:'', vouch_count:1} ] };
+  fRender(SAMPLE.p, SAMPLE.cr);
+  // Pick a quality profile from the spotlight pool; try a few so the featured one has real
+  // cover art when possible, then fall back to the first viable profile regardless.
+  if(window.DQAPI && DQAPI.spotlight && FEATEL){
     DQAPI.spotlight().then(function(r){
-      var ppl=(r&&r.ok&&r.data&&r.data.people)||[];
-      var real=dShuffle(ppl).map(apiToCard);
-      if(!real.length) return; // keep the samples
-      var list=real;
-      if(real.length<3){ var pad=dShuffle(DEVS).filter(function(s){ return !real.some(function(x){return x.slug===s.slug;}); }); list=real.concat(pad); }
-      renderDevs(list.slice(0,3));
+      var pool=dShuffle((r&&r.ok&&r.data&&r.data.people)||[]);
+      if(!pool.length) return; // keep the sample
+      var tried=0, first=null;
+      function attempt(i){
+        if(i>=pool.length || tried>=3){ if(first) fRender(first.p, first.cr); return; }
+        tried++;
+        DQAPI.personCredits(pool[i].slug).then(function(pr){
+          var d=(pr&&pr.data)||{}, per=d.person, cr=(d.credits||[]);
+          if(!per||per.hidden||!cr.length){ return attempt(i+1); }
+          var pp={name:per.name, slug:per.slug, headline:per.headline||pool[i].headline||''};
+          fEnrich(cr).then(function(){
+            if(!first) first={p:pp, cr:cr};
+            if(cr.some(hasCover)) fRender(pp, cr); else attempt(i+1);
+          });
+        }).catch(function(){ attempt(i+1); });
+      }
+      attempt(0);
     }).catch(function(){});
   }
 
