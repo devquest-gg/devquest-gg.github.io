@@ -379,10 +379,25 @@
       alert("Couldn't reach the sign-in service. Please reload the page and try again.");
     };
     if (isAdd) {
+      // Search BOTH the static studios index and D1 user-added studios (from games_added),
+      // deduped by slug (static first), so user-created studios like "Paragon Studios" show.
+      function findStudios(q, cap) {
+        cap = cap || 8;
+        var statP = loadIndex("studios").then(function (rows) { return searchRows(rows, 1, q, cap * 3).rows; }).catch(function () { return []; });
+        var liveP = (w.DQAPI && w.DQAPI.searchStudios)
+          ? w.DQAPI.searchStudios(q).then(function (r) { return ((r.data && r.data.studios) || []).map(function (s) { return [s.slug, s.name, s.count || 0]; }); }).catch(function () { return []; })
+          : Promise.resolve([]);
+        return Promise.all([statP, liveP]).then(function (res) {
+          var seen = {}, out = [];
+          (res[0] || []).forEach(function (r) { var k = r[0]; if (k && !seen[k]) { seen[k] = 1; out.push(r); } });
+          (res[1] || []).forEach(function (r) { var k = r[0]; if (k && !seen[k]) { seen[k] = 1; out.push(r); } });
+          return out.slice(0, cap);
+        });
+      }
       var gstudio = ov.querySelector("#dqc-gstudio");
       if (gstudio) mkAutocomplete(gstudio, function (q) {
-        return loadIndex("studios").then(function (rows) {
-          return searchRows(rows, 1, q, 8).rows.map(function (r) { return { label: r[1], slug: r[0], sub: (r[2] || 0) + " games" }; });
+        return findStudios(q, 8).then(function (rows) {
+          return rows.map(function (r) { return { label: r[1], slug: r[0], sub: (r[2] || 0) + " games" }; });
         });
       }, {
         onSelect: function (it) { selStudioSlug = it.slug; },
