@@ -234,7 +234,7 @@
         '<div class="rowhead"><div><div class="eyebrow">Credits</div>'+
           '<h2 class="sec">'+(credits.length? credits.length+' credited' : 'Who made this game?')+'</h2>'+
           '<p class="secsub" style="margin:0">A developer-owned, peer-verified record of who made this game. Roles reflect each person\'s full time on the title, not a single moment. Listed alphabetically.</p></div>'+
-          (iHaveCredit ? '' : '<span class="btn primary" id="claimbtn">This is me — claim my credit</span>')+
+          (iHaveCredit ? '' : '<span class="btn primary" id="claimbtn">I worked on this game</span>')+
         '</div>'+
         vouchInvite +
         creditsHTML +
@@ -253,9 +253,26 @@
 
     var cb = document.getElementById("claimbtn");
     if(cb) cb.onclick = function(){
-      if(window.DQAPI && !DQAPI.isSignedIn()){ location.href = "signin.html"; return; }
+      if(window.DQAPI && !DQAPI.isSignedIn()){
+        // Stash which game they're claiming so the sign-in page can say so, and so we can
+        // reopen the claim form here after they sign in.
+        try{ localStorage.setItem("dq_claim_game", JSON.stringify({ slug: slug, title: title })); }catch(e){}
+        location.href = "signin.html"; return;
+      }
       DQ.openClaim({ game_slug: slug, game_title: title, game_qid: qid });
     };
+    // Arrived back here signed in after clicking "I worked on this game" while signed out:
+    // reopen the claim form automatically (unless they already hold a credit here).
+    try{
+      var _cg = localStorage.getItem("dq_claim_game");
+      if(_cg && window.DQAPI && DQAPI.isSignedIn()){
+        var _cgp = JSON.parse(_cg);
+        if(_cgp && _cgp.slug === slug){
+          localStorage.removeItem("dq_claim_game");
+          if(!iHaveCredit) DQ.openClaim({ game_slug: slug, game_title: title, game_qid: qid });
+        }
+      }
+    }catch(e){}
     var rgb = document.getElementById("reportgame");
     if(rgb) rgb.onclick = function(){ DQ.openReport("game", slug, title); };
     var asb = document.getElementById("addstudio");

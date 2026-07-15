@@ -102,6 +102,14 @@
     }
   }
 
+  // 1a5) Or you came from a game's "I worked on this game" button (signed out). Now signed
+  // in, go back to that game — its page reopens the claim form (and clears this flag).
+  var claimGame = null; try{ claimGame = localStorage.getItem("dq_claim_game"); }catch(e){}
+  if(claimGame && DQAPI.isSignedIn()){
+    var cgResume = null; try{ cgResume = JSON.parse(claimGame); }catch(e){ cgResume = null; }
+    if(cgResume && cgResume.slug){ location.href = "/credits/game/" + encodeURIComponent(cgResume.slug); return; }
+  }
+
   // 1b) Flash flags carried on the fragment (added=1) or query (email=taken)
   var flash = "";
   if(location.hash.indexOf("added=1") >= 0){ flash = "ok:Backup email confirmed and added to your account."; }
@@ -186,7 +194,14 @@
     }).catch(function(){ var box = document.getElementById("invites"); if(box) box.innerHTML = '<div class="mut" style="font-size:13px">Could not load invites right now.</div>'; });
   }
   function showForm(){
+    // If they arrived from a game's "I worked on this game" button, say plainly what signing
+    // in does — this was a tester's confusion ("am I claiming to be the person listed?").
+    var claimCtx = "";
+    try{ var _cgRaw = localStorage.getItem("dq_claim_game"); if(_cgRaw){ var _cg = JSON.parse(_cgRaw); if(_cg && _cg.title){
+      claimCtx = '<div style="margin:0 0 16px;padding:11px 13px;border:1px solid rgba(88,166,255,.35);background:rgba(88,166,255,.08);border-radius:10px;color:var(--text);font-size:13.5px;line-height:1.5">You’re adding <b>your own</b> credit for working on <b>'+esc(_cg.title)+'</b>. Signing in starts <b>your</b> profile — it doesn’t claim anyone else’s.</div>';
+    } } }catch(e){}
     card.innerHTML =
+      claimCtx +
       '<h1>Sign in to DevQuest Credits</h1>' +
       '<p>Enter your email and we’ll send a one-time sign-in link. No password.<br><span style="color:var(--text);font-weight:600">Returning?</span> Use the same email you claimed with and your profile comes right back.</p>' +
       '<input id="email" type="email" placeholder="you@example.com" autocomplete="email">' +
