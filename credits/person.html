@@ -263,7 +263,7 @@
     var kidParents = {}; credits.forEach(function(c){ var _p = nestParentSlug(c); if(_p) kidParents[_p] = true; });
     function collapseToggle(slug){
       return kidParents[slug]
-        ? '<span class="expcollapse" data-base="'+DQ.esc(slug)+'" data-collapsed="0" role="button" tabindex="0" title="Collapse / expand expansions" style="cursor:pointer;color:var(--muted);font-weight:700;margin-right:6px;user-select:none">▾</span>'
+        ? '<span class="expcollapse expctl" data-base="'+DQ.esc(slug)+'" data-collapsed="0" role="button" tabindex="0" title="Collapse / expand expansions" style="cursor:pointer;color:var(--muted);font-weight:700;margin-right:6px;user-select:none">▾</span>'
         : '';
     }
     function prettySlug(s){ return String(s||"").replace(/-/g," ").replace(/\b\w/g, function(ch){ return ch.toUpperCase(); }); }
@@ -387,7 +387,7 @@
           '<a class="rmvcredit" data-id="'+c.id+'" style="color:var(--pink);font-size:12px;cursor:pointer;margin-left:10px">Remove</a>'
         : '';
       var _rowStyle = _isChild ? ' style="margin-left:26px;border-left:2px solid var(--border,#2d333b);padding-left:12px"' : '';
-      var _kidMark = _isChild ? '<span class="mut" style="font-weight:400;margin-right:5px" title="Expansion of the game above">↳</span>' : '';
+      var _kidMark = _isChild ? '<span class="mut expctl expcollapse-child" data-base="'+DQ.esc(c.parent_slug)+'" role="button" tabindex="0" style="font-weight:400;margin-right:5px;cursor:pointer" title="Collapse under the base game">↳</span>' : '';
       return '<div class="row"'+((isOwn&&c.live&&c.id)?' data-id="'+c.id+'"':'')+_rowStyle+(_isChild?' data-childof="'+DQ.esc(c.parent_slug)+'"':'')+'>'+
         grip +
         '<div class="rmain"><div class="rname">'+(_isChild?_kidMark:collapseToggle(c.game_slug))+'<a href="/credits/game/'+encodeURIComponent(c.game_slug)+'">'+DQ.esc(c.game_title)+'</a>'+ast+seal+orphanExpTag(c)+'</div>'+
@@ -452,7 +452,7 @@
         ? (isFeat ? '<span class="tlfeat" title="One of your Highlights above">★ Highlight</span>' : '<a class="tlfeatbtn" data-id="'+c.id+'" title="Feature this in your Highlights">☆ Make a highlight</a>')
         : '';
       var gurl = '/credits/game/'+encodeURIComponent(c.game_slug);
-      var _yearCell = _isChild ? '<span class="mut" title="Expansion of the game above">↳</span>' : yearLabel;
+      var _yearCell = _isChild ? '<span class="mut expctl expcollapse-child" data-base="'+DQ.esc(c.parent_slug)+'" role="button" tabindex="0" style="cursor:pointer" title="Collapse under the base game">↳</span>' : yearLabel;
       var _cardStyle = _isChild ? ' style="margin-left:22px"' : '';
       return '<div class="tlrow'+(isFeat?' isfeat':'')+(_isChild?' tlrow-child':'')+'"'+(_isChild?' data-childof="'+DQ.esc(c.parent_slug)+'"':'')+'>'+
         '<div class="tlyear" title="'+(_isChild?'Expansion of the game above':yearTip)+'">'+_yearCell+'</div>'+
@@ -617,21 +617,32 @@
       };
     });
 
-    // Collapse / expand the expansions nested under a base game. Scoped per view (List and
-    // the Portfolio timeline each have their own chevron + child rows).
-    Array.prototype.forEach.call(document.querySelectorAll(".expcollapse"), function(tg){
-      function toggle(){
-        var base = tg.getAttribute("data-base");
-        var collapsing = tg.getAttribute("data-collapsed") !== "1";
-        var scope = tg.closest("#gv-visual, #gv-list") || document;
-        var kids = scope.querySelectorAll('[data-childof="'+base+'"]');
-        Array.prototype.forEach.call(kids, function(r){ r.style.display = collapsing ? "none" : ""; });
-        tg.setAttribute("data-collapsed", collapsing ? "1" : "0");
-        tg.textContent = collapsing ? ("▸ "+kids.length) : "▾";
-      }
-      tg.onclick = function(e){ e.preventDefault(); e.stopPropagation(); toggle(); };
-      tg.onkeydown = function(e){ if(e.key==="Enter" || e.key===" "){ e.preventDefault(); toggle(); } };
-    });
+    // Collapse / expand nested expansions. DELEGATED off the document so it can't be lost to
+    // any later re-render, and works from BOTH the base game's ▾ chevron (toggle) and a
+    // child's ↳ (collapse). Scoped to the clicked view so List and the Portfolio timeline
+    // stay independent.
+    function _expToggle(ctl){
+      var base = ctl.getAttribute("data-base"); if(!base) return;
+      var scope = ctl.closest("#gv-visual, #gv-list") || document;
+      var chev = scope.querySelector('.expcollapse[data-base="'+base+'"]');
+      var kids = scope.querySelectorAll('[data-childof="'+base+'"]');
+      // A ↳ always collapses; the chevron flips based on its own current state.
+      var collapsing = ctl.classList.contains("expcollapse-child") ? true : (!chev || chev.getAttribute("data-collapsed") !== "1");
+      Array.prototype.forEach.call(kids, function(r){ r.style.display = collapsing ? "none" : ""; });
+      if(chev){ chev.setAttribute("data-collapsed", collapsing ? "1" : "0"); chev.textContent = collapsing ? ("▸ "+kids.length) : "▾"; }
+    }
+    document.addEventListener("click", function(e){
+      var ctl = e.target && e.target.closest && e.target.closest(".expctl");
+      if(!ctl) return;
+      e.preventDefault(); e.stopPropagation();
+      _expToggle(ctl);
+    }, false);
+    document.addEventListener("keydown", function(e){
+      if(e.key!=="Enter" && e.key!==" ") return;
+      var ctl = e.target && e.target.closest && e.target.closest(".expctl");
+      if(!ctl) return;
+      e.preventDefault(); _expToggle(ctl);
+    }, false);
 
     // ---- Drag-to-reorder in the Visual grid (owner only, pointer-based) ----
     // Native HTML5 drag was imprecise about drop targets. This uses mouse events + nearest-
