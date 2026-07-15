@@ -113,6 +113,7 @@ const DIRECTORY = [
   { name: "Room 8 Studio", url: "https://room8studio.com/careers/", note: "Game art & co-development services (CoD, Diablo, AC) — WordPress careers, no ATS feed", city: "" },
   { name: "Critical Path Games", url: "https://critpath.com/careers", note: "Unannounced multiplayer, cross-platform game (Vancouver indie). Custom Astro site, no scrapeable ATS feed. Requested by studio 2026-07-14", city: "Vancouver, BC" }, // COO Jeanne-Marie Owens emailed studios@; ~1 real role (Senior Animator) plus a General Applications catch-all, hardcoded static pages, nothing to scrape, so Island
   { name: "Webcore Games", url: "https://www.webcoregames.com/careers/", note: "Co-dev, porting & LiveOps studio (São Paulo, since 2004). Applies via a ClickUp form, no scrapeable ATS feed. Requested 2026-07-15", city: "São Paulo, Brazil" }, // apply link goes to forms.clickup.com; ~1 role (Game Engineer) + talent-bank form. No ATS feed to scrape, so Island. Same co-dev pattern as Room 8 / Enduring.
+  { name: "Arcanaut Studios", url: "https://www.arcanautstudios.com/careers", note: "Star Wars: Fate of the Old Republic (Casey Hudson / ex-BioWare, with Lucasfilm Games). applytojobs.ca board, no fetcher yet; no open roles as of 2026-07-15", city: "Edmonton, Canada" }, // Webflow careers page embeds arcanautstudios.applytojobs.ca (/v1/embedded). Notable studio, promotable to mainland once they post roles + a fetcher exists. Requested 2026-07-15
   // (Torpor Games promoted to mainland 2026-07-05 — HiBob (Bob) ATS, /api/job-ad JSON; see fetchHibob.)
   // (Flix Interactive promoted to mainland 2026-07-05 — self-hosted WP careers page (.vacancy-card list); see fetchFlix.)
   // (Anshar Studios promoted to mainland 2026-07-05 — WP careers page → Traffit board; see fetchTraffit.)
@@ -1145,7 +1146,7 @@ function strongTitleDiscipline(t) {
   if (/developer (relations|engagement|evangelis|advocat|marketing|outreach|experience rep|support|solutions?)|\bdev ?rel\b|community developer|content developer|video content|publisher developer relations/.test(t)) return "Marketing";
   if (/\baudio\b|sound design|\bcomposer\b|music design|\bsonore\b|conception sonore/.test(t)) return "Audio";
   if (/\bqa\b|quality assurance|\bqc\b|quality control|contr[ôo]le qualit|\btester\b|\bsdet\b|test (engineer|analyst|lead|automation|specialist)|quality (engineer|analyst|specialist)|assurance qualit/.test(t)) return "QA";
-  if (/art director|\bartist\b|\bartiste\b|direct(eur|rice|ion) artistique|\bart lead\b|lead artist|concept art|\bvfx\b|lighting (artist|lead)|environment artist|character artist|technical artist|technical art\b|(character|environment|prop|vehicle|weapon|texture) (artist|art|outsourc)/.test(t)) return "Art";
+  if (/art director|\bartist\b|\bartiste\b|direct(eur|rice|ion) artistique|\bart lead\b|lead artist|concept art|\bvfx\b|\blighter\b|lighting (artist|lead)|environment artist|character artist|technical artist|technical art\b|(character|environment|prop|vehicle|weapon|texture) (artist|art|outsourc)/.test(t)) return "Art"; // \blighter\b = a lighting artist (film/game craft title, e.g. "Lighter - EA SPORTS FC")
   // Bare "art" as the role word: "AI Art Specialist", "Art Specialist/Lead/Manager/Outsourcing",
   // etc. The main Art rule keys on "artist"/specific combos and missed these. Word boundaries guard
   // out "smart", "part", "chart", "start", "state of the art".
@@ -1186,7 +1187,7 @@ function strongTitleDiscipline(t) {
   if (/\bai\b[ -](transformation|enablement|adoption|integration|automation|platform|infrastructure|tooling|engineer|developer|architect|ops|operations|solutions?|strategy|program|programme)\b/.test(t)) return "Engineering";
   // "Development Director/Manager/Lead" = game-production leadership — but NOT HR "Learning & Development"
   // or "Business Development" (sales). Guarded so those stay out of Production.
-  if (/\bdevelopment (director|manager|lead)\b/.test(t) && !/business|learning|talent|\bl&d\b|\bpeople\b|organi[sz]ation/.test(t)) return "Production";
+  if ((/\bdevelopment (director|manager|lead)\b/.test(t) || /\bdirector of (core|game|studio|title|content|product|live) development\b/.test(t)) && !/business|learning|talent|\bl&d\b|\bpeople\b|organi[sz]ation/.test(t)) return "Production"; // also catches reversed order "Director of Core Development" (e.g. Kabam)
   // Reversed-order product leadership ("Senior Manager, Product"), but not product MARKETING.
   if (/\b(manager|director|lead|owner|vp),?\s+product\b/.test(t) && !/marketing/.test(t)) return "Production";
   if (/\b(project|programme?|delivery|release|portfolio)\s+(manager|management|coordinator|lead|director|assistant)\b|technical (program|project) manager|scrum master|agile coach|\bpmo\b|\bproducer\b|production (coordinator|manager|director|assistant)|product (manager|owner|management|director|lead)|director,? of product|director,?\s+product|(vp|head) of product|game manager|producteur|productrice|réalisat(eur|rice)|gestionnaire de (projet|programme)|chef de (projet|produit)|coordonnateur de projet/.test(t)) return "Production";
@@ -1238,7 +1239,7 @@ function inferSeniority(title) {
   const t = title.toLowerCase();
   // An assistant TO a leader (e.g. "Executive Assistant – General Manager") is not the leader.
   const assistant = /\bassistant\b/.test(t);
-  if (!assistant && /\b(director|head of|vp|chief|executive producer|general manager|studio head)\b/.test(t)) return "Director+";
+  if (!assistant && /\b(director|head of|vp|chief|executive producer|general manager|studio head|distinguished)\b/.test(t)) return "Director+"; // "distinguished" = top IC rung (Distinguished Engineer), director/exec-tier, not Mid
   if (/\b(lead|principal|staff)\b/.test(t)) return "Lead";
   if (/\b(senior|sr\.?)\b/.test(t)) return "Senior";
   if (/\b(junior|jr\.?|associate|intern|entry|apprentice)\b/.test(t)) return "Entry";
