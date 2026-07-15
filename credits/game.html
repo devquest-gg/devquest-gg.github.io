@@ -188,17 +188,24 @@
       : '';
 
     // --- Expansion link: this entry is an expansion/edition OF a base game. ---
-    // parent_slug comes from the API game meta (community-added games only). The title is
-    // seeded from the API (community parent) or a prettified slug, then upgraded async to
-    // the canonical static-catalogue title via loadEntity after render.
-    var parentSlug = (apiGame && apiGame.parent_slug) || null;
-    var parentInit = parentSlug ? ((apiGame && apiGame.parent_title) || parentSlug.replace(/-/g," ").replace(/\b\w/g, function(c){ return c.toUpperCase(); })) : "";
+    // parent_slug comes from EITHER the static catalogue shard (Wikidata P8646 capture,
+    // baked by build-site.js) OR the D1 API game meta (community-added games). Title seeds
+    // from whichever carries it (or a prettified slug), then upgrades async via loadEntity.
+    var parentSlug = (g && g.parent_slug) || (apiGame && apiGame.parent_slug) || null;
+    var parentInit = parentSlug ? ((g && g.parent_title) || (apiGame && apiGame.parent_title) || parentSlug.replace(/-/g," ").replace(/\b\w/g, function(c){ return c.toUpperCase(); })) : "";
     var parentHTML = parentSlug
       ? '<div class="expof" style="margin-top:8px;font-size:13px"><span class="mut">Expansion of</span> <a id="dqc-parentlink" href="/credits/game/'+encodeURIComponent(parentSlug)+'">'+DQ.esc(parentInit)+'</a></div>'
       : '';
 
-    // --- Children: expansions/editions linked TO this game. ---
-    var children = (apiRes && apiRes.children) || [];
+    // --- Children: expansions/editions linked TO this game. Merge catalogue (static shard)
+    // children with community-added (D1 API) children, deduped by slug. ---
+    var children = [];
+    (function(){
+      var seenCh = {};
+      ((g && g.children) || []).concat((apiRes && apiRes.children) || []).forEach(function(ch){
+        if(ch && ch.slug && !seenCh[ch.slug]){ seenCh[ch.slug] = 1; children.push(ch); }
+      });
+    })();
     var childrenHTML = children.length
       ? '<section class="blk"><div class="container">'+
           '<div class="eyebrow">Expansions &amp; editions</div>'+
