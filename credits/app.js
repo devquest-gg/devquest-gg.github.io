@@ -274,6 +274,12 @@
     opts = opts || {}; injectClaimStyles();
     var isAdd = opts.mode === "addGame";
     var selStudioSlug = null;
+    // Expansion-of link (parent base game). Purely additive: an expansion is its own
+    // catalogue entry linked to the base, not merged or blocked. autoDetected = we guessed
+    // it from a "Base: Subtitle" title; parentTouched = the user has taken manual control
+    // (picked/cleared), after which we never auto-change it.
+    var selParentSlug = null, selParentTitle = null, selParentStudio = "";
+    var autoDetected = false, parentTouched = false;
     var ident = getIdentity();
     var isGame = !!opts.game_title;
     var showRole = isGame || isAdd;
@@ -284,6 +290,9 @@
       '<div class="dq-sub">' + (isAdd ? 'Not in the catalogue yet? Add the game and your role. ' : isGame ? 'On <b>' + esc(opts.game_title) + '</b>. ' : '') +
         'A person reviews every submission — nothing appears on the site until we verify it (usually within a day).</div>' +
       (isAdd ? '<label>Game title</label><input id="dqc-gtitle" autocomplete="off" value="' + esc(titleCase(opts.prefillTitle || "")) + '" placeholder="e.g. City of Heroes"><div id="dqc-gexist"></div>' +
+        '<label>Expansion of <span style="font-weight:400;color:var(--muted,#8b98a9)">— if this is an expansion, edition, or DLC of a base game, link it. Optional</span></label>' +
+        '<div id="dqc-gparent-chip"></div>' +
+        '<div id="dqc-gparent-wrap"><input id="dqc-gparent" autocomplete="off" placeholder="Search the base game…"></div>' +
         '<div class="dq-row2"><div><label>Studio <span style="font-weight:400;color:var(--muted,#8b98a9)">— search existing</span></label><input id="dqc-gstudio" autocomplete="off" value="' + esc(opts.prefillStudio || "") + '" placeholder="Start typing…"></div>' +
         '<div><label>Game\'s launch year <span style="font-weight:400;color:var(--muted,#8b98a9)">— optional</span></label><input id="dqc-gyear" placeholder="2004"></div></div>' +
         '<label>Platforms <span style="font-weight:400;color:var(--muted,#8b98a9)">— optional, comma-separated</span></label><input id="dqc-gplat" placeholder="Microsoft Windows">' +
@@ -336,7 +345,8 @@
       var p = { name: name, role: role, roles_other: rolesArr, verification: verification, source_url: proofArr[0] || "", links: proofArr, releases: relArr, scope: scopeEl ? scopeEl.value : "base" };
         if (isAdd) {
           p.new_game = { title: val("dqc-gtitle"), studio: val("dqc-gstudio"), year: val("dqc-gyear"),
-            platforms: val("dqc-gplat") ? val("dqc-gplat").split(",").map(function (s) { return s.trim(); }).filter(Boolean) : [] };
+            platforms: val("dqc-gplat") ? val("dqc-gplat").split(",").map(function (s) { return s.trim(); }).filter(Boolean) : [],
+            parent_slug: selParentSlug || null };
           p.game_title = val("dqc-gtitle"); p.studio = val("dqc-gstudio");
         } else if (isGame) { p.game_slug = opts.game_slug; p.game_title = opts.game_title; p.studio = opts.studio || null; }
         return p;
@@ -377,6 +387,65 @@
         noneText: function (q) { return "No studio matches “" + q + "” — it'll be added as new (reviewed)"; }
       });
       var gtitle = ov.querySelector("#dqc-gtitle"), gexist = ov.querySelector("#dqc-gexist"), gt;
+      var gpchip = ov.querySelector("#dqc-gparent-chip"), gpwrap = ov.querySelector("#dqc-gparent-wrap"), gparent = ov.querySelector("#dqc-gparent");
+      // Show either the confirmed, clearable "Expansion of X" chip or the manual picker.
+      function renderParent() {
+        if (!gpchip || !gpwrap) return;
+        if (selParentSlug) {
+          gpchip.innerHTML = '<div style="display:inline-flex;align-items:center;flex-wrap:wrap;gap:8px;font-size:12.5px;background:rgba(63,185,80,.08);border:1px solid rgba(63,185,80,.35);border-radius:8px;padding:7px 11px;margin:2px 0 4px">' +
+            '<span>Expansion of <b>' + esc(selParentTitle || "") + '</b>' + (selParentStudio ? ' <span style="color:var(--muted,#8b98a9)">· ' + esc(selParentStudio) + '</span>' : '') + '</span>' +
+            (autoDetected ? '<span style="color:var(--muted,#8b98a9);font-size:11px">auto-detected from the title</span>' : '') +
+            '<a data-clearparent style="cursor:pointer;color:var(--accent,#58a6ff);font-weight:600">clear</a></div>';
+          gpwrap.style.display = "none";
+        } else {
+          gpchip.innerHTML = "";
+          gpwrap.style.display = "";
+        }
+      }
+      // Split a "Base: Subtitle" title (colon, or a spaced dash / en-dash / em-dash) into its base.
+      function splitBase(t) {
+        t = String(t || "").trim();
+        var m = t.match(/^(.+?)\s*:\s+.+$/) || t.match(/^(.+?)\s+[–—-]\s+.+$/);
+        return m ? m[1].trim() : "";
+      }
+      // Reuse the same games-index lookup that powers #dqc-gexist to guess the base game.
+      function detectParent() {
+        if (parentTouched) return;                    // user took control — never auto-change
+        if (selParentSlug && !autoDetected) return;   // a manual pick stands
+        var base = splitBase(gtitle.value);
+        if (base.length < 2) {
+          if (autoDetected) { selParentSlug = selParentTitle = null; selParentStudio = ""; autoDetected = false; renderParent(); }
+          return;
+        }
+        loadIndex("games").then(function (rows) {
+          if (parentTouched || (selParentSlug && !autoDetected)) return;
+          var bl = base.toLowerCase(), m = searchRows(rows, 1, base, 8).rows, hit = null;
+          for (var i = 0; i < m.length; i++) { if (String(m[i][1]).toLowerCase() === bl) { hit = m[i]; break; } }  // exact title wins
+          if (!hit && m.length && rank(String(m[0][1]).toLowerCase(), bl) === 0) hit = m[0];                       // else top prefix hit
+          if (hit) { selParentSlug = hit[0]; selParentTitle = hit[1]; selParentStudio = hit[3] || ""; autoDetected = true; renderParent(); }
+          else if (autoDetected) { selParentSlug = selParentTitle = null; selParentStudio = ""; autoDetected = false; renderParent(); }
+        }).catch(function () {});
+      }
+      // Manual search-picker for when the guess is wrong or absent.
+      if (gparent) mkAutocomplete(gparent, function (q) {
+        return loadIndex("games").then(function (rows) {
+          return searchRows(rows, 1, q, 8).rows.map(function (r) {
+            return { label: r[1], slug: r[0], studio: r[3] || "", sub: (r[3] || "") + (r[2] ? (r[3] ? " · " : "") + r[2] : "") };
+          });
+        });
+      }, {
+        onSelect: function (it) { selParentSlug = it.slug; selParentTitle = it.label; selParentStudio = it.studio || ""; autoDetected = false; parentTouched = true; renderParent(); },
+        onType: function () { parentTouched = true; },
+        noneText: function (q) { return "No catalogue game matches “" + q + "”"; }
+      });
+      if (gpchip) gpchip.addEventListener("click", function (e) {
+        var a = e.target.closest && e.target.closest("[data-clearparent]");
+        if (!a) return;
+        e.preventDefault();
+        selParentSlug = selParentTitle = null; selParentStudio = ""; autoDetected = false; parentTouched = true;
+        if (gparent) gparent.value = "";
+        renderParent();
+      });
       var checkExist = function () {
         var q = gtitle.value.trim();
         if (q.length < 3) { gexist.innerHTML = ""; return; }
@@ -387,7 +456,8 @@
             m.map(function (r) { return '<a href="/credits/game/' + encodeURIComponent(r[0]) + '" target="_blank" rel="noopener">' + esc(r[1]) + (r[3] ? ' · ' + esc(r[3]) : '') + '</a>'; }).join(" &nbsp;·&nbsp; ") + '</div>';
         });
       };
-      if (gtitle && gexist) { gtitle.addEventListener("input", function () { clearTimeout(gt); gt = setTimeout(checkExist, 300); }); checkExist(); }
+      renderParent();
+      if (gtitle && gexist) { gtitle.addEventListener("input", function () { clearTimeout(gt); gt = setTimeout(function () { checkExist(); detectParent(); }, 300); }); checkExist(); detectParent(); }
     }
     var clr = ov.querySelector("[data-clearid]");
     if (clr) clr.onclick = function (e) { e.preventDefault(); clearIdentity(); var n = ov.querySelector("#dqc-name"), em = ov.querySelector("#dqc-email"), nt = ov.querySelector(".dq-idnote"); if (n) n.value = ""; if (em) em.value = ""; if (nt) nt.remove(); if (n) n.focus(); };
@@ -416,10 +486,13 @@
     opts = opts || {};
     injectClaimStyles();
     var isCredit = type === "credit";
-    var label = type === "studio" ? "studio" : "game";
+    var isPerson = type === "person";
+    var label = type === "studio" ? "studio" : (isPerson ? "profile" : "game");
     var subj = isCredit ? (esc(name) + (opts.gameTitle ? " on " + esc(opts.gameTitle) : "")) : esc(name || slug);
     var reasons = isCredit
       ? [["not_worked", "This person didn't work on this game"], ["wrong_role", "The role or details are wrong"], ["spam", "Not a real person / spam"], ["other", "Something else"]]
+      : isPerson
+      ? [["impersonation", "This isn't them / impersonation"], ["harassment", "Harassment or abusive content"], ["false_credits", "Claiming credits they didn't work on"], ["private_info", "Posting someone's private information"], ["other", "Something else"]]
       : [["not_real", "This " + label + " is not real / should not exist"], ["wrong_name", "The name is wrong (typo)"]]
           .concat(type === "game" ? [["wrong_studio", "It's under the wrong studio, or has none"]] : [])
           .concat([["other", "Something else"]]);
@@ -430,10 +503,10 @@
     var ov = document.createElement("div"); ov.className = "dq-modal-ov";
     ov.innerHTML = '<div class="dq-modal" role="dialog" aria-modal="true">' +
       '<button class="dq-x" aria-label="Close">×</button>' +
-      '<div class="dq-mh">' + (isCredit ? "Report this credit" : "Report or suggest a fix") + '</div>' +
+      '<div class="dq-mh">' + (isCredit ? "Report this credit" : isPerson ? "Report this profile" : "Report or suggest a fix") + '</div>' +
       '<div class="dq-sub">For <b>' + subj + '</b>. A moderator reviews every report.</div>' +
       '<label>What\'s wrong?</label>' + reasonHTML +
-      (isCredit ? "" : '<label>Suggested correction <span style="font-weight:400;color:var(--muted,#8b98a9)">— optional (the correct name or studio)</span></label><input id="dqr-suggested" placeholder="Correct name or studio">') +
+      (isCredit || isPerson ? "" : '<label>Suggested correction <span style="font-weight:400;color:var(--muted,#8b98a9)">— optional (the correct name or studio)</span></label><input id="dqr-suggested" placeholder="Correct name or studio">') +
       '<label>Details <span style="font-weight:400;color:var(--muted,#8b98a9)">— optional</span></label><textarea id="dqr-note" placeholder="Anything that helps us verify"></textarea>' +
       '<div class="dq-actions"><button class="dq-cancel">Cancel</button><button class="dq-submit">Send report</button></div>' +
       '</div>';
