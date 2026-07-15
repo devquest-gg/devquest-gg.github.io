@@ -111,6 +111,7 @@ const DIRECTORY = [
   { name: "Enduring Games", url: "https://enduring.games/jobs/", note: "Console co-dev & ports — email apply, no ATS feed", city: "Austin, TX" },
   { name: "Tarsier Studios", url: "https://tarsier.recruitment.simployer.com/careers", note: "Little Nightmares 1 & 2 — Simployer ATS (no scrapeable feed)", city: "Malmö, Sweden" },
   { name: "Room 8 Studio", url: "https://room8studio.com/careers/", note: "Game art & co-development services (CoD, Diablo, AC) — WordPress careers, no ATS feed", city: "" },
+  { name: "Critical Path Games", url: "https://critpath.com/careers", note: "Unannounced multiplayer, cross-platform game (Vancouver indie). Custom Astro site, no scrapeable ATS feed. Requested by studio 2026-07-14", city: "Vancouver, BC" }, // COO Jeanne-Marie Owens emailed studios@; ~1 real role (Senior Animator) plus a General Applications catch-all, hardcoded static pages, nothing to scrape, so Island
   // (Torpor Games promoted to mainland 2026-07-05 — HiBob (Bob) ATS, /api/job-ad JSON; see fetchHibob.)
   // (Flix Interactive promoted to mainland 2026-07-05 — self-hosted WP careers page (.vacancy-card list); see fetchFlix.)
   // (Anshar Studios promoted to mainland 2026-07-05 — WP careers page → Traffit board; see fetchTraffit.)
