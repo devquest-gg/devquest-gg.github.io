@@ -258,6 +258,14 @@
     var ownBySlug = {}; credits.forEach(function(c){ ownBySlug[c.game_slug] = c; });
     function nestParentSlug(c){ return (c.parent_slug && ownBySlug[c.parent_slug]) ? c.parent_slug : null; }
     function isOrphanExpansion(c){ return !!(c.parent_slug && !ownBySlug[c.parent_slug]); }
+    // Base slugs that actually have nested expansions this person holds — those get a
+    // collapse/expand chevron; children carry data-childof so the chevron can toggle them.
+    var kidParents = {}; credits.forEach(function(c){ var _p = nestParentSlug(c); if(_p) kidParents[_p] = true; });
+    function collapseToggle(slug){
+      return kidParents[slug]
+        ? '<span class="expcollapse" data-base="'+DQ.esc(slug)+'" data-collapsed="0" role="button" tabindex="0" title="Collapse / expand expansions" style="cursor:pointer;color:var(--muted);font-weight:700;margin-right:6px;user-select:none">▾</span>'
+        : '';
+    }
     function prettySlug(s){ return String(s||"").replace(/-/g," ").replace(/\b\w/g, function(ch){ return ch.toUpperCase(); }); }
     // Reorder a sorted credit list so each base is immediately followed by the expansions
     // the person also holds (kept in the incoming sort order). Returns [{c, child}].
@@ -307,7 +315,7 @@
     var unshippedCount = (api && api.person && typeof api.person.unshipped === "number") ? api.person.unshipped : 0;
     function snapStat(n, label, sub){ return '<div class="snap"><b>'+n+'</b><span>'+label+(sub?' <em>'+sub+'</em>':'')+'</span></div>'; }
     var snapItems = credits.length ? (
-        snapStat(credits.length, 'shipped '+(credits.length===1?'game':'games')) +
+        snapStat(credits.length, 'shipped '+(credits.length===1?'title':'titles')) +
         (relRange ? snapStat(relRange, 'release '+(minY===maxY?'year':'years')) : '') +
         (liveCount>0 ? snapStat(liveCount, 'live-service '+(liveCount===1?'title':'titles')) : '') +
         (unshippedCount>0 ? snapStat(unshippedCount, 'cancelled / unshipped') : '')
@@ -380,9 +388,9 @@
         : '';
       var _rowStyle = _isChild ? ' style="margin-left:26px;border-left:2px solid var(--border,#2d333b);padding-left:12px"' : '';
       var _kidMark = _isChild ? '<span class="mut" style="font-weight:400;margin-right:5px" title="Expansion of the game above">↳</span>' : '';
-      return '<div class="row"'+((isOwn&&c.live&&c.id)?' data-id="'+c.id+'"':'')+_rowStyle+'>'+
+      return '<div class="row"'+((isOwn&&c.live&&c.id)?' data-id="'+c.id+'"':'')+_rowStyle+(_isChild?' data-childof="'+DQ.esc(c.parent_slug)+'"':'')+'>'+
         grip +
-        '<div class="rmain"><div class="rname">'+_kidMark+'<a href="/credits/game/'+encodeURIComponent(c.game_slug)+'">'+DQ.esc(c.game_title)+'</a>'+ast+seal+orphanExpTag(c)+'</div>'+
+        '<div class="rmain"><div class="rname">'+(_isChild?_kidMark:collapseToggle(c.game_slug))+'<a href="/credits/game/'+encodeURIComponent(c.game_slug)+'">'+DQ.esc(c.game_title)+'</a>'+ast+seal+orphanExpTag(c)+'</div>'+
           '<div class="rsub">'+roleHTML+more+(sigs?' &nbsp; '+sigs:'')+(proof?' &nbsp; '+proof:'')+'</div>'+workNote+'</div>'+
         '<div class="rright">'+(trust?'<span style="margin-right:6px">'+trust+'</span>':'')+(c.year?'<span class="yr" title="Game release year"><span class="yrlbl">Released</span> '+c.year+'</span>':'')+confirmBtn+controls+'</div>'+
       '</div>';
@@ -446,12 +454,12 @@
       var gurl = '/credits/game/'+encodeURIComponent(c.game_slug);
       var _yearCell = _isChild ? '<span class="mut" title="Expansion of the game above">↳</span>' : yearLabel;
       var _cardStyle = _isChild ? ' style="margin-left:22px"' : '';
-      return '<div class="tlrow'+(isFeat?' isfeat':'')+(_isChild?' tlrow-child':'')+'">'+
+      return '<div class="tlrow'+(isFeat?' isfeat':'')+(_isChild?' tlrow-child':'')+'"'+(_isChild?' data-childof="'+DQ.esc(c.parent_slug)+'"':'')+'>'+
         '<div class="tlyear" title="'+(_isChild?'Expansion of the game above':yearTip)+'">'+_yearCell+'</div>'+
         '<div class="tlrail"><span class="tldot'+(isFeat?' feat':'')+'"></span></div>'+
         '<div class="tlcard"'+_cardStyle+'>'+
           '<a class="tlthumb" href="'+gurl+'">'+thumb+'</a>'+
-          '<div class="tlbody"><div class="tlnameline"><a class="tlname" href="'+gurl+'">'+DQ.esc(c.game_title)+'</a>'+astg+seal+spanHTML+orphanExpTag(c)+'</div>'+
+          '<div class="tlbody"><div class="tlnameline">'+(_isChild?'':collapseToggle(c.game_slug))+'<a class="tlname" href="'+gurl+'">'+DQ.esc(c.game_title)+'</a>'+astg+seal+spanHTML+orphanExpTag(c)+'</div>'+
             '<div class="tlsub">'+sub+'</div>'+(star?'<div class="tlact">'+star+'</div>':'')+'</div>'+
         '</div>'+
       '</div>';
@@ -527,7 +535,7 @@
     // ---- Viewer invitation: turn a profile visit into a vouch. If the signed-in viewer
     // shipped some of these same games, invite them to confirm this person right here. ----
     var confirmBanner = confirmable.length
-      ? '<div class="verifystrip cta"><b>You shipped '+confirmable.length+' of these game'+(confirmable.length===1?'':'s')+' with '+DQ.esc(name)+'.</b> Confirm the credit'+(confirmable.length===1?'':'s')+' you can vouch for — your confirmation is what turns a self-reported credit into a peer-verified one. Use the green <b>Confirm&nbsp;✓</b> button'+(confirmable.length===1?'':'s')+' on those rows below.</div>'
+      ? '<div class="verifystrip cta"><b>You shipped '+confirmable.length+' of these title'+(confirmable.length===1?'':'s')+' with '+DQ.esc(name)+'.</b> Confirm the credit'+(confirmable.length===1?'':'s')+' you can vouch for — your confirmation is what turns a self-reported credit into a peer-verified one. Use the green <b>Confirm&nbsp;✓</b> button'+(confirmable.length===1?'':'s')+' on those rows below.</div>'
       : '';
 
     // ---- "Known for" chips: the marquee titles (the owner's own showcase order) as quick,
@@ -607,6 +615,22 @@
         var views = { list:"gv-list", visual:"gv-visual" };
         Object.keys(views).forEach(function(k){ var el=document.getElementById(views[k]); if(el) el.style.display = (k===v)?"":"none"; });
       };
+    });
+
+    // Collapse / expand the expansions nested under a base game. Scoped per view (List and
+    // the Portfolio timeline each have their own chevron + child rows).
+    Array.prototype.forEach.call(document.querySelectorAll(".expcollapse"), function(tg){
+      function toggle(){
+        var base = tg.getAttribute("data-base");
+        var collapsing = tg.getAttribute("data-collapsed") !== "1";
+        var scope = tg.closest("#gv-visual, #gv-list") || document;
+        var kids = scope.querySelectorAll('[data-childof="'+base+'"]');
+        Array.prototype.forEach.call(kids, function(r){ r.style.display = collapsing ? "none" : ""; });
+        tg.setAttribute("data-collapsed", collapsing ? "1" : "0");
+        tg.textContent = collapsing ? ("▸ "+kids.length) : "▾";
+      }
+      tg.onclick = function(e){ e.preventDefault(); e.stopPropagation(); toggle(); };
+      tg.onkeydown = function(e){ if(e.key==="Enter" || e.key===" "){ e.preventDefault(); toggle(); } };
     });
 
     // ---- Drag-to-reorder in the Visual grid (owner only, pointer-based) ----
