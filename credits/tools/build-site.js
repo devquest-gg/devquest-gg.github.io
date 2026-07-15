@@ -134,18 +134,41 @@ function writeShards(subdir, n, entries) {
   for (const cv of (coverData && coverData.covers) || []) { if (cv && cv.game_slug && cv.cover_url) coverMap[cv.game_slug] = cv.cover_url; }
   if (Object.keys(coverMap).length) console.log(`  applied ${Object.keys(coverMap).length} admin cover(s)`);
 
+  // ---- expansion parent / child links ------------------------------------
+  // games.json carries parent_slug on expansions (from pull-wikidata.js P8646 capture).
+  // Turn that into a per-base children list so a base game's shard lists its expansions.
+  const childrenBySlug = new Map();
+  for (const g of games) {
+    if (g.parent_slug && bySlug.has(g.parent_slug) && g.parent_slug !== g.slug) {
+      if (!childrenBySlug.has(g.parent_slug)) childrenBySlug.set(g.parent_slug, []);
+      childrenBySlug.get(g.parent_slug).push([g.slug, g.title, g.year || null]);
+    }
+  }
+  // newest-first within each base, capped so a hugely-DLC'd base can't bloat one shard
+  for (const arr of childrenBySlug.values()) arr.sort((a, b) => (b[2] || 0) - (a[2] || 0) || String(a[1]).localeCompare(String(b[1])));
+
   // ---- search index (all games) ------------------------------------------
   // Compact positional rows: [slug, title, year, primaryStudio].
   const index = games.map((g) => [g.slug, g.title, g.year || null, g.studio || (g.studios && g.studios[0]) || ""]);
 
   // ---- game detail shards ------------------------------------------------
-  const gameEntries = games.map((g) => [g.slug, {
-    title: g.title, year: g.year || null,
-    studios: g.studios || [], publishers: g.publishers || [],
-    platforms: g.platforms || [], genres: g.genres || [],
-    qid: g.wikidata_qid || "", steam: g.steam || null, cover: coverMap[g.slug] || null, source: g.source || "wikidata",
-    credits: g.credits || [],
-  }]);
+  const gameEntries = games.map((g) => {
+    const detail = {
+      title: g.title, year: g.year || null,
+      studios: g.studios || [], publishers: g.publishers || [],
+      platforms: g.platforms || [], genres: g.genres || [],
+      qid: g.wikidata_qid || "", steam: g.steam || null, cover: coverMap[g.slug] || null, source: g.source || "wikidata",
+      credits: g.credits || [],
+    };
+    // Only expansions carry a parent; only base games carry children — keeps shards lean.
+    if (g.parent_slug && bySlug.has(g.parent_slug) && g.parent_slug !== g.slug) {
+      detail.parent_slug = g.parent_slug;
+      detail.parent_title = bySlug.get(g.parent_slug).title;
+    }
+    const kids = childrenBySlug.get(g.slug);
+    if (kids && kids.length) detail.children = kids.slice(0, 60).map((k) => ({ slug: k[0], title: k[1], year: k[2] }));
+    return [g.slug, detail];
+  });
 
   // ---- studios: build gameography + people from credits -------------------
   const studioGames = new Map();   // studioSlug -> {name, games:[[slug,title,year]]}
