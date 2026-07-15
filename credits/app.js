@@ -304,11 +304,13 @@
         '<label>Other titles you held on this game <span style="font-weight:400;color:var(--muted,#8b98a9)">— optional, comma-separated</span></label><input id="dqc-roles2" placeholder="Technical Support Lead, Game Designer, Content Manager">' +
         '<label>Ports &amp; remasters <span style="font-weight:400;color:var(--muted,#8b98a9)">(optional, comma-separated)</span></label><input id="dqc-release" list="dqc-release-list" autocomplete="off" placeholder="e.g. PC port, Remaster, Definitive Edition"><datalist id="dqc-release-list"><option value="PC port"></option><option value="Console port"></option><option value="Remaster"></option><option value="Definitive Edition"></option><option value="Re-release"></option></datalist>' +
         '<div style="font-size:11.5px;color:var(--muted,#8b98a9);margin:2px 0;line-height:1.45">Other versions of this <b style="color:var(--text,#e6edf3);font-weight:600">same game</b> (ports, remasters, re-releases). Expansions and editions get added as their own game instead, which links back to this one.</div>' +
-        '<label style="display:block;font-weight:400;font-size:13px;margin:8px 0;cursor:pointer"><input type="checkbox" id="dqc-live" style="margin-right:7px;vertical-align:-1px">I worked on this game\'s live-service / post-launch period</label>' +
-        '<label style="display:block;font-weight:400;font-size:13px;margin:8px 0;cursor:pointer"><input type="checkbox" id="dqc-external" style="margin-right:7px;vertical-align:-1px">I worked on this as an outsourced or external contributor</label>' +
-        '<label style="margin-top:10px">What did you work on?</label>' +
-        '<label style="display:block;font-weight:400;font-size:13px;margin:6px 0;cursor:pointer"><input type="radio" name="dqc-scope" value="base" checked style="margin-right:7px;vertical-align:-1px">The base game <span style="color:var(--muted,#8b98a9)">— including if you also worked on expansions, ports, or live service</span></label>' +
-        '<label style="display:block;font-weight:400;font-size:13px;margin:6px 0;cursor:pointer"><input type="radio" name="dqc-scope" value="partial" style="margin-right:7px;vertical-align:-1px">Only a specific part, not the base game <span style="color:var(--muted,#8b98a9)">— a port, an expansion, or the live-service era</span></label>' : '') +
+        '<label style="margin-top:10px">How were you involved?</label>' +
+        '<label style="display:block;font-weight:400;font-size:13px;margin:6px 0;cursor:pointer"><input type="radio" name="dqc-involve" value="core" checked style="margin-right:7px;vertical-align:-1px">On the core team <span style="color:var(--muted,#8b98a9)">(in-house at the studio that made it)</span></label>' +
+        '<label style="display:block;font-weight:400;font-size:13px;margin:6px 0;cursor:pointer"><input type="radio" name="dqc-involve" value="external" style="margin-right:7px;vertical-align:-1px">Outsourced or external <span style="color:var(--muted,#8b98a9)">(a co-dev, contractor, or partner studio, not the primary developer)</span></label>' +
+        '<label style="margin-top:12px">What part did you work on?</label>' +
+        '<label style="display:block;font-weight:400;font-size:13px;margin:6px 0;cursor:pointer"><input type="radio" name="dqc-scope" value="base" checked style="margin-right:7px;vertical-align:-1px">The base game <span style="color:var(--muted,#8b98a9)">(the main release. Still pick this if you also worked on its ports, expansions, or live service)</span></label>' +
+        '<label style="display:block;font-weight:400;font-size:13px;margin:6px 0;cursor:pointer"><input type="radio" name="dqc-scope" value="partial" style="margin-right:7px;vertical-align:-1px">A specific part only <span style="color:var(--muted,#8b98a9)">(a port, an expansion, or the live-service era, not the base game)</span></label>' +
+        '<label style="display:block;font-weight:400;font-size:13px;margin:10px 0 2px;cursor:pointer"><input type="checkbox" id="dqc-live" style="margin-right:7px;vertical-align:-1px">I also worked on this game\'s live-service / post-launch period</label>' : '') +
       '<label>Links that help show this is you <span style="font-weight:400;color:var(--muted,#8b98a9)">— LinkedIn, portfolio / ArtStation, studio team page. One per line, optional</span></label><textarea id="dqc-proof" placeholder="https://linkedin.com/in/you&#10;https://yourstudio.com/team"></textarea>' +
       '<label>Anything else for our reviewer <span style="font-weight:400;color:var(--muted,#8b98a9)">— optional</span></label><textarea id="dqc-note" placeholder="Context that helps us verify you"></textarea>' +
       '<div style="font-size:11px;color:var(--muted,#8b98a9);margin-top:12px;line-height:1.4">Only add work you\'re free to disclose. Leave off anything under NDA or not publicly announced.</div>' +
@@ -340,8 +342,8 @@
         var relArr = uniq(val("dqc-release") ? val("dqc-release").split(",").map(function (s) { return s.trim(); }).filter(Boolean) : []);
         var liveEl = ov.querySelector("#dqc-live");
         if (liveEl && liveEl.checked && relArr.indexOf("Live service") === -1) relArr.push("Live service");
-        var extEl = ov.querySelector("#dqc-external");
-        if (extEl && extEl.checked && relArr.indexOf("External contributor") === -1) relArr.push("External contributor");
+        var involveEl = ov.querySelector('input[name="dqc-involve"]:checked');
+        if (involveEl && involveEl.value === "external" && relArr.indexOf("External contributor") === -1) relArr.push("External contributor");
       var scopeEl = ov.querySelector('input[name="dqc-scope"]:checked');
       var p = { name: name, role: role, roles_other: rolesArr, verification: verification, source_url: proofArr[0] || "", links: proofArr, releases: relArr, scope: scopeEl ? scopeEl.value : "base" };
         if (isAdd) {
