@@ -441,7 +441,7 @@
     // whole order, so positions stay contiguous and the "top 3 = featured" rule holds.
     var fullOrderIds = visualCredits.filter(function(c){ return c.live && c.id; }).map(function(c){ return String(c.id); });
     var tlMissing = isOwn && credits.some(function(c){ return !c.work_start; });
-    var tlHint = tlMissing ? '<div class="tlhint">Games land by the years you worked them. Set those on any credit in the <b>List</b> view (Edit) — until then, a game sits at its release year.</div>' : '';
+    var tlHint = tlMissing ? '<div class="tlhint">Games sit at their release year until you add the years you actually worked them. Use <b>✎ Edit title / years</b> on any credit below. (Handy for live-service titles you joined years after launch, like LoL.)</div>' : '';
     function tlRow(c, _isChild){
       var seal = c.vouch_count ? ' <span class="vseal" title="Peer-verified by '+c.vouch_count+' teammate'+(c.vouch_count===1?'':'s')+'">✓</span>' : '';
       var astg = c.partial ? ' <span class="ast" style="color:var(--muted);font-weight:700" title="Worked on a specific part">*</span>' : '';
@@ -457,6 +457,8 @@
       var star = (isOwn && c.live && c.id)
         ? (isFeat ? '<span class="tlfeat" title="One of your Highlights above">★ Highlight</span>' : '<a class="tlfeatbtn" data-id="'+c.id+'" title="Feature this in your Highlights">☆ Make a highlight</a>')
         : '';
+      // Editing lived only in List view, which testers couldn't find. Surface it right here.
+      var tledit = (isOwn && c.live && c.id) ? '<a class="tledit" data-id="'+c.id+'" title="Edit your role, and add the years you worked on it" style="font-size:12px;color:var(--accent);cursor:pointer;margin-right:14px">✎ Edit title / years</a>' : '';
       var gurl = '/credits/game/'+encodeURIComponent(c.game_slug);
       var _yearCell = _isChild ? '<span class="mut expctl expcollapse-child" data-base="'+DQ.esc(c.parent_slug)+'" role="button" tabindex="0" style="cursor:pointer" title="Collapse under the base game">↳</span>' : yearLabel;
       var _cardStyle = _isChild ? ' style="margin-left:22px"' : '';
@@ -466,7 +468,7 @@
         '<div class="tlcard"'+_cardStyle+'>'+
           '<a class="tlthumb" href="'+gurl+'">'+thumb+'</a>'+
           '<div class="tlbody"><div class="tlnameline">'+(_isChild?'':collapseToggle(c.game_slug))+'<a class="tlname" href="'+gurl+'">'+DQ.esc(c.game_title)+'</a>'+astg+seal+dispTag(c)+spanHTML+orphanExpTag(c)+'</div>'+
-            '<div class="tlsub">'+sub+'</div>'+(star?'<div class="tlact">'+star+'</div>':'')+'</div>'+
+            '<div class="tlsub">'+sub+'</div>'+((tledit||star)?'<div class="tlact">'+tledit+star+'</div>':'')+'</div>'+
         '</div>'+
       '</div>';
     }
@@ -735,6 +737,19 @@
       };
     });
 
+    // "Edit title / years" from the Portfolio timeline: switch to the List view (where the
+    // inline editor lives) and open that credit's editor, so editing is reachable from the
+    // default view instead of being hidden.
+    Array.prototype.forEach.call(document.querySelectorAll(".tledit"), function(el){
+      el.onclick = function(e){
+        e.preventDefault(); e.stopPropagation();
+        var id = el.getAttribute("data-id");
+        var listTab = document.querySelector('.gvtab[data-v="list"]'); if(listTab) listTab.click();
+        var target = document.querySelector('#gv-list .editcredit[data-id="'+id+'"]');
+        if(target){ target.click(); var r = target.closest(".row"); if(r) r.scrollIntoView({ block: "center" }); }
+      };
+    });
+
     // ---- Shareable credits card (client-side SVG → PNG, no backend) ----
     var CARD_FONT = "'Segoe UI', system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif";
     var CARD_PILL = { content:'#a371f7', live:'#3fb950', port:'#58a6ff', xdev:'#e0b23a' };
@@ -932,8 +947,8 @@
           '<input class="ed-others" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:9px 11px;color:var(--text);font-size:14px;font-family:inherit">'+
           '<label style="font-size:12px;font-weight:700;display:block;margin:10px 0 4px">Proof links <span style="font-weight:400;color:var(--muted)">(LinkedIn, portfolio, press kit. One per line, optional)</span></label>'+
           '<textarea class="ed-proof" style="width:100%;min-height:56px;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:9px 11px;color:var(--text);font-size:14px;font-family:inherit;resize:vertical"></textarea>'+
-          '<label style="font-size:12px;font-weight:700;display:block;margin:10px 0 4px">Releases / expansions <span style="font-weight:400;color:var(--muted)">(ports, remasters, named expansions. Comma-separated, optional)</span></label>'+
-          '<input class="ed-release" list="ed-release-list" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:9px 11px;color:var(--text);font-size:14px;font-family:inherit" placeholder="PC port, Trials of Atlantis, Catacombs"><datalist id="ed-release-list"><option value="PC port"></option><option value="Console port"></option><option value="Remaster"></option><option value="DLC"></option><option value="Expansion"></option></datalist>'+
+          '<label style="font-size:12px;font-weight:700;display:block;margin:10px 0 4px">Ports &amp; remasters <span style="font-weight:400;color:var(--muted)">(other versions of this same game: ports, remasters, re-releases. Comma-separated, optional)</span></label>'+
+          '<input class="ed-release" list="ed-release-list" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:9px 11px;color:var(--text);font-size:14px;font-family:inherit" placeholder="PC port, Remaster, Definitive Edition"><datalist id="ed-release-list"><option value="PC port"></option><option value="Console port"></option><option value="Remaster"></option><option value="Definitive Edition"></option><option value="Re-release"></option></datalist>'+
           '<label style="font-size:12px;font-weight:700;display:block;margin:10px 0 4px">Years you worked on it <span style="font-weight:400;color:var(--muted)">(optional — places this on your Timeline. Leave the end blank if ongoing)</span></label>'+
           '<div style="display:flex;align-items:center;gap:8px">'+
             '<input class="ed-wstart" type="number" min="1970" max="2100" placeholder="From" style="width:110px;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:9px 11px;color:var(--text);font-size:14px;font-family:inherit">'+
@@ -941,11 +956,13 @@
             '<input class="ed-wend" type="number" min="1970" max="2100" placeholder="Present" style="width:110px;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:9px 11px;color:var(--text);font-size:14px;font-family:inherit">'+
           '</div>'+
           '<div style="font-size:11px;color:var(--muted);margin-top:6px;line-height:1.4">When you actually worked on this game, which can differ from its release year. This is your own note; the green check still comes from a teammate vouch.</div>'+
-          '<label style="display:block;font-weight:400;font-size:13px;margin:8px 0;cursor:pointer"><input type="checkbox" class="ed-live" style="margin-right:7px;vertical-align:-1px">I worked on this game\'s live-service / post-launch period</label>'+
-          '<label style="display:block;font-weight:400;font-size:13px;margin:8px 0;cursor:pointer"><input type="checkbox" class="ed-external" style="margin-right:7px;vertical-align:-1px">I worked on this as an outsourced or external contributor</label>'+
-          '<label style="font-size:12px;font-weight:700;display:block;margin:10px 0 4px">What did you work on?</label>'+
-          '<label style="display:block;font-weight:400;font-size:13px;margin:4px 0;cursor:pointer"><input type="radio" name="ed-scope" value="base" style="margin-right:7px;vertical-align:-1px">The base game <span style="color:var(--muted)">— including if you also worked on expansions, ports, or live service</span></label>'+
-          '<label style="display:block;font-weight:400;font-size:13px;margin:4px 0;cursor:pointer"><input type="radio" name="ed-scope" value="partial" style="margin-right:7px;vertical-align:-1px">Only a specific part, not the base game <span style="color:var(--muted)">— a port, an expansion, or the live-service era</span></label>'+
+          '<label style="font-size:12px;font-weight:700;display:block;margin:10px 0 4px">How were you involved?</label>'+
+          '<label style="display:block;font-weight:400;font-size:13px;margin:4px 0;cursor:pointer"><input type="radio" name="ed-involve" value="core" style="margin-right:7px;vertical-align:-1px">On the core team <span style="color:var(--muted)">(in-house at the studio that made it)</span></label>'+
+          '<label style="display:block;font-weight:400;font-size:13px;margin:4px 0;cursor:pointer"><input type="radio" name="ed-involve" value="external" style="margin-right:7px;vertical-align:-1px">Outsourced or external <span style="color:var(--muted)">(a co-dev, contractor, or partner studio, not the primary developer)</span></label>'+
+          '<label style="font-size:12px;font-weight:700;display:block;margin:12px 0 4px">What part did you work on?</label>'+
+          '<label style="display:block;font-weight:400;font-size:13px;margin:4px 0;cursor:pointer"><input type="radio" name="ed-scope" value="base" style="margin-right:7px;vertical-align:-1px">The base game <span style="color:var(--muted)">(the main release. Still pick this if you also worked on its ports, expansions, or live service)</span></label>'+
+          '<label style="display:block;font-weight:400;font-size:13px;margin:4px 0;cursor:pointer"><input type="radio" name="ed-scope" value="partial" style="margin-right:7px;vertical-align:-1px">A specific part only <span style="color:var(--muted)">(a port, an expansion, or the live-service era, not the base game)</span></label>'+
+          '<label style="display:block;font-weight:400;font-size:13px;margin:10px 0 2px;cursor:pointer"><input type="checkbox" class="ed-live" style="margin-right:7px;vertical-align:-1px">I also worked on this game\'s live-service / post-launch period</label>'+
           '<div style="font-size:11px;color:var(--muted);margin-top:10px;line-height:1.4">Only add work you\'re free to disclose. Leave off anything under NDA or not publicly announced.</div>'+
           '<div style="margin-top:12px;display:flex;gap:8px"><span class="btn primary ed-save" style="padding:8px 16px">Save</span><span class="btn ghost ed-cancel" style="padding:8px 16px">Cancel</span></div>'+
         '</div>';
@@ -955,7 +972,8 @@
         var edAll = (el.dataset.releases || "").split(",").map(function(s){return s.trim();}).filter(Boolean);
         row.querySelector(".ed-release").value = edAll.filter(function(r){ var k=DQ.releaseClass(r); return k !== "live" && k !== "xdev"; }).join(", ");
         var edLiveCk = row.querySelector(".ed-live"); if(edLiveCk) edLiveCk.checked = edAll.some(function(r){ return DQ.releaseClass(r) === "live"; });
-        var edExtCk = row.querySelector(".ed-external"); if(edExtCk) edExtCk.checked = edAll.some(function(r){ return DQ.releaseClass(r) === "xdev"; });
+        var edIsExt = edAll.some(function(r){ return DQ.releaseClass(r) === "xdev"; });
+        var involveSel = row.querySelector('input[name="ed-involve"][value="'+(edIsExt?"external":"core")+'"]'); if(involveSel) involveSel.checked = true;
         var scopeSel = row.querySelector('input[name="ed-scope"][value="'+(el.dataset.partial ? "partial" : "base")+'"]');
         if(scopeSel) scopeSel.checked = true;
         row.querySelector(".ed-wstart").value = el.dataset.workstart || "";
@@ -971,8 +989,8 @@
           var nreleases = DQ.uniq(row.querySelector(".ed-release").value.split(",").map(function(s){return s.trim();}).filter(Boolean));
           var edLiveOn = row.querySelector(".ed-live");
           if(edLiveOn && edLiveOn.checked && nreleases.indexOf("Live service") === -1) nreleases.push("Live service");
-          var edExtOn = row.querySelector(".ed-external");
-          if(edExtOn && edExtOn.checked && nreleases.indexOf("External contributor") === -1) nreleases.push("External contributor");
+          var edInvolveEl = row.querySelector('input[name="ed-involve"]:checked');
+          if(edInvolveEl && edInvolveEl.value === "external" && nreleases.indexOf("External contributor") === -1) nreleases.push("External contributor");
           var nscopeEl = row.querySelector('input[name="ed-scope"]:checked');
           var nscope = nscopeEl ? nscopeEl.value : "base";
           // Work period (optional). Empty string clears it on the server; blank end = present.
