@@ -526,7 +526,7 @@
       if (isCredit && opts.gameTitle) note = "On " + opts.gameTitle + (opts.creditId ? " (credit #" + opts.creditId + ")" : "") + ". " + note;
       if (!w.DQAPI) { alert("Reporting isn't available right now."); return; }
       btn.disabled = true; btn.textContent = "Sending…";
-      w.DQAPI.reportEntity({ type: type, slug: slug, name: name || "", reason: reason, suggested: suggested, note: note }).then(function (r) {
+      w.DQAPI.reportEntity({ type: type, slug: slug, name: name || "", reason: reason, suggested: suggested, note: note, credit_id: (isCredit ? (opts.creditId || null) : null) }).then(function (r) {
         if (r && r.ok) {
           ov.querySelector(".dq-modal").innerHTML = '<button class="dq-x" aria-label="Close">×</button><div class="dq-mh">Thanks</div><div class="dq-sub">Your report was sent to the moderators.</div><div class="dq-actions"><button class="dq-cancel">Close</button></div>';
           ov.querySelector(".dq-x").onclick = close; ov.querySelector(".dq-cancel").onclick = close;

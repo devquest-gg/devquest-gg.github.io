@@ -235,7 +235,7 @@
     // Merge credits by game_slug — live (API) wins over seed (static).
     var byGame = {};
     ((stat && stat.credits) || []).forEach(function(c){ byGame[c.game_slug] = { game_slug:c.game_slug, game_title:c.game_title, year:c.year||null, studio:c.studio||null, role:c.role, roles_other:c.roles_other||[], verification:c.verification||[], vouch_count:0, live:false }; });
-    ((api && api.credits) || []).forEach(function(c){ byGame[c.game_slug] = { id:c.id, game_slug:c.game_slug, game_title:c.game_title, year:c.year||null, studio:c.studio||null, role:c.role, roles_other:c.roles_other||[], verification:c.verification||[], links:c.links||[], position:(c.position!=null?c.position:null), releases:c.releases||[], vouch_count:c.vouch_count||0, voucher_slugs:c.voucher_slugs||[], partial:!!c.partial, parent_slug:(c.parent_slug||null), work_start:(c.work_start!=null?c.work_start:null), work_end:(c.work_end!=null?c.work_end:null), live:true }; });
+    ((api && api.credits) || []).forEach(function(c){ byGame[c.game_slug] = { id:c.id, game_slug:c.game_slug, game_title:c.game_title, year:c.year||null, studio:c.studio||null, role:c.role, roles_other:c.roles_other||[], verification:c.verification||[], links:c.links||[], position:(c.position!=null?c.position:null), releases:c.releases||[], vouch_count:c.vouch_count||0, voucher_slugs:c.voucher_slugs||[], partial:!!c.partial, parent_slug:(c.parent_slug||null), status:c.status, work_start:(c.work_start!=null?c.work_start:null), work_end:(c.work_end!=null?c.work_end:null), live:true }; });
     var credits = Object.keys(byGame).map(function(k){ return byGame[k]; });
 
     // Resolve missing launch years from the static catalogue (added games already
@@ -284,6 +284,12 @@
     function orphanExpTag(c){
       return isOrphanExpansion(c)
         ? ' <span class="mut" style="font-weight:400;font-size:12px">· expansion of <a class="expparent" data-parent="'+DQ.esc(c.parent_slug)+'" href="/credits/game/'+encodeURIComponent(c.parent_slug)+'">'+DQ.esc(prettySlug(c.parent_slug))+'</a></span>'
+        : '';
+    }
+    // "Disputed" tag when this credit has been challenged and marked contested by a moderator.
+    function dispTag(c){
+      return c.status==="contested"
+        ? ' <span class="disputed" title="This credit has been challenged and is under review" style="font-size:10px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--gold,#e0b23a);border:1px solid rgba(224,178,58,.5);background:rgba(224,178,58,.1);border-radius:6px;padding:1px 6px;vertical-align:middle">Disputed</span>'
         : '';
     }
     // Credits on games the viewer also shipped, that they haven't confirmed yet.
@@ -390,7 +396,7 @@
       var _kidMark = _isChild ? '<span class="mut expctl expcollapse-child" data-base="'+DQ.esc(c.parent_slug)+'" role="button" tabindex="0" style="font-weight:400;margin-right:5px;cursor:pointer" title="Collapse under the base game">↳</span>' : '';
       return '<div class="row"'+((isOwn&&c.live&&c.id)?' data-id="'+c.id+'"':'')+_rowStyle+(_isChild?' data-childof="'+DQ.esc(c.parent_slug)+'"':'')+'>'+
         grip +
-        '<div class="rmain"><div class="rname">'+(_isChild?_kidMark:collapseToggle(c.game_slug))+'<a href="/credits/game/'+encodeURIComponent(c.game_slug)+'">'+DQ.esc(c.game_title)+'</a>'+ast+seal+orphanExpTag(c)+'</div>'+
+        '<div class="rmain"><div class="rname">'+(_isChild?_kidMark:collapseToggle(c.game_slug))+'<a href="/credits/game/'+encodeURIComponent(c.game_slug)+'">'+DQ.esc(c.game_title)+'</a>'+ast+seal+dispTag(c)+orphanExpTag(c)+'</div>'+
           '<div class="rsub">'+roleHTML+more+(sigs?' &nbsp; '+sigs:'')+(proof?' &nbsp; '+proof:'')+'</div>'+workNote+'</div>'+
         '<div class="rright">'+(trust?'<span style="margin-right:6px">'+trust+'</span>':'')+(c.year?'<span class="yr" title="Game release year"><span class="yrlbl">Released</span> '+c.year+'</span>':'')+confirmBtn+controls+'</div>'+
       '</div>';
@@ -459,7 +465,7 @@
         '<div class="tlrail"><span class="tldot'+(isFeat?' feat':'')+'"></span></div>'+
         '<div class="tlcard"'+_cardStyle+'>'+
           '<a class="tlthumb" href="'+gurl+'">'+thumb+'</a>'+
-          '<div class="tlbody"><div class="tlnameline">'+(_isChild?'':collapseToggle(c.game_slug))+'<a class="tlname" href="'+gurl+'">'+DQ.esc(c.game_title)+'</a>'+astg+seal+spanHTML+orphanExpTag(c)+'</div>'+
+          '<div class="tlbody"><div class="tlnameline">'+(_isChild?'':collapseToggle(c.game_slug))+'<a class="tlname" href="'+gurl+'">'+DQ.esc(c.game_title)+'</a>'+astg+seal+dispTag(c)+spanHTML+orphanExpTag(c)+'</div>'+
             '<div class="tlsub">'+sub+'</div>'+(star?'<div class="tlact">'+star+'</div>':'')+'</div>'+
         '</div>'+
       '</div>';

@@ -80,8 +80,29 @@
       (rep.note?'<div class="mut" style="margin-top:4px;font-size:13px">“'+DQ.esc(rep.note)+'”</div>':'')+
       curLine+
       (rep.type==="credit"
-        ? '<div style="margin-top:8px;font-size:12px;color:#8b949e">Credit report. Review it on the game page, contest or remove the credit there, then dismiss this.</div>'+
-          '<div style="margin-top:10px"><span class="btn ghost act" data-a="dismiss" style="'+btnStyle+';color:var(--pink)">Dismiss</span></div>'
+        ? (function(){
+            var ch = rep.challenger || {};
+            var standing = ch.anonymous ? '<span style="color:var(--muted)">an anonymous / signed-out reporter</span>'
+              : (ch.has_credit
+                  ? (ch.vouched ? '<span style="color:var(--green);font-weight:700">a peer-verified dev on this game</span>' : '<span style="color:var(--gold);font-weight:700">a self-reported dev on this game</span>')
+                  : '<span style="color:var(--muted)">not a credited dev on this game</span>');
+            var cs = rep.credit_status;
+            var statusLine = cs
+              ? '<div style="margin-top:4px;font-size:12px">Credit is currently <b style="color:'+(cs==="contested"?"var(--gold)":"var(--green)")+'">'+cs+'</b></div>'
+              : '<div style="margin-top:4px;font-size:12px;color:var(--pink)">That credit no longer exists (already removed).</div>';
+            var acts = '';
+            if(rep.credit_id && cs){
+              acts += cs==="contested"
+                ? '<span class="btn ghost cact" data-a="uncontest" data-cid="'+rep.credit_id+'" style="'+btnStyle+';color:var(--green)">Clear dispute</span>'
+                : '<span class="btn ghost cact" data-a="contest" data-cid="'+rep.credit_id+'" style="'+btnStyle+';color:var(--gold)">Mark contested</span>';
+              acts += '<span class="btn ghost cact" data-a="removecredit" data-cid="'+rep.credit_id+'" style="'+btnStyle+';color:var(--pink)">Remove credit</span>';
+            }
+            acts += '<span class="btn ghost act" data-a="dismiss" style="'+btnStyle+';color:var(--muted)">Dismiss (no change)</span>';
+            return '<div style="margin-top:8px;font-size:12.5px">Challenged by '+(ch.name?('<b>'+DQ.esc(ch.name)+'</b> — '):'')+standing+'.</div>'+
+              statusLine+
+              (rep.credit_id?'':'<div style="margin-top:4px;font-size:11.5px;color:var(--muted)">This report predates credit-linking, so use the game page to act on the specific credit.</div>')+
+              '<div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:8px;align-items:center">'+acts+'</div>';
+          })()
         : '<div style="margin-top:13px;display:flex;flex-wrap:wrap;gap:8px;align-items:center">'+
           '<span class="btn ghost act" data-a="hide" style="'+btnStyle+'">Hide</span>'+
           '<span class="btn ghost act" data-a="unhide" style="'+btnStyle+'">Unhide</span>'+
@@ -106,6 +127,26 @@
             if(r && r.ok){
               cardEl.style.opacity = ".45"; cardEl.style.pointerEvents = "none";
               cardEl.insertAdjacentHTML("beforeend", '<div style="color:var(--green);font-size:12px;margin-top:10px;font-weight:700">✓ Applied: '+a+(value?' → '+DQ.esc(value):'')+'</div>');
+            } else { btn.textContent = label; alert((r && r.data && r.data.error) || "Could not apply."); }
+          }).catch(function(){ btn.textContent = label; alert("Network error."); });
+        };
+      });
+      // Credit-specific actions: contest / clear dispute / remove. Each also closes the report.
+      Array.prototype.forEach.call(cardEl.querySelectorAll(".cact"), function(btn){
+        btn.onclick = function(){
+          var a = btn.getAttribute("data-a"), cid = btn.getAttribute("data-cid"), run;
+          if(a==="contest") run = DQAPI.adminSetCreditStatus(cid, "contested");
+          else if(a==="uncontest") run = DQAPI.adminSetCreditStatus(cid, "active");
+          else if(a==="removecredit"){ if(!confirm("Remove this credit entirely? This deletes it and any vouches on it. Prefer 'Mark contested' unless the challenge is clearly proven.")) return; run = DQAPI.adminRemoveCredit(cid); }
+          else return;
+          var label = btn.textContent; btn.textContent = "…";
+          run.then(function(r){
+            if(r && r.ok){
+              DQAPI.adminResolveReport(id, { action:"resolve", value:"" }).then(function(){
+                cardEl.style.opacity = ".45"; cardEl.style.pointerEvents = "none";
+                var msg = a==="removecredit" ? "Credit removed" : (a==="contest" ? "Marked contested" : "Dispute cleared");
+                cardEl.insertAdjacentHTML("beforeend", '<div style="color:var(--green);font-size:12px;margin-top:10px;font-weight:700">✓ '+msg+'</div>');
+              });
             } else { btn.textContent = label; alert((r && r.data && r.data.error) || "Could not apply."); }
           }).catch(function(){ btn.textContent = label; alert("Network error."); });
         };
