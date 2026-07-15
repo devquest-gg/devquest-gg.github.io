@@ -187,12 +187,38 @@
       ? '<div class="gpcover"><img loading="lazy" referrerpolicy="no-referrer" src="'+DQ.esc(coverSrc)+'" onerror="var c=this.closest(\'.gpcover\'); if(c) c.remove();" alt="Cover art"></div>'
       : '';
 
+    // --- Expansion link: this entry is an expansion/edition OF a base game. ---
+    // parent_slug comes from the API game meta (community-added games only). The title is
+    // seeded from the API (community parent) or a prettified slug, then upgraded async to
+    // the canonical static-catalogue title via loadEntity after render.
+    var parentSlug = (apiGame && apiGame.parent_slug) || null;
+    var parentInit = parentSlug ? ((apiGame && apiGame.parent_title) || parentSlug.replace(/-/g," ").replace(/\b\w/g, function(c){ return c.toUpperCase(); })) : "";
+    var parentHTML = parentSlug
+      ? '<div class="expof" style="margin-top:8px;font-size:13px"><span class="mut">Expansion of</span> <a id="dqc-parentlink" href="/credits/game/'+encodeURIComponent(parentSlug)+'">'+DQ.esc(parentInit)+'</a></div>'
+      : '';
+
+    // --- Children: expansions/editions linked TO this game. ---
+    var children = (apiRes && apiRes.children) || [];
+    var childrenHTML = children.length
+      ? '<section class="blk"><div class="container">'+
+          '<div class="eyebrow">Expansions &amp; editions</div>'+
+          '<h2 class="sec">'+children.length+' linked</h2>'+
+          '<p class="secsub" style="margin:0 0 12px">Expansions, editions, and DLC catalogued as their own entries, each linking back to this game.</p>'+
+          '<div class="rows">'+ children.map(function(ch){
+            return '<div class="row"><div class="rmain"><div class="rname"><a href="/credits/game/'+encodeURIComponent(ch.slug)+'">'+DQ.esc(ch.title)+'</a></div>'+
+              (ch.year ? '<div class="rsub"><span class="mut">'+DQ.esc(String(ch.year))+'</span></div>' : '')+
+            '</div></div>';
+          }).join("")+'</div>'+
+        '</div></section>'
+      : '';
+
     app.innerHTML =
       '<div class="phead"><div class="container gpheadrow">'+
         '<div class="gpheadtext">'+
           '<div style="margin-bottom:10px">'+srcBadge+' <a id="reportgame" class="reportlink" style="cursor:pointer;color:var(--muted);font-size:12px;margin-left:8px">⚑ Report or suggest a fix</a></div>'+
           '<h1>'+DQ.esc(title)+'</h1>'+
           '<div class="meta">'+metaBits.join(' · ')+'</div>'+
+          parentHTML +
           (chips?'<div class="chips">'+chips+'</div>':'')+
         '</div>'+
         coverHTML +
@@ -208,7 +234,15 @@
         pendingHTML +
         addTeamHTML +
         '<div class="notice">Source of truth is the person who did the work. Catalogue facts come from Wikidata (CC0); credits are added and vouched by developers. Teammate additions are unclaimed until that person confirms them.</div>'+
-      '</div></section>';
+      '</div></section>'+
+      childrenHTML;
+
+    // Upgrade the "Expansion of X" label to the canonical catalogue title once resolved.
+    if (parentSlug) {
+      DQ.loadEntity("games", parentSlug).then(function(pg){
+        if (pg && pg.title) { var el = document.getElementById("dqc-parentlink"); if (el) el.textContent = pg.title; }
+      }).catch(function(){});
+    }
 
     var cb = document.getElementById("claimbtn");
     if(cb) cb.onclick = function(){
