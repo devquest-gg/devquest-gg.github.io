@@ -311,23 +311,48 @@
         {g:"City of Heroes", verified:true, role:"Producer", worked:"the live-service era"}
       ]}
   ];
-  document.getElementById('dcards').innerHTML=DEVS.map(function(d){
-    var initials=d.name.split(' ').map(function(w){return w[0];}).join('');
-    var vcount=d.credits.filter(function(c){return c.verified;}).length;
-    var rows=d.credits.map(function(c){
+  var COLORS=['#58a6ff','#a371f7','#3fb950','#e0b23a','#f778ba'];
+  function dEsc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+  function devCard(d, idx){
+    var initials=String(d.name||'?').trim().split(/\s+/).slice(0,2).map(function(w){return w[0]||'';}).join('').toUpperCase();
+    var color=d.color||COLORS[idx%COLORS.length];
+    var rows=(d.credits||[]).map(function(c){
       var seal=c.verified?' <span class="dseal" title="Verified by a teammate who shipped the same game">✓</span>':'';
-      var worked=c.worked?'<div class="dwork">Also worked on: '+c.worked+'</div>':'';
-      return '<div class="cr"><div class="crtop"><span class="crg">'+c.g+'</span>'+seal+'</div><div class="crrole">'+c.role+'</div>'+worked+'</div>';
+      var worked=c.worked?'<div class="dwork">Also worked on: '+dEsc(c.worked)+'</div>':'';
+      return '<div class="cr"><div class="crtop"><span class="crg">'+dEsc(c.g)+'</span>'+seal+'</div><div class="crrole">'+dEsc(c.role)+'</div>'+worked+'</div>';
     }).join('');
     var href = d.slug ? ' href="/credits/'+encodeURIComponent(d.slug)+'"' : '';
-    return '<a class="dcard"'+href+' style="text-decoration:none;color:inherit"><div class="halo" style="background:'+d.color+'"></div>'+
-      '<div class="av" style="background:'+d.color+'">'+initials+'</div>'+
-      '<div class="nm">'+d.name+'</div>'+
-      '<div class="hl">'+d.title+'</div>'+(d.studio?'<div class="hlst">'+d.studio+'</div>':'')+
-      '<div class="snap">'+d.snap+'</div>'+
-      '<div class="dverify">✓ '+d.verified+' of '+d.total+' credits peer-verified</div>'+
+    return '<a class="dcard"'+href+' style="text-decoration:none;color:inherit"><div class="halo" style="background:'+color+'"></div>'+
+      '<div class="av" style="background:'+color+'">'+dEsc(initials)+'</div>'+
+      '<div class="nm">'+dEsc(d.name)+'</div>'+
+      '<div class="hl">'+dEsc(d.title)+'</div>'+(d.studio?'<div class="hlst">'+dEsc(d.studio)+'</div>':'')+
+      '<div class="snap">'+dEsc(d.snap)+'</div>'+
+      '<div class="dverify">✓ '+(d.verified||0)+' of '+(d.total||0)+' credits peer-verified</div>'+
       '<div class="gocred">'+rows+'</div></a>';
-  }).join('');
+  }
+  function renderDevs(list){ document.getElementById('dcards').innerHTML=list.map(devCard).join(''); }
+  function dShuffle(a){ a=a.slice(); for(var i=a.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)),t=a[i];a[i]=a[j];a[j]=t; } return a; }
+  function apiToCard(p){
+    var h=String(p.headline||'').trim(), i=h.toLowerCase().lastIndexOf(' at ');
+    return { name:p.name, slug:p.slug,
+      title: i>0?h.slice(0,i):(h||'Developer'), studio: i>0?h.slice(i+4):'',
+      snap: (p.total||0)+' shipped '+((p.total===1)?'game':'games'),
+      verified:p.verified||0, total:p.total||0,
+      credits:(p.credits||[]).map(function(c){ return {g:c.g, verified:!!c.verified, role:c.role||'', worked:c.worked||null}; }) };
+  }
+  // Show curated samples immediately (no empty flash), then upgrade to a fresh random trio of
+  // REAL claimed profiles from the DB. Pads with samples if the quality pool is thin in beta.
+  renderDevs(dShuffle(DEVS).slice(0,3));
+  if(window.DQAPI && DQAPI.spotlight){
+    DQAPI.spotlight().then(function(r){
+      var ppl=(r&&r.ok&&r.data&&r.data.people)||[];
+      var real=dShuffle(ppl).map(apiToCard);
+      if(!real.length) return; // keep the samples
+      var list=real;
+      if(real.length<3){ var pad=dShuffle(DEVS).filter(function(s){ return !real.some(function(x){return x.slug===s.slug;}); }); list=real.concat(pad); }
+      renderDevs(list.slice(0,3));
+    }).catch(function(){});
+  }
 
   // ---- animated counters ----
   // Only ever animate a stat once it has a real (>0) target AND is in view, so a
