@@ -121,6 +121,14 @@
 
   // Attach a live grouped dropdown to a text input. Jumps straight to an entity
   // on click/Enter; "See all" (or Enter with nothing highlighted) opens search.html.
+  // A two-word alphabetic query ("art vandelay") is almost always a person searching for
+  // themselves, not a game. Used to lead with the identity path and avoid pre-filling a
+  // person's name into the game-title field.
+  function looksLikeName(s) { s = String(s || "").trim(); if (!s) return false; if (/[0-9:_\/®™]/.test(s)) return false; var ws = s.split(/\s+/); return ws.length === 2 && ws.every(function (x) { return /^[A-Za-z][A-Za-z.'\-]*$/.test(x); }); }
+  // Open the add-a-game / claim flow the identity-aware way: a name-like query pre-fills the
+  // person field; anything else pre-fills the game title.
+  function openAddFlow(q, asSelf) { var v = String(q || "").trim(); openClaim(asSelf ? { mode: "addGame", prefillName: looksLikeName(v) ? v : "" } : { mode: "addGame", prefillTitle: looksLikeName(v) ? "" : v }); }
+
   function attachSuggest(input, opts) {
     opts = opts || {};
     injectSuggestStyles();
@@ -166,7 +174,8 @@
       if (s.total) h += '<div class="grp">Studios</div>' + s.rows.map(function (r) { return suggestRowHTML("studios", r); }).join("");
       if (!h) h = '<div class="dq-empty">No matches' + (data.games ? '' : ' (loading catalogue…)') + '</div>';
       h += '<a class="dq-seeall" href="search.html?q=' + encodeURIComponent(q) + '">See all results for “' + esc(q) + '” →</a>';
-      h += '<a class="dq-seeall dq-add" data-dqadd style="cursor:pointer">＋ Add a game you worked on</a>';
+      h += '<a class="dq-seeall dq-add" data-dqadd style="cursor:pointer;font-weight:800;color:var(--accent,#58a6ff);background:rgba(88,166,255,.09)">＋ Add a game you worked on</a>';
+      h += '<a class="dq-seeall dq-self" data-dqself style="cursor:pointer;color:var(--muted,#8b98a9)">New here, or this is you? <b style="color:var(--accent,#58a6ff)">Start your profile →</b></a>';
       return h;
     }
     function refresh() {
@@ -191,10 +200,10 @@
       if (box.style.display === "none") { if (e.key === "Enter") seeAll(); return; }
       if (e.key === "ArrowDown") { e.preventDefault(); setHi(hi + 1); }
       else if (e.key === "ArrowUp") { e.preventDefault(); setHi(hi - 1); }
-      else if (e.key === "Enter") { var els = items(); if (hi >= 0 && els[hi]) { e.preventDefault(); if (els[hi].hasAttribute("data-dqadd")) { box.style.display = "none"; openClaim({ mode: "addGame", prefillTitle: input.value.trim() }); } else { w.location.href = els[hi].getAttribute("href"); } } else { seeAll(); } }
+      else if (e.key === "Enter") { var els = items(); if (hi >= 0 && els[hi]) { e.preventDefault(); if (els[hi].hasAttribute("data-dqadd") || els[hi].hasAttribute("data-dqself")) { box.style.display = "none"; openAddFlow(input.value.trim(), els[hi].hasAttribute("data-dqself")); } else if (els[hi].getAttribute("href")) { w.location.href = els[hi].getAttribute("href"); } else { seeAll(); } } else { seeAll(); } }
       else if (e.key === "Escape") { box.style.display = "none"; hi = -1; }
     });
-    box.addEventListener("click", function (e) { if (e.target.closest && e.target.closest("[data-dqadd]")) { e.preventDefault(); box.style.display = "none"; openClaim({ mode: "addGame", prefillTitle: input.value.trim() }); } });
+    box.addEventListener("click", function (e) { var self = e.target.closest && e.target.closest("[data-dqself]"); var add = e.target.closest && e.target.closest("[data-dqadd]"); if (self || add) { e.preventDefault(); box.style.display = "none"; openAddFlow(input.value.trim(), !!self); } });
     document.addEventListener("click", function (e) { if (!wrap.contains(e.target)) { box.style.display = "none"; hi = -1; } });
     return { seeAll: seeAll };
   }

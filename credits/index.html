@@ -268,6 +268,7 @@
     <span class="btn primary" id="hsbtn">Search</span>
   </div>
   <div class="trustline">Completely free · opt-in · <b>your data is exportable and yours</b></div>
+  <div class="heroadd" style="margin-top:13px;font-size:14.5px"><span class="mut">Shipped games already?</span> <a id="startprofile" style="color:var(--accent);font-weight:700;cursor:pointer">Start your profile →</a> <span class="mut" style="font-size:12.5px">· takes about a minute</span></div>
 
   <!-- cover wall -->
   <div class="wall">
@@ -455,6 +456,9 @@
   if(!suggest){ hsIn.addEventListener('keydown',function(e){if(e.key==='Enter')goSearch();}); }
   // "Claim your credits" buttons → jump to the search box (finding your name is step one).
   document.querySelectorAll('.claimcta').forEach(function(b){ b.style.cursor='pointer'; b.addEventListener('click',function(){ window.scrollTo({top:0,behavior:'smooth'}); if(hsIn){ setTimeout(function(){ hsIn.focus(); },350); } }); });
+  // Identity-first entry: open the add-a-game/claim flow (which materializes the profile).
+  var _sp=document.getElementById('startprofile');
+  if(_sp) _sp.addEventListener('click',function(){ if(window.DQ&&DQ.openClaim) DQ.openClaim({mode:'addGame'}); });
 
   // ---- real data overlay (stats + fresh games) when the built site data exists ----
   function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
