@@ -33,7 +33,7 @@
     logout: function () { clearToken(); return req("POST", "/auth/logout"); },
     // reads
     stats: function () { return req("GET", "/stats"); },
-    spotlight: function () { return req("GET", "/spotlight?t=" + Date.now()); },
+    spotlight: function () { return req("GET", "/spotlight"); },
     gameCredits: function (slug) { return req("GET", "/credits/game/" + encodeURIComponent(slug)); },
     personCredits: function (slug) { return req("GET", "/credits/person/" + encodeURIComponent(slug)); },
     unclaimedProfile: function (name) { return req("GET", "/credits/unclaimed?name=" + encodeURIComponent(name)); },
