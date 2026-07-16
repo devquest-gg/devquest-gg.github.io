@@ -271,6 +271,14 @@
         ? '<span class="expcollapse expctl" data-base="'+DQ.esc(slug)+'" data-collapsed="0" role="button" tabindex="0" title="Collapse / expand expansions" style="cursor:pointer;color:var(--muted);font-weight:700;margin-right:6px;user-select:none">▾</span>'
         : '';
     }
+    var kidCount = {}; credits.forEach(function(c){ var _p = nestParentSlug(c); if(_p) kidCount[_p] = (kidCount[_p]||0)+1; });
+    // Clear, clickable "+N expansions" affordance under a base game. Expansions are collapsed by
+    // default so a long career reads tight; this line makes the disclosure obvious (vs the old
+    // cryptic "▸ 4" glued to the title).
+    function expMore(slug){
+      var n = kidCount[slug]; if(!n) return '';
+      return '<a class="expmore expctl" data-base="'+DQ.esc(slug)+'" data-collapsed="1" role="button" tabindex="0" title="Show the expansions and editions nested under this game" style="display:inline-block;margin-top:7px;font-size:12.5px;font-weight:700;color:var(--accent);cursor:pointer;user-select:none">+ '+n+' expansion'+(n===1?'':'s')+'</a>';
+    }
     function prettySlug(s){ return String(s||"").replace(/-/g," ").replace(/\b\w/g, function(ch){ return ch.toUpperCase(); }); }
     // Reorder a sorted credit list so each base is immediately followed by the expansions
     // the person also holds (kept in the incoming sort order). Returns [{c, child}].
@@ -397,12 +405,12 @@
         ? '<a class="editcredit" '+editAttrs+' style="color:var(--accent);font-size:12px;cursor:pointer;margin-left:10px">Edit</a>'+
           '<a class="rmvcredit" data-id="'+c.id+'" style="color:var(--pink);font-size:12px;cursor:pointer;margin-left:10px">Remove</a>'
         : '';
-      var _rowStyle = _isChild ? ' style="margin-left:26px;border-left:2px solid var(--border,#2d333b);padding-left:12px"' : '';
+      var _rowStyle = _isChild ? ' style="margin-left:26px;border-left:2px solid var(--border,#2d333b);padding-left:12px;display:none"' : '';
       var _kidMark = _isChild ? '<span class="mut expctl expcollapse-child" data-base="'+DQ.esc(c.parent_slug)+'" role="button" tabindex="0" style="font-weight:400;margin-right:5px;cursor:pointer" title="Collapse under the base game">↳</span>' : '';
       return '<div class="row"'+((isOwn&&c.live&&c.id)?' data-id="'+c.id+'"':'')+_rowStyle+(_isChild?' data-childof="'+DQ.esc(c.parent_slug)+'"':'')+'>'+
         grip +
-        '<div class="rmain"><div class="rname">'+(_isChild?_kidMark:collapseToggle(c.game_slug))+'<a href="/credits/game/'+encodeURIComponent(c.game_slug)+'">'+DQ.esc(c.game_title)+'</a>'+ast+seal+dispTag(c)+orphanExpTag(c)+'</div>'+
-          '<div class="rsub">'+roleHTML+more+(sigs?' &nbsp; '+sigs:'')+(proof?' &nbsp; '+proof:'')+'</div>'+workNote+'</div>'+
+        '<div class="rmain"><div class="rname">'+(_isChild?_kidMark:'')+'<a href="/credits/game/'+encodeURIComponent(c.game_slug)+'">'+DQ.esc(c.game_title)+'</a>'+ast+seal+dispTag(c)+orphanExpTag(c)+'</div>'+
+          '<div class="rsub">'+roleHTML+more+(sigs?' &nbsp; '+sigs:'')+(proof?' &nbsp; '+proof:'')+'</div>'+workNote+(_isChild?'':expMore(c.game_slug))+'</div>'+
         '<div class="rright">'+(trust?'<span style="margin-right:6px">'+trust+'</span>':'')+(c.year?'<span class="yr" title="Game release year"><span class="yrlbl">Released</span> '+c.year+'</span>':'')+confirmBtn+controls+'</div>'+
       '</div>';
     }).join("") + '</div>' : '<div class="empty">No credits on record yet.'+(isOwn?' Add the games you worked on.':'')+'</div>';
@@ -473,13 +481,13 @@
       var gurl = '/credits/game/'+encodeURIComponent(c.game_slug);
       var _yearCell = _isChild ? '<span class="mut expctl expcollapse-child" data-base="'+DQ.esc(c.parent_slug)+'" role="button" tabindex="0" style="cursor:pointer" title="Collapse under the base game">↳</span>' : railInner;
       var _cardStyle = _isChild ? ' style="margin-left:22px"' : '';
-      return '<div class="tlrow'+(isFeat?' isfeat':'')+(_isChild?' tlrow-child':'')+'"'+(_isChild?' data-childof="'+DQ.esc(c.parent_slug)+'"':'')+'>'+
+      return '<div class="tlrow'+(isFeat?' isfeat':'')+(_isChild?' tlrow-child':'')+'"'+(_isChild?' data-childof="'+DQ.esc(c.parent_slug)+'" style="display:none"':'')+'>'+
         '<div class="tlyear" title="'+(_isChild?'Expansion of the game above':yearTip)+'">'+_yearCell+'</div>'+
         '<div class="tlrail"><span class="tldot'+(isFeat?' feat':'')+'"></span></div>'+
         '<div class="tlcard"'+_cardStyle+'>'+
           '<a class="tlthumb" href="'+gurl+'">'+thumb+'</a>'+
-          '<div class="tlbody"><div class="tlnameline">'+(_isChild?'':collapseToggle(c.game_slug))+'<a class="tlname" href="'+gurl+'">'+DQ.esc(c.game_title)+'</a>'+astg+seal+dispTag(c)+orphanExpTag(c)+'</div>'+
-            '<div class="tlsub">'+sub+'</div>'+((tledit||star)?'<div class="tlact">'+tledit+star+'</div>':'')+'</div>'+
+          '<div class="tlbody"><div class="tlnameline"><a class="tlname" href="'+gurl+'">'+DQ.esc(c.game_title)+'</a>'+astg+seal+dispTag(c)+orphanExpTag(c)+'</div>'+
+            '<div class="tlsub">'+sub+'</div>'+(_isChild?'':expMore(c.game_slug))+((tledit||star)?'<div class="tlact">'+tledit+star+'</div>':'')+'</div>'+
         '</div>'+
       '</div>';
     }
@@ -643,12 +651,17 @@
     function _expToggle(ctl){
       var base = ctl.getAttribute("data-base"); if(!base) return;
       var scope = ctl.closest("#gv-visual, #gv-list") || document;
-      var chev = scope.querySelector('.expcollapse[data-base="'+base+'"]');
       var kids = scope.querySelectorAll('[data-childof="'+base+'"]');
-      // A ↳ always collapses; the chevron flips based on its own current state.
-      var collapsing = ctl.classList.contains("expcollapse-child") ? true : (!chev || chev.getAttribute("data-collapsed") !== "1");
+      var toggles = scope.querySelectorAll('.expmore[data-base="'+base+'"], .expcollapse[data-base="'+base+'"]');
+      // A child's ↳ always collapses; a "+N expansions" / chevron toggle flips its own state.
+      var collapsing = ctl.classList.contains("expcollapse-child") ? true : (ctl.getAttribute("data-collapsed") !== "1");
       Array.prototype.forEach.call(kids, function(r){ r.style.display = collapsing ? "none" : ""; });
-      if(chev){ chev.setAttribute("data-collapsed", collapsing ? "1" : "0"); chev.textContent = collapsing ? ("▸ "+kids.length) : "▾"; }
+      var n = kids.length;
+      Array.prototype.forEach.call(toggles, function(t){
+        t.setAttribute("data-collapsed", collapsing ? "1" : "0");
+        if(t.classList.contains("expmore")) t.innerHTML = collapsing ? ("+ "+n+" expansion"+(n===1?"":"s")) : ("Hide "+n+" expansion"+(n===1?"":"s"));
+        else t.textContent = collapsing ? ("▸ "+n) : "▾";
+      });
     }
     document.addEventListener("click", function(e){
       var ctl = e.target && e.target.closest && e.target.closest(".expctl");
