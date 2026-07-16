@@ -38,7 +38,7 @@
       <span class="tab" data-tab="studios">Studios<span class="n" id="ns"></span></span>
       <span class="tab" data-tab="people">People<span class="n" id="np"></span></span>
     </div>
-    <div class="addhint">Not in the catalogue? <a id="addgamebtn">Add a game you worked on</a> &nbsp;·&nbsp; <a id="startprofilebtn">this is you? start your profile →</a></div>
+    <div class="addhint">Not in the catalogue? <a id="addgamebtn">Add a game you worked on</a> &nbsp;·&nbsp; <a id="startprofilebtn">this is you? start your profile →</a> &nbsp;·&nbsp; <a id="suggestbtn">missing a game or studio you weren't part of? suggest it →</a></div>
   </div>
 </div>
 
@@ -126,11 +126,12 @@
     if(kind==="people") ensureLivePeople();
     var rows = sortedIndex(kind);
     if(!rows.length) return '<div class="empty">Nothing to browse here yet.</div>';
+    var suggestHint = kind==="studios" ? '<div class="mut" style="font-size:12.5px;margin:-4px 0 14px">Missing a studio you weren\'t part of? <a data-suggest-studio style="cursor:pointer;color:var(--accent);font-weight:600">Suggest one →</a></div>' : '';
     // Small directory (People for a long while, small studios): show everyone at once. An A–Z bar
     // over a dozen names hides most of them behind letters and reads as empty.
     if(rows.length <= 60){
       var bodyAll = kind==="games"?gameTiles(rows):kind==="studios"?studioTiles(rows):peopleRows(rows);
-      return '<div class="eyebrow" style="margin-bottom:12px">Browse all '+rows.length.toLocaleString()+' '+kind+'</div>'+bodyAll;
+      return '<div class="eyebrow" style="margin-bottom:12px">Browse all '+rows.length.toLocaleString()+' '+kind+'</div>'+suggestHint+bodyAll;
     }
     var present={}; rows.forEach(function(r){ present[letterOf(r[1])]=1; });
     if(!browse.letter || !present[browse.letter]){ browse.letter = LETTERS.filter(function(L){ return present[L]; })[0] || "#"; browse.page=0; }
@@ -147,7 +148,7 @@
         '<span class="brprev" style="cursor:pointer;font-weight:700;font-size:13px;color:var(--accent)'+(browse.page<=0?";opacity:.35;pointer-events:none":"")+'">← Prev</span>'+
         '<span class="mut" style="font-size:13px">'+browse.letter+' · '+(browse.page*PAGE+1)+'–'+(browse.page*PAGE+slice.length)+' of '+total.toLocaleString()+'</span>'+
         '<span class="brnext" style="cursor:pointer;font-weight:700;font-size:13px;color:var(--accent)'+(browse.page>=pages-1?";opacity:.35;pointer-events:none":"")+'">Next →</span></div>' : '';
-    return '<div class="eyebrow" style="margin-bottom:12px">Browse all '+rows.length.toLocaleString()+' '+kind+'</div>'+az+body+nav;
+    return '<div class="eyebrow" style="margin-bottom:12px">Browse all '+rows.length.toLocaleString()+' '+kind+'</div>'+suggestHint+az+body+nav;
   }
 
   function setCounts(g,s,p){
@@ -207,7 +208,7 @@
     if(!q) return browseView("studios");
     var m = combine(DQ.searchRows(data.studios,1,q,LIMIT), liveFilter(data.liveStudios,q), LIMIT);
     document.getElementById("ns").textContent = m.total ? " "+m.total.toLocaleString() : "";
-    if(!m.total) return '<div class="empty">No studios match “'+DQ.esc(q)+'”.<br><span class="mut">Studios appear when you add a game made there.</span><br><a class="btn ghost" data-add-studio style="margin-top:14px">Add a game made here →</a></div>';
+    if(!m.total) return '<div class="empty">No studios match “'+DQ.esc(q)+'”.<br><span class="mut">A studio appears when you add a game made there. Not one you worked at? Suggest it and we\'ll add it if it checks out.</span><br><div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:14px"><a class="btn ghost" data-add-studio>Add a game made here →</a><a data-suggest-studio style="cursor:pointer;background:var(--accent);color:#04121f;border-radius:10px;padding:11px 18px;font-weight:800;font-size:14px;text-decoration:none;display:inline-flex">Suggest this studio →</a></div></div>';
     return studioTiles(m.rows) + (m.total>m.rows.length?'<div class="notice">Showing first '+m.rows.length+' of '+m.total.toLocaleString()+'.</div>':'');
   }
   function renderPeople(q){
@@ -274,6 +275,8 @@
     if(e.target.closest && e.target.closest(".brnext")){ browse.page++; paint(qt()); return; }
     if(e.target.closest && e.target.closest("[data-add]")){ e.preventDefault(); openAddGame({ prefillTitle: looksLikeName(qt())?"":qt() }); return; }
     if(e.target.closest && e.target.closest("[data-add-studio]")){ e.preventDefault(); openAddGame({ prefillStudio: qt() }); return; }
+    if(e.target.closest && e.target.closest("[data-suggest-studio]")){ e.preventDefault(); if(DQ.openSuggest) DQ.openSuggest({ type:"studio", prefillName: qt() }); return; }
+    if(e.target.closest && e.target.closest("[data-suggest]")){ e.preventDefault(); if(DQ.openSuggest) DQ.openSuggest({ prefillName: qt() }); return; }
     if(e.target.closest && e.target.closest("[data-add-person]")){ e.preventDefault(); openAddGame({ prefillName: looksLikeName(qt())?qt():"" }); return; }
     var a = e.target.closest && e.target.closest("[data-goto]");
     if(a){ e.preventDefault(); setTab(a.dataset.goto); }
@@ -282,6 +285,8 @@
   if(agb) agb.onclick = function(){ openAddGame({ prefillTitle: looksLikeName(qt())?"":qt() }); };
   var spb = document.getElementById("startprofilebtn");
   if(spb) spb.onclick = function(){ openAddGame({ prefillName: looksLikeName(qt())?qt():"" }); };
+  var sgb = document.getElementById("suggestbtn");
+  if(sgb) sgb.onclick = function(){ if(DQ.openSuggest) DQ.openSuggest({ prefillName: qt() }); };
 
   var t;
   input.addEventListener("input", function(){ clearTimeout(t); t=setTimeout(function(){ ensure().then(function(ok){ if(ok) render(); }); }, 110); });

@@ -604,17 +604,18 @@
   // own credits. opts.prefillName seeds the name from whatever they were typing.
   function openSuggest(opts) {
     opts = opts || {}; injectClaimStyles();
+    var isStudioSuggest = opts.type === "studio";
     var ov = document.createElement("div"); ov.className = "dq-modal-ov";
     ov.innerHTML = '<div class="dq-modal" role="dialog" aria-modal="true">' +
       '<button class="dq-x" aria-label="Close">×</button>' +
       '<div class="dq-mh">Suggest a missing game or studio</div>' +
       '<div class="dq-sub">For something you did <b>not</b> personally work on. Add a proof link so we can add it to the catalogue correctly.</div>' +
       '<label>What is it?</label>' +
-      '<label style="display:block;font-weight:400;font-size:13px;margin:6px 0;cursor:pointer"><input type="radio" name="dqs-type" value="game" checked style="margin-right:7px;vertical-align:-1px">A game</label>' +
-      '<label style="display:block;font-weight:400;font-size:13px;margin:6px 0;cursor:pointer"><input type="radio" name="dqs-type" value="studio" style="margin-right:7px;vertical-align:-1px">A studio</label>' +
+      '<label style="display:block;font-weight:400;font-size:13px;margin:6px 0;cursor:pointer"><input type="radio" name="dqs-type" value="game"' + (isStudioSuggest ? '' : ' checked') + ' style="margin-right:7px;vertical-align:-1px">A game</label>' +
+      '<label style="display:block;font-weight:400;font-size:13px;margin:6px 0;cursor:pointer"><input type="radio" name="dqs-type" value="studio"' + (isStudioSuggest ? ' checked' : '') + ' style="margin-right:7px;vertical-align:-1px">A studio</label>' +
       '<label>Name</label><input id="dqs-name" autocomplete="off" value="' + esc(opts.prefillName || "") + '" placeholder="e.g. Possibility Space">' +
       '<label>Proof link <span style="font-weight:400;color:var(--muted,#8b98a9)">— a page showing it exists (Wikipedia, Steam, studio site, press)</span></label><input id="dqs-proof" placeholder="https://…">' +
-      '<label>Anything else for our reviewer <span style="font-weight:400;color:var(--muted,#8b98a9)">— optional</span></label><textarea id="dqs-note" placeholder="Context that helps us add it correctly"></textarea>' +
+      '<label>Anything else worth noting <span style="font-weight:400;color:var(--muted,#8b98a9)">— optional</span></label><textarea id="dqs-note" placeholder="Context that helps us add it correctly"></textarea>' +
       '<div class="dq-actions"><button class="dq-cancel">Cancel</button><button class="dq-submit">Send suggestion</button></div>' +
       '</div>';
     document.body.appendChild(ov);
