@@ -99,6 +99,9 @@
   .tlyto{display:block;font-size:11.5px;font-weight:700;color:var(--muted,#8b98a9);font-variant-numeric:tabular-nums;margin-top:1px;letter-spacing:-.2px}
   /* Live-service: a quiet word in the metadata line, not a chip that fights the game title. */
   .tlphase{color:var(--muted,#8b98a9);font-weight:700}
+  /* Evidence dot — one quiet colored mark per credit; meaning is in the tooltip + the explainer. */
+  .evdot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-left:7px;vertical-align:1px;cursor:help}
+  .evdot.peer{background:var(--accent,#58a6ff)} .evdot.team{background:var(--green,#3fb950)} .evdot.rev{background:var(--gold,#e0b23a)}
   .tlhint{font-size:12.5px;color:var(--muted,#8b98a9);line-height:1.5;background:var(--panel,#11161d);border:1px solid var(--border,#2d333b);border-radius:10px;padding:10px 13px;margin:0 0 16px;max-width:560px}
   .tlhint b{color:var(--text,#e6edf3);font-weight:700}
   @media(max-width:600px){.tlrow{grid-template-columns:46px 20px 1fr}.tlyear{font-size:14px}}
@@ -305,6 +308,16 @@
         ? ' <span class="disputed" title="This credit has been challenged and is under review" style="font-size:10px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--gold,#e0b23a);border:1px solid rgba(224,178,58,.5);background:rgba(224,178,58,.1);border-radius:6px;padding:1px 6px;vertical-align:middle">Disputed</span>'
         : '';
     }
+    // Evidence as a single quiet colored dot — keeps the timeline pretty (no pill per row). The
+    // level: peer-confirmed (1), team-confirmed (2+), under review (reported). Self-reported shows
+    // nothing. Meaning lives in the tooltip and on how-evidence-works.html.
+    function evidenceDot(c){
+      if(c.status==="contested") return ' <span class="evdot rev" title="Under review — a report was filed on this credit"></span>';
+      var n = c.vouch_count || 0;
+      if(n>=2) return ' <span class="evdot team" title="Team-confirmed · '+n+' teammates who shipped this game confirmed it"></span>';
+      if(n>=1) return ' <span class="evdot peer" title="Peer-confirmed · 1 teammate who shipped this game confirmed it"></span>';
+      return '';
+    }
     // Credits on games the viewer also shipped, that they haven't confirmed yet.
     var confirmable = credits.filter(function(c){ return me && !isOwn && c.live && c.id && myGames[c.game_slug] && (c.voucher_slugs||[]).indexOf(me.slug) < 0; });
     // Two independent orderings. The List view is a stable career timeline (most recent
@@ -501,7 +514,7 @@
         '<div class="tlrail"><span class="tldot'+(isFeat?' feat':'')+'"></span></div>'+
         '<div class="tlcard"'+_cardStyle+'>'+
           '<a class="tlthumb" href="'+gurl+'">'+thumb+'</a>'+
-          '<div class="tlbody"><div class="tlnameline"><a class="tlname" href="'+gurl+'">'+DQ.esc(c.game_title)+'</a>'+astg+seal+dispTag(c)+orphanExpTag(c)+'</div>'+
+          '<div class="tlbody"><div class="tlnameline"><a class="tlname" href="'+gurl+'">'+DQ.esc(c.game_title)+'</a>'+astg+evidenceDot(c)+orphanExpTag(c)+'</div>'+
             '<div class="tlsub">'+sub+'</div>'+(_isChild?'':expMore(c.game_slug))+((tledit||star)?'<div class="tlact">'+tledit+star+'</div>':'')+'</div>'+
         '</div>'+
       '</div>';
@@ -513,6 +526,11 @@
       portfolioHTML = '<div class="gvhead">Highlights'+hiSub+'</div>'+
         '<div class="ggrid ggrid-hero" id="gv-hero">'+visualCredits.slice(0,3).map(visTile).join("")+'</div>'+
         '<div class="gvhead" style="margin-top:34px">Career timeline'+gvSub('by the years you worked on each game')+'</div>'+
+        '<div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;font-size:11.5px;color:var(--muted,#8b98a9);margin:0 0 14px">'+
+          '<span style="display:inline-flex;align-items:center;gap:6px"><span class="evdot peer" style="margin:0"></span> peer-confirmed</span>'+
+          '<span style="display:inline-flex;align-items:center;gap:6px"><span class="evdot team" style="margin:0"></span> team-confirmed</span>'+
+          '<a href="/credits/how-evidence-works.html" style="color:var(--accent);font-weight:600">how evidence works →</a>'+
+        '</div>'+
         tlHint +
         '<div class="tl" id="gv-tl">'+nestOrder(timelineCredits).map(function(_it){ return tlRow(_it.c, _it.child); }).join("")+'</div>';
     }

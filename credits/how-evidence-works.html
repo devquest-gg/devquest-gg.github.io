@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<base href="/credits/">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>How credits earn trust · DevQuest Credits</title>
+<meta name="description" content="DevQuest Credits doesn't claim credits are verified. It shows the evidence behind each one — who confirmed you worked on a game, and who they are.">
+<link rel="icon" href="/credits/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="app.css">
+<style>
+  .wrap{max-width:720px;margin:0 auto;padding:0 22px}
+  .lead h1{font-size:34px;font-weight:850;letter-spacing:-.8px;margin:34px 0 12px;line-height:1.08}
+  .lead h1 .grad{background:linear-gradient(100deg,#7cc0ff,#a371f7 60%,#e0b23a);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .lead p{font-size:17px;color:#c4cfdd;max-width:600px;margin:0 0 6px}
+  .lead .peers{font-size:16px;font-weight:750;color:var(--purple);margin-top:12px}
+  .sec{margin-top:42px}
+  .eyebrow{font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin-bottom:12px}
+  h2{font-size:23px;font-weight:800;letter-spacing:-.4px;margin:0 0 12px}
+  .body{color:#c4cfdd;font-size:15.5px;line-height:1.6}
+  .body b{color:var(--text)}
+  .ladder{display:flex;flex-direction:column;gap:14px;margin:4px 0}
+  .lr{display:flex;gap:14px;align-items:flex-start;background:var(--panel);border:1px solid var(--border);border-radius:13px;padding:15px 18px}
+  .lr .d{flex:none;width:12px;height:12px;border-radius:50%;margin-top:5px}
+  .lr .t{font-weight:800;font-size:15.5px}
+  .lr .s{color:var(--muted);font-size:13.5px;margin-top:2px}
+  .d.self{background:var(--muted)} .d.peer{background:var(--accent)} .d.team{background:var(--green)} .d.off{background:var(--purple)}
+  .lr.off{opacity:.85}
+  .soon{font-size:10.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--purple);border:1px solid rgba(163,113,247,.4);border-radius:999px;padding:1px 8px;margin-left:8px;vertical-align:2px}
+  /* receipts example */
+  .rcard{background:var(--panel);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-top:6px}
+  .rhead{display:flex;align-items:center;gap:10px;padding:15px 18px;flex-wrap:wrap}
+  .rname{font-weight:800;font-size:16px}.rrole{color:var(--muted);font-size:13px}
+  .evb{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:800;border-radius:999px;padding:2px 10px;color:var(--green);border:1px solid rgba(63,185,80,.35);background:rgba(63,185,80,.09)}
+  .evb .dd{width:8px;height:8px;border-radius:50%;background:var(--green)}
+  .rprov{border-top:1px solid var(--border);background:#0f141c;padding:14px 18px}
+  .provlbl{font-size:11px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin-bottom:9px}
+  .vrow{display:flex;align-items:center;gap:11px;padding:6px 0}
+  .av{flex:none;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;color:#0b0e14}
+  .vn{font-weight:700;font-size:13.5px}.vr{color:var(--muted);font-size:12px}
+  .cols{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  @media(max-width:560px){.cols{grid-template-columns:1fr}}
+  .col{background:var(--panel);border:1px solid var(--border);border-radius:13px;padding:16px 18px}
+  .col h3{font-size:14px;margin:0 0 8px;color:var(--text)}
+  .col p{font-size:13.5px;color:var(--muted);margin:0;line-height:1.55}
+  .cta{display:inline-block;margin-top:8px;font-size:14.5px;font-weight:700;color:#fff;background:linear-gradient(135deg,var(--accent),var(--purple));border-radius:10px;padding:11px 20px}
+</style>
+</head>
+<body>
+<div class="topbar"><div class="container">
+  <div class="brand"><a class="brandhome" href="/credits/" aria-label="DevQuest Credits home"><svg class="mark" viewBox="0 0 32 32" aria-hidden="true"><rect x="1" y="1" width="8" height="8" rx="2" fill="var(--gold)"/><rect x="12" y="1" width="8" height="8" rx="2" fill="#2d333b"/><rect x="23" y="1" width="8" height="8" rx="2" fill="#2d333b"/><rect x="1" y="12" width="8" height="8" rx="2" fill="#2d333b"/><rect x="12" y="12" width="8" height="8" rx="2" fill="var(--gold)"/><rect x="23" y="12" width="8" height="8" rx="2" fill="#2d333b"/><rect x="1" y="23" width="8" height="8" rx="2" fill="#2d333b"/><rect x="12" y="23" width="8" height="8" rx="2" fill="#2d333b"/><rect x="23" y="23" width="8" height="8" rx="2" fill="var(--gold)"/></svg><span class="wm">Dev<span class="q">Quest</span><span class="tld">.gg</span></span></a> <span class="cr">CREDITS</span> <span class="beta">BETA</span></div>
+  <div class="topnav"><a href="/credits/">Home</a><a class="back" href="/">← Jobs board</a></div>
+</div></div>
+
+<div class="wrap">
+  <div class="lead">
+    <div class="eyebrow" style="margin-top:34px">How credits earn trust</div>
+    <h1>We don't verify credits.<br><span class="grad">We show the evidence.</span></h1>
+    <p>Studios decide official credits, and they get them wrong all the time: people cut after a layoff, buried in "Special Thanks," or left off entirely. So we don't claim to have the one true answer. We show <b>who's willing to stand behind each credit, and who they are</b>, and let you judge it the way you'd judge a résumé.</p>
+    <p class="peers">Credits backed by peers, not just publishers.</p>
+  </div>
+
+  <div class="sec">
+    <div class="eyebrow">The evidence ladder</div>
+    <h2>Every credit shows how much backs it</h2>
+    <div class="ladder">
+      <div class="lr"><span class="d self"></span><div><div class="t">Self-reported</div><div class="s">The developer entered it. No one has confirmed it yet. Honest, and where every credit starts.</div></div></div>
+      <div class="lr"><span class="d peer"></span><div><div class="t">Peer-confirmed</div><div class="s">One teammate who shipped the same game confirmed it.</div></div></div>
+      <div class="lr"><span class="d team"></span><div><div class="t">Team-confirmed</div><div class="s">Several teammates who shipped the same game confirmed it.</div></div></div>
+      <div class="lr off"><span class="d off"></span><div><div class="t">Officially corroborated <span class="soon">Coming</span></div><div class="s">It matches the game's shipped credits or another authoritative source, the strongest, hardest-to-fake signal on the platform.</div></div></div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="eyebrow">The receipts</div>
+    <h2>Click any credit to see exactly who's behind it</h2>
+    <p class="body" style="margin-bottom:14px">The badge is a summary. One click shows the actual people who confirmed it, each with their own record you can check. "Confirmed by six veterans" looks nothing like "confirmed by six week-old accounts", and you can see which one you're looking at.</p>
+    <div class="rcard">
+      <div class="rhead"><div style="flex:1"><div class="rname">Marvel's Wolverine</div><div class="rrole">Production Director · 2026</div></div><span class="evb"><span class="dd"></span>Team-confirmed</span></div>
+      <div class="rprov"><div class="provlbl">Confirmed by teammates who shipped this game</div>
+        <div class="vrow"><span class="av" style="background:#58a6ff">SC</span><div><div class="vn">Sarah Chen</div><div class="vr">Senior Producer · 12 credited titles</div></div></div>
+        <div class="vrow"><span class="av" style="background:#a371f7">MJ</span><div><div class="vn">Mike Jones</div><div class="vr">Gameplay Engineer · 8 credited titles</div></div></div>
+        <div class="vrow"><span class="av" style="background:#3fb950">AS</span><div><div class="vn">Ashley Smith</div><div class="vr">Technical Artist · 15 credited titles</div></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="eyebrow">Why this works</div>
+    <div class="cols">
+      <div class="col"><h3>The industry is small</h3><p>A fake "Lead Designer, God of War" isn't fooling an algorithm, it's trying to fool the hundreds of people who were actually there. Fraud on real games gets caught socially, fast.</p></div>
+      <div class="col"><h3>Nothing is hidden</h3><p>There's no single checkmark to game. A weak credit visibly reads as weak, a real one visibly earns strong backing. The difference is on the page, not locked in a score.</p></div>
+      <div class="col"><h3>Confirming means something</h3><p>Only someone who also shipped the game can confirm you, and their name is attached to it. That's a real reference, not an anonymous thumbs-up.</p></div>
+      <div class="col"><h3>Report anything</h3><p>See a credit that's wrong? Flag it. It's marked "under review" until a person looks, and nothing is ever silently removed.</p></div>
+    </div>
+  </div>
+
+  <div class="sec" style="margin-bottom:60px">
+    <h2>Your credits, backed by the people you shipped with.</h2>
+    <p class="body" style="margin-bottom:16px">Claim what you made, and let the teammates who were there confirm it.</p>
+    <a class="cta" href="/credits/">Find your credits →</a>
+  </div>
+</div>
+
+<footer><div class="container">
+  <div><b style="color:var(--text)">DevQuest.gg / Credits</b> · a companion to the game-industry job board</div>
+  <div><a href="/credits/">← Credits home</a> &nbsp;·&nbsp; <a href="https://igda.org/sigs/credits/" target="_blank" rel="noopener">IGDA crediting guidelines ↗</a></div>
+</div></footer>
+</body>
+</html>
