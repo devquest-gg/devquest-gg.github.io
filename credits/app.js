@@ -645,6 +645,56 @@
     };
   }
 
+  // "Ask a teammate to confirm you" — for one of your own credits. We never email anyone (their
+  // address is private); instead this lists the claimed teammates on this game who could vouch,
+  // and hands you a pre-written note + a deep link you send yourself. The link drops the recipient
+  // on the game page with your row highlighted and the Vouch button ready.
+  // opts: { game_slug, game_title, my_slug, my_name, already:[slugs who already vouched] }
+  function openVouchRequest(opts) {
+    opts = opts || {}; injectClaimStyles();
+    var ov = document.createElement("div"); ov.className = "dq-modal-ov";
+    ov.innerHTML = '<div class="dq-modal" role="dialog" aria-modal="true">' +
+      '<button class="dq-x" aria-label="Close">×</button>' +
+      '<div class="dq-mh">Ask a teammate to confirm you</div>' +
+      '<div class="dq-sub">On <b>' + esc(opts.game_title || "this game") + '</b>. Anyone who also shipped it can confirm your credit. We don\'t email them for you, copy the note and send it however you\'d reach them.</div>' +
+      '<div id="vreq-body"><div class="dq-ac-none" style="padding:14px">Finding teammates…</div></div>' +
+      '<div class="dq-actions"><button class="dq-cancel">Close</button></div>' +
+      '</div>';
+    document.body.appendChild(ov);
+    function close() { ov.remove(); }
+    ov.querySelector(".dq-x").onclick = close;
+    ov.querySelector(".dq-cancel").onclick = close;
+    var body = ov.querySelector("#vreq-body");
+    var link = w.location.origin + "/credits/game/" + encodeURIComponent(opts.game_slug) + "?vouch=" + encodeURIComponent(opts.my_slug || "");
+    function msgFor(nm) { return "Hi " + (nm || "there") + ", we worked together on " + (opts.game_title || "a game") + ". I've added my credit on DevQuest Credits, would you confirm it? " + link; }
+    if (!w.DQAPI || !w.DQAPI.gameCredits) { body.innerHTML = '<div style="padding:14px;color:var(--muted,#8b98a9)">Not available right now.</div>'; return; }
+    var already = opts.already || [];
+    w.DQAPI.gameCredits(opts.game_slug).then(function (r) {
+      var creds = (r.data && r.data.credits) || [];
+      var mates = creds.filter(function (c) { return c.person_slug && c.person_slug !== opts.my_slug && already.indexOf(c.person_slug) < 0; });
+      var inStyle = 'flex:1;min-width:0;background:var(--bg,#0b0e14);border:1px solid var(--border,#2d333b);border-radius:8px;padding:9px 11px;color:var(--text,#e6edf3);font-size:12.5px;font-family:inherit';
+      var h = '<div style="font-size:12px;font-weight:700;margin:2px 0 8px;color:var(--muted,#8b98a9)">Your request link</div>' +
+        '<div style="display:flex;gap:8px;margin-bottom:16px"><input class="vreq-url" readonly value="' + esc(link) + '" style="' + inStyle + '"><span class="btn primary vreq-copylink" style="padding:8px 14px;white-space:nowrap">Copy link</span></div>';
+      if (mates.length) {
+        h += '<div style="font-size:12px;font-weight:700;margin:2px 0 4px;color:var(--muted,#8b98a9)">Teammates on this game you can ask</div>';
+        mates.forEach(function (m) {
+          h += '<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px solid var(--border,#2d333b)">' +
+            '<div style="flex:1;min-width:0"><div style="font-weight:700;font-size:13.5px">' + esc(m.person_name || m.person_slug) + '</div>' + (m.role ? '<div style="color:var(--muted,#8b98a9);font-size:12px">' + esc(m.role) + '</div>' : '') + '</div>' +
+            '<span class="btn ghost vreq-copy" data-nm="' + esc(m.person_name || "") + '" style="padding:6px 12px;font-size:12.5px;white-space:nowrap">Copy message</span>' +
+          '</div>';
+        });
+      } else {
+        h += '<div style="color:var(--muted,#8b98a9);font-size:13px;line-height:1.5;border-top:1px solid var(--border,#2d333b);padding-top:12px">No teammates here to ask yet, nobody else has claimed a credit on this game (or they\'ve already confirmed you). As more of the people you shipped it with join and claim this game, they\'ll show up here to ask.</div>';
+      }
+      body.innerHTML = h;
+      var cl = body.querySelector(".vreq-copylink");
+      if (cl) cl.onclick = function () { var i = body.querySelector(".vreq-url"); if (i) i.select(); try { navigator.clipboard.writeText(link); } catch (e) { try { document.execCommand("copy"); } catch (e2) {} } cl.textContent = "Copied ✓"; };
+      Array.prototype.forEach.call(body.querySelectorAll(".vreq-copy"), function (el) {
+        el.onclick = function () { try { navigator.clipboard.writeText(msgFor(el.getAttribute("data-nm"))); } catch (e) {} el.textContent = "Copied ✓"; };
+      });
+    }).catch(function () { body.innerHTML = '<div style="padding:14px;color:var(--pink,#f778ba)">Could not load teammates. Try again.</div>'; });
+  }
+
   // Report / suggest-a-fix modal for a catalogue game or studio, or a person's credit
   // on a game (type "credit"). Anyone can file one. opts.gameTitle gives context for credits.
   function openReport(type, slug, name, opts) {
@@ -699,7 +749,7 @@
 
   w.DQ = {
     bkt: bkt, qs: qs, getJSON: getJSON, loadEntity: loadEntity, loadIndex: loadIndex, openReport: openReport,
-    rank: rank, searchRows: searchRows, attachSuggest: attachSuggest, openClaim: openClaim, openSuggest: openSuggest,
+    rank: rank, searchRows: searchRows, attachSuggest: attachSuggest, openClaim: openClaim, openSuggest: openSuggest, openVouchRequest: openVouchRequest,
     discipline: discipline, DISCIPLINE_ORDER: DISCIPLINE_ORDER,
     uniq: uniq, releaseClass: releaseClass,
     esc: esc, safeUrl: safeUrl, initials: initials, slugify: slugify,

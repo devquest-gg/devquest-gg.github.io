@@ -68,6 +68,7 @@
 <script>
 (function(){
   var slug = DQ.qs("slug"), app = document.getElementById("app");
+  var vouchFor = DQ.qs("vouch") || "";   // ?vouch=<person_slug> — a teammate asked to be confirmed
   try { if (slug) history.replaceState(null, "", "/credits/game/" + encodeURIComponent(slug)); } catch (e) {}
   if(!slug){ app.innerHTML = '<div class="container"><div class="empty">No game specified.</div></div>'; return; }
 
@@ -216,7 +217,7 @@
             ? '<a class="unvouchbtn" data-id="'+c.id+'" title="Withdraw your vouch" style="font-size:12px;font-weight:700;color:var(--green);cursor:pointer">✓ Vouched</a>'
             : '<a class="vouchbtn" data-id="'+c.id+'" style="font-size:12px;font-weight:700;color:var(--green);border:1px solid rgba(63,185,80,.35);background:rgba(63,185,80,.08);border-radius:8px;padding:4px 11px;cursor:pointer">Vouch</a>')
         : '';
-      return '<div class="row" data-disc="'+DQ.esc(c._disc||"Other")+'">'+
+      return '<div class="row" data-disc="'+DQ.esc(c._disc||"Other")+'" data-pslug="'+DQ.esc(c.person_slug)+'">'+
         '<div class="av">'+DQ.esc(DQ.initials(c.name))+'</div>'+
         '<div class="rmain"><div class="rname"><a href="/credits/'+encodeURIComponent(c.person_slug)+'">'+DQ.esc(c.name)+'</a>'+ast+evidenceBadge(c)+'</div>'+
           '<div class="rsub"><span class="rrole">'+DQ.esc(c.role||"Role not recorded")+'</span>'+more+extNote+(sigs?' &nbsp; '+sigs:'')+proof+'</div></div>'+
@@ -229,6 +230,13 @@
     var confirmableHere = (me && iHaveCredit) ? credits.filter(function(c){ return c.live && c.id && c.person_slug!==me.slug && (c.voucher_slugs||[]).indexOf(me.slug) < 0; }).length : 0;
     var vouchInvite = confirmableHere
       ? '<div style="margin:14px 0;padding:12px 14px;border:1px solid rgba(63,185,80,.35);background:rgba(63,185,80,.07);border-radius:10px;font-size:13.5px;line-height:1.5"><b style="color:var(--green)">You shipped this game.</b> Confirm the teammates you actually worked with: tap the green <b>Vouch</b> button on their row. Your vouch is what moves a credit from awaiting confirmation to peer-confirmed. Only confirm people you genuinely worked alongside.</div>'
+      : '';
+
+    // Deep link from a "Request a vouch" message: a specific teammate asked to be confirmed.
+    var vouchReqName = "";
+    if(vouchFor){ var _vc = credits.filter(function(c){ return c.person_slug===vouchFor; })[0]; vouchReqName = _vc ? _vc.name : ""; }
+    var vouchReqBanner = (vouchFor && vouchReqName)
+      ? '<div style="margin:14px 0;padding:12px 14px;border:1px solid rgba(88,166,255,.45);background:rgba(88,166,255,.08);border-radius:10px;font-size:13.5px;line-height:1.5"><b style="color:var(--accent)">'+DQ.esc(vouchReqName)+' asked you to confirm their credit.</b> If you shipped <b>'+DQ.esc(title)+'</b> too, use the green <b>Vouch</b> button on their row below.'+(iHaveCredit?'':' You\'ll need to <b>claim your own credit</b> on this game first.')+'</div>'
       : '';
 
     // Cover art in the header (Steam capsule). Shown only when real art exists; a broken
@@ -257,6 +265,7 @@
           '<p class="secsub" style="margin:0">A developer-owned, peer-confirmed record of who made this game. Roles reflect each person\'s full time on the title, not a single moment. Listed alphabetically. <a href="/credits/how-evidence-works.html" style="color:var(--accent);font-weight:600;white-space:nowrap">how evidence works →</a></p></div>'+
           (iHaveCredit ? '' : '<span class="btn primary" id="claimbtn">This is me — claim my credit</span>')+
         '</div>'+
+        vouchReqBanner +
         vouchInvite +
         discChips +
         creditsHTML +
@@ -264,6 +273,12 @@
         addTeamHTML +
         '<div class="notice">Source of truth is the person who did the work. Catalogue facts come from Wikidata (CC0); credits are added and vouched by developers. Teammate additions are unclaimed until that person confirms them.</div>'+
       '</div></section>';
+
+    // If arrived via a vouch-request link, spotlight the requester's row and scroll to it.
+    if(vouchFor){
+      var _vrow = document.querySelector('.row[data-pslug="'+vouchFor+'"]');
+      if(_vrow){ _vrow.style.boxShadow="0 0 0 2px var(--accent)"; _vrow.style.borderRadius="10px"; _vrow.style.background="rgba(88,166,255,.06)"; try{ _vrow.scrollIntoView({behavior:"smooth",block:"center"}); }catch(e){} }
+    }
 
     // Discipline chips: toggle active styling and show/hide credit rows by discipline.
     var _df = document.getElementById("discfilter");
