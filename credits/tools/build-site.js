@@ -72,7 +72,19 @@ function writeShards(subdir, n, entries) {
 }
 
 // ---- main -----------------------------------------------------------------
-(function main() {
+// Live claimed people, straight from the API (Node 18+ has global fetch). Fetching here means
+// the build needs no extra workflow step. Falls back to a people-live.json file if present, then
+// to empty, so a network hiccup or an offline local run never fails the build.
+async function fetchPeople() {
+  const url = "https://devquest-credits-api.balesdestin.workers.dev/export/people";
+  try {
+    const r = await fetch(url);
+    if (r.ok) { const j = await r.json(); if (j && Array.isArray(j.people)) { console.log(`  live people fetched: ${j.people.length}`); return j; } }
+  } catch (e) { console.log(`  (live people fetch failed: ${e && e.message} — falling back to file/empty)`); }
+  return readJSON("people-live.json", { people: [] });
+}
+
+(async function main() {
   console.log("Building /credits site data from", DATA_DIR);
 
   const games = readJSON("games.json", []);
@@ -196,7 +208,7 @@ function writeShards(subdir, n, entries) {
   // Real developers who signed up and claimed credits, pulled from the DB into people-live.json
   // by the build workflow (mirrors the studio-links / covers pattern). A claimed person owns
   // their record, so their live credits replace any same-slug seed entry.
-  const liveP = readJSON("people-live.json", { people: [] });
+  const liveP = await fetchPeople();
   const yearBySlug = new Map(games.map((g) => [g.slug, g.year || null]));
   for (const lp of (liveP && liveP.people) || []) {
     if (!lp || !lp.slug) continue;
