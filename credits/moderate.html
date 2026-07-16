@@ -36,7 +36,8 @@
   }
   var REASONS = { not_real:"Not real / should not exist", wrong_name:"Wrong name (typo)", wrong_studio:"Wrong or missing studio", other:"Other",
     not_worked:"Person didn't work on this game", wrong_role:"Wrong role / details", spam:"Not a real person / spam",
-    impersonation:"Impersonation", harassment:"Harassment / abusive content", false_credits:"Claiming credits they didn't work on", private_info:"Posting private information" };
+    impersonation:"Impersonation", harassment:"Harassment / abusive content", false_credits:"Claiming credits they didn't work on", private_info:"Posting private information",
+    suggest:"Suggested addition (not yet in catalogue)" };
   DQAPI.adminListReports().then(function(r){
     if(!(r && r.ok)){
       var msg = (r && r.status===403) ? "Not authorized. This page is for moderators only." : "Could not load the queue. Try again.";
@@ -61,6 +62,25 @@
 
   function card(rep){
     var reason = REASONS[rep.reason] || rep.reason;
+    // A "suggest" report is a missing game/studio a visitor flagged (they weren't on it).
+    // It isn't tied to an existing entity, so it gets its own compact card: the proof link,
+    // and Dismiss once you've added it (or if it doesn't check out).
+    if(rep.reason==="suggest"){
+      var btnStyleS = 'padding:7px 12px;font-size:13px';
+      var proof = rep.suggested ? DQ.safeUrl(rep.suggested) : "";
+      return '<div class="panel modcard" data-id="'+rep.id+'" style="padding:16px 18px;margin-bottom:14px;border-left:3px solid var(--accent)">'+
+        '<div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;align-items:center">'+
+          '<div><span class="badge '+(rep.type==="studio"?"official":"hand")+'">'+DQ.esc(rep.type)+'</span> '+
+            '<b style="color:var(--text);margin-left:6px">'+DQ.esc(rep.name||rep.slug)+'</b> '+
+            '<span class="mut" style="font-size:12px">— suggested addition</span></div>'+
+          '<div class="mut" style="font-size:12px">'+DQ.esc(rep.created_at||"")+'</div>'+
+        '</div>'+
+        (proof?'<div style="margin-top:8px;font-size:13px">Proof: <a href="'+DQ.esc(proof)+'" target="_blank" rel="noopener" style="color:var(--accent)">'+DQ.esc(rep.suggested)+' ↗</a></div>':'<div style="margin-top:8px;font-size:13px;color:var(--pink)">No proof link provided.</div>')+
+        (rep.note?'<div class="mut" style="margin-top:4px;font-size:13px">“'+DQ.esc(rep.note)+'”</div>':'')+
+        '<div class="mut" style="margin-top:8px;font-size:12px">Not in the catalogue yet. If it checks out, add it via the site, then dismiss this.</div>'+
+        '<div style="margin-top:10px;display:flex;gap:8px"><span class="btn ghost act" data-a="dismiss" style="'+btnStyleS+';color:var(--muted)">Dismiss</span></div>'+
+      '</div>';
+    }
     var url = rep.type==="studio" ? '/credits/studio/'+encodeURIComponent(rep.slug) : (rep.type==="person" ? '/credits/'+encodeURIComponent(rep.slug) : '/credits/game/'+encodeURIComponent(rep.slug));
     var cur = rep.current || {};
     var curBits = [];
