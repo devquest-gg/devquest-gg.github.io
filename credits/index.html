@@ -372,8 +372,12 @@
     var h=String(p.headline||'').trim(), ai=h.toLowerCase().lastIndexOf(' at ');
     var title=ai>0?h.slice(0,ai):(h||'Developer'), studio=ai>0?h.slice(ai+4):'';
     var total=credits.length, verified=credits.filter(function(c){return c.vouch_count;}).length;
-    var hero=credits.filter(hasCover).concat(credits.filter(function(c){return !hasCover(c);})).slice(0,3);
-    var tl=credits.slice().sort(function(a,b){ return ((a.year||a.work_start||9999)-(b.year||b.work_start||9999)) || String(a.game_title).localeCompare(String(b.game_title)); }).slice(0,6);
+    // Collapse expansions the person also holds under their base game (don't show them as separate
+    // rows in this preview), and order by when they WORKED on each title, not by release year.
+    var _ownBySlug={}; credits.forEach(function(c){ if(c.game_slug) _ownBySlug[c.game_slug]=1; });
+    var baseCredits=credits.filter(function(c){ return !(c.parent_slug && _ownBySlug[c.parent_slug]); });
+    var hero=baseCredits.filter(hasCover).concat(baseCredits.filter(function(c){return !hasCover(c);})).slice(0,3);
+    var tl=baseCredits.slice().sort(function(a,b){ return ((a.work_start||a.year||9999)-(b.work_start||b.year||9999)) || String(a.game_title).localeCompare(String(b.game_title)); }).slice(0,6);
     var vchip=verified?'<span class="fchip vf">✓ '+verified+' of '+total+' peer-verified</span>':'';
     FEATEL.innerHTML=
       '<div class="ftint" style="background:radial-gradient(closest-side,'+color+',transparent)"></div>'+
