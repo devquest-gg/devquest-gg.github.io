@@ -352,8 +352,17 @@
       ((ident.name || ident.email) ? '<div class="dq-idnote">Name and email remembered on this device · <a data-clearid style="cursor:pointer">Clear</a></div>' : '') +
       (showRole ? '<label>Primary role <span style="font-weight:400;color:var(--muted,#8b98a9)">— the role most people would know you for on this project</span></label><input id="dqc-role" list="dqc-roles-list" autocomplete="off" placeholder="Start typing a role…"><datalist id="dqc-roles-list">' + ROLES.map(function (r) { return '<option value="' + esc(r) + '"></option>'; }).join("") + '</datalist>' +
         '<label>Verification link <span style="font-weight:400;color:var(--muted,#8b98a9)">— LinkedIn, portfolio, studio bio, MobyGames, ArtStation. Anything that shows this is you. Optional</span></label><textarea id="dqc-proof" placeholder="https://linkedin.com/in/you"></textarea>' +
-        // Progressive disclosure: everything below is optional and collapsed by default, so the
-        // common case (one role, base game) is a short form. Fields stay in the DOM either way.
+        // Two required questions, shown (not collapsed), because a wrong default here would
+        // silently misrepresent the credit (a contractor reading as core, DLC-only as base game).
+        // Nothing is pre-selected, so the person consciously answers.
+        '<label>How were you involved? <span style="font-weight:400;color:var(--muted,#8b98a9)">— so your credit reads accurately</span></label>' +
+        '<label style="display:block;font-weight:400;font-size:13px;margin:6px 0;cursor:pointer"><input type="radio" name="dqc-involve" value="core" style="margin-right:7px;vertical-align:-1px">Studio employee <span style="color:var(--muted,#8b98a9)">(in-house at the studio that made it)</span></label>' +
+        '<label style="display:block;font-weight:400;font-size:13px;margin:6px 0;cursor:pointer"><input type="radio" name="dqc-involve" value="external" style="margin-right:7px;vertical-align:-1px">External partner or contractor <span style="color:var(--muted,#8b98a9)">(a co-dev or partner studio, not the primary developer)</span></label>' +
+        '<label style="display:block;font-weight:400;font-size:13px;margin:6px 0;cursor:pointer"><input type="radio" name="dqc-involve" value="both" style="margin-right:7px;vertical-align:-1px">Both, over time <span style="color:var(--muted,#8b98a9)">(started external, then joined the core team)</span></label>' +
+        '<label style="margin-top:12px">What part did you work on?</label>' +
+        '<label style="display:block;font-weight:400;font-size:13px;margin:6px 0;cursor:pointer"><input type="radio" name="dqc-scope" value="base" style="margin-right:7px;vertical-align:-1px">The main release</label>' +
+        '<label style="display:block;font-weight:400;font-size:13px;margin:6px 0;cursor:pointer"><input type="radio" name="dqc-scope" value="partial" style="margin-right:7px;vertical-align:-1px">A specific part <span style="color:var(--muted,#8b98a9)">(DLC, expansion, port, or the live-service era, not the main release)</span></label>' +
+        // Progressive disclosure: the remaining detail is optional and collapsed by default.
         '<a class="dq-more" data-sec="roles" data-label="I held other roles on this game" style="display:block;margin:12px 0 2px;color:var(--accent,#58a6ff);cursor:pointer;font-weight:600;font-size:13px">+ I held other roles on this game</a>' +
         '<div class="dq-sec" data-sec="roles" style="display:none"><input id="dqc-roles2" placeholder="Technical Support Lead, Game Designer, Content Manager"></div>' +
         '<a class="dq-more" data-sec="also" data-label="Ports, DLC, or live-service work" style="display:block;margin:10px 0 2px;color:var(--accent,#58a6ff);cursor:pointer;font-weight:600;font-size:13px">+ Ports, DLC, or live-service work</a>' +
@@ -363,16 +372,6 @@
           '<label style="display:block;font-weight:400;font-size:13px;margin:6px 0;cursor:pointer"><input type="checkbox" id="dqc-also-ports" style="margin-right:7px;vertical-align:-1px">Ports or remasters</label>' +
           '<label style="display:block;font-weight:400;font-size:13px;margin:6px 0;cursor:pointer"><input type="checkbox" id="dqc-also-patch" style="margin-right:7px;vertical-align:-1px">Post-launch updates</label>' +
           '<label style="display:block;font-weight:400;font-size:13px;margin:6px 0;cursor:pointer"><input type="checkbox" id="dqc-live" style="margin-right:7px;vertical-align:-1px">Live-service content</label>' +
-        '</div>' +
-        '<a class="dq-more" data-sec="involve" data-label="More about my involvement" style="display:block;margin:10px 0 2px;color:var(--accent,#58a6ff);cursor:pointer;font-weight:600;font-size:13px">+ More about my involvement</a>' +
-        '<div class="dq-sec" data-sec="involve" style="display:none">' +
-          '<label style="margin-top:2px">Contribution type</label>' +
-          '<label style="display:block;font-weight:400;font-size:13px;margin:6px 0;cursor:pointer"><input type="radio" name="dqc-involve" value="core" checked style="margin-right:7px;vertical-align:-1px">Studio employee <span style="color:var(--muted,#8b98a9)">(in-house at the studio that made it)</span></label>' +
-          '<label style="display:block;font-weight:400;font-size:13px;margin:6px 0;cursor:pointer"><input type="radio" name="dqc-involve" value="external" style="margin-right:7px;vertical-align:-1px">External partner or contractor <span style="color:var(--muted,#8b98a9)">(a co-dev or partner studio, not the primary developer)</span></label>' +
-          '<label style="display:block;font-weight:400;font-size:13px;margin:6px 0;cursor:pointer"><input type="radio" name="dqc-involve" value="both" style="margin-right:7px;vertical-align:-1px">Both, over time <span style="color:var(--muted,#8b98a9)">(started external, then joined the core team)</span></label>' +
-          '<label style="margin-top:12px">Scope of work</label>' +
-          '<label style="display:block;font-weight:400;font-size:13px;margin:6px 0;cursor:pointer"><input type="radio" name="dqc-scope" value="base" checked style="margin-right:7px;vertical-align:-1px">Main release</label>' +
-          '<label style="display:block;font-weight:400;font-size:13px;margin:6px 0;cursor:pointer"><input type="radio" name="dqc-scope" value="partial" style="margin-right:7px;vertical-align:-1px">A specific part <span style="color:var(--muted,#8b98a9)">(DLC, expansion, port, or the live-service era, not the main release)</span></label>' +
         '</div>' +
         '<a class="dq-more" data-sec="note" data-label="Add a note" style="display:block;margin:10px 0 2px;color:var(--accent,#58a6ff);cursor:pointer;font-weight:600;font-size:13px">+ Add a note</a>' +
         '<div class="dq-sec" data-sec="note" style="display:none"><textarea id="dqc-note" placeholder="Anything else worth noting about this credit"></textarea></div>' : '') +
@@ -442,7 +441,11 @@
       // --- live API path: save the credit for real ---
       if (w.DQAPI) {
         if (!isGame && !isAdd) { w.location.href = "signin.html"; return; }         // profile claim = sign in
-        if (!role) { alert("Add your headline role first."); return; }
+        if (!role) { alert("Add your primary role first."); return; }
+        // Involvement + scope are required so a credit never silently over-claims (a contractor
+        // reading as core team, or DLC-only work reading as the full base game).
+        if (!ov.querySelector('input[name="dqc-involve"]:checked')) { alert("Pick how you were involved: studio employee, external partner, or both."); return; }
+        if (!ov.querySelector('input[name="dqc-scope"]:checked')) { alert("Pick what part you worked on: the main release or a specific part."); return; }
         if (!w.DQAPI.isSignedIn()) {
           // Stash the whole credit so sign-in can finish it, instead of losing the game.
           try { w.localStorage.setItem("dq_pending_credit", JSON.stringify(payload())); } catch (e) {}
