@@ -95,16 +95,43 @@
 
   // ---- Browse mode: alphabetical directory per type (shown when there's no query) ----
   var browse = { letter: null, page: 0 };
+  function byName(a,b){ return String(a[1]||"").toLowerCase().localeCompare(String(b[1]||"").toLowerCase()); }
+  // Pull the full live people list once (edge-cached, compact form). Lets Browse People show a
+  // developer the moment they claim, instead of waiting for the next catalogue build.
+  function ensureLivePeople(){
+    if(data.livePeopleAll || !(window.DQAPI && DQAPI.base)) return;
+    data.livePeopleAll = [];   // mark as loading so we fetch only once
+    fetch(DQAPI.base + "/export/people?compact=1").then(function(r){ return r.ok?r.json():null; }).then(function(j){
+      if(!j || !j.people) return;
+      data.livePeopleAll = j.people.map(function(p){ return [p.slug, p.name, p.credit_count||0, ""]; });
+      if(tab==="people" && !input.value.trim()) paint("");   // refresh browse now that live people are in
+    }).catch(function(){});
+  }
   function sortedIndex(kind){
+    if(kind==="people"){
+      // Merge the built people index with live claimed people (live wins on dupes) so new signups
+      // appear in Browse immediately.
+      var seen={}, merged=[];
+      (data.livePeopleAll||[]).forEach(function(r){ if(r[0] && !seen[r[0]]){ seen[r[0]]=1; merged.push(r); } });
+      (data.people||[]).forEach(function(r){ if(r[0] && !seen[r[0]]){ seen[r[0]]=1; merged.push(r); } });
+      return merged.sort(byName);
+    }
     if(!data[kind]) return [];
-    if(!data["_sorted_"+kind]) data["_sorted_"+kind] = data[kind].slice().sort(function(a,b){ return String(a[1]||"").toLowerCase().localeCompare(String(b[1]||"").toLowerCase()); });
+    if(!data["_sorted_"+kind]) data["_sorted_"+kind] = data[kind].slice().sort(byName);
     return data["_sorted_"+kind];
   }
   function letterOf(name){ var c=String(name||"").trim().charAt(0).toUpperCase(); return /[A-Z]/.test(c)?c:"#"; }
   var LETTERS = "#ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
   function browseView(kind){
+    if(kind==="people") ensureLivePeople();
     var rows = sortedIndex(kind);
     if(!rows.length) return '<div class="empty">Nothing to browse here yet.</div>';
+    // Small directory (People for a long while, small studios): show everyone at once. An A–Z bar
+    // over a dozen names hides most of them behind letters and reads as empty.
+    if(rows.length <= 60){
+      var bodyAll = kind==="games"?gameTiles(rows):kind==="studios"?studioTiles(rows):peopleRows(rows);
+      return '<div class="eyebrow" style="margin-bottom:12px">Browse all '+rows.length.toLocaleString()+' '+kind+'</div>'+bodyAll;
+    }
     var present={}; rows.forEach(function(r){ present[letterOf(r[1])]=1; });
     if(!browse.letter || !present[browse.letter]){ browse.letter = LETTERS.filter(function(L){ return present[L]; })[0] || "#"; browse.page=0; }
     var az = '<div class="azbar" style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:16px">'+LETTERS.map(function(L){
