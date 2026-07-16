@@ -747,9 +747,95 @@
     };
   }
 
+  // ---- Site-wide "confirm your teammates" nudge ----
+  // A signed-in developer is prompted, on arrival, to confirm the teammates they can vouch for
+  // across ALL their games (not only when they happen to open the right game page). Shown once
+  // per session, dismissible; the list is cached in sessionStorage and updated as they confirm.
+  function vGet(){ try { var s = w.sessionStorage.getItem("dq_vouchable"); return s ? JSON.parse(s) : null; } catch(e){ return null; } }
+  function vSet(d){ try { w.sessionStorage.setItem("dq_vouchable", JSON.stringify(d)); } catch(e){} }
+  function vDismissed(){ try { return w.sessionStorage.getItem("dq_vouch_dismissed") === "1"; } catch(e){ return false; } }
+  function vBannerText(n){ return 'You shipped games with <b>'+n+'</b> developer'+(n===1?'':'s')+' who '+(n===1?"isn't":"aren't")+' confirmed yet. Confirm the ones you actually worked with.'; }
+
+  function showVouchBanner(data){
+    if(vDismissed() || !data || !data.count) return;
+    if(document.getElementById("dq-vouchbar")) return;
+    var bar = document.createElement("div");
+    bar.id = "dq-vouchbar";
+    bar.style.cssText = "position:relative;z-index:40;background:linear-gradient(90deg,rgba(63,185,80,.16),rgba(88,166,255,.10));border-bottom:1px solid var(--border,#2d333b);color:var(--text,#e6edf3);font-size:13.5px;line-height:1.4;padding:9px 16px;display:flex;align-items:center;gap:12px;justify-content:center;flex-wrap:wrap";
+    bar.innerHTML = '<span class="dq-vbtxt">'+vBannerText(data.count)+'</span>'+
+      '<a class="dq-vbreview" style="cursor:pointer;font-weight:800;color:#04220f;background:var(--green,#3fb950);border-radius:8px;padding:5px 14px;text-decoration:none">Review →</a>'+
+      '<a class="dq-vbx" title="Dismiss" style="cursor:pointer;color:var(--muted,#8b98a9);font-size:18px;line-height:1;padding:0 4px;text-decoration:none">×</a>';
+    var tb = document.querySelector(".topbar");
+    if(tb && tb.parentNode){ tb.parentNode.insertBefore(bar, tb.nextSibling); } else { document.body.insertBefore(bar, document.body.firstChild); }
+    bar.querySelector(".dq-vbreview").onclick = function(){ openVouchConfirm(); };
+    bar.querySelector(".dq-vbx").onclick = function(){ try{ w.sessionStorage.setItem("dq_vouch_dismissed","1"); }catch(e){} bar.remove(); };
+  }
+  function updateVouchBanner(d){
+    var bar = document.getElementById("dq-vouchbar");
+    if(!bar) return;
+    if(!d || !d.count){ bar.remove(); return; }
+    var t = bar.querySelector(".dq-vbtxt"); if(t) t.innerHTML = vBannerText(d.count);
+  }
+
+  function openVouchConfirm(){
+    injectClaimStyles();
+    var ov = document.createElement("div"); ov.className = "dq-modal-ov";
+    ov.innerHTML = '<div class="dq-modal" role="dialog" aria-modal="true">'+
+      '<button class="dq-x" aria-label="Close">×</button>'+
+      '<div class="dq-mh">Confirm your teammates</div>'+
+      '<div class="dq-sub">People who claimed a credit on a game you also shipped. <b>Only confirm the ones you genuinely worked with</b>, a confirmation puts your name behind their credit.</div>'+
+      '<div id="dq-vlist"></div>'+
+      '<div class="dq-actions"><button class="dq-cancel">Done</button></div>'+
+      '</div>';
+    document.body.appendChild(ov);
+    function close(){ ov.remove(); }
+    ov.querySelector(".dq-x").onclick = close; ov.querySelector(".dq-cancel").onclick = close;
+    var listEl = ov.querySelector("#dq-vlist");
+    function render(){
+      var items = (vGet()||{items:[]}).items || [];
+      if(!items.length){ listEl.innerHTML = '<div style="padding:16px 2px;color:var(--muted,#8b98a9);font-size:14px">All caught up, nobody left to confirm right now.</div>'; return; }
+      var byGame = {}, order = [];
+      items.forEach(function(it){ if(!byGame[it.game_slug]){ byGame[it.game_slug] = { title: it.game_title, rows: [] }; order.push(it.game_slug); } byGame[it.game_slug].rows.push(it); });
+      var h = '';
+      order.forEach(function(gs){
+        var g = byGame[gs];
+        h += '<div style="font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted,#8b98a9);margin:14px 0 2px">'+esc(g.title)+'</div>';
+        g.rows.forEach(function(it){
+          h += '<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px solid var(--border,#2d333b)">'+
+            '<div style="flex:1;min-width:0"><div style="font-weight:700;font-size:13.5px">'+esc(it.person_name)+'</div>'+(it.role?'<div style="color:var(--muted,#8b98a9);font-size:12px">'+esc(it.role)+'</div>':'')+'</div>'+
+            '<span class="dq-vgo" data-cid="'+it.credit_id+'" style="cursor:pointer;font-size:12.5px;font-weight:800;color:#04220f;background:var(--green,#3fb950);border-radius:8px;padding:5px 14px;white-space:nowrap">Vouch</span>'+
+          '</div>';
+        });
+      });
+      listEl.innerHTML = h;
+      Array.prototype.forEach.call(listEl.querySelectorAll(".dq-vgo"), function(btn){
+        btn.onclick = function(){
+          if(!(w.DQAPI && w.DQAPI.vouch)) return;
+          var cid = btn.getAttribute("data-cid"); btn.textContent = "…";
+          w.DQAPI.vouch(cid).then(function(r){
+            if(r && r.ok){
+              var d = vGet() || { items: [] }; d.items = (d.items||[]).filter(function(x){ return String(x.credit_id) !== String(cid); }); d.count = d.items.length; vSet(d);
+              updateVouchBanner(d); render();
+            } else { btn.textContent = "Vouch"; alert((r && r.data && r.data.error) || "Could not confirm. You can only confirm someone on a game you also shipped."); }
+          }).catch(function(){ btn.textContent = "Vouch"; alert("Network error. Try again."); });
+        };
+      });
+    }
+    render();
+  }
+
+  function initVouchNudge(){
+    if(!(w.DQAPI && w.DQAPI.isSignedIn && w.DQAPI.isSignedIn())) return;
+    if(vDismissed()) return;
+    var cached = vGet();
+    if(cached){ showVouchBanner(cached); return; }
+    if(!w.DQAPI.vouchable) return;
+    w.DQAPI.vouchable().then(function(r){ var d = (r && r.data) || { count: 0, items: [] }; vSet(d); showVouchBanner(d); }).catch(function(){});
+  }
+
   w.DQ = {
     bkt: bkt, qs: qs, getJSON: getJSON, loadEntity: loadEntity, loadIndex: loadIndex, openReport: openReport,
-    rank: rank, searchRows: searchRows, attachSuggest: attachSuggest, openClaim: openClaim, openSuggest: openSuggest, openVouchRequest: openVouchRequest,
+    rank: rank, searchRows: searchRows, attachSuggest: attachSuggest, openClaim: openClaim, openSuggest: openSuggest, openVouchRequest: openVouchRequest, openVouchConfirm: openVouchConfirm,
     discipline: discipline, DISCIPLINE_ORDER: DISCIPLINE_ORDER,
     uniq: uniq, releaseClass: releaseClass,
     esc: esc, safeUrl: safeUrl, initials: initials, slugify: slugify,
@@ -775,6 +861,9 @@
       }).catch(function () {});
     }
   })();
+
+  // Prompt signed-in developers to confirm teammates they can vouch for (once per session).
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", initVouchNudge); else initVouchNudge();
 
   // Clean-URL links (/credits/<slug>, /credits/game/<slug>, /credits/studio/<slug>) are what
   // we render for copy/hover/share, but the real files live at *.html?slug=. Intercept a
