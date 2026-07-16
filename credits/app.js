@@ -666,7 +666,7 @@
     ov.querySelector(".dq-cancel").onclick = close;
     var body = ov.querySelector("#vreq-body");
     var link = w.location.origin + "/credits/game/" + encodeURIComponent(opts.game_slug) + "?vouch=" + encodeURIComponent(opts.my_slug || "");
-    function msgFor(nm) { return "Hi " + (nm || "there") + ", we worked together on " + (opts.game_title || "a game") + ". I've added my credit on DevQuest Credits, would you confirm it? " + link; }
+    function msgFor(nm) { return "Hi " + (nm || "there") + ", we worked together on " + (opts.game_title || "a game") + ". I've added my credit on DevQuest Credits, would you vouch for me? " + link; }
     if (!w.DQAPI || !w.DQAPI.gameCredits) { body.innerHTML = '<div style="padding:14px;color:var(--muted,#8b98a9)">Not available right now.</div>'; return; }
     var already = opts.already || [];
     w.DQAPI.gameCredits(opts.game_slug).then(function (r) {
