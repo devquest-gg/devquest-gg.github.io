@@ -134,41 +134,18 @@ function writeShards(subdir, n, entries) {
   for (const cv of (coverData && coverData.covers) || []) { if (cv && cv.game_slug && cv.cover_url) coverMap[cv.game_slug] = cv.cover_url; }
   if (Object.keys(coverMap).length) console.log(`  applied ${Object.keys(coverMap).length} admin cover(s)`);
 
-  // ---- expansion parent / child links ------------------------------------
-  // games.json carries parent_slug on expansions (from pull-wikidata.js P8646 capture).
-  // Turn that into a per-base children list so a base game's shard lists its expansions.
-  const childrenBySlug = new Map();
-  for (const g of games) {
-    if (g.parent_slug && bySlug.has(g.parent_slug) && g.parent_slug !== g.slug) {
-      if (!childrenBySlug.has(g.parent_slug)) childrenBySlug.set(g.parent_slug, []);
-      childrenBySlug.get(g.parent_slug).push([g.slug, g.title, g.year || null]);
-    }
-  }
-  // newest-first within each base, capped so a hugely-DLC'd base can't bloat one shard
-  for (const arr of childrenBySlug.values()) arr.sort((a, b) => (b[2] || 0) - (a[2] || 0) || String(a[1]).localeCompare(String(b[1])));
-
   // ---- search index (all games) ------------------------------------------
   // Compact positional rows: [slug, title, year, primaryStudio].
   const index = games.map((g) => [g.slug, g.title, g.year || null, g.studio || (g.studios && g.studios[0]) || ""]);
 
   // ---- game detail shards ------------------------------------------------
-  const gameEntries = games.map((g) => {
-    const detail = {
-      title: g.title, year: g.year || null,
-      studios: g.studios || [], publishers: g.publishers || [],
-      platforms: g.platforms || [], genres: g.genres || [],
-      qid: g.wikidata_qid || "", steam: g.steam || null, cover: coverMap[g.slug] || null, source: g.source || "wikidata",
-      credits: g.credits || [],
-    };
-    // Only expansions carry a parent; only base games carry children — keeps shards lean.
-    if (g.parent_slug && bySlug.has(g.parent_slug) && g.parent_slug !== g.slug) {
-      detail.parent_slug = g.parent_slug;
-      detail.parent_title = bySlug.get(g.parent_slug).title;
-    }
-    const kids = childrenBySlug.get(g.slug);
-    if (kids && kids.length) detail.children = kids.slice(0, 60).map((k) => ({ slug: k[0], title: k[1], year: k[2] }));
-    return [g.slug, detail];
-  });
+  const gameEntries = games.map((g) => [g.slug, {
+    title: g.title, year: g.year || null,
+    studios: g.studios || [], publishers: g.publishers || [],
+    platforms: g.platforms || [], genres: g.genres || [],
+    qid: g.wikidata_qid || "", steam: g.steam || null, cover: coverMap[g.slug] || null, source: g.source || "wikidata",
+    credits: g.credits || [],
+  }]);
 
   // ---- studios: build gameography + people from credits -------------------
   const studioGames = new Map();   // studioSlug -> {name, games:[[slug,title,year]]}
@@ -214,6 +191,30 @@ function writeShards(subdir, n, entries) {
     if (pp.name) rec.name = pp.name;
     if (pp.links && pp.links.length) rec.links = pp.links;
   }
+
+  // ---- live claimed people ------------------------------------------------
+  // Real developers who signed up and claimed credits, pulled from the DB into people-live.json
+  // by the build workflow (mirrors the studio-links / covers pattern). A claimed person owns
+  // their record, so their live credits replace any same-slug seed entry.
+  const liveP = readJSON("people-live.json", { people: [] });
+  const yearBySlug = new Map(games.map((g) => [g.slug, g.year || null]));
+  for (const lp of (liveP && liveP.people) || []) {
+    if (!lp || !lp.slug) continue;
+    let rec = people.get(lp.slug);
+    if (!rec) { rec = { name: lp.name || lp.slug, credits: [] }; people.set(lp.slug, rec); }
+    if (lp.name) rec.name = lp.name;
+    if (lp.headline) rec.headline = lp.headline;
+    if (lp.links && lp.links.length) rec.links = lp.links;
+    if (lp.credits && lp.credits.length) {
+      rec.credits = lp.credits.map((c) => ({
+        game_slug: c.game_slug, game_title: c.game_title,
+        year: (c.year != null ? c.year : (yearBySlug.get(c.game_slug) || null)),
+        role: c.role || "", roles_other: c.roles_other || [],
+        verification: [], vouch_count: c.vouch_count || 0,
+      }));
+    }
+  }
+
   const peopleIndex = Array.from(people.entries())
     .map(([slug, v]) => [slug, v.name, v.credits.length])
     .sort((a, b) => String(a[1]).localeCompare(String(b[1])));
