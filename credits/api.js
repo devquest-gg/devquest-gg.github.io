@@ -36,6 +36,7 @@
     spotlight: function () { return req("GET", "/spotlight"); },
     gameCredits: function (slug) { return req("GET", "/credits/game/" + encodeURIComponent(slug)); },
     personCredits: function (slug) { return req("GET", "/credits/person/" + encodeURIComponent(slug)); },
+    confirmers: function (id) { return req("GET", "/credits/confirmers/" + id); },
     unclaimedProfile: function (name) { return req("GET", "/credits/unclaimed?name=" + encodeURIComponent(name)); },
     searchPeople: function (q) { return req("GET", "/people/search?q=" + encodeURIComponent(q)); },
     searchGames: function (q) { return req("GET", "/games/search?q=" + encodeURIComponent(q)); },
