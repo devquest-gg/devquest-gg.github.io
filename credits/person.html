@@ -422,7 +422,7 @@
         ? (workList ? "Worked as an outsourcer on: "+workList : "Worked as an outsourcer")
         : (workList ? (c.partial?"Worked on: ":"Also worked on: ")+workList : "");
       var workNote = workBody ? '<div class="relnote" style="font-size:11px;font-weight:400;color:var(--muted);margin-top:3px">'+workBody+'</div>' : '';
-      var ast = c.partial ? ' <span class="ast" style="color:var(--muted);font-weight:700;cursor:help" title="Worked on a specific part, not the base game" aria-label="Worked on a specific part, not the base game">*</span>' : '';
+      var partTagL = c.partial ? ' <span class="mut" style="font-weight:400;font-size:12px" title="Worked on a specific part (a port, expansion, DLC, or the live-service era), not the base game">· specific part</span>' : '';
       var trust = (!c.vouch_count && isOwn && c.live && c.id)
         ? '<a class="getconf" href="/credits/game/'+encodeURIComponent(c.game_slug)+'" title="Add the teammates you shipped with; once they claim, they can confirm this credit">Get confirmed →</a>'
         : '';
@@ -453,8 +453,8 @@
       var _kidMark = _isChild ? '<span class="mut expctl expcollapse-child" data-base="'+DQ.esc(c.parent_slug)+'" role="button" tabindex="0" style="font-weight:400;margin-right:5px;cursor:pointer" title="Collapse under the base game">↳</span>' : '';
       return '<div class="row"'+((isOwn&&c.live&&c.id)?' data-id="'+c.id+'"':'')+_rowStyle+(_isChild?' data-childof="'+DQ.esc(c.parent_slug)+'"':'')+'>'+
         grip +
-        '<div class="rmain"><div class="rname">'+(_isChild?_kidMark:'')+'<a href="/credits/game/'+encodeURIComponent(c.game_slug)+'">'+DQ.esc(c.game_title)+'</a>'+ast+evidenceBadge(c)+orphanExpTag(c)+'</div>'+
-          '<div class="rsub">'+roleHTML+more+(sigs?' &nbsp; '+sigs:'')+(proof?' &nbsp; '+proof:'')+'</div>'+workNote+(_isChild?'':expMore(c.game_slug))+'</div>'+
+        '<div class="rmain"><div class="rname">'+(_isChild?_kidMark:'')+'<a href="/credits/game/'+encodeURIComponent(c.game_slug)+'">'+DQ.esc(c.game_title)+'</a>'+evidenceBadge(c)+orphanExpTag(c)+'</div>'+
+          '<div class="rsub">'+roleHTML+partTagL+more+(sigs?' &nbsp; '+sigs:'')+(proof?' &nbsp; '+proof:'')+'</div>'+workNote+(_isChild?'':expMore(c.game_slug))+'</div>'+
         '<div class="rright">'+(trust?'<span style="margin-right:6px">'+trust+'</span>':'')+(c.year?'<span class="yr" title="Game release year"><span class="yrlbl">Released</span> '+c.year+'</span>':'')+confirmBtn+controls+'</div>'+
       '</div>';
     }).join("") + '</div>' : '<div class="empty">No credits on record yet.'+(isOwn?' Add the games you worked on.':'')+'</div>';
@@ -471,7 +471,7 @@
       var vbadge = c.vouch_count ? '<span class="gvb '+(c.vouch_count>=2?'team':'peer')+'" title="'+(c.vouch_count>=2?'Team-confirmed by teammates who shipped this game':'Peer-confirmed by a teammate who shipped this game')+'">✓</span>' : '';
       // Rank badge is empty: a CSS counter numbers the hero row 1..3 by live DOM order, so
       // dragging a cover into the featured row renumbers everything without any JS.
-      var astg = c.partial ? ' <span title="Worked on a specific part">*</span>' : '';
+      var astg = c.partial ? ' <span style="color:var(--muted,#8b98a9);font-weight:400" title="Worked on a specific part, not the base game">· specific part</span>' : '';
       var canDrag = isOwn && c.live && c.id;
       var metaLine = (c.studio ? DQ.esc(c.studio)+'  ·  ' : '') + (c.year?c.year:'—');
       return '<a class="gtile'+(canDrag?' dragtile':'')+'"'+(canDrag?' data-id="'+c.id+'" draggable="false"':'')+' href="/credits/game/'+encodeURIComponent(c.game_slug)+'">'+
@@ -515,7 +515,7 @@
         : "You worked on it through its launch.";
     }
     function tlRow(c, _isChild){
-      var astg = c.partial ? ' <span class="ast" style="color:var(--muted);font-weight:700" title="Worked on a specific part">*</span>' : '';
+      var partTag = c.partial ? ' <span class="tlst">·</span> <span class="tlphase" title="Worked on a specific part of this game (a port, expansion, DLC, or the live-service era), not the base game">specific part</span>' : '';
       var startY = c.work_start || null;
       var endY = c.work_end || null;
       // Rail shows the years actually WORKED as a range, not just the start year — the whole point
@@ -530,7 +530,7 @@
       // it made those rows (e.g. City of Heroes) inconsistent with catalogue rows. The studio lives
       // on the game page / cover. Timeline rows read uniformly as "Role · phase".
       var sub = DQ.esc(c.role||"Role not recorded") +
-        (phase ? ' <span class="tlst">·</span> <span class="tlphase" title="'+DQ.esc(phaseTip(phase))+'">'+phase+'</span>' : '');
+        (phase ? ' <span class="tlst">·</span> <span class="tlphase" title="'+DQ.esc(phaseTip(phase))+'">'+phase+'</span>' : '') + partTag;
       var _cs = coverSrc(c);
       var thumb = '<span class="tlph">'+DQ.esc(c.game_title)+'</span>'+(_cs?'<img loading="lazy" referrerpolicy="no-referrer" src="'+DQ.esc(_cs)+'" onerror="this.remove()" alt="">':'');
       var isFeat = !!(c.id && featuredIds[c.id]);
@@ -547,7 +547,7 @@
         '<div class="tlrail"><span class="tldot'+(isFeat?' feat':'')+'"></span></div>'+
         '<div class="tlcard"'+_cardStyle+'>'+
           '<a class="tlthumb" href="'+gurl+'">'+thumb+'</a>'+
-          '<div class="tlbody"><div class="tlnameline"><a class="tlname" href="'+gurl+'">'+DQ.esc(c.game_title)+'</a>'+astg+evidenceBadge(c)+orphanExpTag(c)+'</div>'+
+          '<div class="tlbody"><div class="tlnameline"><a class="tlname" href="'+gurl+'">'+DQ.esc(c.game_title)+'</a>'+evidenceBadge(c)+orphanExpTag(c)+'</div>'+
             '<div class="tlsub">'+sub+'</div>'+(_isChild?'':expMore(c.game_slug))+((tledit||star)?'<div class="tlact">'+tledit+star+'</div>':'')+'</div>'+
         '</div>'+
       '</div>';
