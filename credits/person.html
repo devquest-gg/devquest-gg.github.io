@@ -94,6 +94,11 @@
   .tlsub{font-size:12.5px;color:var(--muted,#8b98a9);margin-top:3px}
   .tlst{color:var(--muted,#8b98a9)}
   .tlspan{font-size:11px;color:var(--muted,#8b98a9);font-variant-numeric:tabular-nums;white-space:nowrap;border:1px solid var(--border,#2d333b);border-radius:999px;padding:1px 8px;margin-left:2px;vertical-align:1px}
+  /* Second line under the rail year: the end of the worked range ("–2015" / "→ now"). Makes the
+     duration legible at the timeline anchor instead of hiding it in a faint pill by the title. */
+  .tlyto{display:block;font-size:12px;font-weight:800;color:var(--accent,#58a6ff);opacity:.72;font-variant-numeric:tabular-nums;margin-top:1px;letter-spacing:-.2px}
+  /* Explicit live-service tag on a credit whose years span an era, not just a launch. */
+  .tllive{font-size:10px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--green,#3fb950);border:1px solid rgba(63,185,80,.4);background:rgba(63,185,80,.1);border-radius:999px;padding:1px 7px;margin-left:6px;vertical-align:1.5px;white-space:nowrap}
   .tlhint{font-size:12.5px;color:var(--muted,#8b98a9);line-height:1.5;background:var(--panel,#11161d);border:1px solid var(--border,#2d333b);border-radius:10px;padding:10px 13px;margin:0 0 16px;max-width:560px}
   .tlhint b{color:var(--text,#e6edf3);font-weight:700}
   @media(max-width:600px){.tlrow{grid-template-columns:46px 20px 1fr}.tlyear{font-size:14px}}
@@ -446,10 +451,16 @@
       var seal = c.vouch_count ? ' <span class="vseal" title="Peer-verified by '+c.vouch_count+' teammate'+(c.vouch_count===1?'':'s')+'">✓</span>' : '';
       var astg = c.partial ? ' <span class="ast" style="color:var(--muted);font-weight:700" title="Worked on a specific part">*</span>' : '';
       var startY = c.work_start || null;
-      var yearLabel = startY ? startY : (c.year || '—');
-      var yearTip = startY ? 'When you worked on it' : 'Game release year';
-      var span = ''; if(startY){ if(c.work_end && c.work_end !== startY) span = 'to '+c.work_end; else if(!c.work_end) span = 'to present'; }
-      var spanHTML = span ? ' <span class="tlspan">'+span+'</span>' : '';
+      var endY = c.work_end || null;
+      // Rail shows the years actually WORKED as a range, not just the start year — the whole point
+      // of the timeline is duration, and live-service devs often join years after a game ships.
+      var topY = startY ? startY : (c.year || '—');
+      var yearTip = startY ? 'The years you worked on this title' : 'Game release year';
+      var railRange = '';
+      if(startY){ if(endY && endY !== startY) railRange = '–'+endY; else if(!endY) railRange = '→ now'; }
+      var railInner = topY + (railRange ? '<span class="tlyto">'+railRange+'</span>' : '');
+      var isLive = (c.releases||[]).some(function(rl){ return DQ.releaseClass(rl)==="live"; });
+      var liveChip = isLive ? ' <span class="tllive" title="A live-service title. The years show when you were on it, not just when it launched.">Live service</span>' : '';
       var sub = DQ.esc(c.role||"Role not recorded") + (c.studio ? ' <span class="tlst">·</span> '+DQ.esc(c.studio) : '');
       var _cs = coverSrc(c);
       var thumb = '<span class="tlph">'+DQ.esc(c.game_title)+'</span>'+(_cs?'<img loading="lazy" referrerpolicy="no-referrer" src="'+DQ.esc(_cs)+'" onerror="this.remove()" alt="">':'');
@@ -460,14 +471,14 @@
       // Editing lived only in List view, which testers couldn't find. Surface it right here.
       var tledit = (isOwn && c.live && c.id) ? '<a class="tledit" data-id="'+c.id+'" title="Edit your role, and add the years you worked on it" style="font-size:12px;color:var(--accent);cursor:pointer;margin-right:14px">✎ Edit title / years</a>' : '';
       var gurl = '/credits/game/'+encodeURIComponent(c.game_slug);
-      var _yearCell = _isChild ? '<span class="mut expctl expcollapse-child" data-base="'+DQ.esc(c.parent_slug)+'" role="button" tabindex="0" style="cursor:pointer" title="Collapse under the base game">↳</span>' : yearLabel;
+      var _yearCell = _isChild ? '<span class="mut expctl expcollapse-child" data-base="'+DQ.esc(c.parent_slug)+'" role="button" tabindex="0" style="cursor:pointer" title="Collapse under the base game">↳</span>' : railInner;
       var _cardStyle = _isChild ? ' style="margin-left:22px"' : '';
       return '<div class="tlrow'+(isFeat?' isfeat':'')+(_isChild?' tlrow-child':'')+'"'+(_isChild?' data-childof="'+DQ.esc(c.parent_slug)+'"':'')+'>'+
         '<div class="tlyear" title="'+(_isChild?'Expansion of the game above':yearTip)+'">'+_yearCell+'</div>'+
         '<div class="tlrail"><span class="tldot'+(isFeat?' feat':'')+'"></span></div>'+
         '<div class="tlcard"'+_cardStyle+'>'+
           '<a class="tlthumb" href="'+gurl+'">'+thumb+'</a>'+
-          '<div class="tlbody"><div class="tlnameline">'+(_isChild?'':collapseToggle(c.game_slug))+'<a class="tlname" href="'+gurl+'">'+DQ.esc(c.game_title)+'</a>'+astg+seal+dispTag(c)+spanHTML+orphanExpTag(c)+'</div>'+
+          '<div class="tlbody"><div class="tlnameline">'+(_isChild?'':collapseToggle(c.game_slug))+'<a class="tlname" href="'+gurl+'">'+DQ.esc(c.game_title)+'</a>'+astg+seal+dispTag(c)+liveChip+orphanExpTag(c)+'</div>'+
             '<div class="tlsub">'+sub+'</div>'+((tledit||star)?'<div class="tlact">'+tledit+star+'</div>':'')+'</div>'+
         '</div>'+
       '</div>';
