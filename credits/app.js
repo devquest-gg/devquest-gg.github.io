@@ -268,7 +268,7 @@
       if (q.length < 2) { box.style.display = "none"; return; }
       Promise.resolve(itemsFn(q)).then(function (items) {
         items = items || [];
-        if (!items.length) { box.innerHTML = '<div class="dq-ac-none">' + esc(opts.noneText ? opts.noneText(q) : "No match — will be added as new (reviewed)") + '</div>'; }
+        if (!items.length) { box.innerHTML = '<div class="dq-ac-none">' + esc(opts.noneText ? opts.noneText(q) : "No match — it'll be added as new") + '</div>'; }
         else { box._items = items; box.innerHTML = items.map(function (it, i) { return '<button type="button" class="dq-ac-row" data-i="' + i + '">' + esc(it.label) + (it.sub ? ' <span class="dq-ac-sub">' + esc(it.sub) + '</span>' : '') + '</button>'; }).join(""); }
         box.style.display = "block";
       });
@@ -336,8 +336,8 @@
     ov.innerHTML = '<div class="dq-modal" role="dialog" aria-modal="true">' +
       '<button class="dq-x" aria-label="Close">×</button>' +
       '<div class="dq-mh">' + (isAdd ? 'Add a game and your credit' : isGame ? 'Claim your credit' : 'Claim this profile') + '</div>' +
-      '<div class="dq-sub">' + (isAdd ? 'Not in the catalogue yet? Add the game and your role. ' : isGame ? 'On <b>' + esc(opts.game_title) + '</b>. ' : '') +
-        'A person reviews every submission — nothing appears on the site until we verify it (usually within a day).</div>' +
+      '<div class="dq-sub">' + (isAdd ? 'Not in the catalogue yet? Add the game and your role below.' : isGame ? 'On <b>' + esc(opts.game_title) + '</b>.' : '') + '</div>' +
+      (showRole ? '<div style="font-size:12px;color:var(--muted,#8b98a9);margin:0 0 12px;line-height:1.5">Your credit goes live on your profile <b style="color:var(--text,#e6edf3);font-weight:600">right away</b>, and it stays yours to edit or remove anytime. It starts as awaiting confirmation and gains evidence as teammates who shipped the game confirm it. <a href="/credits/how-evidence-works.html" target="_blank" rel="noopener" style="color:var(--accent,#58a6ff);font-weight:600">How this works →</a></div>' : '') +
       (isAdd ? '<label>Game title</label><input id="dqc-gtitle" autocomplete="off" value="' + esc(titleCase(opts.prefillTitle || "")) + '" placeholder="e.g. City of Heroes"><div id="dqc-gexist"></div>' +
         '<label>Expansion of <span style="font-weight:400;color:var(--muted,#8b98a9)">— if this is an expansion, edition, or DLC of a base game, link it. Optional</span></label>' +
         '<div id="dqc-gparent-chip"></div>' +
@@ -346,27 +346,36 @@
         '<div><label>Game\'s launch year <span style="font-weight:400;color:var(--muted,#8b98a9)">— optional</span></label><input id="dqc-gyear" placeholder="2004"></div></div>' +
         '<label>Platforms <span style="font-weight:400;color:var(--muted,#8b98a9)">— optional, comma-separated</span></label><input id="dqc-gplat" placeholder="Microsoft Windows">' +
         '<div style="font-size:11.5px;color:var(--muted,#8b98a9);background:rgba(88,166,255,.06);border:1px solid var(--border,#2d333b);border-radius:8px;padding:9px 11px;margin:6px 0 2px;line-height:1.45">This is for a game that <b style="color:var(--text,#e6edf3);font-weight:600">shipped or was publicly announced</b>. Worked at a studio that never released a game? Skip this and use the <b style="color:var(--text,#e6edf3);font-weight:600">cancelled / unshipped</b> counter on your profile instead — it records the work without naming a title, so it stays NDA-safe.</div>' +
-        '<div style="font-size:11.5px;color:var(--muted,#8b98a9);margin:2px 0 2px;line-height:1.45">Add a game or studio you <b style="color:var(--text,#e6edf3);font-weight:600">personally worked on</b> here. Spotted one that is missing but you were not part of? <a id="dqc-suggest-link" style="color:var(--accent);cursor:pointer;font-weight:600">Suggest it for review instead →</a></div>' : '') +
+        '<div style="font-size:11.5px;color:var(--muted,#8b98a9);margin:2px 0 2px;line-height:1.45">Add a game or studio you <b style="color:var(--text,#e6edf3);font-weight:600">personally worked on</b> here. Spotted one that is missing but you were not part of? <a id="dqc-suggest-link" style="color:var(--accent);cursor:pointer;font-weight:600">Suggest it instead →</a></div>' : '') +
       '<label>Your name (as it should be credited)</label><input id="dqc-name" value="' + esc(opts.prefillName || opts.person_name || ident.name || "") + '" placeholder="Jane Doe">' +
       '<label>Your email</label><input id="dqc-email" type="email" value="' + esc(ident.email || "") + '" placeholder="you@example.com">' +
       ((ident.name || ident.email) ? '<div class="dq-idnote">Name and email remembered on this device · <a data-clearid style="cursor:pointer">Clear</a></div>' : '') +
-      (showRole ? '<label>Your headline role <span style="font-weight:400;color:var(--muted,#8b98a9)">— the title to show first; your call</span></label><input id="dqc-role" list="dqc-roles-list" autocomplete="off" placeholder="Start typing a role…"><datalist id="dqc-roles-list">' + ROLES.map(function (r) { return '<option value="' + esc(r) + '"></option>'; }).join("") + '</datalist>' +
-        '<label>Other titles you held on this game <span style="font-weight:400;color:var(--muted,#8b98a9)">— optional, comma-separated</span></label><input id="dqc-roles2" placeholder="Technical Support Lead, Game Designer, Content Manager">' +
-        '<label>Ports &amp; remasters <span style="font-weight:400;color:var(--muted,#8b98a9)">(optional, comma-separated)</span></label><input id="dqc-release" list="dqc-release-list" autocomplete="off" placeholder="e.g. PC port, Remaster, Definitive Edition"><datalist id="dqc-release-list"><option value="PC port"></option><option value="Console port"></option><option value="Remaster"></option><option value="Definitive Edition"></option><option value="Re-release"></option></datalist>' +
-        '<div style="font-size:11.5px;color:var(--muted,#8b98a9);margin:2px 0;line-height:1.45">Other versions of this <b style="color:var(--text,#e6edf3);font-weight:600">same game</b> (ports, remasters, re-releases). Expansions and editions get added as their own game instead, which links back to this one.</div>' +
-        '<label style="margin-top:10px">How were you involved?</label>' +
-        '<label style="display:block;font-weight:400;font-size:13px;margin:6px 0;cursor:pointer"><input type="radio" name="dqc-involve" value="core" checked style="margin-right:7px;vertical-align:-1px">On the core team <span style="color:var(--muted,#8b98a9)">(in-house at the studio that made it)</span></label>' +
-        '<label style="display:block;font-weight:400;font-size:13px;margin:6px 0;cursor:pointer"><input type="radio" name="dqc-involve" value="external" style="margin-right:7px;vertical-align:-1px">Outsourced or external <span style="color:var(--muted,#8b98a9)">(a co-dev, contractor, or partner studio, not the primary developer)</span></label>' +
-        '<label style="display:block;font-weight:400;font-size:13px;margin:6px 0;cursor:pointer"><input type="radio" name="dqc-involve" value="both" style="margin-right:7px;vertical-align:-1px">Both, over time <span style="color:var(--muted,#8b98a9)">(e.g. started as a co-dev or contractor, then joined the core team)</span></label>' +
-        '<label style="margin-top:12px">What part did you work on?</label>' +
-        '<label style="display:block;font-weight:400;font-size:13px;margin:6px 0;cursor:pointer"><input type="radio" name="dqc-scope" value="base" checked style="margin-right:7px;vertical-align:-1px">The base game <span style="color:var(--muted,#8b98a9)">(the main release)</span></label>' +
-        '<label style="display:block;font-weight:400;font-size:13px;margin:6px 0;cursor:pointer"><input type="radio" name="dqc-scope" value="partial" style="margin-right:7px;vertical-align:-1px">A specific part only <span style="color:var(--muted,#8b98a9)">(you worked on a port, expansion, or the live-service era, not the base game)</span></label>' +
-        '<label style="margin-top:12px">Also worked on <span style="font-weight:400;color:var(--muted,#8b98a9)">— optional, check any that apply</span></label>' +
-        '<label style="display:block;font-weight:400;font-size:13px;margin:6px 0;cursor:pointer"><input type="checkbox" id="dqc-also-dlc" style="margin-right:7px;vertical-align:-1px">DLC or expansion content</label>' +
-        '<label style="display:block;font-weight:400;font-size:13px;margin:6px 0;cursor:pointer"><input type="checkbox" id="dqc-also-patch" style="margin-right:7px;vertical-align:-1px">Post-launch patches</label>' +
-        '<label style="display:block;font-weight:400;font-size:13px;margin:6px 0;cursor:pointer"><input type="checkbox" id="dqc-live" style="margin-right:7px;vertical-align:-1px">The live-service period</label>' : '') +
-      '<label>Links that help show this is you <span style="font-weight:400;color:var(--muted,#8b98a9)">— LinkedIn, portfolio / ArtStation, studio team page. One per line, optional</span></label><textarea id="dqc-proof" placeholder="https://linkedin.com/in/you&#10;https://yourstudio.com/team"></textarea>' +
-      '<label>Anything else for our reviewer <span style="font-weight:400;color:var(--muted,#8b98a9)">— optional</span></label><textarea id="dqc-note" placeholder="Context that helps us verify you"></textarea>' +
+      (showRole ? '<label>Primary role <span style="font-weight:400;color:var(--muted,#8b98a9)">— the role most people would know you for on this project</span></label><input id="dqc-role" list="dqc-roles-list" autocomplete="off" placeholder="Start typing a role…"><datalist id="dqc-roles-list">' + ROLES.map(function (r) { return '<option value="' + esc(r) + '"></option>'; }).join("") + '</datalist>' +
+        '<label>Verification link <span style="font-weight:400;color:var(--muted,#8b98a9)">— LinkedIn, portfolio, studio bio, MobyGames, ArtStation. Anything that shows this is you. Optional</span></label><textarea id="dqc-proof" placeholder="https://linkedin.com/in/you"></textarea>' +
+        // Progressive disclosure: everything below is optional and collapsed by default, so the
+        // common case (one role, base game) is a short form. Fields stay in the DOM either way.
+        '<a class="dq-more" data-sec="roles" data-label="I held other roles on this game" style="display:block;margin:12px 0 2px;color:var(--accent,#58a6ff);cursor:pointer;font-weight:600;font-size:13px">+ I held other roles on this game</a>' +
+        '<div class="dq-sec" data-sec="roles" style="display:none"><input id="dqc-roles2" placeholder="Technical Support Lead, Game Designer, Content Manager"></div>' +
+        '<a class="dq-more" data-sec="also" data-label="Ports, DLC, or live-service work" style="display:block;margin:10px 0 2px;color:var(--accent,#58a6ff);cursor:pointer;font-weight:600;font-size:13px">+ Ports, DLC, or live-service work</a>' +
+        '<div class="dq-sec" data-sec="also" style="display:none">' +
+          '<label style="margin-top:2px">Also contributed to <span style="font-weight:400;color:var(--muted,#8b98a9)">— check any that apply</span></label>' +
+          '<label style="display:block;font-weight:400;font-size:13px;margin:6px 0;cursor:pointer"><input type="checkbox" id="dqc-also-dlc" style="margin-right:7px;vertical-align:-1px">DLC or expansions</label>' +
+          '<label style="display:block;font-weight:400;font-size:13px;margin:6px 0;cursor:pointer"><input type="checkbox" id="dqc-also-ports" style="margin-right:7px;vertical-align:-1px">Ports or remasters</label>' +
+          '<label style="display:block;font-weight:400;font-size:13px;margin:6px 0;cursor:pointer"><input type="checkbox" id="dqc-also-patch" style="margin-right:7px;vertical-align:-1px">Post-launch updates</label>' +
+          '<label style="display:block;font-weight:400;font-size:13px;margin:6px 0;cursor:pointer"><input type="checkbox" id="dqc-live" style="margin-right:7px;vertical-align:-1px">Live-service content</label>' +
+        '</div>' +
+        '<a class="dq-more" data-sec="involve" data-label="More about my involvement" style="display:block;margin:10px 0 2px;color:var(--accent,#58a6ff);cursor:pointer;font-weight:600;font-size:13px">+ More about my involvement</a>' +
+        '<div class="dq-sec" data-sec="involve" style="display:none">' +
+          '<label style="margin-top:2px">Contribution type</label>' +
+          '<label style="display:block;font-weight:400;font-size:13px;margin:6px 0;cursor:pointer"><input type="radio" name="dqc-involve" value="core" checked style="margin-right:7px;vertical-align:-1px">Studio employee <span style="color:var(--muted,#8b98a9)">(in-house at the studio that made it)</span></label>' +
+          '<label style="display:block;font-weight:400;font-size:13px;margin:6px 0;cursor:pointer"><input type="radio" name="dqc-involve" value="external" style="margin-right:7px;vertical-align:-1px">External partner or contractor <span style="color:var(--muted,#8b98a9)">(a co-dev or partner studio, not the primary developer)</span></label>' +
+          '<label style="display:block;font-weight:400;font-size:13px;margin:6px 0;cursor:pointer"><input type="radio" name="dqc-involve" value="both" style="margin-right:7px;vertical-align:-1px">Both, over time <span style="color:var(--muted,#8b98a9)">(started external, then joined the core team)</span></label>' +
+          '<label style="margin-top:12px">Scope of work</label>' +
+          '<label style="display:block;font-weight:400;font-size:13px;margin:6px 0;cursor:pointer"><input type="radio" name="dqc-scope" value="base" checked style="margin-right:7px;vertical-align:-1px">Main release</label>' +
+          '<label style="display:block;font-weight:400;font-size:13px;margin:6px 0;cursor:pointer"><input type="radio" name="dqc-scope" value="partial" style="margin-right:7px;vertical-align:-1px">A specific part <span style="color:var(--muted,#8b98a9)">(DLC, expansion, port, or the live-service era, not the main release)</span></label>' +
+        '</div>' +
+        '<a class="dq-more" data-sec="note" data-label="Add a note" style="display:block;margin:10px 0 2px;color:var(--accent,#58a6ff);cursor:pointer;font-weight:600;font-size:13px">+ Add a note</a>' +
+        '<div class="dq-sec" data-sec="note" style="display:none"><textarea id="dqc-note" placeholder="Anything else worth noting about this credit"></textarea></div>' : '') +
       '<div style="font-size:11px;color:var(--muted,#8b98a9);margin-top:12px;line-height:1.4">Only add work you\'re free to disclose. Leave off anything under NDA or not publicly announced.</div>' +
       '<div class="dq-actions"><button class="dq-cancel">Cancel</button><button class="dq-submit">Save my credit →</button></div>' +
       '<div class="dq-foot">Saved to your account — you can edit or remove it anytime.</div>' +
@@ -380,6 +389,17 @@
     ov.querySelector(".dq-cancel").onclick = close;
     var suggestLink = ov.querySelector("#dqc-suggest-link");
     if (suggestLink) suggestLink.onclick = function () { close(); openSuggest({ prefillName: (ov.querySelector("#dqc-gtitle") || {}).value || "" }); };
+    // Progressive-disclosure toggles: reveal / hide each optional section.
+    Array.prototype.forEach.call(ov.querySelectorAll(".dq-more"), function (t) {
+      t.onclick = function () {
+        var key = t.getAttribute("data-sec");
+        var sec = ov.querySelector('.dq-sec[data-sec="' + key + '"]');
+        if (!sec) return;
+        var willOpen = sec.style.display === "none";
+        sec.style.display = willOpen ? "" : "none";
+        t.textContent = (willOpen ? "− " : "+ ") + t.getAttribute("data-label");
+      };
+    });
     if (w.DQAPI) {
       var sb0 = ov.querySelector(".dq-submit"); if (sb0) sb0.textContent = (isGame || isAdd) ? "Save my credit →" : "Sign in →";
       var ft0 = ov.querySelector(".dq-foot"); if (ft0) ft0.innerHTML = (isGame || isAdd) ? "Saved to your account — you can edit or remove it anytime." : "You'll sign in to manage your page.";
@@ -395,16 +415,19 @@
       var proofArr = proof ? proof.split(/\n+/).map(function (s) { return s.trim(); }).filter(Boolean) : [];
       var verification = proofArr.some(function (u) { return /linkedin\.com/i.test(u); }) ? ["linkedin_self"] : [];
       function payload() {
-        var relArr = uniq(val("dqc-release") ? val("dqc-release").split(",").map(function (s) { return s.trim(); }).filter(Boolean) : []);
+        var relArr = [];
+        var portsEl = ov.querySelector("#dqc-also-ports");
+        if (portsEl && portsEl.checked) relArr.push("Ports / remasters");
         var dlcEl = ov.querySelector("#dqc-also-dlc");
-        if (dlcEl && dlcEl.checked && relArr.indexOf("DLC / expansion content") === -1) relArr.push("DLC / expansion content");
+        if (dlcEl && dlcEl.checked) relArr.push("DLC / expansion content");
         var patchEl = ov.querySelector("#dqc-also-patch");
-        if (patchEl && patchEl.checked && relArr.indexOf("Post-launch patches") === -1) relArr.push("Post-launch patches");
+        if (patchEl && patchEl.checked) relArr.push("Post-launch patches");
         var liveEl = ov.querySelector("#dqc-live");
-        if (liveEl && liveEl.checked && relArr.indexOf("Live service") === -1) relArr.push("Live service");
+        if (liveEl && liveEl.checked) relArr.push("Live service");
         var involveEl = ov.querySelector('input[name="dqc-involve"]:checked');
-        if (involveEl && involveEl.value === "external" && relArr.indexOf("External contributor") === -1) relArr.push("External contributor");
-        else if (involveEl && involveEl.value === "both" && relArr.indexOf("External, then core team") === -1) relArr.push("External, then core team");
+        if (involveEl && involveEl.value === "external") relArr.push("External contributor");
+        else if (involveEl && involveEl.value === "both") relArr.push("External, then core team");
+        relArr = uniq(relArr);
       var scopeEl = ov.querySelector('input[name="dqc-scope"]:checked');
       var p = { name: name, role: role, roles_other: rolesArr, verification: verification, source_url: proofArr[0] || "", links: proofArr, releases: relArr, scope: scopeEl ? scopeEl.value : "base" };
         if (isAdd) {
@@ -463,7 +486,7 @@
       }, {
         onSelect: function (it) { selStudioSlug = it.slug; },
         onType: function () { selStudioSlug = null; },
-        noneText: function (q) { return "No studio matches “" + q + "” — it'll be added as new (reviewed)"; }
+        noneText: function (q) { return "No studio matches “" + q + "” — it'll be added as new"; }
       });
       var gtitle = ov.querySelector("#dqc-gtitle"), gexist = ov.querySelector("#dqc-gexist"), gt;
       var gpchip = ov.querySelector("#dqc-gparent-chip"), gpwrap = ov.querySelector("#dqc-gparent-wrap"), gparent = ov.querySelector("#dqc-gparent");
@@ -576,7 +599,8 @@
 
   // Suggest a game or studio that's missing from the catalogue but you weren't personally
   // part of. Routes into the moderator queue (reason "suggest") with a required proof link,
-  // so nothing posts until a human reviews it. Distinct from the add flow, which is for your
+  // it lands in the moderator queue for someone to act on (it isn't your own credit, so it can't
+  // auto-publish). Distinct from the add flow, which is for your
   // own credits. opts.prefillName seeds the name from whatever they were typing.
   function openSuggest(opts) {
     opts = opts || {}; injectClaimStyles();
@@ -584,7 +608,7 @@
     ov.innerHTML = '<div class="dq-modal" role="dialog" aria-modal="true">' +
       '<button class="dq-x" aria-label="Close">×</button>' +
       '<div class="dq-mh">Suggest a missing game or studio</div>' +
-      '<div class="dq-sub">For something you did <b>not</b> personally work on. Add a proof link so a moderator can verify it. Nothing posts until it\'s reviewed.</div>' +
+      '<div class="dq-sub">For something you did <b>not</b> personally work on. Add a proof link so we can add it to the catalogue correctly.</div>' +
       '<label>What is it?</label>' +
       '<label style="display:block;font-weight:400;font-size:13px;margin:6px 0;cursor:pointer"><input type="radio" name="dqs-type" value="game" checked style="margin-right:7px;vertical-align:-1px">A game</label>' +
       '<label style="display:block;font-weight:400;font-size:13px;margin:6px 0;cursor:pointer"><input type="radio" name="dqs-type" value="studio" style="margin-right:7px;vertical-align:-1px">A studio</label>' +
@@ -605,12 +629,12 @@
       var proof = (ov.querySelector("#dqs-proof") || {}).value || ""; proof = proof.trim();
       var note = (ov.querySelector("#dqs-note") || {}).value || "";
       if (!name) { alert("Add the name first."); return; }
-      if (!proof) { alert("A proof link is required so a moderator can verify it."); return; }
+      if (!proof) { alert("A proof link is required so we can add it correctly."); return; }
       if (!w.DQAPI) { alert("Suggestions aren't available right now."); return; }
       btn.disabled = true; btn.textContent = "Sending…";
       w.DQAPI.reportEntity({ type: type, slug: slugify(name), name: name, reason: "suggest", suggested: proof, note: note }).then(function (r) {
         if (r && r.ok) {
-          ov.querySelector(".dq-modal").innerHTML = '<button class="dq-x" aria-label="Close">×</button><div class="dq-mh">Thanks</div><div class="dq-sub">Your suggestion was sent to the moderators. If it checks out, we\'ll add it.</div><div class="dq-actions"><button class="dq-cancel">Close</button></div>';
+          ov.querySelector(".dq-modal").innerHTML = '<button class="dq-x" aria-label="Close">×</button><div class="dq-mh">Thanks</div><div class="dq-sub">Got it. We\'ll add it to the catalogue if it checks out.</div><div class="dq-actions"><button class="dq-cancel">Close</button></div>';
           ov.querySelector(".dq-x").onclick = close; ov.querySelector(".dq-cancel").onclick = close;
         } else { btn.disabled = false; btn.textContent = "Send suggestion"; alert((r && r.data && r.data.error) || "Could not send. Try again."); }
       }).catch(function () { btn.disabled = false; btn.textContent = "Send suggestion"; alert("Network error. Try again."); });
