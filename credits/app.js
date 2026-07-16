@@ -279,6 +279,46 @@
     document.addEventListener("click", function (e) { if (!wrap.contains(e.target)) box.style.display = "none"; });
   }
 
+  // Classify a role/title into the SAME disciplines the job board uses (mapDiscipline in
+  // scrape.js), so credit filtering on game pages matches the jobs side exactly. Credits carry
+  // only a title (no ATS department), so we run the title-based path: strong role-defining rules
+  // first (audio/qa/art/animation/design before engineering), then a broad fallback.
+  var DISCIPLINE_ORDER = ["Production", "Design", "Engineering", "Art", "Animation", "Audio", "QA", "Marketing", "Data & Analytics", "Player Support", "People & Ops", "IT & Security", "Other"];
+  function discipline(title) {
+    var t = String(title || "").toLowerCase();
+    if (/developer (relations|engagement|evangelis|advocat|marketing|outreach|experience rep|support|solutions?)|\bdev ?rel\b|community developer|content developer|video content/.test(t)) return "Marketing";
+    if (/\baudio\b|sound design|\bcomposer\b|music design/.test(t)) return "Audio";
+    if (/\bqa\b|quality assurance|\bqc\b|quality control|\btester\b|\bsdet\b|test (engineer|analyst|lead|automation|specialist)|quality (engineer|analyst|specialist)/.test(t)) return "QA";
+    if (/art director|\bartist\b|\bart lead\b|lead artist|concept art|\bvfx\b|\blighter\b|lighting (artist|lead)|environment artist|character artist|technical artist|technical art\b/.test(t)) return "Art";
+    if (/\bai art\b|\bart (specialist|generalist|lead|director|manager|outsourc\w*|coordinator|supervisor)\b/.test(t)) return "Art";
+    if (/\banimator\b|animation (director|lead|manager|supervisor)|\brigging\b|cinematics? (director|lead|supervisor|manager|animator|designer|editor|artist)|\bmocap\b|motion[ -]?capture/.test(t)) return "Animation";
+    if (/game design|level design|systems? design|technical design|narrative design|\bwriter\b|encounter design|combat design|content design|economy design|gameplay design|ux design|ui design|world build|world design|environment design|game (direct(or|ion)|lead)|creative direct(or|ion)/.test(t)) return "Design";
+    if (/\bfeature (team )?(lead|owner)\b|\bfeature design(er)?\b/.test(t)) return "Design";
+    if ((/(engineers?|engineering|programmers?|programming|developers?|architects?)\b|tech(nical)? (director|lead|manager)|\bback[ -]?end\b|\bfront[ -]?end\b|\bfull[ -]?stack\b|\bcoder\b|\bcoding\b/.test(t)) && !/\bsales\b|business develop(er|ment)/.test(t)) return "Engineering";
+    if (/\b(technology|technical) research\b|research (and|&) development|\br ?& ?d\b/.test(t)) return "Engineering";
+    if (/machine learning|\bml\b ?(scientist|researcher|ops)|data scien|data analy(st|tics|sis)|business intelligence|\bbi analyst\b|insights? analyst|product analyst|\beconomist\b|deep learning|\bnlp\b|artificial intelligence|\bai (scientist|researcher|research)/.test(t)) return "Data & Analytics";
+    if (/\bmodel(l)?er\b/.test(t) && !/\bdata\b|threat|financial|business|risk|econom|pricing/.test(t)) return "Art";
+    if ((/\bdevelopment (director|manager|lead)\b/.test(t) || /\bdirector of (core|game|studio|title|content|product|live) development\b/.test(t)) && !/business|learning|talent|\bl&d\b|\bpeople\b/.test(t)) return "Production";
+    if (/\b(manager|director|lead|owner|vp),?\s+product\b/.test(t) && !/marketing/.test(t)) return "Production";
+    if (/\b(project|programme?|delivery|release|portfolio)\s+(manager|management|coordinator|lead|director)\b|\bproducer\b|production (coordinator|manager|director|assistant)|product (manager|owner|management|director|lead)|game manager/.test(t)) return "Production";
+    if (/engineer|programmer|\bdeveloper|software|\bsre\b|devops|\bsdet\b/.test(t) && !/\bsales\b|business develop(er|ment)/.test(t)) return "Engineering";
+    if (/product (manager|owner|management)|head of product/.test(t)) return "Production";
+    if (/\blive ?ops\b|liveops|live operations/.test(t)) return "Production";
+    if (/artist|concept|\bvfx\b|lighting|illustrat|sculpt/.test(t)) return "Art";
+    if (/animator|animation|rigging/.test(t)) return "Animation";
+    if (/\bux\b|\bui\b|user experience|user research/.test(t)) return "Design";
+    if (/designer|design/.test(t)) return "Design";
+    if (/producer|production/.test(t)) return "Production";
+    if (/audio|sound|composer|\bmusic\b/.test(t)) return "Audio";
+    if (/\bqa\b|quality|tester|\btest\b/.test(t)) return "QA";
+    if (/locali[sz]ation\b/.test(t)) return "Production";
+    if (/writer|narrative/.test(t)) return "Design";
+    if (/\bdata\b|data scien|\banalytics\b|business intelligence|\bbi\b|insights/.test(t)) return "Data & Analytics";
+    if (/player support|customer support|community support/.test(t)) return "Player Support";
+    if (/market|\bbrand\b|public relations|\bpr\b|social media|communit|influencer|communication|esports|broadcast|\bgrowth\b/.test(t)) return "Marketing";
+    return "Other";
+  }
+
   function openClaim(opts) {
     opts = opts || {}; injectClaimStyles();
     var isAdd = opts.mode === "addGame";
@@ -577,6 +617,7 @@
   w.DQ = {
     bkt: bkt, qs: qs, getJSON: getJSON, loadEntity: loadEntity, loadIndex: loadIndex, openReport: openReport,
     rank: rank, searchRows: searchRows, attachSuggest: attachSuggest, openClaim: openClaim,
+    discipline: discipline, DISCIPLINE_ORDER: DISCIPLINE_ORDER,
     uniq: uniq, releaseClass: releaseClass,
     esc: esc, safeUrl: safeUrl, initials: initials, slugify: slugify,
     SIG_LABEL: {
