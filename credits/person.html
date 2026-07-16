@@ -98,7 +98,7 @@
      duration legible at the timeline anchor instead of hiding it in a faint pill by the title. */
   .tlyto{display:block;font-size:11.5px;font-weight:700;color:var(--muted,#8b98a9);font-variant-numeric:tabular-nums;margin-top:1px;letter-spacing:-.2px}
   /* Live-service: a quiet word in the metadata line, not a chip that fights the game title. */
-  .tllive{color:var(--green,#3fb950);font-weight:600}
+  .tlphase{color:var(--muted,#8b98a9);font-weight:700}
   .tlhint{font-size:12.5px;color:var(--muted,#8b98a9);line-height:1.5;background:var(--panel,#11161d);border:1px solid var(--border,#2d333b);border-radius:10px;padding:10px 13px;margin:0 0 16px;max-width:560px}
   .tlhint b{color:var(--text,#e6edf3);font-weight:700}
   @media(max-width:600px){.tlrow{grid-template-columns:46px 20px 1fr}.tlyear{font-size:14px}}
@@ -455,6 +455,21 @@
     var fullOrderIds = visualCredits.filter(function(c){ return c.live && c.id; }).map(function(c){ return String(c.id); });
     var tlMissing = isOwn && credits.some(function(c){ return !c.work_start; });
     var tlHint = tlMissing ? '<div class="tlhint">Games sit at their release year until you add the years you actually worked them. Use <b>✎ Edit title / years</b> on any credit below. (Handy for live-service titles you joined years after launch, like LoL.)</div>' : '';
+    // Lifecycle phase, DERIVED from the years worked vs the game's release year. Describes the
+    // person's involvement (pre-launch / launch / post-launch), not the game's type — which
+    // resolves the "live service" ambiguity. Null when we lack the work years or the release year.
+    function lifecyclePhase(c){
+      var rel = c.year, ws = c.work_start, we = c.work_end;
+      if(ws==null || rel==null) return null;
+      if(we!=null && we < rel) return "pre-launch";
+      if(ws > rel) return "post-launch";
+      return "launch";
+    }
+    function phaseTip(p){
+      return p==="pre-launch" ? "You worked on this before it launched (in development)."
+        : p==="post-launch" ? "You joined after launch to work on the live, ongoing game."
+        : "You worked on it through its launch.";
+    }
     function tlRow(c, _isChild){
       var seal = c.vouch_count ? ' <span class="vseal" title="Peer-verified by '+c.vouch_count+' teammate'+(c.vouch_count===1?'':'s')+'">✓</span>' : '';
       var astg = c.partial ? ' <span class="ast" style="color:var(--muted);font-weight:700" title="Worked on a specific part">*</span>' : '';
@@ -467,9 +482,9 @@
       var railRange = '';
       if(startY){ if(endY && endY !== startY) railRange = '–'+endY; else if(!endY) railRange = '→ now'; }
       var railInner = topY + (railRange ? '<span class="tlyto">'+railRange+'</span>' : '');
-      var isLive = (c.releases||[]).some(function(rl){ return DQ.releaseClass(rl)==="live"; });
+      var phase = _isChild ? null : lifecyclePhase(c);
       var sub = DQ.esc(c.role||"Role not recorded") + (c.studio ? ' <span class="tlst">·</span> '+DQ.esc(c.studio) : '') +
-        ((isLive && !_isChild) ? ' <span class="tlst">·</span> <span class="tllive" title="Live-service title: the years show when you were on it, not just its launch.">live service</span>' : '');
+        (phase ? ' <span class="tlst">·</span> <span class="tlphase" title="'+DQ.esc(phaseTip(phase))+'">'+phase+'</span>' : '');
       var _cs = coverSrc(c);
       var thumb = '<span class="tlph">'+DQ.esc(c.game_title)+'</span>'+(_cs?'<img loading="lazy" referrerpolicy="no-referrer" src="'+DQ.esc(_cs)+'" onerror="this.remove()" alt="">':'');
       var isFeat = !!(c.id && featuredIds[c.id]);
@@ -574,6 +589,17 @@
         '</div>'
       : '';
 
+    // ---- "Specializes in" chips: a profile-level expertise signal so the timeline never has to
+    // repeat "live service" per row. Live Service comes from the credits marked as live-service
+    // work; the rest are the person's top disciplines, classified from their roles.
+    var _discCount = {};
+    credits.forEach(function(c){ var d = DQ.discipline && DQ.discipline(c.role); if(d && d !== "Other") _discCount[d] = (_discCount[d]||0)+1; });
+    var _topDisc = Object.keys(_discCount).sort(function(a,b){ return _discCount[b]-_discCount[a]; }).slice(0,2);
+    var specs = (liveCount > 0 ? ["Live Service"] : []).concat(_topDisc);
+    var specHTML = specs.length
+      ? '<div class="knownfor"><span class="kflabel">Specializes in</span>'+specs.map(function(s){ return '<span class="kchip">'+DQ.esc(s)+'</span>'; }).join('')+'</div>'
+      : '';
+
     // Headline as two stacked lines: role on top, studio beneath — cleaner than a long
     // "Role at Studio" that wraps. Split on the " at " the edit form standardises on.
     var metaHTML = (function(){
@@ -599,6 +625,7 @@
           '</div>'+
           '<div id="linkedit"></div>'+
           snapshotHTML +
+          specHTML +
           verifyHTML +
           confirmBanner +
           claimBanner +
