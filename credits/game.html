@@ -14,6 +14,33 @@
   .gpcover{flex:none;width:130px;aspect-ratio:2/3;border-radius:10px;overflow:hidden;position:relative;border:1px solid var(--border,#2d333b);background:#161b22;box-shadow:0 8px 22px rgba(0,0,0,.45)}
   .gpcover img{width:100%;height:100%;object-fit:cover;display:block}
   @media(max-width:560px){.gpcover{width:96px}.gpheadrow{gap:14px}}
+  /* Evidence badge — a clickable check chip next to a credited name; click opens the confirmer list. */
+  .evb{display:inline-flex;align-items:center;justify-content:center;width:17px;height:17px;border-radius:50%;margin-left:8px;vertical-align:-3px;font-size:10.5px;font-weight:900;line-height:1;color:#fff;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.4);transition:box-shadow .12s,transform .12s}
+  .evb.peer{background:var(--accent,#58a6ff);color:#04122b} .evb.team{background:var(--green,#3fb950);color:#04220f} .evb.rev{background:var(--gold,#e0b23a);color:#3a2c05}
+  .evb[data-ev]:hover,.evb[data-ev]:focus-visible{transform:scale(1.14);outline:none}
+  .evb.peer[data-ev]:hover,.evb.peer[data-ev]:focus-visible{box-shadow:0 0 0 4px rgba(88,166,255,.28)}
+  .evb.team[data-ev]:hover,.evb.team[data-ev]:focus-visible{box-shadow:0 0 0 4px rgba(63,185,80,.28)}
+  .evb.rev[data-ev]:hover,.evb.rev[data-ev]:focus-visible{box-shadow:0 0 0 4px rgba(224,178,58,.28)}
+  .evpop{position:absolute;z-index:60;width:308px;max-width:calc(100vw - 24px);background:var(--panel,#11161d);border:1px solid var(--border,#2d333b);border-radius:13px;box-shadow:0 16px 40px rgba(0,0,0,.55);padding:0;opacity:0;transform:translateY(-4px);pointer-events:none;transition:opacity .12s,transform .12s}
+  .evpop.open{opacity:1;transform:translateY(0);pointer-events:auto}
+  .evpop-head{display:flex;align-items:center;gap:8px;padding:13px 15px 11px;border-bottom:1px solid var(--border,#2d333b)}
+  .evpop-head .hd{width:9px;height:9px;border-radius:50%;flex:none}
+  .evpop-head .hd.peer{background:var(--accent,#58a6ff)} .evpop-head .hd.team{background:var(--green,#3fb950)} .evpop-head .hd.rev{background:var(--gold,#e0b23a)}
+  .evpop-head .lvl{font-weight:800;font-size:13.5px;color:var(--text,#e6edf3)}
+  .evpop-head .cx{margin-left:auto;color:var(--muted,#8b98a9);cursor:pointer;font-size:16px;line-height:1;padding:2px 4px;border-radius:6px}
+  .evpop-head .cx:hover{background:rgba(255,255,255,.06);color:var(--text,#e6edf3)}
+  .evpop-sub{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted,#8b98a9);padding:11px 15px 4px}
+  .evpop-rev{font-size:12.5px;color:var(--gold,#e0b23a);background:rgba(224,178,58,.08);border-bottom:1px solid var(--border,#2d333b);padding:10px 15px;line-height:1.45}
+  .evpop-list{padding:2px 8px 6px;max-height:280px;overflow:auto}
+  .evrow{display:flex;align-items:center;gap:10px;padding:8px 7px;border-radius:9px;text-decoration:none}
+  a.evrow:hover{background:rgba(255,255,255,.05)}
+  .evrow .av{flex:none;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:11px;color:#0b0e14}
+  .evrow .ei{min-width:0}
+  .evrow .en{display:block;font-weight:700;font-size:13.5px;color:var(--text,#e6edf3);line-height:1.2}
+  .evrow .er{display:block;color:var(--muted,#8b98a9);font-size:11.5px;margin-top:2px}
+  .evpop-empty{padding:14px 15px;color:var(--muted,#8b98a9);font-size:12.5px;line-height:1.5}
+  .evpop-foot{display:block;padding:10px 15px;border-top:1px solid var(--border,#2d333b);font-size:12px;font-weight:700;color:var(--accent,#58a6ff);text-decoration:none}
+  .evpop-foot:hover{text-decoration:underline}
 </style>
 </head>
 <body>
@@ -98,7 +125,7 @@
     // merge credits by person — seed (static) + live (API), API wins
     var byPerson = {};
     ((g && g.credits) || []).forEach(function(c){ var ps=DQ.slugify(c.name); byPerson[ps]={person_slug:ps,name:c.name,role:c.role,roles_other:c.roles_other||[],verification:c.verification||[],vouch_count:0,live:false}; });
-    apiCredits.forEach(function(c){ byPerson[c.person_slug]={id:c.id,person_slug:c.person_slug,name:c.person_name,role:c.role,roles_other:c.roles_other||[],verification:c.verification||[],links:c.links||[],releases:c.releases||[],vouch_count:c.vouch_count||0,voucher_slugs:c.voucher_slugs||[],partial:!!c.partial,live:true}; });
+    apiCredits.forEach(function(c){ byPerson[c.person_slug]={id:c.id,person_slug:c.person_slug,name:c.person_name,role:c.role,roles_other:c.roles_other||[],verification:c.verification||[],links:c.links||[],releases:c.releases||[],vouch_count:c.vouch_count||0,voucher_slugs:c.voucher_slugs||[],status:c.status,partial:!!c.partial,live:true}; });
     var credits = Object.keys(byPerson).map(function(k){ return byPerson[k]; });
     var iHaveCredit = !!(me && credits.some(function(c){ return c.person_slug===me.slug; }));
     var pending = (apiRes && apiRes.pending) || [];
@@ -159,13 +186,27 @@
           discList.map(function(d){ return '<span class="dchip" data-disc="'+DQ.esc(d)+'" style="'+_chipBase+'">'+DQ.esc(d)+' <b>'+discCounts[d]+'</b></span>'; }).join('')+
         '</div>'
       : '';
+    // Evidence badge: blue check = peer-confirmed, green = team-confirmed, gold ! = under review.
+    // No badge while a credit is still awaiting confirmation. Click opens the confirmer list.
+    function evidenceBadge(c){
+      var n = c.vouch_count || 0;
+      var rev = c.status==="contested";
+      if(!rev && n<1) return '';
+      var cls = rev ? 'rev' : (n>=2 ? 'team' : 'peer');
+      var glyph = rev ? '!' : '✓';
+      var lbl = rev ? 'Under review' : (n>=2 ? 'Team-confirmed' : 'Peer-confirmed');
+      var tip = rev ? 'Under review. A report was filed on this credit. Click for details.'
+                    : (n>=2 ? 'Team-confirmed by '+n+' teammates who shipped this game. Click to see who.'
+                            : 'Peer-confirmed by 1 teammate who shipped this game. Click to see who.');
+      if(!c.id) return ' <span class="evb '+cls+'" title="'+DQ.esc(tip)+'">'+glyph+'</span>';
+      return ' <span class="evb '+cls+'" data-ev="'+c.id+'"'+(rev?' data-rev="1"':'')+' role="button" tabindex="0" aria-label="'+DQ.esc(lbl)+'. Click to see details." title="'+DQ.esc(tip)+'">'+glyph+'</span>';
+    }
     var creditsHTML = credits.length ? '<div class="rows" id="creditrows">' + credits.map(function(c){
       var sigs = (c.verification||[]).map(function(s){ return '<span class="sig">'+DQ.esc(DQ.SIG_LABEL[s]||s)+'</span>'; }).join("");
       var others = c.roles_other || [];
       var more = others.length ? ' <span class="rmore2" style="color:var(--muted);font-weight:400">· also '+DQ.esc(others.join(", "))+'</span>' : '';
       // Game page stays sparse: no release list here. The asterisk marks scoped work; the
       // "what they worked on" detail lives on the person's profile.
-      var seal = c.vouch_count ? ' <span class="vseal" title="Verified by '+c.vouch_count+' teammate'+(c.vouch_count===1?'':'s')+' who shipped this game" aria-label="Peer-verified by '+c.vouch_count+' teammate'+(c.vouch_count===1?'':'s')+'">✓</span>' : '';
       var ast = c.partial ? ' <span class="ast" style="color:var(--muted);font-weight:700;cursor:help" title="Worked on a specific part, not the base game" aria-label="Worked on a specific part, not the base game">*</span>' : '';
       var extNote = DQ.uniq(c.releases||[]).some(function(r){ return DQ.releaseClass(r)==="xdev"; }) ? ' <span class="rmore2" style="color:var(--muted);font-weight:400">· as an outsourcer</span>' : '';
       var proof = (c.links && c.links.length) ? ' <a class="sig" href="'+DQ.esc(DQ.safeUrl(c.links[0]))+'" target="_blank" rel="noopener noreferrer" title="'+DQ.esc(c.links.join(", "))+'" style="text-decoration:none">proof ↗</a>' : '';
@@ -177,7 +218,7 @@
         : '';
       return '<div class="row" data-disc="'+DQ.esc(c._disc||"Other")+'">'+
         '<div class="av">'+DQ.esc(DQ.initials(c.name))+'</div>'+
-        '<div class="rmain"><div class="rname"><a href="/credits/'+encodeURIComponent(c.person_slug)+'">'+DQ.esc(c.name)+'</a>'+ast+seal+'</div>'+
+        '<div class="rmain"><div class="rname"><a href="/credits/'+encodeURIComponent(c.person_slug)+'">'+DQ.esc(c.name)+'</a>'+ast+evidenceBadge(c)+'</div>'+
           '<div class="rsub"><span class="rrole">'+DQ.esc(c.role||"Role not recorded")+'</span>'+more+extNote+(sigs?' &nbsp; '+sigs:'')+proof+'</div></div>'+
         '<div class="rright">'+vbtn+'<a class="reportcredit reportlink" data-name="'+DQ.esc(c.name)+'" data-cid="'+(c.id||"")+'" title="Report this credit" style="color:var(--muted);font-size:12px;margin-left:12px;text-decoration:none;cursor:pointer">⚑</a></div>'+
       '</div>';
@@ -187,7 +228,7 @@
     // worked with — vouching was previously just an unexplained button nobody discovered.
     var confirmableHere = (me && iHaveCredit) ? credits.filter(function(c){ return c.live && c.id && c.person_slug!==me.slug && (c.voucher_slugs||[]).indexOf(me.slug) < 0; }).length : 0;
     var vouchInvite = confirmableHere
-      ? '<div style="margin:14px 0;padding:12px 14px;border:1px solid rgba(63,185,80,.35);background:rgba(63,185,80,.07);border-radius:10px;font-size:13.5px;line-height:1.5"><b style="color:var(--green)">You shipped this game.</b> Confirm the teammates you actually worked with — tap the green <b>Vouch</b> button on their row. Your vouch is what turns a self-reported credit into a peer-verified one. Only confirm people you genuinely worked alongside.</div>'
+      ? '<div style="margin:14px 0;padding:12px 14px;border:1px solid rgba(63,185,80,.35);background:rgba(63,185,80,.07);border-radius:10px;font-size:13.5px;line-height:1.5"><b style="color:var(--green)">You shipped this game.</b> Confirm the teammates you actually worked with: tap the green <b>Vouch</b> button on their row. Your vouch is what moves a credit from awaiting confirmation to peer-confirmed. Only confirm people you genuinely worked alongside.</div>'
       : '';
 
     // Cover art in the header (Steam capsule). Shown only when real art exists; a broken
@@ -213,7 +254,7 @@
       '<section class="blk"><div class="container">'+
         '<div class="rowhead"><div><div class="eyebrow">Credits</div>'+
           '<h2 class="sec">'+(credits.length? credits.length+' credited' : 'Who made this game?')+'</h2>'+
-          '<p class="secsub" style="margin:0">A developer-owned, peer-verified record of who made this game. Roles reflect each person\'s full time on the title, not a single moment. Listed alphabetically.</p></div>'+
+          '<p class="secsub" style="margin:0">A developer-owned, peer-confirmed record of who made this game. Roles reflect each person\'s full time on the title, not a single moment. Listed alphabetically. <a href="/credits/how-evidence-works.html" style="color:var(--accent);font-weight:600;white-space:nowrap">how evidence works →</a></p></div>'+
           (iHaveCredit ? '' : '<span class="btn primary" id="claimbtn">This is me — claim my credit</span>')+
         '</div>'+
         vouchInvite +
@@ -234,6 +275,87 @@
       var rows = document.querySelectorAll("#creditrows .row");
       rows.forEach(function(row){ row.style.display = (!d || row.getAttribute("data-disc")===d) ? "" : "none"; });
     });
+    // ---- Evidence "receipts": click a credit's badge to see who confirmed it ----
+    (function(){
+      var pop=null, openDot=null, cache={};
+      var AVCOL=["#58a6ff","#a371f7","#3fb950","#e0b23a","#ec6a5e","#3fb0c9","#d2739a"];
+      function initials(nm){ var p=String(nm||"").trim().split(/\s+/); return (((p[0]||"")[0]||"")+((p[1]||"")[0]||"")).toUpperCase(); }
+      function colorFor(s){ var h=0, str=String(s||""); for(var i=0;i<str.length;i++) h=(h*31+str.charCodeAt(i))>>>0; return AVCOL[h%AVCOL.length]; }
+      function ensurePop(){
+        if(pop) return pop;
+        pop=document.createElement("div"); pop.className="evpop"; pop.setAttribute("role","dialog"); pop.setAttribute("aria-label","Who confirmed this credit");
+        document.body.appendChild(pop);
+        return pop;
+      }
+      function closePop(){ if(pop) pop.classList.remove("open"); if(openDot) openDot.setAttribute("aria-expanded","false"); openDot=null; }
+      function place(dot){
+        var r=dot.getBoundingClientRect(), pw=pop.offsetWidth, ph=pop.offsetHeight, vw=document.documentElement.clientWidth, vh=document.documentElement.clientHeight;
+        var left=window.scrollX + r.left + r.width/2 - 20;
+        var maxLeft=window.scrollX + vw - pw - 12, minLeft=window.scrollX + 12;
+        if(left>maxLeft) left=maxLeft; if(left<minLeft) left=minLeft;
+        var top=window.scrollY + r.bottom + 9;
+        if(r.bottom + ph + 16 > vh && r.top - ph - 9 > 0) top=window.scrollY + r.top - ph - 9;
+        pop.style.left=left+"px"; pop.style.top=top+"px";
+      }
+      function render(dot, data, loading){
+        var rev = dot.getAttribute("data-rev")==="1";
+        var cls = dot.classList.contains("team")?"team":(dot.classList.contains("rev")?"rev":"peer");
+        var lvl = rev ? "Under review" : (cls==="team"?"Team-confirmed":"Peer-confirmed");
+        var list = (data&&data.confirmers)||[];
+        var html = '<div class="evpop-head"><span class="hd '+cls+'"></span><span class="lvl">'+DQ.esc(lvl)+'</span><span class="cx" role="button" tabindex="0" aria-label="Close">×</span></div>';
+        if(rev) html += '<div class="evpop-rev">A report was filed on this credit. It stays visible while a moderator reviews it. Nothing is ever silently removed.</div>';
+        if(loading){
+          html += '<div class="evpop-list"><div class="evpop-empty">Loading confirmers…</div></div>';
+        } else if(list.length){
+          html += '<div class="evpop-sub">Confirmed by teammates who shipped this game</div><div class="evpop-list">';
+          list.forEach(function(p){
+            var role = p.headline ? DQ.esc(p.headline) : "";
+            var cc = p.credit_count ? ((role?" · ":"")+p.credit_count+" credited title"+(p.credit_count===1?"":"s")) : "";
+            html += '<a class="evrow" href="/credits/person/'+encodeURIComponent(p.slug)+'"><span class="av" style="background:'+colorFor(p.slug)+'">'+DQ.esc(initials(p.name))+'</span><span class="ei"><span class="en">'+DQ.esc(p.name)+'</span><span class="er">'+role+cc+'</span></span></a>';
+          });
+          html += '</div>';
+        } else if(!rev){
+          html += '<div class="evpop-empty">No confirmers to show yet.</div>';
+        }
+        html += '<a class="evpop-foot" href="/credits/how-evidence-works.html">How evidence works →</a>';
+        pop.innerHTML=html;
+      }
+      function openFor(dot){
+        var id=dot.getAttribute("data-ev"); if(!id) return;
+        if(openDot===dot){ closePop(); return; }
+        ensurePop();
+        openDot=dot; dot.setAttribute("aria-expanded","true");
+        render(dot, cache[id]||null, !cache[id]);
+        pop.classList.add("open"); place(dot);
+        if(!cache[id] && window.DQAPI && DQAPI.confirmers){
+          DQAPI.confirmers(id).then(function(res){
+            cache[id]=(res&&res.data)||{confirmers:[]};
+            if(openDot===dot){ render(dot, cache[id], false); place(dot); }
+          }).catch(function(){ cache[id]={confirmers:[]}; if(openDot===dot){ render(dot, cache[id], false); place(dot); } });
+        }
+      }
+      document.addEventListener("click", function(e){
+        var dot=e.target && e.target.closest && e.target.closest(".evb[data-ev]");
+        if(dot){ e.preventDefault(); e.stopPropagation(); openFor(dot); return; }
+        if(pop && openDot){
+          if(e.target.closest && e.target.closest(".evpop .cx")){ e.preventDefault(); closePop(); return; }
+          if(e.target.closest && e.target.closest(".evpop")) return;
+          closePop();
+        }
+      }, false);
+      document.addEventListener("keydown", function(e){
+        if(e.key==="Enter" || e.key===" "){
+          var dot=e.target && e.target.closest && e.target.closest(".evb[data-ev]");
+          if(dot){ e.preventDefault(); openFor(dot); return; }
+          var cx=e.target && e.target.closest && e.target.closest(".evpop .cx");
+          if(cx){ e.preventDefault(); closePop(); return; }
+        }
+        if(e.key==="Escape" && openDot){ var d=openDot; closePop(); try{ d.focus(); }catch(_){} }
+      }, false);
+      window.addEventListener("resize", function(){ if(openDot) place(openDot); });
+      window.addEventListener("scroll", function(){ if(openDot) place(openDot); });
+    })();
+
     var cb = document.getElementById("claimbtn");
     if(cb) cb.onclick = function(){
       if(window.DQAPI && !DQAPI.isSignedIn()){ location.href = "signin.html"; return; }

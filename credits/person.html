@@ -40,6 +40,7 @@
   .ggrid-hero .grank{display:block;counter-increment:rank}
   .ggrid-hero .grank::before{content:counter(rank)}
   .gvb{position:absolute;top:9px;right:9px;z-index:3;width:24px;height:24px;border-radius:50%;background:rgba(63,185,80,.95);color:#04220f;font-size:14px;font-weight:900;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 5px rgba(0,0,0,.5)}
+  .gvb.peer{background:rgba(88,166,255,.96);color:#04122b} .gvb.team{background:rgba(63,185,80,.96);color:#04220f}
   .gvgrip{position:absolute;top:8px;left:9px;z-index:4;font-size:15px;line-height:1;color:rgba(255,255,255,.82);opacity:0;background:rgba(0,0,0,.5);border-radius:6px;padding:2px 5px;cursor:grab;transition:opacity .12s}
   .dragtile:hover .gvgrip{opacity:1}
   .dragtile.dragging{opacity:.45}
@@ -99,13 +100,15 @@
   .tlyto{display:block;font-size:11.5px;font-weight:700;color:var(--muted,#8b98a9);font-variant-numeric:tabular-nums;margin-top:1px;letter-spacing:-.2px}
   /* Live-service: a quiet word in the metadata line, not a chip that fights the game title. */
   .tlphase{color:var(--muted,#8b98a9);font-weight:700}
-  /* Evidence dot — one quiet colored mark per credit; click opens the confirmer list ("receipts"). */
-  .evdot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-left:7px;vertical-align:1px;cursor:pointer;transition:box-shadow .12s,transform .12s}
-  .evdot.peer{background:var(--accent,#58a6ff)} .evdot.team{background:var(--green,#3fb950)} .evdot.rev{background:var(--gold,#e0b23a)}
-  .evdot[data-ev]:hover,.evdot[data-ev]:focus-visible{transform:scale(1.25);outline:none}
-  .evdot.peer[data-ev]:hover,.evdot.peer[data-ev]:focus-visible{box-shadow:0 0 0 4px rgba(88,166,255,.22)}
-  .evdot.team[data-ev]:hover,.evdot.team[data-ev]:focus-visible{box-shadow:0 0 0 4px rgba(63,185,80,.22)}
-  .evdot.rev[data-ev]:hover,.evdot.rev[data-ev]:focus-visible{box-shadow:0 0 0 4px rgba(224,178,58,.22)}
+  /* Evidence badge — a small check chip per credit; bigger than the rail dot so it reads as a
+     button, click opens the confirmer list ("receipts"). Blue check = peer, green = team,
+     gold ! = under review. No badge when a credit is still awaiting confirmation. */
+  .evb{display:inline-flex;align-items:center;justify-content:center;width:17px;height:17px;border-radius:50%;margin-left:8px;vertical-align:-3px;font-size:10.5px;font-weight:900;line-height:1;color:#fff;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.4);transition:box-shadow .12s,transform .12s}
+  .evb.peer{background:var(--accent,#58a6ff);color:#04122b} .evb.team{background:var(--green,#3fb950);color:#04220f} .evb.rev{background:var(--gold,#e0b23a);color:#3a2c05}
+  .evb[data-ev]{cursor:pointer} .evb[data-ev]:hover,.evb[data-ev]:focus-visible{transform:scale(1.14);outline:none}
+  .evb.peer[data-ev]:hover,.evb.peer[data-ev]:focus-visible{box-shadow:0 0 0 4px rgba(88,166,255,.28)}
+  .evb.team[data-ev]:hover,.evb.team[data-ev]:focus-visible{box-shadow:0 0 0 4px rgba(63,185,80,.28)}
+  .evb.rev[data-ev]:hover,.evb.rev[data-ev]:focus-visible{box-shadow:0 0 0 4px rgba(224,178,58,.28)}
   /* Confirmer popover ("receipts") */
   .evpop{position:absolute;z-index:60;width:308px;max-width:calc(100vw - 24px);background:var(--panel,#11161d);border:1px solid var(--border,#2d333b);border-radius:13px;box-shadow:0 16px 40px rgba(0,0,0,.55);padding:0;opacity:0;transform:translateY(-4px);pointer-events:none;transition:opacity .12s,transform .12s}
   .evpop.open{opacity:1;transform:translateY(0);pointer-events:auto}
@@ -205,7 +208,7 @@
         '</div></div>'+
         '<section class="blk"><div class="container">'+
           '<div class="eyebrow">Attributed credits</div>'+
-          '<p class="secsub" style="margin:6px 0 14px">Titles a teammate has credited to this name. They become a verified record once claimed.</p>'+
+          '<p class="secsub" style="margin:6px 0 14px">Titles a teammate has credited to this name. They become part of a confirmed record once claimed.</p>'+
           '<div class="rows">'+rows+'</div>'+
           '<div class="notice">These credits were added by teammates and are unclaimed. Only the person credited can claim and edit this page.</div>'+
         '</div></section>';
@@ -336,17 +339,18 @@
     // Evidence as a single quiet colored dot — keeps the timeline pretty (no pill per row). The
     // level: peer-confirmed (1), team-confirmed (2+), under review (reported). Self-reported shows
     // nothing. Meaning lives in the tooltip and on how-evidence-works.html.
-    function evidenceDot(c){
+    function evidenceBadge(c){
       var n = c.vouch_count || 0;
       var rev = c.status==="contested";
-      if(!rev && n<1) return '';
+      if(!rev && n<1) return '';   // "Awaiting confirmation" credits carry no badge — keeps rows clean.
       var cls = rev ? 'rev' : (n>=2 ? 'team' : 'peer');
+      var glyph = rev ? '!' : '✓';
       var lbl = rev ? 'Under review' : (n>=2 ? 'Team-confirmed' : 'Peer-confirmed');
       var tip = rev ? 'Under review. A report was filed on this credit. Click for details.'
                     : (n>=2 ? 'Team-confirmed by '+n+' teammates who shipped this game. Click to see who.'
                             : 'Peer-confirmed by 1 teammate who shipped this game. Click to see who.');
-      if(!c.id) return ' <span class="evdot '+cls+'" title="'+tip+'"></span>';
-      return ' <span class="evdot '+cls+'" data-ev="'+c.id+'"'+(rev?' data-rev="1"':'')+' role="button" tabindex="0" aria-label="'+DQ.esc(lbl)+'. Click to see details." title="'+DQ.esc(tip)+'"></span>';
+      if(!c.id) return ' <span class="evb '+cls+'" title="'+DQ.esc(tip)+'">'+glyph+'</span>';
+      return ' <span class="evb '+cls+'" data-ev="'+c.id+'"'+(rev?' data-rev="1"':'')+' role="button" tabindex="0" aria-label="'+DQ.esc(lbl)+'. Click to see details." title="'+DQ.esc(tip)+'">'+glyph+'</span>';
     }
     // Credits on games the viewer also shipped, that they haven't confirmed yet.
     var confirmable = credits.filter(function(c){ return me && !isOwn && c.live && c.id && myGames[c.game_slug] && (c.voucher_slugs||[]).indexOf(me.slug) < 0; });
@@ -418,14 +422,11 @@
         ? (workList ? "Worked as an outsourcer on: "+workList : "Worked as an outsourcer")
         : (workList ? (c.partial?"Worked on: ":"Also worked on: ")+workList : "");
       var workNote = workBody ? '<div class="relnote" style="font-size:11px;font-weight:400;color:var(--muted);margin-top:3px">'+workBody+'</div>' : '';
-      var seal = c.vouch_count
-        ? ' <span class="vseal" title="Verified by '+c.vouch_count+' teammate'+(c.vouch_count===1?'':'s')+' who shipped this game" aria-label="Peer-verified by '+c.vouch_count+' teammate'+(c.vouch_count===1?'':'s')+'">✓</span>'
-        : '';
       var ast = c.partial ? ' <span class="ast" style="color:var(--muted);font-weight:700;cursor:help" title="Worked on a specific part, not the base game" aria-label="Worked on a specific part, not the base game">*</span>' : '';
       var trust = (!c.vouch_count && isOwn && c.live && c.id)
         ? '<a class="getconf" href="/credits/game/'+encodeURIComponent(c.game_slug)+'" title="Add the teammates you shipped with; once they claim, they can confirm this credit">Get confirmed →</a>'
         : '';
-      var proof = (c.links && c.links.length) ? '<a class="proofln" href="'+DQ.esc(DQ.safeUrl(c.links[0]))+'" target="_blank" rel="noopener noreferrer" title="Source for this credit (self-reported): '+DQ.esc(c.links.join(", "))+'" aria-label="View source for this credit">↗</a>' : '';
+      var proof = (c.links && c.links.length) ? '<a class="proofln" href="'+DQ.esc(DQ.safeUrl(c.links[0]))+'" target="_blank" rel="noopener noreferrer" title="Source for this credit (developer-provided): '+DQ.esc(c.links.join(", "))+'" aria-label="View source for this credit">↗</a>' : '';
       // No drag handle in List view: it's a fixed chronological timeline now. Reordering
       // lives in the Visual view, where the owner curates their showcase order.
       var grip = '';
@@ -452,7 +453,7 @@
       var _kidMark = _isChild ? '<span class="mut expctl expcollapse-child" data-base="'+DQ.esc(c.parent_slug)+'" role="button" tabindex="0" style="font-weight:400;margin-right:5px;cursor:pointer" title="Collapse under the base game">↳</span>' : '';
       return '<div class="row"'+((isOwn&&c.live&&c.id)?' data-id="'+c.id+'"':'')+_rowStyle+(_isChild?' data-childof="'+DQ.esc(c.parent_slug)+'"':'')+'>'+
         grip +
-        '<div class="rmain"><div class="rname">'+(_isChild?_kidMark:'')+'<a href="/credits/game/'+encodeURIComponent(c.game_slug)+'">'+DQ.esc(c.game_title)+'</a>'+ast+seal+dispTag(c)+orphanExpTag(c)+'</div>'+
+        '<div class="rmain"><div class="rname">'+(_isChild?_kidMark:'')+'<a href="/credits/game/'+encodeURIComponent(c.game_slug)+'">'+DQ.esc(c.game_title)+'</a>'+ast+evidenceBadge(c)+orphanExpTag(c)+'</div>'+
           '<div class="rsub">'+roleHTML+more+(sigs?' &nbsp; '+sigs:'')+(proof?' &nbsp; '+proof:'')+'</div>'+workNote+(_isChild?'':expMore(c.game_slug))+'</div>'+
         '<div class="rright">'+(trust?'<span style="margin-right:6px">'+trust+'</span>':'')+(c.year?'<span class="yr" title="Game release year"><span class="yrlbl">Released</span> '+c.year+'</span>':'')+confirmBtn+controls+'</div>'+
       '</div>';
@@ -467,7 +468,7 @@
       // image 404s, onerror removes it and the watermark shows through instead of a blank box.
       var art = '<span class="gph">'+DQ.esc(c.game_title)+'</span>' +
         (_covsrc ? '<img loading="lazy" referrerpolicy="no-referrer" src="'+DQ.esc(_covsrc)+'" onerror="this.remove()" alt="">' : '');
-      var vbadge = c.vouch_count ? '<span class="gvb" title="Peer-verified by a teammate">✓</span>' : '';
+      var vbadge = c.vouch_count ? '<span class="gvb '+(c.vouch_count>=2?'team':'peer')+'" title="'+(c.vouch_count>=2?'Team-confirmed by teammates who shipped this game':'Peer-confirmed by a teammate who shipped this game')+'">✓</span>' : '';
       // Rank badge is empty: a CSS counter numbers the hero row 1..3 by live DOM order, so
       // dragging a cover into the featured row renumbers everything without any JS.
       var astg = c.partial ? ' <span title="Worked on a specific part">*</span>' : '';
@@ -514,7 +515,6 @@
         : "You worked on it through its launch.";
     }
     function tlRow(c, _isChild){
-      var seal = c.vouch_count ? ' <span class="vseal" title="Peer-verified by '+c.vouch_count+' teammate'+(c.vouch_count===1?'':'s')+'">✓</span>' : '';
       var astg = c.partial ? ' <span class="ast" style="color:var(--muted);font-weight:700" title="Worked on a specific part">*</span>' : '';
       var startY = c.work_start || null;
       var endY = c.work_end || null;
@@ -544,7 +544,7 @@
         '<div class="tlrail"><span class="tldot'+(isFeat?' feat':'')+'"></span></div>'+
         '<div class="tlcard"'+_cardStyle+'>'+
           '<a class="tlthumb" href="'+gurl+'">'+thumb+'</a>'+
-          '<div class="tlbody"><div class="tlnameline"><a class="tlname" href="'+gurl+'">'+DQ.esc(c.game_title)+'</a>'+astg+evidenceDot(c)+orphanExpTag(c)+'</div>'+
+          '<div class="tlbody"><div class="tlnameline"><a class="tlname" href="'+gurl+'">'+DQ.esc(c.game_title)+'</a>'+astg+evidenceBadge(c)+orphanExpTag(c)+'</div>'+
             '<div class="tlsub">'+sub+'</div>'+(_isChild?'':expMore(c.game_slug))+((tledit||star)?'<div class="tlact">'+tledit+star+'</div>':'')+'</div>'+
         '</div>'+
       '</div>';
@@ -557,8 +557,9 @@
         '<div class="ggrid ggrid-hero" id="gv-hero">'+visualCredits.slice(0,3).map(visTile).join("")+'</div>'+
         '<div class="gvhead" style="margin-top:34px">Career timeline'+gvSub('by the years you worked on each game')+'</div>'+
         '<div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;font-size:11.5px;color:var(--muted,#8b98a9);margin:0 0 14px">'+
-          '<span style="display:inline-flex;align-items:center;gap:6px"><span class="evdot peer" style="margin:0"></span> peer-confirmed</span>'+
-          '<span style="display:inline-flex;align-items:center;gap:6px"><span class="evdot team" style="margin:0"></span> team-confirmed</span>'+
+          '<span style="display:inline-flex;align-items:center;gap:7px"><span class="evb peer" style="margin:0;width:15px;height:15px;font-size:9px">✓</span> peer-confirmed</span>'+
+          '<span style="display:inline-flex;align-items:center;gap:7px"><span class="evb team" style="margin:0;width:15px;height:15px;font-size:9px">✓</span> team-confirmed</span>'+
+          '<span style="color:var(--muted)">click a check to see who confirmed it</span>'+
           '<a href="/credits/how-evidence-works.html" style="color:var(--accent);font-weight:600">how evidence works →</a>'+
         '</div>'+
         tlHint +
@@ -597,26 +598,26 @@
       unshippedHTML = '<section class="blk" style="padding-top:0"><div class="container">'+
         '<div class="eyebrow">Unshipped &amp; cancelled</div>'+
         countLine + editUS +
-        '<div class="notice">Cancelled or never-released work: self-declared and kept name-free, since much of it is under NDA. Counted separately from the verified shipped record above, and shown as a stat on your page so gaps between shipped titles don\'t read as time off.</div>'+
+        '<div class="notice">Cancelled or never-released work: self-declared and kept name-free, since much of it is under NDA. Counted separately from the shipped record above, and shown as a stat on your page so gaps between shipped titles don\'t read as time off.</div>'+
       '</div></section>';
     }
 
-    // ---- Verification hero: peer confirmation is the trust layer, so surface it. ----
+    // ---- Evidence hero: peer confirmation is the core signal, so surface it up top. ----
     var vN = credits.filter(function(c){ return c.vouch_count>0; }).length;
     var verifyHTML = '';
     if(credits.length){
       if(vN>0){
         verifyHTML = '<div class="vblock">'+
           '<div class="vbadge">✓</div>'+
-          '<div class="vbody"><div class="vlbl">Verified by teammates</div>'+
-            '<div class="vtxt"><b>'+vN+' of '+credits.length+'</b> credit'+(credits.length===1?'':'s')+' confirmed by a teammate who shipped the same game.'+(isOwn&&vN<credits.length?' <span class="mut">Get the rest confirmed below.</span>':'')+'</div>'+
+          '<div class="vbody"><div class="vlbl">Confirmed by teammates</div>'+
+            '<div class="vtxt"><b>'+vN+' of '+credits.length+'</b> credit'+(credits.length===1?'':'s')+' confirmed by a teammate who shipped the same game.'+(isOwn&&vN<credits.length?' <span class="mut">Get the rest confirmed below.</span>':'')+' <a href="/credits/how-evidence-works.html" style="color:var(--accent);font-weight:600;white-space:nowrap">how evidence works →</a></div>'+
           '</div>'+
         '</div>';
       } else if(isOwn){
         verifyHTML = '<div class="vblock cta">'+
           '<div class="vbadge">✓</div>'+
-          '<div class="vbody"><div class="vlbl">Not yet peer-verified</div>'+
-            '<div class="vtxt"><b>Get your credits confirmed by teammates.</b> Confirmation from the people you shipped with is what turns this from a résumé into a verified record. On each game below, add the teammates you worked with; once they claim, they can vouch and it earns a green check.</div>'+
+          '<div class="vbody"><div class="vlbl">Not yet confirmed</div>'+
+            '<div class="vtxt"><b>Get your credits confirmed by teammates.</b> Confirmation from the people you shipped with is what turns this from a résumé into a peer-confirmed record. On each game below, add the teammates you worked with; once they claim, they can confirm your credit and it earns a check. <a href="/credits/how-evidence-works.html" style="color:var(--accent);font-weight:600;white-space:nowrap">how evidence works →</a></div>'+
           '</div>'+
         '</div>';
       }
@@ -625,7 +626,7 @@
     // ---- Viewer invitation: turn a profile visit into a vouch. If the signed-in viewer
     // shipped some of these same games, invite them to confirm this person right here. ----
     var confirmBanner = confirmable.length
-      ? '<div class="verifystrip cta"><b>You shipped '+confirmable.length+' of these title'+(confirmable.length===1?'':'s')+' with '+DQ.esc(name)+'.</b> Confirm the credit'+(confirmable.length===1?'':'s')+' you can vouch for — your confirmation is what turns a self-reported credit into a peer-verified one. Use the green <b>Confirm&nbsp;✓</b> button'+(confirmable.length===1?'':'s')+' on those rows below.</div>'
+      ? '<div class="verifystrip cta"><b>You shipped '+confirmable.length+' of these title'+(confirmable.length===1?'':'s')+' with '+DQ.esc(name)+'.</b> Confirm the credit'+(confirmable.length===1?'':'s')+' you can vouch for. Your confirmation is what moves a credit from awaiting confirmation to peer-confirmed. Use the green <b>Confirm&nbsp;✓</b> button'+(confirmable.length===1?'':'s')+' on those rows below.</div>'
       : '';
 
     // ---- "Known for" chips: the marquee titles (the owner's own showcase order) as quick,
@@ -682,13 +683,13 @@
       '</div></div>'+
       '<section class="blk"><div class="container">'+
         '<div class="rowhead"><div><div class="eyebrow">Gameography</div>'+
-          '<p class="secsub" style="margin:6px 0 0">A verified record of the games you\'ve helped create.</p></div>'+
+          '<p class="secsub" style="margin:6px 0 0">A record of the games you\'ve helped create, backed by the teammates who confirm them.</p></div>'+
           '<div class="rhactions">'+ tabsHTML + cta +'</div>'+
         '</div>'+
         ownBanner +
         '<div id="gv-visual"'+(gameView==='visual'?'':' style="display:none"')+'>'+portfolioHTML+'</div>'+
         '<div id="gv-list"'+(gameView==='list'?'':' style="display:none"')+'>'+rowsHTML+'</div>'+
-        '<div class="notice"><b style="color:var(--green);font-style:normal">✓</b> marks credits confirmed by a teammate who shipped the same game. Everything else is self-reported. Only the person credited can claim and edit this page.</div>'+
+        '<div class="notice">A <b style="color:var(--accent);font-style:normal">blue</b> or <b style="color:var(--green);font-style:normal">green</b> check marks a credit a teammate who shipped the same game has confirmed (blue = one, green = several). Click a check to see who. Credits without one are awaiting confirmation. Only the person credited can claim and edit this page.</div>'+
       '</div></section>' +
       unshippedHTML;
 
@@ -814,7 +815,7 @@
         }
       }
       document.addEventListener("click", function(e){
-        var dot=e.target && e.target.closest && e.target.closest(".evdot[data-ev]");
+        var dot=e.target && e.target.closest && e.target.closest(".evb[data-ev]");
         if(dot){ e.preventDefault(); e.stopPropagation(); openFor(dot); return; }
         if(pop && openDot){
           if(e.target.closest && e.target.closest(".evpop .cx")){ e.preventDefault(); closePop(); return; }
@@ -824,7 +825,7 @@
       }, false);
       document.addEventListener("keydown", function(e){
         if(e.key==="Enter" || e.key===" "){
-          var dot=e.target && e.target.closest && e.target.closest(".evdot[data-ev]");
+          var dot=e.target && e.target.closest && e.target.closest(".evb[data-ev]");
           if(dot){ e.preventDefault(); openFor(dot); return; }
           var cx=e.target && e.target.closest && e.target.closest(".evpop .cx");
           if(cx){ e.preventDefault(); closePop(); return; }
@@ -957,9 +958,9 @@
       var statSVG=stats.map(function(s,i){ var x=sxs[i];
         return '<text x="'+x+'" y="566" text-anchor="middle" font-family="'+F+'" font-size="74" font-weight="800" fill="url(#g1)">'+X(s[0])+'</text>'+
                '<text x="'+x+'" y="602" text-anchor="middle" font-family="'+F+'" font-size="21" fill="#8b98a9">'+X(s[1])+'</text>'; }).join('');
-      // "N credits peer-verified" = credits with at least one peer vouch (max = your count). Hidden at 0.
+      // "N credits peer-confirmed" = credits with at least one peer vouch (max = your count). Hidden at 0.
       var vN=credits.filter(function(c){ return c.vouch_count>0; }).length;
-      var vouch=''; if(vN>0){ var vt='✓ '+vN+' credit'+(vN===1?'':'s')+' peer-verified', vpw=Math.round(vt.length*12.2)+40, vpx=cx-vpw/2;
+      var vouch=''; if(vN>0){ var vt='✓ '+vN+' credit'+(vN===1?'':'s')+' peer-confirmed', vpw=Math.round(vt.length*12.2)+40, vpx=cx-vpw/2;
         vouch='<rect x="'+vpx+'" y="446" width="'+vpw+'" height="40" rx="20" fill="#3fb950" fill-opacity="0.14" stroke="#3fb950" stroke-opacity="0.5"/>'+
               '<text x="'+cx+'" y="472" text-anchor="middle" font-family="'+F+'" font-size="21" font-weight="700" fill="#3fb950">'+vt+'</text>'; }
       var rangeLine = relRange ? '<text x="'+cx+'" y="414" text-anchor="middle" font-family="'+F+'" font-size="21" fill="#8b98a9">'+(minY===maxY?'Shipped in ':'Shipping ')+X(relRange)+'</text>' : '';
@@ -979,7 +980,7 @@
         '<text x="'+cx+'" y="225" text-anchor="middle" font-family="'+F+'" font-size="52" font-weight="800" fill="#0b0e14">'+X(DQ.initials(name))+'</text>'+
         '<text x="'+cx+'" y="344" text-anchor="middle" font-family="'+F+'" font-size="'+nameSize+'" font-weight="850" fill="#eef3fa">'+X(name)+'</text>'+ hl + rangeLine +
         vouch + heroFrames + restFrames + extraTxt + statSVG +
-        '<text x="'+cx+'" y="1188" text-anchor="middle" font-family="'+F+'" font-size="24" fill="#c4cfdd">The developer-owned, peer-verified record of who made the games.</text>'+
+        '<text x="'+cx+'" y="1188" text-anchor="middle" font-family="'+F+'" font-size="24" fill="#c4cfdd">The developer-owned, peer-confirmed record of who made the games.</text>'+
         '<text x="'+cx+'" y="1244" text-anchor="middle" font-family="'+F+'" font-size="29" font-weight="800" fill="#58a6ff">devquest.gg/credits/'+X(cardSlug)+'</text>'+
       '</svg>';
     }

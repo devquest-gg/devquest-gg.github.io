@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <base href="/credits/">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>How credits earn trust · DevQuest Credits</title>
-<meta name="description" content="DevQuest Credits doesn't claim credits are verified. It shows the evidence behind each one — who confirmed you worked on a game, and who they are.">
+<title>How credit evidence works · DevQuest Credits</title>
+<meta name="description" content="DevQuest Credits doesn't claim credits are verified. It shows the evidence behind each one: who confirmed you worked on a game, and who they are.">
 <link rel="icon" href="/credits/favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="app.css">
 <style>
@@ -21,11 +21,14 @@
   .body b{color:var(--text)}
   .ladder{display:flex;flex-direction:column;gap:14px;margin:4px 0}
   .lr{display:flex;gap:14px;align-items:flex-start;background:var(--panel);border:1px solid var(--border);border-radius:13px;padding:15px 18px}
-  .lr .d{flex:none;width:12px;height:12px;border-radius:50%;margin-top:5px}
+  .lr .d{flex:none;width:20px;height:20px;border-radius:50%;margin-top:3px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;line-height:1;box-shadow:0 1px 3px rgba(0,0,0,.4)}
   .lr .t{font-weight:800;font-size:15.5px}
   .lr .s{color:var(--muted);font-size:13.5px;margin-top:2px}
-  .d.self{background:var(--muted)} .d.peer{background:var(--accent)} .d.team{background:var(--green)} .d.off{background:var(--purple)}
-  .lr.off{opacity:.85}
+  .d.self{background:transparent;border:2px solid var(--muted);color:var(--muted);box-shadow:none} .d.peer{background:var(--accent);color:#04122b} .d.team{background:var(--green);color:#04220f} .d.off{background:var(--purple);color:#160a2e}
+  /* separate corroboration callout */
+  .corr{display:flex;gap:14px;align-items:flex-start;background:linear-gradient(160deg,rgba(163,113,247,.10),rgba(163,113,247,.03));border:1px solid rgba(163,113,247,.35);border-radius:13px;padding:16px 18px;margin-top:6px}
+  .corr .d{flex:none;width:20px;height:20px;border-radius:50%;margin-top:3px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;background:var(--purple);color:#160a2e}
+  .corr .t{font-weight:800;font-size:15.5px}
   .soon{font-size:10.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--purple);border:1px solid rgba(163,113,247,.4);border-radius:999px;padding:1px 8px;margin-left:8px;vertical-align:2px}
   /* receipts example */
   .rcard{background:var(--panel);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-top:6px}
@@ -54,9 +57,9 @@
 
 <div class="wrap">
   <div class="lead">
-    <div class="eyebrow" style="margin-top:34px">How credits earn trust</div>
+    <div class="eyebrow" style="margin-top:34px">How credit evidence works</div>
     <h1>We don't verify credits.<br><span class="grad">We show the evidence.</span></h1>
-    <p>Studios decide official credits, and they get them wrong all the time: people cut after a layoff, buried in "Special Thanks," or left off entirely. So we don't claim to have the one true answer. We show <b>who's willing to stand behind each credit, and who they are</b>, and let you judge it the way you'd judge a résumé.</p>
+    <p>Studios decide official credits, and they get them wrong all the time: people cut after a layoff, buried in "Special Thanks," or left off entirely. So we don't claim to be the source of truth. We show <b>who's willing to stand behind each credit, and who they are</b>, and let you judge it the way you'd judge a résumé.</p>
     <p class="peers">Credits backed by peers, not just publishers.</p>
   </div>
 
@@ -64,17 +67,28 @@
     <div class="eyebrow">The evidence ladder</div>
     <h2>Every credit shows how much backs it</h2>
     <div class="ladder">
-      <div class="lr"><span class="d self"></span><div><div class="t">Self-reported</div><div class="s">The developer entered it. No one has confirmed it yet. Honest, and where every credit starts.</div></div></div>
-      <div class="lr"><span class="d peer"></span><div><div class="t">Peer-confirmed</div><div class="s">One teammate who shipped the same game confirmed it.</div></div></div>
-      <div class="lr"><span class="d team"></span><div><div class="t">Team-confirmed</div><div class="s">Several teammates who shipped the same game confirmed it.</div></div></div>
-      <div class="lr off"><span class="d off"></span><div><div class="t">Officially corroborated <span class="soon">Coming</span></div><div class="s">It matches the game's shipped credits or another authoritative source, the strongest, hardest-to-fake signal on the platform.</div></div></div>
+      <div class="lr"><span class="d self"></span><div><div class="t">Awaiting confirmation</div><div class="s">The developer entered it. No teammate has confirmed it yet. This is where every credit starts, and it's shown plainly, not hidden.</div></div></div>
+      <div class="lr"><span class="d peer">✓</span><div><div class="t">Peer-confirmed</div><div class="s">One teammate who shipped the same game confirmed it.</div></div></div>
+      <div class="lr"><span class="d team">✓</span><div><div class="t">Team-confirmed</div><div class="s">Several teammates who shipped the same game confirmed it.</div></div></div>
+    </div>
+    <p class="body" style="margin-top:14px;font-size:14px">Higher on the ladder means more people have put their name to it, nothing more. It doesn't decide whether a credit is "true." It shows you how much support it has, so you can weigh it yourself.</p>
+  </div>
+
+  <div class="sec">
+    <div class="eyebrow">One more signal, coming</div>
+    <h2>When the official record agrees too</h2>
+    <div class="corr">
+      <span class="d">◈</span>
+      <div><div class="t">Official credits match <span class="soon">Coming</span></div>
+        <div class="s" style="font-size:14px;line-height:1.55;margin-top:4px">When a credit also matches a game's published credits or another authoritative source, we'll mark it as corroborated. It's a <b style="color:var(--text)">separate badge that can sit beside any level</b>, not a rung above them. It says "the official record agrees too," not "this finally counts." Peer and team confirmation stand on their own, and sometimes the official list is the thing that's wrong.</div>
+      </div>
     </div>
   </div>
 
   <div class="sec">
     <div class="eyebrow">The receipts</div>
     <h2>Click any credit to see exactly who's behind it</h2>
-    <p class="body" style="margin-bottom:14px">The badge is a summary. One click shows the actual people who confirmed it, each with their own record you can check. "Confirmed by six veterans" looks nothing like "confirmed by six week-old accounts", and you can see which one you're looking at.</p>
+    <p class="body" style="margin-bottom:14px">The badge is a summary. One click shows the actual people who confirmed it, each with their own record you can open and check. "Confirmed by six veterans" looks nothing like "confirmed by six week-old accounts", and you can see which one you're looking at.</p>
     <div class="rcard">
       <div class="rhead"><div style="flex:1"><div class="rname">Marvel's Wolverine</div><div class="rrole">Production Director · 2026</div></div><span class="evb"><span class="dd"></span>Team-confirmed</span></div>
       <div class="rprov"><div class="provlbl">Confirmed by teammates who shipped this game</div>
@@ -86,13 +100,21 @@
   </div>
 
   <div class="sec">
+    <div class="eyebrow">What about official credits</div>
+    <h2>Why not just use MobyGames?</h2>
+    <p class="body">Official credits are valuable, and we show them too. But they aren't complete. Developers get left off for reasons that have nothing to do with their work: layoffs, contractor policies, studio rules, credit-cutoff dates, or plain mistakes. A centralized database can only ever be as good as those official lists, and inherits every gap in them.</p>
+    <p class="body" style="margin-top:12px">DevQuest records <b>both</b>: the official credits, and the contributions the people who were there confirm. So your work doesn't disappear when an official system leaves it out. That's also why we don't treat "matches the official credits" as a higher truth than "confirmed by your teammates." When Riot, Ubisoft, or Insomniac leaves someone off, the peer record is the one that's right.</p>
+  </div>
+
+  <div class="sec">
     <div class="eyebrow">Why this works</div>
     <div class="cols">
-      <div class="col"><h3>The industry is small</h3><p>A fake "Lead Designer, God of War" isn't fooling an algorithm, it's trying to fool the hundreds of people who were actually there. Fraud on real games gets caught socially, fast.</p></div>
+      <div class="col"><h3>Confirmers are real, and named</h3><p>A confirmation isn't an anonymous like. Every confirmer appears on this same public credits graph, with their own work history you can open and inspect. You're never asked to trust a number, you can look at the people behind it.</p></div>
       <div class="col"><h3>Nothing is hidden</h3><p>There's no single checkmark to game. A weak credit visibly reads as weak, a real one visibly earns strong backing. The difference is on the page, not locked in a score.</p></div>
-      <div class="col"><h3>Confirming means something</h3><p>Only someone who also shipped the game can confirm you, and their name is attached to it. That's a real reference, not an anonymous thumbs-up.</p></div>
+      <div class="col"><h3>Confirming isn't free</h3><p>Only someone who also shipped the game can confirm you, and their name is attached to it, staked on their own reputation. That's a real reference, not a vote.</p></div>
       <div class="col"><h3>Report anything</h3><p>See a credit that's wrong? Flag it. It's marked "under review" until a person looks, and nothing is ever silently removed.</p></div>
     </div>
+    <p class="body" style="margin-top:16px;font-size:14px">No system that relies on people can be made impossible to game, and we don't pretend otherwise. What we can do is make gaming <b>visible</b>: a fake can only ever reach the thin, unconfirmed end of the ladder, while real work earns names you can check. You weigh it in a glance, the same way you'd weigh a résumé.</p>
   </div>
 
   <div class="sec" style="margin-bottom:60px">
