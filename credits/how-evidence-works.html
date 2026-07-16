@@ -24,7 +24,8 @@
   .lr .d{flex:none;width:20px;height:20px;border-radius:50%;margin-top:3px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;line-height:1;box-shadow:0 1px 3px rgba(0,0,0,.4)}
   .lr .t{font-weight:800;font-size:15.5px}
   .lr .s{color:var(--muted);font-size:13.5px;margin-top:2px}
-  .d.self{background:transparent;border:2px solid var(--muted);color:var(--muted);box-shadow:none} .d.peer{background:var(--accent);color:#04122b} .d.team{background:var(--green);color:#04220f} .d.off{background:var(--purple);color:#160a2e}
+  .d.self{background:transparent;border:2px dashed var(--muted);color:transparent;box-shadow:none;opacity:.7} .d.peer{background:var(--accent);color:#04122b} .d.team{background:var(--green);color:#04220f} .d.off{background:var(--purple);color:#160a2e}
+  .nobadge{font-size:10px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);border:1px solid var(--border);border-radius:999px;padding:1px 7px;margin-left:8px;vertical-align:2px}
   /* separate corroboration callout */
   .corr{display:flex;gap:14px;align-items:flex-start;background:linear-gradient(160deg,rgba(163,113,247,.10),rgba(163,113,247,.03));border:1px solid rgba(163,113,247,.35);border-radius:13px;padding:16px 18px;margin-top:6px}
   .corr .d{flex:none;width:20px;height:20px;border-radius:50%;margin-top:3px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;background:var(--purple);color:#160a2e}
@@ -67,7 +68,7 @@
     <div class="eyebrow">The evidence ladder</div>
     <h2>Every credit shows how much backs it</h2>
     <div class="ladder">
-      <div class="lr"><span class="d self"></span><div><div class="t">Awaiting confirmation</div><div class="s">The developer entered it. No teammate has confirmed it yet. This is where every credit starts, and it's shown plainly, not hidden.</div></div></div>
+      <div class="lr"><span class="d self" aria-hidden="true"></span><div><div class="t">Awaiting confirmation <span class="nobadge">no badge yet</span></div><div class="s">The developer entered it; no teammate has confirmed it. On the page it simply carries no mark. A check appears the moment someone who shipped the game confirms it.</div></div></div>
       <div class="lr"><span class="d peer">✓</span><div><div class="t">Peer-confirmed</div><div class="s">One teammate who shipped the same game confirmed it.</div></div></div>
       <div class="lr"><span class="d team">✓</span><div><div class="t">Team-confirmed</div><div class="s">Several teammates who shipped the same game confirmed it.</div></div></div>
     </div>
@@ -101,9 +102,9 @@
 
   <div class="sec">
     <div class="eyebrow">What about official credits</div>
-    <h2>Why not just use MobyGames?</h2>
-    <p class="body">Official credits are valuable, and we show them too. But they aren't complete. Developers get left off for reasons that have nothing to do with their work: layoffs, contractor policies, studio rules, credit-cutoff dates, or plain mistakes. A centralized database can only ever be as good as those official lists, and inherits every gap in them.</p>
-    <p class="body" style="margin-top:12px">DevQuest records <b>both</b>: the official credits, and the contributions the people who were there confirm. So your work doesn't disappear when an official system leaves it out. That's also why we don't treat "matches the official credits" as a higher truth than "confirmed by your teammates." When Riot, Ubisoft, or Insomniac leaves someone off, the peer record is the one that's right.</p>
+    <h2>This doesn't replace the official credits</h2>
+    <p class="body">Published credits, like a game's own credit roll or the transcriptions on a site like MobyGames, are the backbone of the record, and they're often more complete than anything a young platform like ours has yet. We're not trying to replace them.</p>
+    <p class="body" style="margin-top:12px">What they can't do is fill their own gaps. People get left off for reasons that have nothing to do with their work: layoffs, contractor policies, credit-cutoff dates, or plain mistakes, and a record built only from official credit rolls inherits every one of those gaps. DevQuest adds the layer they're missing: the people who were actually there, confirming each other's work. When your name is absent or wrong in the official record, this is where you can claim it and have your teammates back you up.</p>
   </div>
 
   <div class="sec">

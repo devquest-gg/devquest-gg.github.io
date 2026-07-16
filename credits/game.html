@@ -311,7 +311,7 @@
           list.forEach(function(p){
             var role = p.headline ? DQ.esc(p.headline) : "";
             var cc = p.credit_count ? ((role?" · ":"")+p.credit_count+" credited title"+(p.credit_count===1?"":"s")) : "";
-            html += '<a class="evrow" href="/credits/person/'+encodeURIComponent(p.slug)+'"><span class="av" style="background:'+colorFor(p.slug)+'">'+DQ.esc(initials(p.name))+'</span><span class="ei"><span class="en">'+DQ.esc(p.name)+'</span><span class="er">'+role+cc+'</span></span></a>';
+            html += '<a class="evrow" href="/credits/'+encodeURIComponent(p.slug)+'"><span class="av" style="background:'+colorFor(p.slug)+'">'+DQ.esc(initials(p.name))+'</span><span class="ei"><span class="en">'+DQ.esc(p.name)+'</span><span class="er">'+role+cc+'</span></span></a>';
           });
           html += '</div>';
         } else if(!rev){
