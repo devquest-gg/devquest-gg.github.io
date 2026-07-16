@@ -308,7 +308,7 @@
     // cryptic "▸ 4" glued to the title).
     function expMore(slug){
       var n = kidCount[slug]; if(!n) return '';
-      return '<a class="expmore expctl" data-base="'+DQ.esc(slug)+'" data-collapsed="1" role="button" tabindex="0" title="Show the expansions and editions nested under this game" style="display:inline-block;margin-top:7px;font-size:12.5px;font-weight:700;color:var(--accent);cursor:pointer;user-select:none">+ '+n+' expansion'+(n===1?'':'s')+'</a>';
+      return '<a class="expmore expctl" data-base="'+DQ.esc(slug)+'" data-collapsed="1" role="button" tabindex="0" title="Show the expansions and editions nested under this game" style="display:inline-block;margin-top:7px;font-size:12.5px;font-weight:700;color:var(--gold,#e0b23a);cursor:pointer;user-select:none">+ '+n+' expansion'+(n===1?'':'s')+'</a>';
     }
     function prettySlug(s){ return String(s||"").replace(/-/g," ").replace(/\b\w/g, function(ch){ return ch.toUpperCase(); }); }
     // Reorder a sorted credit list so each base is immediately followed by the expansions
@@ -526,7 +526,10 @@
       if(startY){ if(endY && endY !== startY) railRange = '–'+endY; else if(!endY) railRange = '→ now'; }
       var railInner = topY + (railRange ? '<span class="tlyto">'+railRange+'</span>' : '');
       var phase = _isChild ? null : lifecyclePhase(c);
-      var sub = DQ.esc(c.role||"Role not recorded") + (c.studio ? ' <span class="tlst">·</span> '+DQ.esc(c.studio) : '') +
+      // Studio intentionally omitted here: it's only stored on community-added credits, so showing
+      // it made those rows (e.g. City of Heroes) inconsistent with catalogue rows. The studio lives
+      // on the game page / cover. Timeline rows read uniformly as "Role · phase".
+      var sub = DQ.esc(c.role||"Role not recorded") +
         (phase ? ' <span class="tlst">·</span> <span class="tlphase" title="'+DQ.esc(phaseTip(phase))+'">'+phase+'</span>' : '');
       var _cs = coverSrc(c);
       var thumb = '<span class="tlph">'+DQ.esc(c.game_title)+'</span>'+(_cs?'<img loading="lazy" referrerpolicy="no-referrer" src="'+DQ.esc(_cs)+'" onerror="this.remove()" alt="">':'');
