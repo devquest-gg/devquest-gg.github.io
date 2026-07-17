@@ -880,3 +880,35 @@
     if (real) { e.preventDefault(); w.location.href = real; }
   });
 })(window);
+
+// ---------------------------------------------------------------------------
+// First-party, cookieless pageview beacon. One ping per credits page load to your
+// own analytics Worker (the same one the jobs board uses), carrying only the
+// referring host and a coarse page type. No cookies, no full URLs, no third party.
+// Powers the DAU / WAU / MAU + "where visitors come from" panel on the stats page.
+// Honors the site-wide owner self-exclude (visit devquest.gg/?dqstat=off once per
+// browser); that flag is shared across the whole devquest.gg origin, credits included.
+// ---------------------------------------------------------------------------
+(function () {
+  var STAT_URL = "https://devquest-alerts.balesdestin.workers.dev/cevent";
+  try { if (window.localStorage && localStorage.getItem("dq-nostat") === "1") return; } catch (e) {}
+  try {
+    var host = location.hostname.replace(/^www\./, "");
+    var ref = "(direct)";
+    if (document.referrer) {
+      try { var rh = new URL(document.referrer).hostname.replace(/^www\./, ""); ref = (rh === host) ? "(internal)" : rh; }
+      catch (e) { ref = "(unknown)"; }
+    }
+    var p = location.pathname, pt = "other";
+    if (/^\/credits\/?$/.test(p) || /\/credits\/index\.html$/.test(p)) pt = "home";
+    else if (/^\/credits\/game\//.test(p)) pt = "game";
+    else if (/^\/credits\/studio\//.test(p)) pt = "studio";
+    else if (/^\/credits\/search/.test(p)) pt = "search";
+    else if (/^\/credits\/how-evidence/.test(p)) pt = "explainer";
+    else if (/^\/credits\/(signin|claim|moderate)/.test(p)) pt = "other";
+    else if (/^\/credits\/[^\/]+$/.test(p)) pt = "profile";
+    var payload = JSON.stringify({ name: "pv", props: { ref: ref, pt: pt } });
+    if (navigator.sendBeacon) navigator.sendBeacon(STAT_URL, payload);
+    else fetch(STAT_URL, { method: "POST", headers: { "Content-Type": "application/json" }, body: payload, keepalive: true });
+  } catch (e) {}
+})();
