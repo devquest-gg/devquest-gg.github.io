@@ -122,12 +122,19 @@
   .evb.peer[data-ev]:hover,.evb.peer[data-ev]:focus-visible{box-shadow:0 0 0 4px rgba(88,166,255,.28)}
   .evb.team[data-ev]:hover,.evb.team[data-ev]:focus-visible{box-shadow:0 0 0 4px rgba(63,185,80,.28)}
   .evb.rev[data-ev]:hover,.evb.rev[data-ev]:focus-visible{box-shadow:0 0 0 4px rgba(224,178,58,.28)}
+  .evb.corr{background:var(--purple,#a371f7);color:#160a2e}
+  .evb.corr[data-ev]:hover,.evb.corr[data-ev]:focus-visible{box-shadow:0 0 0 4px rgba(163,113,247,.28)}
   /* Confirmer popover ("receipts") */
   .evpop{position:absolute;z-index:60;width:308px;max-width:calc(100vw - 24px);background:var(--panel,#11161d);border:1px solid var(--border,#2d333b);border-radius:13px;box-shadow:0 16px 40px rgba(0,0,0,.55);padding:0;opacity:0;transform:translateY(-4px);pointer-events:none;transition:opacity .12s,transform .12s}
   .evpop.open{opacity:1;transform:translateY(0);pointer-events:auto}
   .evpop-head{display:flex;align-items:center;gap:8px;padding:13px 15px 11px;border-bottom:1px solid var(--border,#2d333b)}
   .evpop-head .hd{width:9px;height:9px;border-radius:50%;flex:none}
-  .evpop-head .hd.peer{background:var(--accent,#58a6ff)} .evpop-head .hd.team{background:var(--green,#3fb950)} .evpop-head .hd.rev{background:var(--gold,#e0b23a)}
+  .evpop-head .hd.peer{background:var(--accent,#58a6ff)} .evpop-head .hd.team{background:var(--green,#3fb950)} .evpop-head .hd.rev{background:var(--gold,#e0b23a)} .evpop-head .hd.corr{background:var(--purple,#a371f7)}
+  .evpop-corr{display:flex;align-items:center;gap:8px;margin:8px 10px 4px;padding:9px 11px;border-radius:9px;background:rgba(163,113,247,.10);border:1px solid rgba(163,113,247,.32);color:var(--text,#e6edf3);font-size:12.5px;text-decoration:none}
+  a.evpop-corr:hover{background:rgba(163,113,247,.18)}
+  .evpop-corr .cdot{flex:none;width:9px;height:9px;border-radius:50%;background:var(--purple,#a371f7)}
+  .evpop-corr .cnote{color:var(--muted,#8b98a9)}
+  .evpop-corr .cext{margin-left:auto;color:var(--purple,#a371f7);font-weight:800}
   .evpop-head .lvl{font-weight:800;font-size:13.5px;color:var(--text,#e6edf3)}
   .evpop-head .cx{margin-left:auto;color:var(--muted,#8b98a9);cursor:pointer;font-size:16px;line-height:1;padding:2px 4px;border-radius:6px}
   .evpop-head .cx:hover{background:rgba(255,255,255,.06);color:var(--text,#e6edf3)}
@@ -353,11 +360,10 @@
     // level: peer-confirmed (1), team-confirmed (2+), under review (reported). Self-reported shows
     // nothing. Meaning lives in the tooltip and on how-evidence-works.html.
     function corrBadge(c){
-      if(!c || !c.corroborated) return '';
-      var src = c.corroborated.source || 'the published record', url = c.corroborated.url;
-      var tip = 'Matches '+src+'. The published record lists this credit too. Separate from peer confirmation.';
-      if(url) return ' <a class="corrb" href="'+DQ.esc(DQ.safeUrl(url))+'" target="_blank" rel="noopener noreferrer" title="'+DQ.esc(tip)+'" aria-label="'+DQ.esc(tip)+'">◈</a>';
-      return ' <span class="corrb" title="'+DQ.esc(tip)+'" aria-label="'+DQ.esc(tip)+'">◈</span>';
+      if(!c || !c.corroborated || !c.id) return '';
+      var src = c.corroborated.source || 'the published record';
+      var tip = 'Matches '+src+'. Click to see the evidence.';
+      return ' <span class="evb corr" data-ev="'+c.id+'" data-corr="1" role="button" tabindex="0" aria-label="Matches published credits. Click to see details." title="'+DQ.esc(tip)+'">✓</span>';
     }
     function evidenceBadge(c){
       var n = c.vouch_count || 0;
@@ -824,8 +830,8 @@
       }
       function render(dot, data, loading){
         var rev = dot.getAttribute("data-rev")==="1";
-        var cls = dot.classList.contains("team")?"team":(dot.classList.contains("rev")?"rev":"peer");
-        var lvl = rev ? "Under review" : (cls==="team"?"Team-confirmed":"Peer-confirmed");
+        var cls = dot.classList.contains("team")?"team":(dot.classList.contains("rev")?"rev":(dot.classList.contains("corr")?"corr":"peer"));
+        var lvl = rev ? "Under review" : (cls==="team"?"Team-confirmed":(cls==="corr"?"Matches published credits":"Peer-confirmed"));
         var list = (data&&data.confirmers)||[];
         var html = '<div class="evpop-head"><span class="hd '+cls+'"></span><span class="lvl">'+DQ.esc(lvl)+'</span><span class="cx" role="button" tabindex="0" aria-label="Close">×</span></div>';
         if(rev) html += '<div class="evpop-rev">A report was filed on this credit. It stays visible while a moderator reviews it. Nothing is ever silently removed.</div>';
@@ -839,8 +845,14 @@
             html += '<a class="evrow" href="/credits/'+encodeURIComponent(p.slug)+'"><span class="av" style="background:'+colorFor(p.slug)+'">'+DQ.esc(initials(p.name))+'</span><span class="ei"><span class="en">'+DQ.esc(p.name)+'</span><span class="er">'+role+cc+'</span></span></a>';
           });
           html += '</div>';
-        } else if(!rev){
+        } else if(!rev && cls!=="corr"){
           html += '<div class="evpop-empty">No confirmers to show yet.</div>';
+        }
+        if(data && data.corroborated){
+          var csrc = data.corroborated.source || 'the published record', curl = data.corroborated.url;
+          var cin = '<span class="cdot"></span><span>Matches <b>'+DQ.esc(csrc)+'</b> <span class="cnote">published record</span></span>';
+          if(curl) html += '<a class="evpop-corr" href="'+DQ.esc(DQ.safeUrl(curl))+'" target="_blank" rel="noopener noreferrer">'+cin+'<span class="cext">↗</span></a>';
+          else html += '<div class="evpop-corr">'+cin+'</div>';
         }
         html += '<a class="evpop-foot" href="/credits/how-evidence-works.html">How evidence works →</a>';
         pop.innerHTML=html;
