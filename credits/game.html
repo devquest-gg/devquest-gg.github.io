@@ -29,6 +29,7 @@
   /* Evidence badge — a clickable check chip next to a credited name; click opens the confirmer list. */
   .evb{display:inline-flex;align-items:center;justify-content:center;width:17px;height:17px;border-radius:50%;margin-left:8px;vertical-align:-3px;font-size:10.5px;font-weight:900;line-height:1;color:#fff;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.4);transition:box-shadow .12s,transform .12s}
   .evb.peer{background:var(--accent,#58a6ff);color:#04122b} .evb.team{background:var(--green,#3fb950);color:#04220f} .evb.rev{background:var(--gold,#e0b23a);color:#3a2c05}
+  .corrb{display:inline-flex;align-items:center;justify-content:center;width:17px;height:17px;border-radius:50%;margin-left:6px;vertical-align:-3px;font-size:10px;font-weight:900;line-height:1;text-decoration:none;background:rgba(163,113,247,.16);border:1px solid rgba(163,113,247,.55);color:#a371f7} .corrb:hover{background:rgba(163,113,247,.28)}
   .evb[data-ev]:hover,.evb[data-ev]:focus-visible{transform:scale(1.14);outline:none}
   .evb.peer[data-ev]:hover,.evb.peer[data-ev]:focus-visible{box-shadow:0 0 0 4px rgba(88,166,255,.28)}
   .evb.team[data-ev]:hover,.evb.team[data-ev]:focus-visible{box-shadow:0 0 0 4px rgba(63,185,80,.28)}
@@ -138,7 +139,7 @@
     // merge credits by person — seed (static) + live (API), API wins
     var byPerson = {};
     ((g && g.credits) || []).forEach(function(c){ var ps=DQ.slugify(c.name); byPerson[ps]={person_slug:ps,name:c.name,role:c.role,roles_other:c.roles_other||[],verification:c.verification||[],vouch_count:0,live:false}; });
-    apiCredits.forEach(function(c){ byPerson[c.person_slug]={id:c.id,person_slug:c.person_slug,name:c.person_name,role:c.role,roles_other:c.roles_other||[],verification:c.verification||[],links:c.links||[],releases:c.releases||[],vouch_count:c.vouch_count||0,voucher_slugs:c.voucher_slugs||[],status:c.status,partial:!!c.partial,live:true}; });
+    apiCredits.forEach(function(c){ byPerson[c.person_slug]={id:c.id,person_slug:c.person_slug,name:c.person_name,role:c.role,roles_other:c.roles_other||[],verification:c.verification||[],links:c.links||[],releases:c.releases||[],vouch_count:c.vouch_count||0,voucher_slugs:c.voucher_slugs||[],status:c.status,partial:!!c.partial,corroborated:c.corroborated,live:true}; });
     var credits = Object.keys(byPerson).map(function(k){ return byPerson[k]; });
     var iHaveCredit = !!(me && credits.some(function(c){ return c.person_slug===me.slug; }));
     var pending = (apiRes && apiRes.pending) || [];
@@ -201,6 +202,13 @@
       : '';
     // Evidence badge: blue check = peer-confirmed, green = team-confirmed, gold ! = under review.
     // No badge while a credit is still awaiting confirmation. Click opens the confirmer list.
+    function corrBadge(c){
+      if(!c || !c.corroborated) return '';
+      var src = c.corroborated.source || 'the published record', url = c.corroborated.url;
+      var tip = 'Matches '+src+'. The published record lists this credit too. Separate from peer confirmation.';
+      if(url) return ' <a class="corrb" href="'+DQ.esc(DQ.safeUrl(url))+'" target="_blank" rel="noopener noreferrer" title="'+DQ.esc(tip)+'" aria-label="'+DQ.esc(tip)+'">◈</a>';
+      return ' <span class="corrb" title="'+DQ.esc(tip)+'" aria-label="'+DQ.esc(tip)+'">◈</span>';
+    }
     function evidenceBadge(c){
       var n = c.vouch_count || 0;
       var rev = c.status==="contested";
@@ -246,7 +254,7 @@
         : '';
       return '<div class="row" data-disc="'+DQ.esc(c._disc||"Other")+'" data-pslug="'+DQ.esc(c.person_slug)+'">'+
         '<div class="av">'+DQ.esc(DQ.initials(c.name))+'</div>'+
-        '<div class="rmain"><div class="rname"><a href="/credits/'+encodeURIComponent(c.person_slug)+'">'+DQ.esc(c.name)+'</a>'+evidenceBadge(c)+'</div>'+
+        '<div class="rmain"><div class="rname"><a href="/credits/'+encodeURIComponent(c.person_slug)+'">'+DQ.esc(c.name)+'</a>'+evidenceBadge(c)+corrBadge(c)+'</div>'+
           '<div class="rsub"><span class="rrole">'+DQ.esc(c.role||"Role not recorded")+'</span>'+more+scopeTag+extNote+(sigs?' &nbsp; '+sigs:'')+proof+'</div></div>'+
         '<div class="rright">'+vbtn+'<a class="reportcredit reportlink" data-name="'+DQ.esc(c.name)+'" data-cid="'+(c.id||"")+'" title="Report this credit" style="color:var(--muted);font-size:12px;margin-left:12px;text-decoration:none;cursor:pointer">⚑</a></div>'+
       '</div>';

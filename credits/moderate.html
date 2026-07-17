@@ -25,8 +25,8 @@
   <div><a href="/credits/">← Credits home</a></div>
 </div></footer>
 
-<script src="api.js"></script>
-<script src="app.js"></script>
+<script src="api.js?v=20260716"></script>
+<script src="app.js?v=20260716"></script>
 <script>
 (function(){
   var app = document.getElementById("app");
@@ -46,6 +46,7 @@
     }
     render((r.data && r.data.reports) || []);
     renderMerge();
+    renderPublishedCredits();
     loadMissingArt();
   }).catch(function(){ app.innerHTML = '<div class="container"><section class="blk"><div class="empty">Network error loading the queue.</div></section></div>'; });
 
@@ -322,6 +323,56 @@
           st.innerHTML='<span style="color:var(--pink)">'+DQ.esc((r&&r.data&&r.data.error)||"Could not merge.")+'</span>';
         }
       }).catch(function(){ btn.textContent="Merge →"; st.innerHTML='<span style="color:var(--pink)">Network error.</span>'; });
+    };
+  }
+
+  // ---- Published credits: attach a game's external credit list for corroboration ----
+  function renderPublishedCredits(){
+    app.insertAdjacentHTML("beforeend",
+      '<div class="container"><section class="blk"><div class="eyebrow">Corroboration</div>'+
+      '<h2 class="sec">Published credits</h2>'+
+      '<p class="secsub">Attach a game&rsquo;s published credit list (its own credit roll, or a catalogue like MobyGames). Anyone who claims a credit on that game and whose name is on this list gets a ◈ &ldquo;matches published credits&rdquo; badge beside their peer/team check. Paste <b>one person per line</b>, as <b>Name</b> or <b>Name, Role</b>. Saving replaces the whole list for that game; clear the box and Save to remove it.</p>'+
+      '<div class="panel" style="padding:16px 18px;max-width:660px">'+
+        '<div style="font-size:12px;font-weight:700;margin-bottom:4px">Game slug <span class="mut" style="font-weight:400">(the last part of /credits/game/&lt;slug&gt;)</span></div>'+
+        '<input id="pc-slug" placeholder="e.g. dark-age-of-camelot" style="width:100%;box-sizing:border-box;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:9px 11px;color:var(--text);font-size:14px;font-family:inherit">'+
+        '<div id="pc-info" class="mut" style="font-size:12px;margin:5px 0 12px;min-height:16px"></div>'+
+        '<div style="font-size:12px;font-weight:700;margin-bottom:4px">Published names</div>'+
+        '<textarea id="pc-names" rows="8" placeholder="Jane Doe, Producer&#10;John Smith, Lead Programmer&#10;Alex Rivera" style="width:100%;box-sizing:border-box;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:9px 11px;color:var(--text);font-size:13.5px;font-family:inherit;line-height:1.5;resize:vertical"></textarea>'+
+        '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">'+
+          '<div style="flex:1;min-width:170px"><div style="font-size:12px;font-weight:700;margin-bottom:4px">Source label</div><input id="pc-src" placeholder="e.g. MobyGames" style="width:100%;box-sizing:border-box;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:9px 11px;color:var(--text);font-size:14px;font-family:inherit"></div>'+
+          '<div style="flex:2;min-width:220px"><div style="font-size:12px;font-weight:700;margin-bottom:4px">Source link <span class="mut" style="font-weight:400">(optional)</span></div><input id="pc-url" placeholder="https://www.mobygames.com/game/…" style="width:100%;box-sizing:border-box;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:9px 11px;color:var(--text);font-size:14px;font-family:inherit"></div>'+
+        '</div>'+
+        '<div style="display:flex;gap:8px;margin-top:14px"><span class="btn ghost" id="pc-load" style="padding:8px 14px;font-size:13px">Load current</span><span class="btn primary" id="pc-save" style="padding:8px 16px;font-size:13px">Save list</span></div>'+
+        '<div id="pc-status" style="font-size:13px;margin-top:12px;min-height:16px"></div>'+
+      '</div></section></div>');
+    wirePublished();
+  }
+
+  function wirePublished(){
+    var slug=document.getElementById("pc-slug"), names=document.getElementById("pc-names"),
+        src=document.getElementById("pc-src"), urlE=document.getElementById("pc-url"),
+        info=document.getElementById("pc-info"), st=document.getElementById("pc-status");
+    var t;
+    slug.addEventListener("input", function(){ clearTimeout(t); t=setTimeout(function(){ previewGame(slug.value, info); }, 400); });
+    document.getElementById("pc-load").onclick=function(){
+      var s=slug.value.trim(); if(!s){ st.innerHTML='<span style="color:var(--pink)">Enter a game slug first.</span>'; return; }
+      st.textContent="Loading…";
+      DQAPI.adminGetPublishedCredits(s).then(function(r){
+        if(!(r&&r.ok)){ st.innerHTML='<span style="color:var(--pink)">'+DQ.esc((r&&r.data&&r.data.error)||"Could not load.")+'</span>'; return; }
+        var d=r.data||{}, lines=(d.entries||[]).map(function(e){ return e.role ? (e.name+", "+e.role) : e.name; });
+        names.value=lines.join("\n"); src.value=d.source||""; urlE.value=d.source_url||"";
+        st.innerHTML=lines.length ? '<span class="mut">Loaded '+lines.length+' existing name'+(lines.length===1?'':'s')+'.</span>' : '<span class="mut">No published list saved for this game yet.</span>';
+      }).catch(function(){ st.innerHTML='<span style="color:var(--pink)">Network error.</span>'; });
+    };
+    document.getElementById("pc-save").onclick=function(){
+      var s=slug.value.trim(); if(!s){ st.innerHTML='<span style="color:var(--pink)">Enter a game slug.</span>'; return; }
+      var u=urlE.value.trim(); if(u && !/^https:\/\//i.test(u)){ st.innerHTML='<span style="color:var(--pink)">Source link must start with https://</span>'; return; }
+      var btn=document.getElementById("pc-save"); btn.textContent="Saving…";
+      DQAPI.adminSetPublishedCredits({ game_slug:s, text:names.value, source:src.value.trim(), source_url:u }).then(function(r){
+        btn.textContent="Save list";
+        if(r&&r.ok){ var d=r.data||{}; st.innerHTML='<span style="color:var(--green)">✓ Saved '+d.count+' name'+(d.count===1?'':'s')+'. Matches <b>'+d.matched+'</b> of '+d.claimed+' claimed credit'+(d.claimed===1?'':'s')+' on this game right now.'+(d.count===0?' List cleared.':'')+'</span>'; }
+        else { st.innerHTML='<span style="color:var(--pink)">'+DQ.esc((r&&r.data&&r.data.error)||"Could not save.")+'</span>'; }
+      }).catch(function(){ btn.textContent="Save list"; st.innerHTML='<span style="color:var(--pink)">Network error.</span>'; });
     };
   }
 })();

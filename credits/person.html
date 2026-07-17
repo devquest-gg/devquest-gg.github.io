@@ -117,6 +117,7 @@
      gold ! = under review. No badge when a credit is still awaiting confirmation. */
   .evb{display:inline-flex;align-items:center;justify-content:center;width:17px;height:17px;border-radius:50%;margin-left:8px;vertical-align:-3px;font-size:10.5px;font-weight:900;line-height:1;color:#fff;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.4);transition:box-shadow .12s,transform .12s}
   .evb.peer{background:var(--accent,#58a6ff);color:#04122b} .evb.team{background:var(--green,#3fb950);color:#04220f} .evb.rev{background:var(--gold,#e0b23a);color:#3a2c05}
+  .corrb{display:inline-flex;align-items:center;justify-content:center;width:17px;height:17px;border-radius:50%;margin-left:6px;vertical-align:-3px;font-size:10px;font-weight:900;line-height:1;text-decoration:none;background:rgba(163,113,247,.16);border:1px solid rgba(163,113,247,.55);color:#a371f7} .corrb:hover{background:rgba(163,113,247,.28)}
   .evb[data-ev]{cursor:pointer} .evb[data-ev]:hover,.evb[data-ev]:focus-visible{transform:scale(1.14);outline:none}
   .evb.peer[data-ev]:hover,.evb.peer[data-ev]:focus-visible{box-shadow:0 0 0 4px rgba(88,166,255,.28)}
   .evb.team[data-ev]:hover,.evb.team[data-ev]:focus-visible{box-shadow:0 0 0 4px rgba(63,185,80,.28)}
@@ -283,7 +284,7 @@
     // Merge credits by game_slug — live (API) wins over seed (static).
     var byGame = {};
     ((stat && stat.credits) || []).forEach(function(c){ byGame[c.game_slug] = { game_slug:c.game_slug, game_title:c.game_title, year:c.year||null, studio:c.studio||null, role:c.role, roles_other:c.roles_other||[], verification:c.verification||[], vouch_count:0, live:false }; });
-    ((api && api.credits) || []).forEach(function(c){ byGame[c.game_slug] = { id:c.id, game_slug:c.game_slug, game_title:c.game_title, year:c.year||null, studio:c.studio||null, role:c.role, roles_other:c.roles_other||[], verification:c.verification||[], links:c.links||[], position:(c.position!=null?c.position:null), releases:c.releases||[], vouch_count:c.vouch_count||0, voucher_slugs:c.voucher_slugs||[], partial:!!c.partial, parent_slug:(c.parent_slug||null), status:c.status, work_start:(c.work_start!=null?c.work_start:null), work_end:(c.work_end!=null?c.work_end:null), live:true }; });
+    ((api && api.credits) || []).forEach(function(c){ byGame[c.game_slug] = { id:c.id, game_slug:c.game_slug, game_title:c.game_title, year:c.year||null, studio:c.studio||null, role:c.role, roles_other:c.roles_other||[], verification:c.verification||[], links:c.links||[], position:(c.position!=null?c.position:null), releases:c.releases||[], vouch_count:c.vouch_count||0, voucher_slugs:c.voucher_slugs||[], partial:!!c.partial, parent_slug:(c.parent_slug||null), status:c.status, work_start:(c.work_start!=null?c.work_start:null), work_end:(c.work_end!=null?c.work_end:null), corroborated:c.corroborated, live:true }; });
     var credits = Object.keys(byGame).map(function(k){ return byGame[k]; });
 
     // Resolve missing launch years from the static catalogue (added games already
@@ -351,6 +352,13 @@
     // Evidence as a single quiet colored dot — keeps the timeline pretty (no pill per row). The
     // level: peer-confirmed (1), team-confirmed (2+), under review (reported). Self-reported shows
     // nothing. Meaning lives in the tooltip and on how-evidence-works.html.
+    function corrBadge(c){
+      if(!c || !c.corroborated) return '';
+      var src = c.corroborated.source || 'the published record', url = c.corroborated.url;
+      var tip = 'Matches '+src+'. The published record lists this credit too. Separate from peer confirmation.';
+      if(url) return ' <a class="corrb" href="'+DQ.esc(DQ.safeUrl(url))+'" target="_blank" rel="noopener noreferrer" title="'+DQ.esc(tip)+'" aria-label="'+DQ.esc(tip)+'">◈</a>';
+      return ' <span class="corrb" title="'+DQ.esc(tip)+'" aria-label="'+DQ.esc(tip)+'">◈</span>';
+    }
     function evidenceBadge(c){
       var n = c.vouch_count || 0;
       var rev = c.status==="contested";
@@ -486,7 +494,7 @@
       var _kidMark = _isChild ? '<span class="mut expctl expcollapse-child" data-base="'+DQ.esc(c.parent_slug)+'" role="button" tabindex="0" style="font-weight:400;margin-right:5px;cursor:pointer" title="Collapse under the base game">↳</span>' : '';
       return '<div class="row"'+((isOwn&&c.live&&c.id)?' data-id="'+c.id+'"':'')+_rowStyle+(_isChild?' data-childof="'+DQ.esc(c.parent_slug)+'"':'')+'>'+
         grip +
-        '<div class="rmain"><div class="rname">'+(_isChild?_kidMark:'')+'<a href="/credits/game/'+encodeURIComponent(c.game_slug)+'">'+DQ.esc(c.game_title)+'</a>'+evidenceBadge(c)+orphanExpTag(c)+'</div>'+
+        '<div class="rmain"><div class="rname">'+(_isChild?_kidMark:'')+'<a href="/credits/game/'+encodeURIComponent(c.game_slug)+'">'+DQ.esc(c.game_title)+'</a>'+evidenceBadge(c)+corrBadge(c)+orphanExpTag(c)+'</div>'+
           '<div class="rsub">'+roleHTML+partTagL+more+(sigs?' &nbsp; '+sigs:'')+(proof?' &nbsp; '+proof:'')+'</div>'+workNote+(_isChild?'':expMore(c.game_slug))+'</div>'+
         '<div class="rright">'+(trust?'<span style="margin-right:6px">'+trust+'</span>':'')+(c.year?'<span class="yr" title="Game release year"><span class="yrlbl">Released</span> '+c.year+'</span>':'')+confirmBtn+controls+'</div>'+
       '</div>';
@@ -581,7 +589,7 @@
         '<div class="tlrail"><span class="tldot'+(isFeat?' feat':'')+'"></span></div>'+
         '<div class="tlcard"'+_cardStyle+'>'+
           '<a class="tlthumb" href="'+gurl+'">'+thumb+'</a>'+
-          '<div class="tlbody"><div class="tlnameline"><a class="tlname" href="'+gurl+'">'+DQ.esc(c.game_title)+'</a>'+evidenceBadge(c)+orphanExpTag(c)+'</div>'+
+          '<div class="tlbody"><div class="tlnameline"><a class="tlname" href="'+gurl+'">'+DQ.esc(c.game_title)+'</a>'+evidenceBadge(c)+corrBadge(c)+orphanExpTag(c)+'</div>'+
             '<div class="tlsub">'+sub+'</div>'+(_isChild?'':expMore(c.game_slug))+((tledit||star)?'<div class="tlact">'+tledit+star+vouchReqBtn(c)+'</div>':'')+'</div>'+
         '</div>'+
       '</div>';

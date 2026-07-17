@@ -75,5 +75,7 @@
     adminMergeGames: function (payload) { return req("POST", "/admin/merge-games", payload); },
     adminSetCreditStatus: function (creditId, status) { return req("POST", "/admin/credit-status", { credit_id: creditId, status: status }); },
     adminRemoveCredit: function (creditId) { return req("DELETE", "/admin/credit/" + creditId); },
+    adminGetPublishedCredits: function (slug) { return req("GET", "/admin/published-credits?game=" + encodeURIComponent(slug)); },
+    adminSetPublishedCredits: function (payload) { return req("POST", "/admin/published-credits", payload); },
   };
 })(window);
