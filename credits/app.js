@@ -833,9 +833,123 @@
     w.DQAPI.vouchable().then(function(r){ var d = (r && r.data) || { count: 0, items: [] }; vSet(d); showVouchBanner(d); }).catch(function(){});
   }
 
+  // ---- Import from MobyGames: paste your credits, we match them to the catalogue, you claim ----
+  function openMobyImport(opts){
+    opts = opts || {}; injectClaimStyles();
+    var ov = document.createElement("div"); ov.className = "dq-modal-ov";
+    ov.innerHTML = '<div class="dq-modal" role="dialog" aria-modal="true" style="max-width:640px">'+
+      '<button class="dq-x" aria-label="Close">×</button>'+
+      '<div class="dq-mh">Import from MobyGames</div>'+
+      '<div class="dq-sub">Bring your whole gameography in at once. Open your <b>MobyGames profile</b>, select your list of credits, copy it, and paste it below. We’ll match each game to our catalogue for you to review. Nothing is claimed until you say so.</div>'+
+      '<div id="mi-s1">'+
+        '<label>Paste your MobyGames credits</label>'+
+        '<textarea id="mi-paste" rows="7" placeholder="Game Title (Year, Platform)&#9;Role…"></textarea>'+
+        '<label>Your name <span style="font-weight:400;color:var(--muted,#8b98a9)">(as it should appear on your profile)</span></label>'+
+        '<input id="mi-name" placeholder="e.g. Eric Miller">'+
+        '<div class="dq-actions"><button class="dq-cancel">Cancel</button><button class="dq-submit" id="mi-parse">Match my games →</button></div>'+
+      '</div>'+
+      '<div id="mi-s2" style="display:none"></div>'+
+      '</div>';
+    document.body.appendChild(ov);
+    function close(){ ov.remove(); }
+    ov.querySelector(".dq-x").onclick = close;
+    ov.querySelector("#mi-s1 .dq-cancel").onclick = close;
+    ov.addEventListener("click", function(e){ if(e.target===ov) close(); });
+    if(w.DQAPI && w.DQAPI.isSignedIn && w.DQAPI.isSignedIn() && w.DQAPI.me){
+      w.DQAPI.me().then(function(r){ var ni=ov.querySelector("#mi-name"); if(ni && !ni.value && r && r.data && r.data.person && r.data.person.name) ni.value=r.data.person.name; }).catch(function(){});
+    }
+
+    var THANKS=/thank/i;
+    function parseMoby(text){
+      var lines=String(text||"").split(/\r?\n/), out=[];
+      lines.forEach(function(raw){
+        var line=raw.replace(/\s+$/,""); if(!line.trim()) return;
+        var m=line.match(/^(.*?)\s*\((\d{4}),\s*([^)]*)\)[\t]+(.*)$/) || line.match(/^(.*?)\s*\((\d{4}),\s*([^)]*)\)\s{2,}(.*)$/);
+        if(m){ out.push({title:m[1].trim(), year:+m[2], role:m[4].trim()}); }
+      });
+      var by={}, order=[];
+      out.forEach(function(r){ var k=r.title.toLowerCase()+"|"+r.year; if(!by[k]){ by[k]={title:r.title,year:r.year,role:r.role}; order.push(k); } });
+      return order.map(function(k){ return by[k]; });
+    }
+    function norm(s){ return String(s||"").toLowerCase().replace(/[^a-z0-9]+/g," ").replace(/^(a|an|the) /,"").trim(); }
+    function matchGame(cat,nmap,g){
+      var ex=nmap[norm(g.title)];
+      if(ex && ex.length){ var by=ex.slice().sort(function(a,b){ return Math.abs((+a[2]||0)-g.year)-Math.abs((+b[2]||0)-g.year); }); var best=by[0]; return {m:best, conf:(Math.abs((+best[2]||0)-g.year)<=1?2:1)}; }
+      var res=searchRows(cat,1,g.title,40); if(!res.rows.length) return {m:null,conf:0};
+      var near=res.rows.slice().sort(function(a,b){ return Math.abs((+a[2]||0)-g.year)-Math.abs((+b[2]||0)-g.year); });
+      return {m:near[0], conf:0};
+    }
+
+    ov.querySelector("#mi-parse").onclick=function(){
+      var games=parseMoby(ov.querySelector("#mi-paste").value);
+      if(!games.length){ alert("Couldn’t find any credits in that paste. Copy the list of games and roles from your MobyGames profile and paste it here."); return; }
+      var credits=games.filter(function(g){ return !THANKS.test(g.role); });
+      var thanks=games.filter(function(g){ return THANKS.test(g.role); });
+      var b=this; b.disabled=true; b.textContent="Matching…";
+      loadIndex("games").then(function(cat){
+        cat=cat||[]; var nmap=Object.create(null); cat.forEach(function(r){ var n=norm(r[1]); if(n){ (nmap[n]||(nmap[n]=[])).push(r); } });
+        credits.forEach(function(g){ var mm=matchGame(cat,nmap,g); g.match=mm.m; g.conf=mm.conf; });
+        renderReview(credits, thanks);
+      }).catch(function(){ b.disabled=false; b.textContent="Match my games →"; alert("Couldn’t load the catalogue right now. Try again in a moment."); });
+    };
+
+    function xrow(g, checked, note){
+      var slug=g.match[0], mt=g.match[1], my=g.match[2];
+      return '<label style="display:flex;gap:11px;align-items:flex-start;padding:11px 2px;border-top:1px solid var(--border,#242c38)">'+
+        '<input type="checkbox" class="mi-ck" data-slug="'+esc(slug)+'" data-title="'+esc(mt)+'" '+(checked?"checked":"")+'>'+
+        '<span style="flex:1;min-width:0">'+
+          '<span style="font-weight:700;font-size:14px;color:var(--text,#eef3fa)">'+esc(g.title)+' <span style="font-weight:400;font-size:12px;color:var(--muted,#8b98a9)">('+g.year+')</span></span>'+
+          '<span style="display:block;font-size:12px;color:var(--muted,#8b98a9);margin-top:1px">'+note+' <b style="color:var(--text,#eef3fa)">'+esc(mt)+'</b>'+(my?(' · '+my):'')+'</span>'+
+          '<input class="mi-role" data-slug="'+esc(slug)+'" value="'+esc(g.role)+'" style="margin-top:6px;font-size:13px;padding:7px 10px">'+
+        '</span></label>';
+    }
+    function renderReview(credits, thanks){
+      ov.querySelector("#mi-s1").style.display="none";
+      var s2=ov.querySelector("#mi-s2"); s2.style.display="block";
+      var matched=credits.filter(function(g){ return g.match; });
+      var conf=matched.filter(function(g){ return g.conf>=1; });
+      var maybe=matched.filter(function(g){ return g.conf===0; });
+      var none=credits.filter(function(g){ return !g.match; });
+      var GRP='font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted,#8b98a9);margin:16px 0 2px';
+      var html='';
+      if(conf.length){ html+='<div style="'+GRP+'">Ready to claim ('+conf.length+')</div>'+conf.map(function(g){ return xrow(g,true,"Matched to"); }).join(''); }
+      if(maybe.length){ html+='<div style="'+GRP+'">Confirm these matches ('+maybe.length+')</div>'+maybe.map(function(g){ return xrow(g,false,"Closest match:"); }).join(''); }
+      if(none.length){ html+='<div style="'+GRP+'">Not in our catalogue ('+none.length+')</div>'+none.map(function(g){ return '<div style="padding:9px 2px;border-top:1px solid var(--border,#242c38);font-size:13px"><b>'+esc(g.title)+'</b> <span style="color:var(--muted,#8b98a9)">('+g.year+') — you can add it from the site after importing</span></div>'; }).join(''); }
+      if(thanks.length){ html+='<div style="'+GRP+'">Acknowledgments — not claimed ('+thanks.length+')</div><div style="font-size:12px;color:var(--muted,#8b98a9);margin:2px 0 3px">“Special Thanks” isn’t a work credit, so these are left out.</div>'+thanks.map(function(g){ return '<div style="padding:6px 2px;border-top:1px solid var(--border,#242c38);font-size:12.5px;color:var(--muted,#8b98a9)">'+esc(g.title)+' ('+g.year+')</div>'; }).join(''); }
+      s2.innerHTML='<div style="max-height:44vh;overflow:auto;margin:4px 0 2px">'+html+'</div>'+
+        '<div id="mi-status" style="font-size:13px;min-height:16px;margin:6px 0"></div>'+
+        '<div class="dq-actions"><button class="dq-cancel" id="mi-back">Back</button><button class="dq-submit" id="mi-claim">Claim selected →</button></div>';
+      s2.querySelector("#mi-back").onclick=function(){ s2.style.display="none"; ov.querySelector("#mi-s1").style.display="block"; var pb=ov.querySelector("#mi-parse"); pb.disabled=false; pb.textContent="Match my games →"; };
+      s2.querySelector("#mi-claim").onclick=doClaim;
+    }
+    function doClaim(){
+      if(!(w.DQAPI && w.DQAPI.isSignedIn && w.DQAPI.isSignedIn())){ alert("Please sign in first, then run the import."); w.location.href="/credits/signin.html"; return; }
+      var s2=ov.querySelector("#mi-s2");
+      var name=((ov.querySelector("#mi-name")||{}).value||"").trim();
+      var roles={}; Array.prototype.forEach.call(s2.querySelectorAll(".mi-role"), function(ri){ roles[ri.getAttribute("data-slug")]=ri.value; });
+      var cks=Array.prototype.filter.call(s2.querySelectorAll(".mi-ck"), function(c){ return c.checked && c.getAttribute("data-slug"); });
+      if(!cks.length){ alert("Pick at least one game to claim."); return; }
+      var jobs=cks.map(function(c){ var sl=c.getAttribute("data-slug"); return {slug:sl, title:c.getAttribute("data-title"), role:(roles[sl]||"").trim()}; });
+      var status=s2.querySelector("#mi-status"), btn=s2.querySelector("#mi-claim"); btn.disabled=true;
+      var added=0, skipped=0, failed=0, lastSlug=null;
+      (function next(i){
+        if(i>=jobs.length){ status.innerHTML='<span style="color:var(--green,#3fb950)">Imported '+added+' credit'+(added===1?'':'s')+(skipped?', '+skipped+' already on your profile':'')+(failed?', '+failed+' skipped':'')+'.</span>';
+          setTimeout(function(){ w.location.href = lastSlug ? ("/credits/person.html?slug="+encodeURIComponent(lastSlug)) : "/credits/"; }, 1100); return; }
+        var j=jobs[i]; status.textContent="Importing "+(i+1)+" of "+jobs.length+"…";
+        if(!j.role){ failed++; return next(i+1); }
+        w.DQAPI.createCredit({ name:name, role:j.role, game_slug:j.slug, game_title:j.title, scope:"base", roles_other:[], verification:[], links:[], releases:[] }).then(function(r){
+          if(r.status===201||r.ok){ added++; if(r.data&&r.data.person_slug) lastSlug=r.data.person_slug; }
+          else if(r.status===409) skipped++;
+          else failed++;
+          next(i+1);
+        }).catch(function(){ failed++; next(i+1); });
+      })(0);
+    }
+  }
+
   w.DQ = {
     bkt: bkt, qs: qs, getJSON: getJSON, loadEntity: loadEntity, loadIndex: loadIndex, openReport: openReport,
-    rank: rank, searchRows: searchRows, attachSuggest: attachSuggest, openClaim: openClaim, openSuggest: openSuggest, openVouchRequest: openVouchRequest, openVouchConfirm: openVouchConfirm,
+    rank: rank, searchRows: searchRows, attachSuggest: attachSuggest, openClaim: openClaim, openSuggest: openSuggest, openVouchRequest: openVouchRequest, openVouchConfirm: openVouchConfirm, openMobyImport: openMobyImport,
     discipline: discipline, DISCIPLINE_ORDER: DISCIPLINE_ORDER,
     uniq: uniq, releaseClass: releaseClass,
     esc: esc, safeUrl: safeUrl, initials: initials, slugify: slugify,
