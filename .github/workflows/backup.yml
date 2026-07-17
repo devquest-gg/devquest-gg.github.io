@@ -1,0 +1,86 @@
+name: Backup D1 databases
+
+# Daily off-site backup of both DevQuest D1 databases.
+#
+#   devquest-credits  (the credits-api Worker) — the irreplaceable one
+#   devquest          (the alerts/analytics Worker)
+#
+# For each: export a full SQL dump, verify it looks real, GPG-encrypt it (the
+# dumps contain emails + tokens), and upload it to a private R2 bucket. Cloudflare's
+# built-in 30-day Time Travel already covers recent point-in-time recovery; this layer
+# covers database deletion and durability off the D1 instance.
+#
+# One-time setup (create the R2 bucket, the scoped API token, and the three secrets)
+# is documented in BACKUP_SETUP.md at the repo root.
+
+on:
+  schedule:
+    - cron: "30 6 * * *"      # 06:30 UTC every day
+  workflow_dispatch: {}        # adds a "Run workflow" button for manual runs / testing
+
+concurrency:
+  group: d1-backup
+  cancel-in-progress: false
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      BACKUP_GPG_PASSPHRASE: ${{ secrets.BACKUP_GPG_PASSPHRASE }}
+      R2_BUCKET: devquest-backups
+    steps:
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Check required secrets are present
+        run: |
+          missing=0
+          for v in CLOUDFLARE_API_TOKEN CLOUDFLARE_ACCOUNT_ID BACKUP_GPG_PASSPHRASE; do
+            if [ -z "${!v:-}" ]; then echo "::error::Missing required secret: $v (see BACKUP_SETUP.md)"; missing=1; fi
+          done
+          [ "$missing" = 0 ]
+
+      - name: Export, verify, encrypt, and upload
+        run: |
+          set -euo pipefail
+          DAY=$(date -u +%Y-%m-%d)
+          MONTH=$(date -u +%Y-%m)
+          DOM=$(date -u +%d)
+          WR="npx --yes wrangler@4"
+
+          backup_db () {
+            DB="$1"
+            echo "===== $DB ====="
+            $WR d1 export "$DB" --remote --output "$DB.sql"
+
+            # Verify the dump is real before we trust it.
+            BYTES=$(wc -c < "$DB.sql")
+            if [ "$BYTES" -lt 200 ]; then echo "::error::$DB dump is suspiciously small ($BYTES bytes) — aborting"; exit 1; fi
+            if ! grep -q "CREATE TABLE" "$DB.sql"; then echo "::error::$DB dump has no CREATE TABLE — aborting"; exit 1; fi
+            TABLES=$(grep -c "CREATE TABLE" "$DB.sql" || true)
+            ROWS=$(grep -c "INSERT INTO" "$DB.sql" || true)
+            echo "$DB: ${BYTES} bytes, ${TABLES} tables, ${ROWS} insert statements"
+
+            # Encrypt (symmetric AES256) — dumps contain PII, never store plaintext.
+            gpg --batch --yes --pinentry-mode loopback --passphrase "$BACKUP_GPG_PASSPHRASE" \
+                --cipher-algo AES256 -c -o "$DB.sql.gpg" "$DB.sql"
+
+            # Daily copy.
+            $WR r2 object put "$R2_BUCKET/daily/$DB-$DAY.sql.gpg" --file "$DB.sql.gpg" --remote
+            # Keep a monthly copy on the 1st, for long retention.
+            if [ "$DOM" = "01" ]; then
+              $WR r2 object put "$R2_BUCKET/monthly/$DB-$MONTH.sql.gpg" --file "$DB.sql.gpg" --remote
+            fi
+
+            rm -f "$DB.sql" "$DB.sql.gpg"
+            echo "$DB backed up OK"
+          }
+
+          backup_db "devquest-credits"
+          backup_db "devquest"
+          echo "All backups complete for $DAY."
