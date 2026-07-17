@@ -192,7 +192,7 @@
         if (w.DQAPI.searchStudios) w.DQAPI.searchStudios(q).then(function (r) { data.liveStudios = ((r.data && r.data.studios) || []).map(function (s) { return [s.slug, s.name, s.count || 0]; }); repaint(); }).catch(function () {});
       }
     }
-    function seeAll() { var q = input.value.trim(); w.location.href = "search.html" + (q ? "?q=" + encodeURIComponent(q) : ""); }
+    function seeAll() { var q = input.value.trim(); w.location.href = "/credits/search.html" + (q ? "?q=" + encodeURIComponent(q) : ""); }
     var t;
     input.addEventListener("input", function () { clearTimeout(t); t = setTimeout(refresh, 110); });
     input.addEventListener("focus", function () { preload(); if (input.value.trim()) refresh(); });
@@ -440,7 +440,7 @@
 
       // --- live API path: save the credit for real ---
       if (w.DQAPI) {
-        if (!isGame && !isAdd) { w.location.href = "signin.html"; return; }         // profile claim = sign in
+        if (!isGame && !isAdd) { w.location.href = "/credits/signin.html"; return; }         // profile claim = sign in
         if (!role) { alert("Add your primary role first."); return; }
         // Involvement + scope are required so a credit never silently over-claims (a contractor
         // reading as core team, or DLC-only work reading as the full base game).
@@ -449,14 +449,14 @@
         if (!w.DQAPI.isSignedIn()) {
           // Stash the whole credit so sign-in can finish it, instead of losing the game.
           try { w.localStorage.setItem("dq_pending_credit", JSON.stringify(payload())); } catch (e) {}
-          w.location.href = "signin.html"; return;
+          w.location.href = "/credits/signin.html"; return;
         }
         submitBtn.disabled = true; submitBtn.textContent = "Saving…";
         w.DQAPI.createCredit(payload()).then(function (r) {
           if (r.status === 201 || r.ok) {
             var slug = r.data && r.data.person_slug; close();
             w.location.href = slug ? ("/credits/person.html?slug=" + encodeURIComponent(slug)) : "/credits/";
-          } else if (r.status === 401) { w.location.href = "signin.html"; }
+          } else if (r.status === 401) { w.location.href = "/credits/signin.html"; }
           else { submitBtn.disabled = false; submitBtn.textContent = "Save my credit →"; alert((r.data && r.data.error) || "Could not save. Try again."); }
         }).catch(function () { submitBtn.disabled = false; submitBtn.textContent = "Save my credit →"; alert("Network error. Try again."); });
         return;
@@ -852,11 +852,11 @@
     var a = document.createElement("a");
     a.className = "back"; a.style.cursor = "pointer";
     a.textContent = w.DQAPI.isSignedIn() ? "Account" : "Sign in";
-    a.href = "signin.html";
+    a.href = "/credits/signin.html";
     nav.insertBefore(a, nav.firstChild);
     if (w.DQAPI.isSignedIn()) {
       w.DQAPI.me().then(function (r) {
-        if (r.ok && r.data.authenticated) { a.textContent = r.data.person ? ("✓ " + r.data.person.name) : "Account"; a.href = "signin.html"; }
+        if (r.ok && r.data.authenticated) { a.textContent = r.data.person ? ("✓ " + r.data.person.name) : "Account"; a.href = "/credits/signin.html"; }
         else { w.DQAPI.clearToken(); a.textContent = "Sign in"; }
       }).catch(function () {});
     }
