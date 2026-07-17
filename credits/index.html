@@ -1,108 +1,540 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<!-- DevQuest Credits homepage -->
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DevQuest Credits · The credit developers deserve</title>
+<meta name="description" content="An opt-in, dev-controlled game credits database. Find your credits, claim your page, and let the peers you shipped with vouch for it.">
 <meta name="robots" content="noindex, nofollow">
-<title>You're invited · DevQuest Credits</title>
+<link rel="canonical" href="https://devquest.gg/credits">
 <link rel="icon" href="/credits/favicon.svg" type="image/svg+xml">
-<meta name="description" content="An early-access invitation to DevQuest Credits: claim the games you made, let the teammates you shipped with confirm them, and own your record.">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="DevQuest Credits">
-<meta property="og:url" content="https://devquest.gg/credits/welcome/">
-<meta property="og:title" content="You're invited to DevQuest Credits">
-<meta property="og:description" content="Early access. Claim the games you made, let the teammates you shipped with confirm them, and own your record.">
-<meta property="og:image" content="https://devquest.gg/credits/og-welcome.png">
+<meta property="og:url" content="https://devquest.gg/credits">
+<meta property="og:title" content="DevQuest Credits: own the record of the games you made">
+<meta property="og:description" content="A developer-owned, peer-confirmed credits database. Claim your work, and let the people you shipped with confirm it.">
+<meta property="og:image" content="https://devquest.gg/credits/og-credits.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="You're invited to DevQuest Credits">
-<meta name="twitter:description" content="Early access. Claim the games you made, let the teammates you shipped with confirm them, and own your record.">
-<meta name="twitter:image" content="https://devquest.gg/credits/og-welcome.png">
+<meta name="twitter:title" content="DevQuest Credits: own the record of the games you made">
+<meta name="twitter:description" content="A developer-owned, peer-confirmed credits database. Claim your work, and let the people you shipped with confirm it.">
+<meta name="twitter:image" content="https://devquest.gg/credits/og-credits.png">
 <style>
-  :root{--bg:#0b0e16;--panel:#11161f;--border:#242c38;--text:#e9eef6;--muted:#8b98a9;--accent:#58a6ff;--purple:#a371f7;--gold:#e0b23a;--green:#3fb950}
+  :root{
+    --bg:#0b0e14; --panel:#141a23; --border:#242c38; --text:#eef3fa; --muted:#8b98a9;
+    --accent:#58a6ff; --green:#3fb950; --gold:#e0b23a; --purple:#a371f7; --pink:#f778ba;
+  }
   *{box-sizing:border-box}
-  html,body{margin:0;padding:0}
-  body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,-apple-system,Roboto,Helvetica,Arial,sans-serif;line-height:1.5;-webkit-font-smoothing:antialiased;
-    background-image:radial-gradient(closest-side at 30% -8%, rgba(163,113,247,.20), transparent 70%), radial-gradient(closest-side at 88% 8%, rgba(88,166,255,.14), transparent 70%);
-    background-repeat:no-repeat}
-  .bar{height:4px;background:linear-gradient(90deg,var(--gold),var(--purple) 55%,var(--accent))}
-  .wrap{max-width:660px;margin:0 auto;padding:0 22px}
-  .brand{display:flex;align-items:center;gap:11px;padding:26px 0 0}
-  .brand .wm{font-weight:800;font-size:20px;letter-spacing:-.3px}
-  .brand .q{color:var(--accent)} .brand .tld{color:var(--gold)}
-  .brand .cr{font-size:11px;font-weight:800;letter-spacing:.22em;color:var(--accent);margin-left:2px}
-  .mark{width:30px;height:30px;flex:none}
-  .hero{text-align:center;padding:48px 0 8px}
-  .pill{display:inline-flex;align-items:center;gap:10px;font-size:12.5px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);
-    border:1px solid rgba(224,178,58,.5);background:rgba(224,178,58,.10);border-radius:999px;padding:8px 16px}
-  h1{font-size:52px;line-height:1.03;font-weight:850;letter-spacing:-1.2px;margin:22px 0 10px}
-  h1 .grad{background:linear-gradient(100deg,#7cc0ff,#a371f7 60%,#e0b23a);-webkit-background-clip:text;background-clip:text;color:transparent}
-  .from{color:var(--gold);font-weight:700;font-size:15px;margin-top:4px}
-  .lede{font-size:17px;color:#c8d2df;max-width:520px;margin:20px auto 0}
-  .lede b{color:var(--text)}
-  .points{display:flex;flex-direction:column;gap:12px;max-width:470px;margin:30px auto 0;text-align:left}
-  .pt{display:flex;gap:13px;align-items:flex-start;background:var(--panel);border:1px solid var(--border);border-radius:13px;padding:14px 16px}
-  .pt .n{flex:none;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;color:#0b0e14;background:linear-gradient(135deg,#7cc0ff,#a371f7)}
-  .pt .t{font-weight:750;font-size:14.5px}
-  .pt .s{color:var(--muted);font-size:13px;margin-top:2px}
-  .cta{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin:34px 0 8px}
-  .btn{display:inline-block;font-size:15.5px;font-weight:750;text-decoration:none;border-radius:11px;padding:13px 24px}
-  .btn.primary{color:#fff;background:linear-gradient(135deg,var(--accent),var(--purple));box-shadow:0 8px 24px rgba(88,166,255,.25)}
-  .btn.primary:hover{filter:brightness(1.07)}
-  .btn.ghost{color:var(--text);border:1px solid var(--border);background:var(--panel)}
-  .btn.ghost:hover{border-color:var(--accent)}
-  .feedback{text-align:center;color:var(--muted);font-size:14px;margin-top:22px}
-  .feedback a{color:var(--accent);font-weight:600;text-decoration:none}
-  .feedback a:hover{text-decoration:underline}
-  .trust{text-align:center;color:var(--muted);font-size:12.5px;margin-top:10px}
-  footer{border-top:1px solid var(--border);margin-top:56px;padding:22px 0 40px}
-  footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;font-size:12.5px;color:var(--muted)}
-  footer a{color:var(--muted);text-decoration:none} footer a:hover{color:var(--text)}
-  @media(max-width:560px){ h1{font-size:38px} .hero{padding:34px 0 4px} }
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.5;-webkit-font-smoothing:antialiased}
+  a{color:inherit;text-decoration:none}
+  .container{max-width:1080px;margin:0 auto;padding:0 22px}
+  .mut{color:var(--muted)}
+
+  body::before{content:"";position:fixed;inset:0;z-index:-2;
+    background:
+      radial-gradient(60% 50% at 20% 0%,rgba(88,166,255,.16),transparent 60%),
+      radial-gradient(50% 45% at 85% 5%,rgba(163,113,247,.15),transparent 60%),
+      radial-gradient(45% 40% at 60% 30%,rgba(224,178,58,.08),transparent 60%);}
+
+  /* top bar */
+  .topbar{position:sticky;top:0;z-index:50;backdrop-filter:blur(12px);
+    background:rgba(11,14,20,.72);border-bottom:1px solid var(--border)}
+  .topbar .container{display:flex;align-items:center;justify-content:space-between;height:60px}
+  .brand{display:flex;align-items:center;gap:8px}
+.brand .mark{width:24px;height:24px;flex:none;display:block}
+.brandhome{display:inline-flex;align-items:center;gap:8px;text-decoration:none;color:inherit;cursor:pointer;transition:opacity .15s;position:relative}
+.brandhome:hover{opacity:.85}
+.brandhome[data-tip]::after{content:attr(data-tip);position:absolute;top:calc(100% + 9px);left:0;background:var(--panel);border:1px solid var(--border);color:var(--text);font-size:12px;font-weight:600;padding:5px 9px;border-radius:7px;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .14s;box-shadow:0 8px 22px rgba(0,0,0,.5);z-index:60}
+.brandhome:hover[data-tip]::after{opacity:1}
+  .brand .wm{font-weight:800;font-size:20px;letter-spacing:-.3px;color:var(--text)}
+  .brand .wm .q{color:var(--accent)}
+  .brand .wm .tld{color:var(--gold)}
+  .brand .cr{font-size:12px;font-weight:700;color:var(--accent);border:1px solid rgba(88,166,255,.4);border-radius:999px;padding:2px 9px;background:rgba(88,166,255,.08);letter-spacing:.03em;position:relative;top:2px}
+  .brand .beta{font-size:10px;font-weight:800;letter-spacing:.09em;color:#0b0e14;background:var(--gold);border-radius:999px;padding:2px 7px;position:relative;top:2px}
+  .topnav{display:flex;align-items:center;gap:22px;font-size:14px;font-weight:600}
+  .topnav a{color:var(--muted)} .topnav a:hover{color:var(--text)}
+  .topnav .back{font-size:13px;color:var(--muted);border:1px solid var(--border);border-radius:7px;padding:7px 13px;white-space:nowrap}
+  .topnav .back:hover{background:var(--panel);color:var(--text)}
+  .btn{display:inline-flex;align-items:center;gap:7px;border-radius:10px;padding:9px 16px;font-size:14px;font-weight:700;cursor:pointer;border:1px solid transparent}
+  .btn.primary{background:linear-gradient(135deg,var(--accent),var(--purple));color:#fff;box-shadow:0 6px 22px rgba(88,166,255,.28)}
+  .btn.primary:hover{filter:brightness(1.08)}
+
+  /* HERO */
+  .hero{position:relative;overflow:hidden;padding:66px 0 20px}
+  .hero h1{font-size:52px;line-height:1.04;font-weight:850;letter-spacing:-1.2px;margin:0 0 18px;max-width:760px}
+  .hero h1 .grad{background:linear-gradient(100deg,#7cc0ff,#a371f7 55%,#e0b23a);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .hero p.lede{font-size:18px;color:#c4cfdd;max-width:620px;margin:0 0 26px}
+  .searchwrap{display:flex;gap:10px;max-width:640px;margin-bottom:14px}
+  .search{flex:1;display:flex;align-items:center;gap:10px;background:var(--panel);border:1px solid var(--border);border-radius:13px;padding:13px 16px;box-shadow:0 8px 30px rgba(0,0,0,.35)}
+  .search:focus-within{border-color:var(--accent)}
+  .search input{flex:1;background:none;border:none;outline:none;color:var(--text);font-size:15.5px;font-family:inherit}
+  .search .ic{font-size:16px;opacity:.7}
+  .trustline{font-size:13px;color:var(--muted)}
+  .trustline b{color:var(--green)}
+  .heroquick{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+  .qk{font-size:12.5px;color:var(--muted);border:1px solid var(--border);border-radius:999px;padding:5px 12px;cursor:pointer}
+  .qk:hover{border-color:var(--accent);color:var(--text)}
+
+  /* cover wall marquee: contained to center column, fades at edges */
+  .wall{margin-top:46px;position:relative;overflow:hidden;padding:10px 0}
+  .wall::before,.wall::after{content:"";position:absolute;top:0;bottom:0;width:110px;z-index:2;pointer-events:none}
+  .wall::before{left:0;background:linear-gradient(90deg,var(--bg),transparent)}
+  .wall::after{right:0;background:linear-gradient(270deg,var(--bg),transparent)}
+  .marquee{display:flex;gap:14px;width:max-content;will-change:transform}
+  .marquee.play{animation:slide 42s linear infinite}
+  .marquee.rev{margin-top:14px}
+  .marquee.rev.play{animation-direction:reverse;animation-duration:52s}
+  .wall:hover .marquee.play{animation-play-state:paused}
+  @keyframes slide{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+  .cover{width:132px;height:176px;border-radius:12px;flex:none;position:relative;overflow:hidden;
+    box-shadow:0 8px 22px rgba(0,0,0,.5), inset 0 0 0 1px rgba(255,255,255,.06);cursor:pointer;transition:transform .18s}
+  .cover:hover{transform:translateY(-4px) scale(1.02)}
+  .cover .cgenre{position:absolute;top:12px;left:13px;right:13px;font-size:9px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.52)}
+  .cover .ct{position:absolute;left:0;right:0;bottom:0;padding:13px 13px 13px;font-size:14.5px;font-weight:800;line-height:1.15;
+    background:linear-gradient(180deg,transparent,rgba(0,0,0,.5))}
+  .cover .cc{display:block;font-size:10.5px;font-weight:600;color:rgba(255,255,255,.72);margin-top:3px}
+
+  section.blk{padding:56px 0}
+  .eyebrow{font-size:12px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);margin-bottom:10px}
+  h2.sec{font-size:30px;font-weight:800;letter-spacing:-.5px;margin:0 0 8px}
+  .secsub{color:var(--muted);font-size:15px;margin:0 0 26px;max-width:640px}
+  .rowhead{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:22px}
+  .rowhead a.more{font-size:13.5px;font-weight:700;color:var(--accent)}
+  /* the featured-profile section: tighten the gap above it, open up the gap below its header */
+  #devs{padding-top:34px}
+  #devs .rowhead{margin-bottom:38px}
+
+  /* stat strip */
+  .statslead{font-size:13px;color:var(--muted);font-style:italic;margin:44px 0 12px}
+  .stats{display:flex;flex-wrap:wrap;gap:14px;border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:22px 0}
+  .stat{flex:1;min-width:170px}
+  .stat b{display:block;font-size:32px;font-weight:850;letter-spacing:-.5px;
+    background:linear-gradient(120deg,#eef3fa,#9db4d0);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .stat.hl b{background:linear-gradient(120deg,#7cc0ff,#a371f7);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .stat span{font-size:13px;color:var(--muted)}
+
+  /* trending game cards */
+  .gcards{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+  .gcard{background:var(--panel);border:1px solid var(--border);border-radius:14px;overflow:hidden;cursor:pointer;transition:border-color .16s,transform .16s}
+  .gcard:hover{border-color:var(--accent);transform:translateY(-3px)}
+  .gcard .art{height:120px;position:relative}
+  .gcard .art .genre{position:absolute;top:13px;left:15px;font-size:9.5px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.6)}
+  .gcard .art .bigt{position:absolute;left:15px;right:15px;bottom:12px;font-size:17px;font-weight:850;letter-spacing:-.3px;line-height:1.1;text-shadow:0 2px 10px rgba(0,0,0,.4)}
+  .gcard .body{padding:12px 15px 15px}
+  .gcard .gm{font-size:12px;color:var(--muted)}
+  .gcard .gstat{margin-top:9px;font-size:12.5px;color:var(--muted)}
+  .gcard .gstat b{color:var(--accent)}
+
+  /* dev spotlight cards */
+  .dcards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  .dcard{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:18px;position:relative;overflow:hidden}
+  .dcard .halo{position:absolute;top:-40px;right:-40px;width:120px;height:120px;border-radius:50%;filter:blur(30px);opacity:.5}
+  .dcard .av{width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:19px;color:#0b0e14}
+  .dcard .nm{font-weight:800;font-size:16px;margin-top:12px}
+  .dcard .rl{font-size:12.5px;color:var(--muted)}
+  .dcard .verified{color:var(--green);font-size:12px;font-weight:700}
+  .dcard .titles{margin-top:12px;display:flex;flex-direction:column;gap:6px}
+  .dcard .tl{font-size:12.5px;color:#c4cfdd;display:flex;justify-content:space-between}
+  .dcard .tl .v{color:var(--green);font-size:11.5px}
+  .dcard .skills{margin-top:12px}
+  .skchip{display:inline-block;font-size:11px;color:var(--accent);border:1px solid rgba(88,166,255,.3);background:rgba(88,166,255,.08);border-radius:999px;padding:2px 9px;margin:2px 4px 0 0}
+  /* redesigned profile-preview card (mirrors the live person page) */
+  .dcard .hl{font-size:12px;color:var(--muted);margin-top:3px;line-height:1.35}
+  .dcard .hlst{font-size:12px;color:#c4cfdd;margin-top:1px;line-height:1.35}
+  .dcard .snap{font-size:11.5px;color:#c4cfdd;margin-top:9px;font-variant-numeric:tabular-nums}
+  .dcard .gocred{margin-top:13px;display:flex;flex-direction:column;gap:10px}
+  .dcard .cr .crtop{font-size:12.5px;font-weight:700;color:#e6edf5;display:flex;align-items:center;flex-wrap:wrap;gap:6px}
+  .dcard .cr .crrole{font-size:11.5px;color:var(--gold);font-weight:700;margin-top:1px}
+  .dcard .cv{color:var(--green);font-size:11px;font-weight:700;margin-left:auto;white-space:nowrap}
+  .dpill{font-size:10px;font-weight:700;border-radius:5px;padding:1px 6px;color:var(--purple);border:1px solid rgba(163,113,247,.35);background:rgba(163,113,247,.09)}
+  .dpill.live{color:var(--green);border-color:rgba(63,185,80,.35);background:rgba(63,185,80,.09)}
+  .dpill.port{color:var(--accent);border-color:rgba(88,166,255,.35);background:rgba(88,166,255,.09)}
+  /* profile-preview cards mirror the real profile: no pills, green seal, muted worked-on */
+  .crg{color:var(--accent);font-weight:700}
+  .dseal{display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;border-radius:50%;background:var(--green);color:#0b0e14;font-size:9px;font-weight:800;line-height:1;vertical-align:middle}
+  .dseal.peer{background:var(--accent);color:#04122b} .dseal.team{background:var(--green);color:#04220f}
+  .dwork{font-size:11px;color:var(--muted);margin-top:2px}
+  .dverify{font-size:11.5px;font-weight:600;color:var(--green);background:rgba(63,185,80,.08);border:1px solid rgba(63,185,80,.28);border-radius:8px;padding:5px 10px;margin-top:11px}
+
+  /* featured profile: one real profile shown the way its live page looks (cover hero + timeline) */
+  .featframe{background:var(--panel);border:1px solid var(--border);border-radius:18px;overflow:hidden;position:relative;max-width:760px;margin-left:0;margin-right:auto}
+  .ftint{position:absolute;top:-70px;right:-50px;width:230px;height:230px;border-radius:50%;filter:blur(48px);opacity:.32;pointer-events:none;z-index:0}
+  .fhead{display:flex;align-items:center;gap:13px;padding:16px 20px 13px;border-bottom:1px solid var(--border);position:relative;z-index:1;flex-wrap:wrap}
+  .fav{width:46px;height:46px;flex:none;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:17px;color:#0b0e14}
+  .fident{min-width:0;flex:1}
+  .fname{font-weight:800;font-size:17px;letter-spacing:-.3px}
+  .fhl{font-size:13px;color:var(--muted);margin-top:2px}
+  .fhl b{color:#c4cfdd;font-weight:600}
+  .fmeta{display:flex;gap:8px;flex-wrap:wrap;margin-top:9px}
+  .fchip{font-size:11.5px;font-weight:600;color:#c4cfdd;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:999px;padding:3px 11px;font-variant-numeric:tabular-nums}
+  .fchip.vf{color:var(--green);border-color:rgba(63,185,80,.3);background:rgba(63,185,80,.08)}
+  .fview{margin-left:auto;font-size:13px;font-weight:700;color:var(--accent);white-space:nowrap;align-self:center}
+  .fbody{padding:16px 20px 20px;position:relative;z-index:1}
+  .feyebrow{font-size:10.5px;letter-spacing:1.4px;text-transform:uppercase;color:var(--muted);font-weight:700;margin:0 0 10px}
+  .feathero{display:grid;grid-template-columns:repeat(3,1fr);gap:13px}
+  .ftile{text-decoration:none;color:inherit;display:block}
+  .fcov{position:relative;aspect-ratio:2/3;border-radius:13px;overflow:hidden;background:#141b26;box-shadow:0 8px 22px rgba(0,0,0,.5),inset 0 0 0 1px rgba(255,255,255,.06);transition:transform .14s ease,box-shadow .14s ease}
+  .ftile:hover .fcov{transform:translateY(-4px);box-shadow:0 16px 34px rgba(0,0,0,.6),inset 0 0 0 1px rgba(255,255,255,.13)}
+  .fcov img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1}
+  .fph{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:14px;text-align:center;font-size:12.5px;font-weight:800;letter-spacing:.11em;text-transform:uppercase;color:rgba(255,255,255,.30);line-height:1.3}
+  .fscrim{position:absolute;left:0;right:0;bottom:0;z-index:2;padding:30px 11px 10px;background:linear-gradient(to top,rgba(4,7,12,.96) 12%,rgba(4,7,12,.70) 55%,transparent);pointer-events:none}
+  .ftt{display:block;color:#fff;font-weight:750;font-size:13.5px;line-height:1.2;margin-bottom:3px;overflow-wrap:break-word}
+  .fmt{display:block;color:var(--gold);font-weight:700;font-size:11px;line-height:1.3}
+  .fsub{display:block;color:#8b98a9;font-size:10.5px;margin-top:3px;font-variant-numeric:tabular-nums}
+  .fvb{position:absolute;top:8px;right:8px;z-index:3;width:21px;height:21px;border-radius:50%;background:rgba(63,185,80,.95);color:#04220f;font-size:12.5px;font-weight:900;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 5px rgba(0,0,0,.5)}
+  .fvb.peer{background:rgba(88,166,255,.96);color:#04122b} .fvb.team{background:rgba(63,185,80,.96);color:#04220f}
+  .ftl{margin-top:6px}
+  .ftlrow{display:grid;grid-template-columns:52px 20px 1fr;align-items:start}
+  .ftlyear{font-variant-numeric:tabular-nums;font-weight:800;font-size:14px;color:var(--accent);padding-top:2px}
+  .ftlrail{position:relative;display:flex;justify-content:center;align-self:stretch}
+  .ftlrail::before{content:"";position:absolute;top:0;bottom:0;width:2px;background:var(--border)}
+  .ftlrow:first-child .ftlrail::before{top:10px}
+  .ftlrow:last-child .ftlrail::before{bottom:auto;height:10px}
+  .ftldot{position:relative;z-index:1;width:10px;height:10px;border-radius:50%;background:var(--accent);margin-top:6px;box-shadow:0 0 0 4px var(--panel)}
+  .ftlcard{display:flex;gap:12px;align-items:center;padding:0 0 16px 12px;min-width:0}
+  .ftlthumb{position:relative;flex:none;width:40px;aspect-ratio:2/3;border-radius:6px;overflow:hidden;background:#141b26;box-shadow:0 3px 9px rgba(0,0,0,.5),inset 0 0 0 1px rgba(255,255,255,.06);display:block}
+  .ftlthumb img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+  .ftlph{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:3px;text-align:center;font-size:7px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:rgba(255,255,255,.32);line-height:1.2}
+  .ftlbody{min-width:0}
+  .ftlname{font-weight:750;font-size:14px;color:#e6edf5;display:flex;align-items:center;gap:6px}
+  .ftlrole{font-size:12px;color:var(--muted);margin-top:1px}
+  .ftldotmore{background:var(--panel);border:2px solid var(--accent);box-sizing:border-box;width:9px;height:9px;opacity:.85}
+  .ftlmore{align-self:start;font-size:13px;font-weight:700;color:var(--accent);text-decoration:none;padding:1px 0 4px 12px;display:inline-flex;align-items:center;gap:5px}
+  .ftlmore:hover{text-decoration:underline}
+  @media(max-width:600px){.feathero{grid-template-columns:1fr 1fr}}
+
+  /* how it works */
+  .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+  .step{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:22px}
+  .step .num{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:800;
+    background:linear-gradient(135deg,var(--accent),var(--purple));color:#fff;margin-bottom:14px}
+  .step h4{margin:0 0 6px;font-size:16px}
+  .step p{margin:0;font-size:13.5px;color:var(--muted)}
+
+  /* manifesto */
+  .manifesto{background:linear-gradient(135deg,rgba(88,166,255,.1),rgba(163,113,247,.08));border:1px solid var(--border);border-radius:20px;padding:44px}
+  .manifesto h2{font-size:28px;font-weight:800;letter-spacing:-.5px;margin:0 0 14px;max-width:720px}
+  .manifesto p{font-size:15.5px;color:#c4cfdd;max-width:730px;margin:0 0 10px}
+  .manifesto p b{color:var(--text)}
+
+  /* CTA band */
+  .cta{text-align:center;background:linear-gradient(135deg,#131a2a,#0d1017);border:1px solid var(--border);border-radius:20px;padding:52px 24px;position:relative;overflow:hidden}
+  .cta .glow{position:absolute;top:-60px;left:50%;transform:translateX(-50%);width:340px;height:200px;background:radial-gradient(closest-side,rgba(88,166,255,.35),transparent);filter:blur(20px)}
+  .cta h2{font-size:32px;font-weight:850;letter-spacing:-.6px;margin:0 0 10px}
+  .cta p{color:var(--muted);margin:0 0 22px;font-size:15px}
+
+  footer{border-top:1px solid var(--border);padding:34px 0;margin-top:50px;color:var(--muted);font-size:13px}
+  footer .container{display:flex;justify-content:space-between;flex-wrap:wrap;gap:14px}
+  footer a:hover{color:var(--text)}
+
+  .concept{position:fixed;bottom:14px;left:14px;z-index:80;font-size:11px;color:var(--muted);background:rgba(11,14,20,.85);border:1px solid var(--border);border-radius:8px;padding:6px 10px}
+
+  @media(max-width:860px){
+    .hero h1{font-size:38px}.gcards{grid-template-columns:repeat(2,1fr)}
+    .dcards{grid-template-columns:1fr}.steps{grid-template-columns:1fr}.topnav a:not(.back){display:none}
+  }
+  @media(max-width:600px){
+    .container{padding:0 14px}
+    .topbar .container{height:54px}
+    .brand .wm{font-size:18px}
+    .topnav{gap:12px}
+    .topnav .claimcta{display:none}
+    .hero{padding:34px 0 24px}
+    .hero h1{font-size:31px;letter-spacing:-.6px;margin-bottom:14px}
+    .hero p.lede{font-size:15.5px;margin-bottom:20px}
+    .searchwrap{gap:8px}
+    .wall{margin-top:30px}.cover{width:108px;height:144px}.cover .ct{font-size:13px}
+    section.blk{padding:32px 0}
+    h2.sec{font-size:23px}
+    .secsub{font-size:14px;margin-bottom:18px}
+    .rowhead{margin-bottom:16px}
+    .stats{gap:10px;padding:18px 0}.stat{min-width:calc(50% - 10px)}.stat b{font-size:26px}
+    .gcards{gap:12px}.gcard .art{height:104px}
+    .gcards .gcard:nth-child(n+5){display:none}
+    .manifesto{padding:26px;border-radius:16px}.manifesto h2{font-size:22px}.manifesto p{font-size:14.5px}
+    .cta{padding:36px 18px}.cta h2{font-size:24px}.cta p{font-size:14px}
+    footer{margin-top:34px;padding:26px 0}
+    .concept{display:none}
+  }
+  @media(max-width:440px){
+    .brand .cr,.brand .beta{display:none}
+    .brand .wm{font-size:16px}
+    .gcards{grid-template-columns:1fr}
+    .stat{min-width:100%}
+    .hero h1{font-size:27px}
+  }
 </style>
 </head>
 <body>
-<div class="bar"></div>
-<div class="wrap">
-  <div class="brand">
-    <svg class="mark" viewBox="0 0 32 32" aria-hidden="true"><rect x="1" y="1" width="8" height="8" rx="2" fill="var(--gold)"/><rect x="12" y="1" width="8" height="8" rx="2" fill="#2d333b"/><rect x="23" y="1" width="8" height="8" rx="2" fill="#2d333b"/><rect x="1" y="12" width="8" height="8" rx="2" fill="#2d333b"/><rect x="12" y="12" width="8" height="8" rx="2" fill="var(--gold)"/><rect x="23" y="12" width="8" height="8" rx="2" fill="#2d333b"/><rect x="1" y="23" width="8" height="8" rx="2" fill="#2d333b"/><rect x="12" y="23" width="8" height="8" rx="2" fill="#2d333b"/><rect x="23" y="23" width="8" height="8" rx="2" fill="var(--gold)"/></svg>
-    <span class="wm">Dev<span class="q">Quest</span><span class="tld">.gg</span></span><span class="cr">CREDITS</span>
+<div class="topbar"><div class="container">
+  <div class="brand"><a class="brandhome" href="/credits/" data-tip="Back to Credits home" aria-label="DevQuest Credits home" onclick="if(event.metaKey||event.ctrlKey||event.shiftKey)return true;var h=location.origin+'/credits/';location.href===h?location.reload():location.assign(h);return false;"><svg class="mark" viewBox="0 0 32 32" aria-hidden="true"><rect x="1" y="1" width="8" height="8" rx="2" fill="var(--gold)"/><rect x="12" y="1" width="8" height="8" rx="2" fill="#2d333b"/><rect x="23" y="1" width="8" height="8" rx="2" fill="#2d333b"/><rect x="1" y="12" width="8" height="8" rx="2" fill="#2d333b"/><rect x="12" y="12" width="8" height="8" rx="2" fill="var(--gold)"/><rect x="23" y="12" width="8" height="8" rx="2" fill="#2d333b"/><rect x="1" y="23" width="8" height="8" rx="2" fill="#2d333b"/><rect x="12" y="23" width="8" height="8" rx="2" fill="#2d333b"/><rect x="23" y="23" width="8" height="8" rx="2" fill="var(--gold)"/></svg><span class="wm">Dev<span class="q">Quest</span><span class="tld">.gg</span></span></a> <span class="cr">CREDITS</span> <span class="beta">BETA</span></div>
+  <div class="topnav">
+    <a href="search.html?tab=games">Games</a><a href="search.html?tab=studios">Studios</a><a href="search.html?tab=people">People</a><a href="#how">How it works</a>
+    <a class="back" href="/">← Jobs board</a>
+  </div>
+</div></div>
+
+<!-- HERO -->
+<div class="hero"><div class="container">
+  <div class="eyebrow">The credit developers deserve</div>
+  <h1>Every game. Every dev.<br><span class="grad">Properly credited.</span></h1>
+  <p class="lede">Not another wiki you can't edit. Your gameography, owned by you. Claim the games you've built and let the peers you've shipped with vouch for them. Document your career.</p>
+  <div class="searchwrap">
+    <div class="search"><span class="ic">🔍</span><input id="hs" placeholder="Search a game, a studio, or your own name..." autocomplete="off"></div>
+    <span class="btn primary" id="hsbtn">Search</span>
+  </div>
+  <div class="trustline">Completely free · opt-in · <b>your data is exportable and yours</b></div>
+  <div class="heroadd" style="margin-top:13px;font-size:14.5px"><span class="mut">Shipped games already?</span> <a id="startprofile" style="color:var(--accent);font-weight:700;cursor:pointer">Start your profile →</a> <span class="mut" style="font-size:12.5px">· takes about a minute</span></div>
+
+  <!-- cover wall -->
+  <div class="wall">
+    <div class="marquee" id="m1"></div>
+    <div class="marquee rev" id="m2"></div>
   </div>
 
-  <div class="hero">
-    <span class="pill">◆ &nbsp;By invitation &nbsp;·&nbsp; Early access</span>
-    <h1>You're invited to<br><span class="grad">DevQuest Credits.</span></h1>
-    <div class="from" id="fromline">An early look, for people who get it.</div>
-    <p class="lede">Thanks for engaging with DevQuest.gg. Credits is our new feature in development: a place where <b>the person who did the work owns the record of it</b>. You're one of a small group we're inviting to try it early, and we'd genuinely love your eyes on it.</p>
-
-    <div class="points">
-      <div class="pt"><span class="n">1</span><div><div class="t">Claim the games you made</div><div class="s">Search your name, claim your credits, add the ones the official record missed.</div></div></div>
-      <div class="pt"><span class="n">2</span><div><div class="t">Let your teammates confirm them</div><div class="s">The people you shipped with vouch for your work. Peer-confirmed, not self-declared.</div></div></div>
-      <div class="pt"><span class="n">3</span><div><div class="t">Keep it, wherever you go</div><div class="s">Opt-in, exportable, and yours. It outlives any studio, any layoff, and even us.</div></div></div>
-    </div>
-
-    <div class="cta">
-      <a class="btn primary" href="/credits/">Set up your credits →</a>
-      <a class="btn ghost" href="/credits/how-evidence-works.html">See how it works</a>
-    </div>
-    <div class="feedback">Tried it? We're building this in the open and your feedback shapes it. <a href="https://tally.so/r/NpQWol" target="_blank" rel="noopener">Share your thoughts →</a></div>
-    <div class="trust">Completely free · opt-in · your data is exportable and yours.</div>
+  <!-- stats: cold-start-safe (seeded catalogue scale, unclaimed framed as opportunity) -->
+  <div class="statslead">The catalogue is seeded from public records (CC0, via Wikidata). Developers claim their own credits and add the ones missing.</div>
+  <div class="stats">
+    <div class="stat hl"><b data-to="0" id="st-games">0</b><span>games catalogued</span></div>
+    <div class="stat"><b data-to="0" id="st-studios">0</b><span>studios</span></div>
+    <div class="stat"><b data-to="0" id="st-credits">0</b><span>credits added by developers</span></div>
+    <div class="stat"><b data-to="0" id="st-vouches">0</b><span>peer confirmations</span></div>
   </div>
-</div>
+  <div style="text-align:center;margin-top:26px"><a class="more" href="search.html" id="allgames" style="font-size:15px">Browse all games →</a></div>
+</div></div>
 
-<footer><div class="wrap">
+<!-- DEV SPOTLIGHT -->
+<section class="blk" id="devs"><div class="container">
+  <div class="rowhead">
+    <div><div class="eyebrow">The people</div><h2 class="sec">What a claimed profile looks like</h2>
+      <p class="secsub" style="margin:0">Not a résumé bullet: a cover-rich, peer-confirmed page owned by the person who did the work. A real one from the catalogue, refresh to see another.</p></div>
+    <a class="more" href="search.html?tab=people">Browse people →</a>
+  </div>
+  <div class="featframe" id="featwrap"><div class="fbody"><div style="color:var(--muted);padding:16px 2px">Loading a profile…</div></div></div>
+</div></section>
+
+<!-- HOW IT WORKS -->
+<section class="blk" id="how"><div class="container">
+  <div class="eyebrow">Dead simple</div><h2 class="sec">Claim yours in 30 seconds</h2>
+  <p class="secsub">No account, no password, no résumé builder. Just proof you made what you made.</p>
+  <div class="steps">
+    <div class="step"><div class="num">1</div><h4>Find your game</h4><p>Search the catalogue for a game you shipped. If a teammate already added you, your name is there too, ready to claim.</p></div>
+    <div class="step"><div class="num">2</div><h4>Claim with a link</h4><p>Tap "I worked on this game," verify an email once, and a magic link lets you edit forever. That's the whole signup.</p></div>
+    <div class="step"><div class="num">3</div><h4>Peers vouch</h4><p>Colleagues who shipped the same game confirm your role in one click. Trust you can point a recruiter at.</p></div>
+  </div>
+</div></section>
+
+<!-- MANIFESTO -->
+<section class="blk"><div class="container">
+  <div class="manifesto">
+    <div class="eyebrow">Why we're building this</div>
+    <h2>Your gameography, finally yours to own.</h2>
+    <p>Existing catalogues like MobyGames and IGDB are edited around you, not by you, and a game's own credits are the studio's call: real work gets downgraded to "Special Thanks," miscredited, or cut after a layoff. Live-service games make it worse, shipping for years with no credits to point to at all. No existing site lets the person who did the work own the record of it.</p>
+    <p>DevQuest Credits flips that. <b>The person who did the work owns the record of it.</b> You claim the games you actually made, the teammates who were there confirm it, and it stays yours: opt-in, peer-confirmed, and openly licensed, so it outlives any studio, any layoff, and even us.</p>
+    <p style="margin-top:10px"><a href="/credits/how-evidence-works.html" style="color:var(--accent);font-weight:700">See how confirmation works, and the rules behind it →</a></p>
+  </div>
+</div></section>
+
+<!-- CTA -->
+<section class="blk"><div class="container">
+  <div class="cta"><div class="glow"></div>
+    <h2>Your work deserves your name on it.</h2>
+    <p>Find your credits, claim your page, and take it with you wherever you go next.</p>
+    <span class="btn primary claimcta" style="font-size:15px;padding:12px 22px">Claim your credits</span>
+  </div>
+</div></section>
+
+<footer><div class="container">
   <div><b style="color:var(--text)">DevQuest.gg / Credits</b> · a companion to the game-industry job board</div>
-  <div><a href="/credits/">Credits home →</a></div>
+  <div><a href="/">← Back to jobs</a> &nbsp;·&nbsp; <a href="#">Open data &amp; exports</a> &nbsp;·&nbsp; <a href="https://igda.org/sigs/credits/" target="_blank" rel="noopener">IGDA crediting guidelines ↗</a> &nbsp;·&nbsp; <a href="mailto:studios@devquest.gg?subject=DevQuest%20Credits%20feedback&body=Bug%2C%20idea%2C%20or%20just%20a%20thought%3A%0A%0A">Feedback</a></div>
 </div></footer>
 
+<script src="api.js?v=20260716"></script>
+<script src="app.js?v=20260716"></script>
 <script>
-  // Personalize the invite when shared as /credits/welcome/?by=Their+Name
-  try {
-    var by = new URLSearchParams(location.search).get('by');
-    if (by) { by = by.replace(/[<>]/g,'').trim().slice(0,60);
-      if (by) document.getElementById('fromline').textContent = 'A personal invitation from ' + by + '.'; }
-  } catch(e){}
+  // Cover wall (m1/m2) is populated below from the real data/site/home.json (well-known games).
+  // The old hardcoded COVERS/GAMES placeholder blocks were removed: the games grid was cut, and
+  // its leftover render threw on the missing #gcards element, halting the whole script.
+
+  // ---- Featured profile: one REAL claimed profile, rendered the way its live page looks
+  //      (a cover-art hero row + a career timeline), reshuffled to a new developer per refresh.
+  //      Covers come free from Steam capsules and admin covers, same pipeline as the person page.
+  function dEsc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+  function dShuffle(a){ a=a.slice(); for(var i=a.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)),t=a[i];a[i]=a[j];a[j]=t; } return a; }
+  function fHash(s){ s=String(s||''); var h=0; for(var i=0;i<s.length;i++){ h=(h*31+s.charCodeAt(i))|0; } return h; }
+  var FEATEL=document.getElementById('featwrap');
+  var FCOLORS=['#58a6ff','#a371f7','#3fb950','#e0b23a','#f778ba'];
+  var STEAMCAP='https://cdn.cloudflare.steamstatic.com/steam/apps/';
+  function coverSrc(c){ return c.cover ? DQ.safeUrl(c.cover) : (c.steam ? STEAMCAP+encodeURIComponent(c.steam)+'/library_600x900.jpg' : ''); }
+  function hasCover(c){ return !!coverSrc(c); }
+  function fHeroTile(c){
+    var src=coverSrc(c);
+    var art='<span class="fph">'+dEsc(c.game_title)+'</span>'+(src?'<img loading="lazy" referrerpolicy="no-referrer" src="'+dEsc(src)+'" onerror="this.remove()" alt="">':'');
+    var vb=c.vouch_count?'<span class="fvb '+(c.vouch_count>=2?'team':'peer')+'" title="'+(c.vouch_count>=2?'Team-confirmed':'Peer-confirmed')+' by teammates who shipped this game">✓</span>':'';
+    var meta=(c.studio?dEsc(c.studio)+'  ·  ':'')+(c.year?c.year:'—');
+    return '<a class="ftile" href="/credits/game/'+encodeURIComponent(c.game_slug)+'"><div class="fcov">'+art+vb+
+      '<div class="fscrim"><b class="ftt">'+dEsc(c.game_title)+'</b><span class="fmt">'+dEsc(c.role||'Role not recorded')+'</span><span class="fsub">'+meta+'</span></div></div></a>';
+  }
+  function fTlRow(c){
+    var src=coverSrc(c);
+    var thumb='<span class="ftlph">'+dEsc(c.game_title)+'</span>'+(src?'<img loading="lazy" referrerpolicy="no-referrer" src="'+dEsc(src)+'" onerror="this.remove()" alt="">':'');
+    var seal=c.vouch_count?' <span class="dseal '+(c.vouch_count>=2?'team':'peer')+'" title="'+(c.vouch_count>=2?'Team-confirmed':'Peer-confirmed')+' by a teammate">✓</span>':'';
+    return '<div class="ftlrow"><div class="ftlyear">'+(c.year||'—')+'</div><div class="ftlrail"><span class="ftldot"></span></div>'+
+      '<div class="ftlcard"><a class="ftlthumb" href="/credits/game/'+encodeURIComponent(c.game_slug)+'">'+thumb+'</a>'+
+      '<div class="ftlbody"><div class="ftlname">'+dEsc(c.game_title)+seal+'</div><div class="ftlrole">'+dEsc(c.role||'Role not recorded')+'</div></div></div></div>';
+  }
+  function fTlMoreRow(n, slug){
+    return '<div class="ftlrow ftlmorerow"><div class="ftlyear"></div><div class="ftlrail"><span class="ftldot ftldotmore"></span></div>'+
+      '<a class="ftlmore" href="/credits/'+encodeURIComponent(slug)+'">··· and '+n+' more '+(n===1?'title':'titles')+' →</a></div>';
+  }
+  function fRender(p, credits){
+    if(!FEATEL) return;
+    var initials=String(p.name||'?').trim().split(/\s+/).slice(0,2).map(function(w){return w[0]||'';}).join('').toUpperCase();
+    var color=FCOLORS[Math.abs(fHash(p.slug||p.name))%FCOLORS.length];
+    var h=String(p.headline||'').trim(), ai=h.toLowerCase().lastIndexOf(' at ');
+    var title=ai>0?h.slice(0,ai):(h||'Developer'), studio=ai>0?h.slice(ai+4):'';
+    var total=credits.length, verified=credits.filter(function(c){return c.vouch_count;}).length;
+    // Collapse expansions the person also holds under their base game (don't show them as separate
+    // rows in this preview), and order by when they WORKED on each title, not by release year.
+    var _ownBySlug={}; credits.forEach(function(c){ if(c.game_slug) _ownBySlug[c.game_slug]=1; });
+    var baseCredits=credits.filter(function(c){ return !(c.parent_slug && _ownBySlug[c.parent_slug]); });
+    var hero=baseCredits.filter(hasCover).concat(baseCredits.filter(function(c){return !hasCover(c);})).slice(0,3);
+    var tlSorted=baseCredits.slice().sort(function(a,b){ return ((a.work_start||a.year||9999)-(b.work_start||b.year||9999)) || String(a.game_title).localeCompare(String(b.game_title)); });
+    var tl=tlSorted.slice(0,6), tlMore=tlSorted.length-tl.length;
+    var vchip=verified?'<span class="fchip vf">✓ '+verified+' of '+total+' confirmed</span>':'';
+    FEATEL.innerHTML=
+      '<div class="ftint" style="background:radial-gradient(closest-side,'+color+',transparent)"></div>'+
+      '<div class="fhead"><div class="fav" style="background:'+color+'">'+dEsc(initials)+'</div>'+
+        '<div class="fident"><div class="fname">'+dEsc(p.name)+'</div>'+
+          '<div class="fhl"><b>'+dEsc(title)+'</b>'+(studio?' · '+dEsc(studio):'')+'</div>'+
+          '<div class="fmeta"><span class="fchip">'+total+' shipped '+(total===1?'title':'titles')+'</span>'+vchip+'</div></div>'+
+        '<a class="fview" href="/credits/'+encodeURIComponent(p.slug)+'">View full profile →</a></div>'+
+      '<div class="fbody"><div class="feyebrow">Proudest work</div>'+
+        '<div class="feathero">'+hero.map(fHeroTile).join('')+'</div>'+
+        (tl.length>1?'<div class="feyebrow" style="margin-top:22px">Career timeline</div><div class="ftl">'+tl.map(fTlRow).join('')+(tlMore>0?fTlMoreRow(tlMore,p.slug):'')+'</div>':'')+
+      '</div>';
+  }
+  // Enrich a person's credits with cover art + release year from the static shards and admin
+  // covers (the exact pipeline the live person page uses). Mutates and resolves the array.
+  function fEnrich(cr){
+    var slugs=cr.map(function(c){return c.game_slug;});
+    var pc=(slugs.length&&window.DQAPI&&DQAPI.gameCovers)?DQAPI.gameCovers(slugs).then(function(rr){return (rr.data&&rr.data.covers)||{};}).catch(function(){return {};}):Promise.resolve({});
+    var ps=Promise.all(cr.map(function(c){ return DQ.loadEntity('games',c.game_slug).then(function(gg){ if(gg){ if(c.year==null&&gg.year!=null)c.year=gg.year; if(gg.steam)c.steam=gg.steam; if(gg.cover)c.cover=gg.cover; } }).catch(function(){}); }));
+    return Promise.all([pc,ps]).then(function(rz){ var cov=rz[0]||{}; cr.forEach(function(c){ if(cov[c.game_slug]) c.cover=cov[c.game_slug]; }); return cr; });
+  }
+  // Sample shown instantly (real games with cover art) so the section never flashes empty;
+  // upgraded to a live random profile the moment the spotlight pool resolves.
+  var SAMPLE={ p:{name:'Destin Bales', slug:'destin-bales', headline:'Director of Development Management at Insomniac Games'},
+    cr:[ {game_slug:'tom-clancys-rainbow-six-siege', game_title:"Tom Clancy's Rainbow Six Siege", role:'Vice President of Production', studio:'Ubisoft Montreal', year:2015, steam:'359550', vouch_count:0},
+         {game_slug:'dark-age-of-camelot', game_title:'Dark Age of Camelot', role:'Producer', studio:'Mythic Entertainment', year:2001, cover:'https://devquest-credits-api.balesdestin.workers.dev/img?u=https%3A%2F%2Fassets-prd.ignimgs.com%2F2023%2F06%2F27%2Fcamelot-1687898259037.jpg%3Fcrop%3D1%253A1%252Csmart%26format%3Djpg%26auto%3Dwebp%26quality%3D80&s=zf5mP6NFpFvcCmT6ReM2kudlzwakjllICfzywGZdOWE', vouch_count:2},
+         {game_slug:'league-of-legends', game_title:'League of Legends', role:'Senior Producer', studio:'Riot Games', year:2009, cover:'https://devquest-credits-api.balesdestin.workers.dev/img?u=https%3A%2F%2Fi.pinimg.com%2F736x%2F20%2F54%2Fb6%2F2054b617ac11f24e23d62e05f85303d4.jpg&s=ehROCXB2JywmVlzEJ8NNIFRYaBt3UyFvFJaPKQkaSa8', vouch_count:1} ] };
+  fRender(SAMPLE.p, SAMPLE.cr);
+  // Prefer a profile whose every title has cover art (no placeholder tiles). But NEVER get stuck
+  // on the sample: if no fully-covered profile turns up in the pool, fall back to the best real
+  // profile we saw (the one with the most covers), so the card always shows a live developer.
+  function fBaseOf(cr){ var own={}; cr.forEach(function(c){ if(c.game_slug) own[c.game_slug]=1; }); return cr.filter(function(c){ return !(c.parent_slug && own[c.parent_slug]); }); }
+  function fAllCovered(cr){ var b=fBaseOf(cr); return b.length>=2 && b.every(hasCover); }
+  function fCoverScore(cr){ return fBaseOf(cr).filter(hasCover).length; }
+  if(window.DQAPI && DQAPI.spotlight && FEATEL){
+    DQAPI.spotlight().then(function(r){
+      var pool=dShuffle((r&&r.ok&&r.data&&r.data.people)||[]);
+      if(!pool.length) return; // keep the sample
+      var tried=0, MAXTRY=8, best=null, bestScore=0;
+      function attempt(i){
+        if(i>=pool.length || tried>=MAXTRY){ if(best) fRender(best.p, best.cr); return; } // fall back to the most-covered real profile
+        tried++;
+        DQAPI.personCredits(pool[i].slug).then(function(pr){
+          var d=(pr&&pr.data)||{}, per=d.person, cr=(d.credits||[]);
+          if(!per||per.hidden||!cr.length){ return attempt(i+1); }
+          fEnrich(cr).then(function(){
+            var pp={name:per.name, slug:per.slug, headline:per.headline||pool[i].headline||''};
+            if(fAllCovered(cr)){ fRender(pp, cr); return; }              // ideal: every tile has art
+            var sc=fCoverScore(cr);
+            if(fBaseOf(cr).length>=2 && sc>bestScore){ best={p:pp, cr:cr}; bestScore=sc; } // remember best fallback
+            attempt(i+1);
+          });
+        }).catch(function(){ attempt(i+1); });
+      }
+      attempt(0);
+    }).catch(function(){});
+  }
+
+  // ---- animated counters ----
+  // Only ever animate a stat once it has a real (>0) target AND is in view, so a
+  // slow/failed data load can never leave it counting up to a fake zero.
+  var statsInView=false;
+  function countUp(el,to){
+    var start=null,dur=1200;
+    function step(ts){if(!start)start=ts;var p=Math.min((ts-start)/dur,1);
+      el.textContent=Math.floor((1-Math.pow(1-p,3))*to).toLocaleString();
+      if(p<1)requestAnimationFrame(step); else el.textContent=to.toLocaleString();}
+    requestAnimationFrame(step);
+  }
+  function runCounters(){
+    if(!statsInView) return;
+    document.querySelectorAll('.stat b[data-to]').forEach(function(el){
+      var to=+el.dataset.to||0;
+      if(to>0 && !el._done){ el._done=true; countUp(el,to); }
+    });
+  }
+  var io=new IntersectionObserver(function(es){es.forEach(function(e){
+    if(e.isIntersecting){ statsInView=true; io.unobserve(e.target); runCounters(); }});},{threshold:.3});
+  document.querySelectorAll('.stat b[data-to]').forEach(function(el){io.observe(el);});
+
+  // ---- search: live combined dropdown + see-all button ----
+  var hsIn=document.getElementById('hs');
+  var suggest=(window.DQ&&DQ.attachSuggest)?DQ.attachSuggest(hsIn):null;
+  function goSearch(){ if(suggest){suggest.seeAll();return;} var q=hsIn.value.trim();location.href='search.html'+(q?'?q='+encodeURIComponent(q):''); }
+  document.getElementById('hsbtn').addEventListener('click',goSearch);
+  if(!suggest){ hsIn.addEventListener('keydown',function(e){if(e.key==='Enter')goSearch();}); }
+  // "Claim your credits" buttons → jump to the search box (finding your name is step one).
+  document.querySelectorAll('.claimcta').forEach(function(b){ b.style.cursor='pointer'; b.addEventListener('click',function(){ window.scrollTo({top:0,behavior:'smooth'}); if(hsIn){ setTimeout(function(){ hsIn.focus(); },350); } }); });
+  // Identity-first entry: open the add-a-game/claim flow (which materializes the profile).
+  var _sp=document.getElementById('startprofile');
+  if(_sp) _sp.addEventListener('click',function(){ if(window.DQ&&DQ.openClaim) DQ.openClaim({mode:'addGame'}); });
+
+  // ---- real data overlay (stats + fresh games) when the built site data exists ----
+  function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+  var PAL=[["#b23a48","#3a1720"],["#e0662a","#3a1a10"],["#7b3fb0","#1c1030"],["#4aa5e0","#10233a"],["#c8a23a","#2a2210"],["#4caf50","#12331a"],["#2a6fb0","#0f1c30"],["#3a8fb0","#10283a"],["#5a5fb0","#161a30"],["#c02a5a","#300f1c"]];
+  function grad(str){var h=0;for(var i=0;i<str.length;i++)h=(h*31+str.charCodeAt(i))>>>0;var p=PAL[h%PAL.length];return 'linear-gradient(160deg,'+p[0]+','+p[1]+')';}
+  function setStat(id,val){var el=document.getElementById(id);if(el){el.dataset.to=val;runCounters();}}
+
+  // Catalogue counts (games, studios) come from the static build; the developer
+  // credit count is live from the API (the static file only ever saw seed data).
+  fetch('data/site/stats.json?t='+Date.now()).then(function(r){return r.ok?r.json():null;}).then(function(s){
+    if(!s)return; setStat('st-games',s.games); setStat('st-studios',s.studios);
+    var a=document.getElementById('allgames'); if(a)a.textContent='Browse all '+Number(s.games).toLocaleString()+' games →';
+  }).catch(function(){});
+  if(window.DQAPI&&DQAPI.stats){ DQAPI.stats().then(function(r){ if(r&&r.ok&&r.data){ setStat('st-credits', r.data.credits||0); setStat('st-vouches', r.data.vouches||0); } }).catch(function(){}); }
+
+  fetch('data/site/home.json?t='+Date.now()).then(function(r){return r.ok?r.json():null;}).then(function(h){
+    if(!h)return;
+    if(h.covers&&h.covers.length){
+      // [slug,title,year,studio,genre,art] — real box art when we have it (Steam capsule or an
+      // admin cover); the gradient stays as the card background so a missing/failed image just
+      // shows the typographic card instead of a blank.
+      function coverCard(c){
+        // Art sits on top (z-index) so the box art — which already has the title baked in — is all
+        // you see. The genre/title/studio overlays stay in the DOM only as a fallback: if the image
+        // ever fails, onerror removes it and the text shows over the gradient instead of a blank card.
+        var art=c[5]?'<img loading="lazy" referrerpolicy="no-referrer" src="'+esc(c[5])+'" onerror="this.remove()" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1">':'';
+        return '<a class="cover" href="/credits/game/'+encodeURIComponent(c[0])+'" style="background:'+grad(c[1])+'">'+
+          '<span class="cgenre">'+esc(c[4]||'Game')+'</span><div class="ct">'+esc(c[1])+
+          '<span class="cc">'+esc(c[3]|| (c[2]?('· '+c[2]):''))+'</span></div>'+art+'</a>';
+      }
+      var cov=h.covers.map(coverCard).join('');
+      document.getElementById('m1').innerHTML=cov+cov;
+      var rc=h.covers.slice().reverse().map(coverCard).join('');
+      document.getElementById('m2').innerHTML=rc+rc;
+      // Start the animation only AFTER the strips have content, so it measures the real width.
+      // Starting it while a strip was still empty is what left the top row "frozen" on mobile.
+      requestAnimationFrame(function(){ var a=document.getElementById('m1'), b=document.getElementById('m2'); if(a)a.classList.add('play'); if(b)b.classList.add('play'); });
+    }
+  }).catch(function(){});
 </script>
 </body>
 </html>
