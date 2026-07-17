@@ -199,6 +199,9 @@
   .ftlbody{min-width:0}
   .ftlname{font-weight:750;font-size:14px;color:#e6edf5;display:flex;align-items:center;gap:6px}
   .ftlrole{font-size:12px;color:var(--muted);margin-top:1px}
+  .ftldotmore{background:var(--panel);border:2px solid var(--accent);box-sizing:border-box;width:9px;height:9px;opacity:.85}
+  .ftlmore{align-self:start;font-size:13px;font-weight:700;color:var(--accent);text-decoration:none;padding:1px 0 4px 12px;display:inline-flex;align-items:center;gap:5px}
+  .ftlmore:hover{text-decoration:underline}
   @media(max-width:600px){.feathero{grid-template-columns:1fr 1fr}}
 
   /* how it works */
@@ -345,8 +348,8 @@
   <div><a href="/">← Back to jobs</a> &nbsp;·&nbsp; <a href="#">Open data &amp; exports</a> &nbsp;·&nbsp; <a href="https://igda.org/sigs/credits/" target="_blank" rel="noopener">IGDA crediting guidelines ↗</a> &nbsp;·&nbsp; <a href="mailto:studios@devquest.gg?subject=DevQuest%20Credits%20feedback&body=Bug%2C%20idea%2C%20or%20just%20a%20thought%3A%0A%0A">Feedback</a></div>
 </div></footer>
 
-<script src="api.js"></script>
-<script src="app.js"></script>
+<script src="api.js?v=20260716"></script>
+<script src="app.js?v=20260716"></script>
 <script>
   // Cover wall (m1/m2) is populated below from the real data/site/home.json (well-known games).
   // The old hardcoded COVERS/GAMES placeholder blocks were removed: the games grid was cut, and
@@ -379,6 +382,10 @@
       '<div class="ftlcard"><a class="ftlthumb" href="/credits/game/'+encodeURIComponent(c.game_slug)+'">'+thumb+'</a>'+
       '<div class="ftlbody"><div class="ftlname">'+dEsc(c.game_title)+seal+'</div><div class="ftlrole">'+dEsc(c.role||'Role not recorded')+'</div></div></div></div>';
   }
+  function fTlMoreRow(n, slug){
+    return '<div class="ftlrow ftlmorerow"><div class="ftlyear"></div><div class="ftlrail"><span class="ftldot ftldotmore"></span></div>'+
+      '<a class="ftlmore" href="/credits/'+encodeURIComponent(slug)+'">··· and '+n+' more '+(n===1?'title':'titles')+' →</a></div>';
+  }
   function fRender(p, credits){
     if(!FEATEL) return;
     var initials=String(p.name||'?').trim().split(/\s+/).slice(0,2).map(function(w){return w[0]||'';}).join('').toUpperCase();
@@ -391,7 +398,8 @@
     var _ownBySlug={}; credits.forEach(function(c){ if(c.game_slug) _ownBySlug[c.game_slug]=1; });
     var baseCredits=credits.filter(function(c){ return !(c.parent_slug && _ownBySlug[c.parent_slug]); });
     var hero=baseCredits.filter(hasCover).concat(baseCredits.filter(function(c){return !hasCover(c);})).slice(0,3);
-    var tl=baseCredits.slice().sort(function(a,b){ return ((a.work_start||a.year||9999)-(b.work_start||b.year||9999)) || String(a.game_title).localeCompare(String(b.game_title)); }).slice(0,6);
+    var tlSorted=baseCredits.slice().sort(function(a,b){ return ((a.work_start||a.year||9999)-(b.work_start||b.year||9999)) || String(a.game_title).localeCompare(String(b.game_title)); });
+    var tl=tlSorted.slice(0,6), tlMore=tlSorted.length-tl.length;
     var vchip=verified?'<span class="fchip vf">✓ '+verified+' of '+total+' confirmed</span>':'';
     FEATEL.innerHTML=
       '<div class="ftint" style="background:radial-gradient(closest-side,'+color+',transparent)"></div>'+
@@ -402,7 +410,7 @@
         '<a class="fview" href="/credits/'+encodeURIComponent(p.slug)+'">View full profile →</a></div>'+
       '<div class="fbody"><div class="feyebrow">Proudest work</div>'+
         '<div class="feathero">'+hero.map(fHeroTile).join('')+'</div>'+
-        (tl.length>1?'<div class="feyebrow" style="margin-top:22px">Career timeline</div><div class="ftl">'+tl.map(fTlRow).join('')+'</div>':'')+
+        (tl.length>1?'<div class="feyebrow" style="margin-top:22px">Career timeline</div><div class="ftl">'+tl.map(fTlRow).join('')+(tlMore>0?fTlMoreRow(tlMore,p.slug):'')+'</div>':'')+
       '</div>';
   }
   // Enrich a person's credits with cover art + release year from the static shards and admin
