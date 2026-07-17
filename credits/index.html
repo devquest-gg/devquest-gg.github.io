@@ -429,26 +429,29 @@
          {game_slug:'dark-age-of-camelot', game_title:'Dark Age of Camelot', role:'Producer', studio:'Mythic Entertainment', year:2001, cover:'https://devquest-credits-api.balesdestin.workers.dev/img?u=https%3A%2F%2Fassets-prd.ignimgs.com%2F2023%2F06%2F27%2Fcamelot-1687898259037.jpg%3Fcrop%3D1%253A1%252Csmart%26format%3Djpg%26auto%3Dwebp%26quality%3D80&s=zf5mP6NFpFvcCmT6ReM2kudlzwakjllICfzywGZdOWE', vouch_count:2},
          {game_slug:'league-of-legends', game_title:'League of Legends', role:'Senior Producer', studio:'Riot Games', year:2009, cover:'https://devquest-credits-api.balesdestin.workers.dev/img?u=https%3A%2F%2Fi.pinimg.com%2F736x%2F20%2F54%2Fb6%2F2054b617ac11f24e23d62e05f85303d4.jpg&s=ehROCXB2JywmVlzEJ8NNIFRYaBt3UyFvFJaPKQkaSa8', vouch_count:1} ] };
   fRender(SAMPLE.p, SAMPLE.cr);
-  // Only feature a profile whose EVERY displayed title has cover art, so the card never
-  // shows a text placeholder. Collapse expansions first (same as fRender), then require
-  // every base credit to have a cover. Scan the shuffled pool until one qualifies; if none
-  // do, keep the (fully-covered) sample rather than show a card with gaps.
+  // Prefer a profile whose every title has cover art (no placeholder tiles). But NEVER get stuck
+  // on the sample: if no fully-covered profile turns up in the pool, fall back to the best real
+  // profile we saw (the one with the most covers), so the card always shows a live developer.
   function fBaseOf(cr){ var own={}; cr.forEach(function(c){ if(c.game_slug) own[c.game_slug]=1; }); return cr.filter(function(c){ return !(c.parent_slug && own[c.parent_slug]); }); }
   function fAllCovered(cr){ var b=fBaseOf(cr); return b.length>=2 && b.every(hasCover); }
+  function fCoverScore(cr){ return fBaseOf(cr).filter(hasCover).length; }
   if(window.DQAPI && DQAPI.spotlight && FEATEL){
     DQAPI.spotlight().then(function(r){
       var pool=dShuffle((r&&r.ok&&r.data&&r.data.people)||[]);
       if(!pool.length) return; // keep the sample
-      var tried=0, MAXTRY=8;
+      var tried=0, MAXTRY=8, best=null, bestScore=0;
       function attempt(i){
-        if(i>=pool.length || tried>=MAXTRY) return; // none fully covered: keep the clean sample
+        if(i>=pool.length || tried>=MAXTRY){ if(best) fRender(best.p, best.cr); return; } // fall back to the most-covered real profile
         tried++;
         DQAPI.personCredits(pool[i].slug).then(function(pr){
           var d=(pr&&pr.data)||{}, per=d.person, cr=(d.credits||[]);
           if(!per||per.hidden||!cr.length){ return attempt(i+1); }
           fEnrich(cr).then(function(){
-            if(fAllCovered(cr)) fRender({name:per.name, slug:per.slug, headline:per.headline||pool[i].headline||''}, cr);
-            else attempt(i+1);
+            var pp={name:per.name, slug:per.slug, headline:per.headline||pool[i].headline||''};
+            if(fAllCovered(cr)){ fRender(pp, cr); return; }              // ideal: every tile has art
+            var sc=fCoverScore(cr);
+            if(fBaseOf(cr).length>=2 && sc>bestScore){ best={p:pp, cr:cr}; bestScore=sc; } // remember best fallback
+            attempt(i+1);
           });
         }).catch(function(){ attempt(i+1); });
       }
