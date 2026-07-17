@@ -421,12 +421,12 @@
     var ps=Promise.all(cr.map(function(c){ return DQ.loadEntity('games',c.game_slug).then(function(gg){ if(gg){ if(c.year==null&&gg.year!=null)c.year=gg.year; if(gg.steam)c.steam=gg.steam; if(gg.cover)c.cover=gg.cover; } }).catch(function(){}); }));
     return Promise.all([pc,ps]).then(function(rz){ var cov=rz[0]||{}; cr.forEach(function(c){ if(cov[c.game_slug]) c.cover=cov[c.game_slug]; }); return cr; });
   }
-  // Sample shown instantly (real games with Steam covers) so the section never flashes empty;
+  // Sample shown instantly (real games with cover art) so the section never flashes empty;
   // upgraded to a live random profile the moment the spotlight pool resolves.
   var SAMPLE={ p:{name:'Destin Bales', slug:'destin-bales', headline:'Director of Development Management at Insomniac Games'},
     cr:[ {game_slug:'tom-clancys-rainbow-six-siege', game_title:"Tom Clancy's Rainbow Six Siege", role:'Vice President of Production', studio:'Ubisoft Montreal', year:2015, steam:'359550', vouch_count:0},
          {game_slug:'hogwarts-legacy', game_title:'Hogwarts Legacy', role:'Production Director', studio:'Avalanche Software', year:2023, steam:'990080', vouch_count:1},
-         {game_slug:'marvels-spider-man-remastered', game_title:"Marvel's Spider-Man Remastered", role:'Production Director', studio:'Insomniac Games', year:2022, steam:'1817070', vouch_count:1} ] };
+         {game_slug:'league-of-legends', game_title:'League of Legends', role:'Senior Producer', studio:'Riot Games', year:2009, cover:'https://devquest-credits-api.balesdestin.workers.dev/img?u=https%3A%2F%2Fi.pinimg.com%2F736x%2F20%2F54%2Fb6%2F2054b617ac11f24e23d62e05f85303d4.jpg&s=ehROCXB2JywmVlzEJ8NNIFRYaBt3UyFvFJaPKQkaSa8', vouch_count:1} ] };
   fRender(SAMPLE.p, SAMPLE.cr);
   // Only feature a profile whose EVERY displayed title has cover art, so the card never
   // shows a text placeholder. Collapse expansions first (same as fRender), then require
