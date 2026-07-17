@@ -1029,11 +1029,24 @@
       var statSVG=stats.map(function(s,i){ var x=sxs[i];
         return '<text x="'+x+'" y="566" text-anchor="middle" font-family="'+F+'" font-size="74" font-weight="800" fill="url(#g1)">'+X(s[0])+'</text>'+
                '<text x="'+x+'" y="602" text-anchor="middle" font-family="'+F+'" font-size="21" fill="#8b98a9">'+X(s[1])+'</text>'; }).join('');
-      // "N credits peer-confirmed" = credits with at least one peer vouch (max = your count). Hidden at 0.
+      // Confirmation pills, side by side and centered: green "peer-confirmed" (credits with >=1
+      // vouch) + purple "published match" (credits corroborated by the published record). Each
+      // hidden at 0, so a card with neither shows nothing.
       var vN=credits.filter(function(c){ return c.vouch_count>0; }).length;
-      var vouch=''; if(vN>0){ var vt='✓ '+vN+' credit'+(vN===1?'':'s')+' peer-confirmed', vpw=Math.round(vt.length*12.2)+40, vpx=cx-vpw/2;
-        vouch='<rect x="'+vpx+'" y="446" width="'+vpw+'" height="40" rx="20" fill="#3fb950" fill-opacity="0.14" stroke="#3fb950" stroke-opacity="0.5"/>'+
-              '<text x="'+cx+'" y="472" text-anchor="middle" font-family="'+F+'" font-size="21" font-weight="700" fill="#3fb950">'+vt+'</text>'; }
+      var cN=credits.filter(function(c){ return c.corroborated; }).length;
+      var vouch=''; (function(){
+        var pills=[];
+        if(vN>0) pills.push({t:'✓ '+vN+' peer-confirmed', col:'#3fb950'});
+        if(cN>0) pills.push({t:'◈ '+cN+' published match'+(cN===1?'':'es'), col:'#a371f7'});
+        if(!pills.length) return;
+        var gap=16, pw=pills.map(function(p){ return Math.round(p.t.length*11.4)+36; });
+        var tot=pw.reduce(function(a,b){ return a+b; },0)+gap*(pills.length-1), px=cx-tot/2;
+        pills.forEach(function(p,i){
+          vouch+='<rect x="'+px+'" y="446" width="'+pw[i]+'" height="40" rx="20" fill="'+p.col+'" fill-opacity="0.14" stroke="'+p.col+'" stroke-opacity="0.5"/>'+
+                 '<text x="'+(px+pw[i]/2)+'" y="472" text-anchor="middle" font-family="'+F+'" font-size="20" font-weight="700" fill="'+p.col+'">'+X(p.t)+'</text>';
+          px+=pw[i]+gap;
+        });
+      })();
       var rangeLine = relRange ? '<text x="'+cx+'" y="414" text-anchor="middle" font-family="'+F+'" font-size="21" fill="#8b98a9">'+(minY===maxY?'Shipped in ':'Shipping ')+X(relRange)+'</text>' : '';
       var heroFrames = HERO_SLOTS.map(function(s){ return '<rect x="'+s.x+'" y="'+s.y+'" width="'+s.w+'" height="'+s.h+'" rx="14" fill="#1b2130" stroke="#2d333b" stroke-width="1.5"/>'; }).join('');
       var restFrames = REST_SLOTS.map(function(s){ return '<rect x="'+s.x+'" y="'+s.y+'" width="'+s.w+'" height="'+s.h+'" rx="10" fill="#1b2130" stroke="#2d333b" stroke-width="1.25"/>'; }).join('');

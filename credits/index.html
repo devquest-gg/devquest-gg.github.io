@@ -83,10 +83,12 @@
   .wall::before,.wall::after{content:"";position:absolute;top:0;bottom:0;width:110px;z-index:2;pointer-events:none}
   .wall::before{left:0;background:linear-gradient(90deg,var(--bg),transparent)}
   .wall::after{right:0;background:linear-gradient(270deg,var(--bg),transparent)}
-  .marquee{display:flex;gap:14px;width:max-content;animation:slide 42s linear infinite}
-  .marquee.rev{animation-direction:reverse;animation-duration:52s;margin-top:14px}
-  .wall:hover .marquee{animation-play-state:paused}
-  @keyframes slide{to{transform:translateX(-50%)}}
+  .marquee{display:flex;gap:14px;width:max-content;will-change:transform}
+  .marquee.play{animation:slide 42s linear infinite}
+  .marquee.rev{margin-top:14px}
+  .marquee.rev.play{animation-direction:reverse;animation-duration:52s}
+  .wall:hover .marquee.play{animation-play-state:paused}
+  @keyframes slide{from{transform:translateX(0)}to{transform:translateX(-50%)}}
   .cover{width:132px;height:176px;border-radius:12px;flex:none;position:relative;overflow:hidden;
     box-shadow:0 8px 22px rgba(0,0,0,.5), inset 0 0 0 1px rgba(255,255,255,.06);cursor:pointer;transition:transform .18s}
   .cover:hover{transform:translateY(-4px) scale(1.02)}
@@ -299,6 +301,7 @@
     <div class="stat hl"><b data-to="0" id="st-games">0</b><span>games catalogued</span></div>
     <div class="stat"><b data-to="0" id="st-studios">0</b><span>studios</span></div>
     <div class="stat"><b data-to="0" id="st-credits">0</b><span>credits added by developers</span></div>
+    <div class="stat"><b data-to="0" id="st-vouches">0</b><span>peer confirmations</span></div>
   </div>
   <div style="text-align:center;margin-top:26px"><a class="more" href="search.html" id="allgames" style="font-size:15px">Browse all games →</a></div>
 </div></div>
@@ -505,7 +508,7 @@
     if(!s)return; setStat('st-games',s.games); setStat('st-studios',s.studios);
     var a=document.getElementById('allgames'); if(a)a.textContent='Browse all '+Number(s.games).toLocaleString()+' games →';
   }).catch(function(){});
-  if(window.DQAPI&&DQAPI.stats){ DQAPI.stats().then(function(r){ if(r&&r.ok&&r.data){ setStat('st-credits', r.data.credits||0); } }).catch(function(){}); }
+  if(window.DQAPI&&DQAPI.stats){ DQAPI.stats().then(function(r){ if(r&&r.ok&&r.data){ setStat('st-credits', r.data.credits||0); setStat('st-vouches', r.data.vouches||0); } }).catch(function(){}); }
 
   fetch('data/site/home.json?t='+Date.now()).then(function(r){return r.ok?r.json():null;}).then(function(h){
     if(!h)return;
@@ -526,6 +529,9 @@
       document.getElementById('m1').innerHTML=cov+cov;
       var rc=h.covers.slice().reverse().map(coverCard).join('');
       document.getElementById('m2').innerHTML=rc+rc;
+      // Start the animation only AFTER the strips have content, so it measures the real width.
+      // Starting it while a strip was still empty is what left the top row "frozen" on mobile.
+      requestAnimationFrame(function(){ var a=document.getElementById('m1'), b=document.getElementById('m2'); if(a)a.classList.add('play'); if(b)b.classList.add('play'); });
     }
   }).catch(function(){});
 </script>
