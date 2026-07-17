@@ -289,7 +289,6 @@
   </div>
   <div class="trustline">Completely free · opt-in · <b>your data is exportable and yours</b></div>
   <div class="heroadd" style="margin-top:13px;font-size:14.5px"><span class="mut">Shipped games already?</span> <a id="startprofile" style="color:var(--accent);font-weight:700;cursor:pointer">Start your profile →</a> <span class="mut" style="font-size:12.5px">· takes about a minute</span></div>
-  <div class="heroadd" style="margin-top:7px;font-size:13.5px"><span class="mut">On MobyGames?</span> <a id="mobyimport" style="color:var(--accent);font-weight:700;cursor:pointer">Import your credits in one step →</a></div>
 
   <!-- cover wall -->
   <div class="wall">
@@ -497,8 +496,6 @@
   // Identity-first entry: open the add-a-game/claim flow (which materializes the profile).
   var _sp=document.getElementById('startprofile');
   if(_sp) _sp.addEventListener('click',function(){ if(window.DQ&&DQ.openClaim) DQ.openClaim({mode:'addGame'}); });
-  var _mi=document.getElementById('mobyimport');
-  if(_mi) _mi.addEventListener('click',function(){ if(window.DQ&&DQ.openMobyImport) DQ.openMobyImport(); });
 
   // ---- real data overlay (stats + fresh games) when the built site data exists ----
   function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}

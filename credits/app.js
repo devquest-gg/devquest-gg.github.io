@@ -949,7 +949,7 @@
 
   w.DQ = {
     bkt: bkt, qs: qs, getJSON: getJSON, loadEntity: loadEntity, loadIndex: loadIndex, openReport: openReport,
-    rank: rank, searchRows: searchRows, attachSuggest: attachSuggest, openClaim: openClaim, openSuggest: openSuggest, openVouchRequest: openVouchRequest, openVouchConfirm: openVouchConfirm, openMobyImport: openMobyImport,
+    rank: rank, searchRows: searchRows, attachSuggest: attachSuggest, openClaim: openClaim, openSuggest: openSuggest, openVouchRequest: openVouchRequest, openVouchConfirm: openVouchConfirm,
     discipline: discipline, DISCIPLINE_ORDER: DISCIPLINE_ORDER,
     uniq: uniq, releaseClass: releaseClass,
     esc: esc, safeUrl: safeUrl, initials: initials, slugify: slugify,
