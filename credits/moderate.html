@@ -376,59 +376,100 @@
       }).catch(function(){ btn.textContent="Save list"; st.innerHTML='<span style="color:var(--pink)">Network error.</span>'; });
     };
   }
-  // ---- Seed a profile: pre-create an UNCLAIMED profile (pending credits) an admin can seed ----
+  // ---- Seed a profile: pre-create an UNCLAIMED profile; games via catalogue title search ----
+  var SEED_CAT = null;      // lazy catalogue rows [slug,title,year,studio]
+  var seedPicked = [];      // [{slug,title,year,role}]
   function renderSeedPerson(){
     var inp='width:100%;box-sizing:border-box;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:9px 11px;color:var(--text);font-size:14px;font-family:inherit';
     app.insertAdjacentHTML("beforeend",
       '<div class="container"><section class="blk"><div class="eyebrow">Seed a profile</div>'+
       '<h2 class="sec">Pre-seed an unclaimed profile</h2>'+
-      '<p class="secsub">Create an <b>unclaimed</b> profile so a person finds themselves already listed and can claim it. Enter their name, then <b>one game per line</b> as <b>slug | Title | Role</b> (the slug is the last part of /credits/game/&lt;slug&gt;; Title and Role are optional). This creates pending credits under one claim link &mdash; nothing becomes a real, verified credit until the person claims it and a teammate confirms. Re-seeding the same name updates their bundle.</p>'+
+      '<p class="secsub">Create an <b>unclaimed</b> profile so a person finds themselves already listed and can claim it. Type their name, then <b>search each game by title</b> and pick it &mdash; the slug fills in for you. Nothing becomes a real, verified credit until the person claims it and a teammate confirms. Re-seeding the same name updates their bundle.</p>'+
       '<div class="panel" style="padding:16px 18px;max-width:660px">'+
         '<div style="font-size:12px;font-weight:700;margin-bottom:4px">Person name</div>'+
         '<input id="sp-name" placeholder="e.g. Chris Haga" style="'+inp+'">'+
-        '<div style="font-size:12px;font-weight:700;margin:12px 0 4px">Games <span class="mut" style="font-weight:400">&mdash; one per line: slug | Title | Role</span></div>'+
-        '<textarea id="sp-games" rows="8" placeholder="dark-age-of-camelot | Dark Age of Camelot | Producer&#10;rainbow-six-siege | Rainbow Six Siege | Production" style="'+inp+';line-height:1.5;resize:vertical;font-size:13.5px"></textarea>'+
-        '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">'+
+        '<div style="font-size:12px;font-weight:700;margin:14px 0 4px">Games</div>'+
+        '<div style="position:relative">'+
+          '<input id="sp-gsearch" autocomplete="off" placeholder="Search a game by title…" style="'+inp+'">'+
+          '<div id="sp-gac" style="display:none;position:absolute;z-index:20;left:0;right:0;top:calc(100% + 4px);background:var(--panel,#11161f);border:1px solid var(--border);border-radius:10px;max-height:260px;overflow:auto;box-shadow:0 12px 30px rgba(0,0,0,.4)"></div>'+
+        '</div>'+
+        '<div id="sp-glist" style="margin-top:10px;display:flex;flex-direction:column;gap:8px"></div>'+
+        '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px">'+
           '<div style="flex:1;min-width:170px"><div style="font-size:12px;font-weight:700;margin-bottom:4px">Source label</div><input id="sp-src" placeholder="e.g. MobyGames" style="'+inp+'"></div>'+
           '<div style="flex:2;min-width:220px"><div style="font-size:12px;font-weight:700;margin-bottom:4px">Source link <span class="mut" style="font-weight:400">(optional)</span></div><input id="sp-url" placeholder="https://www.mobygames.com/person/…" style="'+inp+'"></div>'+
         '</div>'+
         '<div style="display:flex;gap:8px;margin-top:14px"><span class="btn ghost" id="sp-load" style="padding:8px 14px;font-size:13px">Load current</span><span class="btn primary" id="sp-save" style="padding:8px 16px;font-size:13px">Seed profile</span></div>'+
         '<div id="sp-status" style="font-size:13px;margin-top:12px;min-height:16px"></div>'+
       '</div></section></div>');
+    if(window.DQ && DQ.loadIndex){ DQ.loadIndex("games").then(function(rows){ SEED_CAT=rows||[]; }).catch(function(){ SEED_CAT=[]; }); }
+    seedPicked = [];
     wireSeedPerson();
   }
 
+  function seedRenderList(){
+    var box=document.getElementById("sp-glist"); if(!box) return;
+    if(!seedPicked.length){ box.innerHTML='<div class="mut" style="font-size:12.5px">No games yet — search above and pick one.</div>'; return; }
+    box.innerHTML = seedPicked.map(function(g,i){
+      return '<div class="panel" style="padding:9px 11px;display:flex;gap:10px;align-items:center;background:var(--bg)">'+
+        '<div style="flex:1;min-width:0"><div style="font-weight:600;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+DQ.esc(g.title)+(g.year?' <span class="mut" style="font-weight:400">('+DQ.esc(g.year)+')</span>':'')+'</div>'+
+          '<div class="mut" style="font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+DQ.esc(g.slug)+'</div></div>'+
+        '<input class="sp-role" data-i="'+i+'" value="'+DQ.esc(g.role||"")+'" placeholder="Role (optional)" style="width:180px;background:var(--panel,#11161f);border:1px solid var(--border);border-radius:7px;padding:6px 9px;color:var(--text);font-size:12.5px;font-family:inherit">'+
+        '<span class="sp-del" data-i="'+i+'" title="Remove" style="cursor:pointer;color:var(--muted);font-size:18px;line-height:1;padding:0 4px">×</span>'+
+      '</div>';
+    }).join("");
+    Array.prototype.forEach.call(box.querySelectorAll(".sp-role"), function(ri){ ri.oninput=function(){ seedPicked[+ri.getAttribute("data-i")].role=ri.value; }; });
+    Array.prototype.forEach.call(box.querySelectorAll(".sp-del"), function(d){ d.onclick=function(){ seedPicked.splice(+d.getAttribute("data-i"),1); seedRenderList(); }; });
+  }
+
   function wireSeedPerson(){
-    var nameE=document.getElementById("sp-name"), gamesE=document.getElementById("sp-games"),
-        src=document.getElementById("sp-src"), urlE=document.getElementById("sp-url"),
-        st=document.getElementById("sp-status");
-    function parseGames(){
-      return gamesE.value.split(/\r?\n/).map(function(line){
-        var s=line.trim(); if(!s) return null;
-        var parts=s.split("|").map(function(x){ return x.trim(); });
-        var slug=parts[0]||""; if(!slug) return null;
-        return { game_slug:slug, game_title:parts[1]||slug, role:parts[2]||"" };
-      }).filter(Boolean);
+    var nameE=document.getElementById("sp-name"), gs=document.getElementById("sp-gsearch"), ac=document.getElementById("sp-gac"),
+        src=document.getElementById("sp-src"), urlE=document.getElementById("sp-url"), st=document.getElementById("sp-status");
+    seedRenderList();
+    var t;
+    function closeAc(){ ac.style.display="none"; ac.innerHTML=""; }
+    function pick(slug,title,year){
+      if(!slug) return;
+      if(!seedPicked.some(function(p){ return p.slug===slug; })) seedPicked.push({slug:slug,title:title||slug,year:year||null,role:""});
+      gs.value=""; closeAc(); seedRenderList();
     }
+    function runSearch(){
+      var q=gs.value.trim(); if(q.length<2){ closeAc(); return; }
+      var cat = SEED_CAT ? DQ.searchRows(SEED_CAT,1,q,8).rows : [];
+      var live = DQAPI.searchGames ? DQAPI.searchGames(q) : Promise.resolve({data:{games:[]}});
+      Promise.resolve(live).then(function(r){
+        var lg=((r&&r.data&&r.data.games)||[]).map(function(x){ return [x.slug,x.title,x.year,x.studio]; });
+        var seen={}, all=[];
+        cat.concat(lg).forEach(function(row){ var s=row[0]; if(s&&!seen[s]){ seen[s]=1; all.push(row); } });
+        all=all.slice(0,8);
+        if(!all.length){ ac.innerHTML='<div class="mut" style="padding:10px 12px;font-size:12.5px">No catalogue match. Check the title, or add the game on the site first.</div>'; ac.style.display="block"; return; }
+        ac.innerHTML=all.map(function(row){ return '<div class="sp-ac-item" data-slug="'+DQ.esc(row[0])+'" data-title="'+DQ.esc(row[1]||row[0])+'" data-year="'+DQ.esc(row[2]||"")+'" style="padding:9px 12px;cursor:pointer;border-bottom:1px solid var(--border)">'+
+          '<div style="font-weight:600;font-size:13.5px">'+DQ.esc(row[1]||row[0])+(row[2]?' <span class="mut" style="font-weight:400">('+DQ.esc(row[2])+')</span>':'')+'</div>'+
+          (row[3]?'<div class="mut" style="font-size:11.5px">'+DQ.esc(row[3])+'</div>':'')+'</div>'; }).join("");
+        ac.style.display="block";
+        Array.prototype.forEach.call(ac.querySelectorAll(".sp-ac-item"), function(it){ it.onmousedown=function(e){ e.preventDefault(); pick(it.getAttribute("data-slug"), it.getAttribute("data-title"), it.getAttribute("data-year")); }; });
+      });
+    }
+    gs.addEventListener("input", function(){ clearTimeout(t); t=setTimeout(runSearch, 200); });
+    gs.addEventListener("blur", function(){ setTimeout(closeAc, 150); });
     document.getElementById("sp-load").onclick=function(){
       var nm=nameE.value.trim(); if(!nm){ st.innerHTML='<span style="color:var(--pink)">Enter a name first.</span>'; return; }
       st.textContent="Loading…";
       DQAPI.adminGetSeededPerson(nm).then(function(r){
         if(!(r&&r.ok)){ st.innerHTML='<span style="color:var(--pink)">'+DQ.esc((r&&r.data&&r.data.error)||"Could not load.")+'</span>'; return; }
-        var d=r.data||{}, lines=(d.entries||[]).map(function(e){ return [e.game_slug, e.game_title||e.game_slug, e.role||""].join(" | "); });
-        gamesE.value=lines.join("\n"); src.value=d.source||""; urlE.value=d.source_url||"";
-        st.innerHTML=lines.length ? '<span class="mut">Loaded '+lines.length+' seeded game'+(lines.length===1?'':'s')+'.</span>' : '<span class="mut">No seed saved for this name yet.</span>';
+        var d=r.data||{}; seedPicked=(d.entries||[]).map(function(e){ return {slug:e.game_slug,title:e.game_title||e.game_slug,year:null,role:e.role||""}; });
+        src.value=d.source||""; urlE.value=d.source_url||""; seedRenderList();
+        st.innerHTML=seedPicked.length ? '<span class="mut">Loaded '+seedPicked.length+' seeded game'+(seedPicked.length===1?'':'s')+'.</span>' : '<span class="mut">No seed saved for this name yet.</span>';
       }).catch(function(){ st.innerHTML='<span style="color:var(--pink)">Network error.</span>'; });
     };
     document.getElementById("sp-save").onclick=function(){
       var nm=nameE.value.trim(); if(!nm){ st.innerHTML='<span style="color:var(--pink)">Enter a name.</span>'; return; }
-      var games=parseGames(); if(!games.length){ st.innerHTML='<span style="color:var(--pink)">Add at least one game (slug | Title | Role).</span>'; return; }
+      if(!seedPicked.length){ st.innerHTML='<span style="color:var(--pink)">Add at least one game (search by title above).</span>'; return; }
       var u=urlE.value.trim(); if(u && !/^https:\/\//i.test(u)){ st.innerHTML='<span style="color:var(--pink)">Source link must start with https://</span>'; return; }
+      var entries=seedPicked.map(function(g){ return { game_slug:g.slug, game_title:g.title, role:g.role||"" }; });
       var btn=document.getElementById("sp-save"); btn.textContent="Seeding…";
-      DQAPI.adminSeedPerson({ name:nm, source:src.value.trim(), source_url:u, entries:games }).then(function(r){
+      DQAPI.adminSeedPerson({ name:nm, source:src.value.trim(), source_url:u, entries:entries }).then(function(r){
         btn.textContent="Seed profile";
-        if(r&&r.ok){ var d=r.data||{};
-          st.innerHTML='<span style="color:var(--green)">✓ Seeded <b>'+d.count+'</b> game'+(d.count===1?'':'s')+' for <b>'+DQ.esc(nm)+'</b>. They now appear when someone searches that name. <a href="'+DQ.esc(d.claim_url||"#")+'" target="_blank" rel="noopener" style="color:var(--accent)">Open claim link ↗</a></span>'; }
+        if(r&&r.ok){ var d=r.data||{}; st.innerHTML='<span style="color:var(--green)">✓ Seeded <b>'+d.count+'</b> game'+(d.count===1?'':'s')+' for <b>'+DQ.esc(nm)+'</b>. They now appear when someone searches that name. <a href="'+DQ.esc(d.claim_url||"#")+'" target="_blank" rel="noopener" style="color:var(--accent)">Open claim link ↗</a></span>'; }
         else { st.innerHTML='<span style="color:var(--pink)">'+DQ.esc((r&&r.data&&r.data.error)||"Could not seed.")+'</span>'; }
       }).catch(function(){ btn.textContent="Seed profile"; st.innerHTML='<span style="color:var(--pink)">Network error.</span>'; });
     };
