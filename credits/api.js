@@ -77,5 +77,7 @@
     adminRemoveCredit: function (creditId) { return req("DELETE", "/admin/credit/" + creditId); },
     adminGetPublishedCredits: function (slug) { return req("GET", "/admin/published-credits?game=" + encodeURIComponent(slug)); },
     adminSetPublishedCredits: function (payload) { return req("POST", "/admin/published-credits", payload); },
+    adminGetSeededPerson: function (name) { return req("GET", "/admin/seed-person?name=" + encodeURIComponent(name)); },
+    adminSeedPerson: function (payload) { return req("POST", "/admin/seed-person", payload); },
   };
 })(window);
