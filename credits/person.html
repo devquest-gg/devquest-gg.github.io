@@ -235,11 +235,16 @@
       var cbtn = document.getElementById("claimun");
       if(cbtn) cbtn.onclick = function(){
         if(DQAPI.isSignedIn()){
+          var origLabel = cbtn.textContent;
           cbtn.textContent = "Claiming…";
           var i = 0, lastSlug = null;
           (function nextClaim(){
             if(i >= atts.length){ location.href = lastSlug ? ("/credits/person.html?slug=" + encodeURIComponent(lastSlug)) : "/credits/"; return; }
-            DQAPI.claimAttribution(atts[i].id).then(function(rr){ if(rr.ok && rr.data && rr.data.person_slug) lastSlug = rr.data.person_slug; i++; nextClaim(); }).catch(function(){ i++; nextClaim(); });
+            DQAPI.claimAttribution(atts[i].id).then(function(rr){
+              if(rr.ok){ if(rr.data && rr.data.person_slug) lastSlug = rr.data.person_slug; i++; nextClaim(); }
+              else if(lastSlug){ i++; nextClaim(); }
+              else { cbtn.textContent = origLabel; alert((rr.data && rr.data.error) || "Could not claim this page right now."); }
+            }).catch(function(){ if(lastSlug){ i++; nextClaim(); } else { cbtn.textContent = origLabel; alert("Network error. Try again."); } });
           })();
         } else {
           try{ localStorage.setItem("dq_pending_claim_name", disp); }catch(e){}
