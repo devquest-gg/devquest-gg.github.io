@@ -376,7 +376,8 @@
       }).catch(function(){ btn.textContent="Save list"; st.innerHTML='<span style="color:var(--pink)">Network error.</span>'; });
     };
   }
-  // ---- Seed a profile: pre-create an UNCLAIMED profile; games via catalogue title search ----
+  // ---- Seed a profile: pre-create an UNCLAIMED profile; games via catalogue title search,
+  // with the ability to add an off-catalogue game (title/year/studio/cover) on the fly ----
   var SEED_CAT = null;      // lazy catalogue rows [slug,title,year,studio]
   var seedPicked = [];      // [{slug,title,year,role}]
   function renderSeedPerson(){
@@ -384,14 +385,24 @@
     app.insertAdjacentHTML("beforeend",
       '<div class="container"><section class="blk"><div class="eyebrow">Seed a profile</div>'+
       '<h2 class="sec">Pre-seed an unclaimed profile</h2>'+
-      '<p class="secsub">Create an <b>unclaimed</b> profile so a person finds themselves already listed and can claim it. Type their name, then <b>search each game by title</b> and pick it &mdash; the slug fills in for you. Nothing becomes a real, verified credit until the person claims it and a teammate confirms. Re-seeding the same name updates their bundle.</p>'+
+      '<p class="secsub">Create an <b>unclaimed</b> profile so a person finds themselves already listed and can claim it. Type their name, then <b>search each game by title</b> and pick it. If a game is not in the catalogue, add it on the fly. Nothing becomes a real, verified credit until the person claims it and a teammate confirms. Re-seeding the same name updates their bundle.</p>'+
       '<div class="panel" style="padding:16px 18px;max-width:660px">'+
         '<div style="font-size:12px;font-weight:700;margin-bottom:4px">Person name</div>'+
-        '<input id="sp-name" placeholder="e.g. Chris Haga" style="'+inp+'">'+
+        '<input id="sp-name" placeholder="e.g. Abby LeMaster" style="'+inp+'">'+
         '<div style="font-size:12px;font-weight:700;margin:14px 0 4px">Games</div>'+
         '<div style="position:relative">'+
           '<input id="sp-gsearch" autocomplete="off" placeholder="Search a game by title…" style="'+inp+'">'+
           '<div id="sp-gac" style="display:none;position:absolute;z-index:20;left:0;right:0;top:calc(100% + 4px);background:var(--panel,#11161f);border:1px solid var(--border);border-radius:10px;max-height:260px;overflow:auto;box-shadow:0 12px 30px rgba(0,0,0,.4)"></div>'+
+        '</div>'+
+        '<div id="sp-newgame" style="display:none;margin-top:10px;border:1px solid var(--border);border-radius:10px;padding:12px 13px;background:var(--bg)">'+
+          '<div style="font-size:12.5px;font-weight:700;margin-bottom:8px">Add a game that is not in the catalogue</div>'+
+          '<div style="font-size:11px;font-weight:700;margin-bottom:3px">Title</div><input id="sp-ng-title" style="'+inp+'">'+
+          '<div style="display:flex;gap:8px;margin-top:8px">'+
+            '<div style="flex:1"><div style="font-size:11px;font-weight:700;margin-bottom:3px">Year</div><input id="sp-ng-year" placeholder="2024" style="'+inp+'"></div>'+
+            '<div style="flex:2"><div style="font-size:11px;font-weight:700;margin-bottom:3px">Studio</div><input id="sp-ng-studio" placeholder="e.g. Sony Interactive" style="'+inp+'"></div>'+
+          '</div>'+
+          '<div style="margin-top:8px"><div style="font-size:11px;font-weight:700;margin-bottom:3px">Cover image URL <span class="mut" style="font-weight:400">&mdash; direct .jpg/.png link, optional</span></div><input id="sp-ng-cover" placeholder="https://…/cover.jpg" style="'+inp+'"></div>'+
+          '<div style="display:flex;gap:8px;margin-top:10px;align-items:center"><span class="btn primary" id="sp-ng-add" style="padding:7px 14px;font-size:13px">Add game</span><span class="btn ghost" id="sp-ng-cancel" style="padding:7px 12px;font-size:13px">Cancel</span><span id="sp-ng-status" style="font-size:12px"></span></div>'+
         '</div>'+
         '<div id="sp-glist" style="margin-top:10px;display:flex;flex-direction:column;gap:8px"></div>'+
         '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px">'+
@@ -400,6 +411,7 @@
         '</div>'+
         '<div style="display:flex;gap:8px;margin-top:14px"><span class="btn ghost" id="sp-load" style="padding:8px 14px;font-size:13px">Load current</span><span class="btn primary" id="sp-save" style="padding:8px 16px;font-size:13px">Seed profile</span></div>'+
         '<div id="sp-status" style="font-size:13px;margin-top:12px;min-height:16px"></div>'+
+        '<div class="mut" style="font-size:12px;margin-top:10px">After seeding, set artwork in the <b>Cover art</b> section below &mdash; seeded games missing a cover now appear there too.</div>'+
       '</div></section></div>');
     if(window.DQ && DQ.loadIndex){ DQ.loadIndex("games").then(function(rows){ SEED_CAT=rows||[]; }).catch(function(){ SEED_CAT=[]; }); }
     seedPicked = [];
@@ -408,7 +420,7 @@
 
   function seedRenderList(){
     var box=document.getElementById("sp-glist"); if(!box) return;
-    if(!seedPicked.length){ box.innerHTML='<div class="mut" style="font-size:12.5px">No games yet — search above and pick one.</div>'; return; }
+    if(!seedPicked.length){ box.innerHTML='<div class="mut" style="font-size:12.5px">No games yet — search above and pick one, or add one that is not in the catalogue.</div>'; return; }
     box.innerHTML = seedPicked.map(function(g,i){
       return '<div class="panel" style="padding:9px 11px;display:flex;gap:10px;align-items:center;background:var(--bg)">'+
         '<div style="flex:1;min-width:0"><div style="font-weight:600;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+DQ.esc(g.title)+(g.year?' <span class="mut" style="font-weight:400">('+DQ.esc(g.year)+')</span>':'')+'</div>'+
@@ -423,7 +435,8 @@
 
   function wireSeedPerson(){
     var nameE=document.getElementById("sp-name"), gs=document.getElementById("sp-gsearch"), ac=document.getElementById("sp-gac"),
-        src=document.getElementById("sp-src"), urlE=document.getElementById("sp-url"), st=document.getElementById("sp-status");
+        src=document.getElementById("sp-src"), urlE=document.getElementById("sp-url"), st=document.getElementById("sp-status"),
+        ng=document.getElementById("sp-newgame");
     seedRenderList();
     var t;
     function closeAc(){ ac.style.display="none"; ac.innerHTML=""; }
@@ -432,6 +445,26 @@
       if(!seedPicked.some(function(p){ return p.slug===slug; })) seedPicked.push({slug:slug,title:title||slug,year:year||null,role:""});
       gs.value=""; closeAc(); seedRenderList();
     }
+    function openNewGame(title){
+      document.getElementById("sp-ng-title").value=title||"";
+      document.getElementById("sp-ng-year").value=""; document.getElementById("sp-ng-studio").value=""; document.getElementById("sp-ng-cover").value="";
+      document.getElementById("sp-ng-status").textContent="";
+      ng.style.display="block";
+    }
+    document.getElementById("sp-ng-cancel").onclick=function(){ ng.style.display="none"; };
+    document.getElementById("sp-ng-add").onclick=function(){
+      var tt=document.getElementById("sp-ng-title").value.trim(), yy=document.getElementById("sp-ng-year").value.trim(),
+          ss=document.getElementById("sp-ng-studio").value.trim(), cc=document.getElementById("sp-ng-cover").value.trim(),
+          ns=document.getElementById("sp-ng-status");
+      if(!tt){ ns.innerHTML='<span style="color:var(--pink)">Enter a title.</span>'; return; }
+      if(cc && !/^https:\/\//i.test(cc)){ ns.innerHTML='<span style="color:var(--pink)">Cover URL must start with https://</span>'; return; }
+      var btn=document.getElementById("sp-ng-add"); btn.textContent="Adding…";
+      DQAPI.adminAddGame({ title:tt, year:yy||null, studio:ss||null, cover_url:cc||null }).then(function(r){
+        btn.textContent="Add game";
+        if(r&&r.ok&&r.data&&r.data.slug){ pick(r.data.slug, r.data.title||tt, r.data.year||(yy||null)); ng.style.display="none"; }
+        else { ns.innerHTML='<span style="color:var(--pink)">'+DQ.esc((r&&r.data&&r.data.error)||"Could not add the game.")+'</span>'; }
+      }).catch(function(){ btn.textContent="Add game"; ns.innerHTML='<span style="color:var(--pink)">Network error.</span>'; });
+    };
     function runSearch(){
       var q=gs.value.trim(); if(q.length<2){ closeAc(); return; }
       var cat = SEED_CAT ? DQ.searchRows(SEED_CAT,1,q,8).rows : [];
@@ -441,12 +474,17 @@
         var seen={}, all=[];
         cat.concat(lg).forEach(function(row){ var s=row[0]; if(s&&!seen[s]){ seen[s]=1; all.push(row); } });
         all=all.slice(0,8);
-        if(!all.length){ ac.innerHTML='<div class="mut" style="padding:10px 12px;font-size:12.5px">No catalogue match. Check the title, or add the game on the site first.</div>'; ac.style.display="block"; return; }
-        ac.innerHTML=all.map(function(row){ return '<div class="sp-ac-item" data-slug="'+DQ.esc(row[0])+'" data-title="'+DQ.esc(row[1]||row[0])+'" data-year="'+DQ.esc(row[2]||"")+'" style="padding:9px 12px;cursor:pointer;border-bottom:1px solid var(--border)">'+
-          '<div style="font-weight:600;font-size:13.5px">'+DQ.esc(row[1]||row[0])+(row[2]?' <span class="mut" style="font-weight:400">('+DQ.esc(row[2])+')</span>':'')+'</div>'+
-          (row[3]?'<div class="mut" style="font-size:11.5px">'+DQ.esc(row[3])+'</div>':'')+'</div>'; }).join("");
+        var addItem='<div class="sp-ac-new" style="padding:10px 12px;cursor:pointer;color:var(--accent);font-weight:700;border-top:1px solid var(--border)">+ Add &ldquo;'+DQ.esc(q)+'&rdquo; as a new game</div>';
+        if(!all.length){
+          ac.innerHTML='<div class="mut" style="padding:10px 12px;font-size:12.5px">No catalogue match.</div>'+addItem;
+        } else {
+          ac.innerHTML=all.map(function(row){ return '<div class="sp-ac-item" data-slug="'+DQ.esc(row[0])+'" data-title="'+DQ.esc(row[1]||row[0])+'" data-year="'+DQ.esc(row[2]||"")+'" style="padding:9px 12px;cursor:pointer;border-bottom:1px solid var(--border)">'+
+            '<div style="font-weight:600;font-size:13.5px">'+DQ.esc(row[1]||row[0])+(row[2]?' <span class="mut" style="font-weight:400">('+DQ.esc(row[2])+')</span>':'')+'</div>'+
+            (row[3]?'<div class="mut" style="font-size:11.5px">'+DQ.esc(row[3])+'</div>':'')+'</div>'; }).join("")+addItem;
+        }
         ac.style.display="block";
         Array.prototype.forEach.call(ac.querySelectorAll(".sp-ac-item"), function(it){ it.onmousedown=function(e){ e.preventDefault(); pick(it.getAttribute("data-slug"), it.getAttribute("data-title"), it.getAttribute("data-year")); }; });
+        var newEl=ac.querySelector(".sp-ac-new"); if(newEl) newEl.onmousedown=function(e){ e.preventDefault(); closeAc(); openNewGame(q); };
       });
     }
     gs.addEventListener("input", function(){ clearTimeout(t); t=setTimeout(runSearch, 200); });
@@ -463,7 +501,7 @@
     };
     document.getElementById("sp-save").onclick=function(){
       var nm=nameE.value.trim(); if(!nm){ st.innerHTML='<span style="color:var(--pink)">Enter a name.</span>'; return; }
-      if(!seedPicked.length){ st.innerHTML='<span style="color:var(--pink)">Add at least one game (search by title above).</span>'; return; }
+      if(!seedPicked.length){ st.innerHTML='<span style="color:var(--pink)">Add at least one game (search by title above, or add a new game).</span>'; return; }
       var u=urlE.value.trim(); if(u && !/^https:\/\//i.test(u)){ st.innerHTML='<span style="color:var(--pink)">Source link must start with https://</span>'; return; }
       var entries=seedPicked.map(function(g){ return { game_slug:g.slug, game_title:g.title, role:g.role||"" }; });
       var btn=document.getElementById("sp-save"); btn.textContent="Seeding…";
