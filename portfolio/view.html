@@ -15,9 +15,16 @@
   .bar{height:3px;background:linear-gradient(90deg,var(--gold),var(--purple) 55%,var(--accent))}
   .nav{border-bottom:1px solid var(--border);background:rgba(10,13,20,.85);backdrop-filter:blur(8px);position:sticky;top:0;z-index:50}
   .nav .wrap{display:flex;align-items:center;justify-content:space-between;height:54px}
-  .brand{display:flex;align-items:center;gap:8px;font-weight:800;font-size:17px}
-  .brand .q{color:var(--accent)}.brand .tld{color:var(--gold)}
-  .brand .cr{font-size:10px;font-weight:800;letter-spacing:.2em;color:var(--accent);border:1px solid var(--border);border-radius:5px;padding:2px 6px;margin-left:4px}
+  .brand{display:flex;align-items:center;gap:8px}
+  .brand .mark{width:24px;height:24px;flex:none;display:block}
+  .brandhome{display:inline-flex;align-items:center;gap:8px;text-decoration:none;color:inherit;cursor:pointer;transition:opacity .15s}
+  .brandhome:hover{opacity:.85}
+  .brand .wm{font-weight:800;font-size:20px;letter-spacing:-.3px;color:var(--text)}
+  .brand .wm .q{color:var(--accent)}
+  .brand .wm .tld{color:var(--gold)}
+  .brand .cr{font-size:12px;font-weight:700;color:var(--accent);border:1px solid rgba(88,166,255,.4);border-radius:999px;padding:2px 9px;background:rgba(88,166,255,.08);letter-spacing:.03em;position:relative;top:1px}
+  .brand .beta{font-size:10px;font-weight:800;letter-spacing:.09em;color:#0b0e14;background:var(--gold);border-radius:999px;padding:2px 7px;position:relative;top:1px}
+  @media(max-width:560px){.brand .cr,.brand .beta{display:none}.brand .wm{font-size:17px}}
   .navlinks{display:flex;gap:18px;font-size:14px;color:var(--muted)}.navlinks a:hover{color:var(--text)}
 
   .hero{position:relative;overflow:hidden;border-bottom:1px solid var(--border)}
@@ -241,7 +248,7 @@
 </head>
 <body>
 <div class="bar"></div>
-<div class="nav"><div class="wrap"><div class="brand">Dev<span class="q">Quest</span><span class="tld">.gg</span><span class="cr">PORTFOLIO</span></div><div class="navlinks"><a id="creditslink">Credits</a><a href="/">Jobs board →</a></div></div></div>
+<div class="nav"><div class="wrap"><div class="brand"><a class="brandhome" href="/portfolio/" aria-label="DevQuest Portfolio home"><svg class="mark" viewBox="0 0 32 32" aria-hidden="true"><rect x="1" y="1" width="8" height="8" rx="2" fill="var(--gold)"/><rect x="12" y="1" width="8" height="8" rx="2" fill="#2d333b"/><rect x="23" y="1" width="8" height="8" rx="2" fill="#2d333b"/><rect x="1" y="12" width="8" height="8" rx="2" fill="#2d333b"/><rect x="12" y="12" width="8" height="8" rx="2" fill="var(--gold)"/><rect x="23" y="12" width="8" height="8" rx="2" fill="#2d333b"/><rect x="1" y="23" width="8" height="8" rx="2" fill="#2d333b"/><rect x="12" y="23" width="8" height="8" rx="2" fill="#2d333b"/><rect x="23" y="23" width="8" height="8" rx="2" fill="var(--gold)"/></svg><span class="wm">Dev<span class="q">Quest</span><span class="tld">.gg</span></span></a> <span class="cr">PORTFOLIO</span> <span class="beta">BETA</span></div><div class="navlinks"><a id="creditslink">Credits</a><a href="/">Jobs board →</a></div></div></div></div>
 <a class="editlink" id="editlink" href="/portfolio/edit/">✎ Edit my portfolio</a>
 <div id="app"><div class="wrap" style="padding:60px 22px;color:var(--muted)">Loading portfolio…</div></div>
 <footer><div class="wrap"><div><b style="color:var(--text)">DevQuest.gg</b> · portfolio</div><div>Verified by the people you shipped with.</div></div></footer>
