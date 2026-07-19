@@ -65,29 +65,29 @@
   .legend b{color:var(--text)}.lg{display:inline-flex;align-items:center;gap:7px}
   .lgdot{width:11px;height:11px;border-radius:50%;background:var(--gold);border:2px solid var(--bg)}
   .lgbar{width:16px;height:11px;border-radius:3px;background:linear-gradient(135deg,#555,#333)}
-  .tlx{position:relative;margin:22px 0 10px}
-  .spine{position:absolute;left:44%;top:0;bottom:0;width:2px;background:var(--border);transform:translateX(-1px)}
-  .gdot{position:absolute;left:44%;transform:translate(-50%,-50%);width:13px;height:13px;border-radius:50%;background:var(--gold);border:2px solid var(--bg);box-shadow:0 0 0 3px rgba(224,178,58,.18);z-index:3}
-  .gdot.conf{background:var(--accent);box-shadow:0 0 0 3px rgba(88,166,255,.2)}
-  .gnode{position:absolute;left:0;right:56%;transform:translateY(-50%);display:flex;align-items:center;justify-content:flex-end;z-index:2}
-  .gcard{display:flex;align-items:center;gap:11px;border:1px solid var(--border);background:var(--panel);border-radius:12px;padding:8px 13px 8px 8px;box-shadow:0 8px 22px rgba(0,0,0,.32);max-width:100%}
-  .gcard:hover{border-color:var(--accent)}
-  .gcard .gtxt{min-width:0;display:flex;flex-direction:column}
-  .cover{position:relative;overflow:hidden;width:66px;height:92px;border-radius:7px;flex:none;border:1px solid rgba(255,255,255,.12);box-shadow:0 5px 14px rgba(0,0,0,.5);display:flex;align-items:flex-end;justify-content:center;padding-bottom:5px;font-size:11px;color:rgba(255,255,255,.6);font-weight:800}
-  .cover .ini{position:relative;z-index:0}
-  .cover .art,.oc .art{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1}
-  .gt{font-weight:750;font-size:14px;line-height:1.25}
-  .gr{font-size:11.5px;color:var(--muted);margin-top:2px}
-  .conn{width:42px;height:2px;background:var(--border)}
-  .v{display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;border-radius:50%;font-size:9px;font-weight:900;color:#04121f;margin-left:6px;vertical-align:1px}
-  .v.blue{background:var(--accent)}.v.green{background:var(--green)}
-  .lane-right{position:absolute;left:47%;right:0;top:0}
-  .sbar{position:absolute;left:0;right:0;overflow:hidden;padding:12px 15px;color:#fff;border-bottom:2px solid var(--bg);border-radius:4px}
-  .sbar .wm{position:absolute;right:6px;bottom:-18px;font-size:82px;font-weight:900;color:rgba(255,255,255,.10);line-height:1;pointer-events:none;letter-spacing:-4px}
-  .snm{font-weight:800;font-size:14.5px;display:flex;align-items:center;gap:9px;position:relative}
-  .slogo{width:23px;height:23px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:850;background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.22)}
-  .srole{font-size:12px;color:rgba(255,255,255,.85);margin-top:4px;position:relative;max-width:74%}
-  .syr{font-size:11px;color:rgba(255,255,255,.65);margin-top:2px;position:relative}
+  /* two-sided spine timeline — studio meta left, games right, no frames */
+  .tl3{position:relative;margin:22px 0 10px}
+  .tl3 .spine{position:absolute;left:290px;top:4px;bottom:4px;width:2px;background:var(--border)}
+  .trow{position:relative;display:grid;grid-template-columns:290px 1fr;margin-bottom:30px;align-items:start}
+  .trow .tdot{position:absolute;left:290px;top:5px;transform:translate(-50%,0);width:13px;height:13px;border-radius:50%;background:var(--gold);border:2px solid var(--bg);box-shadow:0 0 0 3px rgba(224,178,58,.18);z-index:2}
+  .tmeta{text-align:right;padding-right:34px;padding-top:1px}
+  .tst{display:flex;align-items:center;justify-content:flex-end;gap:9px}
+  .tname{font-weight:800;font-size:16.5px;letter-spacing:-.2px}
+  .tlogo{width:28px;height:28px;border-radius:7px;flex:none;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:850;color:#fff;border:1px solid rgba(255,255,255,.2)}
+  .trole{font-size:13px;color:var(--muted);margin-top:6px}
+  .tyr{font-size:12.5px;color:var(--muted);margin-top:6px;font-weight:650;letter-spacing:.02em}
+  .tgames{padding-left:34px}
+  .shelf{display:flex;flex-wrap:wrap;gap:15px}
+  .gtile{width:88px}
+  .tart{position:relative;overflow:hidden;width:88px;aspect-ratio:2/3;border-radius:12px;background:#141b26;box-shadow:0 8px 20px rgba(0,0,0,.5),inset 0 0 0 1px rgba(255,255,255,.07);display:flex;align-items:center;justify-content:center;transition:transform .14s ease,box-shadow .14s ease}
+  .gtile:hover .tart{transform:translateY(-4px);box-shadow:0 15px 32px rgba(0,0,0,.6),inset 0 0 0 1px rgba(255,255,255,.15)}
+  .tart .art{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1}
+  .tart .tini{position:relative;z-index:0;font-size:15px;font-weight:850;color:rgba(255,255,255,.55);text-align:center;padding:4px}
+  .tv{position:absolute;top:6px;right:6px;width:21px;height:21px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;z-index:3;box-shadow:0 1px 5px rgba(0,0,0,.5)}
+  .tv.blue{background:rgba(88,166,255,.96);color:#04121f}.tv.green{background:rgba(63,185,80,.96);color:#04220f}
+  .gtr{font-size:11px;color:var(--muted);margin-top:7px;line-height:1.25}
+  .tnone{font-size:12.5px;color:var(--dim);padding-top:6px}
+  @media(max-width:640px){.tl3 .spine,.trow .tdot{display:none}.trow{grid-template-columns:1fr;margin-bottom:22px}.tmeta{text-align:left;padding-right:0;margin-bottom:12px}.tst{justify-content:flex-start}.tgames{padding-left:0}}
   .others{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px;margin-top:14px}
   .ocard{display:flex;align-items:center;gap:10px;border:1px solid var(--border);background:var(--panel);border-radius:11px;padding:8px 11px 8px 8px}
   .ocard .oc{position:relative;overflow:hidden;width:38px;height:50px;border-radius:5px;flex:none}
@@ -235,66 +235,53 @@
   function stat(n,l){ return '<div class="stat"><div class="n">'+n+'</div><div class="l">'+l+'</div></div>'; }
   function cap(s){ return String(s).charAt(0).toUpperCase()+String(s).slice(1); }
 
+  function gtile(c, covMap){
+    var conf=(c.vouch_count||0)>0;
+    return '<div class="gtile"><div class="tart" style="background:'+gameGrad(c.game_slug)+'">'+art(c.game_slug,covMap)+'<span class="tini">'+esc(initials(c.game_title))+'</span>'+(conf?'<span class="tv '+(c.vouch_count>1?"green":"blue")+'">✓</span>':'')+'</div>'+
+      '<div class="gtr">'+esc(c.role)+(creditYear(c)?' · '+creditYear(c):'')+'</div></div>';
+  }
+
   function buildTimeline(positions, credits, covMap){
     covMap = covMap || {};
     if(!positions.length && !credits.length) return {html:""};
-    var MINH=112, SCALE=30, CARDH=118, PAD=28;
-    // bands (positions come newest-first from API)
-    var bands=[];
-    positions.forEach(function(p){
-      var s=p.start_year||CUR, e=p.is_current?CUR:(p.end_year||s);
-      if(e<s) e=s;
-      bands.push({p:p,s:s,e:e,h:Math.max(MINH, Math.round((e-s)*SCALE)),credits:[]});
+    // bands from positions (already newest-first from API)
+    var bands=positions.map(function(p){
+      var s=p.start_year||CUR, e=p.is_current?CUR:(p.end_year||s); if(e<s) e=s;
+      return {p:p,s:s,e:e,credits:[]};
     });
-    // assign credits to bands by year-in-range; else orphan
+    // assign credits to the studio they belong to by year-in-range; else orphan
     var orphans=[];
     credits.forEach(function(c){
       var y=creditYear(c), bi=-1;
       if(y){ for(var i=0;i<bands.length;i++){ if(y>=bands[i].s && y<=bands[i].e){ bi=i; break; } } }
       if(bi<0) orphans.push(c); else bands[bi].credits.push(c);
     });
-    // grow each band so its credit cards never overlap, then lay out tops
-    var top=0;
-    bands.forEach(function(b){
-      if(b.credits.length) b.h=Math.max(b.h, b.credits.length*CARDH+PAD);
-      b.top=top; top+=b.h;
-    });
-    var totalH = top || 120;
-    // bars
-    var barsHtml = bands.map(function(b){
+    // one row per studio: meta left of the spine, games right of it
+    var rows = bands.map(function(b){
       var p=b.p;
-      return '<div class="sbar" style="top:'+b.top+'px;height:'+b.h+'px;background:'+studioGrad(p.studio)+'">'+
-        '<span class="wm">'+esc(studioMark(p.studio))+'</span>'+
-        '<div class="snm"><span class="slogo">'+esc(studioMark(p.studio))+'</span> '+esc(p.studio)+'</div>'+
-        '<div class="srole">'+esc(p.title)+'</div>'+
-        '<div class="syr">'+b.s+' – '+(p.is_current?'Present':b.e)+'</div></div>';
-    }).join("");
-    // cards + dots
-    var nodes="";
-    bands.forEach(function(b){
       var list=b.credits.sort(function(a,c){ return (creditYear(c)||0)-(creditYear(a)||0); });
-      var groupH=list.length*CARDH;
-      var startY=b.top + Math.max(PAD/2, (b.h-groupH)/2);
-      list.forEach(function(c,idx){
-        var y=Math.round(startY + idx*CARDH + CARDH/2);
-        var conf=(c.vouch_count||0)>0;
-        nodes += '<div class="gdot'+(conf?' conf':'')+'" style="top:'+y+'px"></div>'+
-          '<div class="gnode" style="top:'+y+'px"><div class="gcard"><span class="cover" style="background:'+gameGrad(c.game_slug)+'">'+art(c.game_slug,covMap)+'<span class="ini">'+esc(initials(c.game_title))+'</span></span><span class="gtxt"><span class="gt">'+esc(c.game_title)+(conf?'<span class="v '+(c.vouch_count>1?"green":"blue")+'">✓</span>':'')+'</span><span class="gr">'+esc(c.role)+(creditYear(c)?' · '+creditYear(c):'')+'</span></span></div><span class="conn"></span></div>';
-      });
-    });
-    var tlBlock = '<div class="tlx" style="height:'+totalH+'px"><div class="spine"></div><div class="lane-right" style="height:'+totalH+'px">'+barsHtml+'</div>'+nodes+'</div>';
+      var games = list.length ? '<div class="shelf">'+list.map(function(c){ return gtile(c,covMap); }).join("")+'</div>'
+                              : '<div class="tnone">No publicly shipped titles from this role.</div>';
+      return '<div class="trow"><span class="tdot"></span>'+
+        '<div class="tmeta">'+
+          '<div class="tst"><span class="tname">'+esc(p.studio)+'</span><span class="tlogo" style="background:'+studioGrad(p.studio)+'">'+esc(studioMark(p.studio))+'</span></div>'+
+          '<div class="tyr">'+b.s+' – '+(p.is_current?'Present':b.e)+'</div>'+
+        '</div>'+
+        '<div class="tgames">'+games+'</div></div>';
+    }).join("");
+    var tlBlock='<div class="tl3"><div class="spine"></div>'+rows+'</div>';
 
     // orphans (credits without a matching position)
     var othersBlock = "";
     if(orphans.length){
       orphans.sort(function(a,c){ return (creditYear(c)||0)-(creditYear(a)||0); });
-      othersBlock = '<div class="eyebrow" style="margin-top:26px">Also credited</div><p class="sub">Titles not yet matched to a role above — add the studio &amp; dates in your editor and they will slot into the timeline.</p><div class="others">'+
+      othersBlock = '<div class="eyebrow" style="margin-top:26px">Also credited</div><p class="sub">Titles not yet matched to a role above — add the studio &amp; dates in your editor and they will nest into the right studio.</p><div class="others">'+
         orphans.map(function(c){ return '<div class="ocard"><span class="oc" style="background:'+gameGrad(c.game_slug)+'">'+art(c.game_slug,covMap)+'</span><div><div style="font-weight:700;font-size:13px">'+esc(c.game_title)+'</div><div style="color:var(--muted);font-size:11.5px">'+esc(c.role)+(creditYear(c)?' · '+creditYear(c):'')+'</div></div></div>'; }).join("")+
         '</div>';
     }
 
-    var legend='<div class="legend"><span class="lg"><span class="lgdot"></span> <b>Game shipped</b></span><span class="lg"><span class="lgdot" style="background:var(--accent)"></span> <b>Peer-confirmed</b></span><span class="lg"><span class="lgbar"></span> <b>Studio tenure</b></span></div>';
-    var html = '<div class="wrap"><section><div class="eyebrow">Career &amp; gameography</div><h2 class="sec">On one timeline</h2><p class="sub">Games on the left; studios on the right, on the same axis. Newest at the top.</p>'+legend+tlBlock+othersBlock+'</section></div>';
+    var legend='<div class="legend"><span class="lg"><span class="lgdot"></span> <b>Studio</b> (newest first)</span><span class="lg"><span class="lgdot" style="background:var(--accent)"></span> <b>Peer-confirmed title</b></span></div>';
+    var html = '<div class="wrap"><section><div class="eyebrow">Career &amp; gameography</div><h2 class="sec">Studios &amp; the games they shipped</h2><p class="sub">Every role you\'ve held, newest first, with the titles that came out of each — verified by the people you shipped with.</p>'+legend+tlBlock+othersBlock+'</section></div>';
     return {html:html};
   }
 })();
