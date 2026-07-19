@@ -199,6 +199,29 @@
   .osvouchers.on{display:flex}
   .osvchiplink{font-size:12px;font-weight:700;color:#dce4f0;border:1px solid var(--border);background:#0d131d;border-radius:999px;padding:5px 12px}
   .osvchiplink:hover{border-color:var(--accent);color:#fff}
+
+  /* inline owner editing */
+  .owner-only{display:none !important}
+  body.is-owner .owner-only{display:inline-flex !important}
+  .pedit{position:absolute;top:16px;right:16px;z-index:5;align-items:center;gap:6px;font-size:13px;font-weight:750;color:#04121f;background:var(--gold);border:0;border-radius:10px;padding:8px 14px;cursor:pointer;box-shadow:0 4px 14px rgba(224,178,58,.3)}
+  .pedit:hover{filter:brightness(1.06)}
+  .osedit{position:absolute;top:14px;right:60px;z-index:12;align-items:center;gap:6px;height:38px;padding:0 15px;border-radius:19px;border:1px solid rgba(255,255,255,.25);background:rgba(0,0,0,.4);color:#fff;font-size:13px;font-weight:750;cursor:pointer;backdrop-filter:blur(4px)}
+  .osedit:hover{background:rgba(0,0,0,.66)}
+  .efwrap{padding:26px 28px 30px}
+  .efwrap h3{margin:0 0 4px;font-size:22px;font-weight:850;letter-spacing:-.4px}
+  .efdesc{color:var(--muted);font-size:13px;margin:0 0 14px}
+  .eflabel{display:block;font-size:12px;font-weight:700;color:#cdd8e6;margin:14px 0 5px}
+  .eflabel .mut{color:var(--muted);font-weight:400}
+  .efwrap input,.efwrap select,.efwrap textarea{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:9px;padding:10px 12px;color:var(--text);font-size:14px;font-family:inherit;outline:none}
+  .efwrap textarea{resize:vertical;min-height:60px;line-height:1.5}
+  .efwrap input:focus,.efwrap textarea:focus,.efwrap select:focus{border-color:var(--accent)}
+  .efrow{display:flex;gap:10px;flex-wrap:wrap}.efrow>div{flex:1;min-width:130px}
+  .efchk{display:flex;align-items:center;gap:8px;font-size:13.5px;margin-top:12px;cursor:pointer}.efchk input{width:auto}
+  .efactions{display:flex;gap:10px;align-items:center;margin-top:20px;flex-wrap:wrap}
+  .efbtn{font-size:14px;font-weight:750;border-radius:10px;padding:10px 18px;cursor:pointer;border:1px solid var(--border);background:var(--panel2);color:var(--text)}
+  .efbtn.primary{color:#04121f;background:linear-gradient(135deg,#7cc0ff,#58a6ff);border:0}
+  .efstatus{font-size:13px}.efstatus.ok{color:var(--green)}.efstatus.err{color:var(--pink)}
+  .efstat-row{display:flex;gap:8px;margin-bottom:8px}
 </style>
 </head>
 <body>
@@ -213,7 +236,7 @@
 (function(){
   var CUR = 2026;
   var app = document.getElementById("app");
-  var STEAM = {}, IS_OWNER = false, _covMap = {}, _credits = [];
+  var STEAM = {}, IS_OWNER = false, _covMap = {}, _credits = [], _person = null, _positions = [], _curCi = -1;
   function esc(s){ return String(s==null?"":s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];}); }
   // slug from ?slug= (router / view.html) or the last path segment (/portfolio/<slug>/)
   var qslug = new URLSearchParams(location.search).get("slug");
@@ -253,7 +276,7 @@
     var person=r.data.person, positions=r.data.positions||[], credits=r.data.credits||[];
     resolveCovers(credits).then(function(covMap){ render(person, positions, credits, covMap||{}); });
     // show edit link if this is my own page
-    if(DQAPI.isSignedIn()){ DQAPI.me().then(function(mr){ var me=mr&&mr.data&&mr.data.person; if(me && me.slug===slug){ IS_OWNER=true; document.getElementById("editlink").style.display="inline-block"; } }).catch(function(){}); }
+    if(DQAPI.isSignedIn()){ DQAPI.me().then(function(mr){ var me=mr&&mr.data&&mr.data.person; if(me && me.slug===slug){ IS_OWNER=true; document.body.classList.add("is-owner"); document.getElementById("editlink").style.display="inline-block"; } }).catch(function(){}); }
   }).catch(function(){ app.innerHTML='<div class="wrap" style="padding:60px 22px;color:var(--pink)">Could not load this portfolio. Try again.</div>'; });
 
   function creditYear(c){ return c.work_start || c.year || c.work_end || null; }
@@ -262,21 +285,6 @@
   function render(p, positions, credits, covMap){
     covMap = covMap || {};
     document.title = p.name + " · DevQuest Portfolio";
-    // ---- stats ----
-    var startYears = [];
-    positions.forEach(function(x){ if(x.start_year) startYears.push(x.start_year); });
-    credits.forEach(function(c){ var y=creditYear(c); if(y) startYears.push(y); });
-    var minY = startYears.length ? Math.min.apply(null,startYears) : CUR;
-    var studioSet = {}; positions.forEach(function(x){ if(x.studio) studioSet[x.studio.toLowerCase()]=1; }); credits.forEach(function(c){ if(c.studio) studioSet[String(c.studio).toLowerCase()]=1; });
-    var nStudios = Object.keys(studioSet).length || positions.length;
-    var liveCount = credits.filter(isLive).length;
-    var av = (p.name||"?").split(/\s+/).map(function(x){return x[0];}).slice(0,2).join("").toUpperCase();
-
-    var tags = [];
-    tags.push(cap(p.portfolio_style||"production"));
-    if(liveCount) tags.push("Live Service");
-    if(positions.length>=3 || /director|vp|head|lead/i.test(p.headline||"")) tags.push("Studio Leadership");
-
     var links = {}; (p.links||[]).forEach(function(l){ links[l.type]=l.url; });
     var linkBtns = "";
     if(links.linkedin) linkBtns += '<a class="btn ghost" href="'+esc(links.linkedin)+'" target="_blank">in · LinkedIn</a>';
@@ -284,24 +292,10 @@
     if(links.artstation) linkBtns += '<a class="btn ghost" href="'+esc(links.artstation)+'" target="_blank">ArtStation</a>';
     if(links.github) linkBtns += '<a class="btn ghost" href="'+esc(links.github)+'" target="_blank">GitHub</a>';
 
-    var hero =
-      '<div class="hero"><div class="banner"></div><div class="scrim"></div><div class="wrap"><div class="htop">'+
-        '<div class="avatar">'+esc(av)+'</div><div class="hmeta">'+
-        (p.open_to_work ? '<div class="oa"><span class="d"></span> Open to opportunities</div>' : '')+
-        '<h1>'+esc(p.name)+'</h1>'+
-        (p.headline ? '<div class="role">'+esc(p.headline)+'</div>' : '')+
-        (p.bio ? '<p class="bio">'+esc(p.bio)+'</p>' : '')+
-        '<div class="tags">'+tags.map(function(t){return '<span class="tag spec">'+esc(t)+'</span>';}).join("")+'</div>'+
-        '<div class="cta"><a class="btn primary">⬇ Download résumé</a>'+linkBtns+'</div>'+
-        '</div></div>'+
-        '<div class="stats">'+
-          stat((CUR-minY)+" yrs","In the industry")+stat(nStudios,"Studios")+stat(credits.length,"Credits")+
-          stat(liveCount,"Live-service")+stat(p.unshipped||0,"Cancelled / unshipped")+
-        '</div>'+
-      '</div></div>';
+    var hero = '<div id="herobox">'+heroHTML(p, positions, credits)+'</div>';
 
     // ---- the work: unified wall <-> timeline stage ----
-    _covMap = covMap; _credits = credits;
+    _covMap = covMap; _credits = credits; _person = p; _positions = positions;
     var stageSection = credits.length ? '<div class="wrap"><section><div class="stagehead"><div><div class="eyebrow">The Work</div><h2 class="sec">Every game, your way</h2><p class="sub">Arrange the wall however you like — then flip to the timeline and watch them fall into place.</p></div><div class="vtoggle" id="vtoggle"><button data-m="grid" class="on">▦ Wall</button><button data-m="timeline">↳ Timeline</button></div></div><div class="vhint" id="vhint"></div><div id="stage" class="grid"><div id="chrome"><div id="spine"></div></div></div></section></div>' : '';
 
     // ---- skills ----
@@ -317,8 +311,45 @@
       '</div></div>';
 
     app.innerHTML = hero + stageSection + skills + contact;
+    wireHeroEdit();
     if(credits.length) buildStage(credits, positions, covMap);
   }
+
+  function heroHTML(p, positions, credits){
+    var startYears=[];
+    positions.forEach(function(x){ if(x.start_year) startYears.push(x.start_year); });
+    credits.forEach(function(c){ var y=creditYear(c); if(y) startYears.push(y); });
+    var minY=startYears.length?Math.min.apply(null,startYears):CUR;
+    var studioSet={}; positions.forEach(function(x){ if(x.studio) studioSet[x.studio.toLowerCase()]=1; }); credits.forEach(function(c){ if(c.studio) studioSet[String(c.studio).toLowerCase()]=1; });
+    var nStudios=Object.keys(studioSet).length||positions.length;
+    var liveCount=credits.filter(isLive).length;
+    var av=(p.name||"?").split(/\s+/).map(function(x){return x[0];}).slice(0,2).join("").toUpperCase();
+    var tags=[]; tags.push(cap(p.portfolio_style||"production")); if(liveCount) tags.push("Live Service"); if(positions.length>=3 || /director|vp|head|lead/i.test(p.headline||"")) tags.push("Studio Leadership");
+    var links={}; (p.links||[]).forEach(function(l){ links[l.type]=l.url; });
+    var lb="";
+    if(links.linkedin) lb+='<a class="btn ghost" href="'+esc(links.linkedin)+'" target="_blank">in · LinkedIn</a>';
+    if(links.portfolio) lb+='<a class="btn ghost" href="'+esc(links.portfolio)+'" target="_blank">Website</a>';
+    if(links.artstation) lb+='<a class="btn ghost" href="'+esc(links.artstation)+'" target="_blank">ArtStation</a>';
+    if(links.github) lb+='<a class="btn ghost" href="'+esc(links.github)+'" target="_blank">GitHub</a>';
+    return '<div class="hero"><div class="banner"></div><div class="scrim"></div>'+
+      '<button class="pedit owner-only" id="editProfile">✎ Edit</button>'+
+      '<div class="wrap"><div class="htop">'+
+        '<div class="avatar">'+esc(av)+'</div><div class="hmeta">'+
+        (p.open_to_work ? '<div class="oa"><span class="d"></span> Open to opportunities</div>' : '')+
+        '<h1>'+esc(p.name)+'</h1>'+
+        (p.headline ? '<div class="role">'+esc(p.headline)+'</div>' : '')+
+        (p.bio ? '<p class="bio">'+esc(p.bio)+'</p>' : '')+
+        '<div class="tags">'+tags.map(function(t){return '<span class="tag spec">'+esc(t)+'</span>';}).join("")+'</div>'+
+        '<div class="cta"><a class="btn primary">⬇ Download résumé</a>'+lb+'</div>'+
+        '</div></div>'+
+        '<div class="stats">'+
+          stat((CUR-minY)+" yrs","In the industry")+stat(nStudios,"Studios")+stat(credits.length,"Credits")+
+          stat(liveCount,"Live-service")+stat(p.unshipped||0,"Cancelled / unshipped")+
+        '</div>'+
+      '</div></div>';
+  }
+  function renderHero(){ var hb=document.getElementById("herobox"); if(hb){ hb.innerHTML=heroHTML(_person,_positions,_credits); wireHeroEdit(); } if(_person) document.title=_person.name+" · DevQuest Portfolio"; }
+  function wireHeroEdit(){ var b=document.getElementById("editProfile"); if(b) b.onclick=openProfileEdit; }
 
   function stat(n,l){ return '<div class="stat"><div class="n">'+n+'</div><div class="l">'+l+'</div></div>'; }
   function cap(s){ return String(s).charAt(0).toUpperCase()+String(s).slice(1); }
@@ -338,12 +369,101 @@
   function openSheet(ci){
     ensureOvl();
     var c=_credits[ci]; if(!c) return;
+    _curCi=ci;
     var sheet=document.getElementById("ossheet");
     sheet.innerHTML=oneSheetHTML(c);
     var cl=sheet.querySelector(".osclose"); if(cl) cl.onclick=closeSheet;
     var sw=sheet.querySelector(".osseewho"); if(sw) sw.onclick=function(){ var v=sheet.querySelector(".osvouchers"); if(v) v.classList.toggle("on"); };
+    var ed=sheet.querySelector(".osedit"); if(ed) ed.onclick=function(){ openSheetEdit(ci); };
     sheet.scrollTop=0;
     _ovl.classList.add("on"); document.body.style.overflow="hidden";
+  }
+
+  // ---- inline edit: profile ----
+  function openProfileEdit(){
+    ensureOvl();
+    var sheet=document.getElementById("ossheet");
+    sheet.innerHTML=profileFormHTML(_person||{});
+    sheet.querySelector(".osclose").onclick=closeSheet;
+    sheet.querySelector("#ef-cancel").onclick=closeSheet;
+    sheet.querySelector("#ef-save").onclick=saveProfile;
+    sheet.scrollTop=0;
+    _ovl.classList.add("on"); document.body.style.overflow="hidden";
+  }
+  function profileFormHTML(p){
+    var links={}; (p.links||[]).forEach(function(l){ links[l.type]=l.url; });
+    return '<div class="efwrap"><button class="osclose" aria-label="Close">✕</button>'+
+      '<h3>Edit profile</h3><div class="efdesc">The header of your portfolio.</div>'+
+      '<label class="eflabel">Display name</label><input id="ef-name" value="'+esc(p.name||"")+'">'+
+      '<label class="eflabel">Headline <span class="mut">— current role &amp; studio</span></label><input id="ef-head" value="'+esc(p.headline||"")+'">'+
+      '<label class="eflabel">Location</label><input id="ef-loc" value="'+esc(p.location||"")+'">'+
+      '<label class="eflabel">About / bio</label><textarea id="ef-bio">'+esc(p.bio||"")+'</textarea>'+
+      '<div class="efchk"><input type="checkbox" id="ef-otw" '+(p.open_to_work?"checked":"")+'><label for="ef-otw">Show &ldquo;Open to opportunities&rdquo;</label></div>'+
+      '<label class="eflabel">Links</label>'+
+      '<div class="efrow"><div><input id="ef-linkedin" placeholder="LinkedIn URL" value="'+esc(links.linkedin||"")+'"></div><div><input id="ef-portfolio" placeholder="Website URL" value="'+esc(links.portfolio||"")+'"></div></div>'+
+      '<div class="efrow" style="margin-top:8px"><div><input id="ef-artstation" placeholder="ArtStation URL" value="'+esc(links.artstation||"")+'"></div><div><input id="ef-github" placeholder="GitHub URL" value="'+esc(links.github||"")+'"></div></div>'+
+      '<div class="efactions"><span class="efbtn primary" id="ef-save">Save</span><span class="efbtn" id="ef-cancel">Cancel</span><span class="efstatus" id="ef-status"></span></div>'+
+      '</div>';
+  }
+  function saveProfile(){
+    var g=function(id){ var e=document.getElementById(id); return e?e.value.trim():""; };
+    var links=[];
+    [["linkedin","ef-linkedin"],["portfolio","ef-portfolio"],["artstation","ef-artstation"],["github","ef-github"]].forEach(function(x){ var u=g(x[1]); if(u) links.push({type:x[0],url:u}); });
+    var payload={ name:g("ef-name"), headline:g("ef-head"), location:g("ef-loc"), bio:g("ef-bio"), open_to_work: document.getElementById("ef-otw").checked?1:0, links:links };
+    var st=document.getElementById("ef-status"); st.textContent="Saving…"; st.className="efstatus";
+    DQAPI.updateProfile(payload).then(function(r){
+      if(r&&r.ok){ _person.name=payload.name; _person.headline=payload.headline; _person.location=payload.location; _person.bio=payload.bio; _person.open_to_work=payload.open_to_work; _person.links=links; renderHero(); st.textContent="Saved ✓"; st.className="efstatus ok"; setTimeout(closeSheet,450); }
+      else { st.textContent=(r&&r.data&&r.data.error)||"Could not save."; st.className="efstatus err"; }
+    }).catch(function(){ st.textContent="Network error."; st.className="efstatus err"; });
+  }
+
+  // ---- inline edit: one-sheet ----
+  function openSheetEdit(ci){
+    var c=_credits[ci]; if(!c) return;
+    var sheet=document.getElementById("ossheet");
+    sheet.innerHTML=sheetFormHTML(c);
+    sheet.querySelector(".osclose").onclick=closeSheet;
+    sheet.querySelector("#ef-scancel").onclick=function(){ openSheet(ci); };
+    sheet.querySelector("#ef-ssave").onclick=function(){ saveSheetEdit(ci); };
+    sheet.scrollTop=0;
+  }
+  function sheetFormHTML(c){
+    var s=c.sheet||{};
+    var stats=(s.stats||[]).slice(0,6); while(stats.length<4){ stats.push({label:"",value:""}); }
+    var contribs=(s.contributions||[]).join("\n");
+    var kw=(s.keywords||[]).join(", ");
+    var shots=(s.screenshots||[]).join("\n");
+    return '<div class="efwrap"><button class="osclose" aria-label="Close">✕</button>'+
+      '<h3>Edit one-sheet</h3><div class="efdesc">'+esc(c.game_title)+' · '+esc(c.role||"")+'</div>'+
+      '<label class="eflabel">One-line summary</label><textarea id="ef-summary" placeholder="What was this game, and your part in it?">'+esc(s.summary||"")+'</textarea>'+
+      '<label class="eflabel">Stats <span class="mut">— label + value tiles</span></label><div id="ef-stats">'+
+        stats.map(function(st){ return '<div class="efstat-row"><input class="ef-slabel" placeholder="Label (e.g. Players)" value="'+esc(st.label||"")+'"><input class="ef-svalue" placeholder="Value (e.g. 85M+)" value="'+esc(st.value||"")+'"></div>'; }).join("")+
+      '</div>'+
+      '<label class="eflabel">What I led <span class="mut">— one line per bullet</span></label><textarea id="ef-did" placeholder="One achievement per line">'+esc(contribs)+'</textarea>'+
+      '<label class="eflabel">Focus / keywords <span class="mut">— comma-separated</span></label><input id="ef-kw" value="'+esc(kw)+'">'+
+      '<label class="eflabel">Banner image URL <span class="mut">— optional wide art (blank uses box art)</span></label><input id="ef-banner" placeholder="https://..." value="'+esc(s.banner_url||"")+'">'+
+      '<label class="eflabel">Screenshots <span class="mut">— one image URL per line</span></label><textarea id="ef-shots" placeholder="One image URL per line">'+esc(shots)+'</textarea>'+
+      '<div class="efactions"><span class="efbtn primary" id="ef-ssave">Save</span><span class="efbtn" id="ef-scancel">Cancel</span><span class="efstatus" id="ef-sstatus"></span></div>'+
+      '</div>';
+  }
+  function saveSheetEdit(ci){
+    var c=_credits[ci];
+    var stats=[];
+    document.querySelectorAll("#ef-stats .efstat-row").forEach(function(row){ var l=row.querySelector(".ef-slabel").value.trim(), v=row.querySelector(".ef-svalue").value.trim(); if(l||v) stats.push({label:l,value:v}); });
+    var g=function(id){ var e=document.getElementById(id); return e?e.value:""; };
+    var payload={
+      summary: g("ef-summary").trim(),
+      stats: stats,
+      contributions: g("ef-did").split("\n").map(function(x){return x.trim();}).filter(Boolean),
+      keywords: g("ef-kw").split(",").map(function(x){return x.trim();}).filter(Boolean),
+      banner_url: g("ef-banner").trim(),
+      screenshots: g("ef-shots").split("\n").map(function(x){return x.trim();}).filter(Boolean)
+    };
+    var st=document.getElementById("ef-sstatus"); st.textContent="Saving…"; st.className="efstatus";
+    DQAPI.saveSheet(c.id, payload).then(function(r){
+      if(r&&r.ok){ c.sheet={ summary:payload.summary, contributions:payload.contributions, stats:payload.stats, keywords:payload.keywords, banner_url:payload.banner_url||null, screenshots:payload.screenshots }; st.textContent="Saved ✓"; st.className="efstatus ok"; setTimeout(function(){ openSheet(ci); },420); }
+      else { st.textContent=(r&&r.data&&r.data.error)||"Could not save."; st.className="efstatus err"; }
+    }).catch(function(){ st.textContent="Network error."; st.className="efstatus err"; });
   }
   function oneSheetHTML(c){
     var slug=c.game_slug, sid=STEAM[slug], cover=_covMap[slug], sh=c.sheet;
@@ -367,6 +487,7 @@
     var vlist = vouchers.length ? '<div class="osvouchers">'+vouchers.map(function(s){ return '<a class="osvchiplink" href="/credits/'+esc(s)+'">'+esc(deslug(s))+'</a>'; }).join("")+'</div>' : '';
     var ownerCTA = (IS_OWNER && !sh) ? '<div class="oscta">This is your one-sheet. Add the scale, team size, and “what I led” in your editor to fill it out.</div>' : '';
     return '<button class="osclose" aria-label="Close">✕</button>'+
+      '<button class="osedit owner-only">✎ Edit</button>'+
       '<div class="osbanner">'+bannerFill+'<div class="osscrim"></div><div class="osgloss"></div>'+
         '<div class="osbtitle"><div class="oskicker">'+
           (c.studio?'<span class="oschip">'+esc(c.studio)+'</span>':"")+
