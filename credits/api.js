@@ -50,6 +50,11 @@
     vouch: function (creditId) { return req("POST", "/vouch", { credit_id: creditId }); },
     unvouch: function (creditId) { return req("DELETE", "/vouch", { credit_id: creditId }); },
     updateProfile: function (payload) { return req("PATCH", "/me", payload); },
+    portfolio: function (slug) { return req("GET", "/portfolio/" + encodeURIComponent(slug)); },
+    addPosition: function (payload) { return req("POST", "/me/positions", payload); },
+    updatePosition: function (id, payload) { return req("PATCH", "/me/positions/" + id, payload); },
+    deletePosition: function (id) { return req("DELETE", "/me/positions/" + id); },
+    reorderPositions: function (order) { return req("POST", "/me/positions/reorder", { order: order }); },
     // account / backup emails
     addEmail: function (email) { return req("POST", "/me/emails", { email: email }); },
     removeEmail: function (id) { return req("DELETE", "/me/emails/" + id); },
