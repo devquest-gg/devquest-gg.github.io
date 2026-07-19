@@ -146,6 +146,7 @@
   .oskicker{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:9px}
   .oschip{font-size:12px;font-weight:800;letter-spacing:.03em;color:#e6edf6;background:rgba(0,0,0,.42);border:1px solid rgba(255,255,255,.22);border-radius:999px;padding:4px 11px}
   .osvchip{background:rgba(63,185,80,.2);border-color:rgba(63,185,80,.5);color:#b7f0c2;display:inline-flex;align-items:center;gap:6px}
+  .oschip.cssoon{background:rgba(163,113,247,.25);border-color:rgba(163,113,247,.55);color:#e9dcff}
   .osvchip .c{width:14px;height:14px;border-radius:50%;background:var(--green);color:#04220f;font-size:9px;display:flex;align-items:center;justify-content:center;font-weight:900}
   .osbtitle h3{margin:0;font-size:33px;font-weight:850;letter-spacing:-.7px;text-shadow:0 3px 20px rgba(0,0,0,.85)}
   .osrole{margin-top:6px;font-size:15.5px;color:#eaf1fa;font-weight:650;text-shadow:0 2px 10px rgba(0,0,0,.7)}
@@ -178,6 +179,7 @@
   #stage .tile .hf{position:absolute;left:0;bottom:0;z-index:3;display:none;align-items:center;gap:4px;font-size:11px;font-weight:800;color:#04121f;background:var(--gold);border-radius:0 9px 0 10px;padding:4px 10px;box-shadow:0 2px 8px rgba(0,0,0,.4)}
   #stage.grid .tile.hero .hf{display:inline-flex}
   #stage.grid .tile.hero{box-shadow:0 14px 34px rgba(0,0,0,.6),inset 0 0 0 2px rgba(224,178,58,.55)}
+  #stage .tile .cs{position:absolute;left:0;right:0;top:0;z-index:4;background:linear-gradient(90deg,rgba(163,113,247,.96),rgba(88,166,255,.96));color:#fff;font-size:10px;font-weight:800;letter-spacing:.11em;text-align:center;padding:4px 0;box-shadow:0 2px 8px rgba(0,0,0,.4)}
   #chrome{position:absolute;inset:0;z-index:0;opacity:0;transition:opacity .4s ease;pointer-events:none}
   #stage.timeline #chrome{opacity:1}
   #spine{position:absolute;top:6px;bottom:6px;width:2px;background:var(--border)}
@@ -306,6 +308,8 @@
 
   function creditYear(c){ return c.work_start || c.year || c.work_end || null; }
   function isLive(c){ return (c.releases||[]).some(function(x){ return /live/i.test(x); }); }
+  function comingSoon(c){ var d=c.sheet&&c.sheet.release_date; if(!d) return false; var t=Date.parse(d); return !isNaN(t) && t>Date.now(); }
+  function fmtRel(d){ var t=Date.parse(d); if(isNaN(t)) return String(d); return new Date(t).toLocaleDateString(undefined,{month:"short",year:"numeric"}); }
 
   function render(p, positions, credits, covMap){
     covMap = covMap || {};
@@ -467,6 +471,7 @@
       '</div>'+
       '<label class="eflabel">What I led <span class="mut">— one line per bullet</span></label><textarea id="ef-did" placeholder="One achievement per line">'+esc(contribs)+'</textarea>'+
       '<label class="eflabel">Focus / keywords <span class="mut">— comma-separated</span></label><input id="ef-kw" value="'+esc(kw)+'">'+
+      '<label class="eflabel">Release date <span class="mut">— set only if unreleased; shows &ldquo;Coming Soon&rdquo; until then</span></label><input type="date" id="ef-release" value="'+esc(s.release_date||"")+'">'+
       '<label class="eflabel">Banner image URL <span class="mut">— optional wide art (blank uses box art)</span></label><input id="ef-banner" placeholder="https://..." value="'+esc(s.banner_url||"")+'">'+
       '<label class="eflabel">Screenshots <span class="mut">— one image URL per line</span></label><textarea id="ef-shots" placeholder="One image URL per line">'+esc(shots)+'</textarea>'+
       '<div class="efactions"><span class="efbtn primary" id="ef-ssave">Save</span><span class="efbtn" id="ef-scancel">Cancel</span><span class="efstatus" id="ef-sstatus"></span></div>'+
@@ -483,11 +488,12 @@
       contributions: g("ef-did").split("\n").map(function(x){return x.trim();}).filter(Boolean),
       keywords: g("ef-kw").split(",").map(function(x){return x.trim();}).filter(Boolean),
       banner_url: g("ef-banner").trim(),
-      screenshots: g("ef-shots").split("\n").map(function(x){return x.trim();}).filter(Boolean)
+      screenshots: g("ef-shots").split("\n").map(function(x){return x.trim();}).filter(Boolean),
+      release_date: g("ef-release").trim()
     };
     var st=document.getElementById("ef-sstatus"); st.textContent="Saving…"; st.className="efstatus";
     DQAPI.saveSheet(c.id, payload).then(function(r){
-      if(r&&r.ok){ c.sheet={ summary:payload.summary, contributions:payload.contributions, stats:payload.stats, keywords:payload.keywords, banner_url:payload.banner_url||null, screenshots:payload.screenshots }; st.textContent="Saved ✓"; st.className="efstatus ok"; setTimeout(function(){ openSheet(ci); },420); }
+      if(r&&r.ok){ c.sheet={ summary:payload.summary, contributions:payload.contributions, stats:payload.stats, keywords:payload.keywords, banner_url:payload.banner_url||null, screenshots:payload.screenshots, release_date:payload.release_date||null }; st.textContent="Saved ✓"; st.className="efstatus ok"; setTimeout(function(){ openSheet(ci); },420); }
       else { st.textContent=(r&&r.data&&r.data.error)||"Could not save."; st.className="efstatus err"; }
     }).catch(function(){ st.textContent="Network error."; st.className="efstatus err"; });
   }
@@ -570,9 +576,12 @@
     var sumHTML = (sh&&sh.summary) ? '<p class="ossum">'+esc(sh.summary)+'</p>' : '';
     var mainHTML = (sumHTML||gridHTML) ? '<div class="osmain">'+sumHTML+gridHTML+'</div>' : '';
     var vouchers = c.voucher_slugs ? String(c.voucher_slugs).split(",").filter(Boolean) : [];
-    var evid = conf
+    var cs=comingSoon(c), rdate=(sh&&sh.release_date)?fmtRel(sh.release_date):"";
+    var evid = cs
+      ? '<span class="oseb" style="background:var(--purple);color:#fff">➤</span><span><b>In development'+(rdate?' — expected '+esc(rdate):'')+'.</b> Peer confirmations open once it ships.</span>'
+      : (conf
       ? '<span class="oseb'+(vouchers.length?' osclk':'')+'">✓</span><span><b>Confirmed by '+conf+' teammate'+(conf>1?"s":"")+' who shipped '+esc(c.game_title)+'.</b> Peer verification is the part no other portfolio can show.'+(vouchers.length?' <span class="osseewho">See who →</span>':'')+'</span>'
-      : '<span class="oseb dim">•</span><span>Not yet peer-confirmed — <a href="/credits/'+esc(slug)+'" style="color:var(--accent)">ask a teammate to confirm →</a></span>';
+      : '<span class="oseb dim">•</span><span>Not yet peer-confirmed — <a href="/credits/'+esc(slug)+'" style="color:var(--accent)">ask a teammate to confirm →</a></span>');
     var vlist = vouchers.length ? '<div class="osvouchers">'+vouchers.map(function(s){ return '<a class="osvchiplink" href="/credits/'+esc(s)+'">'+esc(deslug(s))+'</a>'; }).join("")+'</div>' : '';
     var ownerCTA = (IS_OWNER && !sh) ? '<div class="oscta">This is your one-sheet. Add the scale, team size, and “what I led” in your editor to fill it out.</div>' : '';
     return '<button class="osclose" aria-label="Close">✕</button>'+
@@ -582,6 +591,7 @@
           (c.studio?'<span class="oschip">'+esc(c.studio)+'</span>':"")+
           (yr?'<span class="oschip">'+esc(yr)+'</span>':"")+
           (conf?'<span class="oschip osvchip'+(vouchers.length?' osclk':'')+'"><span class="c">✓</span> '+conf+' confirmed</span>':"")+
+          (cs?'<span class="oschip cssoon">🔜 Coming '+esc(rdate||"Soon")+'</span>':"")+
         '</div><h3>'+esc(c.game_title)+'</h3><div class="osrole">'+esc(c.role)+'</div></div>'+
       '</div>'+statsHTML+mainHTML+
       '<div class="osevid">'+evid+'</div>'+vlist+ownerCTA;
@@ -593,7 +603,7 @@
     var stage=document.getElementById("stage"); if(!stage) return;
     var chrome=document.getElementById("chrome"), spine=document.getElementById("spine");
     var order=credits.map(function(_,i){return i;});
-    var mode="grid", tiles=[], labels=[], dots=[], geo={}, GAP=16, HS=1.62;
+    var mode="grid", tiles=[], labels=[], dots=[], geo={}, GAP=16, SLOTS=3;
 
     var bands=positions.map(function(p){ var s=p.start_year||CUR, e=p.is_current?CUR:(p.end_year||s); if(e<s)e=s; return {p:p,s:s,e:e}; });
     function bandOf(c){ var y=creditYear(c); if(!y) return -1; for(var i=0;i<bands.length;i++){ if(y>=bands[i].s && y<=bands[i].e) return i; } return -1; }
@@ -601,7 +611,7 @@
     credits.forEach(function(c,i){
       var el=document.createElement("div"); el.className="tile"; el.dataset.i=i;
       var conf=(c.vouch_count||0)>0;
-      el.innerHTML='<div class="fb" style="background:'+gameGrad(c.game_slug)+'"><span>'+esc(c.game_title)+'</span></div>'+art(c.game_slug,covMap)+'<div class="gloss"></div>'+(conf?'<span class="vb">✓</span>':'')+'<span class="grip">⠿</span><span class="hf">★ Featured</span>';
+      el.innerHTML='<div class="fb" style="background:'+gameGrad(c.game_slug)+'"><span>'+esc(c.game_title)+'</span></div>'+art(c.game_slug,covMap)+'<div class="gloss"></div>'+(conf?'<span class="vb">✓</span>':'')+(comingSoon(c)?'<span class="cs">COMING SOON</span>':'')+'<span class="grip">⠿</span><span class="hf">★ Featured</span>';
       stage.appendChild(el); tiles.push(el);
     });
     var addEl=document.createElement("div"); addEl.className="addtile"; addEl.innerHTML='<div class="plus">+</div><div class="lbl">Add game</div>'; addEl.onclick=openAddGame; stage.appendChild(addEl);
@@ -627,10 +637,10 @@
     function put(el,x,y,s){ el.style.transform="translate("+x+"px,"+y+"px) scale("+s+")"; }
     function placeGrid(skip){
       var bw=geo.bw, bh=geo.bh, cols=geo.cols;
-      var heroW=Math.round(bw*HS), heroH=Math.round(bh*HS);
-      var heroN=Math.min(2, order.length);
+      var heroW=Math.round((geo.W - GAP*(SLOTS-1))/SLOTS), hs=heroW/bw, heroH=Math.round(bh*hs);
+      var heroN=Math.min(SLOTS, order.length);
       order.forEach(function(gi,k){ tiles[gi].classList.toggle("hero", k<heroN); });
-      for(var k=0;k<heroN;k++){ var gi=order[k]; if(gi!==skip) put(tiles[gi], k*(heroW+GAP), 0, HS); }
+      for(var k=0;k<heroN;k++){ var gi=order[k]; if(gi!==skip) put(tiles[gi], k*(heroW+GAP), 0, hs); }
       var gy = heroN ? heroH + GAP + 14 : 0;
       var rest=order.slice(heroN), total=0;
       rest.forEach(function(gi,j){ if(gi===skip) return; var row=Math.floor(j/cols), col=j%cols; put(tiles[gi], col*(bw+GAP), gy+row*(bh+GAP), 1); });
@@ -687,8 +697,8 @@
       put(drag.el, e.clientX-drag.ox, e.clientY-drag.oy, 1.1);
       var r=stage.getBoundingClientRect();
       var lx=e.clientX-r.left, ly=e.clientY-r.top;
-      var heroW=Math.round(geo.bw*HS), heroH=Math.round(geo.bh*HS), heroN=Math.min(2,order.length), slot;
-      if(ly < heroH + GAP/2){ slot = (lx < heroW + GAP/2) ? 0 : 1; slot=Math.min(slot, order.length-1); }
+      var heroW=Math.round((geo.W-GAP*(SLOTS-1))/SLOTS), heroH=Math.round(geo.bh*(heroW/geo.bw)), heroN=Math.min(SLOTS,order.length), slot;
+      if(ly < heroH + GAP/2){ slot=Math.max(0,Math.min(SLOTS-1, Math.floor(lx/(heroW+GAP)))); slot=Math.min(slot, order.length-1); }
       else { var gy=heroH+GAP+14; var col=Math.max(0,Math.min(geo.cols-1,Math.floor(lx/(geo.bw+GAP)))); var row=Math.max(0,Math.floor((ly-gy)/(geo.bh+GAP))); slot=Math.min(order.length-1, heroN + row*geo.cols + col); }
       var cur=order.indexOf(drag.gi);
       if(slot!==cur){ order.splice(cur,1); order.splice(slot,0,drag.gi); relayoutExcept(drag.gi); }
