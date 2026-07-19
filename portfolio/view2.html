@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Portfolio · DevQuest</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<style>
+  :root{--bg:#0a0d14;--panel:#11161f;--panel2:#141b26;--border:#232c3a;--text:#eaf0f8;--muted:#8b98ab;--dim:#5f6b7d;--accent:#58a6ff;--purple:#a371f7;--gold:#e0b23a;--green:#3fb950;--pink:#f778ba}
+  *{box-sizing:border-box}html,body{margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,-apple-system,Roboto,Helvetica,Arial,sans-serif;line-height:1.55;-webkit-font-smoothing:antialiased}
+  a{color:inherit;text-decoration:none}
+  .wrap{max-width:1040px;margin:0 auto;padding:0 22px}
+  .bar{height:3px;background:linear-gradient(90deg,var(--gold),var(--purple) 55%,var(--accent))}
+  .nav{border-bottom:1px solid var(--border);background:rgba(10,13,20,.85);backdrop-filter:blur(8px);position:sticky;top:0;z-index:50}
+  .nav .wrap{display:flex;align-items:center;justify-content:space-between;height:54px}
+  .brand{display:flex;align-items:center;gap:8px;font-weight:800;font-size:17px}
+  .brand .q{color:var(--accent)}.brand .tld{color:var(--gold)}
+  .brand .cr{font-size:10px;font-weight:800;letter-spacing:.2em;color:var(--accent);border:1px solid var(--border);border-radius:5px;padding:2px 6px;margin-left:4px}
+  .navlinks{display:flex;gap:18px;font-size:14px;color:var(--muted)}.navlinks a:hover{color:var(--text)}
+
+  .hero{position:relative;overflow:hidden;border-bottom:1px solid var(--border)}
+  .banner{position:absolute;inset:0;background:radial-gradient(60% 120% at 15% 0%, #6d3bd6 0%, transparent 55%),radial-gradient(50% 130% at 88% 10%, #1f6feb 0%, transparent 55%),radial-gradient(45% 120% at 60% 120%, #c99a2a 0%, transparent 55%),conic-gradient(from 210deg at 78% 30%, #10203a, #241033 40%, #0c1626 75%, #10203a);filter:saturate(1.05)}
+  .scrim{position:absolute;inset:0;background:linear-gradient(180deg,rgba(10,13,20,.55),rgba(10,13,20,.72) 55%,rgba(10,13,20,.94))}
+  .hero .wrap{position:relative;z-index:2;padding:44px 22px 28px}
+  .htop{display:flex;gap:24px;align-items:flex-start;flex-wrap:wrap}
+  .avatar{width:102px;height:102px;border-radius:22px;flex:none;background:linear-gradient(135deg,#7cc0ff,#a371f7);display:flex;align-items:center;justify-content:center;font-weight:850;font-size:36px;color:#0a0d14;box-shadow:0 12px 40px rgba(0,0,0,.4);border:2px solid rgba(255,255,255,.2)}
+  .hmeta{flex:1;min-width:280px}
+  .oa{display:inline-flex;align-items:center;gap:7px;font-size:11.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--green);border:1px solid rgba(63,185,80,.45);background:rgba(63,185,80,.12);border-radius:999px;padding:4px 11px;margin-bottom:12px}
+  .oa .d{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green)}
+  h1{margin:0;font-size:40px;line-height:1.05;letter-spacing:-1px;font-weight:850}
+  .role{margin-top:6px;font-size:16px;color:#dbe4ef}
+  .bio{margin:14px 0 0;font-size:15px;color:#c6d0de;max-width:640px;white-space:pre-line}
+  .tags{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+  .tag{font-size:12.5px;font-weight:700;color:#dbe4ef;border:1px solid rgba(255,255,255,.14);background:rgba(0,0,0,.25);border-radius:999px;padding:5px 13px}
+  .tag.spec{color:#e2d0ff;border-color:rgba(163,113,247,.5);background:rgba(163,113,247,.22)}
+  .cta{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px}
+  .btn{display:inline-flex;align-items:center;gap:8px;font-size:14px;font-weight:750;border-radius:11px;padding:11px 18px;cursor:pointer;border:1px solid rgba(255,255,255,.16)}
+  .btn.primary{color:#04121f;background:linear-gradient(135deg,#7cc0ff,#58a6ff);border:0}
+  .btn.ghost{color:#fff;background:rgba(0,0,0,.3)}
+  .stats{display:flex;flex-wrap:wrap;margin-top:26px;border:1px solid var(--border);border-radius:14px;overflow:hidden;background:rgba(17,22,31,.85)}
+  .stat{flex:1;min-width:110px;padding:15px 18px;border-right:1px solid var(--border)}.stat:last-child{border-right:0}
+  .stat .n{font-size:23px;font-weight:850;letter-spacing:-.5px;background:linear-gradient(120deg,#9ecbff,#c9a6ff);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .stat .l{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-top:3px}
+
+  section{padding:40px 0 6px}
+  .eyebrow{font-size:12px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--accent)}
+  h2.sec{font-size:23px;font-weight:800;letter-spacing:-.4px;margin:6px 0 4px}
+  .sub{color:var(--muted);font-size:14px;margin:0 0 18px;max-width:700px}
+
+  .heroes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;max-width:600px}
+  .gcardH{border:1px solid var(--border);border-radius:16px;overflow:hidden;background:var(--panel);transition:transform .18s,border-color .18s}
+  .gcardH:hover{transform:translateY(-4px);border-color:var(--accent)}
+  .cover3{aspect-ratio:3/4;position:relative;display:flex;align-items:flex-end;padding:12px}
+  .cover3 .rank{position:absolute;top:8px;left:10px;font-size:26px;font-weight:850;color:rgba(255,255,255,.16)}
+  .cover3 .chk{position:absolute;top:10px;right:10px;width:19px;height:19px;border-radius:50%;background:var(--accent);color:#04121f;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900}
+  .cover3 .ttl{position:relative;z-index:2;font-weight:850;font-size:15px;letter-spacing:-.2px;text-shadow:0 2px 14px rgba(0,0,0,.7);line-height:1.1}
+  .cover3 .rank,.cover3 .chk{z-index:2}
+  .cover3 .art{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0}
+  .cover3::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.02) 40%,rgba(0,0,0,.78));z-index:1}
+  .gmeta{padding:10px 12px}.gmeta .r{font-weight:700;font-size:12.5px;line-height:1.2}.gmeta .s{color:var(--muted);font-size:11.5px;margin-top:2px}
+
+  .legend{display:flex;gap:18px;flex-wrap:wrap;font-size:12.5px;color:var(--muted);margin:0 0 8px}
+  .legend b{color:var(--text)}.lg{display:inline-flex;align-items:center;gap:7px}
+  .lgdot{width:11px;height:11px;border-radius:50%;background:var(--gold);border:2px solid var(--bg)}
+  .lgbar{width:16px;height:11px;border-radius:3px;background:linear-gradient(135deg,#555,#333)}
+  /* studios-as-containers timeline */
+  .tl2{position:relative;padding-left:34px;margin:20px 0 10px}
+  .tl2 .spine{position:absolute;left:11px;top:8px;bottom:8px;width:2px;background:var(--border)}
+  .spanel{position:relative;overflow:hidden;border-radius:14px;margin-bottom:14px;padding:15px 18px 17px;color:#fff;border:1px solid rgba(255,255,255,.08)}
+  .spanel .dot{position:absolute;left:-27px;top:23px;width:12px;height:12px;border-radius:50%;background:var(--gold);border:2px solid var(--bg);box-shadow:0 0 0 3px rgba(224,178,58,.18);z-index:2}
+  .spanel .wm{position:absolute;right:10px;bottom:-30px;font-size:150px;font-weight:900;color:rgba(255,255,255,.07);line-height:1;pointer-events:none;letter-spacing:-8px;z-index:0}
+  .shead{display:flex;align-items:center;gap:12px;position:relative;z-index:1}
+  .shead .slogo{width:32px;height:32px;border-radius:8px;flex:none;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:850;background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.22)}
+  .sname{font-weight:800;font-size:16.5px;letter-spacing:-.2px}
+  .smeta{font-size:12.5px;color:rgba(255,255,255,.82);margin-top:2px}
+  .shelf{display:flex;flex-wrap:wrap;gap:13px;margin-top:15px;position:relative;z-index:1}
+  .gtile{width:86px}
+  .tart{position:relative;overflow:hidden;width:86px;height:115px;border-radius:8px;border:1px solid rgba(255,255,255,.15);box-shadow:0 6px 16px rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center}
+  .tart .art{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1}
+  .tart .tini{position:relative;z-index:0;font-size:15px;font-weight:850;color:rgba(255,255,255,.6);text-align:center;padding:4px}
+  .tv{position:absolute;top:5px;right:5px;width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:900;color:#04121f;z-index:2}
+  .tv.blue{background:var(--accent)}.tv.green{background:var(--green)}
+  .gtt{font-size:11.5px;font-weight:750;margin-top:6px;line-height:1.2;color:#fff}
+  .gtr{font-size:10.5px;color:rgba(255,255,255,.72);margin-top:2px}
+  .noship{margin-top:9px;font-size:12px;color:rgba(255,255,255,.5);position:relative;z-index:1}
+  .others{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px;margin-top:14px}
+  .ocard{display:flex;align-items:center;gap:10px;border:1px solid var(--border);background:var(--panel);border-radius:11px;padding:8px 11px 8px 8px}
+  .ocard .oc{position:relative;overflow:hidden;width:38px;height:50px;border-radius:5px;flex:none}
+
+  .skills{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  .skgroup{border:1px solid var(--border);border-radius:14px;background:var(--panel);padding:15px 16px}
+  .skgroup h4{margin:0 0 10px;font-size:12.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+  .pills{display:flex;gap:7px;flex-wrap:wrap}
+  .pill{font-size:12.5px;font-weight:650;color:#d3dcea;border:1px solid var(--border);background:var(--panel2);border-radius:8px;padding:5px 11px}
+
+  .contact{margin-top:30px;border:1px solid var(--border);border-radius:18px;background:radial-gradient(600px 200px at 20% 0%,rgba(88,166,255,.12),transparent),linear-gradient(180deg,var(--panel),#0d121b);padding:28px 26px;text-align:center}
+  .contact h3{margin:0 0 6px;font-size:22px;font-weight:800}.contact p{margin:0 0 18px;color:var(--muted);font-size:14px}
+  .clinks{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+  .vfoot{display:flex;align-items:center;gap:8px;justify-content:center;color:var(--muted);font-size:13px;margin:16px 0 0;flex-wrap:wrap}
+  .vfoot .v2{width:16px;height:16px;border-radius:50%;background:var(--green);color:#04121f;font-size:10px;font-weight:900;display:inline-flex;align-items:center;justify-content:center}
+  footer{border-top:1px solid var(--border);margin-top:38px;padding:22px 0 54px}
+  footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;font-size:12.5px;color:var(--dim)}
+  .editlink{position:fixed;bottom:12px;right:12px;z-index:60;font-size:12px;font-weight:700;color:#04121f;background:var(--gold);border-radius:999px;padding:7px 14px;display:none}
+  @media(max-width:820px){.heroes{grid-template-columns:1fr 1fr}.skills{grid-template-columns:1fr}}
+  @media(max-width:560px){.heroes{grid-template-columns:1fr}h1{font-size:31px}.navlinks{display:none}}
+</style>
+</head>
+<body>
+<div class="bar"></div>
+<div class="nav"><div class="wrap"><div class="brand">Dev<span class="q">Quest</span><span class="tld">.gg</span><span class="cr">PORTFOLIO</span></div><div class="navlinks"><a id="creditslink">Credits</a><a href="/">Jobs board →</a></div></div></div>
+<a class="editlink" id="editlink" href="/portfolio/edit/">✎ Edit my portfolio</a>
+<div id="app"><div class="wrap" style="padding:60px 22px;color:var(--muted)">Loading portfolio…</div></div>
+<footer><div class="wrap"><div><b style="color:var(--text)">DevQuest.gg</b> · portfolio</div><div>Verified by the people you shipped with.</div></div></footer>
+
+<script src="/credits/api.js"></script>
+<script>
+(function(){
+  var CUR = 2026;
+  var app = document.getElementById("app");
+  function esc(s){ return String(s==null?"":s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];}); }
+  // slug from ?slug= (router / view.html) or the last path segment (/portfolio/<slug>/)
+  var qslug = new URLSearchParams(location.search).get("slug");
+  var parts = location.pathname.replace(/\/+$/,"").split("/");
+  var pslug = parts[parts.length-1] || "";
+  var slug = String(qslug || pslug || "").trim().toLowerCase();
+  if(slug==="portfolio" || slug==="view.html" || !slug){ app.innerHTML='<div class="wrap" style="padding:60px 22px;color:var(--muted)">No profile specified.</div>'; return; }
+  document.getElementById("creditslink").href="/credits/"+slug;
+
+  // --- box art: resolve Steam capsules + admin covers, same as the credits person page ---
+  function bkt(s){ var h=2166136261>>>0; for(var i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=Math.imul(h,16777619)>>>0; } return h%256; }
+  var _jc={};
+  function getJSON(u){ if(_jc[u]) return _jc[u]; _jc[u]=fetch(u).then(function(r){ return r.ok?r.json():{}; }).catch(function(){ return {}; }); return _jc[u]; }
+  function steamArt(id){ return "https://cdn.cloudflare.steamstatic.com/steam/apps/"+encodeURIComponent(id)+"/library_600x900.jpg"; }
+  function resolveCovers(credits){
+    var seen={}; credits.forEach(function(c){ if(c.game_slug) seen[c.game_slug]=1; });
+    var list=Object.keys(seen);
+    if(!list.length) return Promise.resolve({});
+    var adminP=(DQAPI.gameCovers?DQAPI.gameCovers(list):Promise.resolve({data:{covers:{}}})).then(function(r){ return (r&&r.data&&r.data.covers)||{}; }).catch(function(){ return {}; });
+    var entP=Promise.all(list.map(function(s){ return getJSON("/credits/data/site/games/"+bkt(s)+".json").then(function(m){ return {s:s,e:(m&&m[s])||null}; }); }));
+    return Promise.all([adminP,entP]).then(function(res){
+      var admin=res[0], map={};
+      res[1].forEach(function(x){ var e=x.e; var url=admin[x.s]||(e&&e.cover)||(e&&e.steam?steamArt(e.steam):null); if(url) map[x.s]=url; });
+      return map;
+    }).catch(function(){ return {}; });
+  }
+  function art(slug, covMap){ var u=covMap&&covMap[slug]; return u?'<img class="art" loading="lazy" src="'+esc(u)+'" alt="" onerror="this.style.display=\'none\'">':''; }
+
+  function hashHue(s){ s=String(s||"x"); var h=0; for(var i=0;i<s.length;i++) h=(h*31+s.charCodeAt(i))>>>0; return h%360; }
+  function studioGrad(s){ var h=hashHue(s); return 'linear-gradient(120deg,hsl('+h+',42%,25%),hsl('+((h+18)%360)+',48%,14%))'; }
+  function gameGrad(s){ var h=hashHue(s); return 'radial-gradient(120% 90% at 50% 0%,hsl('+h+',52%,28%),hsl('+h+',58%,8%))'; }
+  function initials(s){ var w=String(s||"").replace(/[:\-].*$/,"").split(/\s+/).filter(function(x){return x && !/^(of|the|and|a|an|II|2)$/i.test(x);}); var r=w.slice(0,3).map(function(x){return x[0];}).join(""); return (r||String(s||"?").slice(0,2)).toUpperCase(); }
+  function studioMark(s){ return String(s||"?").trim().slice(0,1).toUpperCase(); }
+
+  DQAPI.portfolio(slug).then(function(r){
+    if(!(r && r.ok && r.data && r.data.person)){ app.innerHTML='<div class="wrap" style="padding:60px 22px"><h1>Not found</h1><p style="color:var(--muted)">No portfolio at this address yet.</p></div>'; return; }
+    var person=r.data.person, positions=r.data.positions||[], credits=r.data.credits||[];
+    resolveCovers(credits).then(function(covMap){ render(person, positions, credits, covMap||{}); });
+    // show edit link if this is my own page
+    if(DQAPI.isSignedIn()){ DQAPI.me().then(function(mr){ var me=mr&&mr.data&&mr.data.person; if(me && me.slug===slug) document.getElementById("editlink").style.display="inline-block"; }).catch(function(){}); }
+  }).catch(function(){ app.innerHTML='<div class="wrap" style="padding:60px 22px;color:var(--pink)">Could not load this portfolio. Try again.</div>'; });
+
+  function creditYear(c){ return c.work_start || c.year || c.work_end || null; }
+  function isLive(c){ return (c.releases||[]).some(function(x){ return /live/i.test(x); }); }
+
+  function render(p, positions, credits, covMap){
+    covMap = covMap || {};
+    document.title = p.name + " · DevQuest Portfolio";
+    // ---- stats ----
+    var startYears = [];
+    positions.forEach(function(x){ if(x.start_year) startYears.push(x.start_year); });
+    credits.forEach(function(c){ var y=creditYear(c); if(y) startYears.push(y); });
+    var minY = startYears.length ? Math.min.apply(null,startYears) : CUR;
+    var studioSet = {}; positions.forEach(function(x){ if(x.studio) studioSet[x.studio.toLowerCase()]=1; }); credits.forEach(function(c){ if(c.studio) studioSet[String(c.studio).toLowerCase()]=1; });
+    var nStudios = Object.keys(studioSet).length || positions.length;
+    var liveCount = credits.filter(isLive).length;
+    var av = (p.name||"?").split(/\s+/).map(function(x){return x[0];}).slice(0,2).join("").toUpperCase();
+
+    var tags = [];
+    tags.push(cap(p.portfolio_style||"production"));
+    if(liveCount) tags.push("Live Service");
+    if(positions.length>=3 || /director|vp|head|lead/i.test(p.headline||"")) tags.push("Studio Leadership");
+
+    var links = {}; (p.links||[]).forEach(function(l){ links[l.type]=l.url; });
+    var linkBtns = "";
+    if(links.linkedin) linkBtns += '<a class="btn ghost" href="'+esc(links.linkedin)+'" target="_blank">in · LinkedIn</a>';
+    if(links.portfolio) linkBtns += '<a class="btn ghost" href="'+esc(links.portfolio)+'" target="_blank">Website</a>';
+    if(links.artstation) linkBtns += '<a class="btn ghost" href="'+esc(links.artstation)+'" target="_blank">ArtStation</a>';
+    if(links.github) linkBtns += '<a class="btn ghost" href="'+esc(links.github)+'" target="_blank">GitHub</a>';
+
+    var hero =
+      '<div class="hero"><div class="banner"></div><div class="scrim"></div><div class="wrap"><div class="htop">'+
+        '<div class="avatar">'+esc(av)+'</div><div class="hmeta">'+
+        (p.open_to_work ? '<div class="oa"><span class="d"></span> Open to opportunities</div>' : '')+
+        '<h1>'+esc(p.name)+'</h1>'+
+        (p.headline ? '<div class="role">'+esc(p.headline)+'</div>' : '')+
+        (p.bio ? '<p class="bio">'+esc(p.bio)+'</p>' : '')+
+        '<div class="tags">'+tags.map(function(t){return '<span class="tag spec">'+esc(t)+'</span>';}).join("")+'</div>'+
+        '<div class="cta"><a class="btn primary">⬇ Download résumé</a>'+linkBtns+'</div>'+
+        '</div></div>'+
+        '<div class="stats">'+
+          stat((CUR-minY)+" yrs","In the industry")+stat(nStudios,"Studios")+stat(credits.length,"Credits")+
+          stat(liveCount,"Live-service")+stat(p.unshipped||0,"Cancelled / unshipped")+
+        '</div>'+
+      '</div></div>';
+
+    // ---- highlights: top 3 by vouches, then recency ----
+    var top = credits.slice().sort(function(a,b){ return (b.vouch_count||0)-(a.vouch_count||0) || (creditYear(b)||0)-(creditYear(a)||0); }).slice(0,3);
+    var highlights = top.length ? '<div class="wrap"><section><div class="eyebrow">Highlights</div><h2 class="sec">Proudest work</h2><p class="sub">Most-confirmed titles from the full record below.</p><div class="heroes">'+
+      top.map(function(c,i){ return '<div class="gcardH"><div class="cover3" style="background:'+gameGrad(c.game_slug)+'">'+art(c.game_slug,covMap)+'<span class="rank">'+(i+1)+'</span>'+(c.vouch_count?'<span class="chk">✓</span>':'')+'<span class="ttl">'+esc(c.game_title)+'</span></div><div class="gmeta"><div class="r">'+esc(c.role)+'</div><div class="s">'+esc(c.studio||"")+(creditYear(c)?(c.studio?' · ':'')+creditYear(c):'')+'</div></div></div>'; }).join("")+
+      '</div></section></div>' : '';
+
+    // ---- timeline ----
+    var tl = buildTimeline(positions, credits, covMap);
+
+    // ---- skills ----
+    var groups = (p.skills && p.skills.groups) ? p.skills.groups : [];
+    var skills = groups.length ? '<div class="wrap"><section><div class="eyebrow">How I work</div><h2 class="sec">Skills &amp; tools</h2><div class="skills">'+
+      groups.map(function(g){ return '<div class="skgroup"><h4>'+esc(g.label)+'</h4><div class="pills">'+(g.items||[]).map(function(it){return '<span class="pill">'+esc(it)+'</span>';}).join("")+'</div></div>'; }).join("")+
+      '</div></section></div>' : '';
+
+    // ---- confirm count ----
+    var confirmed = credits.filter(function(c){ return (c.vouch_count||0)>0; }).length;
+    var contact = '<div class="wrap"><div class="contact"><h3>'+esc(p.name.split(" ")[0])+' is '+(p.open_to_work?'open to new roles':'on DevQuest')+'</h3><p>Résumé tailors to your posting in one click.</p><div class="clinks"><a class="btn primary">⬇ Download résumé (PDF)</a>'+linkBtns+'</div>'+
+      (confirmed?'<div class="vfoot"><span class="v2">✓</span> '+confirmed+' of '+credits.length+' credits confirmed by teammates who shipped the same game · <a href="/credits/how-evidence-works.html" style="color:var(--accent)">how evidence works →</a></div>':'')+
+      '</div></div>';
+
+    app.innerHTML = hero + highlights + tl.html + skills + contact;
+  }
+
+  function stat(n,l){ return '<div class="stat"><div class="n">'+n+'</div><div class="l">'+l+'</div></div>'; }
+  function cap(s){ return String(s).charAt(0).toUpperCase()+String(s).slice(1); }
+
+  function gtile(c, covMap){
+    var conf=(c.vouch_count||0)>0;
+    return '<div class="gtile"><div class="tart" style="background:'+gameGrad(c.game_slug)+'">'+art(c.game_slug,covMap)+'<span class="tini">'+esc(initials(c.game_title))+'</span>'+(conf?'<span class="tv '+(c.vouch_count>1?"green":"blue")+'">✓</span>':'')+'</div>'+
+      '<div class="gtt">'+esc(c.game_title)+'</div><div class="gtr">'+esc(c.role)+(creditYear(c)?' · '+creditYear(c):'')+'</div></div>';
+  }
+
+  function buildTimeline(positions, credits, covMap){
+    covMap = covMap || {};
+    if(!positions.length && !credits.length) return {html:""};
+    // bands from positions (already newest-first from API)
+    var bands=positions.map(function(p){
+      var s=p.start_year||CUR, e=p.is_current?CUR:(p.end_year||s); if(e<s) e=s;
+      return {p:p,s:s,e:e,credits:[]};
+    });
+    // assign credits to the studio they belong to by year-in-range; else orphan
+    var orphans=[];
+    credits.forEach(function(c){
+      var y=creditYear(c), bi=-1;
+      if(y){ for(var i=0;i<bands.length;i++){ if(y>=bands[i].s && y<=bands[i].e){ bi=i; break; } } }
+      if(bi<0) orphans.push(c); else bands[bi].credits.push(c);
+    });
+    // one panel per studio, games nested inside
+    var panels = bands.map(function(b){
+      var p=b.p;
+      var list=b.credits.sort(function(a,c){ return (creditYear(c)||0)-(creditYear(a)||0); });
+      var body = list.length ? '<div class="shelf">'+list.map(function(c){ return gtile(c,covMap); }).join("")+'</div>'
+                             : '<div class="noship">No publicly shipped titles from this role.</div>';
+      return '<div class="spanel" style="background:'+studioGrad(p.studio)+'">'+
+        '<span class="dot"></span><span class="wm">'+esc(studioMark(p.studio))+'</span>'+
+        '<div class="shead"><span class="slogo">'+esc(studioMark(p.studio))+'</span>'+
+          '<div><div class="sname">'+esc(p.studio)+'</div><div class="smeta">'+esc(p.title)+' · '+b.s+' – '+(p.is_current?'Present':b.e)+'</div></div>'+
+        '</div>'+body+'</div>';
+    }).join("");
+    var tlBlock='<div class="tl2"><div class="spine"></div>'+panels+'</div>';
+
+    // orphans (credits without a matching position)
+    var othersBlock = "";
+    if(orphans.length){
+      orphans.sort(function(a,c){ return (creditYear(c)||0)-(creditYear(a)||0); });
+      othersBlock = '<div class="eyebrow" style="margin-top:26px">Also credited</div><p class="sub">Titles not yet matched to a role above — add the studio &amp; dates in your editor and they will nest into the right studio.</p><div class="others">'+
+        orphans.map(function(c){ return '<div class="ocard"><span class="oc" style="background:'+gameGrad(c.game_slug)+'">'+art(c.game_slug,covMap)+'</span><div><div style="font-weight:700;font-size:13px">'+esc(c.game_title)+'</div><div style="color:var(--muted);font-size:11.5px">'+esc(c.role)+(creditYear(c)?' · '+creditYear(c):'')+'</div></div></div>'; }).join("")+
+        '</div>';
+    }
+
+    var legend='<div class="legend"><span class="lg"><span class="lgdot"></span> <b>Studio</b> (newest first)</span><span class="lg"><span class="lgdot" style="background:var(--accent)"></span> <b>Peer-confirmed title</b></span></div>';
+    var html = '<div class="wrap"><section><div class="eyebrow">Career &amp; gameography</div><h2 class="sec">Studios &amp; the games they shipped</h2><p class="sub">Every role you\'ve held, newest first, with the titles that came out of each — verified by the people you shipped with.</p>'+legend+tlBlock+othersBlock+'</section></div>';
+    return {html:html};
+  }
+})();
+</script>
+</body>
+</html>
