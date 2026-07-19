@@ -7,9 +7,8 @@
 <meta name="robots" content="noindex">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <script>
-// Pretty-URL router for the Credits section. GitHub Pages serves this file for
-// any path that doesn't map to a real file, so we translate clean profile URLs
-// like /credits/destin-bales into the actual /credits/person.html?slug=... page.
+// Pretty-URL router. GitHub Pages serves this file for any path that doesn't map
+// to a real file, so we translate clean URLs into the actual page + ?slug=... .
 // Runs in <head> before render, so valid pretty URLs redirect with no flash.
 (function () {
   var p = location.pathname.replace(/\/+$/, "");
@@ -17,6 +16,8 @@
   var m;
   if ((m = p.match(/^\/credits\/game\/([^\/]+)$/)))   { location.replace("/credits/game.html?slug=" + encodeURIComponent(decodeURIComponent(m[1])) + h); return; }
   if ((m = p.match(/^\/credits\/studio\/([^\/]+)$/))) { location.replace("/credits/studio.html?slug=" + encodeURIComponent(decodeURIComponent(m[1])) + h); return; }
+  // /portfolio/<handle> — a bare segment with no dot (so it's not a real file)
+  if ((m = p.match(/^\/portfolio\/([^\/.]+)$/)))       { location.replace("/portfolio/view.html?slug=" + encodeURIComponent(decodeURIComponent(m[1])) + h); return; }
   // /credits/<handle> — a bare segment with no dot (so it's not a real file like person.html)
   if ((m = p.match(/^\/credits\/([^\/.]+)$/)))         { location.replace("/credits/person.html?slug=" + encodeURIComponent(decodeURIComponent(m[1])) + h); return; }
 })();
