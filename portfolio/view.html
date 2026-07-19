@@ -232,6 +232,8 @@
   .agresult .ags{font-size:12px;color:var(--muted)}
   .agsel{border:1px solid rgba(88,166,255,.5);background:rgba(88,166,255,.1);border-radius:9px;padding:10px 12px;font-size:13.5px;margin-bottom:6px}
   .agnew{color:var(--accent);font-weight:700;cursor:pointer;font-size:13px}
+  .agprev{margin-top:10px;display:flex;gap:12px;align-items:center}
+  .agprev img{width:84px;height:112px;object-fit:cover;border-radius:8px;border:1px solid var(--border);background:#141b26}
 </style>
 </head>
 <body>
@@ -487,6 +489,8 @@
       '<div id="ag-results" style="margin-top:8px"></div>'+
       '<div id="ag-picked"></div>'+
       '<label class="eflabel">Your role on it</label><input id="ag-role" placeholder="e.g. Senior Producer">'+
+      '<label class="eflabel">Box art URL <span class="mut">— optional; leave blank to keep the catalogue art</span></label><input id="ag-cover" placeholder="https://…  link to a cover image" autocomplete="off">'+
+      '<div id="ag-preview"></div>'+
       '<div class="efactions"><span class="efbtn primary" id="ag-add">Add to my portfolio</span><span class="efbtn" id="ag-cancel">Cancel</span><span class="efstatus" id="ag-status"></span></div>'+
       '</div>';
   }
@@ -521,11 +525,15 @@
       });
     }
     q.oninput=function(){ sel=null; picked.innerHTML=""; clearTimeout(t); t=setTimeout(search,220); };
+    var cov=sheet.querySelector("#ag-cover"), prev=sheet.querySelector("#ag-preview");
+    cov.oninput=function(){ var u=cov.value.trim(); if(/^https:\/\//i.test(u)){ prev.innerHTML='<div class="agprev"><img src="'+esc(u)+'" alt="" onerror="this.style.opacity=.15"><span class="mut" style="font-size:12px">Box art preview</span></div>'; } else { prev.innerHTML=""; } };
     sheet.querySelector("#ag-add").onclick=function(){
       var role=sheet.querySelector("#ag-role").value.trim(), st=sheet.querySelector("#ag-status");
       if(!sel){ st.textContent="Pick a game from the list first."; st.className="efstatus err"; return; }
       if(!role){ st.textContent="Add your role."; st.className="efstatus err"; return; }
+      var coverUrl=cov.value.trim();
       var payload = sel.isNew ? { role:role, new_game:{ title:sel.title, studio:sel.studio||"" } } : { role:role, game_slug:sel.slug, game_title:sel.title, studio:sel.studio||null };
+      if(coverUrl) payload.cover_url=coverUrl;
       st.textContent="Adding…"; st.className="efstatus";
       DQAPI.createCredit(payload).then(function(r){
         if(r&&r.ok){ st.textContent="Added ✓"; st.className="efstatus ok"; setTimeout(function(){ closeSheet(); loadPortfolio(); },500); }
