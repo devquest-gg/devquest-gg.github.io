@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Build your portfolio · DevQuest</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<style>
+  :root{--bg:#0a0d14;--panel:#11161f;--panel2:#141b26;--border:#232c3a;--text:#eaf0f8;--muted:#8b98ab;--dim:#5f6b7d;--accent:#58a6ff;--purple:#a371f7;--gold:#e0b23a;--green:#3fb950;--pink:#f778ba}
+  *{box-sizing:border-box}html,body{margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,-apple-system,Roboto,Helvetica,Arial,sans-serif;line-height:1.5;-webkit-font-smoothing:antialiased}
+  a{color:var(--accent);text-decoration:none}
+  .bar{height:3px;background:linear-gradient(90deg,var(--gold),var(--purple) 55%,var(--accent))}
+  .wrap{max-width:760px;margin:0 auto;padding:0 20px}
+  .nav{border-bottom:1px solid var(--border)}.nav .wrap{display:flex;align-items:center;justify-content:space-between;height:54px}
+  .brand{font-weight:800;font-size:17px}.brand .q{color:var(--accent)}.brand .tld{color:var(--gold)}
+  .brand .cr{font-size:10px;font-weight:800;letter-spacing:.2em;color:var(--accent);border:1px solid var(--border);border-radius:5px;padding:2px 6px;margin-left:6px}
+  h1{font-size:26px;font-weight:850;letter-spacing:-.4px;margin:26px 0 4px}
+  .lede{color:var(--muted);font-size:14px;margin:0 0 8px}
+  .blk{border:1px solid var(--border);background:var(--panel);border-radius:16px;padding:20px 22px;margin:18px 0}
+  .blk h2{font-size:16px;font-weight:800;margin:0 0 3px}
+  .blk .desc{color:var(--muted);font-size:12.5px;margin:0 0 14px}
+  label{display:block;font-size:12px;font-weight:700;color:#cdd8e6;margin:12px 0 5px}
+  input,select,textarea{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:9px;padding:10px 12px;color:var(--text);font-size:14px;font-family:inherit;outline:none}
+  input:focus,select:focus,textarea:focus{border-color:var(--accent)}
+  textarea{resize:vertical;min-height:64px;line-height:1.5}
+  .row{display:flex;gap:10px;flex-wrap:wrap}.row>div{flex:1;min-width:120px}
+  .chk{display:flex;align-items:center;gap:8px;font-size:13.5px;font-weight:600;margin-top:12px;cursor:pointer}
+  .chk input{width:auto}
+  .btn{display:inline-flex;align-items:center;gap:7px;font-size:14px;font-weight:750;border-radius:10px;padding:10px 18px;cursor:pointer;border:1px solid var(--border);background:var(--panel2);color:var(--text)}
+  .btn.primary{color:#04121f;background:linear-gradient(135deg,#7cc0ff,#58a6ff);border:0}
+  .btn.sm{padding:7px 13px;font-size:13px}
+  .btn.danger{color:var(--pink);border-color:rgba(247,120,186,.3)}
+  .pos{border:1px solid var(--border);border-radius:13px;background:var(--panel2);padding:15px 16px;margin-bottom:12px}
+  .pos .top{display:flex;justify-content:space-between;align-items:center;gap:10px}
+  .pos .pt{font-weight:750;font-size:14px}
+  .status{font-size:13px;margin-top:10px;min-height:16px}
+  .ok{color:var(--green)}.err{color:var(--pink)}.mut{color:var(--muted)}
+  .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px;align-items:center}
+  .empty{color:var(--muted);font-size:13.5px;padding:6px 0}
+  .top-cta{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:6px 0 0}
+  footer{border-top:1px solid var(--border);margin-top:30px;padding:20px 0 46px;font-size:12.5px;color:var(--dim)}
+</style>
+</head>
+<body>
+<div class="bar"></div>
+<div class="nav"><div class="wrap"><div class="brand">Dev<span class="q">Quest</span><span class="tld">.gg</span><span class="cr">PORTFOLIO</span></div><div style="font-size:13px"><a href="/">Jobs board →</a></div></div></div>
+
+<div class="wrap">
+  <h1>Build your portfolio</h1>
+  <p class="lede">Your work history and details, entered once — powering your portfolio page and a résumé that tailors to any job.</p>
+  <div class="top-cta" id="topcta"></div>
+  <div id="app"><div class="blk"><div class="mut">Loading…</div></div></div>
+</div>
+<footer><div class="wrap">DevQuest.gg · portfolio editor</div></footer>
+
+<script src="/credits/api.js"></script>
+<script>
+(function(){
+  var app = document.getElementById("app");
+  var topcta = document.getElementById("topcta");
+  var ME = null, SLUG = null, POS = [], NEWCTR = 0;
+
+  function esc(s){ return String(s==null?"":s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];}); }
+  function val(id){ var e=document.getElementById(id); return e?e.value.trim():""; }
+
+  if(!window.DQAPI || !DQAPI.isSignedIn()){
+    app.innerHTML = '<div class="blk"><h2>Sign in to build your portfolio</h2><div class="desc">You need a DevQuest account first — it takes one email link.</div><a class="btn primary" href="/credits/signin.html">Sign in →</a></div>';
+    return;
+  }
+
+  DQAPI.me().then(function(r){
+    ME = (r && r.data) || {};
+    var person = ME.person;
+    if(!person || !person.slug){
+      app.innerHTML = '<div class="blk"><h2>Claim your profile first</h2><div class="desc">Add one game you shipped to start your profile, then come back here to flesh out your portfolio.</div><a class="btn primary" href="/credits/">Add a credit →</a></div>';
+      return;
+    }
+    SLUG = person.slug;
+    topcta.innerHTML = '<a class="btn sm" href="/portfolio/'+esc(SLUG)+'/" target="_blank">View my portfolio ↗</a><a class="btn sm" href="/credits/'+esc(SLUG)+'" target="_blank">My credits page ↗</a>';
+    return DQAPI.portfolio(SLUG).then(function(pr){
+      var d = (pr && pr.data) || {}; render(d.person||{}, d.positions||[]);
+    });
+  }).catch(function(){ app.innerHTML='<div class="blk"><div class="err">Could not load your profile. Reload and try again.</div></div>'; });
+
+  function render(p, positions){
+    POS = positions.slice();
+    var links = {}; (p.links||[]).forEach(function(l){ links[l.type]=l.url; });
+    var sk = (p.skills && p.skills.groups) ? p.skills.groups : [];
+    while(sk.length < 3) sk.push({label:"",items:[]});
+
+    app.innerHTML =
+      // BASICS
+      '<div class="blk"><h2>Basics</h2><div class="desc">The header of your portfolio and résumé.</div>'+
+        '<label>Display name</label><input id="b-name" value="'+esc(p.name||"")+'">'+
+        '<label>Headline <span class="mut" style="font-weight:400">— current role &amp; studio</span></label><input id="b-head" placeholder="Director of Development Management · Insomniac Games" value="'+esc(p.headline||"")+'">'+
+        '<label>Location</label><input id="b-loc" placeholder="City, State (or Remote)" value="'+esc(p.location||"")+'">'+
+        '<label>About / bio</label><textarea id="b-bio" placeholder="A couple of sentences on who you are and how you work.">'+esc(p.bio||"")+'</textarea>'+
+        '<div class="chk"><input type="checkbox" id="b-otw" '+(p.open_to_work?"checked":"")+'><label for="b-otw" style="margin:0">Show &ldquo;Open to opportunities&rdquo; on my portfolio</label></div>'+
+        '<label>Portfolio style</label><select id="b-style">'+
+          ['production','engineering','art','audio','design','qa'].map(function(s){ return '<option value="'+s+'" '+((p.portfolio_style||"production")===s?"selected":"")+'>'+s.charAt(0).toUpperCase()+s.slice(1)+'</option>'; }).join("")+
+        '</select>'+
+        '<label>Links</label>'+
+        '<div class="row"><div><input id="l-linkedin" placeholder="LinkedIn URL" value="'+esc(links.linkedin||"")+'"></div><div><input id="l-portfolio" placeholder="Website / portfolio URL" value="'+esc(links.portfolio||"")+'"></div></div>'+
+        '<div class="row" style="margin-top:8px"><div><input id="l-artstation" placeholder="ArtStation URL" value="'+esc(links.artstation||"")+'"></div><div><input id="l-github" placeholder="GitHub URL" value="'+esc(links.github||"")+'"></div></div>'+
+        '<div class="actions"><span class="btn primary" id="save-basics">Save basics</span><span class="status" id="st-basics"></span></div>'+
+      '</div>'+
+
+      // SKILLS
+      '<div class="blk"><h2>Skills &amp; tools</h2><div class="desc">Group them however makes sense — e.g. &ldquo;Production &amp; Leadership&rdquo;, &ldquo;Tools&rdquo;. Comma-separated.</div>'+
+        '<div id="skills">'+ sk.slice(0,6).map(function(g,i){ return skillRow(g,i); }).join("") +'</div>'+
+        '<div class="actions"><span class="btn sm" id="add-skill">+ Add a group</span><span class="btn primary" id="save-skills">Save skills</span><span class="status" id="st-skills"></span></div>'+
+      '</div>'+
+
+      // WORK HISTORY
+      '<div class="blk"><h2>Work history</h2><div class="desc">Your studios and roles — the spine of your résumé and the right-hand track of the timeline. Newest or oldest, any order; the page sorts by date.</div>'+
+        '<div id="poslist"></div>'+
+        '<div class="actions"><span class="btn" id="add-pos">+ Add a position</span></div>'+
+      '</div>';
+
+    renderPositions();
+    wireBasics(); wireSkills();
+  }
+
+  function skillRow(g,i){
+    return '<div class="row skrow" style="margin-bottom:8px"><div style="flex:0 0 34%"><input class="sk-label" placeholder="Group (e.g. Tools)" value="'+esc(g.label||"")+'"></div>'+
+      '<div><input class="sk-items" placeholder="Jira, Perforce, Unreal, …" value="'+esc((g.items||[]).join(", "))+'"></div></div>';
+  }
+
+  // ---------- BASICS ----------
+  function wireBasics(){
+    document.getElementById("save-basics").onclick = function(){
+      var st=document.getElementById("st-basics"); st.textContent="Saving…"; st.className="status mut";
+      var links=[];
+      [["linkedin","l-linkedin"],["portfolio","l-portfolio"],["artstation","l-artstation"],["github","l-github"]].forEach(function(p){
+        var u=val(p[1]); if(u) links.push({type:p[0],url:u});
+      });
+      DQAPI.updateProfile({
+        name: val("b-name"), headline: val("b-head"), location: val("b-loc"), bio: val("b-bio"),
+        open_to_work: document.getElementById("b-otw").checked ? 1 : 0,
+        portfolio_style: val("b-style"), links: links
+      }).then(function(r){
+        if(r&&r.ok){ st.textContent="✓ Saved"; st.className="status ok"; }
+        else { st.textContent=(r&&r.data&&r.data.error)||"Could not save."; st.className="status err"; }
+      }).catch(function(){ st.textContent="Network error."; st.className="status err"; });
+    };
+  }
+
+  // ---------- SKILLS ----------
+  function wireSkills(){
+    document.getElementById("add-skill").onclick=function(){
+      document.getElementById("skills").insertAdjacentHTML("beforeend", skillRow({},0));
+    };
+    document.getElementById("save-skills").onclick=function(){
+      var st=document.getElementById("st-skills"); st.textContent="Saving…"; st.className="status mut";
+      var groups=[];
+      Array.prototype.forEach.call(document.querySelectorAll(".skrow"), function(row){
+        var label=(row.querySelector(".sk-label").value||"").trim();
+        var items=(row.querySelector(".sk-items").value||"").split(",").map(function(x){return x.trim();}).filter(Boolean);
+        if(label && items.length) groups.push({label:label, items:items});
+      });
+      DQAPI.updateProfile({ skills:{ groups:groups } }).then(function(r){
+        if(r&&r.ok){ st.textContent="✓ Saved"; st.className="status ok"; }
+        else { st.textContent=(r&&r.data&&r.data.error)||"Could not save."; st.className="status err"; }
+      }).catch(function(){ st.textContent="Network error."; st.className="status err"; });
+    };
+  }
+
+  // ---------- POSITIONS ----------
+  function renderPositions(){
+    var box=document.getElementById("poslist");
+    if(!POS.length){ box.innerHTML='<div class="empty">No positions yet — add your first role below.</div>'; return; }
+    box.innerHTML = POS.map(posCard).join("");
+    POS.forEach(function(p){ wirePos(p.id); });
+  }
+  function yearOpts(sel){ var o='<option value="">Year</option>'; for(var y=2026; y>=1980; y--){ o+='<option value="'+y+'"'+(String(sel)===String(y)?" selected":"")+'>'+y+'</option>'; } return o; }
+  function monthOpts(sel){ var m=["","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]; var o='<option value="">Mo</option>'; for(var i=1;i<=12;i++){ o+='<option value="'+i+'"'+(String(sel)===String(i)?" selected":"")+'>'+m[i]+'</option>'; } return o; }
+  function empOpts(sel){ return ["","Full-time","Contract","Freelance","Internship"].map(function(t){ return '<option value="'+t+'"'+(sel===t?" selected":"")+'>'+(t||"Type")+'</option>'; }).join(""); }
+
+  function posCard(p){
+    var id=p.id;
+    return '<div class="pos" data-id="'+id+'">'+
+      '<div class="top"><span class="pt">'+esc(p.title||"New position")+(p.studio?' · '+esc(p.studio):'')+'</span></div>'+
+      '<div class="row" style="margin-top:10px"><div><label>Studio / company</label><input class="p-studio" value="'+esc(p.studio||"")+'"></div><div><label>Title</label><input class="p-title" value="'+esc(p.title||"")+'"></div></div>'+
+      '<div class="row" style="margin-top:8px"><div style="flex:0 0 30%"><label>Type</label><select class="p-emp">'+empOpts(p.employment_type||"")+'</select></div><div><label>Location</label><input class="p-loc" value="'+esc(p.location||"")+'"></div></div>'+
+      '<div class="row" style="margin-top:8px;align-items:flex-end">'+
+        '<div><label>Start</label><div class="row"><div><select class="p-sm">'+monthOpts(p.start_month)+'</select></div><div><select class="p-sy">'+yearOpts(p.start_year)+'</select></div></div></div>'+
+        '<div><label>End</label><div class="row"><div><select class="p-em">'+monthOpts(p.end_month)+'</select></div><div><select class="p-ey">'+yearOpts(p.end_year)+'</select></div></div></div>'+
+      '</div>'+
+      '<div class="chk"><input type="checkbox" class="p-cur" '+(p.is_current?"checked":"")+'><label style="margin:0">I currently work here</label></div>'+
+      '<label>What you did <span class="mut" style="font-weight:400">— a few accomplishment lines</span></label><textarea class="p-desc" placeholder="Led studio production for…&#10;Owned milestone quality and budget for…">'+esc(p.description||"")+'</textarea>'+
+      '<div class="actions"><span class="btn primary sm p-save">Save</span><span class="btn danger sm p-del">Remove</span><span class="status p-st"></span></div>'+
+    '</div>';
+  }
+
+  function wirePos(id){
+    var card=document.querySelector('.pos[data-id="'+id+'"]'); if(!card) return;
+    var st=card.querySelector(".p-st");
+    var cur=card.querySelector(".p-cur");
+    cur.onchange=function(){ card.querySelector(".p-em").disabled=cur.checked; card.querySelector(".p-ey").disabled=cur.checked; };
+    cur.onchange();
+    card.querySelector(".p-save").onclick=function(){
+      var payload={
+        studio_name: card.querySelector(".p-studio").value.trim(),
+        title: card.querySelector(".p-title").value.trim(),
+        employment_type: card.querySelector(".p-emp").value,
+        location: card.querySelector(".p-loc").value.trim(),
+        start_year: card.querySelector(".p-sy").value, start_month: card.querySelector(".p-sm").value,
+        end_year: card.querySelector(".p-ey").value, end_month: card.querySelector(".p-em").value,
+        is_current: cur.checked ? 1 : 0,
+        description: card.querySelector(".p-desc").value
+      };
+      if(!payload.studio_name || !payload.title){ st.textContent="Studio and title are required."; st.className="status err"; return; }
+      st.textContent="Saving…"; st.className="status mut";
+      var isNew = String(id).indexOf("new")===0;
+      var call = isNew ? DQAPI.addPosition(payload) : DQAPI.updatePosition(id, payload);
+      call.then(function(r){
+        if(r&&r.ok){ st.textContent="✓ Saved"; st.className="status ok";
+          if(isNew && r.data && r.data.id){ card.setAttribute("data-id", r.data.id); var p=POS.filter(function(x){return String(x.id)===String(id);})[0]; if(p) p.id=r.data.id; wirePos(r.data.id); }
+        } else { st.textContent=(r&&r.data&&r.data.error)||"Could not save."; st.className="status err"; }
+      }).catch(function(){ st.textContent="Network error."; st.className="status err"; });
+    };
+    card.querySelector(".p-del").onclick=function(){
+      var isNew = String(id).indexOf("new")===0;
+      if(!confirm("Remove this position?")) return;
+      if(isNew){ POS=POS.filter(function(x){return String(x.id)!==String(id);}); renderPositions(); return; }
+      DQAPI.deletePosition(id).then(function(r){ if(r&&r.ok){ POS=POS.filter(function(x){return String(x.id)!==String(id);}); renderPositions(); } else { st.textContent="Could not remove."; st.className="status err"; } });
+    };
+  }
+
+  // add-position handler (delegated after render)
+  document.addEventListener("click", function(e){
+    if(e.target && e.target.id==="add-pos"){
+      var nid="new"+(++NEWCTR);
+      POS.push({id:nid, studio:"", title:"", start_year:null, end_year:null, is_current:0, description:""});
+      renderPositions();
+      var el=document.querySelector('.pos[data-id="'+nid+'"]'); if(el) el.scrollIntoView({behavior:"smooth",block:"center"});
+    }
+  });
+})();
+</script>
+</body>
+</html>
