@@ -84,7 +84,7 @@
   }).join("")+'</div>'; }
   function peopleRows(rows){ return '<div class="rows">'+rows.map(function(p){
     var un = p[3];
-    var href = un ? ('/credits/person.html?name='+encodeURIComponent(p[1])) : ('/portfolio/'+encodeURIComponent(p[0]));
+    var href = un ? ('/credits/person.html?name='+encodeURIComponent(p[1])) : ('/credits/'+encodeURIComponent(p[0]));
     var name = DQ.esc(p[1]) + (un ? ' <span class="sig" style="color:var(--muted)">unclaimed</span>' : '');
     var sub = un ? 'Attributed by a teammate — tap to claim' : (p[2]+' credit'+(p[2]===1?'':'s'));
     return '<a class="row" href="'+href+'">'+
@@ -216,7 +216,7 @@
     var m = combine(data.people?DQ.searchRows(data.people,1,q,LIMIT):{total:0,rows:[]}, liveFilter(data.livePeople,q), LIMIT);
     document.getElementById("np").textContent = m.total ? " "+m.total.toLocaleString() : "";
     if(!m.total) return '<div class="empty">No people match “'+DQ.esc(q)+'”.<br><span class="mut">A profile appears once you claim a game you worked on.</span><br><a class="btn ghost" data-add-person style="margin-top:14px">This is you? Start your profile →</a></div>';
-    return peopleRows(m.rows) + '<div class="notice" style="margin-top:12px">Not you, or is your name taken by someone else? <a data-add-person style="cursor:pointer;color:var(--accent);font-weight:700">Start your own profile →</a></div>';
+    return peopleRows(m.rows);
   }
 
   // Fetch live user-added results for the current query, then repaint.

@@ -19,7 +19,7 @@
   // /portfolio/<handle> — a bare segment with no dot (so it's not a real file)
   if ((m = p.match(/^\/portfolio\/([^\/.]+)$/)))       { location.replace("/portfolio/view.html?slug=" + encodeURIComponent(decodeURIComponent(m[1])) + h); return; }
   // /credits/<handle> — a bare segment with no dot (so it's not a real file like person.html)
-  if ((m = p.match(/^\/credits\/([^\/.]+)$/)))         { location.replace("/credits/person.html?slug=" + encodeURIComponent(decodeURIComponent(m[1])) + h); return; }
+  if ((m = p.match(/^\/credits\/([^\/.]+)$/)))         { location.replace("/portfolio/view.html?slug=" + encodeURIComponent(decodeURIComponent(m[1])) + h); return; }
 })();
 </script>
 <style>

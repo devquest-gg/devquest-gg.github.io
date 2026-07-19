@@ -113,7 +113,7 @@
         '<span class="txt"><span class="nm">' + esc(r[1]) + '</span><span class="sb">' + Number(r[2]).toLocaleString() + ' game' + (r[2] === 1 ? '' : 's') + '</span></span></a>';
     }
     var un = r[3];
-    var phref = un ? ('/credits/person.html?name=' + encodeURIComponent(r[1])) : ('/portfolio/' + encodeURIComponent(r[0]));
+    var phref = un ? ('/credits/person.html?name=' + encodeURIComponent(r[1])) : ('/credits/' + encodeURIComponent(r[0]));
     var psub = un ? 'Unclaimed — tap to claim' : (r[2] + ' credit' + (r[2] === 1 ? '' : 's'));
     return '<a class="dq-row" href="' + phref + '"><span class="tag dq-tag-person">Person</span>' +
       '<span class="txt"><span class="nm">' + esc(r[1]) + '</span><span class="sb">' + psub + '</span></span></a>';
@@ -386,42 +386,6 @@
     // Intentionally NOT closing on backdrop click — too easy to lose a filled-in form.
     ov.querySelector(".dq-x").onclick = close;
     ov.querySelector(".dq-cancel").onclick = close;
-
-    // After a credit is saved, invite the person to name up to 3 teammates on this game.
-    // Each becomes an unclaimed stub that surfaces in search + the "Is this you?" claim flow.
-    function promptTeammates(gameSlug, gameTitle, studio, personSlug){
-      var dest = personSlug ? ("/credits/person.html?slug=" + encodeURIComponent(personSlug)) : "/credits/";
-      var modal = ov.querySelector(".dq-modal");
-      if(!gameSlug || !modal || !(w.DQAPI && w.DQAPI.attributeTeammate)){ close(); w.location.href = dest; return; }
-      function row(i){
-        return '<div class="dq-row2" style="gap:8px;margin-bottom:8px">'+
-          '<div style="flex:2"><input class="dq-tm-name" data-i="'+i+'" autocomplete="off" placeholder="Teammate\'s name"></div>'+
-          '<div style="flex:1"><input class="dq-tm-role" data-i="'+i+'" autocomplete="off" placeholder="Role (optional)"></div>'+
-        '</div>';
-      }
-      modal.innerHTML = '<button class="dq-x" aria-label="Close">×</button>'+
-        '<div class="dq-mh">Who did you work with?</div>'+
-        '<div class="dq-sub">Name up to 3 people you shipped <b>'+esc(gameTitle||"this game")+'</b> with. They\'ll find themselves already listed when they search their name, and can confirm your credit too. No emails are sent.</div>'+
-        row(0)+row(1)+row(2)+
-        '<div class="dq-actions"><button class="dq-cancel dq-tm-skip">Skip</button><button class="dq-submit dq-tm-save">Add teammates →</button></div>'+
-        '<div class="dq-foot">Optional — naming teammates is what helps the site spread to the people you shipped with.</div>';
-      modal.querySelector(".dq-x").onclick = function(){ close(); w.location.href = dest; };
-      modal.querySelector(".dq-tm-skip").onclick = function(){ close(); w.location.href = dest; };
-      modal.querySelector(".dq-tm-save").onclick = function(){
-        var btn = this;
-        var nameEls = modal.querySelectorAll(".dq-tm-name"), roleEls = modal.querySelectorAll(".dq-tm-role");
-        var jobs = [];
-        for(var i=0;i<nameEls.length;i++){ var nm = nameEls[i].value.trim(); if(nm) jobs.push({ name:nm, role:(roleEls[i]&&roleEls[i].value.trim())||null }); }
-        if(!jobs.length){ close(); w.location.href = dest; return; }
-        btn.disabled = true; btn.textContent = "Adding…";
-        var done = 0;
-        jobs.forEach(function(j){
-          w.DQAPI.attributeTeammate({ game_slug: gameSlug, game_title: gameTitle, studio: studio||null, name: j.name, role: j.role }).catch(function(){}).then(function(){
-            done++; if(done===jobs.length){ close(); w.location.href = dest; }
-          });
-        });
-      };
-    }
     var suggestLink = ov.querySelector("#dqc-suggest-link");
     if (suggestLink) suggestLink.onclick = function () { close(); openSuggest({ prefillName: (ov.querySelector("#dqc-gtitle") || {}).value || "" }); };
     // Progressive-disclosure toggles: reveal / hide each optional section.
@@ -490,11 +454,8 @@
         submitBtn.disabled = true; submitBtn.textContent = "Saving…";
         w.DQAPI.createCredit(payload()).then(function (r) {
           if (r.status === 201 || r.ok) {
-            var slug = r.data && r.data.person_slug;
-            var gSlug = (r.data && r.data.game_slug) || opts.game_slug || "";
-            var gTitle = opts.game_title || (isAdd ? val("dqc-gtitle") : "");
-            var gStudio = (isGame ? (opts.studio || null) : (isAdd ? val("dqc-gstudio") : null)) || null;
-            promptTeammates(gSlug, gTitle, gStudio, slug);
+            var slug = r.data && r.data.person_slug; close();
+            w.location.href = slug ? ("/credits/person.html?slug=" + encodeURIComponent(slug)) : "/credits/";
           } else if (r.status === 401) { w.location.href = "/credits/signin.html"; }
           else { submitBtn.disabled = false; submitBtn.textContent = "Save my credit →"; alert((r.data && r.data.error) || "Could not save. Try again."); }
         }).catch(function () { submitBtn.disabled = false; submitBtn.textContent = "Save my credit →"; alert("Network error. Try again."); });

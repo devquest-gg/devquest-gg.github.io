@@ -179,6 +179,49 @@ Data: keep the per-credit `release_tag` list. Back the picker with the distinct 
 already used on that game plus catalogue platform names. A dedicated `game_releases` table can
 come later if the per-game vocabulary needs its own moderation.
 
+## 7b. Capacity: outsourced and external contributors (Shipped)
+
+Not everyone who worked on a game was core staff at the crediting studio. Outsourced artists,
+external vendors, and co-development partners are exactly the people most often left off
+official credits, so a developer-owned record is one of the few places they can be recognized.
+
+The lightweight treatment (deliberately not LinkedIn): a single self-reported checkbox, "I
+worked on this as an outsourced or external contributor," next to the live-service checkbox.
+There is no employer or studio field; we do not ask people to enter where they worked. One flag
+covers both the outsourcing-vendor case and the (announced) co-developer case.
+
+Storage reuses the release mechanism, so no schema change: the checkbox stores an "External
+contributor" token in `release_tag`, which the existing classifier maps to the `xdev` class
+(the classifier already recognized outsource / co-dev / external / support-studio terms). On
+display, the capacity is pulled out of the "worked on" list and instead reframes the sentence:
+"Worked as an outsourcer on Mac Port, the live-service era," or just "Worked as an outsourcer"
+when there are no named parts. Capacity describes the whole credit, not a single item, and it is
+independent of scope: an outsourced artist who did a slice of the base game stays scope=base (no
+asterisk) with the capacity carrying the nuance.
+
+Verification caveat (open): peer vouching assumes the confirmer is on the game's credit list and
+recognizes you. Outsourcers and uncredited support often worked alongside their vendor's team,
+not the lead studio's staff, so they are the hardest to verify and the current model does not
+solve that well. A future step is to surface the confirmer's own studio ("verified by 3
+teammates at [vendor]") and weight confirmations by whether the confirmer is themselves verified
+(see the anti-gaming note in CREDITS_TRUST_AND_OWNERSHIP.md).
+
+## 7c. NDA and unannounced work (Shipped: a reminder; deferred: tooling)
+
+Risk: someone claiming work on a title at a studio whose involvement was never announced could
+breach an NDA or expose a confidential partnership, and a reporter scraping the site could treat
+an un-announced co-dev name attached to a big title as a scoop. Rare, but asymmetric: if it
+happens once it is a bad headline with DevQuest's name in it.
+
+Proportionate response (shipped): one muted line of helper text on the claim and edit forms,
+near submit: "Only add work you're free to disclose. Leave off anything under NDA or not
+publicly announced." This puts the obligation where it legally already sits (on the person),
+signals reasonable care, and costs one sentence. The dispute-and-remove path in
+CREDITS_TRUST_AND_OWNERSHIP.md handles the rare takedown.
+
+Deliberately deferred: a "claim it without naming the title or partner" flow. That is a lot of
+complexity for a rare case; the reminder plus takedown covers the realistic risk for now.
+
 ## 8. Display rules by surface
 
 Game page (a list of people who worked on the game):

@@ -168,6 +168,9 @@
   #stage .tile .vb{position:absolute;top:7px;right:7px;z-index:3;width:22px;height:22px;border-radius:50%;background:rgba(63,185,80,.96);color:#04220f;font-weight:900;font-size:12px;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 6px rgba(0,0,0,.5)}
   #stage .tile .grip{position:absolute;left:7px;top:6px;z-index:3;font-size:12px;color:rgba(255,255,255,.75);background:rgba(0,0,0,.42);border-radius:6px;padding:1px 7px;opacity:0;transition:.15s}
   #stage.grid .tile:hover .grip{opacity:1}
+  #stage .tile .hf{position:absolute;left:0;bottom:0;z-index:3;display:none;align-items:center;gap:4px;font-size:11px;font-weight:800;color:#04121f;background:var(--gold);border-radius:0 9px 0 10px;padding:4px 10px;box-shadow:0 2px 8px rgba(0,0,0,.4)}
+  #stage.grid .tile.hero .hf{display:inline-flex}
+  #stage.grid .tile.hero{box-shadow:0 14px 34px rgba(0,0,0,.6),inset 0 0 0 2px rgba(224,178,58,.55)}
   #chrome{position:absolute;inset:0;z-index:0;opacity:0;transition:opacity .4s ease;pointer-events:none}
   #stage.timeline #chrome{opacity:1}
   #spine{position:absolute;top:6px;bottom:6px;width:2px;background:var(--border)}
@@ -583,7 +586,7 @@
     var stage=document.getElementById("stage"); if(!stage) return;
     var chrome=document.getElementById("chrome"), spine=document.getElementById("spine");
     var order=credits.map(function(_,i){return i;});
-    var mode="grid", tiles=[], labels=[], dots=[], geo={}, GAP=16;
+    var mode="grid", tiles=[], labels=[], dots=[], geo={}, GAP=16, HS=1.62;
 
     var bands=positions.map(function(p){ var s=p.start_year||CUR, e=p.is_current?CUR:(p.end_year||s); if(e<s)e=s; return {p:p,s:s,e:e}; });
     function bandOf(c){ var y=creditYear(c); if(!y) return -1; for(var i=0;i<bands.length;i++){ if(y>=bands[i].s && y<=bands[i].e) return i; } return -1; }
@@ -591,7 +594,7 @@
     credits.forEach(function(c,i){
       var el=document.createElement("div"); el.className="tile"; el.dataset.i=i;
       var conf=(c.vouch_count||0)>0;
-      el.innerHTML='<div class="fb" style="background:'+gameGrad(c.game_slug)+'"><span>'+esc(c.game_title)+'</span></div>'+art(c.game_slug,covMap)+'<div class="gloss"></div>'+(conf?'<span class="vb">✓</span>':'')+'<span class="grip">⠿</span>';
+      el.innerHTML='<div class="fb" style="background:'+gameGrad(c.game_slug)+'"><span>'+esc(c.game_title)+'</span></div>'+art(c.game_slug,covMap)+'<div class="gloss"></div>'+(conf?'<span class="vb">✓</span>':'')+'<span class="grip">⠿</span><span class="hf">★ Featured</span>';
       stage.appendChild(el); tiles.push(el);
     });
     var addEl=document.createElement("div"); addEl.className="addtile"; addEl.innerHTML='<div class="plus">+</div><div class="lbl">Add game</div>'; addEl.onclick=openAddGame; stage.appendChild(addEl);
@@ -615,15 +618,24 @@
       geo={W:W,cols:cols,bw:bw,bh:bh};
     }
     function put(el,x,y,s){ el.style.transform="translate("+x+"px,"+y+"px) scale("+s+")"; }
+    function placeGrid(skip){
+      var bw=geo.bw, bh=geo.bh, cols=geo.cols;
+      var heroW=Math.round(bw*HS), heroH=Math.round(bh*HS);
+      var heroN=Math.min(2, order.length);
+      order.forEach(function(gi,k){ tiles[gi].classList.toggle("hero", k<heroN); });
+      for(var k=0;k<heroN;k++){ var gi=order[k]; if(gi!==skip) put(tiles[gi], k*(heroW+GAP), 0, HS); }
+      var gy = heroN ? heroH + GAP + 14 : 0;
+      var rest=order.slice(heroN), total=0;
+      rest.forEach(function(gi,j){ if(gi===skip) return; var row=Math.floor(j/cols), col=j%cols; put(tiles[gi], col*(bw+GAP), gy+row*(bh+GAP), 1); });
+      total=rest.length;
+      if(IS_OWNER){ addEl.style.display="flex"; put(addEl,(total%cols)*(bw+GAP), gy+Math.floor(total/cols)*(bh+GAP), 1); total+=1; }
+      else addEl.style.display="none";
+      stage.style.height=(gy + Math.max(1,Math.ceil(total/cols))*(bh+GAP) - GAP)+"px";
+    }
     function layout(){
       var bw=geo.bw, bh=geo.bh, W=geo.W;
       if(mode==="grid"){
-        var cols=geo.cols;
-        order.forEach(function(gi,k){ var row=Math.floor(k/cols), col=k%cols; put(tiles[gi], col*(bw+GAP), row*(bh+GAP), 1); });
-        var total=order.length;
-        if(IS_OWNER){ addEl.style.display="flex"; put(addEl, (total%cols)*(bw+GAP), Math.floor(total/cols)*(bh+GAP), 1); total+=1; }
-        else { addEl.style.display="none"; }
-        stage.style.height=(Math.ceil(total/cols)*(bh+GAP)-GAP)+"px";
+        placeGrid(-1);
       } else {
         addEl.style.display="none";
         var labelW=Math.min(210,Math.max(148,Math.round(W*0.22))), spineX=labelW+18, tilesX=spineX+22, tW=74, sc=tW/bw, tH=Math.round(tW*1.5), tg=12;
@@ -647,7 +659,7 @@
     }
 
     var vt=document.getElementById("vtoggle"), vh=document.getElementById("vhint");
-    function setHint(){ vh.textContent = mode==="grid" ? (IS_OWNER?"Drag to arrange your wall. Click a game for its one-sheet.":"Click any game for its one-sheet.") : "Same games — now on your career spine, newest first."; }
+    function setHint(){ vh.textContent = mode==="grid" ? (IS_OWNER?"Drag your best games into the two big Featured slots up top. Click a game for its one-sheet.":"Click any game for its one-sheet.") : "Same games — now on your career spine, newest first."; }
     vt.addEventListener("click",function(e){ var b=e.target.closest("button"); if(!b||b.dataset.m===mode) return; mode=b.dataset.m; stage.className=mode; [].forEach.call(vt.children,function(x){x.classList.toggle("on",x.dataset.m===mode);}); setHint(); layout(); });
 
     var drag=null, saveT=null;
@@ -665,11 +677,12 @@
       var dx=e.clientX-drag.sx, dy=e.clientY-drag.sy;
       if(!drag.moved && Math.hypot(dx,dy)<6) return;
       if(!drag.moved){ drag.moved=true; drag.el.classList.add("drag"); drag.el.style.transition="none"; }
-      put(drag.el, e.clientX-drag.ox, e.clientY-drag.oy, 1.06);
+      put(drag.el, e.clientX-drag.ox, e.clientY-drag.oy, 1.1);
       var r=stage.getBoundingClientRect();
-      var col=Math.max(0,Math.min(geo.cols-1,Math.floor((e.clientX-r.left)/(geo.bw+GAP))));
-      var row=Math.max(0,Math.floor((e.clientY-r.top)/(geo.bh+GAP)));
-      var slot=Math.min(order.length-1, row*geo.cols+col);
+      var lx=e.clientX-r.left, ly=e.clientY-r.top;
+      var heroW=Math.round(geo.bw*HS), heroH=Math.round(geo.bh*HS), heroN=Math.min(2,order.length), slot;
+      if(ly < heroH + GAP/2){ slot = (lx < heroW + GAP/2) ? 0 : 1; slot=Math.min(slot, order.length-1); }
+      else { var gy=heroH+GAP+14; var col=Math.max(0,Math.min(geo.cols-1,Math.floor(lx/(geo.bw+GAP)))); var row=Math.max(0,Math.floor((ly-gy)/(geo.bh+GAP))); slot=Math.min(order.length-1, heroN + row*geo.cols + col); }
       var cur=order.indexOf(drag.gi);
       if(slot!==cur){ order.splice(cur,1); order.splice(slot,0,drag.gi); relayoutExcept(drag.gi); }
     });
@@ -678,7 +691,7 @@
       if(!d.moved){ openSheet(d.gi); return; }
       d.el.classList.remove("drag"); d.el.style.transition=""; layout(); persist();
     });
-    function relayoutExcept(skip){ var cols=geo.cols,bw=geo.bw,bh=geo.bh; order.forEach(function(gi,k){ if(gi===skip)return; var row=Math.floor(k/cols),col=k%cols; put(tiles[gi], col*(bw+GAP), row*(bh+GAP), 1); }); }
+    function relayoutExcept(skip){ placeGrid(skip); }
     stage.addEventListener("click",function(e){ if(IS_OWNER) return; var el=e.target.closest(".tile"); if(el) openSheet(+el.dataset.i); });
 
     var rt; window.addEventListener("resize",function(){ clearTimeout(rt); rt=setTimeout(function(){ computeBase(); layout(); },120); });

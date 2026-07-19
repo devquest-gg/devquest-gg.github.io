@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Portfolio look · mockup</title>
+<style>
+  :root{
+    --bg:#0b0e14; --panel:#11161d; --panel2:#151b24; --border:#2a313c;
+    --text:#e9eef5; --muted:#8b98a9; --accent:#58a6ff; --gold:#e0b23a;
+    --purple:#a371f7; --green:#3fb950;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);
+    font-family:'Segoe UI',system-ui,-apple-system,Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased}
+  .wrap{max-width:1080px;margin:0 auto;padding:34px 28px 80px}
+  .mocknote{max-width:1080px;margin:0 auto 0;padding:10px 28px;color:var(--muted);font-size:12.5px;
+    border-bottom:1px solid var(--border)}
+
+  /* ---- Identity band ---- */
+  .hero{display:flex;gap:22px;align-items:center;padding:6px 0 4px}
+  .av{width:84px;height:84px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;
+    font-weight:800;font-size:30px;color:#0b0e14;background:linear-gradient(135deg,var(--accent),var(--purple))}
+  .who h1{margin:0 0 5px;font-size:34px;font-weight:850;letter-spacing:-.7px;line-height:1.05}
+  .who .role{color:var(--muted);font-size:15.5px}
+  .who .chips{display:flex;gap:8px;margin-top:11px;flex-wrap:wrap}
+  .chip{font-size:12px;font-weight:600;color:var(--muted);border:1px solid var(--border);
+    border-radius:999px;padding:4px 12px;text-decoration:none}
+  .chip.share{color:#0b0e14;background:var(--gold);border-color:var(--gold);font-weight:700}
+  .chip.verified{color:var(--green);border-color:rgba(63,185,80,.4);background:rgba(63,185,80,.09)}
+
+  /* ---- Stat strip ---- */
+  .stats{display:flex;gap:34px;margin:26px 0 4px;padding:18px 4px;border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+  .stat b{display:block;font-size:27px;font-weight:850;letter-spacing:-.5px;line-height:1;
+    background:linear-gradient(120deg,#7cc0ff,var(--purple));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .stat span{display:block;font-size:12px;color:var(--muted);margin-top:6px;font-weight:600}
+
+  /* ---- Section headers ---- */
+  .sec{margin-top:40px}
+  .sechead{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:16px}
+  .sechead .lbl{font-size:12px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--accent)}
+  .sechead .sub{font-size:12.5px;color:var(--muted)}
+
+  /* ---- Cover primitives ---- */
+  .cover{position:relative;aspect-ratio:2/3;border-radius:14px;overflow:hidden;display:block;
+    box-shadow:0 8px 22px rgba(0,0,0,.5), inset 0 0 0 1px rgba(255,255,255,.06);
+    transition:transform .14s ease, box-shadow .14s ease;text-decoration:none;color:inherit}
+  .cover:hover{transform:translateY(-4px);box-shadow:0 16px 34px rgba(0,0,0,.6), inset 0 0 0 1px rgba(255,255,255,.12)}
+  .cover .art{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:14px;text-align:center}
+  .cover .art .mono{font-size:13px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.34)}
+  .cover .scrim{position:absolute;left:0;right:0;bottom:0;padding:36px 14px 13px;
+    background:linear-gradient(to top,rgba(4,7,12,.94) 12%,rgba(4,7,12,.72) 55%,transparent);}
+  .cover .gt{font-weight:750;font-size:14px;line-height:1.22;margin-bottom:4px}
+  .cover .gr{font-size:11.5px;color:#cdd6e2;line-height:1.3}
+  .cover .gy{color:#8b98a9}
+  .cover .vb{position:absolute;top:9px;right:9px;width:24px;height:24px;border-radius:50%;
+    background:rgba(63,185,80,.95);color:#04220f;font-size:14px;font-weight:900;
+    display:flex;align-items:center;justify-content:center;box-shadow:0 1px 5px rgba(0,0,0,.5)}
+  .cover .grip{position:absolute;top:8px;left:9px;font-size:15px;color:rgba(255,255,255,.75);
+    background:rgba(0,0,0,.4);border-radius:6px;padding:2px 5px;opacity:0;transition:opacity .12s;cursor:grab}
+  .cover:hover .grip{opacity:1}
+  .rank{position:absolute;top:9px;left:11px;font-size:34px;font-weight:900;color:rgba(255,255,255,.16);line-height:1}
+
+  /* ---- Featured (hero) row ---- */
+  .featured{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+  .featured .gt{font-size:17px}
+  .featured .gr{font-size:12.5px}
+
+  /* ---- Rest grid ---- */
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:18px}
+
+  @media(max-width:720px){
+    .featured{grid-template-columns:1fr 1fr;gap:14px}
+    .stats{gap:20px;flex-wrap:wrap}
+    .who h1{font-size:27px}
+  }
+</style>
+</head>
+<body>
+<div class="mocknote">Mockup · placeholder covers stand in for your real box art · nothing here is live</div>
+<div class="wrap">
+
+  <div class="hero">
+    <div class="av">DB</div>
+    <div class="who">
+      <h1>Destin Bales</h1>
+      <div class="role">Director of Development Management at Insomniac Games</div>
+      <div class="chips">
+        <span class="chip verified">✓ 1 of 9 credits peer-verified</span>
+        <a class="chip" href="#">LinkedIn ↗</a>
+        <a class="chip share" href="#">⬆ Share my credits</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><b>9</b><span>shipped games</span></div>
+    <div class="stat"><b>2001&ndash;2024</b><span>release years</span></div>
+    <div class="stat"><b>6</b><span>live-service titles</span></div>
+    <div class="stat"><b>5</b><span>cancelled / unshipped</span></div>
+  </div>
+
+  <div class="sec">
+    <div class="sechead">
+      <span class="lbl">Featured work</span>
+      <span class="sub">the three you're proudest of · drag any cover to choose them</span>
+    </div>
+    <div class="featured">
+      <a class="cover" href="#" style="background:linear-gradient(150deg,#2c3e57,#12202f)">
+        <span class="rank">1</span>
+        <div class="art"><span class="mono">Rainbow Six<br>Siege</span></div>
+        <span class="vb">✓</span>
+        <span class="grip">⠿</span>
+        <div class="scrim"><div class="gt">Tom Clancy's Rainbow Six Siege</div><div class="gr">Vice President of Production <span class="gy">· 2015</span></div></div>
+      </a>
+      <a class="cover" href="#" style="background:linear-gradient(150deg,#1d4a45,#0e2422)">
+        <span class="rank">2</span>
+        <div class="art"><span class="mono">League of<br>Legends</span></div>
+        <span class="grip">⠿</span>
+        <div class="scrim"><div class="gt">League of Legends</div><div class="gr">Senior Producer <span class="gy">· 2009</span></div></div>
+      </a>
+      <a class="cover" href="#" style="background:linear-gradient(150deg,#4a2530,#26121a)">
+        <span class="rank">3</span>
+        <div class="art"><span class="mono">Dark Age of<br>Camelot</span></div>
+        <span class="grip">⠿</span>
+        <div class="scrim"><div class="gt">Dark Age of Camelot</div><div class="gr">Producer <span class="gy">· 2001</span></div></div>
+      </a>
+    </div>
+  </div>
+
+  <div class="sec">
+    <div class="sechead">
+      <span class="lbl">Full gameography</span>
+      <span class="sub">6 more titles</span>
+    </div>
+    <div class="grid">
+      <a class="cover" href="#" style="background:linear-gradient(150deg,#4d4322,#241f10)"><div class="art"><span class="mono">Poro<br>Roundup</span></div><span class="grip">⠿</span><div class="scrim"><div class="gt">Blitzcrank's Poro Roundup</div><div class="gr">Senior Producer <span class="gy">· 2015</span></div></div></a>
+      <a class="cover" href="#" style="background:linear-gradient(150deg,#3a2a52,#1c1430)"><div class="art"><span class="mono">Legends of<br>Runeterra</span></div><span class="grip">⠿</span><div class="scrim"><div class="gt">Legends of Runeterra</div><div class="gr">Senior Producer <span class="gy">· 2020</span></div></div></a>
+      <a class="cover" href="#" style="background:linear-gradient(150deg,#33404a,#171d24)"><div class="art"><span class="mono">XDefiant</span></div><span class="grip">⠿</span><div class="scrim"><div class="gt">XDefiant</div><div class="gr">Vice President of Production <span class="gy">· 2024</span></div></div></a>
+      <a class="cover" href="#" style="background:linear-gradient(150deg,#213b2c,#0f1d16)"><div class="art"><span class="mono">Days Gone</span></div><span class="grip">⠿</span><div class="scrim"><div class="gt">Days Gone</div><div class="gr">Director of Studio Production <span class="gy">· 2019</span></div></div></a>
+      <a class="cover" href="#" style="background:linear-gradient(150deg,#243a55,#101d2c)"><div class="art"><span class="mono">City of<br>Heroes</span></div><span class="grip">⠿</span><div class="scrim"><div class="gt">City of Heroes</div><div class="gr">Studio Director of Development <span class="gy">· 2004</span></div></div></a>
+      <a class="cover" href="#" style="background:linear-gradient(150deg,#4a3820,#241a0e)"><div class="art"><span class="mono">Warhammer<br>Online</span></div><span class="grip">⠿</span><div class="scrim"><div class="gt">Warhammer Online: Age of Reckoning</div><div class="gr">Live Producer <span class="gy">· 2008</span></div></div></a>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,1285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Person · DevQuest Credits</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" href="/credits/favicon.svg" type="image/svg+xml">
+<meta property="og:type" content="profile">
+<meta property="og:site_name" content="DevQuest Credits">
+<meta property="og:url" content="https://devquest.gg/credits">
+<meta property="og:title" content="A developer's game credits, peer-confirmed on DevQuest">
+<meta property="og:description" content="A developer-owned, peer-confirmed credits database. Claim your work, and let the people you shipped with confirm it.">
+<meta property="og:image" content="https://devquest.gg/credits/og-credits.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="A developer's game credits, peer-confirmed on DevQuest">
+<meta name="twitter:description" content="A developer-owned, peer-confirmed credits database. Claim your work, and let the people you shipped with confirm it.">
+<meta name="twitter:image" content="https://devquest.gg/credits/og-credits.png">
+<link rel="stylesheet" href="app.css">
+<style>
+  .gvtabs{display:flex;justify-content:flex-end;margin:0 0 16px}
+  .rhactions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+  .gvtab{padding:6px 14px;font-size:13px;font-weight:700;color:var(--muted,#8b98a9);cursor:pointer;border:1px solid var(--border,#2d333b);background:var(--panel,#11161d);user-select:none}
+  .gvtab:first-child{border-radius:8px 0 0 8px}
+  .gvtab:last-child{border-radius:0 8px 8px 0}
+  .gvtab + .gvtab{border-left:none}
+  .gvtab.on{background:#20293a;color:var(--text,#e6edf3)}
+  .ggrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:18px;align-items:start}
+  .ggrid.ggrid-hero{grid-template-columns:repeat(3,1fr);max-width:none;gap:20px}
+  .gvhead{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted,#8b98a9);font-weight:700;margin:2px 0 12px}
+  @media (pointer:coarse){.gvgrip{display:none}}
+  @media(max-width:600px){.ggrid.ggrid-hero{grid-template-columns:1fr 1fr}}
+  /* Cover tile: caption sits ON the art via a bottom scrim, so full titles/roles never clip. */
+  .gtile{text-decoration:none;color:inherit;display:block;-webkit-user-drag:none}
+  .gcov{position:relative;aspect-ratio:2/3;border-radius:14px;overflow:hidden;display:block;background:#141b26;box-shadow:0 8px 22px rgba(0,0,0,.5), inset 0 0 0 1px rgba(255,255,255,.06);transition:transform .14s ease, box-shadow .14s ease}
+  .gtile:hover .gcov{transform:translateY(-4px);box-shadow:0 16px 34px rgba(0,0,0,.6), inset 0 0 0 1px rgba(255,255,255,.13)}
+  .gcov img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1;-webkit-user-drag:none;user-select:none}
+  .gph{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:14px;text-align:center;font-size:12.5px;font-weight:800;letter-spacing:.11em;text-transform:uppercase;color:rgba(255,255,255,.30);line-height:1.3}
+  .gscrim{position:absolute;left:0;right:0;bottom:0;z-index:2;padding:34px 13px 12px;background:linear-gradient(to top,rgba(4,7,12,.95) 12%,rgba(4,7,12,.70) 55%,transparent);pointer-events:none}
+  .gtt{display:block;color:#fff;font-weight:750;font-size:13.5px;line-height:1.22;margin-bottom:4px;overflow-wrap:break-word}
+  .gmt{display:block;color:#cdd6e2;font-size:11.5px;line-height:1.32;overflow-wrap:break-word}
+  .gmt .y{white-space:nowrap;color:#8b98a9}
+  .gsub{display:block;color:#8b98a9;font-size:10.5px;margin-top:3px;line-height:1.3;overflow-wrap:break-word;font-variant-numeric:tabular-nums}
+  .ggrid-hero .gsub{font-size:11.5px}
+  .ggrid-hero .gtt{font-size:16px}
+  .ggrid-hero .gmt{font-size:12.5px}
+  .ggrid-hero .gscrim{padding:44px 15px 14px}
+  .grank{display:none;position:absolute;top:6px;left:13px;z-index:2;font-size:38px;font-weight:900;color:rgba(255,255,255,.22);line-height:1;pointer-events:none;text-shadow:0 1px 6px rgba(0,0,0,.5)}
+  .ggrid-hero{counter-reset:rank}
+  .ggrid-hero .grank{display:block;counter-increment:rank}
+  .ggrid-hero .grank::before{content:counter(rank)}
+  .gvb{position:absolute;top:9px;right:9px;z-index:3;width:24px;height:24px;border-radius:50%;background:rgba(63,185,80,.95);color:#04220f;font-size:14px;font-weight:900;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 5px rgba(0,0,0,.5)}
+  .gvb.peer{background:rgba(88,166,255,.96);color:#04122b} .gvb.team{background:rgba(63,185,80,.96);color:#04220f}
+  .gvgrip{position:absolute;top:8px;left:9px;z-index:4;font-size:15px;line-height:1;color:rgba(255,255,255,.82);opacity:0;background:rgba(0,0,0,.5);border-radius:6px;padding:2px 5px;cursor:grab;transition:opacity .12s}
+  .dragtile:hover .gvgrip{opacity:1}
+  .dragtile.dragging{opacity:.45}
+  .gv-nav-lock{cursor:grabbing !important}
+  /* Career snapshot as a light hairline strip (overrides the boxed cards in app.css). */
+  /* width:fit-content makes the top/bottom rules hug the stats instead of spanning full width. */
+  .snapshot{display:flex;gap:30px;margin:22px 0 4px;padding:16px 2px;border-top:1px solid var(--border,#2d333b);border-bottom:1px solid var(--border,#2d333b);flex-wrap:wrap;width:fit-content;max-width:100%}
+  .snap{background:none;border:none;border-radius:0;padding:0;min-width:0;text-align:center}
+  .snap b{font-size:27px}
+  .snap span{margin-top:6px}
+  /* Peer-verified strip hugs its text too, rather than stretching across the page. */
+  .verifystrip{width:fit-content;max-width:100%}
+  /* Peer-verification trust block — the product's core signal, so give it real presence. */
+  .vblock{display:flex;gap:13px;align-items:flex-start;margin:16px 0 2px;padding:13px 17px 13px 14px;border-radius:12px;width:fit-content;max-width:560px;border:1px solid rgba(63,185,80,.42);background:rgba(63,185,80,.09)}
+  .vblock .vbadge{flex:none;width:30px;height:30px;border-radius:50%;background:var(--green,#3fb950);color:#04220f;font-size:17px;font-weight:900;display:flex;align-items:center;justify-content:center;margin-top:1px;box-shadow:0 1px 5px rgba(0,0,0,.35)}
+  .vblock .vlbl{font-size:11px;font-weight:800;letter-spacing:.13em;text-transform:uppercase;color:var(--green,#3fb950);margin-bottom:4px}
+  .vblock .vtxt{font-size:13.5px;line-height:1.5;color:#cdefd5}
+  .vblock .vtxt b{color:#fff;font-weight:750}
+  .vblock .vtxt .mut{color:#8b98a9}
+  .vblock.cta{border-color:rgba(224,178,58,.42);background:rgba(224,178,58,.08)}
+  .vblock.cta .vbadge{background:var(--gold,#e0b23a)}
+  .vblock.cta .vlbl{color:var(--gold,#e0b23a)}
+  .vblock.cta .vtxt{color:#e8ddc4}
+  /* "Known for" chip row under the headline. */
+  .knownfor{display:flex;flex-wrap:wrap;gap:7px;align-items:center;margin:11px 0 2px}
+  .knownfor .kflabel{font-size:11px;font-weight:800;letter-spacing:.11em;text-transform:uppercase;color:var(--muted,#8b98a9);margin-right:3px}
+  .kchip{font-size:12.5px;font-weight:600;color:var(--text,#e6edf3);text-decoration:none;background:var(--panel,#11161d);border:1px solid var(--border,#2d333b);border-radius:999px;padding:4px 12px;transition:border-color .12s,background .12s}
+  .kchip:hover{border-color:#3b4654;background:#171d27}
+  .phead .metastudio{color:var(--muted,#8b98a9);font-size:13.5px;margin-top:2px}
+  /* Timeline view: year rail down the left, dots per credit, progression top to bottom. */
+  .tl{margin-top:2px}
+  .tlrow{display:grid;grid-template-columns:58px 22px 1fr;align-items:start}
+  .tlyear{font-variant-numeric:tabular-nums;font-weight:800;font-size:15px;color:var(--accent,#58a6ff);padding-top:1px}
+  .tlrail{position:relative;display:flex;justify-content:center;align-self:stretch}
+  .tlrail::before{content:"";position:absolute;top:0;bottom:0;width:2px;background:var(--border,#2d333b)}
+  .tlrow:first-child .tlrail::before{top:9px}
+  .tlrow:last-child .tlrail::before{bottom:auto;height:9px}
+  .tldot{position:relative;z-index:1;width:11px;height:11px;border-radius:50%;background:var(--accent,#58a6ff);margin-top:5px;box-shadow:0 0 0 4px var(--bg,#0b0e14)}
+  .tldot.feat{background:var(--gold,#e0b23a);box-shadow:0 0 0 4px var(--bg,#0b0e14),0 0 9px rgba(224,178,58,.55)}
+  .tlcard{display:flex;gap:14px;align-items:flex-start;padding:0 0 22px 14px;min-width:0}
+  .tlthumb{position:relative;flex:none;width:56px;aspect-ratio:2/3;border-radius:8px;overflow:hidden;background:#141b26;box-shadow:0 4px 12px rgba(0,0,0,.5),inset 0 0 0 1px rgba(255,255,255,.06);display:block}
+  .tlthumb img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+  .tlph{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:5px;text-align:center;font-size:8.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:rgba(255,255,255,.32);line-height:1.25}
+  .tlbody{min-width:0}
+  .tlnameline{line-height:1.3}
+  .tlname{font-weight:750;font-size:15px;color:var(--accent,#58a6ff);text-decoration:none}
+  .tlname:hover{color:#7cc0ff}
+  .tlact{margin-top:8px}
+  .tlfeat{font-size:11px;font-weight:700;color:var(--gold,#e0b23a);letter-spacing:.02em}
+  .tlfeatbtn{display:inline-block;font-size:11.5px;font-weight:700;color:var(--muted,#8b98a9);cursor:pointer;border:1px solid var(--border,#2d333b);border-radius:999px;padding:2px 11px;transition:border-color .12s,color .12s;user-select:none}
+  .tlfeatbtn:hover{color:var(--gold,#e0b23a);border-color:rgba(224,178,58,.5)}
+  .tlsub{font-size:12.5px;color:var(--muted,#8b98a9);margin-top:3px}
+  .tlst{color:var(--muted,#8b98a9)}
+  .tlspan{font-size:11px;color:var(--muted,#8b98a9);font-variant-numeric:tabular-nums;white-space:nowrap;border:1px solid var(--border,#2d333b);border-radius:999px;padding:1px 8px;margin-left:2px;vertical-align:1px}
+  /* Second line under the rail year: the end of the worked range ("–2015" / "→ now"). Makes the
+     duration legible at the timeline anchor instead of hiding it in a faint pill by the title. */
+  .tlyto{display:block;font-size:11.5px;font-weight:700;color:var(--muted,#8b98a9);font-variant-numeric:tabular-nums;margin-top:1px;letter-spacing:-.2px}
+  /* Live-service: a quiet word in the metadata line, not a chip that fights the game title. */
+  .tlphase{color:var(--muted,#8b98a9);font-weight:700}
+  /* Evidence badge — a small check chip per credit; bigger than the rail dot so it reads as a
+     button, click opens the confirmer list ("receipts"). Blue check = peer, green = team,
+     gold ! = under review. No badge when a credit is still awaiting confirmation. */
+  .evb{display:inline-flex;align-items:center;justify-content:center;width:17px;height:17px;border-radius:50%;margin-left:8px;vertical-align:-3px;font-size:10.5px;font-weight:900;line-height:1;color:#fff;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.4);transition:box-shadow .12s,transform .12s}
+  .evb.peer{background:var(--accent,#58a6ff);color:#04122b} .evb.team{background:var(--green,#3fb950);color:#04220f} .evb.rev{background:var(--gold,#e0b23a);color:#3a2c05}
+  .corrb{display:inline-flex;align-items:center;justify-content:center;width:17px;height:17px;border-radius:50%;margin-left:6px;vertical-align:-3px;font-size:10px;font-weight:900;line-height:1;text-decoration:none;background:rgba(163,113,247,.16);border:1px solid rgba(163,113,247,.55);color:#a371f7} .corrb:hover{background:rgba(163,113,247,.28)}
+  .evb[data-ev]{cursor:pointer} .evb[data-ev]:hover,.evb[data-ev]:focus-visible{transform:scale(1.14);outline:none}
+  .evb.peer[data-ev]:hover,.evb.peer[data-ev]:focus-visible{box-shadow:0 0 0 4px rgba(88,166,255,.28)}
+  .evb.team[data-ev]:hover,.evb.team[data-ev]:focus-visible{box-shadow:0 0 0 4px rgba(63,185,80,.28)}
+  .evb.rev[data-ev]:hover,.evb.rev[data-ev]:focus-visible{box-shadow:0 0 0 4px rgba(224,178,58,.28)}
+  .evb.corr{background:var(--purple,#a371f7);color:#160a2e}
+  .evb.corr[data-ev]:hover,.evb.corr[data-ev]:focus-visible{box-shadow:0 0 0 4px rgba(163,113,247,.28)}
+  /* Confirmer popover ("receipts") */
+  .evpop{position:absolute;z-index:60;width:308px;max-width:calc(100vw - 24px);background:var(--panel,#11161d);border:1px solid var(--border,#2d333b);border-radius:13px;box-shadow:0 16px 40px rgba(0,0,0,.55);padding:0;opacity:0;transform:translateY(-4px);pointer-events:none;transition:opacity .12s,transform .12s}
+  .evpop.open{opacity:1;transform:translateY(0);pointer-events:auto}
+  .evpop-head{display:flex;align-items:center;gap:8px;padding:13px 15px 11px;border-bottom:1px solid var(--border,#2d333b)}
+  .evpop-head .hd{width:9px;height:9px;border-radius:50%;flex:none}
+  .evpop-head .hd.peer{background:var(--accent,#58a6ff)} .evpop-head .hd.team{background:var(--green,#3fb950)} .evpop-head .hd.rev{background:var(--gold,#e0b23a)} .evpop-head .hd.corr{background:var(--purple,#a371f7)}
+  .evpop-corr{display:flex;align-items:center;gap:8px;margin:8px 10px 4px;padding:9px 11px;border-radius:9px;background:rgba(163,113,247,.10);border:1px solid rgba(163,113,247,.32);color:var(--text,#e6edf3);font-size:12.5px;text-decoration:none}
+  a.evpop-corr:hover{background:rgba(163,113,247,.18)}
+  .evpop-corr .cdot{flex:none;width:9px;height:9px;border-radius:50%;background:var(--purple,#a371f7)}
+  .evpop-corr .cnote{color:var(--muted,#8b98a9)}
+  .evpop-corr .cext{margin-left:auto;color:var(--purple,#a371f7);font-weight:800}
+  .evpop-head .lvl{font-weight:800;font-size:13.5px;color:var(--text,#e6edf3)}
+  .evpop-head .cx{margin-left:auto;color:var(--muted,#8b98a9);cursor:pointer;font-size:16px;line-height:1;padding:2px 4px;border-radius:6px}
+  .evpop-head .cx:hover{background:rgba(255,255,255,.06);color:var(--text,#e6edf3)}
+  .evpop-sub{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted,#8b98a9);padding:11px 15px 4px}
+  .evpop-rev{font-size:12.5px;color:var(--gold,#e0b23a);background:rgba(224,178,58,.08);border-bottom:1px solid var(--border,#2d333b);padding:10px 15px;line-height:1.45}
+  .evpop-list{padding:2px 8px 6px;max-height:280px;overflow:auto}
+  .evrow{display:flex;align-items:center;gap:10px;padding:8px 7px;border-radius:9px;text-decoration:none}
+  a.evrow:hover{background:rgba(255,255,255,.05)}
+  .evrow .av{flex:none;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:11px;color:#0b0e14}
+  .evrow .ei{min-width:0}
+  .evrow .en{display:block;font-weight:700;font-size:13.5px;color:var(--text,#e6edf3);line-height:1.2}
+  .evrow .er{display:block;color:var(--muted,#8b98a9);font-size:11.5px;margin-top:2px}
+  .evpop-empty{padding:14px 15px;color:var(--muted,#8b98a9);font-size:12.5px;line-height:1.5}
+  .evpop-foot{display:block;padding:10px 15px;border-top:1px solid var(--border,#2d333b);font-size:12px;font-weight:700;color:var(--accent,#58a6ff);text-decoration:none}
+  .evpop-foot:hover{text-decoration:underline}
+  .tlhint{font-size:12.5px;color:var(--muted,#8b98a9);line-height:1.5;background:var(--panel,#11161d);border:1px solid var(--border,#2d333b);border-radius:10px;padding:10px 13px;margin:0 0 16px;max-width:560px}
+  .tlhint b{color:var(--text,#e6edf3);font-weight:700}
+  @media(max-width:600px){.tlrow{grid-template-columns:46px 20px 1fr}.tlyear{font-size:14px}}
+  @media(max-width:600px){.snapshot{gap:16px 20px;padding:14px 2px}.snap{flex:0 0 auto;padding:0}}
+</style>
+</head>
+<body>
+<div class="topbar"><div class="container">
+  <div class="brand"><a class="brandhome" href="/credits/" data-tip="Back to Credits home" aria-label="DevQuest Credits home"><svg class="mark" viewBox="0 0 32 32" aria-hidden="true"><rect x="1" y="1" width="8" height="8" rx="2" fill="var(--gold)"/><rect x="12" y="1" width="8" height="8" rx="2" fill="#2d333b"/><rect x="23" y="1" width="8" height="8" rx="2" fill="#2d333b"/><rect x="1" y="12" width="8" height="8" rx="2" fill="#2d333b"/><rect x="12" y="12" width="8" height="8" rx="2" fill="var(--gold)"/><rect x="23" y="12" width="8" height="8" rx="2" fill="#2d333b"/><rect x="1" y="23" width="8" height="8" rx="2" fill="#2d333b"/><rect x="12" y="23" width="8" height="8" rx="2" fill="#2d333b"/><rect x="23" y="23" width="8" height="8" rx="2" fill="var(--gold)"/></svg><span class="wm">Dev<span class="q">Quest</span><span class="tld">.gg</span></span></a> <span class="cr">CREDITS</span> <span class="beta">BETA</span></div>
+  <div class="topnav">
+    <a href="/credits/search.html?tab=games">Games</a><a href="/credits/search.html?tab=studios">Studios</a><a href="/credits/search.html?tab=people">People</a><a href="/credits/#how">How it works</a>
+    <a class="back" href="/">← Jobs board</a>
+  </div>
+</div></div>
+
+<div class="container">
+  <div class="crumbs"><a href="/credits/">Credits</a><span class="sep">/</span><a href="search.html?tab=people">People</a><span class="sep">/</span><span id="crumb" class="mut">…</span></div>
+</div>
+
+<div id="app"><div class="container"><div class="loading">Loading profile…</div></div></div>
+
+<footer><div class="container">
+  <div><b style="color:var(--text)">DevQuest.gg / Credits</b> · a companion to the game-industry job board</div>
+  <div><a href="/credits/">← Credits home</a> &nbsp;·&nbsp; <a href="https://igda.org/sigs/credits/" target="_blank" rel="noopener">IGDA crediting guidelines ↗</a> &nbsp;·&nbsp; <a href="mailto:studios@devquest.gg?subject=DevQuest%20Credits%20feedback&body=Bug%2C%20idea%2C%20or%20just%20a%20thought%3A%0A%0A">Feedback</a></div>
+</div></footer>
+
+<script src="api.js?v=20260716"></script>
+<script src="app.js?v=20260716"></script>
+<script>
+(function(){
+  var slug = DQ.qs("slug"), uname = DQ.qs("name"), app = document.getElementById("app");
+  // Keep the address bar on the pretty URL (/credits/<slug>) even when reached via
+  // person.html?slug=... The 404.html router redirects clean URLs here; this rewrites back.
+  try { if (slug) history.replaceState(null, "", "/credits/" + encodeURIComponent(slug)); } catch (e) {}
+  if(!slug){
+    // No claimed slug, but a ?name= means an unclaimed person — someone a teammate
+    // attributed who hasn't signed in yet. Show every title attributed to that name.
+    if(uname && window.DQAPI){ renderUnclaimed(uname); return; }
+    app.innerHTML = '<div class="container"><div class="empty">No person specified.</div></div>'; return;
+  }
+
+  // ---- Unclaimed profile: aggregates every pending attribution for a name ----
+  function renderUnclaimed(name){
+    document.getElementById("crumb").textContent = name;
+    document.title = name + " · DevQuest Credits";
+    var pProf = DQAPI.unclaimedProfile(name).catch(function(){ return {ok:false}; });
+    var pMe = DQAPI.isSignedIn() ? DQAPI.me().catch(function(){ return {ok:false}; }) : Promise.resolve({ok:false});
+    Promise.all([pProf, pMe]).then(function(res){
+      var data = (res[0] && res[0].ok && res[0].data) ? res[0].data : null;
+      var signedIn = !!(res[1] && res[1].ok && res[1].data && res[1].data.authenticated);
+      var atts = (data && data.attributions) || [];
+      var disp = (data && data.name) || name;
+      document.getElementById("crumb").textContent = disp;
+      document.title = disp + " · DevQuest Credits";
+      if(!atts.length){
+        app.innerHTML = '<div class="container"><div class="empty">No profile yet for that name.<br>'+
+          '<span class="mut">People appear here once a teammate attributes a credit, or once they claim their own.</span></div></div>';
+        return;
+      }
+      var rows = atts.map(function(a){
+        return '<div class="row">'+
+          '<div class="rmain"><div class="rname"><a href="/credits/game/'+encodeURIComponent(a.game_slug)+'">'+DQ.esc(a.game_title)+'</a></div>'+
+            '<div class="rsub"><span class="rrole">'+DQ.esc(a.role||"Contributor")+'</span>'+
+            '<span class="mut"> &nbsp;·&nbsp; added by '+DQ.esc(a.added_by_name||"a teammate")+'</span></div></div>'+
+        '</div>';
+      }).join("");
+      var cta = '<span class="btn primary" id="claimun">This is me — claim '+(atts.length===1?'this credit':'these '+atts.length+' credits')+' →</span>';
+      app.innerHTML =
+        '<div class="phead"><div class="container">'+
+          '<div style="display:flex;align-items:center;gap:16px">'+
+            '<div class="row" style="padding:0;border:none"><div class="av" style="width:60px;height:60px;font-size:22px">'+DQ.esc(DQ.initials(disp))+'</div></div>'+
+            '<div><h1 style="margin:0;display:flex;align-items:center;gap:12px;flex-wrap:wrap">'+DQ.esc(disp)+' <span style="font-size:12px;font-weight:700;letter-spacing:1.5px;color:var(--muted);border:1px solid var(--border);border-radius:999px;padding:3px 11px;line-height:1.4">UNCLAIMED</span></h1>'+
+            '<div class="meta">Attributed by teammates · not yet claimed</div></div>'+
+          '</div>'+
+          '<div class="claimbanner" style="margin-top:16px"><div class="cbtext"><b>Is this you?</b> A teammate credited you on the '+(atts.length===1?'game':'games')+' below. Claim this page to confirm your credits, add the rest of what you shipped, and get peer-vouched.</div>'+cta+'</div>'+
+        '</div></div>'+
+        '<section class="blk"><div class="container">'+
+          '<div class="eyebrow">Attributed credits</div>'+
+          '<p class="secsub" style="margin:6px 0 14px">Titles a teammate has credited to this name. They become part of a confirmed record once claimed.</p>'+
+          '<div class="rows">'+rows+'</div>'+
+          '<div class="notice">These credits were added by teammates and are unclaimed. Only the person credited can claim and edit this page.</div>'+
+        '</div></section>';
+      var cbtn = document.getElementById("claimun");
+      if(cbtn) cbtn.onclick = function(){
+        if(DQAPI.isSignedIn()){
+          cbtn.textContent = "Claiming…";
+          var i = 0, lastSlug = null;
+          (function nextClaim(){
+            if(i >= atts.length){ location.href = lastSlug ? ("/credits/person.html?slug=" + encodeURIComponent(lastSlug)) : "/credits/"; return; }
+            DQAPI.claimAttribution(atts[i].id).then(function(rr){ if(rr.ok && rr.data && rr.data.person_slug) lastSlug = rr.data.person_slug; i++; nextClaim(); }).catch(function(){ i++; nextClaim(); });
+          })();
+        } else {
+          try{ localStorage.setItem("dq_pending_claim_name", disp); }catch(e){}
+          location.href = "signin.html";
+        }
+      };
+    }).catch(function(e){
+      app.innerHTML = '<div class="container"><div class="empty">Something went wrong loading this profile.<br><span class="mut">'+DQ.esc(e && e.message)+'</span></div></div>';
+    });
+  }
+  var LINK_LABEL = { linkedin:"LinkedIn", portfolio:"Portfolio", artstation:"ArtStation", website:"Website", site:"Website", personal:"Website", twitter:"Twitter", x:"X", bluesky:"Bluesky", github:"GitHub", itch:"itch.io", mastodon:"Mastodon" };
+
+  // Load the static (seed) profile + the live (API) profile + who I am, in parallel.
+  var pStatic = DQ.loadEntity("people", slug).catch(function(){ return null; });
+  var pApi = (window.DQAPI ? DQAPI.personCredits(slug) : Promise.resolve({ok:false})).catch(function(){ return {ok:false}; });
+  var pMe  = (window.DQAPI && DQAPI.isSignedIn()) ? DQAPI.me().catch(function(){ return {ok:false}; }) : Promise.resolve({ok:false});
+
+  Promise.all([pStatic, pApi, pMe]).then(function(res){
+    var stat = res[0];
+    var api  = (res[1] && res[1].ok && res[1].data && res[1].data.person) ? res[1].data : null;
+    var me   = (res[2] && res[2].ok && res[2].data && res[2].data.authenticated) ? res[2].data.person : null;
+
+    // Admin takedown: a hidden profile shows a removed notice instead of any content, even if
+    // a stale static shard still has it.
+    if(api && api.person && api.person.hidden){
+      document.getElementById("crumb").textContent = "Removed";
+      app.innerHTML = '<div class="container"><div class="empty">This profile has been removed.<br><span class="mut">It was reported and taken down by a moderator.</span><br><a class="btn ghost" style="margin-top:14px" href="/credits/">Back to Credits</a></div></div>';
+      return;
+    }
+
+    if(!stat && !api){
+      document.getElementById("crumb").textContent = "Not found";
+      app.innerHTML = '<div class="container"><div class="empty">No profile yet for that name.<br>'+
+        '<span class="mut">People appear here once a credit is added or claimed.</span></div></div>';
+      return;
+    }
+
+    var name  = (api && api.person.name) || (stat && stat.name) || slug;
+    var links = (api && api.person.links && api.person.links.length) ? api.person.links : ((stat && stat.links) || []);
+    var headline = (api && api.person && api.person.headline) ? api.person.headline : '';
+    var isOwn = !!(me && api && me.slug === api.person.slug);
+
+    // If a signed-in viewer is looking at someone else, fetch their own credits so we know
+    // which games they *both* shipped — those are the credits the viewer can confirm/vouch for.
+    var pMyGames = (me && api && me.slug !== api.person.slug)
+      ? DQAPI.personCredits(me.slug).then(function(r){ var s={}; (((r.data&&r.data.credits)||[])).forEach(function(c){ s[c.game_slug]=1; }); return s; }).catch(function(){ return {}; })
+      : Promise.resolve({});
+
+    // Merge credits by game_slug — live (API) wins over seed (static).
+    var byGame = {};
+    ((stat && stat.credits) || []).forEach(function(c){ byGame[c.game_slug] = { game_slug:c.game_slug, game_title:c.game_title, year:c.year||null, studio:c.studio||null, role:c.role, roles_other:c.roles_other||[], verification:c.verification||[], vouch_count:0, live:false }; });
+    ((api && api.credits) || []).forEach(function(c){ byGame[c.game_slug] = { id:c.id, game_slug:c.game_slug, game_title:c.game_title, year:c.year||null, studio:c.studio||null, role:c.role, roles_other:c.roles_other||[], verification:c.verification||[], links:c.links||[], position:(c.position!=null?c.position:null), releases:c.releases||[], vouch_count:c.vouch_count||0, voucher_slugs:c.voucher_slugs||[], partial:!!c.partial, parent_slug:(c.parent_slug||null), status:c.status, work_start:(c.work_start!=null?c.work_start:null), work_end:(c.work_end!=null?c.work_end:null), corroborated:c.corroborated, live:true }; });
+    var credits = Object.keys(byGame).map(function(k){ return byGame[k]; });
+
+    // Resolve missing launch years from the static catalogue (added games already
+    // carry a year; catalogue games get theirs from the shard), then sort + render.
+    // Admin-set covers for games without a Steam capsule (instant, ahead of the next rebuild).
+    var _coverSlugs = credits.map(function(c){ return c.game_slug; });
+    var pCovers = (_coverSlugs.length && window.DQAPI && DQAPI.gameCovers) ? DQAPI.gameCovers(_coverSlugs).then(function(r){ return (r.data && r.data.covers) || {}; }).catch(function(){ return {}; }) : Promise.resolve({});
+    Promise.all([ Promise.all(credits.map(function(c){
+      return DQ.loadEntity("games", c.game_slug).then(function(gg){ if(gg){ if(c.year==null && gg.year!=null) c.year = gg.year; if(gg.steam) c.steam = gg.steam; if(gg.cover) c.cover = gg.cover; } }).catch(function(){});
+    })), pMyGames, pCovers ]).then(function(_res){
+    var myGames = _res[1] || {};
+    var _covMap = _res[2] || {};
+    credits.forEach(function(c){ if(_covMap[c.game_slug]) c.cover = _covMap[c.game_slug]; });
+
+    // ---- Expansion nesting (List + Career timeline) ----
+    // An expansion nests directly under its base game ONLY when this person also holds the
+    // base credit. An expansion whose base they DON'T hold stays a top-level entry with an
+    // "expansion of X" tag linking to the base. Display grouping only — it never touches the
+    // Visual/position order that drives Highlights or the share card.
+    var ownBySlug = {}; credits.forEach(function(c){ ownBySlug[c.game_slug] = c; });
+    function nestParentSlug(c){ return (c.parent_slug && ownBySlug[c.parent_slug]) ? c.parent_slug : null; }
+    function isOrphanExpansion(c){ return !!(c.parent_slug && !ownBySlug[c.parent_slug]); }
+    // Base slugs that actually have nested expansions this person holds — those get a
+    // collapse/expand chevron; children carry data-childof so the chevron can toggle them.
+    var kidParents = {}; credits.forEach(function(c){ var _p = nestParentSlug(c); if(_p) kidParents[_p] = true; });
+    function collapseToggle(slug){
+      return kidParents[slug]
+        ? '<span class="expcollapse expctl" data-base="'+DQ.esc(slug)+'" data-collapsed="0" role="button" tabindex="0" title="Collapse / expand expansions" style="cursor:pointer;color:var(--muted);font-weight:700;margin-right:6px;user-select:none">▾</span>'
+        : '';
+    }
+    var kidCount = {}; credits.forEach(function(c){ var _p = nestParentSlug(c); if(_p) kidCount[_p] = (kidCount[_p]||0)+1; });
+    // Clear, clickable "+N expansions" affordance under a base game. Expansions are collapsed by
+    // default so a long career reads tight; this line makes the disclosure obvious (vs the old
+    // cryptic "▸ 4" glued to the title).
+    function expMore(slug){
+      var n = kidCount[slug]; if(!n) return '';
+      return '<a class="expmore expctl" data-base="'+DQ.esc(slug)+'" data-collapsed="1" role="button" tabindex="0" title="Show the expansions and editions nested under this game" style="display:inline-block;margin-top:7px;font-size:12.5px;font-weight:700;color:var(--gold,#e0b23a);cursor:pointer;user-select:none">+ '+n+' expansion'+(n===1?'':'s')+'</a>';
+    }
+    function prettySlug(s){ return String(s||"").replace(/-/g," ").replace(/\b\w/g, function(ch){ return ch.toUpperCase(); }); }
+    // Reorder a sorted credit list so each base is immediately followed by the expansions
+    // the person also holds (kept in the incoming sort order). Returns [{c, child}].
+    function nestOrder(sorted){
+      var kids = {};
+      sorted.forEach(function(c){ var p = nestParentSlug(c); if(p){ (kids[p] = kids[p] || []).push(c); } });
+      var out = [];
+      sorted.forEach(function(c){
+        if(nestParentSlug(c)) return;                 // emitted under its base, below
+        out.push({ c:c, child:false });
+        (kids[c.game_slug] || []).forEach(function(k){ out.push({ c:k, child:true }); });
+      });
+      return out;
+    }
+    // Tag markup for a top-level expansion whose base this person does NOT hold.
+    function orphanExpTag(c){
+      return isOrphanExpansion(c)
+        ? ' <span class="mut" style="font-weight:400;font-size:12px">· expansion of <a class="expparent" data-parent="'+DQ.esc(c.parent_slug)+'" href="/credits/game/'+encodeURIComponent(c.parent_slug)+'">'+DQ.esc(prettySlug(c.parent_slug))+'</a></span>'
+        : '';
+    }
+    // "Disputed" tag when this credit has been challenged and marked contested by a moderator.
+    function dispTag(c){
+      return c.status==="contested"
+        ? ' <span class="disputed" title="This credit has been challenged and is under review" style="font-size:10px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--gold,#e0b23a);border:1px solid rgba(224,178,58,.5);background:rgba(224,178,58,.1);border-radius:6px;padding:1px 6px;vertical-align:middle">Disputed</span>'
+        : '';
+    }
+    // Evidence as a single quiet colored dot — keeps the timeline pretty (no pill per row). The
+    // level: peer-confirmed (1), team-confirmed (2+), under review (reported). Self-reported shows
+    // nothing. Meaning lives in the tooltip and on how-evidence-works.html.
+    function corrBadge(c){
+      if(!c || !c.corroborated || !c.id) return '';
+      var src = c.corroborated.source || 'the published record';
+      var tip = 'Matches '+src+'. Click to see the evidence.';
+      return ' <span class="evb corr" data-ev="'+c.id+'" data-corr="1" role="button" tabindex="0" aria-label="Matches published credits. Click to see details." title="'+DQ.esc(tip)+'">✓</span>';
+    }
+    function evidenceBadge(c){
+      var n = c.vouch_count || 0;
+      var rev = c.status==="contested";
+      if(!rev && n<1) return '';   // "Awaiting confirmation" credits carry no badge — keeps rows clean.
+      var cls = rev ? 'rev' : (n>=2 ? 'team' : 'peer');
+      var glyph = rev ? '!' : '✓';
+      var lbl = rev ? 'Under review' : (n>=2 ? 'Team-confirmed' : 'Peer-confirmed');
+      var tip = rev ? 'Under review. A report was filed on this credit. Click for details.'
+                    : (n>=2 ? 'Team-confirmed by '+n+' teammates who shipped this game. Click to see who.'
+                            : 'Peer-confirmed by 1 teammate who shipped this game. Click to see who.');
+      if(!c.id) return ' <span class="evb '+cls+'" title="'+DQ.esc(tip)+'">'+glyph+'</span>';
+      return ' <span class="evb '+cls+'" data-ev="'+c.id+'"'+(rev?' data-rev="1"':'')+' role="button" tabindex="0" aria-label="'+DQ.esc(lbl)+'. Click to see details." title="'+DQ.esc(tip)+'">'+glyph+'</span>';
+    }
+    // For a "specific part" credit, name the actual parts they worked on, matching the claim
+    // form's "Also contributed to" checklist (DLC, ports, post-launch updates, live-service),
+    // derived from the release tags. Falls back to a plain "specific part" if none were named.
+    function partLabels(c){
+      var out = [];
+      DQ.uniq(c.releases || []).forEach(function(r){
+        var s = String(r).toLowerCase();
+        if(/dlc|expansion/.test(s)){ if(out.indexOf("DLC")<0) out.push("DLC"); }
+        else if(/port|remaster/.test(s)){ if(out.indexOf("ports")<0) out.push("ports"); }
+        else if(/live/.test(s)){ if(out.indexOf("live service")<0) out.push("live service"); }
+        else if(/patch|post.?launch|update/.test(s)){ if(out.indexOf("post-launch updates")<0) out.push("post-launch updates"); }
+      });
+      return out;
+    }
+    function partText(c){ if(!c.partial) return ""; var l = partLabels(c); return l.length ? l.join(", ") : "specific part"; }
+    // "Ask for a vouch" on your own live credit: opens a modal listing teammates on this game who
+    // can confirm you, with a copyable request note + deep link. Owner-only.
+    function vouchReqBtn(c){
+      if(!(isOwn && c.live && c.id)) return '';
+      return '<a class="vreqbtn" data-slug="'+DQ.esc(c.game_slug)+'" data-title="'+DQ.esc(c.game_title)+'" data-vouchers="'+DQ.esc((c.voucher_slugs||[]).join(","))+'" title="Ask a teammate who shipped this game to confirm your credit" style="font-size:12px;color:var(--accent);cursor:pointer;margin-left:14px">Ask for a vouch →</a>';
+    }
+    // Credits on games the viewer also shipped, that they haven't confirmed yet.
+    var confirmable = credits.filter(function(c){ return me && !isOwn && c.live && c.id && myGames[c.game_slug] && (c.voucher_slugs||[]).indexOf(me.slug) < 0; });
+    // Two independent orderings. The List view is a stable career timeline (most recent
+    // release first) and ignores the drag order. The Visual view is the owner's own
+    // showcase: drag-to-reorder, top three featured, and it's what the share card pulls
+    // its hero covers from. They no longer share a single order.
+    function byRecent(a,b){ return (b.year||0)-(a.year||0) || String(a.game_title).localeCompare(String(b.game_title)); }
+    var listCredits = credits.slice().sort(byRecent);
+    var visualCredits = credits.slice().sort(function(a,b){
+      var pa=(a.position!=null)?a.position:1e9, pb=(b.position!=null)?b.position:1e9;
+      if(pa!==pb) return pa-pb;
+      return byRecent(a,b);
+    });
+
+    document.title = name + " · DevQuest Credits";
+    document.getElementById("crumb").textContent = name;
+
+    // ---- Career Snapshot: honest, computable, ungameable stats only ----
+    var years = credits.map(function(c){ return c.year; }).filter(function(y){ return y; });
+    var minY = years.length ? Math.min.apply(null, years) : null;
+    var maxY = years.length ? Math.max.apply(null, years) : null;
+    // Show the honest first-to-latest release range as a plain fact, NOT a "years shipping"
+    // count: a min-to-max span falsely implies continuous activity, misreading career gaps or
+    // breaks as either inactivity or overstated tenure. Recent unshipped work is surfaced too.
+    var relRange = (minY && maxY) ? (minY===maxY ? String(minY) : (minY+'–'+maxY)) : '';
+    var liveCount = credits.filter(function(c){ return (c.releases||[]).some(function(rl){ return DQ.releaseClass(rl)==="live"; }); }).length;
+    var unshippedCount = (api && api.person && typeof api.person.unshipped === "number") ? api.person.unshipped : 0;
+    function snapStat(n, label, sub){ return '<div class="snap"><b>'+n+'</b><span>'+label+(sub?' <em>'+sub+'</em>':'')+'</span></div>'; }
+    var snapItems = credits.length ? (
+        snapStat(credits.length, 'shipped '+(credits.length===1?'title':'titles')) +
+        (relRange ? snapStat(relRange, 'release '+(minY===maxY?'year':'years')) : '') +
+        (liveCount>0 ? snapStat(liveCount, 'live-service '+(liveCount===1?'title':'titles')) : '') +
+        (unshippedCount>0 ? snapStat(unshippedCount, 'cancelled / unshipped') : '')
+      ) : '';
+    var snapshotHTML = snapItems ? '<div class="snapshot">'+snapItems+'</div>' : '';
+
+    // ---- Claim CTA ----
+    // A page with a live owner record (api present) is already claimed & curated —
+    // keep the claim path available but quiet. An unclaimed seed page is the real
+    // acquisition moment, so there the banner stays prominent.
+    var claimed = !!api;
+    var claimBanner = '';
+    // Only signed-out visitors see a claim prompt — a signed-in person is not this page's subject.
+    if(!me && window.DQAPI){
+      claimBanner = claimed
+        ? '<div class="claimquiet">Is this your page? <span id="claimbtn">Sign in to edit →</span></div>'
+        : '<div class="claimbanner"><div class="cbtext"><b>Is this you?</b> Claim this page to edit your credits, add the games you shipped, and get peer-vouched by teammates.</div><span class="btn primary" id="claimbtn">Claim this page →</span></div>';
+    }
+
+    var rowsHTML = credits.length ? '<div class="rows">' + nestOrder(listCredits).map(function(_it){ var c=_it.c, _isChild=_it.child;
+      // State the rule once (in the footer note); mark only the exceptions here.
+      // Self-provided signals (LinkedIn self, etc.) are dropped from the row —
+      // they're implied by "self-reported" + the proof link. Only genuine
+      // third-party signals and peer vouches earn a visible mark.
+      var sigs = (c.verification||[]).filter(function(s){ return String(s).indexOf("_self")===-1; }).map(function(s){ return '<span class="sig">'+DQ.esc(DQ.SIG_LABEL[s]||s)+'</span>'; }).join("");
+      var others = c.roles_other || [];
+      var more = others.length ? ' <span class="rmore2" style="color:var(--muted);font-weight:400">· also '+DQ.esc(others.join(", "))+'</span>' : '';
+      // Named releases (ports + expansions) and the live-service era are one flat bucket.
+      // The asterisk (partial scope) is the only thing that ranks them: "Worked on" for a
+      // scoped credit, "Also worked on" for a base-game credit. No ports-vs-expansions split.
+      var rels = DQ.uniq(c.releases || []);
+      var relNamed = rels.filter(function(r){ var k=DQ.releaseClass(r); return k==="port"||k==="content"; });
+      var didWork = relNamed.slice();
+      if(rels.some(function(r){ return DQ.releaseClass(r)==="live"; })) didWork.push("the live-service era");
+      var isExternal = rels.some(function(r){ return DQ.releaseClass(r)==="xdev"; });
+      var workList = didWork.length ? DQ.esc(didWork.join(", ")) : "";
+      var workBody = isExternal
+        ? (workList ? "Worked as an outsourcer on: "+workList : "Worked as an outsourcer")
+        : (workList ? (c.partial?"Worked on: ":"Also worked on: ")+workList : "");
+      var workNote = workBody ? '<div class="relnote" style="font-size:11px;font-weight:400;color:var(--muted);margin-top:3px">'+workBody+'</div>' : '';
+      var partTagL = (function(){ var t = partText(c); return t ? ' <span class="mut" style="font-weight:400;font-size:12px" title="What you worked on, beyond the base game">· '+DQ.esc(t)+'</span>' : ''; })();
+      var trust = (!c.vouch_count && isOwn && c.live && c.id)
+        ? '<a class="getconf" href="/credits/game/'+encodeURIComponent(c.game_slug)+'" title="Add the teammates you shipped with; once they claim, they can confirm this credit">Get confirmed →</a>'
+        : '';
+      var proof = (c.links && c.links.length) ? '<a class="proofln" href="'+DQ.esc(DQ.safeUrl(c.links[0]))+'" target="_blank" rel="noopener noreferrer" title="Source for this credit (developer-provided): '+DQ.esc(c.links.join(", "))+'" aria-label="View source for this credit">↗</a>' : '';
+      // No drag handle in List view: it's a fixed chronological timeline now. Reordering
+      // lives in the Visual view, where the owner curates their showcase order.
+      var grip = '';
+      var editAttrs = 'data-id="'+c.id+'" data-role="'+DQ.esc(c.role||"")+'" data-others="'+DQ.esc((c.roles_other||[]).join(", "))+'" data-links="'+DQ.esc((c.links||[]).join("\n"))+'" data-releases="'+DQ.esc((c.releases||[]).join(", "))+'" data-partial="'+(c.partial?"1":"")+'" data-workstart="'+(c.work_start||"")+'" data-workend="'+(c.work_end||"")+'"';
+      // Owner nudge: a claimed credit still sitting at the "Contributor" placeholder (or blank)
+      // gets an invite to set a real title — the common case after claiming a teammate's add.
+      var isPlaceholderRole = isOwn && c.live && c.id && (!String(c.role||"").trim() || /^contributor$/i.test(String(c.role||"").trim()));
+      var roleHTML = isPlaceholderRole
+        ? '<span class="rrole" style="color:var(--muted)">'+DQ.esc(c.role||"Role not recorded")+'</span> <a class="editcredit" '+editAttrs+' style="color:var(--gold);font-weight:700;font-size:12px;cursor:pointer">+ add your real title</a>'
+        : '<span class="rrole">'+DQ.esc(c.role||"Role not recorded")+'</span>';
+      // Viewer who shipped this same game can confirm this credit right from the profile.
+      var iVouchedThis = !!(me && (c.voucher_slugs||[]).indexOf(me.slug) >= 0);
+      var canConfirm = !!(me && !isOwn && c.live && c.id && myGames[c.game_slug]);
+      var confirmBtn = canConfirm
+        ? (iVouchedThis
+            ? '<a class="unvouchp" data-id="'+c.id+'" title="Withdraw your confirmation" style="font-size:12px;font-weight:700;color:var(--green);cursor:pointer;white-space:nowrap;margin-left:8px">✓ Confirmed</a>'
+            : '<a class="vouchp" data-id="'+c.id+'" title="Confirm you shipped this game with '+DQ.esc(name)+'" style="font-size:12px;font-weight:700;color:var(--green);border:1px solid rgba(63,185,80,.4);background:rgba(63,185,80,.08);border-radius:8px;padding:4px 11px;cursor:pointer;white-space:nowrap;margin-left:8px">Confirm ✓</a>')
+        : '';
+      var controls = (isOwn && c.live && c.id)
+        ? '<a class="editcredit" '+editAttrs+' style="color:var(--accent);font-size:12px;cursor:pointer;margin-left:10px">Edit</a>'+
+          '<a class="rmvcredit" data-id="'+c.id+'" style="color:var(--pink);font-size:12px;cursor:pointer;margin-left:10px">Remove</a>'+vouchReqBtn(c)
+        : '';
+      var _rowStyle = _isChild ? ' style="margin-left:26px;border-left:2px solid var(--border,#2d333b);padding-left:12px;display:none"' : '';
+      var _kidMark = _isChild ? '<span class="mut expctl expcollapse-child" data-base="'+DQ.esc(c.parent_slug)+'" role="button" tabindex="0" style="font-weight:400;margin-right:5px;cursor:pointer" title="Collapse under the base game">↳</span>' : '';
+      return '<div class="row"'+((isOwn&&c.live&&c.id)?' data-id="'+c.id+'"':'')+_rowStyle+(_isChild?' data-childof="'+DQ.esc(c.parent_slug)+'"':'')+'>'+
+        grip +
+        '<div class="rmain"><div class="rname">'+(_isChild?_kidMark:'')+'<a href="/credits/game/'+encodeURIComponent(c.game_slug)+'">'+DQ.esc(c.game_title)+'</a>'+evidenceBadge(c)+corrBadge(c)+orphanExpTag(c)+'</div>'+
+          '<div class="rsub">'+roleHTML+partTagL+more+(sigs?' &nbsp; '+sigs:'')+(proof?' &nbsp; '+proof:'')+'</div>'+workNote+(_isChild?'':expMore(c.game_slug))+'</div>'+
+        '<div class="rright">'+(trust?'<span style="margin-right:6px">'+trust+'</span>':'')+(c.year?'<span class="yr" title="Game release year"><span class="yrlbl">Released</span> '+c.year+'</span>':'')+confirmBtn+controls+'</div>'+
+      '</div>';
+    }).join("") + '</div>' : '<div class="empty">No credits on record yet.'+(isOwn?' Add the games you worked on.':'')+'</div>';
+
+    // ---- Visual (cover) view of the same gameography ----
+    var PH_BG='linear-gradient(160deg,#232c3b,#141b26)';
+    function visTile(c){
+      // Admin-set cover wins over the Steam capsule (which may be dead for a delisted game).
+      var _covsrc = c.cover ? DQ.safeUrl(c.cover) : (c.steam ? 'https://cdn.cloudflare.steamstatic.com/steam/apps/'+encodeURIComponent(c.steam)+'/library_600x900.jpg' : '');
+      // Title watermark always sits behind; a real cover (when present) paints over it. If the
+      // image 404s, onerror removes it and the watermark shows through instead of a blank box.
+      var art = '<span class="gph">'+DQ.esc(c.game_title)+'</span>' +
+        (_covsrc ? '<img loading="lazy" referrerpolicy="no-referrer" src="'+DQ.esc(_covsrc)+'" onerror="this.remove()" alt="">' : '');
+      var vbadge = c.vouch_count ? '<span class="gvb '+(c.vouch_count>=2?'team':'peer')+'" title="'+(c.vouch_count>=2?'Team-confirmed by teammates who shipped this game':'Peer-confirmed by a teammate who shipped this game')+'">✓</span>' : '';
+      // Rank badge is empty: a CSS counter numbers the hero row 1..3 by live DOM order, so
+      // dragging a cover into the featured row renumbers everything without any JS.
+      var astg = (function(){ var t = partText(c); return t ? ' <span style="color:var(--muted,#8b98a9);font-weight:400" title="What you worked on, beyond the base game">· '+DQ.esc(t)+'</span>' : ''; })();
+      var canDrag = isOwn && c.live && c.id;
+      var metaLine = (c.studio ? DQ.esc(c.studio)+'  ·  ' : '') + (c.year?c.year:'—');
+      return '<a class="gtile'+(canDrag?' dragtile':'')+'"'+(canDrag?' data-id="'+c.id+'" draggable="false"':'')+' href="/credits/game/'+encodeURIComponent(c.game_slug)+'">'+
+        '<div class="gcov"><span class="grank"></span>'+art+vbadge+(canDrag?'<span class="gvgrip" title="Drag to reorder">⠿</span>':'')+
+          '<div class="gscrim"><b class="gtt">'+DQ.esc(c.game_title)+'</b><span class="gmt">'+DQ.esc(c.role||"Role not recorded")+astg+'</span><span class="gsub">'+metaLine+'</span></div>'+
+        '</div>'+
+      '</a>';
+    }
+    // Hero row: the first three of the Visual (drag/showcase) order render larger. This order
+    // is independent of the List view, which is a fixed most-recent-first career timeline.
+    var isTouch = !!(window.matchMedia && window.matchMedia('(pointer:coarse)').matches);
+    function gvSub(t){ return ' <span class="mut" style="font-weight:400;letter-spacing:0;text-transform:none;font-size:12px">· '+t+'</span>'; }
+    var hiSub = isOwn
+      ? gvSub('the three you\'re proudest of'+((!isTouch)?' — drag to reorder; swap one in with “Make a highlight” below':''))
+      : gvSub('their proudest work');
+    // ---- Merged Portfolio view: curated Highlights trio + a cover-rich career timeline.
+    // The trio is the pride order (top 3 by position, drag to reorder). The timeline places
+    // every game by the years worked (work_start/work_end), falling back to the release year.
+    function coverSrc(c){ return c.cover ? DQ.safeUrl(c.cover) : (c.steam ? 'https://cdn.cloudflare.steamstatic.com/steam/apps/'+encodeURIComponent(c.steam)+'/library_600x900.jpg' : ''); }
+    function tlAnchor(c){ return c.work_start || c.year || 9999; }
+    var timelineCredits = credits.slice().sort(function(a,b){ return tlAnchor(a)-tlAnchor(b) || String(a.game_title).localeCompare(String(b.game_title)); });
+    var featuredIds = {}; visualCredits.slice(0,3).forEach(function(c){ if(c.id) featuredIds[c.id]=1; });
+    // Full ordered list of live credit ids — every reorder (drag or feature) rewrites the
+    // whole order, so positions stay contiguous and the "top 3 = featured" rule holds.
+    var fullOrderIds = visualCredits.filter(function(c){ return c.live && c.id; }).map(function(c){ return String(c.id); });
+    var tlMissing = isOwn && credits.some(function(c){ return !c.work_start; });
+    var tlHint = tlMissing ? '<div class="tlhint">Games sit at their release year until you add the years you actually worked them. Use <b>✎ Edit title / years</b> on any credit below. (Handy for live-service titles you joined years after launch, like LoL.)</div>' : '';
+    // Lifecycle phase, DERIVED from the years worked vs the game's release year. Describes the
+    // person's involvement (pre-launch / launch / post-launch), not the game's type — which
+    // resolves the "live service" ambiguity. Null when we lack the work years or the release year.
+    function lifecyclePhase(c){
+      var rel = c.year, ws = c.work_start, we = c.work_end;
+      if(ws==null || rel==null) return null;
+      if(we!=null && we < rel) return "pre-launch";
+      if(ws > rel) return "post-launch";
+      return "launch";
+    }
+    function phaseTip(p){
+      return p==="pre-launch" ? "You worked on this before it launched (in development)."
+        : p==="post-launch" ? "You joined after launch to work on the live, ongoing game."
+        : "You worked on it through its launch.";
+    }
+    function tlRow(c, _isChild){
+      var _pt = partText(c);
+      var partTag = _pt ? ' <span class="tlst">·</span> <span class="tlphase" title="What you worked on, beyond the base game">'+DQ.esc(_pt)+'</span>' : '';
+      var startY = c.work_start || null;
+      var endY = c.work_end || null;
+      // Rail shows the years actually WORKED as a range, not just the start year — the whole point
+      // of the timeline is duration, and live-service devs often join years after a game ships.
+      var topY = startY ? startY : (c.year || '—');
+      var yearTip = startY ? 'The years you worked on this title' : 'Game release year';
+      var railRange = '';
+      if(startY){ if(endY && endY !== startY) railRange = '–'+endY; else if(!endY) railRange = '→ now'; }
+      var railInner = topY + (railRange ? '<span class="tlyto">'+railRange+'</span>' : '');
+      var phase = _isChild ? null : lifecyclePhase(c);
+      // Studio intentionally omitted here: it's only stored on community-added credits, so showing
+      // it made those rows (e.g. City of Heroes) inconsistent with catalogue rows. The studio lives
+      // on the game page / cover. Timeline rows read uniformly as "Role · phase".
+      var sub = DQ.esc(c.role||"Role not recorded") +
+        (phase ? ' <span class="tlst">·</span> <span class="tlphase" title="'+DQ.esc(phaseTip(phase))+'">'+phase+'</span>' : '') + partTag;
+      var _cs = coverSrc(c);
+      var thumb = '<span class="tlph">'+DQ.esc(c.game_title)+'</span>'+(_cs?'<img loading="lazy" referrerpolicy="no-referrer" src="'+DQ.esc(_cs)+'" onerror="this.remove()" alt="">':'');
+      var isFeat = !!(c.id && featuredIds[c.id]);
+      var star = (isOwn && c.live && c.id)
+        ? (isFeat ? '<span class="tlfeat" title="One of your Highlights above">★ Highlight</span>' : '<a class="tlfeatbtn" data-id="'+c.id+'" title="Feature this in your Highlights">☆ Make a highlight</a>')
+        : '';
+      // Editing lived only in List view, which testers couldn't find. Surface it right here.
+      var tledit = (isOwn && c.live && c.id) ? '<a class="tledit" data-id="'+c.id+'" title="Edit your role, and add the years you worked on it" style="font-size:12px;color:var(--accent);cursor:pointer;margin-right:14px">✎ Edit title / years</a>' : '';
+      var gurl = '/credits/game/'+encodeURIComponent(c.game_slug);
+      var _yearCell = _isChild ? '<span class="mut expctl expcollapse-child" data-base="'+DQ.esc(c.parent_slug)+'" role="button" tabindex="0" style="cursor:pointer" title="Collapse under the base game">↳</span>' : railInner;
+      var _cardStyle = _isChild ? ' style="margin-left:22px"' : '';
+      return '<div class="tlrow'+(isFeat?' isfeat':'')+(_isChild?' tlrow-child':'')+'"'+(_isChild?' data-childof="'+DQ.esc(c.parent_slug)+'" style="display:none"':'')+'>'+
+        '<div class="tlyear" title="'+(_isChild?'Expansion of the game above':yearTip)+'">'+_yearCell+'</div>'+
+        '<div class="tlrail"><span class="tldot'+(isFeat?' feat':'')+'"></span></div>'+
+        '<div class="tlcard"'+_cardStyle+'>'+
+          '<a class="tlthumb" href="'+gurl+'">'+thumb+'</a>'+
+          '<div class="tlbody"><div class="tlnameline"><a class="tlname" href="'+gurl+'">'+DQ.esc(c.game_title)+'</a>'+evidenceBadge(c)+corrBadge(c)+orphanExpTag(c)+'</div>'+
+            '<div class="tlsub">'+sub+'</div>'+(_isChild?'':expMore(c.game_slug))+((tledit||star)?'<div class="tlact">'+tledit+star+vouchReqBtn(c)+'</div>':'')+'</div>'+
+        '</div>'+
+      '</div>';
+    }
+    var portfolioHTML;
+    if(!credits.length){ portfolioHTML = ''; }
+    else if(credits.length <= 3){ portfolioHTML = '<div class="ggrid ggrid-hero" id="gv-hero">'+visualCredits.map(visTile).join("")+'</div>'; }
+    else {
+      portfolioHTML = '<div class="gvhead">Highlights'+hiSub+'</div>'+
+        '<div class="ggrid ggrid-hero" id="gv-hero">'+visualCredits.slice(0,3).map(visTile).join("")+'</div>'+
+        '<div class="gvhead" style="margin-top:34px">Career timeline'+gvSub('by the years you worked on each game')+'</div>'+
+        '<div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;font-size:11.5px;color:var(--muted,#8b98a9);margin:0 0 14px">'+
+          '<span style="display:inline-flex;align-items:center;gap:7px"><span class="evb peer" style="margin:0;width:15px;height:15px;font-size:9px">✓</span> peer-confirmed</span>'+
+          '<span style="display:inline-flex;align-items:center;gap:7px"><span class="evb team" style="margin:0;width:15px;height:15px;font-size:9px">✓</span> team-confirmed</span>'+
+          '<span style="color:var(--muted)">click a check to see who confirmed it</span>'+
+          '<a href="/credits/how-evidence-works.html" style="color:var(--accent);font-weight:600">how evidence works →</a>'+
+        '</div>'+
+        tlHint +
+        '<div class="tl" id="gv-tl">'+nestOrder(timelineCredits).map(function(_it){ return tlRow(_it.c, _it.child); }).join("")+'</div>';
+    }
+
+    // Default to the Portfolio (visual) view — it's the shareable, "why care" impression.
+    // Migrate the old 'timeline' choice (now folded into Portfolio) to 'visual'.
+    var gameView='visual'; try{ gameView = localStorage.getItem('dq_gameview')||'visual'; }catch(e){}
+    if(gameView==='timeline') gameView='visual';
+    if(['list','visual'].indexOf(gameView)<0) gameView='visual';
+    var tabsHTML = credits.length ? '<div class="gvtabs" style="margin:0">'+
+      '<span class="gvtab'+(gameView==='visual'?' on':'')+'" data-v="visual">▦ Portfolio</span>'+
+      '<span class="gvtab'+(gameView==='list'?' on':'')+'" data-v="list">☰ List</span>'+
+    '</div>' : '';
+
+    var linksHTML = links.length ? '<div class="plinks">'+links.map(function(l){
+      var label = LINK_LABEL[String(l.type||"").toLowerCase()] || l.label || l.type || "Link";
+      return '<a class="plink" href="'+DQ.esc(DQ.safeUrl(l.url))+'" target="_blank" rel="noopener noreferrer">'+DQ.esc(label)+' <span aria-hidden="true">↗</span></a>';
+    }).join("")+'</div>' : '';
+    // Owner-only affordance to add/edit the headline + public profile links under the name.
+    var editLinksAff = isOwn ? '<span class="editlinks" id="editlinks">'+((headline||links.length)?'✎ Edit profile':'+ Add your title & links')+'</span>' : '';
+
+    var cta = isOwn ? '<a class="btn primary" href="search.html">+ Add a credit</a>'
+            : (window.DQAPI ? '' : '');
+    var ownBanner = '';
+
+    // ---- Unshipped & cancelled (count-only, NDA-safe, its own understated section) ----
+    var unshipped = (api && api.person && typeof api.person.unshipped === "number") ? api.person.unshipped : 0;
+    var unshippedHTML = '';
+    if(unshipped > 0 || isOwn){
+      var countLine = unshipped > 0
+        ? '<div class="unshipped"><span class="usdot">◇</span> <b>'+unshipped+'</b> '+(unshipped===1?'project that was cancelled or never shipped':'projects that were cancelled or never shipped')+' <span class="mut">(titles withheld)</span></div>'
+        : (isOwn ? '<div style="font-size:13px;color:var(--text)">Worked on games that were cancelled or never shipped? <b>Add them here.</b> They count as recent experience and keep your record from looking inactive, even when the title can\'t be named.</div>' : '');
+      var editUS = isOwn ? '<span class="editus" id="editus">'+(unshipped>0?'✎ Edit count':'+ Add cancelled / unshipped')+'</span><div id="usedit"></div>' : '';
+      unshippedHTML = '<section class="blk" style="padding-top:0"><div class="container">'+
+        '<div class="eyebrow">Unshipped &amp; cancelled</div>'+
+        countLine + editUS +
+        '<div class="notice">Cancelled or never-released work: self-declared and kept name-free, since much of it is under NDA. Counted separately from the shipped record above, and shown as a stat on your page so gaps between shipped titles don\'t read as time off.</div>'+
+      '</div></section>';
+    }
+
+    // ---- Evidence hero: peer confirmation is the core signal, so surface it up top. ----
+    var vN = credits.filter(function(c){ return c.vouch_count>0; }).length;
+    var verifyHTML = '';
+    if(credits.length){
+      if(vN>0){
+        verifyHTML = '<div class="vblock">'+
+          '<div class="vbadge">✓</div>'+
+          '<div class="vbody"><div class="vlbl">Confirmed by teammates</div>'+
+            '<div class="vtxt"><b>'+vN+' of '+credits.length+'</b> credit'+(credits.length===1?'':'s')+' confirmed by a teammate who shipped the same game.'+(isOwn&&vN<credits.length?' <span class="mut">Get the rest confirmed below.</span>':'')+' <a href="/credits/how-evidence-works.html" style="color:var(--accent);font-weight:600;white-space:nowrap">how evidence works →</a></div>'+
+          '</div>'+
+        '</div>';
+      } else if(isOwn){
+        verifyHTML = '<div class="vblock cta">'+
+          '<div class="vbadge">✓</div>'+
+          '<div class="vbody"><div class="vlbl">Not yet confirmed</div>'+
+            '<div class="vtxt"><b>Get your credits confirmed by teammates.</b> Confirmation from the people you shipped with is what turns this from a résumé into a peer-confirmed record. On each game below, add the teammates you worked with; once they claim, they can confirm your credit and it earns a check. <a href="/credits/how-evidence-works.html" style="color:var(--accent);font-weight:600;white-space:nowrap">how evidence works →</a></div>'+
+          '</div>'+
+        '</div>';
+      }
+    }
+
+    // ---- Viewer invitation: turn a profile visit into a vouch. If the signed-in viewer
+    // shipped some of these same games, invite them to confirm this person right here. ----
+    var confirmBanner = confirmable.length
+      ? '<div class="verifystrip cta"><b>You shipped '+confirmable.length+' of these title'+(confirmable.length===1?'':'s')+' with '+DQ.esc(name)+'.</b> Confirm the credit'+(confirmable.length===1?'':'s')+' you can vouch for. Your confirmation is what moves a credit from awaiting confirmation to peer-confirmed. Use the green <b>Confirm&nbsp;✓</b> button'+(confirmable.length===1?'':'s')+' on those rows below.</div>'
+      : '';
+
+    // ---- "Known for" chips: the marquee titles (the owner's own showcase order) as quick,
+    // clickable context right under the headline, so a visitor gets the gist in a glance. ----
+    var knownFor = visualCredits.slice(0, Math.min(5, visualCredits.length));
+    var knownForHTML = (knownFor.length >= 2)
+      ? '<div class="knownfor"><span class="kflabel">Known for</span>'+
+          knownFor.map(function(c){ return '<a class="kchip" href="/credits/game/'+encodeURIComponent(c.game_slug)+'">'+DQ.esc(c.game_title)+'</a>'; }).join('')+
+        '</div>'
+      : '';
+
+    // ---- "Specializes in" chips: a profile-level expertise signal so the timeline never has to
+    // repeat "live service" per row. Live Service comes from the credits marked as live-service
+    // work; the rest are the person's top disciplines, classified from their roles.
+    var _discCount = {};
+    credits.forEach(function(c){ var d = DQ.discipline && DQ.discipline(c.role); if(d && d !== "Other") _discCount[d] = (_discCount[d]||0)+1; });
+    var _topDisc = Object.keys(_discCount).sort(function(a,b){ return _discCount[b]-_discCount[a]; }).slice(0,2);
+    var specs = (liveCount > 0 ? ["Live Service"] : []).concat(_topDisc);
+    var specHTML = specs.length
+      ? '<div class="knownfor"><span class="kflabel">Specializes in</span>'+specs.map(function(s){ return '<span class="kchip">'+DQ.esc(s)+'</span>'; }).join('')+'</div>'
+      : '';
+
+    // Headline as two stacked lines: role on top, studio beneath — cleaner than a long
+    // "Role at Studio" that wraps. Split on the " at " the edit form standardises on.
+    var metaHTML = (function(){
+      if(!headline) return credits.length ? '' : '<div class="meta">No credits on record yet</div>';
+      var i=headline.toLowerCase().lastIndexOf(' at ');
+      var t=i>0?headline.slice(0,i):headline, s=i>0?headline.slice(i+4):'';
+      return '<div class="meta">'+DQ.esc(t)+'</div>'+(s?'<div class="metastudio">'+DQ.esc(s)+'</div>':'');
+    })();
+
+    app.innerHTML =
+      '<div class="phead"><div class="container">'+
+        '<div style="display:flex;align-items:flex-start;gap:16px">'+
+          '<div class="row" style="padding:0;border:none"><div class="av" style="width:60px;height:60px;font-size:22px">'+DQ.esc(DQ.initials(name))+'</div></div>'+
+          '<div style="flex:1;min-width:0">'+
+          '<h1 style="margin:0">'+DQ.esc(name)+'</h1>'+
+          metaHTML +
+          knownForHTML +
+          '<div class="phactions">'+
+            linksHTML +
+            editLinksAff +
+            (credits.length ? '<span class="editlinks" id="sharecard">⬆ Share my credits</span>' : '') +
+            (!isOwn ? '<span class="editlinks" id="reportprofile" style="color:var(--muted)" title="Report this profile to a moderator">⚑ Report</span>' : '') +
+          '</div>'+
+          '<div id="linkedit"></div>'+
+          snapshotHTML +
+          specHTML +
+          verifyHTML +
+          confirmBanner +
+          claimBanner +
+          '</div>'+
+        '</div>'+
+      '</div></div>'+
+      '<section class="blk"><div class="container">'+
+        '<div class="rowhead"><div><div class="eyebrow">Gameography</div>'+
+          '<p class="secsub" style="margin:6px 0 0">A record of the games you\'ve helped create, backed by the teammates who confirm them.</p></div>'+
+          '<div class="rhactions">'+ tabsHTML + cta +'</div>'+
+        '</div>'+
+        ownBanner +
+        '<div id="gv-visual"'+(gameView==='visual'?'':' style="display:none"')+'>'+portfolioHTML+'</div>'+
+        '<div id="gv-list"'+(gameView==='list'?'':' style="display:none"')+'>'+rowsHTML+'</div>'+
+        '<div class="notice">A <b style="color:var(--accent);font-style:normal">blue</b> or <b style="color:var(--green);font-style:normal">green</b> check marks a credit a teammate who shipped the same game has confirmed (blue = one, green = several). Click a check to see who. Credits without one are awaiting confirmation. Only the person credited can claim and edit this page.</div>'+
+      '</div></section>' +
+      unshippedHTML;
+
+    // Upgrade "expansion of X" tags (for expansions whose base this person doesn't hold)
+    // from the prettified slug to the canonical catalogue title, once resolved.
+    (function(){
+      var els = document.querySelectorAll(".expparent"); if(!els.length) return;
+      var seen = {};
+      Array.prototype.forEach.call(els, function(el){
+        var ps = el.getAttribute("data-parent"); if(!ps || seen[ps]) return; seen[ps] = 1;
+        DQ.loadEntity("games", ps).then(function(pg){
+          if(pg && pg.title){ Array.prototype.forEach.call(document.querySelectorAll('.expparent[data-parent="'+ps+'"]'), function(x){ x.textContent = pg.title; }); }
+        }).catch(function(){});
+      });
+    })();
+
+    var cb = document.getElementById("claimbtn");
+    if(cb) cb.onclick = function(){ if(window.DQAPI) location.href = "signin.html"; else DQ.openClaim({ person_name: name }); };
+
+    // List / Visual / Timeline gameography toggle (choice remembered per device).
+    Array.prototype.forEach.call(document.querySelectorAll(".gvtab"), function(t){
+      t.onclick = function(){
+        var v = t.getAttribute("data-v");
+        try{ localStorage.setItem("dq_gameview", v); }catch(e){}
+        Array.prototype.forEach.call(document.querySelectorAll(".gvtab"), function(x){ x.classList.toggle("on", x===t); });
+        var views = { list:"gv-list", visual:"gv-visual" };
+        Object.keys(views).forEach(function(k){ var el=document.getElementById(views[k]); if(el) el.style.display = (k===v)?"":"none"; });
+      };
+    });
+
+    // Collapse / expand nested expansions. DELEGATED off the document so it can't be lost to
+    // any later re-render, and works from BOTH the base game's ▾ chevron (toggle) and a
+    // child's ↳ (collapse). Scoped to the clicked view so List and the Portfolio timeline
+    // stay independent.
+    function _expToggle(ctl){
+      var base = ctl.getAttribute("data-base"); if(!base) return;
+      var scope = ctl.closest("#gv-visual, #gv-list") || document;
+      var kids = scope.querySelectorAll('[data-childof="'+base+'"]');
+      var toggles = scope.querySelectorAll('.expmore[data-base="'+base+'"], .expcollapse[data-base="'+base+'"]');
+      // A child's ↳ always collapses; a "+N expansions" / chevron toggle flips its own state.
+      var collapsing = ctl.classList.contains("expcollapse-child") ? true : (ctl.getAttribute("data-collapsed") !== "1");
+      Array.prototype.forEach.call(kids, function(r){ r.style.display = collapsing ? "none" : ""; });
+      var n = kids.length;
+      Array.prototype.forEach.call(toggles, function(t){
+        t.setAttribute("data-collapsed", collapsing ? "1" : "0");
+        if(t.classList.contains("expmore")) t.innerHTML = collapsing ? ("+ "+n+" expansion"+(n===1?"":"s")) : ("Hide "+n+" expansion"+(n===1?"":"s"));
+        else t.textContent = collapsing ? ("▸ "+n) : "▾";
+      });
+    }
+    document.addEventListener("click", function(e){
+      var ctl = e.target && e.target.closest && e.target.closest(".expctl");
+      if(!ctl) return;
+      e.preventDefault(); e.stopPropagation();
+      _expToggle(ctl);
+    }, false);
+    document.addEventListener("keydown", function(e){
+      if(e.key!=="Enter" && e.key!==" ") return;
+      var ctl = e.target && e.target.closest && e.target.closest(".expctl");
+      if(!ctl) return;
+      e.preventDefault(); _expToggle(ctl);
+    }, false);
+
+    // ---- Evidence "receipts": click a timeline dot to see who confirmed the credit ----
+    // The dot is a summary; this is the substance. One click resolves the credit's confirmers
+    // to real named people, each with their role and how many titles they hold, so "confirmed
+    // by veterans" reads visibly differently from "confirmed by blank new accounts".
+    (function(){
+      var pop=null, openDot=null, cache={};
+      var AVCOL=["#58a6ff","#a371f7","#3fb950","#e0b23a","#ec6a5e","#3fb0c9","#d2739a"];
+      function initials(nm){ var p=String(nm||"").trim().split(/\s+/); return (((p[0]||"")[0]||"")+((p[1]||"")[0]||"")).toUpperCase(); }
+      function colorFor(s){ var h=0, str=String(s||""); for(var i=0;i<str.length;i++) h=(h*31+str.charCodeAt(i))>>>0; return AVCOL[h%AVCOL.length]; }
+      function ensurePop(){
+        if(pop) return pop;
+        pop=document.createElement("div"); pop.className="evpop"; pop.setAttribute("role","dialog"); pop.setAttribute("aria-label","Who confirmed this credit");
+        document.body.appendChild(pop);
+        return pop;
+      }
+      function closePop(){ if(pop) pop.classList.remove("open"); if(openDot) openDot.setAttribute("aria-expanded","false"); openDot=null; }
+      function place(dot){
+        var r=dot.getBoundingClientRect(), pw=pop.offsetWidth, ph=pop.offsetHeight, vw=document.documentElement.clientWidth, vh=document.documentElement.clientHeight;
+        var left=window.scrollX + r.left + r.width/2 - 20;
+        var maxLeft=window.scrollX + vw - pw - 12, minLeft=window.scrollX + 12;
+        if(left>maxLeft) left=maxLeft; if(left<minLeft) left=minLeft;
+        var top=window.scrollY + r.bottom + 9;
+        if(r.bottom + ph + 16 > vh && r.top - ph - 9 > 0) top=window.scrollY + r.top - ph - 9;
+        pop.style.left=left+"px"; pop.style.top=top+"px";
+      }
+      function render(dot, data, loading){
+        var rev = dot.getAttribute("data-rev")==="1";
+        var cls = dot.classList.contains("team")?"team":(dot.classList.contains("rev")?"rev":(dot.classList.contains("corr")?"corr":"peer"));
+        var lvl = rev ? "Under review" : (cls==="team"?"Team-confirmed":(cls==="corr"?"Matches published credits":"Peer-confirmed"));
+        var list = (data&&data.confirmers)||[];
+        var html = '<div class="evpop-head"><span class="hd '+cls+'"></span><span class="lvl">'+DQ.esc(lvl)+'</span><span class="cx" role="button" tabindex="0" aria-label="Close">×</span></div>';
+        if(rev) html += '<div class="evpop-rev">A report was filed on this credit. It stays visible while a moderator reviews it. Nothing is ever silently removed.</div>';
+        if(loading){
+          html += '<div class="evpop-list"><div class="evpop-empty">Loading confirmers…</div></div>';
+        } else if(list.length){
+          html += '<div class="evpop-sub">Confirmed by teammates who shipped this game</div><div class="evpop-list">';
+          list.forEach(function(p){
+            var role = p.headline ? DQ.esc(p.headline) : "";
+            var cc = p.credit_count ? ((role?" · ":"")+p.credit_count+" credited title"+(p.credit_count===1?"":"s")) : "";
+            html += '<a class="evrow" href="/credits/'+encodeURIComponent(p.slug)+'"><span class="av" style="background:'+colorFor(p.slug)+'">'+DQ.esc(initials(p.name))+'</span><span class="ei"><span class="en">'+DQ.esc(p.name)+'</span><span class="er">'+role+cc+'</span></span></a>';
+          });
+          html += '</div>';
+        } else if(!rev && cls!=="corr"){
+          html += '<div class="evpop-empty">No confirmers to show yet.</div>';
+        }
+        if(data && data.corroborated){
+          var csrc = data.corroborated.source || 'the published record', curl = data.corroborated.url;
+          var cin = '<span class="cdot"></span><span>Matches <b>'+DQ.esc(csrc)+'</b> <span class="cnote">published record</span></span>';
+          if(curl) html += '<a class="evpop-corr" href="'+DQ.esc(DQ.safeUrl(curl))+'" target="_blank" rel="noopener noreferrer">'+cin+'<span class="cext">↗</span></a>';
+          else html += '<div class="evpop-corr">'+cin+'</div>';
+        }
+        html += '<a class="evpop-foot" href="/credits/how-evidence-works.html">How evidence works →</a>';
+        pop.innerHTML=html;
+      }
+      function openFor(dot){
+        var id=dot.getAttribute("data-ev"); if(!id) return;
+        if(openDot===dot){ closePop(); return; }
+        ensurePop();
+        openDot=dot; dot.setAttribute("aria-expanded","true");
+        render(dot, cache[id]||null, !cache[id]);
+        pop.classList.add("open"); place(dot);
+        if(!cache[id] && window.DQAPI && DQAPI.confirmers){
+          DQAPI.confirmers(id).then(function(res){
+            cache[id]=(res&&res.data)||{confirmers:[]};
+            if(openDot===dot){ render(dot, cache[id], false); place(dot); }
+          }).catch(function(){ cache[id]={confirmers:[]}; if(openDot===dot){ render(dot, cache[id], false); place(dot); } });
+        }
+      }
+      document.addEventListener("click", function(e){
+        var dot=e.target && e.target.closest && e.target.closest(".evb[data-ev]");
+        if(dot){ e.preventDefault(); e.stopPropagation(); openFor(dot); return; }
+        if(pop && openDot){
+          if(e.target.closest && e.target.closest(".evpop .cx")){ e.preventDefault(); closePop(); return; }
+          if(e.target.closest && e.target.closest(".evpop")) return; // clicks inside (e.g. links) pass through
+          closePop();
+        }
+      }, false);
+      document.addEventListener("keydown", function(e){
+        if(e.key==="Enter" || e.key===" "){
+          var dot=e.target && e.target.closest && e.target.closest(".evb[data-ev]");
+          if(dot){ e.preventDefault(); openFor(dot); return; }
+          var cx=e.target && e.target.closest && e.target.closest(".evpop .cx");
+          if(cx){ e.preventDefault(); closePop(); return; }
+        }
+        if(e.key==="Escape" && openDot){ var d=openDot; closePop(); try{ d.focus(); }catch(_){} }
+      }, false);
+      window.addEventListener("resize", function(){ if(openDot) place(openDot); });
+      window.addEventListener("scroll", function(){ if(openDot) place(openDot); });
+    })();
+
+    // ---- Drag-to-reorder in the Visual grid (owner only, pointer-based) ----
+    // Native HTML5 drag was imprecise about drop targets. This uses mouse events + nearest-
+    // centre hit-testing across both grids, reorders live, and re-splits so the hero row always
+    // holds the first three. A short move threshold keeps a plain click navigating to the game.
+    (function(){
+      if(!isOwn || isTouch) return;
+      var vis = document.getElementById("gv-visual");
+      if(!vis) return;
+      var hero = document.getElementById("gv-hero"), rest = document.getElementById("gv-rest");
+      function tiles(){ return Array.prototype.slice.call(vis.querySelectorAll(".dragtile")); }
+      if(tiles().length < 2) return;
+
+      var drag=null, sx=0, sy=0, active=false;
+
+      // Append in sequence: first three go to the hero row, the rest below. Only called when
+      // the order actually changed (guarded by the caller), so re-appends stay cheap.
+      function applyOrder(order){ order.forEach(function(el,i){ (i<3?hero:(rest||hero)).appendChild(el); }); }
+
+      function onMove(e){
+        if(!drag) return;
+        if(!active){
+          if(Math.abs(e.clientX-sx)+Math.abs(e.clientY-sy) < 6) return;
+          active=true; drag.classList.add("dragging"); document.body.classList.add("gv-nav-lock"); document.body.style.userSelect="none";
+        }
+        e.preventDefault();
+        var others = tiles().filter(function(x){ return x!==drag; });
+        var best=null, bestD=Infinity, after=false;
+        others.forEach(function(x){
+          var r=x.getBoundingClientRect(), cxp=r.left+r.width/2, cyp=r.top+r.height/2;
+          var d=(e.clientX-cxp)*(e.clientX-cxp)+(e.clientY-cyp)*(e.clientY-cyp);
+          if(d<bestD){ bestD=d; best=x; after=(e.clientY>cyp+r.height*0.15)||(Math.abs(e.clientY-cyp)<=r.height*0.5 && e.clientX>cxp); }
+        });
+        if(!best) return;
+        var order = others.slice(); var idx = order.indexOf(best); if(after) idx++;
+        order.splice(idx,0,drag);
+        var cur = tiles();
+        var same = order.length===cur.length && order.every(function(el,i){ return el===cur[i]; });
+        if(!same) applyOrder(order);
+      }
+      function onUp(){
+        document.removeEventListener("mousemove", onMove, true);
+        document.removeEventListener("mouseup", onUp, true);
+        document.body.classList.remove("gv-nav-lock"); document.body.style.userSelect="";
+        var was=active, d=drag; drag=null; active=false;
+        if(d) d.classList.remove("dragging");
+        if(was && d){
+          // Swallow the click that fires right after a drag so we don't navigate to the game.
+          var swallow=function(ev){ ev.preventDefault(); ev.stopPropagation(); };
+          vis.addEventListener("click", swallow, true);
+          setTimeout(function(){ vis.removeEventListener("click", swallow, true); }, 60);
+          // Send the FULL order (reordered hero three, then everyone else) so positions stay
+          // contiguous and "top 3 = featured" holds. Reordering the trio doesn't change which
+          // games are featured, so no reload is needed — the CSS counter renumbers 1/2/3 live.
+          var heroIds = tiles().map(function(el){ return String(el.getAttribute("data-id")); });
+          var fullOrder = heroIds.concat(fullOrderIds.filter(function(x){ return heroIds.indexOf(x) < 0; }));
+          if(window.DQAPI && DQAPI.reorderCredits) DQAPI.reorderCredits(fullOrder).catch(function(){});
+        }
+      }
+      vis.addEventListener("mousedown", function(e){
+        if(e.button && e.button!==0) return;
+        var t = e.target && e.target.closest ? e.target.closest(".dragtile") : null;
+        if(!t) return;
+        drag=t; sx=e.clientX; sy=e.clientY; active=false;
+        document.addEventListener("mousemove", onMove, true);
+        document.addEventListener("mouseup", onUp, true);
+      });
+      // Belt-and-suspenders: cancel any native image/link dragging inside the grid.
+      vis.addEventListener("dragstart", function(e){ e.preventDefault(); });
+    })();
+
+    // ---- "Make a highlight": promote a timeline game into the featured trio. Works on touch
+    // too (it's a tap, not a drag). Inserts the game at slot 3, keeping the current #1 and #2,
+    // and rewrites the full order so positions stay contiguous. ----
+    Array.prototype.forEach.call(document.querySelectorAll(".tlfeatbtn"), function(btn){
+      btn.onclick = function(e){
+        e.preventDefault(); e.stopPropagation();
+        if(!(window.DQAPI && DQAPI.reorderCredits)) return;
+        var id = String(btn.getAttribute("data-id"));
+        var rest = fullOrderIds.filter(function(x){ return x !== id; });
+        var newOrder = rest.slice(0,2).concat([id]).concat(rest.slice(2));
+        btn.textContent = "…";
+        DQAPI.reorderCredits(newOrder).then(function(){ location.reload(); }).catch(function(){ location.reload(); });
+      };
+    });
+
+    // "Edit title / years" from the Portfolio timeline: switch to the List view (where the
+    // inline editor lives) and open that credit's editor, so editing is reachable from the
+    // default view instead of being hidden.
+    // "Ask for a vouch" → open the request modal (delegated so it survives view re-renders).
+    document.addEventListener("click", function(e){
+      var b = e.target && e.target.closest && e.target.closest(".vreqbtn");
+      if(!b) return;
+      e.preventDefault(); e.stopPropagation();
+      if(!(window.DQ && DQ.openVouchRequest)) return;
+      DQ.openVouchRequest({
+        game_slug: b.getAttribute("data-slug"),
+        game_title: b.getAttribute("data-title"),
+        my_slug: (api && api.person && api.person.slug) || slug,
+        my_name: name,
+        already: (b.getAttribute("data-vouchers")||"").split(",").filter(Boolean)
+      });
+    }, false);
+    Array.prototype.forEach.call(document.querySelectorAll(".tledit"), function(el){
+      el.onclick = function(e){
+        e.preventDefault(); e.stopPropagation();
+        var id = el.getAttribute("data-id");
+        var listTab = document.querySelector('.gvtab[data-v="list"]'); if(listTab) listTab.click();
+        var target = document.querySelector('#gv-list .editcredit[data-id="'+id+'"]');
+        if(target){ target.click(); var r = target.closest(".row"); if(r) r.scrollIntoView({ block: "center" }); }
+      };
+    });
+
+    // ---- Shareable credits card (client-side SVG → PNG, no backend) ----
+    var CARD_FONT = "'Segoe UI', system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif";
+    var CARD_PILL = { content:'#a371f7', live:'#3fb950', port:'#58a6ff', xdev:'#e0b23a' };
+    function cTrunc(s,n){ s=String(s==null?'':s); return s.length>n ? s.slice(0,n-1)+'…' : s; }
+    // Covers for the 4:5 (1080x1350) share card: three large "highlight" covers, then up to
+    // six smaller covers for the rest of the gameography — the whole portfolio on one card.
+    // Steam/Wikimedia embed cleanly; other hosts are proxied at draw time; a missing cover
+    // just stays an empty frame.
+    function _cardCover(c){ return c.cover ? DQ.safeUrl(c.cover) : (c.steam ? 'https://cdn.cloudflare.steamstatic.com/steam/apps/'+encodeURIComponent(c.steam)+'/library_600x900.jpg' : null); }
+    var heroCovers = visualCredits.slice(0,3).map(_cardCover);
+    var restCovers = visualCredits.slice(3,9).map(_cardCover);
+    var cardExtra = Math.max(0, visualCredits.length - 9);
+    var HERO_SLOTS = (function(){ var n=heroCovers.length; if(!n) return []; var w=168,h=252,g=28,tot=n*w+(n-1)*g,sx=(1080-tot)/2,out=[]; for(var i=0;i<n;i++) out.push({x:sx+i*(w+g),y:646,w:w,h:h}); return out; })();
+    var REST_SLOTS = (function(){ var n=restCovers.length; if(!n) return []; var w=96,h=144,g=18,tot=n*w+(n-1)*g,sx=(1080-tot)/2,out=[]; for(var i=0;i<n;i++) out.push({x:sx+i*(w+g),y:946,w:w,h:h}); return out; })();
+    function buildCardSVG(){
+      var X=DQ.esc, W=1080, H=1350, M=64, F=CARD_FONT;
+      var cx=540, cardSlug=(api&&api.person&&api.person.slug)||slug||'';
+      var stats=[[String(credits.length), credits.length===1?'shipped game':'shipped games']];
+      if(liveCount>0) stats.push([String(liveCount), liveCount===1?'live-service title':'live-service titles']);
+      if(unshippedCount>0) stats.push([String(unshippedCount), 'cancelled / unshipped']);
+      var sxs=stats.length===3?[300,540,780]:(stats.length===2?[390,690]:[540]);
+      var statSVG=stats.map(function(s,i){ var x=sxs[i];
+        return '<text x="'+x+'" y="566" text-anchor="middle" font-family="'+F+'" font-size="74" font-weight="800" fill="url(#g1)">'+X(s[0])+'</text>'+
+               '<text x="'+x+'" y="602" text-anchor="middle" font-family="'+F+'" font-size="21" fill="#8b98a9">'+X(s[1])+'</text>'; }).join('');
+      // Confirmation pills, side by side and centered: green "peer-confirmed" (credits with >=1
+      // vouch) + purple "published match" (credits corroborated by the published record). Each
+      // hidden at 0, so a card with neither shows nothing.
+      var vN=credits.filter(function(c){ return c.vouch_count>0; }).length;
+      var cN=credits.filter(function(c){ return c.corroborated; }).length;
+      var vouch=''; (function(){
+        var pills=[];
+        if(vN>0) pills.push({t:'✓ '+vN+' peer-confirmed', col:'#3fb950'});
+        if(cN>0) pills.push({t:'◈ '+cN+' published match'+(cN===1?'':'es'), col:'#a371f7'});
+        if(!pills.length) return;
+        var gap=16, pw=pills.map(function(p){ return Math.round(p.t.length*11.4)+36; });
+        var tot=pw.reduce(function(a,b){ return a+b; },0)+gap*(pills.length-1), px=cx-tot/2;
+        pills.forEach(function(p,i){
+          vouch+='<rect x="'+px+'" y="446" width="'+pw[i]+'" height="40" rx="20" fill="'+p.col+'" fill-opacity="0.14" stroke="'+p.col+'" stroke-opacity="0.5"/>'+
+                 '<text x="'+(px+pw[i]/2)+'" y="472" text-anchor="middle" font-family="'+F+'" font-size="20" font-weight="700" fill="'+p.col+'">'+X(p.t)+'</text>';
+          px+=pw[i]+gap;
+        });
+      })();
+      var rangeLine = relRange ? '<text x="'+cx+'" y="414" text-anchor="middle" font-family="'+F+'" font-size="21" fill="#8b98a9">'+(minY===maxY?'Shipped in ':'Shipping ')+X(relRange)+'</text>' : '';
+      var heroFrames = HERO_SLOTS.map(function(s){ return '<rect x="'+s.x+'" y="'+s.y+'" width="'+s.w+'" height="'+s.h+'" rx="14" fill="#1b2130" stroke="#2d333b" stroke-width="1.5"/>'; }).join('');
+      var restFrames = REST_SLOTS.map(function(s){ return '<rect x="'+s.x+'" y="'+s.y+'" width="'+s.w+'" height="'+s.h+'" rx="10" fill="#1b2130" stroke="#2d333b" stroke-width="1.25"/>'; }).join('');
+      var extraTxt = cardExtra>0 ? '<text x="'+cx+'" y="1128" text-anchor="middle" font-family="'+F+'" font-size="20" fill="#8b98a9">+ '+cardExtra+' more title'+(cardExtra===1?'':'s')+'</text>' : '';
+      var mark=''; [[0,0,'#e0b23a'],[1,0,'#2d333b'],[2,0,'#2d333b'],[0,1,'#2d333b'],[1,1,'#e0b23a'],[2,1,'#2d333b'],[0,2,'#2d333b'],[1,2,'#2d333b'],[2,2,'#e0b23a']].forEach(function(r){ mark+='<rect x="'+(M+r[0]*13)+'" y="'+(64+r[1]*13)+'" width="10" height="10" rx="2" fill="'+r[2]+'"/>'; });
+      var nameSize=name.length>22?44:(name.length>16?54:66);
+      var hl=headline ? '<text x="'+cx+'" y="384" text-anchor="middle" font-family="'+F+'" font-size="25" fill="#8b98a9">'+X(cTrunc(headline,60))+'</text>' : '';
+      return '<svg xmlns="http://www.w3.org/2000/svg" width="'+W+'" height="'+H+'" viewBox="0 0 '+W+' '+H+'">'+
+        '<defs><linearGradient id="g1" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7cc0ff"/><stop offset="1" stop-color="#a371f7"/></linearGradient></defs>'+
+        '<rect width="'+W+'" height="'+H+'" fill="#0c0f17"/>'+
+        mark+
+        '<text x="'+(M+45)+'" y="84" font-family="'+F+'" font-size="24" font-weight="800" fill="#eef3fa">Dev<tspan fill="#58a6ff">Quest</tspan><tspan fill="#e0b23a">.gg</tspan></text>'+
+        '<text x="'+(M+210)+'" y="84" font-family="'+F+'" font-size="15" font-weight="800" fill="#58a6ff" letter-spacing="2">CREDITS</text>'+
+        '<circle cx="'+cx+'" cy="206" r="70" fill="url(#g1)"/>'+
+        '<text x="'+cx+'" y="225" text-anchor="middle" font-family="'+F+'" font-size="52" font-weight="800" fill="#0b0e14">'+X(DQ.initials(name))+'</text>'+
+        '<text x="'+cx+'" y="344" text-anchor="middle" font-family="'+F+'" font-size="'+nameSize+'" font-weight="850" fill="#eef3fa">'+X(name)+'</text>'+ hl + rangeLine +
+        vouch + heroFrames + restFrames + extraTxt + statSVG +
+        '<text x="'+cx+'" y="1188" text-anchor="middle" font-family="'+F+'" font-size="24" fill="#c4cfdd">The developer-owned, peer-confirmed record of who made the games.</text>'+
+        '<text x="'+cx+'" y="1244" text-anchor="middle" font-family="'+F+'" font-size="29" font-weight="800" fill="#58a6ff">devquest.gg/credits/'+X(cardSlug)+'</text>'+
+      '</svg>';
+    }
+    function downloadCard(btn){
+      var svg=buildCardSVG(), img=new Image();
+      img.onload=function(){
+        var scale=2, CW=1080, CH=1350, cv=document.createElement("canvas"); cv.width=CW*scale; cv.height=CH*scale;
+        var ctx=cv.getContext("2d"); ctx.scale(scale,scale); ctx.drawImage(img,0,0,CW,CH);
+        // Draw the hero covers into their frames. Cross-origin-friendly hosts (Steam, Wikimedia)
+        // load with crossOrigin and keep the canvas clean; others just fail and leave the frame.
+        function loadImg(u){ return new Promise(function(resolve,reject){ var ci=new Image(); ci.crossOrigin="anonymous"; ci.onload=function(){ resolve(ci); }; ci.onerror=function(){ reject(); }; ci.src=u; setTimeout(reject,7000); }); }
+        function paint(ci,slot){ try{
+          ctx.save();
+          if(ctx.roundRect){ ctx.beginPath(); ctx.roundRect(slot.x,slot.y,slot.w,slot.h,12); ctx.clip(); } else { ctx.beginPath(); ctx.rect(slot.x,slot.y,slot.w,slot.h); ctx.clip(); }
+          var ar=ci.naturalWidth/ci.naturalHeight, sar=slot.w/slot.h, dw,dh,dx,dy;
+          if(ar>sar){ dh=slot.h; dw=dh*ar; dx=slot.x-(dw-slot.w)/2; dy=slot.y; } else { dw=slot.w; dh=dw/ar; dx=slot.x; dy=slot.y-(dh-slot.h)/2; }
+          ctx.drawImage(ci,dx,dy,dw,dh); ctx.restore();
+        }catch(e){} }
+        function drawCover(slot,url){ return new Promise(function(res){
+          if(!url){ res(); return; }
+          // Try the URL directly (works for CORS-friendly hosts like Steam/Wikimedia); if the
+          // host blocks cross-origin, retry via a proxy that re-serves it with the right headers.
+          var proxied="https://wsrv.nl/?url="+encodeURIComponent(url)+"&w=440&output=jpg";
+          loadImg(url).catch(function(){ return loadImg(proxied); }).then(function(ci){ paint(ci,slot); res(); }).catch(function(){ res(); });
+        }); }
+        var coverJobs = HERO_SLOTS.map(function(s,i){ return drawCover(s,heroCovers[i]); })
+          .concat(REST_SLOTS.map(function(s,i){ return drawCover(s,restCovers[i]); }));
+        Promise.all(coverJobs).then(function(){
+          cv.toBlob(function(blob){
+            if(!blob){ if(btn) btn.textContent="⬆ Share my credits"; alert("Could not generate the card. Try again."); return; }
+            var a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=(DQ.slugify(name)||"devquest")+"-credits.png";
+            document.body.appendChild(a); a.click(); document.body.removeChild(a);
+            setTimeout(function(){ URL.revokeObjectURL(a.href); },1000);
+            if(btn) btn.textContent="⬆ Share my credits";
+          }, "image/png");
+        });
+      };
+      img.onerror=function(){ if(btn) btn.textContent="⬆ Share my credits"; alert("Could not generate the card. Try again."); };
+      img.src="data:image/svg+xml;charset=utf-8,"+encodeURIComponent(svg);
+    }
+    var scb=document.getElementById("sharecard");
+    if(scb) scb.onclick=function(){ scb.textContent="Generating…"; downloadCard(scb); };
+    var rpb=document.getElementById("reportprofile");
+    if(rpb && window.DQ && DQ.openReport) rpb.onclick=function(){ DQ.openReport("person", slug, name); };
+
+    // ---- Owner-only profile-links editor (saves via PATCH /me) ----
+    var elBtn = document.getElementById("editlinks");
+    if(elBtn) elBtn.onclick = function(){ openLinkEditor(links); };
+    function openLinkEditor(current){
+      var TYPES = [["linkedin","LinkedIn"],["portfolio","Portfolio"],["artstation","ArtStation"],["website","Website"],["github","GitHub"],["twitter","Twitter / X"],["bluesky","Bluesky"],["itch","itch.io"],["mastodon","Mastodon"]];
+      var box = document.getElementById("linkedit");
+      if(elBtn) elBtn.style.display = "none";
+      function rowHtml(type, url){
+        var opts = TYPES.map(function(t){ return '<option value="'+t[0]+'"'+(t[0]===type?' selected':'')+'>'+t[1]+'</option>'; }).join("");
+        return '<div class="le-row" style="display:flex;gap:8px;margin-bottom:8px">'+
+          '<select class="le-type" style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px 9px;color:var(--text);font-size:13px;font-family:inherit;flex:none;width:130px">'+opts+'</select>'+
+          '<input class="le-url" value="'+DQ.esc(url||"")+'" placeholder="https://…" style="flex:1;min-width:0;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px 11px;color:var(--text);font-size:13px;font-family:inherit">'+
+          '<span class="le-del" title="Remove" style="cursor:pointer;color:var(--muted);font-size:18px;line-height:1;padding:6px 4px;flex:none">×</span>'+
+        '</div>';
+      }
+      var startRows = (current && current.length) ? current : [{type:"linkedin",url:""}];
+      // Split any existing free-text headline on the " at " we standardise on, so re-editing an
+      // old headline keeps the two-field structure instead of dumping it all in the title box.
+      var _h=(headline||'').trim(), _ati=_h.toLowerCase().lastIndexOf(' at ');
+      var _title=_ati>0?_h.slice(0,_ati):_h, _studio=_ati>0?_h.slice(_ati+4):'';
+      box.innerHTML = '<div class="panel" style="padding:14px;margin-top:12px;max-width:520px">'+
+        '<div style="font-size:12px;font-weight:700;margin-bottom:4px">Current title <span style="font-weight:400;color:var(--muted)">(your role)</span></div>'+
+        '<input class="le-title" value="'+DQ.esc(_title)+'" placeholder="e.g. Senior Producer" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px 11px;color:var(--text);font-size:13px;font-family:inherit;margin-bottom:10px">'+
+        '<div style="font-size:12px;font-weight:700;margin-bottom:4px">Studio <span style="font-weight:400;color:var(--muted)">(optional — leave blank if freelance or between roles)</span></div>'+
+        '<input class="le-studio" value="'+DQ.esc(_studio)+'" placeholder="e.g. Insomniac Games" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px 11px;color:var(--text);font-size:13px;font-family:inherit;margin-bottom:16px">'+
+        '<div style="font-size:12px;font-weight:700;margin-bottom:8px">Profile links <span style="font-weight:400;color:var(--muted)">(shown as chips under your name)</span></div>'+
+        '<div class="le-rows">'+startRows.map(function(l){ return rowHtml(l.type, l.url); }).join("")+'</div>'+
+        '<span class="le-add" style="font-size:12.5px;font-weight:700;color:var(--accent);cursor:pointer">+ Add another</span>'+
+        '<div style="margin-top:12px;display:flex;gap:8px"><span class="btn primary le-save" style="padding:8px 16px">Save profile</span><span class="btn ghost le-cancel" style="padding:8px 16px">Cancel</span></div>'+
+      '</div>';
+      function wireDels(){ Array.prototype.forEach.call(box.querySelectorAll(".le-del"), function(d){ d.onclick = function(){ var r=d.closest(".le-row"); if(r) r.parentNode.removeChild(r); }; }); }
+      wireDels();
+      box.querySelector(".le-add").onclick = function(){ var tmp=document.createElement("div"); tmp.innerHTML = rowHtml("website",""); box.querySelector(".le-rows").appendChild(tmp.firstChild); wireDels(); };
+      box.querySelector(".le-cancel").onclick = function(){ box.innerHTML=""; if(elBtn) elBtn.style.display=""; };
+      box.querySelector(".le-save").onclick = function(){
+        var out = [];
+        Array.prototype.forEach.call(box.querySelectorAll(".le-row"), function(r){
+          var type = r.querySelector(".le-type").value;
+          var url = r.querySelector(".le-url").value.trim();
+          if(!url) return;
+          if(!/^https?:\/\//i.test(url)) url = "https://"+url;
+          out.push({ type:type, url:url });
+        });
+        // Standardise: "Title at Studio" (or just the title when no studio is given).
+        var _t=box.querySelector(".le-title").value.trim(), _s=box.querySelector(".le-studio").value.trim();
+        var hl = _t + (_s ? ' at ' + _s : '');
+        var sbtn = this; sbtn.textContent = "Saving…";
+        DQAPI.updateProfile({ headline: hl, links: out }).then(function(r){
+          if(r && r.ok){ location.reload(); }
+          else { sbtn.textContent = "Save profile"; alert((r && r.data && r.data.error) || "Could not save."); }
+        });
+      };
+    }
+
+    // ---- Owner-only unshipped/cancelled count editor (saves via PATCH /me) ----
+    var usBtn = document.getElementById("editus");
+    if(usBtn) usBtn.onclick = function(){
+      var box = document.getElementById("usedit");
+      usBtn.style.display = "none";
+      box.innerHTML = '<div class="panel" style="padding:14px;margin-top:12px;max-width:440px">'+
+        '<div style="font-size:12px;font-weight:700;margin-bottom:8px">Projects you worked on that were cancelled or never shipped</div>'+
+        '<div style="display:flex;align-items:center;gap:10px">'+
+          '<input class="us-num" type="number" min="0" max="999" value="'+(unshipped||0)+'" style="width:90px;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px 11px;color:var(--text);font-size:14px;font-family:inherit">'+
+          '<span class="mut" style="font-size:12.5px">Count only. No names are stored or shown.</span>'+
+        '</div>'+
+        '<div style="margin-top:12px;display:flex;gap:8px"><span class="btn primary us-save" style="padding:8px 16px">Save</span><span class="btn ghost us-cancel" style="padding:8px 16px">Cancel</span></div>'+
+      '</div>';
+      box.querySelector(".us-cancel").onclick = function(){ box.innerHTML=""; usBtn.style.display=""; };
+      box.querySelector(".us-save").onclick = function(){
+        var n = parseInt(box.querySelector(".us-num").value, 10); if(isNaN(n)||n<0) n=0; if(n>999) n=999;
+        var sbtn = this; sbtn.textContent = "Saving…";
+        DQAPI.updateProfile({ unshipped_count: n }).then(function(r){
+          if(r && r.ok){ location.reload(); }
+          else { sbtn.textContent = "Save"; alert((r && r.data && r.data.error) || "Could not save."); }
+        });
+      };
+    };
+    // Viewer confirms/vouches for this person's credit on a game they both shipped.
+    Array.prototype.forEach.call(document.querySelectorAll(".vouchp"), function(el){
+      el.onclick = function(){ el.textContent = "…"; DQAPI.vouch(el.dataset.id).then(function(r){ if(r.ok){ location.reload(); } else { el.textContent="Confirm ✓"; alert((r.data&&r.data.error)||"Could not confirm. You can only confirm someone on a game you also shipped."); } }).catch(function(){ el.textContent="Confirm ✓"; alert("Network error. Try again."); }); };
+    });
+    Array.prototype.forEach.call(document.querySelectorAll(".unvouchp"), function(el){
+      el.onclick = function(){ if(!confirm("Withdraw your confirmation of this credit?")) return; DQAPI.unvouch(el.dataset.id).then(function(r){ if(r.ok) location.reload(); else alert((r.data&&r.data.error)||"Could not update."); }); };
+    });
+    Array.prototype.forEach.call(document.querySelectorAll(".rmvcredit"), function(el){
+      el.onclick = function(){ if(!confirm("Remove this credit?")) return; DQAPI.deleteCredit(el.dataset.id).then(function(){ location.reload(); }); };
+    });
+    Array.prototype.forEach.call(document.querySelectorAll(".editcredit"), function(el){
+      el.onclick = function(){
+        var row = el.closest(".row"), id = el.dataset.id;
+        // Grab the game title (and year) from the row before we replace it, so the editor
+        // shows what's being edited instead of a blank, context-free form.
+        var gtEl = row.querySelector(".rname a"); var gtitle = gtEl ? gtEl.textContent : "";
+        var yrEl = row.querySelector(".yr"); var gyear = yrEl ? yrEl.textContent.replace(/[^0-9]/g,"") : "";
+        var curRole = el.dataset.role || "";
+        row.innerHTML = '<div class="rmain" style="width:100%">'+
+          '<div style="font-weight:800;font-size:16px;line-height:1.25">'+DQ.esc(gtitle)+(gyear?' <span style="font-weight:400;color:var(--muted);font-size:13px">('+DQ.esc(gyear)+')</span>':'')+'</div>'+
+          '<div style="font-size:12px;color:var(--muted);margin:2px 0 14px">Editing your credit'+(curRole?' — currently listed as “'+DQ.esc(curRole)+'”':'')+'</div>'+
+          '<label style="font-size:12px;font-weight:700;display:block;margin-bottom:4px">Headline role</label>'+
+          '<input class="ed-role" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:9px 11px;color:var(--text);font-size:14px;font-family:inherit">'+
+          '<div style="font-size:11.5px;color:var(--muted);margin-top:5px">Prefer a standard title where one fits, per the <a href="https://igda.org/sigs/credits/" target="_blank" rel="noopener" style="color:var(--accent)">IGDA crediting guide ↗</a>.</div>'+
+          '<label style="font-size:12px;font-weight:700;display:block;margin:10px 0 4px">Other titles <span style="font-weight:400;color:var(--muted)">(comma-separated, optional)</span></label>'+
+          '<input class="ed-others" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:9px 11px;color:var(--text);font-size:14px;font-family:inherit">'+
+          '<label style="font-size:12px;font-weight:700;display:block;margin:10px 0 4px">Proof links <span style="font-weight:400;color:var(--muted)">(LinkedIn, portfolio, press kit. One per line, optional)</span></label>'+
+          '<textarea class="ed-proof" style="width:100%;min-height:56px;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:9px 11px;color:var(--text);font-size:14px;font-family:inherit;resize:vertical"></textarea>'+
+          '<label style="font-size:12px;font-weight:700;display:block;margin:10px 0 4px">Ports &amp; remasters <span style="font-weight:400;color:var(--muted)">(other versions of this same game: ports, remasters, re-releases. Comma-separated, optional)</span></label>'+
+          '<input class="ed-release" list="ed-release-list" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:9px 11px;color:var(--text);font-size:14px;font-family:inherit" placeholder="PC port, Remaster, Definitive Edition"><datalist id="ed-release-list"><option value="PC port"></option><option value="Console port"></option><option value="Remaster"></option><option value="Definitive Edition"></option><option value="Re-release"></option></datalist>'+
+          '<label style="font-size:12px;font-weight:700;display:block;margin:10px 0 4px">Years you worked on it <span style="font-weight:400;color:var(--muted)">(optional — places this on your Timeline. Leave the end blank if ongoing)</span></label>'+
+          '<div style="display:flex;align-items:center;gap:8px">'+
+            '<input class="ed-wstart" type="number" min="1970" max="2100" placeholder="From" style="width:110px;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:9px 11px;color:var(--text);font-size:14px;font-family:inherit">'+
+            '<span style="color:var(--muted)">to</span>'+
+            '<input class="ed-wend" type="number" min="1970" max="2100" placeholder="Present" style="width:110px;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:9px 11px;color:var(--text);font-size:14px;font-family:inherit">'+
+          '</div>'+
+          '<div style="font-size:11px;color:var(--muted);margin-top:6px;line-height:1.4">When you actually worked on this game, which can differ from its release year. This is your own note; the green check still comes from a teammate vouch.</div>'+
+          '<label style="font-size:12px;font-weight:700;display:block;margin:10px 0 4px">How were you involved?</label>'+
+          '<label style="display:block;font-weight:400;font-size:13px;margin:4px 0;cursor:pointer"><input type="radio" name="ed-involve" value="core" style="margin-right:7px;vertical-align:-1px">On the core team <span style="color:var(--muted)">(in-house at the studio that made it)</span></label>'+
+          '<label style="display:block;font-weight:400;font-size:13px;margin:4px 0;cursor:pointer"><input type="radio" name="ed-involve" value="external" style="margin-right:7px;vertical-align:-1px">Outsourced or external <span style="color:var(--muted)">(a co-dev, contractor, or partner studio, not the primary developer)</span></label>'+
+          '<label style="font-size:12px;font-weight:700;display:block;margin:12px 0 4px">What part did you work on?</label>'+
+          '<label style="display:block;font-weight:400;font-size:13px;margin:4px 0;cursor:pointer"><input type="radio" name="ed-scope" value="base" style="margin-right:7px;vertical-align:-1px">The base game <span style="color:var(--muted)">(the main release. Still pick this if you also worked on its ports, expansions, or live service)</span></label>'+
+          '<label style="display:block;font-weight:400;font-size:13px;margin:4px 0;cursor:pointer"><input type="radio" name="ed-scope" value="partial" style="margin-right:7px;vertical-align:-1px">A specific part only <span style="color:var(--muted)">(a port, an expansion, or the live-service era, not the base game)</span></label>'+
+          '<label style="display:block;font-weight:400;font-size:13px;margin:10px 0 2px;cursor:pointer"><input type="checkbox" class="ed-live" style="margin-right:7px;vertical-align:-1px">I also worked on this game\'s live-service / post-launch period</label>'+
+          '<div style="font-size:11px;color:var(--muted);margin-top:10px;line-height:1.4">Only add work you\'re free to disclose. Leave off anything under NDA or not publicly announced.</div>'+
+          '<div style="margin-top:12px;display:flex;gap:8px"><span class="btn primary ed-save" style="padding:8px 16px">Save</span><span class="btn ghost ed-cancel" style="padding:8px 16px">Cancel</span></div>'+
+        '</div>';
+        row.querySelector(".ed-role").value = el.dataset.role || "";
+        row.querySelector(".ed-others").value = el.dataset.others || "";
+        row.querySelector(".ed-proof").value = el.dataset.links || "";
+        var edAll = (el.dataset.releases || "").split(",").map(function(s){return s.trim();}).filter(Boolean);
+        row.querySelector(".ed-release").value = edAll.filter(function(r){ var k=DQ.releaseClass(r); return k !== "live" && k !== "xdev"; }).join(", ");
+        var edLiveCk = row.querySelector(".ed-live"); if(edLiveCk) edLiveCk.checked = edAll.some(function(r){ return DQ.releaseClass(r) === "live"; });
+        var edIsExt = edAll.some(function(r){ return DQ.releaseClass(r) === "xdev"; });
+        var involveSel = row.querySelector('input[name="ed-involve"][value="'+(edIsExt?"external":"core")+'"]'); if(involveSel) involveSel.checked = true;
+        var scopeSel = row.querySelector('input[name="ed-scope"][value="'+(el.dataset.partial ? "partial" : "base")+'"]');
+        if(scopeSel) scopeSel.checked = true;
+        row.querySelector(".ed-wstart").value = el.dataset.workstart || "";
+        row.querySelector(".ed-wend").value = el.dataset.workend || "";
+        row.querySelector(".ed-role").focus();
+        row.querySelector(".ed-cancel").onclick = function(){ location.reload(); };
+        row.querySelector(".ed-save").onclick = function(){
+          var nrole = row.querySelector(".ed-role").value.trim();
+          if(!nrole){ alert("Role can't be empty."); return; }
+          var nothers = row.querySelector(".ed-others").value.split(",").map(function(s){return s.trim();}).filter(Boolean);
+          var nlinks = row.querySelector(".ed-proof").value.split(/\n+/).map(function(s){return s.trim();}).filter(Boolean);
+          var nverif = nlinks.some(function(u){return /linkedin\.com/i.test(u);}) ? ["linkedin_self"] : [];
+          var nreleases = DQ.uniq(row.querySelector(".ed-release").value.split(",").map(function(s){return s.trim();}).filter(Boolean));
+          var edLiveOn = row.querySelector(".ed-live");
+          if(edLiveOn && edLiveOn.checked && nreleases.indexOf("Live service") === -1) nreleases.push("Live service");
+          var edInvolveEl = row.querySelector('input[name="ed-involve"]:checked');
+          if(edInvolveEl && edInvolveEl.value === "external" && nreleases.indexOf("External contributor") === -1) nreleases.push("External contributor");
+          var nscopeEl = row.querySelector('input[name="ed-scope"]:checked');
+          var nscope = nscopeEl ? nscopeEl.value : "base";
+          // Work period (optional). Empty string clears it on the server; blank end = present.
+          var wsRaw = row.querySelector(".ed-wstart").value.trim();
+          var weRaw = row.querySelector(".ed-wend").value.trim();
+          if(wsRaw && weRaw && parseInt(weRaw,10) < parseInt(wsRaw,10)){ alert("The end year can't be before the start year."); return; }
+          var sbtn = this; sbtn.textContent = "Saving…";
+          DQAPI.updateCredit(id, { role: nrole, roles_other: nothers, links: nlinks, verification: nverif, releases: nreleases, scope: nscope, work_start: wsRaw, work_end: weRaw }).then(function(r){
+            if(r && r.ok){ location.reload(); }
+            else { sbtn.textContent = "Save"; alert((r && r.data && r.data.error) || "Could not save."); }
+          });
+        };
+      };
+    });
+    // (List view no longer supports manual drag: it's a fixed most-recent-first timeline.
+    // Reordering lives in the Visual view, which persists the showcase order.)
+    });
+  }).catch(function(e){
+    app.innerHTML = '<div class="container"><div class="empty">Something went wrong loading this profile.<br><span class="mut">'+DQ.esc(e && e.message)+'</span></div></div>';
+  });
+})();
+</script>
+</body>
+</html>

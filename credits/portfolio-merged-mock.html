@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Merged portfolio · mockup</title>
+<style>
+  :root{--bg:#0b0e14;--panel:#11161d;--border:#2a313c;--text:#e9eef5;--muted:#8b98a9;--accent:#58a6ff;--gold:#e0b23a;--purple:#a371f7;--green:#3fb950}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,-apple-system,Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1080px;margin:0 auto;padding:28px 28px 80px}
+  .note{max-width:1080px;margin:0 auto;padding:10px 28px;color:var(--muted);font-size:12.5px;border-bottom:1px solid var(--border)}
+  .rowhead{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:16px;gap:16px;flex-wrap:wrap}
+  .eyebrow{font-size:12px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--accent)}
+  .secsub{color:var(--muted);font-size:14px;margin:6px 0 0}
+  .tabs{display:flex}
+  .tab{padding:6px 15px;font-size:13px;font-weight:700;color:var(--muted);border:1px solid var(--border);background:var(--panel);user-select:none;cursor:pointer}
+  .tab:first-child{border-radius:8px 0 0 8px}
+  .tab:last-child{border-radius:0 8px 8px 0}
+  .tab+.tab{border-left:none}
+  .tab.on{background:#20293a;color:var(--text)}
+  .gvhead{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-weight:700;margin:2px 0 14px}
+  .gvhead .m{font-weight:400;letter-spacing:0;text-transform:none;font-size:12px;color:var(--muted)}
+
+  /* hero trio */
+  .featured{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-bottom:40px}
+  .cover{position:relative;aspect-ratio:2/3;border-radius:14px;overflow:hidden;display:block;box-shadow:0 8px 22px rgba(0,0,0,.5),inset 0 0 0 1px rgba(255,255,255,.06)}
+  .cover .art{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:12px;text-align:center}
+  .cover .mono{font-size:13px;font-weight:800;letter-spacing:.13em;text-transform:uppercase;color:rgba(255,255,255,.34);line-height:1.3}
+  .cover .scrim{position:absolute;left:0;right:0;bottom:0;padding:38px 14px 13px;background:linear-gradient(to top,rgba(4,7,12,.95) 12%,rgba(4,7,12,.7) 55%,transparent)}
+  .cover .gt{font-weight:750;font-size:16px;line-height:1.2;margin-bottom:4px}
+  .cover .gr{font-size:12.5px;color:#cdd6e2}
+  .cover .rank{position:absolute;top:6px;left:12px;font-size:36px;font-weight:900;color:rgba(255,255,255,.22);text-shadow:0 1px 6px rgba(0,0,0,.5)}
+  .cover .vb{position:absolute;top:9px;right:9px;width:24px;height:24px;border-radius:50%;background:rgba(63,185,80,.95);color:#04220f;font-size:14px;font-weight:900;display:flex;align-items:center;justify-content:center}
+
+  /* career timeline with covers */
+  .tl{position:relative}
+  .tlrow{display:grid;grid-template-columns:56px 22px 1fr;align-items:start}
+  .tlyear{font-variant-numeric:tabular-nums;font-weight:800;font-size:15px;color:var(--accent);padding-top:20px}
+  .tlrail{position:relative;display:flex;justify-content:center;align-self:stretch}
+  .tlrail::before{content:"";position:absolute;top:0;bottom:0;width:2px;background:var(--border)}
+  .tlrow:first-child .tlrail::before{top:32px}
+  .tlrow:last-child .tlrail::before{height:32px}
+  .tldot{position:relative;z-index:1;width:11px;height:11px;border-radius:50%;background:var(--accent);margin-top:26px;box-shadow:0 0 0 4px var(--bg)}
+  .tlcard{display:flex;gap:14px;align-items:center;padding:0 0 20px 14px}
+  .thumb{position:relative;flex:none;width:62px;aspect-ratio:2/3;border-radius:8px;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,.5),inset 0 0 0 1px rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center;text-align:center;padding:6px}
+  .thumb .tm{font-size:8.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:rgba(255,255,255,.4);line-height:1.25}
+  .tlbody{min-width:0}
+  .tlname{font-weight:750;font-size:15.5px;color:var(--accent);text-decoration:none}
+  .tlname .ast{color:var(--muted)}
+  .vseal{color:var(--green);font-weight:800;margin-left:2px}
+  .span{font-size:11px;color:var(--muted);border:1px solid var(--border);border-radius:999px;padding:1px 8px;margin-left:6px;white-space:nowrap;vertical-align:1px}
+  .tlsub{font-size:12.5px;color:var(--muted);margin-top:4px}
+  @media(max-width:720px){.featured{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+<div class="note">Mockup · one merged "Portfolio" view (Visual + Timeline) · placeholder covers stand in for your real box art</div>
+<div class="wrap">
+
+  <div class="rowhead">
+    <div><div class="eyebrow">Gameography</div>
+      <div class="secsub">A verified record of the games you've helped create.</div></div>
+    <div class="tabs"><span class="tab on">▦ Portfolio</span><span class="tab">☰ List</span></div>
+  </div>
+
+  <div class="gvhead">Highlights <span class="m">· the three you're proudest of — drag any cover to choose them</span></div>
+  <div class="featured">
+    <a class="cover" style="background:linear-gradient(150deg,#2c3e57,#12202f)"><span class="rank">1</span><div class="art"><span class="mono">Rainbow Six<br>Siege</span></div><div class="scrim"><div class="gt">Tom Clancy's Rainbow Six Siege</div><div class="gr">Vice President of Production</div></div></a>
+    <a class="cover" style="background:linear-gradient(150deg,#1d4a45,#0e2422)"><span class="rank">2</span><div class="art"><span class="mono">League of<br>Legends</span></div><div class="scrim"><div class="gt">League of Legends</div><div class="gr">Senior Producer</div></div></a>
+    <a class="cover" style="background:linear-gradient(150deg,#4a2530,#26121a)"><span class="rank">3</span><div class="art"><span class="mono">Dark Age of<br>Camelot</span></div><span class="vb">✓</span><div class="scrim"><div class="gt">Dark Age of Camelot</div><div class="gr">Producer</div></div></a>
+  </div>
+
+  <div class="gvhead">Career timeline <span class="m">· by the years you worked on each game</span></div>
+  <div class="tl">
+    <div class="tlrow"><div class="tlyear">2001</div><div class="tlrail"><span class="tldot"></span></div><div class="tlcard"><div class="thumb" style="background:linear-gradient(150deg,#4a2530,#26121a)"><span class="tm">Dark Age of Camelot</span></div><div class="tlbody"><a class="tlname">Dark Age of Camelot</a><span class="vseal">✓</span><span class="span">to 2006</span><div class="tlsub">Producer</div></div></div></div>
+    <div class="tlrow"><div class="tlyear">2007</div><div class="tlrail"><span class="tldot"></span></div><div class="tlcard"><div class="thumb" style="background:linear-gradient(150deg,#4a3820,#241a0e)"><span class="tm">Warhammer Online</span></div><div class="tlbody"><a class="tlname">Warhammer Online: Age of Reckoning</a><span class="span">to 2009</span><div class="tlsub">Live Producer</div></div></div></div>
+    <div class="tlrow"><div class="tlyear">2010</div><div class="tlrail"><span class="tldot"></span></div><div class="tlcard"><div class="thumb" style="background:linear-gradient(150deg,#243a55,#101d2c)"><span class="tm">City of Heroes</span></div><div class="tlbody"><a class="tlname">City of Heroes <span class="ast">*</span></a><span class="span">to 2012</span><div class="tlsub">Studio Director of Development · Paragon Studios</div></div></div></div>
+    <div class="tlrow"><div class="tlyear">2012</div><div class="tlrail"><span class="tldot"></span></div><div class="tlcard"><div class="thumb" style="background:linear-gradient(150deg,#1d4a45,#0e2422)"><span class="tm">League of Legends</span></div><div class="tlbody"><a class="tlname">League of Legends <span class="ast">*</span></a><span class="span">to 2015</span><div class="tlsub">Senior Producer</div></div></div></div>
+    <div class="tlrow"><div class="tlyear">2015</div><div class="tlrail"><span class="tldot"></span></div><div class="tlcard"><div class="thumb" style="background:linear-gradient(150deg,#4d4322,#241f10)"><span class="tm">Poro Roundup</span></div><div class="tlbody"><a class="tlname">Blitzcrank's Poro Roundup</a><div class="tlsub">Senior Producer</div></div></div></div>
+    <div class="tlrow"><div class="tlyear">2018</div><div class="tlrail"><span class="tldot"></span></div><div class="tlcard"><div class="thumb" style="background:linear-gradient(150deg,#3a2a52,#1c1430)"><span class="tm">Legends of Runeterra</span></div><div class="tlbody"><a class="tlname">Legends of Runeterra</a><span class="span">to 2019</span><div class="tlsub">Senior Producer</div></div></div></div>
+    <div class="tlrow"><div class="tlyear">2020</div><div class="tlrail"><span class="tldot"></span></div><div class="tlcard"><div class="thumb" style="background:linear-gradient(150deg,#213b2c,#0f1d16)"><span class="tm">Days Gone</span></div><div class="tlbody"><a class="tlname">Days Gone <span class="ast">*</span></a><span class="span">to 2021</span><div class="tlsub">Director of Studio Production</div></div></div></div>
+    <div class="tlrow"><div class="tlyear">2023</div><div class="tlrail"><span class="tldot"></span></div><div class="tlcard"><div class="thumb" style="background:linear-gradient(150deg,#2c3e57,#12202f)"><span class="tm">Rainbow Six Siege</span></div><div class="tlbody"><a class="tlname">Tom Clancy's Rainbow Six Siege <span class="ast">*</span></a><span class="span">to 2025</span><div class="tlsub">Vice President of Production</div></div></div></div>
+    <div class="tlrow"><div class="tlyear">2023</div><div class="tlrail"><span class="tldot"></span></div><div class="tlcard"><div class="thumb" style="background:linear-gradient(150deg,#33404a,#171d24)"><span class="tm">XDefiant</span></div><div class="tlbody"><a class="tlname">XDefiant</a><span class="span">to 2025</span><div class="tlsub">Vice President of Production</div></div></div></div>
+  </div>
+
+</div>
+</body>
+</html>

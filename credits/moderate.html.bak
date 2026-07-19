@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Moderation · DevQuest Credits</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" href="/credits/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<div class="topbar"><div class="container">
+  <div class="brand"><a class="brandhome" href="/credits/" aria-label="DevQuest Credits home"><svg class="mark" viewBox="0 0 32 32" aria-hidden="true"><rect x="1" y="1" width="8" height="8" rx="2" fill="var(--gold)"/><rect x="12" y="1" width="8" height="8" rx="2" fill="#2d333b"/><rect x="23" y="1" width="8" height="8" rx="2" fill="#2d333b"/><rect x="1" y="12" width="8" height="8" rx="2" fill="#2d333b"/><rect x="12" y="12" width="8" height="8" rx="2" fill="var(--gold)"/><rect x="23" y="12" width="8" height="8" rx="2" fill="#2d333b"/><rect x="1" y="23" width="8" height="8" rx="2" fill="#2d333b"/><rect x="12" y="23" width="8" height="8" rx="2" fill="#2d333b"/><rect x="23" y="23" width="8" height="8" rx="2" fill="var(--gold)"/></svg><span class="wm">Dev<span class="q">Quest</span><span class="tld">.gg</span></span></a> <span class="cr">CREDITS</span> <span class="beta">BETA</span></div>
+  <div class="topnav"><a class="back" href="/credits/">← Credits home</a></div>
+</div></div>
+
+<div class="container">
+  <div class="crumbs"><a href="/credits/">Credits</a><span class="sep">/</span><span class="mut">Moderation</span></div>
+</div>
+
+<div id="app"><div class="container"><div class="loading">Loading moderation queue…</div></div></div>
+
+<footer><div class="container">
+  <div><b style="color:var(--text)">DevQuest.gg / Credits</b> · moderation</div>
+  <div><a href="/credits/">← Credits home</a></div>
+</div></footer>
+
+<script src="api.js?v=20260716"></script>
+<script src="app.js?v=20260716"></script>
+<script>
+(function(){
+  var app = document.getElementById("app");
+  if(!window.DQAPI || !DQAPI.isSignedIn()){
+    app.innerHTML = '<div class="container"><section class="blk"><div class="empty">You need to sign in as a moderator to view this page.<br><a class="btn primary" style="margin-top:14px" href="signin.html">Sign in</a></div></section></div>';
+    return;
+  }
+  var REASONS = { not_real:"Not real / should not exist", wrong_name:"Wrong name (typo)", wrong_studio:"Wrong or missing studio", other:"Other",
+    not_worked:"Person didn't work on this game", wrong_role:"Wrong role / details", spam:"Not a real person / spam",
+    impersonation:"Impersonation", harassment:"Harassment / abusive content", false_credits:"Claiming credits they didn't work on", private_info:"Posting private information",
+    suggest:"Suggested addition (not yet in catalogue)" };
+  DQAPI.adminListReports().then(function(r){
+    if(!(r && r.ok)){
+      var msg = (r && r.status===403) ? "Not authorized. This page is for moderators only." : "Could not load the queue. Try again.";
+      app.innerHTML = '<div class="container"><section class="blk"><div class="empty">'+msg+'</div></section></div>';
+      return;
+    }
+    render((r.data && r.data.reports) || []);
+    renderMerge();
+    renderPublishedCredits();
+    loadMissingArt();
+  }).catch(function(){ app.innerHTML = '<div class="container"><section class="blk"><div class="empty">Network error loading the queue.</div></section></div>'; });
+
+  function render(reports){
+    if(!reports.length){
+      app.innerHTML = '<div class="container"><section class="blk"><div class="eyebrow">Moderation</div><h2 class="sec">Reports queue</h2><div class="empty">No open reports. All clear.</div></section></div>';
+      return;
+    }
+    var cards = reports.map(card).join("");
+    app.innerHTML = '<div class="container"><section class="blk"><div class="eyebrow">Moderation</div><h2 class="sec">'+reports.length+' open report'+(reports.length===1?'':'s')+'</h2>'+
+      '<p class="secsub">Approve a fix (which stores an override applied over the catalogue), or dismiss.</p>'+cards+'</section></div>';
+    wire();
+  }
+
+  function card(rep){
+    var reason = REASONS[rep.reason] || rep.reason;
+    // A "suggest" report is a missing game/studio a visitor flagged (they weren't on it).
+    // It isn't tied to an existing entity, so it gets its own compact card: the proof link,
+    // and Dismiss once you've added it (or if it doesn't check out).
+    if(rep.reason==="suggest"){
+      var btnStyleS = 'padding:7px 12px;font-size:13px';
+      var proof = rep.suggested ? DQ.safeUrl(rep.suggested) : "";
+      return '<div class="panel modcard" data-id="'+rep.id+'" style="padding:16px 18px;margin-bottom:14px;border-left:3px solid var(--accent)">'+
+        '<div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;align-items:center">'+
+          '<div><span class="badge '+(rep.type==="studio"?"official":"hand")+'">'+DQ.esc(rep.type)+'</span> '+
+            '<b style="color:var(--text);margin-left:6px">'+DQ.esc(rep.name||rep.slug)+'</b> '+
+            '<span class="mut" style="font-size:12px">— suggested addition</span></div>'+
+          '<div class="mut" style="font-size:12px">'+DQ.esc(rep.created_at||"")+'</div>'+
+        '</div>'+
+        (proof?'<div style="margin-top:8px;font-size:13px">Proof: <a href="'+DQ.esc(proof)+'" target="_blank" rel="noopener" style="color:var(--accent)">'+DQ.esc(rep.suggested)+' ↗</a></div>':'<div style="margin-top:8px;font-size:13px;color:var(--pink)">No proof link provided.</div>')+
+        (rep.note?'<div class="mut" style="margin-top:4px;font-size:13px">“'+DQ.esc(rep.note)+'”</div>':'')+
+        '<div class="mut" style="margin-top:8px;font-size:12px">Not in the catalogue yet. If it checks out, add it via the site, then dismiss this.</div>'+
+        '<div style="margin-top:10px;display:flex;gap:8px"><span class="btn ghost act" data-a="dismiss" style="'+btnStyleS+';color:var(--muted)">Dismiss</span></div>'+
+      '</div>';
+    }
+    var url = rep.type==="studio" ? '/credits/studio/'+encodeURIComponent(rep.slug) : (rep.type==="person" ? '/credits/'+encodeURIComponent(rep.slug) : '/credits/game/'+encodeURIComponent(rep.slug));
+    var cur = rep.current || {};
+    var curBits = [];
+    if(cur.hidden) curBits.push("hidden");
+    if(cur.name) curBits.push('renamed to "'+DQ.esc(cur.name)+'"');
+    if(cur.studio) curBits.push('studio → "'+DQ.esc(cur.studio)+'"');
+    var curLine = curBits.length ? '<div style="margin-top:6px;font-size:12px;color:var(--green)">Current override: '+curBits.join(" · ")+'</div>' : '';
+    var inStyle = 'background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:7px 10px;color:var(--text);font-size:13px;width:160px;font-family:inherit';
+    var btnStyle = 'padding:7px 12px;font-size:13px';
+    return '<div class="panel modcard" data-id="'+rep.id+'" style="padding:16px 18px;margin-bottom:14px">'+
+      '<div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;align-items:center">'+
+        '<div><span class="badge '+(rep.type==="studio"?"official":"hand")+'">'+rep.type+'</span> '+
+          '<a href="'+url+'" target="_blank" rel="noopener" style="color:var(--accent);font-weight:700;margin-left:6px">'+DQ.esc(rep.name||rep.slug)+' ↗</a></div>'+
+        '<div class="mut" style="font-size:12px">'+DQ.esc(rep.created_at||"")+'</div>'+
+      '</div>'+
+      '<div style="margin-top:8px;font-size:13.5px"><b style="color:var(--gold)">'+reason+'</b>'+(rep.suggested?' &nbsp;·&nbsp; suggested: <b>'+DQ.esc(rep.suggested)+'</b>':'')+'</div>'+
+      (rep.note?'<div class="mut" style="margin-top:4px;font-size:13px">“'+DQ.esc(rep.note)+'”</div>':'')+
+      curLine+
+      (rep.type==="credit"
+        ? (function(){
+            var ch = rep.challenger || {};
+            var standing = ch.anonymous ? '<span style="color:var(--muted)">an anonymous / signed-out reporter</span>'
+              : (ch.has_credit
+                  ? (ch.vouched ? '<span style="color:var(--green);font-weight:700">a peer-verified dev on this game</span>' : '<span style="color:var(--gold);font-weight:700">a self-reported dev on this game</span>')
+                  : '<span style="color:var(--muted)">not a credited dev on this game</span>');
+            var cs = rep.credit_status;
+            var statusLine = cs
+              ? '<div style="margin-top:4px;font-size:12px">Credit is currently <b style="color:'+(cs==="contested"?"var(--gold)":"var(--green)")+'">'+cs+'</b></div>'
+              : '<div style="margin-top:4px;font-size:12px;color:var(--pink)">That credit no longer exists (already removed).</div>';
+            var acts = '';
+            if(rep.credit_id && cs){
+              acts += cs==="contested"
+                ? '<span class="btn ghost cact" data-a="uncontest" data-cid="'+rep.credit_id+'" style="'+btnStyle+';color:var(--green)">Clear dispute</span>'
+                : '<span class="btn ghost cact" data-a="contest" data-cid="'+rep.credit_id+'" style="'+btnStyle+';color:var(--gold)">Mark contested</span>';
+              acts += '<span class="btn ghost cact" data-a="removecredit" data-cid="'+rep.credit_id+'" style="'+btnStyle+';color:var(--pink)">Remove credit</span>';
+            }
+            acts += '<span class="btn ghost act" data-a="dismiss" style="'+btnStyle+';color:var(--muted)">Dismiss (no change)</span>';
+            return '<div style="margin-top:8px;font-size:12.5px">Challenged by '+(ch.name?('<b>'+DQ.esc(ch.name)+'</b> — '):'')+standing+'.</div>'+
+              statusLine+
+              (rep.credit_id?'':'<div style="margin-top:4px;font-size:11.5px;color:var(--muted)">This report predates credit-linking, so use the game page to act on the specific credit.</div>')+
+              '<div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:8px;align-items:center">'+acts+'</div>';
+          })()
+        : '<div style="margin-top:13px;display:flex;flex-wrap:wrap;gap:8px;align-items:center">'+
+          '<span class="btn ghost act" data-a="hide" style="'+btnStyle+'">Hide</span>'+
+          '<span class="btn ghost act" data-a="unhide" style="'+btnStyle+'">Unhide</span>'+
+          '<input class="rename-in" placeholder="corrected name" value="'+DQ.esc(rep.reason==="wrong_name"&&rep.suggested?rep.suggested:"")+'" style="'+inStyle+'"><span class="btn ghost act" data-a="rename" style="'+btnStyle+'">Rename</span>'+
+          (rep.type==="game" ? '<input class="reassign-in" placeholder="correct studio" value="'+DQ.esc(rep.reason==="wrong_studio"&&rep.suggested?rep.suggested:"")+'" style="'+inStyle+'"><span class="btn ghost act" data-a="reassign" style="'+btnStyle+'">Reassign</span>' : '')+
+          '<span class="btn ghost act" data-a="clear" style="'+btnStyle+';color:var(--muted)">Clear overrides</span>'+
+          '<span class="btn ghost act" data-a="dismiss" style="'+btnStyle+';color:var(--pink)">Dismiss</span>'+
+        '</div>')+
+    '</div>';
+  }
+
+  function wire(){
+    Array.prototype.forEach.call(document.querySelectorAll(".modcard"), function(cardEl){
+      var id = cardEl.getAttribute("data-id");
+      Array.prototype.forEach.call(cardEl.querySelectorAll(".act"), function(btn){
+        btn.onclick = function(){
+          var a = btn.getAttribute("data-a"), value = "";
+          if(a==="rename"){ var ri=cardEl.querySelector(".rename-in"); value = ri?ri.value.trim():""; if(!value){ alert("Enter the corrected name."); return; } }
+          if(a==="reassign"){ var si=cardEl.querySelector(".reassign-in"); value = si?si.value.trim():""; if(!value){ alert("Enter the correct studio."); return; } }
+          var label = btn.textContent; btn.textContent = "…";
+          DQAPI.adminResolveReport(id, { action:a, value:value }).then(function(r){
+            if(r && r.ok){
+              cardEl.style.opacity = ".45"; cardEl.style.pointerEvents = "none";
+              cardEl.insertAdjacentHTML("beforeend", '<div style="color:var(--green);font-size:12px;margin-top:10px;font-weight:700">✓ Applied: '+a+(value?' → '+DQ.esc(value):'')+'</div>');
+            } else { btn.textContent = label; alert((r && r.data && r.data.error) || "Could not apply."); }
+          }).catch(function(){ btn.textContent = label; alert("Network error."); });
+        };
+      });
+      // Credit-specific actions: contest / clear dispute / remove. Each also closes the report.
+      Array.prototype.forEach.call(cardEl.querySelectorAll(".cact"), function(btn){
+        btn.onclick = function(){
+          var a = btn.getAttribute("data-a"), cid = btn.getAttribute("data-cid"), run;
+          if(a==="contest") run = DQAPI.adminSetCreditStatus(cid, "contested");
+          else if(a==="uncontest") run = DQAPI.adminSetCreditStatus(cid, "active");
+          else if(a==="removecredit"){ if(!confirm("Remove this credit entirely? This deletes it and any vouches on it. Prefer 'Mark contested' unless the challenge is clearly proven.")) return; run = DQAPI.adminRemoveCredit(cid); }
+          else return;
+          var label = btn.textContent; btn.textContent = "…";
+          run.then(function(r){
+            if(r && r.ok){
+              DQAPI.adminResolveReport(id, { action:"resolve", value:"" }).then(function(){
+                cardEl.style.opacity = ".45"; cardEl.style.pointerEvents = "none";
+                var msg = a==="removecredit" ? "Credit removed" : (a==="contest" ? "Marked contested" : "Dispute cleared");
+                cardEl.insertAdjacentHTML("beforeend", '<div style="color:var(--green);font-size:12px;margin-top:10px;font-weight:700">✓ '+msg+'</div>');
+              });
+            } else { btn.textContent = label; alert((r && r.data && r.data.error) || "Could not apply."); }
+          }).catch(function(){ btn.textContent = label; alert("Network error."); });
+        };
+      });
+    });
+  }
+
+  // ---- Missing artwork: games with credits but no Steam capsule and no admin cover ----
+  function testCapsule(appid){ return new Promise(function(res){ var i=new Image(); i.onload=function(){ res(true); }; i.onerror=function(){ res(false); }; i.src="https://cdn.cloudflare.steamstatic.com/steam/apps/"+appid+"/library_600x900.jpg"; setTimeout(function(){ res(false); }, 6000); }); }
+
+  function loadMissingArt(){
+    DQAPI.adminCreditedGames().then(function(r){
+      if(!(r && r.ok)) return;
+      var games = (r.data && r.data.games) || [];
+      Promise.all(games.map(function(g){
+        return DQ.loadEntity("games", g.game_slug).then(function(gg){ g.steam = (gg && gg.steam) ? gg.steam : null; }).catch(function(){ g.steam = null; })
+          .then(function(){ if(!g.steam){ g.hasCapsule = false; return; } return testCapsule(g.steam).then(function(ok){ g.hasCapsule = ok; }); });
+      })).then(function(){
+        // Games with no *working* Steam capsule — no Steam ID, or a delisted one whose capsule
+        // image is gone (e.g. Warhammer Online). Cover-set ones stay editable; needy ones on top.
+        var list = games.filter(function(g){ return !g.hasCapsule; });
+        list.sort(function(a,b){ return (a.cover?1:0)-(b.cover?1:0) || String(a.game_title).localeCompare(String(b.game_title)); });
+        renderMissingArt(list);
+      });
+    }).catch(function(){});
+  }
+
+  function renderMissingArt(list){
+    var need = list.filter(function(g){ return !g.cover; }).length;
+    var body = list.length ? list.map(artCard).join("")
+      : '<div class="empty">Every credited game has a Steam capsule.</div>';
+    app.insertAdjacentHTML("beforeend",
+      '<div class="container"><section class="blk"><div class="eyebrow">Artwork</div>'+
+      '<h2 class="sec">Cover art</h2>'+
+      '<p class="secsub"><b>'+need+'</b> of '+list.length+' non-Steam game'+(list.length===1?'':'s')+' still '+(need===1?'needs':'need')+' a cover. Paste a <b>direct image link</b> (right-click a cover and choose &ldquo;Copy image address&rdquo; &mdash; it ends in .jpg or .png), <b>not</b> a store page. Ideally a tall 2:3 cover; it crops to fit on the game page and profiles. Leave the box empty and Save to remove a cover.</p>'+
+      body+'</section></div>');
+    wireArt();
+  }
+
+  function artCard(g){
+    var url = '/credits/game/'+encodeURIComponent(g.game_slug);
+    return '<div class="panel artcard" data-slug="'+DQ.esc(g.game_slug)+'" data-title="'+DQ.esc(g.game_title)+'" style="padding:14px 16px;margin-bottom:12px;display:flex;gap:14px;align-items:flex-start">'+
+      '<div class="artprev" style="flex:none;width:68px;aspect-ratio:2/3;border-radius:8px;overflow:hidden;background:#161b22;border:1px solid var(--border)"></div>'+
+      '<div style="flex:1;min-width:0">'+
+        '<a href="'+url+'" target="_blank" rel="noopener" style="color:var(--accent);font-weight:700">'+DQ.esc(g.game_title)+' ↗</a>'+
+        '<div class="mut" style="font-size:12px;margin-top:2px">'+(g.people||0)+' credited'+(g.cover?' · <span style="color:var(--green)">cover set</span>':'')+'</div>'+
+        '<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">'+
+          '<input class="cover-in" value="'+DQ.esc(g.cover||"")+'" placeholder="https://…/cover.jpg" style="flex:1;min-width:220px;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px 11px;color:var(--text);font-size:13px;font-family:inherit">'+
+          '<span class="btn ghost prev-btn" style="padding:8px 12px;font-size:13px">Preview</span>'+
+          '<span class="btn primary save-btn" style="padding:8px 14px;font-size:13px">Save</span>'+
+        '</div>'+
+        '<div class="prev-status" style="font-size:12px;margin-top:7px;min-height:15px"></div>'+
+      '</div>'+
+    '</div>';
+  }
+
+  function wireArt(){
+    Array.prototype.forEach.call(document.querySelectorAll(".artcard"), function(card){
+      var input = card.querySelector(".cover-in"), prev = card.querySelector(".artprev"), st = card.querySelector(".prev-status");
+      var lastState = "empty"; // empty | loading | ok | bad
+      function setStatus(txt, color){ st.textContent = txt; st.style.color = color || "var(--muted)"; }
+      // Load the URL as an actual image so we can tell the admin whether it's a real image
+      // link (a store/product page will fail here exactly like it would on the live site).
+      function showPrev(cb){
+        var u = input.value.trim();
+        if(!u){ prev.innerHTML=""; setStatus(""); lastState="empty"; if(cb) cb("empty"); return; }
+        if(!/^https:\/\//i.test(u)){ setStatus("Must start with https://", "var(--pink)"); lastState="bad"; if(cb) cb("bad"); return; }
+        setStatus("Loading…"); lastState="loading";
+        var img = new Image(); img.referrerPolicy = "no-referrer";
+        img.onload = function(){ prev.innerHTML=""; img.style.width="100%"; img.style.height="100%"; img.style.objectFit="cover"; prev.appendChild(img); setStatus("Looks good", "var(--green)"); lastState="ok"; if(cb) cb("ok"); };
+        img.onerror = function(){ prev.innerHTML=""; setStatus("That's not a direct image link. Right-click the cover on the store/game page and choose “Copy image address”.", "var(--pink)"); lastState="bad"; if(cb) cb("bad"); };
+        img.src = DQ.safeUrl(u);
+      }
+      card.querySelector(".prev-btn").onclick = function(){ showPrev(); };
+      input.addEventListener("blur", function(){ showPrev(); });
+      function doSave(){
+        var u = input.value.trim();
+        if(u && !/^https:\/\//i.test(u)){ alert("Cover URL must start with https://"); return; }
+        var btn = card.querySelector(".save-btn"), label = btn.textContent; btn.textContent="…";
+        DQAPI.adminSetGameCover({ game_slug: card.getAttribute("data-slug"), game_title: card.getAttribute("data-title"), cover_url: u }).then(function(r){
+          btn.textContent = label;
+          if(r && r.ok){ setStatus(u ? "Saved — live now (refresh a profile to see it)" : "Cover removed", "var(--green)"); }
+          else { alert((r && r.data && r.data.error) || "Could not save."); }
+        }).catch(function(){ btn.textContent=label; alert("Network error."); });
+      }
+      card.querySelector(".save-btn").onclick = function(){
+        // Verify it's a loadable image first; warn (don't block) if not.
+        showPrev(function(state){
+          if(state === "ok" || state === "empty"){ doSave(); }
+          else if(confirm("That link didn't load as an image, so the cover probably won't show. Save it anyway?")){ doSave(); }
+        });
+      };
+      if(input.value.trim()) showPrev(); // preview an already-set cover on load
+    });
+  }
+
+  // ---- Merge duplicate games -------------------------------------------------
+  function renderMerge(){
+    app.insertAdjacentHTML("beforeend",
+      '<div class="container"><section class="blk"><div class="eyebrow">Merge</div>'+
+      '<h2 class="sec">Merge duplicate games</h2>'+
+      '<p class="secsub">Move every credit from a duplicate entry into the one you want to keep, reparent its expansions, then retire the duplicate. Enter each game’s <b>slug</b> (the last part of its page URL, <span class="mut">/credits/game/&lt;slug&gt;</span>). Hit <b>Preview</b> first to confirm you picked the right two.</p>'+
+      '<div class="panel" style="padding:16px 18px;max-width:660px">'+
+        '<div style="font-size:12px;font-weight:700;margin-bottom:4px;color:var(--pink)">Duplicate to remove (loser)</div>'+
+        '<input id="mg-from" placeholder="e.g. dark-age-of-camelot-2" style="width:100%;box-sizing:border-box;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:9px 11px;color:var(--text);font-size:14px;font-family:inherit">'+
+        '<div id="mg-from-info" class="mut" style="font-size:12px;margin:5px 0 12px;min-height:16px"></div>'+
+        '<div style="font-size:12px;font-weight:700;margin-bottom:4px;color:var(--green)">Keep (winner)</div>'+
+        '<input id="mg-into" placeholder="e.g. dark-age-of-camelot" style="width:100%;box-sizing:border-box;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:9px 11px;color:var(--text);font-size:14px;font-family:inherit">'+
+        '<div id="mg-into-info" class="mut" style="font-size:12px;margin:5px 0 12px;min-height:16px"></div>'+
+        '<div style="display:flex;gap:8px"><span class="btn ghost" id="mg-preview" style="padding:8px 14px;font-size:13px">Preview</span><span class="btn primary" id="mg-merge" style="padding:8px 16px;font-size:13px">Merge →</span></div>'+
+        '<div id="mg-status" style="font-size:13px;margin-top:12px;min-height:16px"></div>'+
+      '</div></section></div>');
+    wireMerge();
+  }
+
+  // Resolve a slug to a title + credit/expansion counts so the admin can confirm the pick.
+  function previewGame(slug, el){
+    slug = String(slug||"").trim();
+    if(!slug){ el.textContent=""; return; }
+    el.textContent = "Checking…";
+    Promise.all([
+      DQ.loadEntity("games", slug).catch(function(){ return null; }),
+      DQAPI.gameCredits(slug).catch(function(){ return {}; })
+    ]).then(function(res){
+      var g=res[0], api=(res[1]&&res[1].data)||{};
+      var title = (api.game&&api.game.title) || (g&&g.title) || null;
+      var n = (api.credits||[]).length;
+      if(!title && !n){ el.innerHTML = '<span style="color:var(--pink)">No catalogue game or credits found for “'+DQ.esc(slug)+'”.</span>'; return; }
+      var kids = ((g&&g.children)||[]).length + ((api.children||[]).length);
+      el.innerHTML = '<a href="/credits/game/'+encodeURIComponent(slug)+'" target="_blank" rel="noopener" style="color:var(--accent);font-weight:700">'+DQ.esc(title||slug)+' ↗</a> · '+n+' credit'+(n===1?'':'s')+(kids?(' · '+kids+' linked expansion'+(kids===1?'':'s')):'');
+    });
+  }
+
+  function wireMerge(){
+    var from=document.getElementById("mg-from"), into=document.getElementById("mg-into");
+    var fi=document.getElementById("mg-from-info"), ii=document.getElementById("mg-into-info"), st=document.getElementById("mg-status");
+    var t1,t2;
+    from.addEventListener("input", function(){ clearTimeout(t1); t1=setTimeout(function(){ previewGame(from.value, fi); }, 400); });
+    into.addEventListener("input", function(){ clearTimeout(t2); t2=setTimeout(function(){ previewGame(into.value, ii); }, 400); });
+    document.getElementById("mg-preview").onclick=function(){ previewGame(from.value, fi); previewGame(into.value, ii); };
+    document.getElementById("mg-merge").onclick=function(){
+      var f=from.value.trim(), i=into.value.trim(), btn=this;
+      if(!f||!i){ st.innerHTML='<span style="color:var(--pink)">Enter both slugs.</span>'; return; }
+      if(f===i){ st.innerHTML='<span style="color:var(--pink)">Pick two different games.</span>'; return; }
+      if(!confirm("Move all credits from \""+f+"\" into \""+i+"\", reparent its expansions, and retire \""+f+"\"? This cannot be undone.")) return;
+      btn.textContent="Merging…";
+      DQAPI.adminMergeGames({ from_slug:f, into_slug:i }).then(function(r){
+        btn.textContent="Merge →";
+        if(r&&r.ok){
+          st.innerHTML='<span style="color:var(--green)">✓ Merged into <b>'+DQ.esc(r.data.into_title||i)+'</b>. Moved '+r.data.moved+' credit'+(r.data.moved===1?'':'s')+(r.data.dropped?(', dropped '+r.data.dropped+' duplicate'+(r.data.dropped===1?'':'s')):'')+'. The duplicate is now hidden; a catalogue rebuild removes it from search.</span>';
+          from.value=""; into.value=""; fi.textContent=""; ii.textContent="";
+        } else {
+          st.innerHTML='<span style="color:var(--pink)">'+DQ.esc((r&&r.data&&r.data.error)||"Could not merge.")+'</span>';
+        }
+      }).catch(function(){ btn.textContent="Merge →"; st.innerHTML='<span style="color:var(--pink)">Network error.</span>'; });
+    };
+  }
+
+  // ---- Published credits: attach a game's external credit list for corroboration ----
+  function renderPublishedCredits(){
+    app.insertAdjacentHTML("beforeend",
+      '<div class="container"><section class="blk"><div class="eyebrow">Corroboration</div>'+
+      '<h2 class="sec">Published credits</h2>'+
+      '<p class="secsub">Attach a game&rsquo;s published credit list (its own credit roll, or a catalogue like MobyGames). Anyone who claims a credit on that game and whose name is on this list gets a ◈ &ldquo;matches published credits&rdquo; badge beside their peer/team check. Paste <b>one person per line</b>, as <b>Name</b> or <b>Name, Role</b>. Saving replaces the whole list for that game; clear the box and Save to remove it.</p>'+
+      '<div class="panel" style="padding:16px 18px;max-width:660px">'+
+        '<div style="font-size:12px;font-weight:700;margin-bottom:4px">Game slug <span class="mut" style="font-weight:400">(the last part of /credits/game/&lt;slug&gt;)</span></div>'+
+        '<input id="pc-slug" placeholder="e.g. dark-age-of-camelot" style="width:100%;box-sizing:border-box;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:9px 11px;color:var(--text);font-size:14px;font-family:inherit">'+
+        '<div id="pc-info" class="mut" style="font-size:12px;margin:5px 0 12px;min-height:16px"></div>'+
+        '<div style="font-size:12px;font-weight:700;margin-bottom:4px">Published names</div>'+
+        '<textarea id="pc-names" rows="8" placeholder="Jane Doe, Producer&#10;John Smith, Lead Programmer&#10;Alex Rivera" style="width:100%;box-sizing:border-box;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:9px 11px;color:var(--text);font-size:13.5px;font-family:inherit;line-height:1.5;resize:vertical"></textarea>'+
+        '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">'+
+          '<div style="flex:1;min-width:170px"><div style="font-size:12px;font-weight:700;margin-bottom:4px">Source label</div><input id="pc-src" placeholder="e.g. MobyGames" style="width:100%;box-sizing:border-box;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:9px 11px;color:var(--text);font-size:14px;font-family:inherit"></div>'+
+          '<div style="flex:2;min-width:220px"><div style="font-size:12px;font-weight:700;margin-bottom:4px">Source link <span class="mut" style="font-weight:400">(optional)</span></div><input id="pc-url" placeholder="https://www.mobygames.com/game/…" style="width:100%;box-sizing:border-box;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:9px 11px;color:var(--text);font-size:14px;font-family:inherit"></div>'+
+        '</div>'+
+        '<div style="display:flex;gap:8px;margin-top:14px"><span class="btn ghost" id="pc-load" style="padding:8px 14px;font-size:13px">Load current</span><span class="btn primary" id="pc-save" style="padding:8px 16px;font-size:13px">Save list</span></div>'+
+        '<div id="pc-status" style="font-size:13px;margin-top:12px;min-height:16px"></div>'+
+      '</div></section></div>');
+    wirePublished();
+  }
+
+  function wirePublished(){
+    var slug=document.getElementById("pc-slug"), names=document.getElementById("pc-names"),
+        src=document.getElementById("pc-src"), urlE=document.getElementById("pc-url"),
+        info=document.getElementById("pc-info"), st=document.getElementById("pc-status");
+    var t;
+    slug.addEventListener("input", function(){ clearTimeout(t); t=setTimeout(function(){ previewGame(slug.value, info); }, 400); });
+    document.getElementById("pc-load").onclick=function(){
+      var s=slug.value.trim(); if(!s){ st.innerHTML='<span style="color:var(--pink)">Enter a game slug first.</span>'; return; }
+      st.textContent="Loading…";
+      DQAPI.adminGetPublishedCredits(s).then(function(r){
+        if(!(r&&r.ok)){ st.innerHTML='<span style="color:var(--pink)">'+DQ.esc((r&&r.data&&r.data.error)||"Could not load.")+'</span>'; return; }
+        var d=r.data||{}, lines=(d.entries||[]).map(function(e){ return e.role ? (e.name+", "+e.role) : e.name; });
+        names.value=lines.join("\n"); src.value=d.source||""; urlE.value=d.source_url||"";
+        st.innerHTML=lines.length ? '<span class="mut">Loaded '+lines.length+' existing name'+(lines.length===1?'':'s')+'.</span>' : '<span class="mut">No published list saved for this game yet.</span>';
+      }).catch(function(){ st.innerHTML='<span style="color:var(--pink)">Network error.</span>'; });
+    };
+    document.getElementById("pc-save").onclick=function(){
+      var s=slug.value.trim(); if(!s){ st.innerHTML='<span style="color:var(--pink)">Enter a game slug.</span>'; return; }
+      var u=urlE.value.trim(); if(u && !/^https:\/\//i.test(u)){ st.innerHTML='<span style="color:var(--pink)">Source link must start with https://</span>'; return; }
+      var btn=document.getElementById("pc-save"); btn.textContent="Saving…";
+      DQAPI.adminSetPublishedCredits({ game_slug:s, text:names.value, source:src.value.trim(), source_url:u }).then(function(r){
+        btn.textContent="Save list";
+        if(r&&r.ok){ var d=r.data||{}; st.innerHTML='<span style="color:var(--green)">✓ Saved '+d.count+' name'+(d.count===1?'':'s')+'. Matches <b>'+d.matched+'</b> of '+d.claimed+' claimed credit'+(d.claimed===1?'':'s')+' on this game right now.'+(d.count===0?' List cleared.':'')+'</span>'; }
+        else { st.innerHTML='<span style="color:var(--pink)">'+DQ.esc((r&&r.data&&r.data.error)||"Could not save.")+'</span>'; }
+      }).catch(function(){ btn.textContent="Save list"; st.innerHTML='<span style="color:var(--pink)">Network error.</span>'; });
+    };
+  }
+})();
+</script>
+</body>
+</html>
