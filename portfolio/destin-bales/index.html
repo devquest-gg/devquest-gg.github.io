@@ -55,7 +55,10 @@
   .cover3{aspect-ratio:3/4;position:relative;display:flex;align-items:flex-end;padding:16px}
   .cover3 .rank{position:absolute;top:10px;left:12px;font-size:34px;font-weight:850;color:rgba(255,255,255,.16)}
   .cover3 .chk{position:absolute;top:12px;right:12px;width:22px;height:22px;border-radius:50%;background:var(--accent);color:#04121f;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900}
-  .cover3 .ttl{position:relative;font-weight:850;font-size:20px;letter-spacing:-.3px;text-shadow:0 2px 14px rgba(0,0,0,.7);line-height:1.06}
+  .cover3 .ttl{position:relative;z-index:2;font-weight:850;font-size:20px;letter-spacing:-.3px;text-shadow:0 2px 14px rgba(0,0,0,.7);line-height:1.06}
+  .cover3 .rank,.cover3 .chk{z-index:2}
+  .cover3 .art{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0}
+  .cover3::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.02) 40%,rgba(0,0,0,.78));z-index:1}
   .gmeta{padding:13px 15px}.gmeta .r{font-weight:700;font-size:14px}.gmeta .s{color:var(--muted);font-size:12.5px;margin-top:2px}
 
   .legend{display:flex;gap:18px;flex-wrap:wrap;font-size:12.5px;color:var(--muted);margin:0 0 8px}
@@ -70,7 +73,9 @@
   .gcard{display:flex;align-items:center;gap:11px;border:1px solid var(--border);background:var(--panel);border-radius:12px;padding:8px 13px 8px 8px;box-shadow:0 8px 22px rgba(0,0,0,.32);max-width:100%}
   .gcard:hover{border-color:var(--accent)}
   .gcard .gtxt{min-width:0;display:flex;flex-direction:column}
-  .cover{width:48px;height:64px;border-radius:6px;flex:none;border:1px solid rgba(255,255,255,.12);box-shadow:0 4px 12px rgba(0,0,0,.45);display:flex;align-items:flex-end;justify-content:center;padding-bottom:4px;font-size:8px;color:rgba(255,255,255,.4);font-weight:800}
+  .cover{position:relative;overflow:hidden;width:48px;height:64px;border-radius:6px;flex:none;border:1px solid rgba(255,255,255,.12);box-shadow:0 4px 12px rgba(0,0,0,.45);display:flex;align-items:flex-end;justify-content:center;padding-bottom:4px;font-size:9px;color:rgba(255,255,255,.55);font-weight:800}
+  .cover .ini{position:relative;z-index:0}
+  .cover .art,.oc .art{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1}
   .gt{font-weight:750;font-size:14px;line-height:1.25}
   .gr{font-size:11.5px;color:var(--muted);margin-top:2px}
   .conn{width:42px;height:2px;background:var(--border)}
@@ -85,7 +90,7 @@
   .syr{font-size:11px;color:rgba(255,255,255,.65);margin-top:2px;position:relative}
   .others{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px;margin-top:14px}
   .ocard{display:flex;align-items:center;gap:10px;border:1px solid var(--border);background:var(--panel);border-radius:11px;padding:8px 11px 8px 8px}
-  .ocard .oc{width:38px;height:50px;border-radius:5px;flex:none}
+  .ocard .oc{position:relative;overflow:hidden;width:38px;height:50px;border-radius:5px;flex:none}
 
   .skills{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
   .skgroup{border:1px solid var(--border);border-radius:14px;background:var(--panel);padding:15px 16px}
@@ -118,11 +123,32 @@
   var CUR = 2026;
   var app = document.getElementById("app");
   function esc(s){ return String(s==null?"":s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];}); }
-  // slug from /portfolio/<slug>/
+  // slug from ?slug= (router / view.html) or the last path segment (/portfolio/<slug>/)
+  var qslug = new URLSearchParams(location.search).get("slug");
   var parts = location.pathname.replace(/\/+$/,"").split("/");
-  var slug = parts[parts.length-1] || "";
-  if(slug==="portfolio" || !slug){ app.innerHTML='<div class="wrap" style="padding:60px 22px;color:var(--muted)">No profile specified.</div>'; return; }
+  var pslug = parts[parts.length-1] || "";
+  var slug = String(qslug || pslug || "").trim().toLowerCase();
+  if(slug==="portfolio" || slug==="view.html" || !slug){ app.innerHTML='<div class="wrap" style="padding:60px 22px;color:var(--muted)">No profile specified.</div>'; return; }
   document.getElementById("creditslink").href="/credits/"+slug;
+
+  // --- box art: resolve Steam capsules + admin covers, same as the credits person page ---
+  function bkt(s){ var h=2166136261>>>0; for(var i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=Math.imul(h,16777619)>>>0; } return h%256; }
+  var _jc={};
+  function getJSON(u){ if(_jc[u]) return _jc[u]; _jc[u]=fetch(u).then(function(r){ return r.ok?r.json():{}; }).catch(function(){ return {}; }); return _jc[u]; }
+  function steamArt(id){ return "https://cdn.cloudflare.steamstatic.com/steam/apps/"+encodeURIComponent(id)+"/library_600x900.jpg"; }
+  function resolveCovers(credits){
+    var seen={}; credits.forEach(function(c){ if(c.game_slug) seen[c.game_slug]=1; });
+    var list=Object.keys(seen);
+    if(!list.length) return Promise.resolve({});
+    var adminP=(DQAPI.gameCovers?DQAPI.gameCovers(list):Promise.resolve({data:{covers:{}}})).then(function(r){ return (r&&r.data&&r.data.covers)||{}; }).catch(function(){ return {}; });
+    var entP=Promise.all(list.map(function(s){ return getJSON("/credits/data/site/games/"+bkt(s)+".json").then(function(m){ return {s:s,e:(m&&m[s])||null}; }); }));
+    return Promise.all([adminP,entP]).then(function(res){
+      var admin=res[0], map={};
+      res[1].forEach(function(x){ var e=x.e; var url=admin[x.s]||(e&&e.cover)||(e&&e.steam?steamArt(e.steam):null); if(url) map[x.s]=url; });
+      return map;
+    }).catch(function(){ return {}; });
+  }
+  function art(slug, covMap){ var u=covMap&&covMap[slug]; return u?'<img class="art" loading="lazy" src="'+esc(u)+'" alt="" onerror="this.style.display=\'none\'">':''; }
 
   function hashHue(s){ s=String(s||"x"); var h=0; for(var i=0;i<s.length;i++) h=(h*31+s.charCodeAt(i))>>>0; return h%360; }
   function studioGrad(s){ var h=hashHue(s); return 'linear-gradient(120deg,hsl('+h+',42%,25%),hsl('+((h+18)%360)+',48%,14%))'; }
@@ -132,7 +158,8 @@
 
   DQAPI.portfolio(slug).then(function(r){
     if(!(r && r.ok && r.data && r.data.person)){ app.innerHTML='<div class="wrap" style="padding:60px 22px"><h1>Not found</h1><p style="color:var(--muted)">No portfolio at this address yet.</p></div>'; return; }
-    render(r.data.person, r.data.positions||[], r.data.credits||[]);
+    var person=r.data.person, positions=r.data.positions||[], credits=r.data.credits||[];
+    resolveCovers(credits).then(function(covMap){ render(person, positions, credits, covMap||{}); });
     // show edit link if this is my own page
     if(DQAPI.isSignedIn()){ DQAPI.me().then(function(mr){ var me=mr&&mr.data&&mr.data.person; if(me && me.slug===slug) document.getElementById("editlink").style.display="inline-block"; }).catch(function(){}); }
   }).catch(function(){ app.innerHTML='<div class="wrap" style="padding:60px 22px;color:var(--pink)">Could not load this portfolio. Try again.</div>'; });
@@ -140,7 +167,8 @@
   function creditYear(c){ return c.work_start || c.year || c.work_end || null; }
   function isLive(c){ return (c.releases||[]).some(function(x){ return /live/i.test(x); }); }
 
-  function render(p, positions, credits){
+  function render(p, positions, credits, covMap){
+    covMap = covMap || {};
     document.title = p.name + " · DevQuest Portfolio";
     // ---- stats ----
     var startYears = [];
@@ -183,11 +211,11 @@
     // ---- highlights: top 3 by vouches, then recency ----
     var top = credits.slice().sort(function(a,b){ return (b.vouch_count||0)-(a.vouch_count||0) || (creditYear(b)||0)-(creditYear(a)||0); }).slice(0,3);
     var highlights = top.length ? '<div class="wrap"><section><div class="eyebrow">Highlights</div><h2 class="sec">Proudest work</h2><p class="sub">Most-confirmed titles from the full record below.</p><div class="heroes">'+
-      top.map(function(c,i){ return '<div class="gcardH"><div class="cover3" style="background:'+gameGrad(c.game_slug)+'"><span class="rank">'+(i+1)+'</span>'+(c.vouch_count?'<span class="chk">✓</span>':'')+'<span class="ttl">'+esc(c.game_title)+'</span></div><div class="gmeta"><div class="r">'+esc(c.role)+'</div><div class="s">'+esc(c.studio||"")+(creditYear(c)?(c.studio?' · ':'')+creditYear(c):'')+'</div></div></div>'; }).join("")+
+      top.map(function(c,i){ return '<div class="gcardH"><div class="cover3" style="background:'+gameGrad(c.game_slug)+'">'+art(c.game_slug,covMap)+'<span class="rank">'+(i+1)+'</span>'+(c.vouch_count?'<span class="chk">✓</span>':'')+'<span class="ttl">'+esc(c.game_title)+'</span></div><div class="gmeta"><div class="r">'+esc(c.role)+'</div><div class="s">'+esc(c.studio||"")+(creditYear(c)?(c.studio?' · ':'')+creditYear(c):'')+'</div></div></div>'; }).join("")+
       '</div></section></div>' : '';
 
     // ---- timeline ----
-    var tl = buildTimeline(positions, credits);
+    var tl = buildTimeline(positions, credits, covMap);
 
     // ---- skills ----
     var groups = (p.skills && p.skills.groups) ? p.skills.groups : [];
@@ -207,7 +235,8 @@
   function stat(n,l){ return '<div class="stat"><div class="n">'+n+'</div><div class="l">'+l+'</div></div>'; }
   function cap(s){ return String(s).charAt(0).toUpperCase()+String(s).slice(1); }
 
-  function buildTimeline(positions, credits){
+  function buildTimeline(positions, credits, covMap){
+    covMap = covMap || {};
     if(!positions.length && !credits.length) return {html:""};
     var MINH=96, SCALE=28, CARDH=96, PAD=24;
     // bands (positions come newest-first from API)
@@ -248,7 +277,7 @@
         var y=Math.round(b.top + b.h*(idx+1)/(list.length+1));
         var conf=(c.vouch_count||0)>0;
         nodes += '<div class="gdot'+(conf?' conf':'')+'" style="top:'+y+'px"></div>'+
-          '<div class="gnode" style="top:'+y+'px"><div class="gcard"><span class="cover" style="background:'+gameGrad(c.game_slug)+'">'+esc(initials(c.game_title))+'</span><span class="gtxt"><span class="gt">'+esc(c.game_title)+(conf?'<span class="v '+(c.vouch_count>1?"green":"blue")+'">✓</span>':'')+'</span><span class="gr">'+esc(c.role)+(creditYear(c)?' · '+creditYear(c):'')+'</span></span></div><span class="conn"></span></div>';
+          '<div class="gnode" style="top:'+y+'px"><div class="gcard"><span class="cover" style="background:'+gameGrad(c.game_slug)+'">'+art(c.game_slug,covMap)+'<span class="ini">'+esc(initials(c.game_title))+'</span></span><span class="gtxt"><span class="gt">'+esc(c.game_title)+(conf?'<span class="v '+(c.vouch_count>1?"green":"blue")+'">✓</span>':'')+'</span><span class="gr">'+esc(c.role)+(creditYear(c)?' · '+creditYear(c):'')+'</span></span></div><span class="conn"></span></div>';
       });
     });
     var tlBlock = '<div class="tlx" style="height:'+totalH+'px"><div class="spine"></div><div class="lane-right" style="height:'+totalH+'px">'+barsHtml+'</div>'+nodes+'</div>';
@@ -258,7 +287,7 @@
     if(orphans.length){
       orphans.sort(function(a,c){ return (creditYear(c)||0)-(creditYear(a)||0); });
       othersBlock = '<div class="eyebrow" style="margin-top:26px">Also credited</div><p class="sub">Titles not yet matched to a role above — add the studio &amp; dates in your editor and they will slot into the timeline.</p><div class="others">'+
-        orphans.map(function(c){ return '<div class="ocard"><span class="oc" style="background:'+gameGrad(c.game_slug)+'"></span><div><div style="font-weight:700;font-size:13px">'+esc(c.game_title)+'</div><div style="color:var(--muted);font-size:11.5px">'+esc(c.role)+(creditYear(c)?' · '+creditYear(c):'')+'</div></div></div>'; }).join("")+
+        orphans.map(function(c){ return '<div class="ocard"><span class="oc" style="background:'+gameGrad(c.game_slug)+'">'+art(c.game_slug,covMap)+'</span><div><div style="font-weight:700;font-size:13px">'+esc(c.game_title)+'</div><div style="color:var(--muted);font-size:11.5px">'+esc(c.role)+(creditYear(c)?' · '+creditYear(c):'')+'</div></div></div>'; }).join("")+
         '</div>';
     }
 
