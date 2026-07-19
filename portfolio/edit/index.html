@@ -41,6 +41,14 @@
   .empty{color:var(--muted);font-size:13.5px;padding:6px 0}
   .top-cta{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:6px 0 0}
   footer{border-top:1px solid var(--border);margin-top:30px;padding:20px 0 46px;font-size:12.5px;color:var(--dim)}
+  details.sheet-card{border:1px solid var(--border);border-radius:13px;background:var(--panel2);margin-bottom:10px;overflow:hidden}
+  details.sheet-card>summary{cursor:pointer;padding:13px 16px;font-size:14px;list-style:none;display:flex;align-items:center;gap:8px}
+  details.sheet-card>summary::-webkit-details-marker{display:none}
+  details.sheet-card>summary::before{content:"\25B8";color:var(--muted);font-size:12px}
+  details.sheet-card[open]>summary::before{content:"\25BE"}
+  .sheet-body{padding:4px 16px 16px}
+  .sf-stats .row{margin-bottom:8px}
+  .sf-filled{font-size:11px;font-weight:800;color:var(--gold);border:1px solid rgba(224,178,58,.4);border-radius:6px;padding:1px 7px}
 </style>
 </head>
 <body>
@@ -80,11 +88,11 @@
     SLUG = person.slug;
     topcta.innerHTML = '<a class="btn sm" href="/portfolio/'+esc(SLUG)+'/" target="_blank">View my portfolio ↗</a><a class="btn sm" href="/credits/'+esc(SLUG)+'" target="_blank">My credits page ↗</a>';
     return DQAPI.portfolio(SLUG).then(function(pr){
-      var d = (pr && pr.data) || {}; render(d.person||{}, d.positions||[]);
+      var d = (pr && pr.data) || {}; render(d.person||{}, d.positions||[], d.credits||[]);
     });
   }).catch(function(){ app.innerHTML='<div class="blk"><div class="err">Could not load your profile. Reload and try again.</div></div>'; });
 
-  function render(p, positions){
+  function render(p, positions, credits){
     POS = positions.slice();
     var links = {}; (p.links||[]).forEach(function(l){ links[l.type]=l.url; });
     var sk = (p.skills && p.skills.groups) ? p.skills.groups : [];
@@ -121,6 +129,7 @@
 
     renderPositions();
     wireBasics(); wireSkills();
+    if(credits && credits.length){ app.insertAdjacentHTML("beforeend", sheetsSection(credits)); }
   }
 
   function skillRow(g,i){
@@ -237,6 +246,51 @@
       renderPositions();
       var el=document.querySelector('.pos[data-id="'+nid+'"]'); if(el) el.scrollIntoView({behavior:"smooth",block:"center"});
     }
+  });
+  function sheetsSection(credits){
+    return '<div class="blk"><h2>Game one-sheets</h2><div class="desc">The expandable sell-sheet behind each game on your portfolio — scale, what you led, screenshots. Fill in the ones that matter most.</div><div id="sheets">'+ credits.map(sheetCard).join("") +'</div></div>';
+  }
+  function sheetCard(c){
+    var s=c.sheet||{};
+    var stats=(s.stats||[]).slice(0,6); while(stats.length<4){ stats.push({label:"",value:""}); }
+    var contribs=(s.contributions||[]).join("\n");
+    var kw=(s.keywords||[]).join(", ");
+    var shots=(s.screenshots||[]).join("\n");
+    return '<details class="sheet-card" data-cid="'+c.id+'"><summary><b>'+esc(c.game_title)+'</b> <span class="mut" style="font-weight:600">'+esc(c.role||"")+'</span>'+(c.sheet?' <span class="sf-filled">filled</span>':'')+'</summary>'+
+      '<div class="sheet-body">'+
+        '<label>One-line summary</label><textarea class="sf-summary" placeholder="What was this game, and your part in it?">'+esc(s.summary||"")+'</textarea>'+
+        '<label>Stats <span class="mut" style="font-weight:400">&mdash; the top infographic (label + value)</span></label><div class="sf-stats">'+
+          stats.map(function(st){ return '<div class="row"><div><input class="sf-slabel" placeholder="Label (e.g. Players)" value="'+esc(st.label||"")+'"></div><div><input class="sf-svalue" placeholder="Value (e.g. 85M+)" value="'+esc(st.value||"")+'"></div></div>'; }).join("")+
+        '</div>'+
+        '<label>What I led <span class="mut" style="font-weight:400">&mdash; one achievement per line</span></label><textarea class="sf-did" placeholder="One achievement per line">'+esc(contribs)+'</textarea>'+
+        '<label>Focus / keywords <span class="mut" style="font-weight:400">&mdash; comma-separated</span></label><input class="sf-kw" placeholder="Live-Service, AAA Production, Team Leadership" value="'+esc(kw)+'">'+
+        '<label>Banner image URL <span class="mut" style="font-weight:400">&mdash; wide art for the top; optional</span></label><input class="sf-banner" placeholder="https://  (blank = use box art)" value="'+esc(s.banner_url||"")+'">'+
+        '<label>Screenshots <span class="mut" style="font-weight:400">&mdash; one image URL per line</span></label><textarea class="sf-shots" placeholder="One image URL per line">'+esc(shots)+'</textarea>'+
+        '<div class="actions"><span class="btn primary save-sheet">Save one-sheet</span><span class="status sf-status"></span></div>'+
+      '</div></details>';
+  }
+  document.addEventListener("click", function(e){
+    if(!(e.target && e.target.classList && e.target.classList.contains("save-sheet"))) return;
+    var card=e.target.closest(".sheet-card"); if(!card) return;
+    var cid=card.getAttribute("data-cid");
+    var stats=[];
+    card.querySelectorAll(".sf-stats .row").forEach(function(row){
+      var l=row.querySelector(".sf-slabel").value.trim(), v=row.querySelector(".sf-svalue").value.trim();
+      if(l||v){ stats.push({label:l,value:v}); }
+    });
+    var payload={
+      summary: card.querySelector(".sf-summary").value.trim(),
+      stats: stats,
+      contributions: card.querySelector(".sf-did").value.split("\n").map(function(x){return x.trim();}).filter(Boolean),
+      keywords: card.querySelector(".sf-kw").value.split(",").map(function(x){return x.trim();}).filter(Boolean),
+      banner_url: card.querySelector(".sf-banner").value.trim(),
+      screenshots: card.querySelector(".sf-shots").value.split("\n").map(function(x){return x.trim();}).filter(Boolean)
+    };
+    var st=card.querySelector(".sf-status"); st.textContent="Saving…"; st.className="status sf-status";
+    DQAPI.saveSheet(cid, payload).then(function(r){
+      if(r&&r.ok){ st.textContent="Saved ✓"; st.className="status sf-status ok"; var summ=card.querySelector("summary"); if(summ && !summ.querySelector(".sf-filled")){ summ.insertAdjacentHTML("beforeend", ' <span class="sf-filled">filled</span>'); } }
+      else { st.textContent=(r&&r.data&&r.data.error)||"Could not save."; st.className="status sf-status err"; }
+    }).catch(function(){ st.textContent="Network error."; st.className="status sf-status err"; });
   });
 })();
 </script>

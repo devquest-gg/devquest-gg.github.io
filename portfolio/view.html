@@ -192,6 +192,13 @@
   .osdid li::before{content:"";position:absolute;left:2px;top:8px;width:7px;height:7px;border-radius:2px;background:linear-gradient(135deg,var(--accent),var(--purple))}
   .oskw{display:flex;gap:8px;flex-wrap:wrap}
   .oskw span{font-size:12px;font-weight:700;color:#dce4f0;border:1px solid var(--border);background:#0d131d;border-radius:8px;padding:5px 11px}
+  .osbanner img{object-position:center 22%}
+  .osshotcol{display:flex;flex-direction:column;gap:12px}
+  .osseewho{color:var(--accent);font-weight:700;cursor:pointer;white-space:nowrap}
+  .osvouchers{display:none;gap:8px;flex-wrap:wrap;margin:12px 30px 4px}
+  .osvouchers.on{display:flex}
+  .osvchiplink{font-size:12px;font-weight:700;color:#dce4f0;border:1px solid var(--border);background:#0d131d;border-radius:999px;padding:5px 12px}
+  .osvchiplink:hover{border-color:var(--accent);color:#fff}
 </style>
 </head>
 <body>
@@ -334,6 +341,7 @@
     var sheet=document.getElementById("ossheet");
     sheet.innerHTML=oneSheetHTML(c);
     var cl=sheet.querySelector(".osclose"); if(cl) cl.onclick=closeSheet;
+    var sw=sheet.querySelector(".osseewho"); if(sw) sw.onclick=function(){ var v=sheet.querySelector(".osvouchers"); if(v) v.classList.toggle("on"); };
     sheet.scrollTop=0;
     _ovl.classList.add("on"); document.body.style.overflow="hidden";
   }
@@ -347,13 +355,16 @@
     var kwHTML = (sh&&sh.keywords&&sh.keywords.length) ? '<div class="oslabel"'+((sh.contributions&&sh.contributions.length)?' style="margin-top:18px"':'')+'>Focus</div><div class="oskw">'+sh.keywords.map(function(k){ return '<span>'+esc(k)+'</span>'; }).join("")+'</div>' : '';
     var didHTML = (sh&&sh.contributions&&sh.contributions.length) ? '<div class="oslabel">What I led</div><ul class="osdid">'+sh.contributions.map(function(d){ return '<li>'+esc(d)+'</li>'; }).join("")+'</ul>' : '';
     var leftCol = (didHTML||kwHTML) ? '<div>'+didHTML+kwHTML+'</div>' : '';
-    var shotHTML = sid ? '<div class="osshot"><img src="'+steamHeader(sid)+'" alt="" onerror="this.closest(\'.osshot\').style.display=\'none\'"></div>' : '';
+    var shotUrls = (sh&&sh.screenshots&&sh.screenshots.length) ? sh.screenshots : (sid?[steamHeader(sid)]:[]);
+    var shotHTML = shotUrls.length ? '<div class="osshotcol">'+shotUrls.map(function(u){ return '<div class="osshot"><img src="'+esc(u)+'" alt="" onerror="this.closest(\'.osshot\').style.display=\'none\'"></div>'; }).join("")+'</div>' : '';
     var gridHTML = (leftCol||shotHTML) ? '<div class="osgrid">'+(leftCol||'<div></div>')+'<div>'+shotHTML+'</div></div>' : '';
     var sumHTML = (sh&&sh.summary) ? '<p class="ossum">'+esc(sh.summary)+'</p>' : '';
     var mainHTML = (sumHTML||gridHTML) ? '<div class="osmain">'+sumHTML+gridHTML+'</div>' : '';
+    var vouchers = c.voucher_slugs ? String(c.voucher_slugs).split(",").filter(Boolean) : [];
     var evid = conf
-      ? '<span class="oseb">✓</span><span><b>Confirmed by '+conf+' teammate'+(conf>1?"s":"")+' who shipped '+esc(c.game_title)+'.</b> Peer verification is the part no other portfolio can show.</span>'
+      ? '<span class="oseb">✓</span><span><b>Confirmed by '+conf+' teammate'+(conf>1?"s":"")+' who shipped '+esc(c.game_title)+'.</b> Peer verification is the part no other portfolio can show.'+(vouchers.length?' <span class="osseewho">See who →</span>':'')+'</span>'
       : '<span class="oseb dim">•</span><span>Not yet peer-confirmed — <a href="/credits/'+esc(slug)+'" style="color:var(--accent)">ask a teammate to confirm →</a></span>';
+    var vlist = vouchers.length ? '<div class="osvouchers">'+vouchers.map(function(s){ return '<a class="osvchiplink" href="/credits/'+esc(s)+'">'+esc(deslug(s))+'</a>'; }).join("")+'</div>' : '';
     var ownerCTA = (IS_OWNER && !sh) ? '<div class="oscta">This is your one-sheet. Add the scale, team size, and “what I led” in your editor to fill it out.</div>' : '';
     return '<button class="osclose" aria-label="Close">✕</button>'+
       '<div class="osbanner">'+bannerFill+'<div class="osscrim"></div><div class="osgloss"></div>'+
@@ -363,8 +374,9 @@
           (conf?'<span class="oschip osvchip"><span class="c">✓</span> '+conf+' confirmed</span>':"")+
         '</div><h3>'+esc(c.game_title)+'</h3><div class="osrole">'+esc(c.role)+'</div></div>'+
       '</div>'+statsHTML+mainHTML+
-      '<div class="osevid">'+evid+'</div>'+ownerCTA;
+      '<div class="osevid">'+evid+'</div>'+vlist+ownerCTA;
   }
+  function deslug(s){ return String(s||"").split("-").map(function(w){ return w?w.charAt(0).toUpperCase()+w.slice(1):w; }).join(" "); }
 
   // ---- unified wall <-> timeline stage ----
   function buildStage(credits, positions, covMap){
