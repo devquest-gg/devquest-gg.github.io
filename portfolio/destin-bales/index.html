@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Destin Bales · Game Production Leader · DevQuest Portfolio</title>
+<meta name="description" content="24 years in games production — from Mythic and Riot to Bend Studio, Ubisoft, and Insomniac. A DevQuest portfolio.">
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<meta property="og:type" content="profile">
+<meta property="og:title" content="Destin Bales · Game Production Leader">
+<meta property="og:description" content="24 years shipping games — Mythic, Riot, Bend, Ubisoft, Insomniac. Career, credits, and portfolio on DevQuest.">
+<meta property="og:url" content="https://devquest.gg/portfolio/destin-bales/">
+<style>
+  :root{--bg:#0a0d14;--panel:#11161f;--panel2:#141b26;--border:#232c3a;--text:#eaf0f8;--muted:#8b98ab;--dim:#5f6b7d;--accent:#58a6ff;--purple:#a371f7;--gold:#e0b23a;--green:#3fb950;--pink:#f778ba}
+  *{box-sizing:border-box}html,body{margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,-apple-system,Roboto,Helvetica,Arial,sans-serif;line-height:1.55;-webkit-font-smoothing:antialiased}
+  a{color:inherit;text-decoration:none}
+  .wrap{max-width:1040px;margin:0 auto;padding:0 22px}
+  .bar{height:3px;background:linear-gradient(90deg,var(--gold),var(--purple) 55%,var(--accent))}
+  .beta{position:fixed;bottom:12px;left:12px;z-index:60;font-size:11px;font-weight:800;letter-spacing:.08em;color:var(--gold);background:rgba(224,178,58,.1);border:1px solid rgba(224,178,58,.35);border-radius:999px;padding:5px 12px}
+
+  .nav{border-bottom:1px solid var(--border);background:rgba(10,13,20,.85);backdrop-filter:blur(8px);position:sticky;top:0;z-index:50}
+  .nav .wrap{display:flex;align-items:center;justify-content:space-between;height:54px}
+  .brand{display:flex;align-items:center;gap:8px;font-weight:800;font-size:17px}
+  .brand .q{color:var(--accent)}.brand .tld{color:var(--gold)}
+  .brand .cr{font-size:10px;font-weight:800;letter-spacing:.2em;color:var(--accent);border:1px solid var(--border);border-radius:5px;padding:2px 6px;margin-left:4px}
+  .navlinks{display:flex;gap:20px;font-size:14px;color:var(--muted)}.navlinks a:hover{color:var(--text)}
+
+  .hero{position:relative;overflow:hidden;border-bottom:1px solid var(--border)}
+  .banner{position:absolute;inset:0;background:radial-gradient(60% 120% at 15% 0%, #6d3bd6 0%, transparent 55%),radial-gradient(50% 130% at 88% 10%, #1f6feb 0%, transparent 55%),radial-gradient(45% 120% at 60% 120%, #c99a2a 0%, transparent 55%),conic-gradient(from 210deg at 78% 30%, #10203a, #241033 40%, #0c1626 75%, #10203a);filter:saturate(1.05)}
+  .scrim{position:absolute;inset:0;background:linear-gradient(180deg,rgba(10,13,20,.55) 0%,rgba(10,13,20,.72) 55%,rgba(10,13,20,.94) 100%)}
+  .bannerhint{position:absolute;top:12px;right:14px;font-size:10.5px;font-weight:700;color:#cdd8e6;background:rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.14);border-radius:7px;padding:4px 9px;z-index:3}
+  .hero .wrap{position:relative;z-index:2;padding:44px 22px 28px}
+  .htop{display:flex;gap:24px;align-items:flex-start;flex-wrap:wrap}
+  .avatar{width:102px;height:102px;border-radius:22px;flex:none;background:linear-gradient(135deg,#7cc0ff,#a371f7);display:flex;align-items:center;justify-content:center;font-weight:850;font-size:38px;color:#0a0d14;box-shadow:0 12px 40px rgba(0,0,0,.4);border:2px solid rgba(255,255,255,.2)}
+  .hmeta{flex:1;min-width:280px}
+  .oa{display:inline-flex;align-items:center;gap:7px;font-size:11.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--green);border:1px solid rgba(63,185,80,.45);background:rgba(63,185,80,.12);border-radius:999px;padding:4px 11px;margin-bottom:12px}
+  .oa .dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green)}
+  h1{margin:0;font-size:40px;line-height:1.05;letter-spacing:-1px;font-weight:850}
+  .role{margin-top:6px;font-size:16px;color:#dbe4ef}.role b{color:#fff}
+  .bio{margin:14px 0 0;font-size:15px;color:#c6d0de;max-width:640px}
+  .tags{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
+  .tag{font-size:12.5px;font-weight:700;color:#dbe4ef;border:1px solid rgba(255,255,255,.14);background:rgba(0,0,0,.25);border-radius:999px;padding:5px 13px}
+  .tag.spec{color:#e2d0ff;border-color:rgba(163,113,247,.5);background:rgba(163,113,247,.22)}
+  .cta{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px}
+  .btn{display:inline-flex;align-items:center;gap:8px;font-size:14px;font-weight:750;border-radius:11px;padding:11px 18px;cursor:pointer;border:1px solid rgba(255,255,255,.16)}
+  .btn.primary{color:#04121f;background:linear-gradient(135deg,#7cc0ff,#58a6ff);border:0;box-shadow:0 8px 22px rgba(88,166,255,.3)}
+  .btn.ghost{color:#fff;background:rgba(0,0,0,.3)}
+  .stats{display:flex;flex-wrap:wrap;margin-top:26px;border:1px solid var(--border);border-radius:14px;overflow:hidden;background:rgba(17,22,31,.85)}
+  .stat{flex:1;min-width:118px;padding:15px 18px;border-right:1px solid var(--border)}.stat:last-child{border-right:0}
+  .stat .n{font-size:23px;font-weight:850;letter-spacing:-.5px;background:linear-gradient(120deg,#9ecbff,#c9a6ff);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .stat .l{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-top:3px}
+
+  section{padding:42px 0 6px}
+  .eyebrow{font-size:12px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--accent)}
+  h2.sec{font-size:23px;font-weight:800;letter-spacing:-.4px;margin:6px 0 4px}
+  .sub{color:var(--muted);font-size:14px;margin:0 0 20px;max-width:700px}
+
+  .heroes{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  .gcardH{border:1px solid var(--border);border-radius:16px;overflow:hidden;background:var(--panel);transition:transform .18s,border-color .18s}
+  .gcardH:hover{transform:translateY(-4px);border-color:var(--accent)}
+  .cover3{aspect-ratio:3/4;position:relative;display:flex;align-items:flex-end;padding:16px}
+  .cover3 .rank{position:absolute;top:10px;left:12px;font-size:34px;font-weight:850;color:rgba(255,255,255,.16)}
+  .cover3 .chk{position:absolute;top:12px;right:12px;width:22px;height:22px;border-radius:50%;background:var(--accent);color:#04121f;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900}
+  .cover3 .ttl{position:relative;font-weight:850;font-size:21px;letter-spacing:-.3px;text-shadow:0 2px 14px rgba(0,0,0,.7);line-height:1.05}
+  .c-lol{background:radial-gradient(120% 90% at 50% 0%,#1c3d63,#0a1a2e 70%)}
+  .c-war{background:radial-gradient(120% 90% at 50% 10%,#5a1717,#160707 70%)}
+  .c-coh{background:radial-gradient(120% 90% at 50% 0%,#164a4f,#07171a 70%)}
+  .gmeta{padding:13px 15px}.gmeta .r{font-weight:700;font-size:14px}.gmeta .s{color:var(--muted);font-size:12.5px;margin-top:2px}
+
+  /* two-track timeline */
+  .legend{display:flex;gap:18px;flex-wrap:wrap;font-size:12.5px;color:var(--muted);margin:0 0 8px}
+  .legend b{color:var(--text)}.lg{display:inline-flex;align-items:center;gap:7px}
+  .lgdot{width:11px;height:11px;border-radius:50%;background:var(--gold);border:2px solid var(--bg)}
+  .lgbar{width:16px;height:11px;border-radius:3px;background:linear-gradient(135deg,#7a2528,#54181b)}
+  .tlx{position:relative;height:925px;margin:22px 0 10px}
+  .spine{position:absolute;left:44%;top:0;bottom:0;width:2px;background:var(--border);transform:translateX(-1px)}
+  .gdot{position:absolute;left:44%;transform:translate(-50%,-50%);width:13px;height:13px;border-radius:50%;background:var(--gold);border:2px solid var(--bg);box-shadow:0 0 0 3px rgba(224,178,58,.18);z-index:3}
+  .gdot.conf{background:var(--accent);box-shadow:0 0 0 3px rgba(88,166,255,.2)}
+  .gnode{position:absolute;right:56%;transform:translateY(-50%);display:flex;align-items:center;z-index:2}
+  .gcard{display:flex;align-items:center;gap:11px;border:1px solid var(--border);background:var(--panel);border-radius:12px;padding:8px 13px 8px 8px;box-shadow:0 8px 22px rgba(0,0,0,.32)}
+  .gcard:hover{border-color:var(--accent)}
+  .cover{width:50px;height:66px;border-radius:6px;flex:none;border:1px solid rgba(255,255,255,.12);box-shadow:0 4px 12px rgba(0,0,0,.45);display:flex;align-items:flex-end;justify-content:center;padding-bottom:4px;font-size:8px;color:rgba(255,255,255,.35);font-weight:700}
+  .gt{font-weight:750;font-size:14px;white-space:nowrap}
+  .gr{font-size:11.5px;color:var(--muted);white-space:nowrap;margin-top:2px}
+  .conn{width:42px;height:2px;background:var(--border)}
+  .v{display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;border-radius:50%;font-size:9px;font-weight:900;color:#04121f;margin-left:6px;vertical-align:1px}
+  .v.blue{background:var(--accent)}.v.green{background:var(--green)}
+  .lane-right{position:absolute;left:47%;right:0;top:0;bottom:0;display:flex;flex-direction:column}
+  .sbar{position:relative;overflow:hidden;padding:12px 15px;color:#fff;border-bottom:2px solid var(--bg)}
+  .sbar .wm{position:absolute;right:6px;bottom:-18px;font-size:88px;font-weight:900;color:rgba(255,255,255,.09);line-height:1;pointer-events:none;letter-spacing:-4px}
+  .snm{font-weight:800;font-size:15px;display:flex;align-items:center;gap:9px;position:relative}
+  .slogo{width:24px;height:24px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:850;background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.22)}
+  .srole{font-size:12px;color:rgba(255,255,255,.85);margin-top:4px;position:relative;max-width:74%}
+  .syr{font-size:11px;color:rgba(255,255,255,.65);margin-top:2px;position:relative}
+  .tcount{position:absolute;right:13px;top:13px;font-size:10.5px;font-weight:800;color:#fff;background:rgba(0,0,0,.32);border:1px solid rgba(255,255,255,.25);border-radius:999px;padding:3px 10px;z-index:2}
+  .s-in{background:linear-gradient(120deg,#7a5e1e,#4f3d14)}.s-ub{background:linear-gradient(120deg,#254a76,#183050)}
+  .s-po{background:linear-gradient(120deg,#4a2f6e,#33204d)}.s-bs{background:linear-gradient(120deg,#28313f,#1a2029)}
+  .s-ri{background:linear-gradient(120deg,#7a2528,#54181b)}.s-pa{background:linear-gradient(120deg,#245b63,#173e44)}
+  .s-my{background:linear-gradient(120deg,#3a2b5c,#2a1f45)}
+
+  .skills{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  .skgroup{border:1px solid var(--border);border-radius:14px;background:var(--panel);padding:15px 16px}
+  .skgroup h4{margin:0 0 10px;font-size:12.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+  .pills{display:flex;gap:7px;flex-wrap:wrap}
+  .pill{font-size:12.5px;font-weight:650;color:#d3dcea;border:1px solid var(--border);background:var(--panel2);border-radius:8px;padding:5px 11px}
+
+  .quotes{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .quote{border:1px solid var(--border);border-radius:14px;background:linear-gradient(180deg,var(--panel),#0e131c);padding:20px 22px}
+  .quote .mark{font-size:44px;line-height:0;color:var(--purple);opacity:.5;font-weight:900}
+  .quote p{font-size:15px;color:#e3eaf4;margin:6px 0 14px;font-style:italic}
+  .quote .by{font-size:13px;color:var(--muted)}.quote .by b{color:var(--text)}
+  .sample{font-size:10px;font-weight:800;letter-spacing:.1em;color:var(--gold);border:1px solid rgba(224,178,58,.4);border-radius:5px;padding:2px 6px;text-transform:uppercase;margin-left:6px}
+
+  .contact{margin-top:30px;border:1px solid var(--border);border-radius:18px;background:radial-gradient(600px 200px at 20% 0%,rgba(88,166,255,.12),transparent),linear-gradient(180deg,var(--panel),#0d121b);padding:28px 26px;text-align:center}
+  .contact h3{margin:0 0 6px;font-size:22px;font-weight:800}.contact p{margin:0 0 18px;color:var(--muted);font-size:14px}
+  .clinks{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+  .vfoot{display:flex;align-items:center;gap:10px;justify-content:center;color:var(--muted);font-size:13px;margin:16px 0 0;flex-wrap:wrap}
+  .vfoot .v2{width:16px;height:16px;border-radius:50%;background:var(--green);color:#04121f;font-size:10px;font-weight:900;display:inline-flex;align-items:center;justify-content:center}
+  footer{border-top:1px solid var(--border);margin-top:38px;padding:22px 0 54px}
+  footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;font-size:12.5px;color:var(--dim)}
+
+  @media(max-width:820px){.heroes{grid-template-columns:1fr 1fr}.skills{grid-template-columns:1fr}.quotes{grid-template-columns:1fr}}
+  @media(max-width:560px){.heroes{grid-template-columns:1fr}h1{font-size:31px}.navlinks{display:none}}
+</style>
+</head>
+<body>
+<div class="bar"></div>
+<div class="beta">PORTFOLIO · WORK IN PROGRESS</div>
+
+<div class="nav"><div class="wrap">
+  <div class="brand">Dev<span class="q">Quest</span><span class="tld">.gg</span><span class="cr">PORTFOLIO</span></div>
+  <div class="navlinks"><a href="/credits/destin-bales">Credits page</a><a href="/">Jobs board →</a></div>
+</div></div>
+
+<div class="hero">
+  <div class="banner"></div><div class="scrim"></div>
+  <div class="bannerhint">◨ Custom banner — upload art or key image</div>
+  <div class="wrap"><div class="htop">
+    <div class="avatar">DB</div>
+    <div class="hmeta">
+      <div class="oa"><span class="dot"></span> Open to opportunities</div>
+      <h1>Destin Bales</h1>
+      <div class="role"><b>Director of Development Management</b> · Insomniac Games</div>
+      <p class="bio">A lifelong gamer and production leader with 20+ years helping teams build games worth remembering. Now at Insomniac, I support world-class developers as we craft ambitious, player-first experiences. My style is simple: clear the path, empower the team, and keep the work healthy and focused.</p>
+      <div class="tags"><span class="tag spec">Production</span><span class="tag spec">Live Service</span><span class="tag">MMORPG</span><span class="tag">First-Party Console</span><span class="tag">Studio Leadership</span></div>
+      <div class="cta"><a class="btn primary">⬇ Download résumé</a><a class="btn ghost">✉ Get in touch</a><a class="btn ghost">in · LinkedIn</a></div>
+    </div>
+  </div>
+  <div class="stats">
+    <div class="stat"><div class="n">24 yrs</div><div class="l">In the industry</div></div>
+    <div class="stat"><div class="n">7</div><div class="l">Studios</div></div>
+    <div class="stat"><div class="n">5</div><div class="l">Shipped titles</div></div>
+    <div class="stat"><div class="n">3</div><div class="l">Live-service titles</div></div>
+    <div class="stat"><div class="n">6</div><div class="l">Cancelled / unshipped</div></div>
+  </div></div>
+</div>
+
+<div class="wrap">
+  <section>
+    <div class="eyebrow">Highlights</div><h2 class="sec">Proudest work</h2>
+    <p class="sub">The titles I'm most known for — hand-picked from the full record.</p>
+    <div class="heroes">
+      <div class="gcardH"><div class="cover3 c-lol"><span class="rank">1</span><span class="chk">✓</span><span class="ttl">League of<br>Legends</span></div><div class="gmeta"><div class="r">Senior Producer</div><div class="s">Riot Games · 2012–2019</div></div></div>
+      <div class="gcardH"><div class="cover3 c-war"><span class="rank">2</span><span class="chk">✓</span><span class="ttl">Warhammer<br>Online</span></div><div class="gmeta"><div class="r">Producer</div><div class="s">Mythic / EA · 2008</div></div></div>
+      <div class="gcardH"><div class="cover3 c-coh"><span class="rank">3</span><span class="chk">✓</span><span class="ttl">City of<br>Heroes</span></div><div class="gmeta"><div class="r">Studio Director of Development</div><div class="s">Paragon Studios · 2010–2012</div></div></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="eyebrow">Career &amp; gameography</div><h2 class="sec">Two decades, on one timeline</h2>
+    <p class="sub">Most recent at the top. Games sit on the left with their box art; studio tenures run down the right, so you see which titles came out of which studio.</p>
+    <div class="legend">
+      <span class="lg"><span class="lgdot"></span> <b>Game shipped</b></span>
+      <span class="lg"><span class="lgdot" style="background:var(--accent)"></span> <b>Peer-confirmed</b></span>
+      <span class="lg"><span class="lgbar"></span> <b>Studio tenure</b> (taller = longer)</span>
+    </div>
+    <div class="tlx">
+      <div class="spine"></div>
+      <div class="lane-right">
+        <div class="sbar s-in" style="height:96px"><span class="wm">i</span><div class="snm"><span class="slogo">◎</span> Insomniac Games</div><div class="srole">Director of Development Management</div><div class="syr">2025 – Present</div></div>
+        <div class="sbar s-ub" style="height:96px"><span class="wm">U</span><div class="snm"><span class="slogo">U</span> Ubisoft</div><div class="srole">VP of Production</div><div class="syr">2023 – 2025 · 2 yrs 6 mos</div></div>
+        <div class="sbar s-po" style="height:96px"><span class="wm">◈</span><div class="snm"><span class="slogo">◈</span> Possibility Space</div><div class="srole">Platform Production Director</div><div class="syr">2022 – 2023</div></div>
+        <div class="sbar s-bs" style="height:96px"><span class="wm">B</span><div class="snm"><span class="slogo">◣</span> Bend Studio</div><div class="srole">Sr Managing Producer → Director of Studio Production</div><div class="syr">2019 – 2022 · 2 yrs 9 mos</div></div>
+        <div class="sbar s-ri" style="height:205px"><span class="wm">R</span><span class="tcount">2 titles</span><div class="snm"><span class="slogo">R</span> Riot Games</div><div class="srole">Senior Producer</div><div class="syr">2012 – 2019 · 6 yrs 10 mos</div></div>
+        <div class="sbar s-pa" style="height:96px"><span class="wm">P</span><span class="tcount">1 title</span><div class="snm"><span class="slogo">P</span> Paragon Studios</div><div class="srole">Sr Producer → Studio Director of Development</div><div class="syr">2009 – 2012 · 3 yrs</div></div>
+        <div class="sbar s-my" style="height:240px"><span class="wm">M</span><span class="tcount">2 titles</span><div class="snm"><span class="slogo">M</span> Mythic Entertainment</div><div class="srole">Content Designer → Design Manager → Design Director → Producer</div><div class="syr">2001 – 2009 · 8 yrs</div></div>
+      </div>
+      <div class="gdot" style="top:445px"></div>
+      <div class="gnode" style="top:445px"><div class="gcard"><span class="cover" style="background:radial-gradient(120% 90% at 50% 0%,#3a2c5e,#140c26)">LoR</span><span><span class="gt">Legends of Runeterra</span><span class="gr">Senior Producer · 2020</span></span></div><span class="conn"></span></div>
+      <div class="gdot conf" style="top:528px"></div>
+      <div class="gnode" style="top:528px"><div class="gcard"><span class="cover" style="background:radial-gradient(120% 90% at 50% 0%,#1c3d63,#0a1a2e)">LoL</span><span><span class="gt">League of Legends<span class="v blue">✓</span></span><span class="gr">Senior Producer · 2012–2019</span></span></div><span class="conn"></span></div>
+      <div class="gdot conf" style="top:637px"></div>
+      <div class="gnode" style="top:637px"><div class="gcard"><span class="cover" style="background:radial-gradient(120% 90% at 50% 0%,#164a4f,#07171a)">CoH</span><span><span class="gt">City of Heroes<span class="v blue">✓</span></span><span class="gr">Studio Director of Development · 2012</span></span></div><span class="conn"></span></div>
+      <div class="gdot conf" style="top:745px"></div>
+      <div class="gnode" style="top:745px"><div class="gcard"><span class="cover" style="background:radial-gradient(120% 90% at 50% 10%,#5a1717,#160707)">WAR</span><span><span class="gt">Warhammer Online<span class="v green">✓</span></span><span class="gr">Producer · 2008</span></span></div><span class="conn"></span></div>
+      <div class="gdot conf" style="top:855px"></div>
+      <div class="gnode" style="top:855px"><div class="gcard"><span class="cover" style="background:radial-gradient(120% 90% at 50% 0%,#4a3416,#1a1207)">DAoC</span><span><span class="gt">Dark Age of Camelot<span class="v green">✓</span></span><span class="gr">Content Designer · 2001</span></span></div><span class="conn"></span></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="eyebrow">How I work</div><h2 class="sec">Skills &amp; tools</h2><p class="sub">Disciplines, methods, and tools I bring to a team.</p>
+    <div class="skills">
+      <div class="skgroup"><h4>Production &amp; Leadership</h4><div class="pills"><span class="pill">Full-lifecycle production</span><span class="pill">Milestone planning</span><span class="pill">Risk management</span><span class="pill">Budget forecasting</span><span class="pill">Portfolio strategy</span><span class="pill">Team health</span><span class="pill">Live-ops</span></div></div>
+      <div class="skgroup"><h4>Methods</h4><div class="pills"><span class="pill">Agile / Scrum</span><span class="pill">Milestone &amp; cert</span><span class="pill">Release management</span><span class="pill">Roadmapping</span></div></div>
+      <div class="skgroup"><h4>Tools</h4><div class="pills"><span class="pill">Jira</span><span class="pill">Confluence</span><span class="pill">Perforce</span><span class="pill">Miro</span></div></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="eyebrow">Endorsements <span class="sample">Sample</span></div><h2 class="sec">What teammates say</h2>
+    <p class="sub">A confirming teammate can leave one line — verification becomes a recommendation.</p>
+    <div class="quotes">
+      <div class="quote"><div class="mark">&ldquo;</div><p>Destin clears the blockers before you even see them. He makes the whole team better.</p><div class="by">— <b>Engineering Lead</b>, shipped League of Legends together</div></div>
+      <div class="quote"><div class="mark">&ldquo;</div><p>Calm, clear, and relentless about team health. I'd follow him to any studio.</p><div class="by">— <b>Senior Designer</b>, shipped Warhammer Online together</div></div>
+    </div>
+  </section>
+
+  <div class="contact">
+    <h3>Looking for a production leader?</h3>
+    <p>Open to Executive Producer &amp; Studio Production roles. Résumé tailors to your posting in one click.</p>
+    <div class="clinks"><a class="btn primary">⬇ Download résumé (PDF)</a><a class="btn ghost">✉ Get in touch</a><a class="btn ghost">in · LinkedIn</a></div>
+    <div class="vfoot"><span class="v2">✓</span> 4 of 5 shipped credits confirmed by teammates who shipped the same game · <a href="/credits/how-evidence-works.html" style="color:var(--accent)">how evidence works →</a></div>
+  </div>
+</div>
+
+<footer><div class="wrap">
+  <div><b style="color:var(--text)">DevQuest.gg</b> · portfolio · devquest.gg/portfolio/destin-bales</div>
+  <div>One profile, every style — verified by the people you shipped with.</div>
+</div></footer>
+</body>
+</html>
