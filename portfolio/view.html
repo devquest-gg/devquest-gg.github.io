@@ -108,6 +108,48 @@
   .editlink{position:fixed;bottom:12px;right:12px;z-index:60;font-size:12px;font-weight:700;color:#04121f;background:var(--gold);border-radius:999px;padding:7px 14px;display:none}
   @media(max-width:820px){.heroes{grid-template-columns:1fr 1fr}.skills{grid-template-columns:1fr}}
   @media(max-width:560px){.heroes{grid-template-columns:1fr}h1{font-size:31px}.navlinks{display:none}}
+
+  /* featured work: wall of box art */
+  .wall{display:grid;grid-template-columns:repeat(5,1fr);gap:16px;margin-top:20px}
+  .poster{position:relative;aspect-ratio:2/3;border-radius:13px;overflow:hidden;cursor:pointer;background:#141b26;box-shadow:0 10px 26px rgba(0,0,0,.5),inset 0 0 0 1px rgba(255,255,255,.07);transition:transform .16s ease,box-shadow .16s ease}
+  .poster:hover{transform:translateY(-6px) scale(1.015);box-shadow:0 22px 44px rgba(0,0,0,.6),inset 0 0 0 1px rgba(255,255,255,.18)}
+  .poster .art{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1}
+  .poster .pfallback{position:absolute;inset:0;display:flex;align-items:flex-end;padding:12px;z-index:0}
+  .poster .pfallback span{font-weight:850;font-size:15px;letter-spacing:-.3px;text-shadow:0 2px 12px rgba(0,0,0,.85);line-height:1.1}
+  .poster .pgloss{position:absolute;inset:0;z-index:2;pointer-events:none;background:linear-gradient(160deg,rgba(255,255,255,.13),transparent 34%)}
+  .poster .pvb{position:absolute;top:8px;right:8px;z-index:3;width:22px;height:22px;border-radius:50%;background:rgba(63,185,80,.96);color:#04220f;font-size:12px;font-weight:900;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 6px rgba(0,0,0,.5)}
+  .poster .pexp{position:absolute;bottom:8px;right:8px;z-index:3;font-size:10.5px;font-weight:800;color:#fff;background:rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.28);border-radius:999px;padding:3px 9px;opacity:0;transform:translateY(6px);transition:.16s}
+  .poster:hover .pexp{opacity:1;transform:none}
+  @media(max-width:900px){.wall{grid-template-columns:repeat(4,1fr)}}
+  @media(max-width:680px){.wall{grid-template-columns:repeat(3,1fr)}}
+  @media(max-width:440px){.wall{grid-template-columns:repeat(2,1fr)}}
+
+  /* one-sheet modal */
+  .osovl{position:fixed;inset:0;z-index:100;display:flex;align-items:flex-start;justify-content:center;padding:34px 16px 44px;overflow:auto;background:rgba(4,7,12,.74);backdrop-filter:blur(7px);opacity:0;pointer-events:none;transition:opacity .2s ease}
+  .osovl.on{opacity:1;pointer-events:auto}
+  .ossheet{position:relative;width:100%;max-width:900px;border-radius:20px;overflow:hidden;background:linear-gradient(180deg,var(--panel),#0d131d);border:1px solid var(--border);box-shadow:0 40px 100px rgba(0,0,0,.7);transform:translateY(24px) scale(.97);opacity:0;transition:transform .24s cubic-bezier(.2,.8,.2,1),opacity .24s}
+  .osovl.on .ossheet{transform:none;opacity:1}
+  .osclose{position:absolute;top:14px;right:14px;z-index:12;width:38px;height:38px;border-radius:50%;border:1px solid rgba(255,255,255,.25);background:rgba(0,0,0,.4);color:#fff;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+  .osclose:hover{background:rgba(0,0,0,.66)}
+  .osbanner{position:relative;height:280px;overflow:hidden}
+  .osbanner img,.osbanner .osfill{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+  .osscrim{position:absolute;inset:0;background:linear-gradient(180deg,rgba(8,11,17,.12),rgba(8,11,17,.55) 55%,var(--panel) 99%)}
+  .osgloss{position:absolute;inset:0;background:linear-gradient(150deg,rgba(255,255,255,.15),transparent 30%);pointer-events:none}
+  .osbtitle{position:absolute;left:0;right:0;bottom:0;padding:24px 30px;z-index:2}
+  .oskicker{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:9px}
+  .oschip{font-size:12px;font-weight:800;letter-spacing:.03em;color:#e6edf6;background:rgba(0,0,0,.42);border:1px solid rgba(255,255,255,.22);border-radius:999px;padding:4px 11px}
+  .osvchip{background:rgba(63,185,80,.2);border-color:rgba(63,185,80,.5);color:#b7f0c2;display:inline-flex;align-items:center;gap:6px}
+  .osvchip .c{width:14px;height:14px;border-radius:50%;background:var(--green);color:#04220f;font-size:9px;display:flex;align-items:center;justify-content:center;font-weight:900}
+  .osbtitle h3{margin:0;font-size:33px;font-weight:850;letter-spacing:-.7px;text-shadow:0 3px 20px rgba(0,0,0,.85)}
+  .osrole{margin-top:6px;font-size:15.5px;color:#eaf1fa;font-weight:650;text-shadow:0 2px 10px rgba(0,0,0,.7)}
+  .osshots{padding:22px 30px 6px}
+  .osshot{position:relative;border-radius:12px;overflow:hidden;aspect-ratio:16/9;background:#0c121b;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06),0 8px 20px rgba(0,0,0,.45)}
+  .osshot img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+  .osevid{margin:14px 30px 8px;border-top:1px solid var(--border);padding-top:18px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;font-size:14px;color:var(--muted)}
+  .osevid .oseb{flex:none;width:26px;height:26px;border-radius:50%;background:var(--green);color:#04220f;font-size:14px;font-weight:900;display:flex;align-items:center;justify-content:center}
+  .osevid .oseb.dim{background:var(--dim);color:#0b0e14}
+  .osevid b{color:var(--text)}
+  .oscta{margin:6px 30px 26px;font-size:13px;color:var(--gold);border:1px dashed rgba(224,178,58,.45);border-radius:12px;padding:12px 15px;background:rgba(224,178,58,.06)}
 </style>
 </head>
 <body>
@@ -122,6 +164,7 @@
 (function(){
   var CUR = 2026;
   var app = document.getElementById("app");
+  var STEAM = {}, IS_OWNER = false, _covMap = {}, _credits = [];
   function esc(s){ return String(s==null?"":s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];}); }
   // slug from ?slug= (router / view.html) or the last path segment (/portfolio/<slug>/)
   var qslug = new URLSearchParams(location.search).get("slug");
@@ -144,7 +187,7 @@
     var entP=Promise.all(list.map(function(s){ return getJSON("/credits/data/site/games/"+bkt(s)+".json").then(function(m){ return {s:s,e:(m&&m[s])||null}; }); }));
     return Promise.all([adminP,entP]).then(function(res){
       var admin=res[0], map={};
-      res[1].forEach(function(x){ var e=x.e; var url=admin[x.s]||(e&&e.cover)||(e&&e.steam?steamArt(e.steam):null); if(url) map[x.s]=url; });
+      res[1].forEach(function(x){ var e=x.e; if(e&&e.steam) STEAM[x.s]=e.steam; var url=admin[x.s]||(e&&e.cover)||(e&&e.steam?steamArt(e.steam):null); if(url) map[x.s]=url; });
       return map;
     }).catch(function(){ return {}; });
   }
@@ -161,7 +204,7 @@
     var person=r.data.person, positions=r.data.positions||[], credits=r.data.credits||[];
     resolveCovers(credits).then(function(covMap){ render(person, positions, credits, covMap||{}); });
     // show edit link if this is my own page
-    if(DQAPI.isSignedIn()){ DQAPI.me().then(function(mr){ var me=mr&&mr.data&&mr.data.person; if(me && me.slug===slug) document.getElementById("editlink").style.display="inline-block"; }).catch(function(){}); }
+    if(DQAPI.isSignedIn()){ DQAPI.me().then(function(mr){ var me=mr&&mr.data&&mr.data.person; if(me && me.slug===slug){ IS_OWNER=true; document.getElementById("editlink").style.display="inline-block"; } }).catch(function(){}); }
   }).catch(function(){ app.innerHTML='<div class="wrap" style="padding:60px 22px;color:var(--pink)">Could not load this portfolio. Try again.</div>'; });
 
   function creditYear(c){ return c.work_start || c.year || c.work_end || null; }
@@ -208,10 +251,13 @@
         '</div>'+
       '</div></div>';
 
-    // ---- highlights: top 3 by vouches, then recency ----
-    var top = credits.slice().sort(function(a,b){ return (b.vouch_count||0)-(a.vouch_count||0) || (creditYear(b)||0)-(creditYear(a)||0); }).slice(0,3);
-    var highlights = top.length ? '<div class="wrap"><section><div class="eyebrow">Highlights</div><h2 class="sec">Proudest work</h2><p class="sub">Most-confirmed titles from the full record below.</p><div class="heroes">'+
-      top.map(function(c,i){ return '<div class="gcardH"><div class="cover3" style="background:'+gameGrad(c.game_slug)+'">'+art(c.game_slug,covMap)+'<span class="rank">'+(i+1)+'</span>'+(c.vouch_count?'<span class="chk">✓</span>':'')+'<span class="ttl">'+esc(c.game_title)+'</span></div><div class="gmeta"><div class="r">'+esc(c.role)+'</div><div class="s">'+esc(c.studio||"")+(creditYear(c)?(c.studio?' · ':'')+creditYear(c):'')+'</div></div></div>'; }).join("")+
+    // ---- featured work: the wall of box art (click → one-sheet) ----
+    _covMap = covMap; _credits = credits;
+    var wallGames = credits.slice().sort(function(a,b){ return (b.vouch_count||0)-(a.vouch_count||0) || (creditYear(b)||0)-(creditYear(a)||0); });
+    var highlights = wallGames.length ? '<div class="wrap"><section><div class="eyebrow">The Work</div><h2 class="sec">Featured work</h2><p class="sub">Click any title for its one-sheet — the role, the scale, and the teammates who confirmed it.</p><div class="wall">'+
+      wallGames.map(function(c){ var ci=credits.indexOf(c); var conf=(c.vouch_count||0)>0;
+        return '<div class="poster" data-ci="'+ci+'"><div class="pfallback" style="background:'+gameGrad(c.game_slug)+'"><span>'+esc(c.game_title)+'</span></div>'+art(c.game_slug,covMap)+'<div class="pgloss"></div>'+(conf?'<span class="pvb">✓</span>':'')+'<span class="pexp">Open ⤢</span></div>';
+      }).join("")+
       '</div></section></div>' : '';
 
     // ---- timeline ----
@@ -230,10 +276,55 @@
       '</div></div>';
 
     app.innerHTML = hero + highlights + tl.html + skills + contact;
+    var wallEl = app.querySelector(".wall");
+    if(wallEl){ wallEl.addEventListener("click", function(e){ var pel=e.target.closest(".poster"); if(pel) openSheet(+pel.getAttribute("data-ci")); }); }
   }
 
   function stat(n,l){ return '<div class="stat"><div class="n">'+n+'</div><div class="l">'+l+'</div></div>'; }
   function cap(s){ return String(s).charAt(0).toUpperCase()+String(s).slice(1); }
+
+  // ---- one-sheet modal ----
+  function steamHero(id){ return "https://cdn.cloudflare.steamstatic.com/steam/apps/"+id+"/library_hero.jpg"; }
+  function steamHeader(id){ return "https://cdn.cloudflare.steamstatic.com/steam/apps/"+id+"/header.jpg"; }
+  var _ovl=null;
+  function ensureOvl(){
+    if(_ovl) return;
+    _ovl=document.createElement("div"); _ovl.className="osovl"; _ovl.innerHTML='<div class="ossheet" id="ossheet"></div>';
+    document.body.appendChild(_ovl);
+    _ovl.addEventListener("click",function(e){ if(e.target===_ovl) closeSheet(); });
+    document.addEventListener("keydown",function(e){ if(e.key==="Escape") closeSheet(); });
+  }
+  function closeSheet(){ if(_ovl){ _ovl.classList.remove("on"); document.body.style.overflow=""; } }
+  function openSheet(ci){
+    ensureOvl();
+    var c=_credits[ci]; if(!c) return;
+    var sheet=document.getElementById("ossheet");
+    sheet.innerHTML=oneSheetHTML(c);
+    var cl=sheet.querySelector(".osclose"); if(cl) cl.onclick=closeSheet;
+    sheet.scrollTop=0;
+    _ovl.classList.add("on"); document.body.style.overflow="hidden";
+  }
+  function oneSheetHTML(c){
+    var slug=c.game_slug, sid=STEAM[slug], cover=_covMap[slug];
+    var yr=(c.work_start&&c.work_end)?(c.work_start+" – "+c.work_end):(creditYear(c)||"");
+    var conf=(c.vouch_count||0);
+    var bannerFill = sid ? '<img src="'+steamHero(sid)+'" alt="" onerror="this.remove()">'
+                    : (cover ? '<img src="'+esc(cover)+'" alt="">' : '<div class="osfill" style="background:'+gameGrad(slug)+'"></div>');
+    var shots = sid ? '<div class="osshots"><div class="osshot"><img src="'+steamHeader(sid)+'" alt="" onerror="this.closest(\'.osshots\').style.display=\'none\'"></div></div>' : '';
+    var evid = conf
+      ? '<span class="oseb">✓</span><span><b>Confirmed by '+conf+' teammate'+(conf>1?"s":"")+' who shipped '+esc(c.game_title)+'.</b> Peer verification is the part no other portfolio can show.</span>'
+      : '<span class="oseb dim">•</span><span>Not yet peer-confirmed — <a href="/credits/'+esc(slug)+'" style="color:var(--accent)">ask a teammate to confirm →</a></span>';
+    var ownerCTA = IS_OWNER ? '<div class="oscta">This is your one-sheet. The scale, team size, and “what I led” will be drafted here for your approval — that’s the next build.</div>' : '';
+    return '<button class="osclose" aria-label="Close">✕</button>'+
+      '<div class="osbanner">'+bannerFill+'<div class="osscrim"></div><div class="osgloss"></div>'+
+        '<div class="osbtitle"><div class="oskicker">'+
+          (c.studio?'<span class="oschip">'+esc(c.studio)+'</span>':"")+
+          (yr?'<span class="oschip">'+esc(yr)+'</span>':"")+
+          (conf?'<span class="oschip osvchip"><span class="c">✓</span> '+conf+' confirmed</span>':"")+
+        '</div><h3>'+esc(c.game_title)+'</h3><div class="osrole">'+esc(c.role)+'</div></div>'+
+      '</div>'+shots+
+      '<div class="osevid">'+evid+'</div>'+ownerCTA;
+  }
 
   function gtile(c, covMap){
     var conf=(c.vouch_count||0)>0;
