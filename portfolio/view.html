@@ -192,7 +192,6 @@
   .osdid li::before{content:"";position:absolute;left:2px;top:8px;width:7px;height:7px;border-radius:2px;background:linear-gradient(135deg,var(--accent),var(--purple))}
   .oskw{display:flex;gap:8px;flex-wrap:wrap}
   .oskw span{font-size:12px;font-weight:700;color:#dce4f0;border:1px solid var(--border);background:#0d131d;border-radius:8px;padding:5px 11px}
-  .osbanner img{object-position:center 22%}
   .osshotcol{display:flex;flex-direction:column;gap:12px}
   .osseewho{color:var(--accent);font-weight:700;cursor:pointer;white-space:nowrap}
   .osvouchers{display:none;gap:8px;flex-wrap:wrap;margin:12px 30px 4px}
@@ -205,8 +204,8 @@
   body.is-owner .owner-only{display:inline-flex !important}
   .pedit{position:absolute;top:16px;right:16px;z-index:5;align-items:center;gap:6px;font-size:13px;font-weight:750;color:#04121f;background:var(--gold);border:0;border-radius:10px;padding:8px 14px;cursor:pointer;box-shadow:0 4px 14px rgba(224,178,58,.3)}
   .pedit:hover{filter:brightness(1.06)}
-  .osedit{position:absolute;top:14px;right:60px;z-index:12;align-items:center;gap:6px;height:38px;padding:0 15px;border-radius:19px;border:1px solid rgba(255,255,255,.25);background:rgba(0,0,0,.4);color:#fff;font-size:13px;font-weight:750;cursor:pointer;backdrop-filter:blur(4px)}
-  .osedit:hover{background:rgba(0,0,0,.66)}
+  .osedit{position:absolute;top:14px;right:60px;z-index:12;align-items:center;gap:6px;height:38px;padding:0 16px;border-radius:19px;border:0;background:var(--gold);color:#04121f;font-size:13px;font-weight:800;cursor:pointer;box-shadow:0 4px 14px rgba(224,178,58,.35)}
+  .osedit:hover{filter:brightness(1.06)}
   .efwrap{padding:26px 28px 30px}
   .efwrap h3{margin:0 0 4px;font-size:22px;font-weight:850;letter-spacing:-.4px}
   .efdesc{color:var(--muted);font-size:13px;margin:0 0 14px}
@@ -222,6 +221,17 @@
   .efbtn.primary{color:#04121f;background:linear-gradient(135deg,#7cc0ff,#58a6ff);border:0}
   .efstatus{font-size:13px}.efstatus.ok{color:var(--green)}.efstatus.err{color:var(--pink)}
   .efstat-row{display:flex;gap:8px;margin-bottom:8px}
+  .osclk{cursor:pointer}
+  .addtile{position:absolute;top:0;left:0;transform-origin:0 0;border-radius:12px;border:2px dashed var(--border);display:none;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;color:var(--muted);background:rgba(255,255,255,.02);transition:transform .55s cubic-bezier(.2,.8,.2,1),border-color .15s,color .15s}
+  .addtile:hover{border-color:var(--accent);color:var(--accent)}
+  .addtile .plus{font-size:36px;font-weight:300;line-height:1}
+  .addtile .lbl{font-size:12px;font-weight:750;margin-top:6px}
+  .agresult{display:flex;flex-direction:column;gap:1px;padding:9px 11px;border:1px solid var(--border);border-radius:9px;margin-bottom:7px;cursor:pointer;background:var(--bg)}
+  .agresult:hover{border-color:var(--accent)}
+  .agresult .agt{font-weight:700;font-size:13.5px}
+  .agresult .ags{font-size:12px;color:var(--muted)}
+  .agsel{border:1px solid rgba(88,166,255,.5);background:rgba(88,166,255,.1);border-radius:9px;padding:10px 12px;font-size:13.5px;margin-bottom:6px}
+  .agnew{color:var(--accent);font-weight:700;cursor:pointer;font-size:13px}
 </style>
 </head>
 <body>
@@ -271,13 +281,16 @@
   function initials(s){ var w=String(s||"").replace(/[:\-].*$/,"").split(/\s+/).filter(function(x){return x && !/^(of|the|and|a|an|II|2)$/i.test(x);}); var r=w.slice(0,3).map(function(x){return x[0];}).join(""); return (r||String(s||"?").slice(0,2)).toUpperCase(); }
   function studioMark(s){ return String(s||"?").trim().slice(0,1).toUpperCase(); }
 
-  DQAPI.portfolio(slug).then(function(r){
-    if(!(r && r.ok && r.data && r.data.person)){ app.innerHTML='<div class="wrap" style="padding:60px 22px"><h1>Not found</h1><p style="color:var(--muted)">No portfolio at this address yet.</p></div>'; return; }
-    var person=r.data.person, positions=r.data.positions||[], credits=r.data.credits||[];
-    resolveCovers(credits).then(function(covMap){ render(person, positions, credits, covMap||{}); });
-    // show edit link if this is my own page
-    if(DQAPI.isSignedIn()){ DQAPI.me().then(function(mr){ var me=mr&&mr.data&&mr.data.person; if(me && me.slug===slug){ IS_OWNER=true; document.body.classList.add("is-owner"); document.getElementById("editlink").style.display="inline-block"; } }).catch(function(){}); }
-  }).catch(function(){ app.innerHTML='<div class="wrap" style="padding:60px 22px;color:var(--pink)">Could not load this portfolio. Try again.</div>'; });
+  var _relayout=null;
+  function loadPortfolio(){
+    DQAPI.portfolio(slug).then(function(r){
+      if(!(r && r.ok && r.data && r.data.person)){ app.innerHTML='<div class="wrap" style="padding:60px 22px"><h1>Not found</h1><p style="color:var(--muted)">No portfolio at this address yet.</p></div>'; return; }
+      var person=r.data.person, positions=r.data.positions||[], credits=r.data.credits||[];
+      resolveCovers(credits).then(function(covMap){ render(person, positions, credits, covMap||{}); });
+      if(DQAPI.isSignedIn()){ DQAPI.me().then(function(mr){ var me=mr&&mr.data&&mr.data.person; if(me && me.slug===slug){ IS_OWNER=true; document.body.classList.add("is-owner"); document.getElementById("editlink").style.display="inline-block"; if(_relayout) _relayout(); } }).catch(function(){}); }
+    }).catch(function(){ app.innerHTML='<div class="wrap" style="padding:60px 22px;color:var(--pink)">Could not load this portfolio. Try again.</div>'; });
+  }
+  loadPortfolio();
 
   function creditYear(c){ return c.work_start || c.year || c.work_end || null; }
   function isLive(c){ return (c.releases||[]).some(function(x){ return /live/i.test(x); }); }
@@ -373,7 +386,8 @@
     var sheet=document.getElementById("ossheet");
     sheet.innerHTML=oneSheetHTML(c);
     var cl=sheet.querySelector(".osclose"); if(cl) cl.onclick=closeSheet;
-    var sw=sheet.querySelector(".osseewho"); if(sw) sw.onclick=function(){ var v=sheet.querySelector(".osvouchers"); if(v) v.classList.toggle("on"); };
+    var toggV=function(){ var v=sheet.querySelector(".osvouchers"); if(v) v.classList.toggle("on"); };
+    sheet.querySelectorAll(".osseewho,.osclk").forEach(function(el){ el.onclick=toggV; });
     var ed=sheet.querySelector(".osedit"); if(ed) ed.onclick=function(){ openSheetEdit(ci); };
     sheet.scrollTop=0;
     _ovl.classList.add("on"); document.body.style.overflow="hidden";
@@ -465,6 +479,52 @@
       else { st.textContent=(r&&r.data&&r.data.error)||"Could not save."; st.className="efstatus err"; }
     }).catch(function(){ st.textContent="Network error."; st.className="efstatus err"; });
   }
+  // ---- add a game (owner) ----
+  function addGameHTML(){
+    return '<div class="efwrap"><button class="osclose" aria-label="Close">✕</button>'+
+      '<h3>Add a game</h3><div class="efdesc">Search the catalogue for a game you shipped, then add your role.</div>'+
+      '<label class="eflabel">Game</label><input id="ag-q" placeholder="Start typing a game title…" autocomplete="off">'+
+      '<div id="ag-results" style="margin-top:8px"></div>'+
+      '<div id="ag-picked"></div>'+
+      '<label class="eflabel">Your role on it</label><input id="ag-role" placeholder="e.g. Senior Producer">'+
+      '<div class="efactions"><span class="efbtn primary" id="ag-add">Add to my portfolio</span><span class="efbtn" id="ag-cancel">Cancel</span><span class="efstatus" id="ag-status"></span></div>'+
+      '</div>';
+  }
+  function openAddGame(){
+    ensureOvl();
+    var sheet=document.getElementById("ossheet");
+    sheet.innerHTML=addGameHTML();
+    sheet.querySelector(".osclose").onclick=closeSheet;
+    sheet.querySelector("#ag-cancel").onclick=closeSheet;
+    var q=sheet.querySelector("#ag-q"), res=sheet.querySelector("#ag-results"), picked=sheet.querySelector("#ag-picked");
+    var sel=null, t=null;
+    function pick(g){ sel=g; picked.innerHTML='<div class="agsel"><b>'+esc(g.title)+'</b>'+(g.studio?' <span class="mut">· '+esc(g.studio)+'</span>':'')+(g.isNew?' <span class="mut">(new)</span>':'')+'</div>'; res.innerHTML=""; q.value=g.title; }
+    function search(){
+      var v=q.value.trim(); if(v.length<2){ res.innerHTML=""; return; }
+      DQAPI.searchGames(v).then(function(r){
+        var games=(r&&r.data&&r.data.games)||[];
+        res.innerHTML=games.map(function(g,i){ return '<div class="agresult" data-i="'+i+'"><span class="agt">'+esc(g.title)+'</span>'+((g.studio||g.year)?'<span class="ags">'+esc(g.studio||"")+(g.year?(g.studio?' · ':'')+g.year:'')+'</span>':'')+'</div>'; }).join("")+
+          '<div class="agnew" id="ag-new">+ Add “'+esc(v)+'” as a new game</div>';
+        res.querySelectorAll(".agresult").forEach(function(el){ el.onclick=function(){ pick(games[+el.dataset.i]); }; });
+        var nb=res.querySelector("#ag-new"); if(nb) nb.onclick=function(){ pick({title:v, studio:"", isNew:true}); };
+      }).catch(function(){});
+    }
+    q.oninput=function(){ sel=null; picked.innerHTML=""; clearTimeout(t); t=setTimeout(search,220); };
+    sheet.querySelector("#ag-add").onclick=function(){
+      var role=sheet.querySelector("#ag-role").value.trim(), st=sheet.querySelector("#ag-status");
+      if(!sel){ st.textContent="Pick a game from the list first."; st.className="efstatus err"; return; }
+      if(!role){ st.textContent="Add your role."; st.className="efstatus err"; return; }
+      var payload = sel.isNew ? { role:role, new_game:{ title:sel.title, studio:sel.studio||"" } } : { role:role, game_slug:sel.slug, game_title:sel.title, studio:sel.studio||null };
+      st.textContent="Adding…"; st.className="efstatus";
+      DQAPI.createCredit(payload).then(function(r){
+        if(r&&r.ok){ st.textContent="Added ✓"; st.className="efstatus ok"; setTimeout(function(){ closeSheet(); loadPortfolio(); },500); }
+        else { st.textContent=(r&&r.data&&r.data.error)||"Could not add."; st.className="efstatus err"; }
+      }).catch(function(){ st.textContent="Network error."; st.className="efstatus err"; });
+    };
+    sheet.scrollTop=0;
+    _ovl.classList.add("on"); document.body.style.overflow="hidden";
+  }
+
   function oneSheetHTML(c){
     var slug=c.game_slug, sid=STEAM[slug], cover=_covMap[slug], sh=c.sheet;
     var yr=(c.work_start&&c.work_end)?(c.work_start+" – "+c.work_end):(creditYear(c)||"");
@@ -482,7 +542,7 @@
     var mainHTML = (sumHTML||gridHTML) ? '<div class="osmain">'+sumHTML+gridHTML+'</div>' : '';
     var vouchers = c.voucher_slugs ? String(c.voucher_slugs).split(",").filter(Boolean) : [];
     var evid = conf
-      ? '<span class="oseb">✓</span><span><b>Confirmed by '+conf+' teammate'+(conf>1?"s":"")+' who shipped '+esc(c.game_title)+'.</b> Peer verification is the part no other portfolio can show.'+(vouchers.length?' <span class="osseewho">See who →</span>':'')+'</span>'
+      ? '<span class="oseb'+(vouchers.length?' osclk':'')+'">✓</span><span><b>Confirmed by '+conf+' teammate'+(conf>1?"s":"")+' who shipped '+esc(c.game_title)+'.</b> Peer verification is the part no other portfolio can show.'+(vouchers.length?' <span class="osseewho">See who →</span>':'')+'</span>'
       : '<span class="oseb dim">•</span><span>Not yet peer-confirmed — <a href="/credits/'+esc(slug)+'" style="color:var(--accent)">ask a teammate to confirm →</a></span>';
     var vlist = vouchers.length ? '<div class="osvouchers">'+vouchers.map(function(s){ return '<a class="osvchiplink" href="/credits/'+esc(s)+'">'+esc(deslug(s))+'</a>'; }).join("")+'</div>' : '';
     var ownerCTA = (IS_OWNER && !sh) ? '<div class="oscta">This is your one-sheet. Add the scale, team size, and “what I led” in your editor to fill it out.</div>' : '';
@@ -492,7 +552,7 @@
         '<div class="osbtitle"><div class="oskicker">'+
           (c.studio?'<span class="oschip">'+esc(c.studio)+'</span>':"")+
           (yr?'<span class="oschip">'+esc(yr)+'</span>':"")+
-          (conf?'<span class="oschip osvchip"><span class="c">✓</span> '+conf+' confirmed</span>':"")+
+          (conf?'<span class="oschip osvchip'+(vouchers.length?' osclk':'')+'"><span class="c">✓</span> '+conf+' confirmed</span>':"")+
         '</div><h3>'+esc(c.game_title)+'</h3><div class="osrole">'+esc(c.role)+'</div></div>'+
       '</div>'+statsHTML+mainHTML+
       '<div class="osevid">'+evid+'</div>'+vlist+ownerCTA;
@@ -515,6 +575,7 @@
       el.innerHTML='<div class="fb" style="background:'+gameGrad(c.game_slug)+'"><span>'+esc(c.game_title)+'</span></div>'+art(c.game_slug,covMap)+'<div class="gloss"></div>'+(conf?'<span class="vb">✓</span>':'')+'<span class="grip">⠿</span>';
       stage.appendChild(el); tiles.push(el);
     });
+    var addEl=document.createElement("div"); addEl.className="addtile"; addEl.innerHTML='<div class="plus">+</div><div class="lbl">Add game</div>'; addEl.onclick=openAddGame; stage.appendChild(addEl);
     var hasOrphan = credits.some(function(c){ return bandOf(c)<0; });
     var labelBands = bands.map(function(b){ return {studio:b.p.studio, cur:b.p.is_current, s:b.s, e:b.e}; });
     if(hasOrphan) labelBands.push({studio:"Also credited", orphan:true});
@@ -531,6 +592,7 @@
       var cols=Math.max(2,Math.min(6,Math.floor((W+GAP)/(176+GAP))));
       var bw=Math.floor((W-GAP*(cols-1))/cols), bh=Math.round(bw*1.5);
       tiles.forEach(function(el){ el.style.width=bw+"px"; el.style.height=bh+"px"; });
+      addEl.style.width=bw+"px"; addEl.style.height=bh+"px";
       geo={W:W,cols:cols,bw:bw,bh:bh};
     }
     function put(el,x,y,s){ el.style.transform="translate("+x+"px,"+y+"px) scale("+s+")"; }
@@ -539,8 +601,12 @@
       if(mode==="grid"){
         var cols=geo.cols;
         order.forEach(function(gi,k){ var row=Math.floor(k/cols), col=k%cols; put(tiles[gi], col*(bw+GAP), row*(bh+GAP), 1); });
-        stage.style.height=(Math.ceil(order.length/cols)*(bh+GAP)-GAP)+"px";
+        var total=order.length;
+        if(IS_OWNER){ addEl.style.display="flex"; put(addEl, (total%cols)*(bw+GAP), Math.floor(total/cols)*(bh+GAP), 1); total+=1; }
+        else { addEl.style.display="none"; }
+        stage.style.height=(Math.ceil(total/cols)*(bh+GAP)-GAP)+"px";
       } else {
+        addEl.style.display="none";
         var labelW=Math.min(210,Math.max(148,Math.round(W*0.22))), spineX=labelW+18, tilesX=spineX+22, tW=74, sc=tW/bw, tH=Math.round(tW*1.5), tg=12;
         var perRow=Math.max(1,Math.floor((W-tilesX)/(tW+tg)));
         spine.style.left=spineX+"px";
@@ -597,6 +663,7 @@
     stage.addEventListener("click",function(e){ if(IS_OWNER) return; var el=e.target.closest(".tile"); if(el) openSheet(+el.dataset.i); });
 
     var rt; window.addEventListener("resize",function(){ clearTimeout(rt); rt=setTimeout(function(){ computeBase(); layout(); },120); });
+    _relayout=function(){ computeBase(); layout(); };
     computeBase(); setHint(); layout();
   }
 
