@@ -147,6 +147,23 @@
   .oschip{font-size:12px;font-weight:800;letter-spacing:.03em;color:#e6edf6;background:rgba(0,0,0,.42);border:1px solid rgba(255,255,255,.22);border-radius:999px;padding:4px 11px}
   .osvchip{background:rgba(63,185,80,.2);border-color:rgba(63,185,80,.5);color:#b7f0c2;display:inline-flex;align-items:center;gap:6px}
   .oschip.cssoon{background:rgba(163,113,247,.25);border-color:rgba(163,113,247,.55);color:#e9dcff}
+  .cfovl{position:fixed;inset:0;z-index:120;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(4,7,12,.55);backdrop-filter:blur(3px);opacity:0;pointer-events:none;transition:opacity .16s}
+  .cfovl.on{opacity:1;pointer-events:auto}
+  .cfcard{width:100%;max-width:400px;background:var(--panel);border:1px solid var(--border);border-radius:16px;box-shadow:0 30px 80px rgba(0,0,0,.7);overflow:hidden;transform:translateY(10px) scale(.98);transition:transform .18s,opacity .18s}
+  .cfovl.on .cfcard{transform:none}
+  .cfhead{display:flex;align-items:center;gap:9px;padding:15px 16px;border-bottom:1px solid var(--border);font-weight:800;font-size:15px}
+  .cfhead .ck{width:22px;height:22px;border-radius:50%;background:var(--green);color:#04220f;font-size:12px;font-weight:900;display:flex;align-items:center;justify-content:center;flex:none}
+  .cfhead .x{margin-left:auto;cursor:pointer;color:var(--muted);font-size:17px;background:none;border:0;line-height:1}
+  .cfhead .x:hover{color:var(--text)}
+  .cfsub{padding:15px 16px 5px;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--dim)}
+  .cfrow{display:flex;align-items:center;gap:12px;padding:11px 16px;text-decoration:none;color:inherit}
+  .cfrow:hover{background:rgba(255,255,255,.03)}
+  .cfav{width:38px;height:38px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;font-weight:850;font-size:14px;color:#04121f;background:linear-gradient(135deg,#7cc0ff,#a371f7)}
+  .cfinfo{display:flex;flex-direction:column;min-width:0}
+  .cfnm{font-weight:750;font-size:14px}
+  .cfmeta{font-size:12px;color:var(--muted);margin-top:1px;line-height:1.35}
+  .cffoot{padding:13px 16px;border-top:1px solid var(--border)}
+  .cffoot a{color:var(--accent);font-weight:700;font-size:13.5px;text-decoration:none}
   .osvchip .c{width:14px;height:14px;border-radius:50%;background:var(--green);color:#04220f;font-size:9px;display:flex;align-items:center;justify-content:center;font-weight:900}
   .osbtitle h3{margin:0;font-size:33px;font-weight:850;letter-spacing:-.7px;text-shadow:0 3px 20px rgba(0,0,0,.85)}
   .osrole{margin-top:6px;font-size:15.5px;color:#eaf1fa;font-weight:650;text-shadow:0 2px 10px rgba(0,0,0,.7)}
@@ -402,8 +419,8 @@
     var sheet=document.getElementById("ossheet");
     sheet.innerHTML=oneSheetHTML(c);
     var cl=sheet.querySelector(".osclose"); if(cl) cl.onclick=closeSheet;
-    var toggV=function(){ var v=sheet.querySelector(".osvouchers"); if(v) v.classList.toggle("on"); };
-    sheet.querySelectorAll(".osseewho,.osclk").forEach(function(el){ el.onclick=toggV; });
+    var showConf=function(e){ if(e) e.stopPropagation(); var cc=_credits[ci]; if(cc) openConfirmers(cc.id, cc.game_title); };
+    sheet.querySelectorAll(".osseewho,.osclk").forEach(function(el){ el.onclick=showConf; });
     var ed=sheet.querySelector(".osedit"); if(ed) ed.onclick=function(){ openSheetEdit(ci); };
     sheet.scrollTop=0;
     _ovl.classList.add("on"); document.body.style.overflow="hidden";
@@ -582,7 +599,7 @@
       : (conf
       ? '<span class="oseb'+(vouchers.length?' osclk':'')+'">✓</span><span><b>Confirmed by '+conf+' teammate'+(conf>1?"s":"")+' who shipped '+esc(c.game_title)+'.</b> Peer verification is the part no other portfolio can show.'+(vouchers.length?' <span class="osseewho">See who →</span>':'')+'</span>'
       : '<span class="oseb dim">•</span><span>Not yet peer-confirmed — <a href="/credits/'+esc(slug)+'" style="color:var(--accent)">ask a teammate to confirm →</a></span>');
-    var vlist = vouchers.length ? '<div class="osvouchers">'+vouchers.map(function(s){ return '<a class="osvchiplink" href="/credits/'+esc(s)+'">'+esc(deslug(s))+'</a>'; }).join("")+'</div>' : '';
+    var vlist = "";
     var ownerCTA = (IS_OWNER && !sh) ? '<div class="oscta">This is your one-sheet. Add the scale, team size, and “what I led” in your editor to fill it out.</div>' : '';
     return '<button class="osclose" aria-label="Close">✕</button>'+
       '<button class="osedit owner-only">✎ Edit</button>'+
@@ -597,6 +614,41 @@
       '<div class="osevid">'+evid+'</div>'+vlist+ownerCTA;
   }
   function deslug(s){ return String(s||"").split("-").map(function(w){ return w?w.charAt(0).toUpperCase()+w.slice(1):w; }).join(" "); }
+
+  // ---- peer-confirmation popover (matches the credits evidence popover) ----
+  var _cfovl=null;
+  function ensureCf(){
+    if(_cfovl) return;
+    _cfovl=document.createElement("div"); _cfovl.className="cfovl"; _cfovl.innerHTML='<div class="cfcard" id="cfcard"></div>';
+    document.body.appendChild(_cfovl);
+    _cfovl.addEventListener("click",function(e){ if(e.target===_cfovl) closeCf(); });
+    document.addEventListener("keydown",function(e){ if(e.key==="Escape") closeCf(); });
+  }
+  function closeCf(){ if(_cfovl) _cfovl.classList.remove("on"); }
+  function cfHead(){ return '<div class="cfhead"><span class="ck">✓</span> Peer-confirmed <button class="x" aria-label="Close">✕</button></div>'; }
+  function openConfirmers(cid, title){
+    ensureCf();
+    var card=document.getElementById("cfcard");
+    card.innerHTML=cfHead()+'<div style="padding:18px 16px;color:var(--muted);font-size:13px">Loading…</div>';
+    card.querySelector(".x").onclick=closeCf;
+    _cfovl.classList.add("on");
+    DQAPI.confirmers(cid).then(function(r){
+      var d=(r&&r.data)||{}; var list=d.confirmers||[];
+      var rows=list.map(function(v){
+        var av=(v.name||"?").split(/\s+/).map(function(w){return w[0];}).slice(0,2).join("").toUpperCase();
+        var meta=esc(v.headline||"")+(v.credit_count?((v.headline?' · ':'')+v.credit_count+' credited title'+(v.credit_count>1?'s':'')):'');
+        return '<a class="cfrow" href="/portfolio/'+esc(v.slug)+'"><span class="cfav">'+esc(av)+'</span><span class="cfinfo"><span class="cfnm">'+esc(v.name)+'</span><span class="cfmeta">'+meta+'</span></span></a>';
+      }).join("");
+      card.innerHTML=cfHead()+
+        '<div class="cfsub">Confirmed by teammates who shipped this game</div>'+
+        (rows||'<div style="padding:6px 16px 14px;color:var(--muted);font-size:13px">No confirmations yet.</div>')+
+        '<div class="cffoot"><a href="/credits/how-evidence-works.html">How evidence works →</a></div>';
+      card.querySelector(".x").onclick=closeCf;
+    }).catch(function(){
+      card.innerHTML=cfHead()+'<div style="padding:16px;color:var(--pink);font-size:13px">Could not load confirmations.</div>';
+      card.querySelector(".x").onclick=closeCf;
+    });
+  }
 
   // ---- unified wall <-> timeline stage ----
   function buildStage(credits, positions, covMap){
