@@ -260,7 +260,7 @@
         : '';
       return '<div class="row" data-disc="'+DQ.esc(c._disc||"Other")+'" data-pslug="'+DQ.esc(c.person_slug)+'">'+
         '<div class="av">'+DQ.esc(DQ.initials(c.name))+'</div>'+
-        '<div class="rmain"><div class="rname"><a href="/credits/'+encodeURIComponent(c.person_slug)+'">'+DQ.esc(c.name)+'</a>'+evidenceBadge(c)+corrBadge(c)+'</div>'+
+        '<div class="rmain"><div class="rname"><a href="/portfolio/'+encodeURIComponent(c.person_slug)+'">'+DQ.esc(c.name)+'</a>'+evidenceBadge(c)+corrBadge(c)+'</div>'+
           '<div class="rsub"><span class="rrole">'+DQ.esc(c.role||"Role not recorded")+'</span>'+more+scopeTag+extNote+(sigs?' &nbsp; '+sigs:'')+proof+'</div></div>'+
         '<div class="rright">'+vbtn+'<a class="reportcredit reportlink" data-name="'+DQ.esc(c.name)+'" data-cid="'+(c.id||"")+'" title="Report this credit" style="color:var(--muted);font-size:12px;margin-left:12px;text-decoration:none;cursor:pointer">⚑</a></div>'+
       '</div>';
@@ -367,7 +367,7 @@
           list.forEach(function(p){
             var role = p.headline ? DQ.esc(p.headline) : "";
             var cc = p.credit_count ? ((role?" · ":"")+p.credit_count+" credited title"+(p.credit_count===1?"":"s")) : "";
-            html += '<a class="evrow" href="/credits/'+encodeURIComponent(p.slug)+'"><span class="av" style="background:'+colorFor(p.slug)+'">'+DQ.esc(initials(p.name))+'</span><span class="ei"><span class="en">'+DQ.esc(p.name)+'</span><span class="er">'+role+cc+'</span></span></a>';
+            html += '<a class="evrow" href="/portfolio/'+encodeURIComponent(p.slug)+'"><span class="av" style="background:'+colorFor(p.slug)+'">'+DQ.esc(initials(p.name))+'</span><span class="ei"><span class="en">'+DQ.esc(p.name)+'</span><span class="er">'+role+cc+'</span></span></a>';
           });
           html += '</div>';
         } else if(!rev && cls!=="corr"){
@@ -484,7 +484,7 @@
         if(window.DQAPI && DQAPI.isSignedIn()){
           el.textContent = "…";
           DQAPI.claimAttribution(id).then(function(r){
-            if(r.ok){ location.href = "/credits/person.html?slug=" + encodeURIComponent(r.data.person_slug); }
+            if(r.ok){ location.href = "/portfolio/" + encodeURIComponent(r.data.person_slug); }
             else { el.textContent = "Is this you? Claim"; alert((r.data&&r.data.error)||"Could not claim right now."); }
           }).catch(function(){ el.textContent = "Is this you? Claim"; });
         } else {

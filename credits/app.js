@@ -390,7 +390,7 @@
     // After a credit is saved, invite the person to name up to 3 teammates on this game.
     // Each becomes an unclaimed stub that surfaces in search + the "Is this you?" claim flow.
     function promptTeammates(gameSlug, gameTitle, studio, personSlug){
-      var dest = personSlug ? ("/credits/person.html?slug=" + encodeURIComponent(personSlug)) : "/credits/";
+      var dest = personSlug ? ("/portfolio/" + encodeURIComponent(personSlug)) : "/portfolio/";
       var modal = ov.querySelector(".dq-modal");
       if(!gameSlug || !modal || !(w.DQAPI && w.DQAPI.attributeTeammate)){ close(); w.location.href = dest; return; }
       function row(i){
@@ -973,7 +973,7 @@
       var added=0, skipped=0, failed=0, lastSlug=null;
       (function next(i){
         if(i>=jobs.length){ status.innerHTML='<span style="color:var(--green,#3fb950)">Imported '+added+' credit'+(added===1?'':'s')+(skipped?', '+skipped+' already on your profile':'')+(failed?', '+failed+' skipped':'')+'.</span>';
-          setTimeout(function(){ w.location.href = lastSlug ? ("/credits/person.html?slug="+encodeURIComponent(lastSlug)) : "/credits/"; }, 1100); return; }
+          setTimeout(function(){ w.location.href = lastSlug ? ("/portfolio/"+encodeURIComponent(lastSlug)) : "/portfolio/"; }, 1100); return; }
         var j=jobs[i]; status.textContent="Importing "+(i+1)+" of "+jobs.length+"…";
         if(!j.role){ failed++; return next(i+1); }
         w.DQAPI.createCredit({ name:name, role:j.role, game_slug:j.slug, game_title:j.title, scope:"base", roles_other:[], verification:[], links:[], releases:[] }).then(function(r){
@@ -1029,7 +1029,7 @@
     var href = a.getAttribute("href") || "", m, real = null;
     if ((m = href.match(/^\/credits\/game\/([^\/?#]+)$/))) real = "/credits/game.html?slug=" + m[1];
     else if ((m = href.match(/^\/credits\/studio\/([^\/?#]+)$/))) real = "/credits/studio.html?slug=" + m[1];
-    else if ((m = href.match(/^\/credits\/([^\/?#.]+)$/))) real = "/credits/person.html?slug=" + m[1];
+    else if ((m = href.match(/^\/credits\/([^\/?#.]+)$/))) real = "/portfolio/" + m[1];
     if (real) { e.preventDefault(); w.location.href = real; }
   });
 })(window);

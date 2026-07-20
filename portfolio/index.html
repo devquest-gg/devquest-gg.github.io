@@ -389,7 +389,7 @@
   }
   function fTlMoreRow(n, slug){
     return '<div class="ftlrow ftlmorerow"><div class="ftlyear"></div><div class="ftlrail"><span class="ftldot ftldotmore"></span></div>'+
-      '<a class="ftlmore" href="/credits/'+encodeURIComponent(slug)+'">··· and '+n+' more '+(n===1?'title':'titles')+' →</a></div>';
+      '<a class="ftlmore" href="/portfolio/'+encodeURIComponent(slug)+'">··· and '+n+' more '+(n===1?'title':'titles')+' →</a></div>';
   }
   function fRender(p, credits){
     if(!FEATEL) return;
@@ -412,7 +412,7 @@
         '<div class="fident"><div class="fname">'+dEsc(p.name)+'</div>'+
           '<div class="fhl"><b>'+dEsc(title)+'</b>'+(studio?' · '+dEsc(studio):'')+'</div>'+
           '<div class="fmeta"><span class="fchip">'+total+' shipped '+(total===1?'title':'titles')+'</span>'+vchip+'</div></div>'+
-        '<a class="fview" href="/credits/'+encodeURIComponent(p.slug)+'">View full profile →</a></div>'+
+        '<a class="fview" href="/portfolio/'+encodeURIComponent(p.slug)+'">View full profile →</a></div>'+
       '<div class="fbody"><div class="feyebrow">Proudest work</div>'+
         '<div class="feathero">'+hero.map(fHeroTile).join('')+'</div>'+
         (tl.length>1?'<div class="feyebrow" style="margin-top:22px">Career timeline</div><div class="ftl">'+tl.map(fTlRow).join('')+(tlMore>0?fTlMoreRow(tlMore,p.slug):'')+'</div>':'')+
