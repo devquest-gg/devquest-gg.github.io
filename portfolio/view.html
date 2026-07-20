@@ -185,6 +185,37 @@
   .opchip{font-size:12px;font-weight:700;color:#d6dfeb;border:1px solid var(--border);background:#0d131d;border-radius:8px;padding:5px 10px}
   .opchip em{color:var(--muted);font-style:normal;font-weight:600;margin-left:2px}
   .oparr{color:var(--dim);font-weight:700}
+  .osdid.chal li::before{background:linear-gradient(135deg,var(--gold),var(--pink))}
+
+  /* recruiter mode */
+  #recruiter{margin:16px 0 10px}
+  .rcwhy{border:1px solid var(--border);border-radius:16px;background:radial-gradient(600px 200px at 15% 0%,rgba(88,166,255,.1),transparent),var(--panel);padding:20px 22px;margin-bottom:16px}
+  .rceyebrow{font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin-bottom:12px}
+  .rcstats{display:flex;gap:28px;flex-wrap:wrap}
+  .rcst{display:flex;flex-direction:column}.rcst b{font-size:26px;font-weight:850;letter-spacing:-.5px;line-height:1}.rcst span{font-size:12.5px;color:var(--muted);margin-top:5px}
+  .rclist{display:flex;flex-direction:column;gap:12px}
+  .rcrow{display:flex;gap:16px;border:1px solid var(--border);border-radius:14px;background:var(--panel);padding:15px 17px;cursor:pointer;transition:border-color .14s,transform .14s}
+  .rcrow:hover{border-color:var(--accent);transform:translateY(-1px)}
+  .rcthumb{width:58px;height:78px;flex:none;border-radius:8px;overflow:hidden;background:#141b26;position:relative;display:flex;align-items:center;justify-content:center;box-shadow:inset 0 0 0 1px rgba(255,255,255,.07)}
+  .rcthumb img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+  .rcini{font-weight:850;font-size:13px;color:rgba(255,255,255,.5)}
+  .rcmain{flex:1;min-width:0}
+  .rchead{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .rcgame{font-weight:800;font-size:17px;letter-spacing:-.3px}
+  .rcver{font-size:11.5px;font-weight:800;border-radius:999px;padding:3px 10px}
+  .rcver.ok{background:rgba(63,185,80,.16);border:1px solid rgba(63,185,80,.4);color:#b7f0c2;cursor:pointer}
+  .rcver.none{background:var(--panel2);border:1px solid var(--border);color:var(--dim)}
+  .rcver.soon{background:rgba(163,113,247,.18);border:1px solid rgba(163,113,247,.45);color:#e2d0ff}
+  .rcrole{font-size:13.5px;color:var(--gold);font-weight:700;margin-top:3px}
+  .rcscope{display:flex;gap:16px;flex-wrap:wrap;margin-top:9px;font-size:12.5px;color:var(--muted)}
+  .rcscope b{color:var(--text);font-weight:800}
+  .rcimp{margin:9px 0 0;padding:0;list-style:none}
+  .rcimp li{position:relative;padding-left:18px;margin-bottom:5px;font-size:13.5px;color:#d6dfeb;line-height:1.45}
+  .rcimp li::before{content:"";position:absolute;left:2px;top:8px;width:6px;height:6px;border-radius:2px;background:linear-gradient(135deg,var(--accent),var(--purple))}
+  .rcnone{font-size:13px;color:var(--dim);margin-top:8px}
+  .rcchal{margin-top:9px;font-size:12.5px;color:var(--muted)}
+  .rcchal .rclab{font-size:10.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--gold);margin-right:6px}
+  @media(max-width:560px){.rcstats{gap:18px}.rcst b{font-size:22px}}
   .osshots{padding:22px 30px 6px}
   .osshot{position:relative;border-radius:12px;overflow:hidden;aspect-ratio:16/9;background:#0c121b;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06),0 8px 20px rgba(0,0,0,.45)}
   .osshot img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
@@ -360,7 +391,7 @@
 
     // ---- the work: unified wall <-> timeline stage ----
     _covMap = covMap; _credits = credits; _person = p; _positions = positions;
-    var stageSection = credits.length ? '<div class="wrap"><section><div class="stagehead"><div><div class="eyebrow">The Work</div><h2 class="sec">Every game, your way</h2><p class="sub">Arrange the wall however you like — then flip to the timeline and watch them fall into place.</p></div><div class="vtoggle" id="vtoggle"><button data-m="grid" class="on">▦ Wall</button><button data-m="timeline">↳ Timeline</button></div></div><div class="vhint" id="vhint"></div><div id="stage" class="grid"><div id="chrome"><div id="spine"></div></div></div></section></div>' : '';
+    var stageSection = credits.length ? '<div class="wrap"><section><div class="stagehead"><div><div class="eyebrow">The Work</div><h2 class="sec">Every game, your way</h2><p class="sub">Arrange the wall however you like — then flip to the timeline and watch them fall into place.</p></div><div class="vtoggle" id="vtoggle"><button data-m="grid" class="on">▦ Wall</button><button data-m="timeline">↳ Timeline</button><button data-m="recruiter">▤ Recruiter</button></div></div><div class="vhint" id="vhint"></div><div id="stage" class="grid"><div id="chrome"><div id="spine"></div></div></div><div id="recruiter" style="display:none"></div></section></div>' : '';
 
     // ---- skills ----
     var groups = (p.skills && p.skills.groups) ? p.skills.groups : [];
@@ -496,6 +527,7 @@
     var s=c.sheet||{};
     var stats=(s.stats||[]).slice(0,6); while(stats.length<4){ stats.push({label:"",value:""}); }
     var contribs=(s.contributions||[]).join("\n");
+    var chals=(s.challenges||[]).join("\n");
     var kw=(s.keywords||[]).join(", ");
     var shots=(s.screenshots||[]).join("\n");
     return '<div class="efwrap"><button class="osclose" aria-label="Close">✕</button>'+
@@ -505,6 +537,7 @@
         stats.map(function(st){ return '<div class="efstat-row"><input class="ef-slabel" placeholder="Label (e.g. Players)" value="'+esc(st.label||"")+'"><input class="ef-svalue" placeholder="Value (e.g. 85M+)" value="'+esc(st.value||"")+'"></div>'; }).join("")+
       '</div>'+
       '<label class="eflabel">What I led <span class="mut">— one line per bullet</span></label><textarea id="ef-did" placeholder="One achievement per line">'+esc(contribs)+'</textarea>'+
+      '<label class="eflabel">Key challenges <span class="mut">— problems you solved; one per line</span></label><textarea id="ef-challenges" placeholder="One challenge per line">'+esc(chals)+'</textarea>'+
       '<label class="eflabel">Focus / keywords <span class="mut">— comma-separated</span></label><input id="ef-kw" value="'+esc(kw)+'">'+
       '<label class="eflabel">Release date <span class="mut">— set only if unreleased; shows &ldquo;Coming Soon&rdquo; until then</span></label><input type="date" id="ef-release" value="'+esc(s.release_date||"")+'">'+
       '<label class="eflabel">Banner image URL <span class="mut">— optional wide art (blank uses box art)</span></label><input id="ef-banner" placeholder="https://..." value="'+esc(s.banner_url||"")+'">'+
@@ -521,6 +554,7 @@
       summary: g("ef-summary").trim(),
       stats: stats,
       contributions: g("ef-did").split("\n").map(function(x){return x.trim();}).filter(Boolean),
+      challenges: g("ef-challenges").split("\n").map(function(x){return x.trim();}).filter(Boolean),
       keywords: g("ef-kw").split(",").map(function(x){return x.trim();}).filter(Boolean),
       banner_url: g("ef-banner").trim(),
       screenshots: g("ef-shots").split("\n").map(function(x){return x.trim();}).filter(Boolean),
@@ -528,7 +562,7 @@
     };
     var st=document.getElementById("ef-sstatus"); st.textContent="Saving…"; st.className="efstatus";
     DQAPI.saveSheet(c.id, payload).then(function(r){
-      if(r&&r.ok){ c.sheet={ summary:payload.summary, contributions:payload.contributions, stats:payload.stats, keywords:payload.keywords, banner_url:payload.banner_url||null, screenshots:payload.screenshots, release_date:payload.release_date||null }; st.textContent="Saved ✓"; st.className="efstatus ok"; setTimeout(function(){ openSheet(ci); },420); }
+      if(r&&r.ok){ c.sheet={ summary:payload.summary, contributions:payload.contributions, challenges:payload.challenges, stats:payload.stats, keywords:payload.keywords, banner_url:payload.banner_url||null, screenshots:payload.screenshots, release_date:payload.release_date||null }; st.textContent="Saved ✓"; st.className="efstatus ok"; setTimeout(function(){ openSheet(ci); },420); }
       else { st.textContent=(r&&r.data&&r.data.error)||"Could not save."; st.className="efstatus err"; }
     }).catch(function(){ st.textContent="Network error."; st.className="efstatus err"; });
   }
@@ -606,8 +640,9 @@
     // ---- contribution (person-first) ----
     var sumHTML=(sh&&sh.summary)?'<p class="ossum">'+esc(sh.summary)+'</p>':'';
     var didHTML=(sh&&sh.contributions&&sh.contributions.length)?'<div class="oslabel">What I led</div><ul class="osdid">'+sh.contributions.map(function(d){ return '<li>'+esc(d)+'</li>'; }).join("")+'</ul>':'';
-    var kwHTML=(sh&&sh.keywords&&sh.keywords.length)?'<div class="oslabel"'+(didHTML?' style="margin-top:18px"':'')+'>Focus</div><div class="oskw">'+sh.keywords.map(function(k){ return '<span>'+esc(k)+'</span>'; }).join("")+'</div>':'';
-    var contribHTML=(sumHTML||didHTML||kwHTML)?'<div class="osmain">'+sumHTML+didHTML+kwHTML+'</div>':(IS_OWNER&&!sh?'<div class="oscta">This is your one-sheet. Add your role details, impact, and scale in your editor to fill it out.</div>':'');
+    var chHTML=(sh&&sh.challenges&&sh.challenges.length)?'<div class="oslabel"'+(didHTML?' style="margin-top:18px"':'')+'>Key challenges</div><ul class="osdid chal">'+sh.challenges.map(function(x){ return '<li>'+esc(x)+'</li>'; }).join("")+'</ul>':'';
+    var kwHTML=(sh&&sh.keywords&&sh.keywords.length)?'<div class="oslabel"'+((didHTML||chHTML)?' style="margin-top:18px"':'')+'>Focus</div><div class="oskw">'+sh.keywords.map(function(k){ return '<span>'+esc(k)+'</span>'; }).join("")+'</div>':'';
+    var contribHTML=(sumHTML||didHTML||chHTML||kwHTML)?'<div class="osmain">'+sumHTML+didHTML+chHTML+kwHTML+'</div>':(IS_OWNER&&!sh?'<div class="oscta">This is your one-sheet. Add your role details, impact, and scale in your editor to fill it out.</div>':'');
 
     // ---- verification (elevated) or coming-soon ----
     var vblock;
@@ -645,6 +680,33 @@
     if(ps.length<2) return "";
     var items=ps.map(function(p){ return '<span class="opchip">'+esc(p.title)+' <em>’'+String(p.start_year).slice(2)+'</em></span>'; }).join('<span class="oparr">→</span>');
     return '<div class="osprog"><div class="oslabel ctx">Career progression</div><div class="opline">'+items+'</div></div>';
+  }
+
+  // ---- recruiter mode: scannable, consistent role/scope/impact/proof ----
+  function rcstat(n,l){ return '<div class="rcst"><b>'+n+'</b><span>'+l+'</span></div>'; }
+  function recruiterHTML(credits, positions, covMap){
+    var startY=[]; positions.forEach(function(p){ if(p.start_year) startY.push(p.start_year); }); credits.forEach(function(c){ var y=creditYear(c); if(y) startY.push(y); });
+    var minY=startY.length?Math.min.apply(null,startY):CUR;
+    var live=credits.filter(isLive).length;
+    var vset={}; credits.forEach(function(c){ (c.voucher_slugs?String(c.voucher_slugs).split(","):[]).forEach(function(s){ if(s) vset[s]=1; }); });
+    var studioSet={}; positions.forEach(function(p){ if(p.studio) studioSet[p.studio.toLowerCase()]=1; }); credits.forEach(function(c){ if(c.studio) studioSet[String(c.studio).toLowerCase()]=1; });
+    var why='<div class="rcwhy"><div class="rceyebrow">Why this matters</div><div class="rcstats">'+
+      rcstat((CUR-minY)+" yrs","in the industry")+rcstat(credits.length,"shipped titles")+rcstat(Object.keys(studioSet).length,"studios")+rcstat(live,"live-service")+rcstat(Object.keys(vset).length,"peer confirmations")+
+      '</div></div>';
+    var rows=credits.map(function(c){
+      var sh=c.sheet||{}, conf=(c.vouch_count||0), cs=comingSoon(c), ci=credits.indexOf(c);
+      var art=covMap[c.game_slug];
+      var thumb=art?'<img src="'+esc(art)+'" alt="" onerror="this.style.opacity=.15">':'<span class="rcini">'+esc(initials(c.game_title))+'</span>';
+      var ver=cs?'<span class="rcver soon">Coming soon</span>':(conf>0?'<span class="rcver ok">✓ '+conf+' confirmed</span>':'<span class="rcver none">Unconfirmed</span>');
+      var scope=(sh.stats&&sh.stats.length)?'<div class="rcscope">'+sh.stats.slice(0,4).map(function(s){ return '<span><b>'+esc(s.value)+'</b> '+esc(s.label)+'</span>'; }).join("")+'</div>':'';
+      var impact=(sh.contributions&&sh.contributions.length)?'<ul class="rcimp">'+sh.contributions.slice(0,3).map(function(d){ return '<li>'+esc(d)+'</li>'; }).join("")+'</ul>':'<div class="rcnone">No impact details added yet.</div>';
+      var chal=(sh.challenges&&sh.challenges.length)?'<div class="rcchal"><span class="rclab">Challenges</span>'+esc(sh.challenges.slice(0,2).join("  ·  "))+'</div>':'';
+      return '<div class="rcrow" data-ci="'+ci+'"><div class="rcthumb">'+thumb+'</div>'+
+        '<div class="rcmain"><div class="rchead"><span class="rcgame">'+esc(c.game_title)+'</span>'+ver+'</div>'+
+        '<div class="rcrole">'+esc(c.role)+(c.studio?' · '+esc(c.studio):'')+(creditYear(c)?' · '+creditYear(c):'')+'</div>'+
+        scope+impact+chal+'</div></div>';
+    }).join("");
+    return why+'<div class="rclist">'+rows+'</div>';
   }
   function deslug(s){ return String(s||"").split("-").map(function(w){ return w?w.charAt(0).toUpperCase()+w.slice(1):w; }).join(" "); }
 
@@ -760,9 +822,16 @@
       }
     }
 
-    var vt=document.getElementById("vtoggle"), vh=document.getElementById("vhint");
-    function setHint(){ vh.textContent = mode==="grid" ? (IS_OWNER?"Drag your best games into the two big Featured slots up top. Click a game for its one-sheet.":"Click any game for its one-sheet.") : "Same games — now on your career spine, newest first."; }
-    vt.addEventListener("click",function(e){ var b=e.target.closest("button"); if(!b||b.dataset.m===mode) return; mode=b.dataset.m; stage.className=mode; [].forEach.call(vt.children,function(x){x.classList.toggle("on",x.dataset.m===mode);}); setHint(); layout(); });
+    var vt=document.getElementById("vtoggle"), vh=document.getElementById("vhint"), rec=document.getElementById("recruiter");
+    function setHint(){ vh.textContent = mode==="grid" ? (IS_OWNER?"Drag your best games into the three big Featured slots up top. Click a game for its one-sheet.":"Click any game for its one-sheet.") : (mode==="timeline" ? "Same games — now on your career spine, newest first." : "A recruiter-first read: role, scope, impact, and proof — in the same order, every title."); }
+    function wireRecruiter(el){ el.onclick=function(e){ var v=e.target.closest(".rcver.ok"); if(v){ e.stopPropagation(); var rw=v.closest(".rcrow"); if(rw) openConfirmers(credits[+rw.dataset.ci].id, credits[+rw.dataset.ci].game_title); return; } var row=e.target.closest(".rcrow"); if(row) openSheet(+row.dataset.ci); }; }
+    vt.addEventListener("click",function(e){
+      var b=e.target.closest("button"); if(!b||b.dataset.m===mode) return;
+      mode=b.dataset.m;
+      [].forEach.call(vt.children,function(x){x.classList.toggle("on",x.dataset.m===mode);});
+      if(mode==="recruiter"){ stage.style.display="none"; if(rec){ rec.style.display="block"; rec.innerHTML=recruiterHTML(credits, positions, covMap); wireRecruiter(rec); } setHint(); }
+      else { if(rec) rec.style.display="none"; stage.style.display=""; stage.className=mode; setHint(); layout(); }
+    });
 
     var drag=null, saveT=null;
     function persist(){ if(!IS_OWNER) return; clearTimeout(saveT); saveT=setTimeout(function(){ try{ DQAPI.reorderCredits(order.map(function(gi){return credits[gi].id;})); }catch(e){} },700); }
