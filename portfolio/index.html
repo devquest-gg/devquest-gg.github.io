@@ -301,6 +301,7 @@
   <div class="stats">
     <div class="stat hl"><b data-to="0" id="st-games">0</b><span>games catalogued</span></div>
     <div class="stat"><b data-to="0" id="st-studios">0</b><span>studios</span></div>
+    <div class="stat hl"><b data-to="0" id="st-portfolios">0</b><span>live portfolios</span></div>
     <div class="stat"><b data-to="0" id="st-credits">0</b><span>credits added by developers</span></div>
     <div class="stat"><b data-to="0" id="st-vouches">0</b><span>peer confirmations</span></div>
   </div>
@@ -509,7 +510,7 @@
     if(!s)return; setStat('st-games',s.games); setStat('st-studios',s.studios);
     var a=document.getElementById('allgames'); if(a)a.textContent='Browse all '+Number(s.games).toLocaleString()+' games →';
   }).catch(function(){});
-  if(window.DQAPI&&DQAPI.stats){ DQAPI.stats().then(function(r){ if(r&&r.ok&&r.data){ setStat('st-credits', r.data.credits||0); setStat('st-vouches', r.data.vouches||0); } }).catch(function(){}); }
+  if(window.DQAPI&&DQAPI.stats){ DQAPI.stats().then(function(r){ if(r&&r.ok&&r.data){ setStat('st-credits', r.data.credits||0); setStat('st-vouches', r.data.vouches||0); setStat('st-portfolios', r.data.people||0); } }).catch(function(){}); }
 
   fetch('/credits/data/site/home.json?t='+Date.now()).then(function(r){return r.ok?r.json():null;}).then(function(h){
     if(!h)return;
