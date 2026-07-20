@@ -138,7 +138,7 @@
   .osovl.on .ossheet{transform:none;opacity:1}
   .osclose{position:absolute;top:14px;right:14px;z-index:12;width:38px;height:38px;border-radius:50%;border:1px solid rgba(255,255,255,.25);background:rgba(0,0,0,.4);color:#fff;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
   .osclose:hover{background:rgba(0,0,0,.66)}
-  .osbanner{position:relative;height:280px;overflow:hidden}
+  .osbanner{position:relative;height:210px;overflow:hidden}
   .osbanner img,.osbanner .osfill{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
   .osscrim{position:absolute;inset:0;background:linear-gradient(180deg,rgba(8,11,17,.12),rgba(8,11,17,.55) 55%,var(--panel) 99%)}
   .osgloss{position:absolute;inset:0;background:linear-gradient(150deg,rgba(255,255,255,.15),transparent 30%);pointer-events:none}
@@ -166,7 +166,25 @@
   .cffoot a{color:var(--accent);font-weight:700;font-size:13.5px;text-decoration:none}
   .osvchip .c{width:14px;height:14px;border-radius:50%;background:var(--green);color:#04220f;font-size:9px;display:flex;align-items:center;justify-content:center;font-weight:900}
   .osbtitle h3{margin:0;font-size:33px;font-weight:850;letter-spacing:-.7px;text-shadow:0 3px 20px rgba(0,0,0,.85)}
-  .osrole{margin-top:6px;font-size:15.5px;color:#eaf1fa;font-weight:650;text-shadow:0 2px 10px rgba(0,0,0,.7)}
+  .osrole{margin-top:6px;font-size:17px;color:#fff;font-weight:800;letter-spacing:-.2px;text-shadow:0 2px 12px rgba(0,0,0,.8)}
+  .osverify{display:flex;align-items:center;gap:14px;margin:16px 30px 6px;padding:14px 16px;border-radius:14px;background:linear-gradient(90deg,rgba(63,185,80,.16),rgba(63,185,80,.04));border:1px solid rgba(63,185,80,.32)}
+  .osverify.dim{background:var(--panel2);border-color:var(--border)}
+  .osverify .ovck{width:30px;height:30px;border-radius:50%;flex:none;background:var(--green);color:#04220f;font-weight:900;font-size:15px;display:flex;align-items:center;justify-content:center}
+  .osverify .ovck.dim{background:var(--dim);color:#0b0e14}
+  .ovtx{flex:1;min-width:0}.ovtx b{font-size:14.5px}.ovsub{font-size:12.5px;color:var(--muted);margin-top:2px}
+  .ovbtn{flex:none;font-size:13px;font-weight:750;color:var(--accent);background:none;border:0;cursor:pointer;white-space:nowrap}
+  .oscontext{padding:16px 30px 4px}
+  .oscontext .osstats{border-radius:12px;overflow:hidden;border:1px solid var(--border);border-bottom:1px solid var(--border)}
+  .oslabel.ctx{color:var(--muted)}
+  .oscs{margin:16px 30px 6px;padding:13px 16px;border-radius:14px;background:rgba(163,113,247,.12);border:1px solid rgba(163,113,247,.32);color:#e2d0ff;font-size:13.5px;font-weight:600}
+  .osshotwrap{padding:16px 30px 4px}
+  .osshotrow{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:10px}
+  @media(max-width:600px){.osshotrow{grid-template-columns:1fr}}
+  .osprog{padding:18px 30px 26px;margin-top:8px;border-top:1px solid var(--border)}
+  .opline{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:11px}
+  .opchip{font-size:12px;font-weight:700;color:#d6dfeb;border:1px solid var(--border);background:#0d131d;border-radius:8px;padding:5px 10px}
+  .opchip em{color:var(--muted);font-style:normal;font-weight:600;margin-left:2px}
+  .oparr{color:var(--dim);font-weight:700}
   .osshots{padding:22px 30px 6px}
   .osshot{position:relative;border-radius:12px;overflow:hidden;aspect-ratio:16/9;background:#0c121b;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06),0 8px 20px rgba(0,0,0,.45)}
   .osshot img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
@@ -581,37 +599,52 @@
     var slug=c.game_slug, sid=STEAM[slug], cover=_covMap[slug], sh=c.sheet;
     var yr=(c.work_start&&c.work_end)?(c.work_start+" – "+c.work_end):(creditYear(c)||"");
     var conf=(c.vouch_count||0);
-    var bannerSrc = (sh&&sh.banner_url) ? sh.banner_url : (sid?steamHero(sid):cover);
-    var bannerFill = bannerSrc ? '<img src="'+esc(bannerSrc)+'" alt="" onerror="this.remove()">' : '<div class="osfill" style="background:'+gameGrad(slug)+'"></div>';
-    var statsHTML = (sh&&sh.stats&&sh.stats.length) ? '<div class="osstats">'+sh.stats.map(function(s){ return '<div class="osstat"><div class="n">'+esc(s.value)+'</div><div class="l">'+esc(s.label)+'</div></div>'; }).join("")+'</div>' : '';
-    var kwHTML = (sh&&sh.keywords&&sh.keywords.length) ? '<div class="oslabel"'+((sh.contributions&&sh.contributions.length)?' style="margin-top:18px"':'')+'>Focus</div><div class="oskw">'+sh.keywords.map(function(k){ return '<span>'+esc(k)+'</span>'; }).join("")+'</div>' : '';
-    var didHTML = (sh&&sh.contributions&&sh.contributions.length) ? '<div class="oslabel">What I led</div><ul class="osdid">'+sh.contributions.map(function(d){ return '<li>'+esc(d)+'</li>'; }).join("")+'</ul>' : '';
-    var leftCol = (didHTML||kwHTML) ? '<div>'+didHTML+kwHTML+'</div>' : '';
-    var shotUrls = (sh&&sh.screenshots&&sh.screenshots.length) ? sh.screenshots : (sid?[steamHeader(sid)]:[]);
-    var shotHTML = shotUrls.length ? '<div class="osshotcol">'+shotUrls.map(function(u){ return '<div class="osshot"><img src="'+esc(u)+'" alt="" onerror="this.closest(\'.osshot\').style.display=\'none\'"></div>'; }).join("")+'</div>' : '';
-    var gridHTML = (leftCol||shotHTML) ? '<div class="osgrid">'+(leftCol||'<div></div>')+'<div>'+shotHTML+'</div></div>' : '';
-    var sumHTML = (sh&&sh.summary) ? '<p class="ossum">'+esc(sh.summary)+'</p>' : '';
-    var mainHTML = (sumHTML||gridHTML) ? '<div class="osmain">'+sumHTML+gridHTML+'</div>' : '';
-    var vouchers = c.voucher_slugs ? String(c.voucher_slugs).split(",").filter(Boolean) : [];
     var cs=comingSoon(c), rdate=(sh&&sh.release_date)?fmtRel(sh.release_date):"";
-    var evid = cs
-      ? '<span class="oseb" style="background:var(--purple);color:#fff">➤</span><span><b>In development'+(rdate?' — expected '+esc(rdate):'')+'.</b> Peer confirmations open once it ships.</span>'
-      : (conf
-      ? '<span class="oseb'+(vouchers.length?' osclk':'')+'">✓</span><span><b>Confirmed by '+conf+' teammate'+(conf>1?"s":"")+' who shipped '+esc(c.game_title)+'.</b> Peer verification is the part no other portfolio can show.'+(vouchers.length?' <span class="osseewho">See who →</span>':'')+'</span>'
-      : '<span class="oseb dim">•</span><span>Not yet peer-confirmed — <a href="/credits/'+esc(slug)+'" style="color:var(--accent)">ask a teammate to confirm →</a></span>');
-    var vlist = "";
-    var ownerCTA = (IS_OWNER && !sh) ? '<div class="oscta">This is your one-sheet. Add the scale, team size, and “what I led” in your editor to fill it out.</div>' : '';
+    var bannerSrc=(sh&&sh.banner_url)?sh.banner_url:(sid?steamHero(sid):cover);
+    var bannerFill=bannerSrc?'<img src="'+esc(bannerSrc)+'" alt="" onerror="this.remove()">':'<div class="osfill" style="background:'+gameGrad(slug)+'"></div>';
+
+    // ---- contribution (person-first) ----
+    var sumHTML=(sh&&sh.summary)?'<p class="ossum">'+esc(sh.summary)+'</p>':'';
+    var didHTML=(sh&&sh.contributions&&sh.contributions.length)?'<div class="oslabel">What I led</div><ul class="osdid">'+sh.contributions.map(function(d){ return '<li>'+esc(d)+'</li>'; }).join("")+'</ul>':'';
+    var kwHTML=(sh&&sh.keywords&&sh.keywords.length)?'<div class="oslabel"'+(didHTML?' style="margin-top:18px"':'')+'>Focus</div><div class="oskw">'+sh.keywords.map(function(k){ return '<span>'+esc(k)+'</span>'; }).join("")+'</div>':'';
+    var contribHTML=(sumHTML||didHTML||kwHTML)?'<div class="osmain">'+sumHTML+didHTML+kwHTML+'</div>':(IS_OWNER&&!sh?'<div class="oscta">This is your one-sheet. Add your role details, impact, and scale in your editor to fill it out.</div>':'');
+
+    // ---- verification (elevated) or coming-soon ----
+    var vblock;
+    if(cs){
+      vblock='<div class="oscs">➤ In development'+(rdate?' — expected '+esc(rdate):'')+'. Peer confirmations open once it ships.</div>';
+    } else if(conf>0){
+      vblock='<div class="osverify"><span class="ovck">✓</span><div class="ovtx"><b>Verified by '+conf+' teammate'+(conf>1?"s":"")+' who shipped '+esc(c.game_title)+'</b><div class="ovsub">Peer-confirmed — the proof no résumé, LinkedIn, or database can show.</div></div><button class="ovbtn osseewho">See who →</button></div>';
+    } else {
+      vblock='<div class="osverify dim"><span class="ovck dim">•</span><div class="ovtx"><b>Not yet peer-confirmed</b><div class="ovsub"><a href="/credits/'+esc(slug)+'" style="color:var(--accent)">Ask a teammate who shipped it to confirm →</a></div></div></div>';
+    }
+
+    // ---- game context (stats demoted to supporting evidence) ----
+    var contextHTML=(sh&&sh.stats&&sh.stats.length)?'<div class="oscontext"><div class="oslabel ctx">Game context</div><div class="osstats">'+sh.stats.map(function(s){ return '<div class="osstat"><div class="n">'+esc(s.value)+'</div><div class="l">'+esc(s.label)+'</div></div>'; }).join("")+'</div></div>':'';
+
+    // ---- screenshots ----
+    var shotUrls=(sh&&sh.screenshots&&sh.screenshots.length)?sh.screenshots:(sid?[steamHeader(sid)]:[]);
+    var shotHTML=shotUrls.length?'<div class="osshotwrap"><div class="oslabel ctx">In game</div><div class="osshotrow">'+shotUrls.map(function(u){ return '<div class="osshot"><img src="'+esc(u)+'" alt="" onerror="this.closest(\'.osshot\').style.display=\'none\'"></div>'; }).join("")+'</div></div>':'';
+
+    var progHTML=progressionStrip();
+
     return '<button class="osclose" aria-label="Close">✕</button>'+
       '<button class="osedit owner-only">✎ Edit</button>'+
       '<div class="osbanner">'+bannerFill+'<div class="osscrim"></div><div class="osgloss"></div>'+
         '<div class="osbtitle"><div class="oskicker">'+
           (c.studio?'<span class="oschip">'+esc(c.studio)+'</span>':"")+
           (yr?'<span class="oschip">'+esc(yr)+'</span>':"")+
-          (conf?'<span class="oschip osvchip'+(vouchers.length?' osclk':'')+'"><span class="c">✓</span> '+conf+' confirmed</span>':"")+
           (cs?'<span class="oschip cssoon">🔜 Coming '+esc(rdate||"Soon")+'</span>':"")+
         '</div><h3>'+esc(c.game_title)+'</h3><div class="osrole">'+esc(c.role)+'</div></div>'+
-      '</div>'+statsHTML+mainHTML+
-      '<div class="osevid">'+evid+'</div>'+vlist+ownerCTA;
+      '</div>'+
+      contribHTML+vblock+contextHTML+shotHTML+progHTML;
+  }
+  function progressionStrip(){
+    if(!_positions||!_positions.length) return "";
+    var ps=_positions.slice().filter(function(p){ return p.start_year; }).sort(function(a,b){ return a.start_year-b.start_year; });
+    if(ps.length<2) return "";
+    var items=ps.map(function(p){ return '<span class="opchip">'+esc(p.title)+' <em>’'+String(p.start_year).slice(2)+'</em></span>'; }).join('<span class="oparr">→</span>');
+    return '<div class="osprog"><div class="oslabel ctx">Career progression</div><div class="opline">'+items+'</div></div>';
   }
   function deslug(s){ return String(s||"").split("-").map(function(w){ return w?w.charAt(0).toUpperCase()+w.slice(1):w; }).join(" "); }
 
