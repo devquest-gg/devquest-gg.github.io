@@ -180,6 +180,12 @@
   .osshotwrap{padding:16px 30px 4px}
   .osshotrow{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:10px}
   @media(max-width:600px){.osshotrow{grid-template-columns:1fr}}
+  .osvid{cursor:pointer}
+  .osvidbg{position:absolute;inset:0;background:linear-gradient(135deg,#3a2c5e,#140c26)}
+  .osplay{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:3;width:52px;height:52px;border-radius:50%;background:rgba(0,0,0,.62);border:2px solid rgba(255,255,255,.85);color:#fff;display:flex;align-items:center;justify-content:center;font-size:19px;padding-left:3px;transition:background .14s,transform .14s}
+  .osvid:hover .osplay{background:rgba(220,40,60,.9);transform:translate(-50%,-50%) scale(1.06)}
+  .osdid a,.ossum a,.rcimp a{color:var(--accent);text-decoration:underline;text-underline-offset:2px;word-break:break-word}
+  .osdid a:hover,.ossum a:hover,.rcimp a:hover{color:#8cc6ff}
   .osprog{padding:18px 30px 26px;margin-top:8px;border-top:1px solid var(--border)}
   .opline{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:11px}
   .opchip{font-size:12px;font-weight:700;color:#d6dfeb;border:1px solid var(--border);background:#0d131d;border-radius:8px;padding:5px 10px}
@@ -376,6 +382,24 @@
   function isLive(c){ return (c.releases||[]).some(function(x){ return /live/i.test(x); }); }
   function comingSoon(c){ var d=c.sheet&&c.sheet.release_date; if(!d) return false; var t=Date.parse(d); return !isNaN(t) && t>Date.now(); }
   function fmtRel(d){ var t=Date.parse(d); if(isNaN(t)) return String(d); return new Date(t).toLocaleDateString(undefined,{month:"short",year:"numeric"}); }
+  // linkify: escapes, then turns [label](url) and bare URLs into clickable links
+  function shortUrl(u){ var s=String(u).replace(/^https?:\/\//,"").replace(/\/$/,""); return s.length>46?s.slice(0,44)+"…":s; }
+  function linkify(s){
+    s=esc(s);
+    s=s.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, function(m,l,u){ return '<a href="'+u+'" target="_blank" rel="noopener">'+l+'</a>'; });
+    s=s.replace(/(^|[\s(])(https?:\/\/[^\s<]+)/g, function(m,pre,u){ return pre+'<a href="'+u+'" target="_blank" rel="noopener">'+shortUrl(u)+'</a>'; });
+    return s;
+  }
+  // media: detect video links so screenshots can be YouTube/Vimeo/mp4
+  function ytId(u){ var m=String(u).match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{6,})/); return m?m[1]:null; }
+  function vimeoId(u){ var m=String(u).match(/vimeo\.com\/(?:video\/)?(\d+)/); return m?m[1]:null; }
+  function mediaTile(u){
+    var yt=ytId(u), vm=vimeoId(u);
+    if(yt) return '<div class="osshot osvid" data-embed="https://www.youtube.com/embed/'+yt+'?autoplay=1"><img src="https://img.youtube.com/vi/'+yt+'/hqdefault.jpg" alt="" onerror="this.style.opacity=.25"><span class="osplay">▶</span></div>';
+    if(vm) return '<div class="osshot osvid" data-embed="https://player.vimeo.com/video/'+vm+'?autoplay=1"><div class="osvidbg"></div><span class="osplay">▶</span></div>';
+    if(/\.(mp4|webm|mov)(\?|$)/i.test(u)) return '<div class="osshot"><video src="'+esc(u)+'" controls preload="metadata" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#000"></video></div>';
+    return '<div class="osshot"><img src="'+esc(u)+'" alt="" onerror="this.closest(\'.osshot\').style.display=\'none\'"></div>';
+  }
 
   function render(p, positions, credits, covMap){
     covMap = covMap || {};
@@ -470,6 +494,7 @@
     var cl=sheet.querySelector(".osclose"); if(cl) cl.onclick=closeSheet;
     var showConf=function(e){ if(e) e.stopPropagation(); var cc=_credits[ci]; if(cc) openConfirmers(cc.id, cc.game_title); };
     sheet.querySelectorAll(".osseewho,.osclk").forEach(function(el){ el.onclick=showConf; });
+    sheet.querySelectorAll(".osvid").forEach(function(el){ el.onclick=function(){ var em=el.getAttribute("data-embed"); if(em){ el.innerHTML='<iframe src="'+em+'" frameborder="0" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen style="position:absolute;inset:0;width:100%;height:100%;border:0"></iframe>'; el.classList.remove("osvid"); } }; });
     var ed=sheet.querySelector(".osedit"); if(ed) ed.onclick=function(){ openSheetEdit(ci); };
     sheet.scrollTop=0;
     _ovl.classList.add("on"); document.body.style.overflow="hidden";
@@ -536,12 +561,12 @@
       '<label class="eflabel">Stats <span class="mut">— label + value tiles</span></label><div id="ef-stats">'+
         stats.map(function(st){ return '<div class="efstat-row"><input class="ef-slabel" placeholder="Label (e.g. Players)" value="'+esc(st.label||"")+'"><input class="ef-svalue" placeholder="Value (e.g. 85M+)" value="'+esc(st.value||"")+'"></div>'; }).join("")+
       '</div>'+
-      '<label class="eflabel">What I led <span class="mut">— one line per bullet</span></label><textarea id="ef-did" placeholder="One achievement per line">'+esc(contribs)+'</textarea>'+
-      '<label class="eflabel">Key challenges <span class="mut">— problems you solved; one per line</span></label><textarea id="ef-challenges" placeholder="One challenge per line">'+esc(chals)+'</textarea>'+
+      '<label class="eflabel">What I led <span class="mut">— one per line; paste a link or use [label](url)</span></label><textarea id="ef-did" placeholder="One achievement per line">'+esc(contribs)+'</textarea>'+
+      '<label class="eflabel">Key challenges <span class="mut">— problems you solved; one per line; links work here too</span></label><textarea id="ef-challenges" placeholder="One challenge per line">'+esc(chals)+'</textarea>'+
       '<label class="eflabel">Focus / keywords <span class="mut">— comma-separated</span></label><input id="ef-kw" value="'+esc(kw)+'">'+
       '<label class="eflabel">Release date <span class="mut">— set only if unreleased; shows &ldquo;Coming Soon&rdquo; until then</span></label><input type="date" id="ef-release" value="'+esc(s.release_date||"")+'">'+
       '<label class="eflabel">Banner image URL <span class="mut">— optional wide art (blank uses box art)</span></label><input id="ef-banner" placeholder="https://..." value="'+esc(s.banner_url||"")+'">'+
-      '<label class="eflabel">Screenshots <span class="mut">— one image URL per line</span></label><textarea id="ef-shots" placeholder="One image URL per line">'+esc(shots)+'</textarea>'+
+      '<label class="eflabel">Screenshots &amp; videos <span class="mut">— one URL per line; images or videos (YouTube, Vimeo, .mp4)</span></label><textarea id="ef-shots" placeholder="One image or video URL per line">'+esc(shots)+'</textarea>'+
       '<div class="efactions"><span class="efbtn primary" id="ef-ssave">Save</span><span class="efbtn" id="ef-scancel">Cancel</span><span class="efstatus" id="ef-sstatus"></span></div>'+
       '</div>';
   }
@@ -638,9 +663,9 @@
     var bannerFill=bannerSrc?'<img src="'+esc(bannerSrc)+'" alt="" onerror="this.remove()">':'<div class="osfill" style="background:'+gameGrad(slug)+'"></div>';
 
     // ---- contribution (person-first) ----
-    var sumHTML=(sh&&sh.summary)?'<p class="ossum">'+esc(sh.summary)+'</p>':'';
-    var didHTML=(sh&&sh.contributions&&sh.contributions.length)?'<div class="oslabel">What I led</div><ul class="osdid">'+sh.contributions.map(function(d){ return '<li>'+esc(d)+'</li>'; }).join("")+'</ul>':'';
-    var chHTML=(sh&&sh.challenges&&sh.challenges.length)?'<div class="oslabel"'+(didHTML?' style="margin-top:18px"':'')+'>Key challenges</div><ul class="osdid chal">'+sh.challenges.map(function(x){ return '<li>'+esc(x)+'</li>'; }).join("")+'</ul>':'';
+    var sumHTML=(sh&&sh.summary)?'<p class="ossum">'+linkify(sh.summary)+'</p>':'';
+    var didHTML=(sh&&sh.contributions&&sh.contributions.length)?'<div class="oslabel">What I led</div><ul class="osdid">'+sh.contributions.map(function(d){ return '<li>'+linkify(d)+'</li>'; }).join("")+'</ul>':'';
+    var chHTML=(sh&&sh.challenges&&sh.challenges.length)?'<div class="oslabel"'+(didHTML?' style="margin-top:18px"':'')+'>Key challenges</div><ul class="osdid chal">'+sh.challenges.map(function(x){ return '<li>'+linkify(x)+'</li>'; }).join("")+'</ul>':'';
     var kwHTML=(sh&&sh.keywords&&sh.keywords.length)?'<div class="oslabel"'+((didHTML||chHTML)?' style="margin-top:18px"':'')+'>Focus</div><div class="oskw">'+sh.keywords.map(function(k){ return '<span>'+esc(k)+'</span>'; }).join("")+'</div>':'';
     var contribHTML=(sumHTML||didHTML||chHTML||kwHTML)?'<div class="osmain">'+sumHTML+didHTML+chHTML+kwHTML+'</div>':(IS_OWNER&&!sh?'<div class="oscta">This is your one-sheet. Add your role details, impact, and scale in your editor to fill it out.</div>':'');
 
@@ -659,7 +684,7 @@
 
     // ---- screenshots ----
     var shotUrls=(sh&&sh.screenshots&&sh.screenshots.length)?sh.screenshots:(sid?[steamHeader(sid)]:[]);
-    var shotHTML=shotUrls.length?'<div class="osshotwrap"><div class="oslabel ctx">In game</div><div class="osshotrow">'+shotUrls.map(function(u){ return '<div class="osshot"><img src="'+esc(u)+'" alt="" onerror="this.closest(\'.osshot\').style.display=\'none\'"></div>'; }).join("")+'</div></div>':'';
+    var shotHTML=shotUrls.length?'<div class="osshotwrap"><div class="oslabel ctx">In game</div><div class="osshotrow">'+shotUrls.map(mediaTile).join("")+'</div></div>':'';
 
     var progHTML=progressionStrip();
 
@@ -699,7 +724,7 @@
       var thumb=art?'<img src="'+esc(art)+'" alt="" onerror="this.style.opacity=.15">':'<span class="rcini">'+esc(initials(c.game_title))+'</span>';
       var ver=cs?'<span class="rcver soon">Coming soon</span>':(conf>0?'<span class="rcver ok">✓ '+conf+' confirmed</span>':'<span class="rcver none">Unconfirmed</span>');
       var scope=(sh.stats&&sh.stats.length)?'<div class="rcscope">'+sh.stats.slice(0,4).map(function(s){ return '<span><b>'+esc(s.value)+'</b> '+esc(s.label)+'</span>'; }).join("")+'</div>':'';
-      var impact=(sh.contributions&&sh.contributions.length)?'<ul class="rcimp">'+sh.contributions.slice(0,3).map(function(d){ return '<li>'+esc(d)+'</li>'; }).join("")+'</ul>':'<div class="rcnone">No impact details added yet.</div>';
+      var impact=(sh.contributions&&sh.contributions.length)?'<ul class="rcimp">'+sh.contributions.slice(0,3).map(function(d){ return '<li>'+linkify(d)+'</li>'; }).join("")+'</ul>':'<div class="rcnone">No impact details added yet.</div>';
       var chal=(sh.challenges&&sh.challenges.length)?'<div class="rcchal"><span class="rclab">Challenges</span>'+esc(sh.challenges.slice(0,2).join("  ·  "))+'</div>':'';
       return '<div class="rcrow" data-ci="'+ci+'"><div class="rcthumb">'+thumb+'</div>'+
         '<div class="rcmain"><div class="rchead"><span class="rcgame">'+esc(c.game_title)+'</span>'+ver+'</div>'+
