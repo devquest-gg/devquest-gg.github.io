@@ -394,6 +394,15 @@
   function creditYear(c){ return c.work_start || c.year || c.work_end || null; }
   function isLive(c){ return (c.releases||[]).some(function(x){ return /live/i.test(x); }); }
   function comingSoon(c){ var d=c.sheet&&c.sheet.release_date; if(!d) return false; var t=Date.parse(d); return !isNaN(t) && t>Date.now(); }
+  // portfolio-level average critic score across titles that have one (auto-shows only with 2+ scored titles)
+  var MIN_SCORED = 2;
+  function avgCritic(credits){
+    var vals=[];
+    (credits||[]).forEach(function(c){ var rs=c.sheet&&c.sheet.review_score; if(rs && rs.score!=null && rs.score!==""){ var n=+rs.score; if(!isNaN(n)) vals.push(n); } });
+    if(vals.length<MIN_SCORED) return null;
+    var sum=vals.reduce(function(a,b){ return a+b; },0);
+    return { avg: Math.round(sum/vals.length), n: vals.length };
+  }
   function fmtRel(d){ var t=Date.parse(d); if(isNaN(t)) return String(d); return new Date(t).toLocaleDateString(undefined,{month:"short",year:"numeric"}); }
   // linkify: escapes, then turns [label](url) and bare URLs into clickable links
   function shortUrl(u){ var s=String(u).replace(/^https?:\/\//,"").replace(/\/$/,""); return s.length>46?s.slice(0,44)+"…":s; }
@@ -470,6 +479,7 @@
     var studioSet={}; positions.forEach(function(x){ if(x.studio) studioSet[x.studio.toLowerCase()]=1; }); credits.forEach(function(c){ if(c.studio) studioSet[String(c.studio).toLowerCase()]=1; });
     var nStudios=Object.keys(studioSet).length||positions.length;
     var liveCount=credits.filter(isLive).length;
+    var ac=avgCritic(credits);
     var av=(p.name||"?").split(/\s+/).map(function(x){return x[0];}).slice(0,2).join("").toUpperCase();
     var tags=[]; tags.push(cap(p.portfolio_style||"production")); if(liveCount) tags.push("Live Service"); if(positions.length>=3 || /director|vp|head|lead/i.test(p.headline||"")) tags.push("Studio Leadership");
     var links={}; (p.links||[]).forEach(function(l){ links[l.type]=l.url; });
@@ -491,6 +501,7 @@
         '</div></div>'+
         '<div class="stats">'+
           stat((CUR-minY)+" yrs","In the industry")+stat(nStudios,"Studios")+stat(credits.length,"Credits")+
+          (ac?stat(ac.avg,"Avg. critic score"):"")+
           stat(liveCount,"Live-service")+stat(p.unshipped||0,"Cancelled / unshipped")+
         '</div>'+
       '</div></div>';
@@ -626,7 +637,7 @@
     };
     var st=document.getElementById("ef-sstatus"); st.textContent="Saving…"; st.className="efstatus";
     DQAPI.saveSheet(c.id, payload).then(function(r){
-      if(r&&r.ok){ c.sheet={ summary:payload.summary, contributions:payload.contributions, challenges:payload.challenges, stats:payload.stats, keywords:payload.keywords, banner_url:payload.banner_url||null, screenshots:payload.screenshots, release_date:payload.release_date||null, review_score:payload.review_score||null }; st.textContent="Saved ✓"; st.className="efstatus ok"; setTimeout(function(){ openSheet(ci); },420); }
+      if(r&&r.ok){ c.sheet={ summary:payload.summary, contributions:payload.contributions, challenges:payload.challenges, stats:payload.stats, keywords:payload.keywords, banner_url:payload.banner_url||null, screenshots:payload.screenshots, release_date:payload.release_date||null, review_score:payload.review_score||null }; renderHero(); st.textContent="Saved ✓"; st.className="efstatus ok"; setTimeout(function(){ openSheet(ci); },420); }
       else { st.textContent=(r&&r.data&&r.data.error)||"Could not save."; st.className="efstatus err"; }
     }).catch(function(){ st.textContent="Network error."; st.className="efstatus err"; });
   }
@@ -756,8 +767,9 @@
     var live=credits.filter(isLive).length;
     var vset={}; credits.forEach(function(c){ (c.voucher_slugs?String(c.voucher_slugs).split(","):[]).forEach(function(s){ if(s) vset[s]=1; }); });
     var studioSet={}; positions.forEach(function(p){ if(p.studio) studioSet[p.studio.toLowerCase()]=1; }); credits.forEach(function(c){ if(c.studio) studioSet[String(c.studio).toLowerCase()]=1; });
+    var ac=avgCritic(credits);
     var why='<div class="rcwhy"><div class="rceyebrow">Why this matters</div><div class="rcstats">'+
-      rcstat((CUR-minY)+" yrs","in the industry")+rcstat(credits.length,"shipped titles")+rcstat(Object.keys(studioSet).length,"studios")+rcstat(live,"live-service")+rcstat(Object.keys(vset).length,"peer confirmations")+
+      rcstat((CUR-minY)+" yrs","in the industry")+rcstat(credits.length,"shipped titles")+(ac?rcstat(ac.avg,"avg. critic score"):"")+rcstat(Object.keys(studioSet).length,"studios")+rcstat(live,"live-service")+rcstat(Object.keys(vset).length,"peer confirmations")+
       '</div></div>';
     var rows=credits.map(function(c){
       var sh=c.sheet||{}, conf=(c.vouch_count||0), cs=comingSoon(c), ci=credits.indexOf(c);

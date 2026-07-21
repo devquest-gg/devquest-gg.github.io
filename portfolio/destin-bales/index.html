@@ -177,6 +177,19 @@
   .oscontext .osstats{border-radius:12px;overflow:hidden;border:1px solid var(--border);border-bottom:1px solid var(--border)}
   .oslabel.ctx{color:var(--muted)}
   .oscs{margin:16px 30px 6px;padding:13px 16px;border-radius:14px;background:rgba(163,113,247,.12);border:1px solid rgba(163,113,247,.32);color:#e2d0ff;font-size:13.5px;font-weight:600}
+  /* critic score badge (OpenCritic / Metacritic) */
+  .osreview{margin:16px 30px 6px}
+  .reviewbadge{display:inline-flex;align-items:center;gap:13px;padding:10px 16px 10px 10px;border:1px solid var(--border);border-radius:14px;background:var(--panel2);max-width:100%}
+  a.reviewbadge{transition:border-color .14s,transform .14s}
+  a.reviewbadge:hover{border-color:var(--accent);transform:translateY(-1px)}
+  .rsbox{width:48px;height:48px;flex:none;display:flex;align-items:center;justify-content:center;font-size:21px;font-weight:850;border-radius:9px;letter-spacing:-.5px}
+  .reviewbadge.oc .rsbox{border-radius:50%}
+  .rsmeta{display:flex;flex-direction:column;gap:2px;min-width:0}
+  .rssrc{font-size:14.5px;font-weight:800;color:var(--text);line-height:1.1}
+  .rssub{font-size:12px;color:var(--muted);margin-top:1px}
+  .rsttier{font-weight:800;letter-spacing:.05em;text-transform:uppercase}
+  .rsarrow{margin-left:4px;color:var(--muted);font-size:15px;font-weight:700;flex:none}
+  a.reviewbadge:hover .rsarrow{color:var(--accent)}
   .osshotwrap{padding:16px 30px 4px}
   .osshotrow{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:10px}
   @media(max-width:600px){.osshotrow{grid-template-columns:1fr}}
@@ -381,6 +394,15 @@
   function creditYear(c){ return c.work_start || c.year || c.work_end || null; }
   function isLive(c){ return (c.releases||[]).some(function(x){ return /live/i.test(x); }); }
   function comingSoon(c){ var d=c.sheet&&c.sheet.release_date; if(!d) return false; var t=Date.parse(d); return !isNaN(t) && t>Date.now(); }
+  // portfolio-level average critic score across titles that have one (auto-shows only with 2+ scored titles)
+  var MIN_SCORED = 2;
+  function avgCritic(credits){
+    var vals=[];
+    (credits||[]).forEach(function(c){ var rs=c.sheet&&c.sheet.review_score; if(rs && rs.score!=null && rs.score!==""){ var n=+rs.score; if(!isNaN(n)) vals.push(n); } });
+    if(vals.length<MIN_SCORED) return null;
+    var sum=vals.reduce(function(a,b){ return a+b; },0);
+    return { avg: Math.round(sum/vals.length), n: vals.length };
+  }
   function fmtRel(d){ var t=Date.parse(d); if(isNaN(t)) return String(d); return new Date(t).toLocaleDateString(undefined,{month:"short",year:"numeric"}); }
   // linkify: escapes, then turns [label](url) and bare URLs into clickable links
   function shortUrl(u){ var s=String(u).replace(/^https?:\/\//,"").replace(/\/$/,""); return s.length>46?s.slice(0,44)+"…":s; }
@@ -399,6 +421,21 @@
     if(vm) return '<div class="osshot osvid" data-embed="https://player.vimeo.com/video/'+vm+'?autoplay=1"><div class="osvidbg"></div><span class="osplay">▶</span></div>';
     if(/\.(mp4|webm|mov)(\?|$)/i.test(u)) return '<div class="osshot"><video src="'+esc(u)+'" controls preload="metadata" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#000"></video></div>';
     return '<div class="osshot"><img src="'+esc(u)+'" alt="" onerror="this.closest(\'.osshot\').style.display=\'none\'"></div>';
+  }
+  // critic score badge — OpenCritic or Metacritic, clickable to the score page
+  function scoreColor(n){ n=+n; if(n>=75) return {bg:"#6dc84a",fg:"#08210a"}; if(n>=50) return {bg:"#f2c94c",fg:"#231b02"}; return {bg:"#f0563f",fg:"#2a0a05"}; }
+  function reviewBadge(sh){
+    var rs=sh&&sh.review_score;
+    if(!rs || rs.score==null || rs.score==="") return "";
+    var isOC=rs.source==="opencritic";
+    var name=isOC?"OpenCritic":"Metacritic";
+    var col=scoreColor(rs.score);
+    var sub=isOC ? ((rs.tier?'<span class="rsttier" style="color:'+col.bg+'">'+esc(rs.tier)+'</span> · ':'')+"Top Critic Average") : "Metascore";
+    var inner='<span class="rsbox" style="background:'+col.bg+';color:'+col.fg+'">'+esc(String(rs.score))+'</span>'+
+      '<span class="rsmeta"><span class="rssrc">'+name+'</span><span class="rssub">'+sub+'</span></span>'+
+      (rs.url?'<span class="rsarrow">↗</span>':'');
+    if(rs.url) return '<a class="reviewbadge'+(isOC?' oc':'')+'" href="'+esc(rs.url)+'" target="_blank" rel="noopener" title="View on '+name+'">'+inner+'</a>';
+    return '<div class="reviewbadge'+(isOC?' oc':'')+'">'+inner+'</div>';
   }
 
   function render(p, positions, credits, covMap){
@@ -442,6 +479,7 @@
     var studioSet={}; positions.forEach(function(x){ if(x.studio) studioSet[x.studio.toLowerCase()]=1; }); credits.forEach(function(c){ if(c.studio) studioSet[String(c.studio).toLowerCase()]=1; });
     var nStudios=Object.keys(studioSet).length||positions.length;
     var liveCount=credits.filter(isLive).length;
+    var ac=avgCritic(credits);
     var av=(p.name||"?").split(/\s+/).map(function(x){return x[0];}).slice(0,2).join("").toUpperCase();
     var tags=[]; tags.push(cap(p.portfolio_style||"production")); if(liveCount) tags.push("Live Service"); if(positions.length>=3 || /director|vp|head|lead/i.test(p.headline||"")) tags.push("Studio Leadership");
     var links={}; (p.links||[]).forEach(function(l){ links[l.type]=l.url; });
@@ -463,6 +501,7 @@
         '</div></div>'+
         '<div class="stats">'+
           stat((CUR-minY)+" yrs","In the industry")+stat(nStudios,"Studios")+stat(credits.length,"Credits")+
+          (ac?stat(ac.avg,"Avg. critic score"):"")+
           stat(liveCount,"Live-service")+stat(p.unshipped||0,"Cancelled / unshipped")+
         '</div>'+
       '</div></div>';
@@ -555,6 +594,7 @@
     var chals=(s.challenges||[]).join("\n");
     var kw=(s.keywords||[]).join(", ");
     var shots=(s.screenshots||[]).join("\n");
+    var rv=s.review_score||{};
     return '<div class="efwrap"><button class="osclose" aria-label="Close">✕</button>'+
       '<h3>Edit one-sheet</h3><div class="efdesc">'+esc(c.game_title)+' · '+esc(c.role||"")+'</div>'+
       '<label class="eflabel">One-line summary</label><textarea id="ef-summary" placeholder="What was this game, and your part in it?">'+esc(s.summary||"")+'</textarea>'+
@@ -564,6 +604,13 @@
       '<label class="eflabel">What I led <span class="mut">— one per line; paste a link or use [label](url)</span></label><textarea id="ef-did" placeholder="One achievement per line">'+esc(contribs)+'</textarea>'+
       '<label class="eflabel">Key challenges <span class="mut">— problems you solved; one per line; links work here too</span></label><textarea id="ef-challenges" placeholder="One challenge per line">'+esc(chals)+'</textarea>'+
       '<label class="eflabel">Focus / keywords <span class="mut">— comma-separated</span></label><input id="ef-kw" value="'+esc(kw)+'">'+
+      '<label class="eflabel">Critic score <span class="mut">— optional; OpenCritic or Metacritic, links out to the score page</span></label>'+
+      '<div class="efrow">'+
+        '<div><select id="ef-rsrc"><option value="">— none —</option><option value="opencritic"'+(rv.source==="opencritic"?" selected":"")+'>OpenCritic</option><option value="metacritic"'+(rv.source==="metacritic"?" selected":"")+'>Metacritic</option></select></div>'+
+        '<div><input id="ef-rscore" type="number" min="0" max="100" placeholder="Score (0–100)" value="'+esc(rv.score!=null?rv.score:"")+'"></div>'+
+        '<div><select id="ef-rtier"><option value="">Tier — OpenCritic only</option>'+["Mighty","Strong","Fair","Weak"].map(function(t){ return '<option'+(rv.tier===t?" selected":"")+'>'+t+'</option>'; }).join("")+'</select></div>'+
+      '</div>'+
+      '<input id="ef-rurl" placeholder="Link to the score page (https://…)" value="'+esc(rv.url||"")+'" style="margin-top:8px">'+
       '<label class="eflabel">Release date <span class="mut">— set only if unreleased; shows &ldquo;Coming Soon&rdquo; until then</span></label><input type="date" id="ef-release" value="'+esc(s.release_date||"")+'">'+
       '<label class="eflabel">Banner image URL <span class="mut">— optional wide art (blank uses box art)</span></label><input id="ef-banner" placeholder="https://..." value="'+esc(s.banner_url||"")+'">'+
       '<label class="eflabel">Screenshots &amp; videos <span class="mut">— one URL per line; images or videos (YouTube, Vimeo, .mp4)</span></label><textarea id="ef-shots" placeholder="One image or video URL per line">'+esc(shots)+'</textarea>'+
@@ -575,6 +622,8 @@
     var stats=[];
     document.querySelectorAll("#ef-stats .efstat-row").forEach(function(row){ var l=row.querySelector(".ef-slabel").value.trim(), v=row.querySelector(".ef-svalue").value.trim(); if(l||v) stats.push({label:l,value:v}); });
     var g=function(id){ var e=document.getElementById(id); return e?e.value:""; };
+    var rsrc=g("ef-rsrc").trim(), rsc=g("ef-rscore").trim(), rtier=g("ef-rtier").trim(), rurl=g("ef-rurl").trim();
+    var review_score = (rsrc && rsc!=="") ? { source:rsrc, score:parseInt(rsc,10), tier:(rsrc==="opencritic"?rtier:""), url:rurl } : null;
     var payload={
       summary: g("ef-summary").trim(),
       stats: stats,
@@ -583,11 +632,12 @@
       keywords: g("ef-kw").split(",").map(function(x){return x.trim();}).filter(Boolean),
       banner_url: g("ef-banner").trim(),
       screenshots: g("ef-shots").split("\n").map(function(x){return x.trim();}).filter(Boolean),
-      release_date: g("ef-release").trim()
+      release_date: g("ef-release").trim(),
+      review_score: review_score
     };
     var st=document.getElementById("ef-sstatus"); st.textContent="Saving…"; st.className="efstatus";
     DQAPI.saveSheet(c.id, payload).then(function(r){
-      if(r&&r.ok){ c.sheet={ summary:payload.summary, contributions:payload.contributions, challenges:payload.challenges, stats:payload.stats, keywords:payload.keywords, banner_url:payload.banner_url||null, screenshots:payload.screenshots, release_date:payload.release_date||null }; st.textContent="Saved ✓"; st.className="efstatus ok"; setTimeout(function(){ openSheet(ci); },420); }
+      if(r&&r.ok){ c.sheet={ summary:payload.summary, contributions:payload.contributions, challenges:payload.challenges, stats:payload.stats, keywords:payload.keywords, banner_url:payload.banner_url||null, screenshots:payload.screenshots, release_date:payload.release_date||null, review_score:payload.review_score||null }; renderHero(); st.textContent="Saved ✓"; st.className="efstatus ok"; setTimeout(function(){ openSheet(ci); },420); }
       else { st.textContent=(r&&r.data&&r.data.error)||"Could not save."; st.className="efstatus err"; }
     }).catch(function(){ st.textContent="Network error."; st.className="efstatus err"; });
   }
@@ -687,6 +737,8 @@
     var shotHTML=shotUrls.length?'<div class="osshotwrap"><div class="oslabel ctx">In game</div><div class="osshotrow">'+shotUrls.map(mediaTile).join("")+'</div></div>':'';
 
     var progHTML=progressionStrip();
+    var rb=reviewBadge(sh);
+    var reviewHTML=rb?'<div class="osreview">'+rb+'</div>':'';
 
     return '<button class="osclose" aria-label="Close">✕</button>'+
       '<button class="osedit owner-only">✎ Edit</button>'+
@@ -697,7 +749,7 @@
           (cs?'<span class="oschip cssoon">🔜 Coming '+esc(rdate||"Soon")+'</span>':"")+
         '</div><h3>'+esc(c.game_title)+'</h3><div class="osrole">'+esc(c.role)+'</div></div>'+
       '</div>'+
-      contribHTML+vblock+contextHTML+shotHTML+progHTML;
+      contribHTML+vblock+reviewHTML+contextHTML+shotHTML+progHTML;
   }
   function progressionStrip(){
     if(!_positions||!_positions.length) return "";
@@ -715,8 +767,9 @@
     var live=credits.filter(isLive).length;
     var vset={}; credits.forEach(function(c){ (c.voucher_slugs?String(c.voucher_slugs).split(","):[]).forEach(function(s){ if(s) vset[s]=1; }); });
     var studioSet={}; positions.forEach(function(p){ if(p.studio) studioSet[p.studio.toLowerCase()]=1; }); credits.forEach(function(c){ if(c.studio) studioSet[String(c.studio).toLowerCase()]=1; });
+    var ac=avgCritic(credits);
     var why='<div class="rcwhy"><div class="rceyebrow">Why this matters</div><div class="rcstats">'+
-      rcstat((CUR-minY)+" yrs","in the industry")+rcstat(credits.length,"shipped titles")+rcstat(Object.keys(studioSet).length,"studios")+rcstat(live,"live-service")+rcstat(Object.keys(vset).length,"peer confirmations")+
+      rcstat((CUR-minY)+" yrs","in the industry")+rcstat(credits.length,"shipped titles")+(ac?rcstat(ac.avg,"avg. critic score"):"")+rcstat(Object.keys(studioSet).length,"studios")+rcstat(live,"live-service")+rcstat(Object.keys(vset).length,"peer confirmations")+
       '</div></div>';
     var rows=credits.map(function(c){
       var sh=c.sheet||{}, conf=(c.vouch_count||0), cs=comingSoon(c), ci=credits.indexOf(c);
