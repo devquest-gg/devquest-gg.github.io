@@ -309,6 +309,7 @@
   .oseditgame{position:absolute;top:14px;left:14px;z-index:12;display:none;align-items:center;gap:6px;height:34px;padding:0 14px;border-radius:17px;border:1px solid rgba(255,255,255,.25);background:rgba(0,0,0,.45);color:#fff;font-size:12.5px;font-weight:700;cursor:pointer;backdrop-filter:blur(4px)}
   .oseditgame:hover{background:rgba(0,0,0,.66)}
   body.is-auth .oseditgame{display:inline-flex}
+  .sdrop{max-height:230px;overflow:auto;margin-top:4px}
   .efwrap{padding:26px 28px 30px}
   .efwrap h3{margin:0 0 4px;font-size:22px;font-weight:850;letter-spacing:-.4px}
   .efdesc{color:var(--muted);font-size:13px;margin:0 0 14px}
@@ -655,7 +656,7 @@
     return '<div class="efwrap"><button class="osclose" aria-label="Close">✕</button>'+
       '<h3>Edit game info</h3><div class="efdesc">Corrects this game across DevQuest — thanks for improving the catalogue. Your edit is attributed and can be reviewed by moderators.</div>'+
       '<label class="eflabel">Game title</label><input id="gf-title" value="'+esc(c.game_title||"")+'">'+
-      '<label class="eflabel">Studio / developer <span class="mut">— who made it</span></label><input id="gf-studio" placeholder="e.g. Riot Games" value="'+esc(c.studio||"")+'">'+
+      '<label class="eflabel">Studio / developer <span class="mut">— pick a known studio or type a new one</span></label><input id="gf-studio" placeholder="Start typing a studio…" autocomplete="off" value="'+esc(c.studio||"")+'"><div id="gf-sresults" class="sdrop"></div>'+
       '<label class="eflabel">Release year <span class="mut">— optional</span></label><input id="gf-year" type="number" min="1950" max="2100" placeholder="e.g. 2009" value="'+esc(yr)+'">'+
       '<div class="efactions"><span class="efbtn primary" id="gf-save">Save</span><span class="efbtn" id="gf-cancel">Cancel</span><span class="efstatus" id="gf-status"></span></div>'+
       '</div>';
@@ -667,6 +668,30 @@
     sheet.querySelector(".osclose").onclick=closeSheet;
     sheet.querySelector("#gf-cancel").onclick=function(){ openSheet(ci); };
     sheet.querySelector("#gf-save").onclick=function(){ saveGameEdit(ci); };
+    // studio typeahead — full catalogue studios (static index.json) + live user-added
+    var sIn=sheet.querySelector("#gf-studio"), sRes=sheet.querySelector("#gf-sresults"), sT=null;
+    function pickStudio(n){ sIn.value=n; sRes.innerHTML=""; }
+    function studioSearch(){
+      var v=sIn.value.trim(); if(v.length<2){ sRes.innerHTML=""; return; }
+      var ql=v.toLowerCase();
+      var staticP=getJSON("/credits/data/site/index.json").then(function(rows){
+        if(!Array.isArray(rows)) return [];
+        var seen={}, out=[];
+        for(var i=0;i<rows.length && out.length<40;i++){ var s=rows[i]&&rows[i][3]; if(!s) continue; var sl=String(s).toLowerCase(); if(sl.indexOf(ql)!==-1 && !seen[sl]){ seen[sl]=1; out.push(String(s)); } }
+        return out;
+      }).catch(function(){ return []; });
+      var liveP=(DQAPI.searchStudios?DQAPI.searchStudios(v).then(function(r){ return ((r&&r.data&&r.data.studios)||[]).map(function(s){ return s.name; }); }).catch(function(){ return []; }):Promise.resolve([]));
+      Promise.all([staticP,liveP]).then(function(a){
+        var seen={}, names=[];
+        a[0].concat(a[1]).forEach(function(n){ if(!n) return; var k=String(n).toLowerCase(); if(seen[k]) return; seen[k]=1; names.push(String(n)); });
+        names.sort(function(x,y){ var xs=x.toLowerCase().indexOf(ql)===0?0:1, ys=y.toLowerCase().indexOf(ql)===0?0:1; return xs-ys || x.localeCompare(y); });
+        names=names.slice(0,12);
+        if(!names.length){ sRes.innerHTML=""; return; }
+        sRes.innerHTML=names.map(function(n,i){ return '<div class="agresult" data-i="'+i+'"><span class="agt">'+esc(n)+'</span></div>'; }).join("");
+        sRes.querySelectorAll(".agresult").forEach(function(el){ el.onclick=function(){ pickStudio(names[+el.dataset.i]); }; });
+      });
+    }
+    sIn.oninput=function(){ clearTimeout(sT); sT=setTimeout(studioSearch,200); };
     sheet.scrollTop=0;
   }
   function saveGameEdit(ci){
