@@ -52,11 +52,13 @@
   .stat .l{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-top:3px}
   .studios{margin-top:20px}
   .studios-lbl{font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:11px}
-  .studios-row{display:flex;gap:11px;flex-wrap:wrap;align-items:center}
-  .stile{width:44px;height:44px;border-radius:11px;flex:none;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(0,0,0,.4),inset 0 0 0 1px rgba(255,255,255,.09)}
-  .stile .sgloss{position:absolute;inset:0;background:linear-gradient(150deg,rgba(255,255,255,.16),transparent 44%);pointer-events:none;z-index:2}
-  .stile img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1}
-  .smono{position:relative;z-index:1;font-weight:850;font-size:15px;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.4)}
+  .studios-row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .stile{width:42px;height:42px;border-radius:10px;flex:none;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;background:var(--panel2);border:1px solid var(--border);transition:border-color .15s}
+  .stile:hover{border-color:var(--dim)}
+  .stile img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;padding:7px;z-index:1;filter:grayscale(1) brightness(1.5) opacity(.85);transition:filter .16s}
+  .stile:hover img{filter:none}
+  .stile:has(img) .smono{display:none}
+  .smono{position:relative;z-index:1;font-weight:800;font-size:14px;color:#9fb0c4;letter-spacing:.02em}
 
   section{padding:40px 0 6px}
   .eyebrow{font-size:12px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--accent)}
@@ -389,7 +391,7 @@
   // studio monogram (1-2 letters) for logo-less tiles
   function studioMono(s){ var stop=/^(games|game|entertainment|studios|studio|interactive|inc|llc|co|corp|the|of|and|a)$/i; var w=String(s||"").replace(/[.,]/g,"").split(/\s+/).filter(function(x){ return x && !stop.test(x); }); if(!w.length) w=String(s||"?").split(/\s+/); var r=w.slice(0,2).map(function(x){ return x[0]; }).join(""); return (r||"?").toUpperCase(); }
   // studios strip: app-icon square tiles (logo where available, monogram fallback)
-  function studioTile(pos){ var name=pos.studio||"", logo=pos.studio_logo; var inner=logo?'<img src="'+esc(logo)+'" alt="'+esc(name)+'" onerror="this.remove()">':'<span class="smono">'+esc(studioMono(name))+'</span>'; return '<span class="stile" title="'+esc(name)+'" style="background:'+studioGrad(name)+'"><span class="sgloss"></span>'+inner+'</span>'; }
+  function studioTile(pos){ var name=pos.studio||"", logo=pos.studio_logo; var img=logo?'<img src="'+esc(logo)+'" alt="'+esc(name)+'" onerror="this.remove()">':''; return '<span class="stile" title="'+esc(name)+'"><span class="smono">'+esc(studioMono(name))+'</span>'+img+'</span>'; }
   // one row of studios (deduped, oldest->newest); auto-hides under 2 studios
   function studiosStripHTML(positions){ var seen={}, list=[]; (positions||[]).slice().sort(function(a,b){ return (a.start_year||0)-(b.start_year||0); }).forEach(function(x){ if(!x.studio) return; var k=String(x.studio_slug||x.studio).toLowerCase(); if(seen[k]) return; seen[k]=1; list.push(x); }); if(list.length<2) return ""; return '<div class="studios"><div class="studios-lbl">Shipped at</div><div class="studios-row">'+list.map(studioTile).join("")+'</div></div>'; }
 
@@ -514,7 +516,7 @@
         '<div class="cta"><a class="btn primary">⬇ Download résumé</a>'+lb+'</div>'+
         '</div></div>'+
         '<div class="stats">'+
-          stat((CUR-minY)+" yrs","In the industry")+stat(nStudios,"Studios")+stat(credits.length,"Credits")+
+          stat((CUR-minY)+" yrs","In the industry")+stat(credits.length,"Credits")+
           (ac?stat(ac.avg,"Avg. critic score"):"")+
           stat(liveCount,"Live-service")+stat(p.unshipped||0,"Cancelled / unshipped")+
         '</div>'+
