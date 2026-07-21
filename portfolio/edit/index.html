@@ -197,7 +197,6 @@
         '<div><label>End</label><div class="row"><div><select class="p-em">'+monthOpts(p.end_month)+'</select></div><div><select class="p-ey">'+yearOpts(p.end_year)+'</select></div></div></div>'+
       '</div>'+
       '<div class="chk"><input type="checkbox" class="p-cur" '+(p.is_current?"checked":"")+'><label style="margin:0">I currently work here</label></div>'+
-      '<label>Studio logo URL <span class="mut" style="font-weight:400">— optional; a light or transparent logo shows best (blank = monogram tile)</span></label><input class="p-logo" placeholder="https://…  link to the studio logo" value="'+esc(p.studio_logo||"")+'">'+
       '<label>What you did <span class="mut" style="font-weight:400">— a few accomplishment lines</span></label><textarea class="p-desc" placeholder="Led studio production for…&#10;Owned milestone quality and budget for…">'+esc(p.description||"")+'</textarea>'+
       '<div class="actions"><span class="btn primary sm p-save">Save</span><span class="btn danger sm p-del">Remove</span><span class="status p-st"></span></div>'+
     '</div>';
@@ -218,8 +217,7 @@
         start_year: card.querySelector(".p-sy").value, start_month: card.querySelector(".p-sm").value,
         end_year: card.querySelector(".p-ey").value, end_month: card.querySelector(".p-em").value,
         is_current: cur.checked ? 1 : 0,
-        description: card.querySelector(".p-desc").value,
-        studio_logo: card.querySelector(".p-logo").value.trim()
+        description: card.querySelector(".p-desc").value
       };
       if(!payload.studio_name || !payload.title){ st.textContent="Studio and title are required."; st.className="status err"; return; }
       st.textContent="Saving…"; st.className="status mut";
