@@ -706,7 +706,7 @@
         c.game_title=title; c.studio=studio||null;
         var yv=parseInt(yearRaw,10); c.year=isNaN(yv)?null:yv;
         st.textContent="Saved ✓"; st.className="efstatus ok"; setTimeout(function(){ openSheet(ci); },450);
-      } else { st.textContent=(r&&r.data&&r.data.error)||"Could not save."; st.className="efstatus err"; }
+      } else { st.textContent=((r&&r.data&&r.data.error)||"Could not save.")+'  ·  slug="'+(c.game_slug||"(EMPTY)")+'"  ·  HTTP '+((r&&r.status)||"?"); st.className="efstatus err"; try{ console.log("[game edit] PUT /games/"+c.game_slug, r); }catch(e){} }
     }).catch(function(){ st.textContent="Network error."; st.className="efstatus err"; });
   }
 
