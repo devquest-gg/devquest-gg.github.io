@@ -51,6 +51,7 @@
     vouch: function (creditId) { return req("POST", "/vouch", { credit_id: creditId }); },
     unvouch: function (creditId) { return req("DELETE", "/vouch", { credit_id: creditId }); },
     updateProfile: function (payload) { return req("PATCH", "/me", payload); },
+    updateGame: function (slug, payload) { return req("PUT", "/games/" + encodeURIComponent(slug), payload); },
     portfolio: function (slug) { return req("GET", "/portfolio/" + encodeURIComponent(slug)); },
     addPosition: function (payload) { return req("POST", "/me/positions", payload); },
     updatePosition: function (id, payload) { return req("PATCH", "/me/positions/" + id, payload); },
