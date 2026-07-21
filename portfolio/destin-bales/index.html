@@ -306,6 +306,9 @@
   .pedit:hover{filter:brightness(1.06)}
   .osedit{position:absolute;top:14px;right:60px;z-index:12;align-items:center;gap:6px;height:38px;padding:0 16px;border-radius:19px;border:0;background:var(--gold);color:#04121f;font-size:13px;font-weight:800;cursor:pointer;box-shadow:0 4px 14px rgba(224,178,58,.35)}
   .osedit:hover{filter:brightness(1.06)}
+  .oseditgame{position:absolute;top:14px;left:14px;z-index:12;display:none;align-items:center;gap:6px;height:34px;padding:0 14px;border-radius:17px;border:1px solid rgba(255,255,255,.25);background:rgba(0,0,0,.45);color:#fff;font-size:12.5px;font-weight:700;cursor:pointer;backdrop-filter:blur(4px)}
+  .oseditgame:hover{background:rgba(0,0,0,.66)}
+  body.is-auth .oseditgame{display:inline-flex}
   .efwrap{padding:26px 28px 30px}
   .efwrap h3{margin:0 0 4px;font-size:22px;font-weight:850;letter-spacing:-.4px}
   .efdesc{color:var(--muted);font-size:13px;margin:0 0 14px}
@@ -389,7 +392,7 @@
       if(!(r && r.ok && r.data && r.data.person)){ app.innerHTML='<div class="wrap" style="padding:60px 22px"><h1>Not found</h1><p style="color:var(--muted)">No portfolio at this address yet.</p></div>'; return; }
       var person=r.data.person, positions=r.data.positions||[], credits=r.data.credits||[];
       resolveCovers(credits).then(function(covMap){ render(person, positions, credits, covMap||{}); });
-      if(DQAPI.isSignedIn()){ DQAPI.me().then(function(mr){ var me=mr&&mr.data&&mr.data.person; if(me && me.slug===slug){ IS_OWNER=true; document.body.classList.add("is-owner"); document.getElementById("editlink").style.display="inline-block"; if(_relayout) _relayout(); } }).catch(function(){}); }
+      if(DQAPI.isSignedIn()){ document.body.classList.add("is-auth"); DQAPI.me().then(function(mr){ var me=mr&&mr.data&&mr.data.person; if(me && me.slug===slug){ IS_OWNER=true; document.body.classList.add("is-owner"); document.getElementById("editlink").style.display="inline-block"; if(_relayout) _relayout(); } }).catch(function(){}); }
     }).catch(function(){ app.innerHTML='<div class="wrap" style="padding:60px 22px;color:var(--pink)">Could not load this portfolio. Try again.</div>'; });
   }
   loadPortfolio();
@@ -538,6 +541,7 @@
     sheet.querySelectorAll(".osseewho,.osclk").forEach(function(el){ el.onclick=showConf; });
     sheet.querySelectorAll(".osvid").forEach(function(el){ el.onclick=function(){ var em=el.getAttribute("data-embed"); if(em){ el.innerHTML='<iframe src="'+em+'" frameborder="0" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen style="position:absolute;inset:0;width:100%;height:100%;border:0"></iframe>'; el.classList.remove("osvid"); } }; });
     var ed=sheet.querySelector(".osedit"); if(ed) ed.onclick=function(){ openSheetEdit(ci); };
+    var edg=sheet.querySelector(".oseditgame"); if(edg) edg.onclick=function(){ openGameEdit(ci); };
     sheet.scrollTop=0;
     _ovl.classList.add("on"); document.body.style.overflow="hidden";
   }
@@ -644,6 +648,43 @@
       else { st.textContent=(r&&r.data&&r.data.error)||"Could not save."; st.className="efstatus err"; }
     }).catch(function(){ st.textContent="Network error."; st.className="efstatus err"; });
   }
+
+  // ---- edit game info (any signed-in user) — corrects the shared game for everyone ----
+  function gameEditFormHTML(c){
+    var yr = (c.year!=null && c.year!=="") ? c.year : (creditYear(c)||"");
+    return '<div class="efwrap"><button class="osclose" aria-label="Close">✕</button>'+
+      '<h3>Edit game info</h3><div class="efdesc">Corrects this game across DevQuest — thanks for improving the catalogue. Your edit is attributed and can be reviewed by moderators.</div>'+
+      '<label class="eflabel">Game title</label><input id="gf-title" value="'+esc(c.game_title||"")+'">'+
+      '<label class="eflabel">Studio / developer <span class="mut">— who made it</span></label><input id="gf-studio" placeholder="e.g. Riot Games" value="'+esc(c.studio||"")+'">'+
+      '<label class="eflabel">Release year <span class="mut">— optional</span></label><input id="gf-year" type="number" min="1950" max="2100" placeholder="e.g. 2009" value="'+esc(yr)+'">'+
+      '<div class="efactions"><span class="efbtn primary" id="gf-save">Save</span><span class="efbtn" id="gf-cancel">Cancel</span><span class="efstatus" id="gf-status"></span></div>'+
+      '</div>';
+  }
+  function openGameEdit(ci){
+    var c=_credits[ci]; if(!c) return;
+    var sheet=document.getElementById("ossheet");
+    sheet.innerHTML=gameEditFormHTML(c);
+    sheet.querySelector(".osclose").onclick=closeSheet;
+    sheet.querySelector("#gf-cancel").onclick=function(){ openSheet(ci); };
+    sheet.querySelector("#gf-save").onclick=function(){ saveGameEdit(ci); };
+    sheet.scrollTop=0;
+  }
+  function saveGameEdit(ci){
+    var c=_credits[ci];
+    var g=function(id){ var e=document.getElementById(id); return e?e.value.trim():""; };
+    var title=g("gf-title"), studio=g("gf-studio"), yearRaw=g("gf-year");
+    var st=document.getElementById("gf-status");
+    if(!title){ st.textContent="A title is required."; st.className="efstatus err"; return; }
+    st.textContent="Saving…"; st.className="efstatus";
+    DQAPI.updateGame(c.game_slug, { title:title, studio:studio, year:yearRaw }).then(function(r){
+      if(r&&r.ok){
+        c.game_title=title; c.studio=studio||null;
+        var yv=parseInt(yearRaw,10); c.year=isNaN(yv)?null:yv;
+        st.textContent="Saved ✓"; st.className="efstatus ok"; setTimeout(function(){ openSheet(ci); },450);
+      } else { st.textContent=(r&&r.data&&r.data.error)||"Could not save."; st.className="efstatus err"; }
+    }).catch(function(){ st.textContent="Network error."; st.className="efstatus err"; });
+  }
+
   // ---- add a game (owner) ----
   function addGameHTML(){
     return '<div class="efwrap"><button class="osclose" aria-label="Close">✕</button>'+
@@ -744,6 +785,7 @@
 
     return '<button class="osclose" aria-label="Close">✕</button>'+
       '<button class="osedit owner-only">✎ Edit</button>'+
+      '<button class="oseditgame">✎ Game info</button>'+
       '<div class="osbanner">'+bannerFill+'<div class="osscrim"></div><div class="osgloss"></div>'+
         '<div class="osbtitle"><div class="oskicker">'+
           (c.studio?'<span class="oschip">'+esc(c.studio)+'</span>':"")+
