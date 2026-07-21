@@ -212,6 +212,9 @@
   .rceyebrow{font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin-bottom:12px}
   .rcstats{display:flex;gap:28px;flex-wrap:wrap}
   .rcst{display:flex;flex-direction:column}.rcst b{font-size:26px;font-weight:850;letter-spacing:-.5px;line-height:1}.rcst span{font-size:12.5px;color:var(--muted);margin-top:5px}
+  .rcstudios{margin-top:16px;padding-top:14px;border-top:1px solid var(--border);font-size:13px;color:#cdd8e6;line-height:1.75}
+  .rcslab{font-size:10.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--gold);margin-right:12px}
+  .rcsdot{color:var(--dim);margin:0 8px}
   .rclist{display:flex;flex-direction:column;gap:12px}
   .rcrow{display:flex;gap:16px;border:1px solid var(--border);border-radius:14px;background:var(--panel);padding:15px 17px;cursor:pointer;transition:border-color .14s,transform .14s}
   .rcrow:hover{border-color:var(--accent);transform:translateY(-1px)}
@@ -736,7 +739,6 @@
     var shotUrls=(sh&&sh.screenshots&&sh.screenshots.length)?sh.screenshots:(sid?[steamHeader(sid)]:[]);
     var shotHTML=shotUrls.length?'<div class="osshotwrap"><div class="oslabel ctx">In game</div><div class="osshotrow">'+shotUrls.map(mediaTile).join("")+'</div></div>':'';
 
-    var progHTML=progressionStrip();
     var rb=reviewBadge(sh);
     var reviewHTML=rb?'<div class="osreview">'+rb+'</div>':'';
 
@@ -749,14 +751,7 @@
           (cs?'<span class="oschip cssoon">🔜 Coming '+esc(rdate||"Soon")+'</span>':"")+
         '</div><h3>'+esc(c.game_title)+'</h3><div class="osrole">'+esc(c.role)+'</div></div>'+
       '</div>'+
-      contribHTML+vblock+reviewHTML+contextHTML+shotHTML+progHTML;
-  }
-  function progressionStrip(){
-    if(!_positions||!_positions.length) return "";
-    var ps=_positions.slice().filter(function(p){ return p.start_year; }).sort(function(a,b){ return a.start_year-b.start_year; });
-    if(ps.length<2) return "";
-    var items=ps.map(function(p){ return '<span class="opchip">'+esc(p.title)+' <em>’'+String(p.start_year).slice(2)+'</em></span>'; }).join('<span class="oparr">→</span>');
-    return '<div class="osprog"><div class="oslabel ctx">Career progression</div><div class="opline">'+items+'</div></div>';
+      contribHTML+vblock+reviewHTML+contextHTML+shotHTML;
   }
 
   // ---- recruiter mode: scannable, consistent role/scope/impact/proof ----
@@ -768,9 +763,12 @@
     var vset={}; credits.forEach(function(c){ (c.voucher_slugs?String(c.voucher_slugs).split(","):[]).forEach(function(s){ if(s) vset[s]=1; }); });
     var studioSet={}; positions.forEach(function(p){ if(p.studio) studioSet[p.studio.toLowerCase()]=1; }); credits.forEach(function(c){ if(c.studio) studioSet[String(c.studio).toLowerCase()]=1; });
     var ac=avgCritic(credits);
+    var stdSeen={}, stdList=[];
+    positions.forEach(function(p){ if(!p.studio) return; var k=String(p.studio_slug||p.studio).toLowerCase(); if(stdSeen[k]) return; stdSeen[k]=1; stdList.push(p.studio); });
+    var studiosLine = stdList.length ? '<div class="rcstudios"><span class="rcslab">Studios</span>'+stdList.map(function(s){ return esc(s); }).join('<span class="rcsdot">·</span>')+'</div>' : '';
     var why='<div class="rcwhy"><div class="rceyebrow">Why this matters</div><div class="rcstats">'+
       rcstat((CUR-minY)+" yrs","in the industry")+rcstat(credits.length,"shipped titles")+(ac?rcstat(ac.avg,"avg. critic score"):"")+rcstat(Object.keys(studioSet).length,"studios")+rcstat(live,"live-service")+rcstat(Object.keys(vset).length,"peer confirmations")+
-      '</div></div>';
+      '</div>'+studiosLine+'</div>';
     var rows=credits.map(function(c){
       var sh=c.sheet||{}, conf=(c.vouch_count||0), cs=comingSoon(c), ci=credits.indexOf(c);
       var art=covMap[c.game_slug];
