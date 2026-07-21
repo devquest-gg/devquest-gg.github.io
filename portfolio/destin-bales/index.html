@@ -650,6 +650,32 @@
     }).catch(function(){ st.textContent="Network error."; st.className="efstatus err"; });
   }
 
+  // shared studio typeahead: full catalogue studios (static index.json) + live user-added
+  function wireStudioTypeahead(inEl, resEl){
+    var t=null;
+    function run(){
+      var v=inEl.value.trim(); if(v.length<2){ resEl.innerHTML=""; return; }
+      var ql=v.toLowerCase();
+      var staticP=getJSON("/credits/data/site/index.json").then(function(rows){
+        if(!Array.isArray(rows)) return [];
+        var seen={}, out=[];
+        for(var i=0;i<rows.length && out.length<40;i++){ var s=rows[i]&&rows[i][3]; if(!s) continue; var sl=String(s).toLowerCase(); if(sl.indexOf(ql)!==-1 && !seen[sl]){ seen[sl]=1; out.push(String(s)); } }
+        return out;
+      }).catch(function(){ return []; });
+      var liveP=(DQAPI.searchStudios?DQAPI.searchStudios(v).then(function(r){ return ((r&&r.data&&r.data.studios)||[]).map(function(s){ return s.name; }); }).catch(function(){ return []; }):Promise.resolve([]));
+      Promise.all([staticP,liveP]).then(function(a){
+        var seen={}, names=[];
+        a[0].concat(a[1]).forEach(function(n){ if(!n) return; var k=String(n).toLowerCase(); if(seen[k]) return; seen[k]=1; names.push(String(n)); });
+        names.sort(function(x,y){ var xs=x.toLowerCase().indexOf(ql)===0?0:1, ys=y.toLowerCase().indexOf(ql)===0?0:1; return xs-ys || x.localeCompare(y); });
+        names=names.slice(0,12);
+        if(!names.length){ resEl.innerHTML=""; return; }
+        resEl.innerHTML=names.map(function(n,i){ return '<div class="agresult" data-i="'+i+'"><span class="agt">'+esc(n)+'</span></div>'; }).join("");
+        resEl.querySelectorAll(".agresult").forEach(function(el){ el.onclick=function(){ inEl.value=names[+el.dataset.i]; resEl.innerHTML=""; }; });
+      });
+    }
+    inEl.oninput=function(){ clearTimeout(t); t=setTimeout(run,200); };
+  }
+
   // ---- edit game info (any signed-in user) — corrects the shared game for everyone ----
   function gameEditFormHTML(c){
     var yr = (c.year!=null && c.year!=="") ? c.year : (creditYear(c)||"");
@@ -668,30 +694,7 @@
     sheet.querySelector(".osclose").onclick=closeSheet;
     sheet.querySelector("#gf-cancel").onclick=function(){ openSheet(ci); };
     sheet.querySelector("#gf-save").onclick=function(){ saveGameEdit(ci); };
-    // studio typeahead — full catalogue studios (static index.json) + live user-added
-    var sIn=sheet.querySelector("#gf-studio"), sRes=sheet.querySelector("#gf-sresults"), sT=null;
-    function pickStudio(n){ sIn.value=n; sRes.innerHTML=""; }
-    function studioSearch(){
-      var v=sIn.value.trim(); if(v.length<2){ sRes.innerHTML=""; return; }
-      var ql=v.toLowerCase();
-      var staticP=getJSON("/credits/data/site/index.json").then(function(rows){
-        if(!Array.isArray(rows)) return [];
-        var seen={}, out=[];
-        for(var i=0;i<rows.length && out.length<40;i++){ var s=rows[i]&&rows[i][3]; if(!s) continue; var sl=String(s).toLowerCase(); if(sl.indexOf(ql)!==-1 && !seen[sl]){ seen[sl]=1; out.push(String(s)); } }
-        return out;
-      }).catch(function(){ return []; });
-      var liveP=(DQAPI.searchStudios?DQAPI.searchStudios(v).then(function(r){ return ((r&&r.data&&r.data.studios)||[]).map(function(s){ return s.name; }); }).catch(function(){ return []; }):Promise.resolve([]));
-      Promise.all([staticP,liveP]).then(function(a){
-        var seen={}, names=[];
-        a[0].concat(a[1]).forEach(function(n){ if(!n) return; var k=String(n).toLowerCase(); if(seen[k]) return; seen[k]=1; names.push(String(n)); });
-        names.sort(function(x,y){ var xs=x.toLowerCase().indexOf(ql)===0?0:1, ys=y.toLowerCase().indexOf(ql)===0?0:1; return xs-ys || x.localeCompare(y); });
-        names=names.slice(0,12);
-        if(!names.length){ sRes.innerHTML=""; return; }
-        sRes.innerHTML=names.map(function(n,i){ return '<div class="agresult" data-i="'+i+'"><span class="agt">'+esc(n)+'</span></div>'; }).join("");
-        sRes.querySelectorAll(".agresult").forEach(function(el){ el.onclick=function(){ pickStudio(names[+el.dataset.i]); }; });
-      });
-    }
-    sIn.oninput=function(){ clearTimeout(sT); sT=setTimeout(studioSearch,200); };
+    wireStudioTypeahead(sheet.querySelector("#gf-studio"), sheet.querySelector("#gf-sresults"));
     sheet.scrollTop=0;
   }
   function saveGameEdit(ci){
@@ -706,7 +709,7 @@
         c.game_title=title; c.studio=studio||null;
         var yv=parseInt(yearRaw,10); c.year=isNaN(yv)?null:yv;
         st.textContent="Saved ✓"; st.className="efstatus ok"; setTimeout(function(){ openSheet(ci); },450);
-      } else { st.textContent=((r&&r.data&&r.data.error)||"Could not save.")+'  ·  slug="'+(c.game_slug||"(EMPTY)")+'"  ·  HTTP '+((r&&r.status)||"?"); st.className="efstatus err"; try{ console.log("[game edit] PUT /games/"+c.game_slug, r); }catch(e){} }
+      } else { st.textContent=(r&&r.data&&r.data.error)||"Could not save."; st.className="efstatus err"; }
     }).catch(function(){ st.textContent="Network error."; st.className="efstatus err"; });
   }
 
@@ -717,6 +720,7 @@
       '<label class="eflabel">Game</label><input id="ag-q" placeholder="Start typing a game title…" autocomplete="off">'+
       '<div id="ag-results" style="margin-top:8px"></div>'+
       '<div id="ag-picked"></div>'+
+      '<div id="ag-studio-wrap" style="display:none"><label class="eflabel">Studio / developer <span class="mut">— pick a known studio or type a new one</span></label><input id="ag-studio" placeholder="Start typing a studio…" autocomplete="off"><div id="ag-sresults" class="sdrop"></div></div>'+
       '<label class="eflabel">Your role on it</label><input id="ag-role" placeholder="e.g. Senior Producer">'+
       '<label class="eflabel">Box art URL <span class="mut">— optional; leave blank to keep the catalogue art</span></label><input id="ag-cover" placeholder="https://…  link to a cover image" autocomplete="off">'+
       '<div id="ag-preview"></div>'+
@@ -730,8 +734,10 @@
     sheet.querySelector(".osclose").onclick=closeSheet;
     sheet.querySelector("#ag-cancel").onclick=closeSheet;
     var q=sheet.querySelector("#ag-q"), res=sheet.querySelector("#ag-results"), picked=sheet.querySelector("#ag-picked");
+    var studioWrap=sheet.querySelector("#ag-studio-wrap"), studioIn=sheet.querySelector("#ag-studio"), studioRes=sheet.querySelector("#ag-sresults");
+    wireStudioTypeahead(studioIn, studioRes);
     var sel=null, t=null;
-    function pick(g){ sel=g; picked.innerHTML='<div class="agsel"><b>'+esc(g.title)+'</b>'+(g.studio?' <span class="mut">· '+esc(g.studio)+'</span>':'')+(g.isNew?' <span class="mut">(new)</span>':'')+'</div>'; res.innerHTML=""; q.value=g.title; }
+    function pick(g){ sel=g; picked.innerHTML='<div class="agsel"><b>'+esc(g.title)+'</b>'+(g.studio?' <span class="mut">· '+esc(g.studio)+'</span>':'')+(g.isNew?' <span class="mut">(new)</span>':'')+'</div>'; res.innerHTML=""; q.value=g.title; if(g.isNew){ studioWrap.style.display="block"; studioIn.value=g.studio||""; } else { studioWrap.style.display="none"; studioRes.innerHTML=""; } }
     function search(){
       var v=q.value.trim(); if(v.length<2){ res.innerHTML=""; return; }
       var ql=v.toLowerCase();
@@ -761,7 +767,7 @@
       if(!sel){ st.textContent="Pick a game from the list first."; st.className="efstatus err"; return; }
       if(!role){ st.textContent="Add your role."; st.className="efstatus err"; return; }
       var coverUrl=cov.value.trim();
-      var payload = sel.isNew ? { role:role, new_game:{ title:sel.title, studio:sel.studio||"" } } : { role:role, game_slug:sel.slug, game_title:sel.title, studio:sel.studio||null };
+      var payload = sel.isNew ? { role:role, new_game:{ title:sel.title, studio:studioIn.value.trim() } } : { role:role, game_slug:sel.slug, game_title:sel.title, studio:sel.studio||null };
       if(coverUrl) payload.cover_url=coverUrl;
       st.textContent="Adding…"; st.className="efstatus";
       DQAPI.createCredit(payload).then(function(r){
