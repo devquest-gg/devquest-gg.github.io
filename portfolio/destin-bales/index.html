@@ -50,6 +50,13 @@
   .stat{flex:1;min-width:110px;padding:15px 18px;border-right:1px solid var(--border)}.stat:last-child{border-right:0}
   .stat .n{font-size:23px;font-weight:850;letter-spacing:-.5px;background:linear-gradient(120deg,#9ecbff,#c9a6ff);-webkit-background-clip:text;background-clip:text;color:transparent}
   .stat .l{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-top:3px}
+  .studios{margin-top:20px}
+  .studios-lbl{font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:11px}
+  .studios-row{display:flex;gap:11px;flex-wrap:wrap;align-items:center}
+  .stile{width:44px;height:44px;border-radius:11px;flex:none;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(0,0,0,.4),inset 0 0 0 1px rgba(255,255,255,.09)}
+  .stile .sgloss{position:absolute;inset:0;background:linear-gradient(150deg,rgba(255,255,255,.16),transparent 44%);pointer-events:none;z-index:2}
+  .stile img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1}
+  .smono{position:relative;z-index:1;font-weight:850;font-size:15px;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.4)}
 
   section{padding:40px 0 6px}
   .eyebrow{font-size:12px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--accent)}
@@ -379,6 +386,12 @@
   function gameGrad(s){ var h=hashHue(s); return 'radial-gradient(120% 90% at 50% 0%,hsl('+h+',52%,28%),hsl('+h+',58%,8%))'; }
   function initials(s){ var w=String(s||"").replace(/[:\-].*$/,"").split(/\s+/).filter(function(x){return x && !/^(of|the|and|a|an|II|2)$/i.test(x);}); var r=w.slice(0,3).map(function(x){return x[0];}).join(""); return (r||String(s||"?").slice(0,2)).toUpperCase(); }
   function studioMark(s){ return String(s||"?").trim().slice(0,1).toUpperCase(); }
+  // studio monogram (1-2 letters) for logo-less tiles
+  function studioMono(s){ var stop=/^(games|game|entertainment|studios|studio|interactive|inc|llc|co|corp|the|of|and|a)$/i; var w=String(s||"").replace(/[.,]/g,"").split(/\s+/).filter(function(x){ return x && !stop.test(x); }); if(!w.length) w=String(s||"?").split(/\s+/); var r=w.slice(0,2).map(function(x){ return x[0]; }).join(""); return (r||"?").toUpperCase(); }
+  // studios strip: app-icon square tiles (logo where available, monogram fallback)
+  function studioTile(pos){ var name=pos.studio||"", logo=pos.studio_logo; var inner=logo?'<img src="'+esc(logo)+'" alt="'+esc(name)+'" onerror="this.remove()">':'<span class="smono">'+esc(studioMono(name))+'</span>'; return '<span class="stile" title="'+esc(name)+'" style="background:'+studioGrad(name)+'"><span class="sgloss"></span>'+inner+'</span>'; }
+  // one row of studios (deduped, oldest->newest); auto-hides under 2 studios
+  function studiosStripHTML(positions){ var seen={}, list=[]; (positions||[]).slice().sort(function(a,b){ return (a.start_year||0)-(b.start_year||0); }).forEach(function(x){ if(!x.studio) return; var k=String(x.studio_slug||x.studio).toLowerCase(); if(seen[k]) return; seen[k]=1; list.push(x); }); if(list.length<2) return ""; return '<div class="studios"><div class="studios-lbl">Shipped at</div><div class="studios-row">'+list.map(studioTile).join("")+'</div></div>'; }
 
   var _relayout=null;
   function loadPortfolio(){
@@ -480,6 +493,7 @@
     var nStudios=Object.keys(studioSet).length||positions.length;
     var liveCount=credits.filter(isLive).length;
     var ac=avgCritic(credits);
+    var studiosHTML=studiosStripHTML(positions);
     var av=(p.name||"?").split(/\s+/).map(function(x){return x[0];}).slice(0,2).join("").toUpperCase();
     var tags=[]; tags.push(cap(p.portfolio_style||"production")); if(liveCount) tags.push("Live Service"); if(positions.length>=3 || /director|vp|head|lead/i.test(p.headline||"")) tags.push("Studio Leadership");
     var links={}; (p.links||[]).forEach(function(l){ links[l.type]=l.url; });
@@ -504,6 +518,7 @@
           (ac?stat(ac.avg,"Avg. critic score"):"")+
           stat(liveCount,"Live-service")+stat(p.unshipped||0,"Cancelled / unshipped")+
         '</div>'+
+        studiosHTML+
       '</div></div>';
   }
   function renderHero(){ var hb=document.getElementById("herobox"); if(hb){ hb.innerHTML=heroHTML(_person,_positions,_credits); wireHeroEdit(); } if(_person) document.title=_person.name+" · DevQuest Portfolio"; }
@@ -736,7 +751,6 @@
     var shotUrls=(sh&&sh.screenshots&&sh.screenshots.length)?sh.screenshots:(sid?[steamHeader(sid)]:[]);
     var shotHTML=shotUrls.length?'<div class="osshotwrap"><div class="oslabel ctx">In game</div><div class="osshotrow">'+shotUrls.map(mediaTile).join("")+'</div></div>':'';
 
-    var progHTML=progressionStrip();
     var rb=reviewBadge(sh);
     var reviewHTML=rb?'<div class="osreview">'+rb+'</div>':'';
 
@@ -749,14 +763,7 @@
           (cs?'<span class="oschip cssoon">🔜 Coming '+esc(rdate||"Soon")+'</span>':"")+
         '</div><h3>'+esc(c.game_title)+'</h3><div class="osrole">'+esc(c.role)+'</div></div>'+
       '</div>'+
-      contribHTML+vblock+reviewHTML+contextHTML+shotHTML+progHTML;
-  }
-  function progressionStrip(){
-    if(!_positions||!_positions.length) return "";
-    var ps=_positions.slice().filter(function(p){ return p.start_year; }).sort(function(a,b){ return a.start_year-b.start_year; });
-    if(ps.length<2) return "";
-    var items=ps.map(function(p){ return '<span class="opchip">'+esc(p.title)+' <em>’'+String(p.start_year).slice(2)+'</em></span>'; }).join('<span class="oparr">→</span>');
-    return '<div class="osprog"><div class="oslabel ctx">Career progression</div><div class="opline">'+items+'</div></div>';
+      contribHTML+vblock+reviewHTML+contextHTML+shotHTML;
   }
 
   // ---- recruiter mode: scannable, consistent role/scope/impact/proof ----
