@@ -49,6 +49,15 @@
   .sheet-body{padding:4px 16px 16px}
   .sf-stats .row{margin-bottom:8px}
   .sf-filled{font-size:11px;font-weight:800;color:var(--gold);border:1px solid rgba(224,178,58,.4);border-radius:6px;padding:1px 7px}
+  .uprow{display:flex;gap:12px;align-items:flex-start;margin-top:6px}
+  .upprev{width:60px;height:60px;border-radius:12px;flex:none;background:var(--panel2);border:1px solid var(--border);overflow:hidden;display:flex;align-items:center;justify-content:center;color:var(--dim);font-size:11px;text-align:center}
+  .upprev.port{border-radius:16px}
+  .upprev img{width:100%;height:100%;object-fit:cover;display:block}
+  .upbtns{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+  .upbtn{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:700;border:1px solid var(--border);background:var(--panel2);color:var(--text);border-radius:9px;padding:7px 12px;cursor:pointer}
+  .upbtn:hover{border-color:var(--accent)}
+  .upbtn.busy{opacity:.6;pointer-events:none}
+  .upbtn.ghost{background:none;color:var(--muted)}
 </style>
 </head>
 <body>
@@ -71,6 +80,63 @@
   var ME = null, SLUG = null, POS = [], NEWCTR = 0;
 
   function esc(s){ return String(s==null?"":s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];}); }
+
+  // ---- image upload helpers (portrait) ----
+  function downscaleImage(file, maxDim){
+    maxDim = maxDim || 1400;
+    return new Promise(function(resolve){
+      if(!/^image\/(png|jpe?g|webp)$/i.test(file.type)){ resolve(file); return; }
+      try{
+        var img=new Image(), url=URL.createObjectURL(file);
+        img.onload=function(){
+          var w=img.naturalWidth, h=img.naturalHeight, mx=Math.max(w,h);
+          if(mx<=maxDim && file.size<900*1024){ URL.revokeObjectURL(url); resolve(file); return; }
+          var sc=Math.min(1,maxDim/mx), cw=Math.max(1,Math.round(w*sc)), ch=Math.max(1,Math.round(h*sc));
+          var cv=document.createElement("canvas"); cv.width=cw; cv.height=ch;
+          cv.getContext("2d").drawImage(img,0,0,cw,ch);
+          URL.revokeObjectURL(url);
+          cv.toBlob(function(b){ resolve(b&&b.size?b:file); }, "image/webp", 0.85);
+        };
+        img.onerror=function(){ URL.revokeObjectURL(url); resolve(file); };
+        img.src=url;
+      }catch(e){ resolve(file); }
+    });
+  }
+  function wireUploads(container){
+    (container||document).querySelectorAll(".upbtn[data-upload-for]").forEach(function(btn){
+      if(btn._wired) return; btn._wired=true;
+      var file=document.createElement("input"); file.type="file"; file.accept="image/png,image/jpeg,image/webp,image/gif"; file.style.display="none";
+      btn.parentNode.appendChild(file);
+      btn.onclick=function(){ file.click(); };
+      file.onchange=function(){
+        var f=file.files&&file.files[0]; if(!f) return;
+        var target=document.getElementById(btn.getAttribute("data-upload-for"));
+        var old=btn.textContent;
+        if(!/^image\/(png|jpe?g|webp|gif)$/i.test(f.type)){ btn.textContent="PNG / JPG / WebP / GIF only"; setTimeout(function(){ btn.textContent=old; },1800); file.value=""; return; }
+        if(f.size>15*1024*1024){ btn.textContent="Too large (15 MB max)"; setTimeout(function(){ btn.textContent=old; },2200); file.value=""; return; }
+        btn.textContent="Uploading…"; btn.classList.add("busy");
+        downscaleImage(f).then(function(blob){ return DQAPI.uploadImage(blob); }).then(function(r){
+          btn.classList.remove("busy");
+          if(r&&r.ok&&r.data&&r.data.url){ if(target){ target.value=r.data.url; target.dispatchEvent(new Event("input")); } btn.textContent="Uploaded ✓"; setTimeout(function(){ btn.textContent=old; },1400); }
+          else { btn.textContent=(r&&r.data&&r.data.error)||"Upload failed"; setTimeout(function(){ btn.textContent=old; },2400); }
+          file.value="";
+        }).catch(function(){ btn.classList.remove("busy"); btn.textContent="Upload failed"; setTimeout(function(){ btn.textContent=old; },2400); file.value=""; });
+      };
+    });
+  }
+  function bindPreview(inputId, prevId, fallback){
+    var input=document.getElementById(inputId), prev=document.getElementById(prevId);
+    if(!input||!prev) return;
+    var label=prev.textContent;
+    function upd(){ var u=(input.value||"").trim()||fallback||""; prev.innerHTML = u ? '<img src="'+esc(u)+'" alt="" onerror="this.remove()">' : esc(label); }
+    input.addEventListener("input", upd); upd();
+  }
+  function wireBasicsMedia(p){
+    wireUploads(document);
+    bindPreview("b-avatar","b-avatar-prev",(p&&p.avatar_url)||"");
+    var c=document.getElementById("b-avatar-clear");
+    if(c) c.onclick=function(){ var i=document.getElementById("b-avatar"); if(i){ i.value=""; i.dispatchEvent(new Event("input")); } };
+  }
   function val(id){ var e=document.getElementById(id); return e?e.value.trim():""; }
 
   if(!window.DQAPI || !DQAPI.isSignedIn()){
@@ -106,6 +172,8 @@
         '<label>Location</label><input id="b-loc" placeholder="City, State (or Remote)" value="'+esc(p.location||"")+'">'+
         '<label>About / bio</label><textarea id="b-bio" placeholder="A couple of sentences on who you are and how you work.">'+esc(p.bio||"")+'</textarea>'+
         '<div class="chk"><input type="checkbox" id="b-otw" '+(p.open_to_work?"checked":"")+'><label for="b-otw" style="margin:0">Show &ldquo;Open to opportunities&rdquo; on my portfolio</label></div>'+
+        '<label>Profile portrait <span class="mut" style="font-weight:400">— optional headshot; shown instead of your initials</span></label>'+
+        '<div class="uprow"><div class="upprev port" id="b-avatar-prev">Photo</div><div style="flex:1"><input id="b-avatar" placeholder="https://… or upload a photo" value="'+esc(p.avatar_url||"")+'"><div class="upbtns"><button type="button" class="upbtn" data-upload-for="b-avatar">⬆ Upload photo</button><button type="button" class="upbtn ghost" id="b-avatar-clear">Remove</button></div></div></div>'+
         '<label>Portfolio style</label><select id="b-style">'+
           ['production','engineering','art','audio','design','qa'].map(function(s){ return '<option value="'+s+'" '+((p.portfolio_style||"production")===s?"selected":"")+'>'+s.charAt(0).toUpperCase()+s.slice(1)+'</option>'; }).join("")+
         '</select>'+
@@ -128,7 +196,7 @@
       '</div>';
 
     renderPositions();
-    wireBasics(); wireSkills();
+    wireBasics(); wireSkills(); wireBasicsMedia(p);
   }
 
   function skillRow(g,i){
@@ -147,6 +215,7 @@
       DQAPI.updateProfile({
         name: val("b-name"), headline: val("b-head"), location: val("b-loc"), bio: val("b-bio"),
         open_to_work: document.getElementById("b-otw").checked ? 1 : 0,
+        avatar_url: val("b-avatar"),
         portfolio_style: val("b-style"), links: links
       }).then(function(r){
         if(r&&r.ok){ st.textContent="✓ Saved"; st.className="status ok"; }

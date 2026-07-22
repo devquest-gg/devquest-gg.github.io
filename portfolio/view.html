@@ -33,6 +33,18 @@
   .hero .wrap{position:relative;z-index:2;padding:44px 22px 28px}
   .htop{display:flex;gap:24px;align-items:flex-start;flex-wrap:wrap}
   .avatar{width:102px;height:102px;border-radius:22px;flex:none;background:linear-gradient(135deg,#7cc0ff,#a371f7);display:flex;align-items:center;justify-content:center;font-weight:850;font-size:36px;color:#0a0d14;box-shadow:0 12px 40px rgba(0,0,0,.4);border:2px solid rgba(255,255,255,.2)}
+  .avatar{position:relative;overflow:hidden}
+  .avatar img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+  .avatar.has-photo .ini{display:none}
+  .uprow{display:flex;gap:12px;align-items:flex-start;margin-top:2px}
+  .upprev{width:64px;height:64px;border-radius:12px;flex:none;background:var(--panel2);border:1px solid var(--border);overflow:hidden;display:flex;align-items:center;justify-content:center;color:var(--dim);font-size:11px;text-align:center}
+  .upprev.port{border-radius:16px}
+  .upprev img{width:100%;height:100%;object-fit:cover;display:block}
+  .upbtns{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+  .upbtn{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:700;border:1px solid var(--border);background:var(--panel2);color:var(--text);border-radius:9px;padding:7px 12px;cursor:pointer;transition:border-color .14s}
+  .upbtn:hover{border-color:var(--accent)}
+  .upbtn.busy{opacity:.6;pointer-events:none}
+  .upbtn.ghost{background:none;color:var(--muted)}
   .hmeta{flex:1;min-width:280px}
   .oa{display:inline-flex;align-items:center;gap:7px;font-size:11.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--green);border:1px solid rgba(63,185,80,.45);background:rgba(63,185,80,.12);border-radius:999px;padding:4px 11px;margin-bottom:12px}
   .oa .d{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green)}
@@ -525,7 +537,7 @@
     return '<div class="hero"><div class="banner"></div><div class="scrim"></div>'+
       '<button class="pedit owner-only" id="editProfile">✎ Edit</button>'+
       '<div class="wrap"><div class="htop">'+
-        '<div class="avatar">'+esc(av)+'</div><div class="hmeta">'+
+        '<div class="avatar'+(p.avatar_url?' has-photo':'')+'">'+(p.avatar_url?'<img src="'+esc(p.avatar_url)+'" alt="" onerror="this.remove();this.parentNode.classList.remove(\'has-photo\')">':'')+'<span class="ini">'+esc(av)+'</span></div><div class="hmeta">'+
         (p.open_to_work ? '<div class="oa"><span class="d"></span> Open to opportunities</div>' : '')+
         '<h1>'+esc(p.name)+'</h1>'+
         (p.headline ? '<div class="role">'+esc(p.headline)+'</div>' : '')+
@@ -582,8 +594,82 @@
     sheet.querySelector(".osclose").onclick=closeSheet;
     sheet.querySelector("#ef-cancel").onclick=closeSheet;
     sheet.querySelector("#ef-save").onclick=saveProfile;
+    initFormMedia(sheet);
     sheet.scrollTop=0;
     _ovl.classList.add("on"); document.body.style.overflow="hidden";
+  }
+  // ---- shared image upload + preview helpers (portrait, cover, banner, screenshots) ----
+  function downscaleImage(file, maxDim){
+    maxDim = maxDim || 1400;
+    return new Promise(function(resolve){
+      if(!/^image\/(png|jpe?g|webp)$/i.test(file.type)){ resolve(file); return; }
+      try{
+        var img=new Image(), url=URL.createObjectURL(file);
+        img.onload=function(){
+          var w=img.naturalWidth, h=img.naturalHeight, mx=Math.max(w,h);
+          if(mx<=maxDim && file.size<900*1024){ URL.revokeObjectURL(url); resolve(file); return; }
+          var sc=Math.min(1,maxDim/mx), cw=Math.max(1,Math.round(w*sc)), ch=Math.max(1,Math.round(h*sc));
+          var cv=document.createElement("canvas"); cv.width=cw; cv.height=ch;
+          cv.getContext("2d").drawImage(img,0,0,cw,ch);
+          URL.revokeObjectURL(url);
+          cv.toBlob(function(b){ resolve(b&&b.size?b:file); }, "image/webp", 0.85);
+        };
+        img.onerror=function(){ URL.revokeObjectURL(url); resolve(file); };
+        img.src=url;
+      }catch(e){ resolve(file); }
+    });
+  }
+  function wireUploads(container){
+    container.querySelectorAll(".upbtn[data-upload-for]").forEach(function(btn){
+      if(btn._wired) return; btn._wired=true;
+      var file=document.createElement("input"); file.type="file"; file.accept="image/png,image/jpeg,image/webp,image/gif"; file.style.display="none";
+      btn.parentNode.appendChild(file);
+      btn.onclick=function(){ file.click(); };
+      file.onchange=function(){
+        var f=file.files&&file.files[0]; if(!f) return;
+        var target=document.getElementById(btn.getAttribute("data-upload-for"));
+        var old=btn.textContent;
+        if(!/^image\/(png|jpe?g|webp|gif)$/i.test(f.type)){ btn.textContent="PNG / JPG / WebP / GIF only"; setTimeout(function(){ btn.textContent=old; },1800); file.value=""; return; }
+        if(f.size>15*1024*1024){ btn.textContent="Too large (15 MB max)"; setTimeout(function(){ btn.textContent=old; },2200); file.value=""; return; }
+        btn.textContent="Uploading…"; btn.classList.add("busy");
+        downscaleImage(f).then(function(blob){ return DQAPI.uploadImage(blob); }).then(function(r){
+          btn.classList.remove("busy");
+          if(r&&r.ok&&r.data&&r.data.url){
+            var u=r.data.url;
+            if(target){ if(target.tagName==="TEXTAREA"){ target.value=(target.value.trim()?target.value.trim()+"\n":"")+u; } else { target.value=u; target.dataset.cleared=""; } target.dispatchEvent(new Event("input")); }
+            btn.textContent="Uploaded ✓"; setTimeout(function(){ btn.textContent=old; },1400);
+          } else { btn.textContent=(r&&r.data&&r.data.error)||"Upload failed"; setTimeout(function(){ btn.textContent=old; },2400); }
+          file.value="";
+        }).catch(function(){ btn.classList.remove("busy"); btn.textContent="Upload failed"; setTimeout(function(){ btn.textContent=old; },2400); file.value=""; });
+      };
+    });
+  }
+  function bindPreview(inputId, prevId, fallback){
+    var input=document.getElementById(inputId), prev=document.getElementById(prevId);
+    if(!input||!prev) return;
+    var label=prev.textContent;
+    function upd(){ var u=(input.value||"").trim()||fallback||""; prev.innerHTML = u ? '<img src="'+esc(u)+'" alt="" onerror="this.remove()">' : esc(label); }
+    input.addEventListener("input", upd); upd();
+  }
+  function initFormMedia(container, c){
+    wireUploads(container);
+    bindPreview("ef-avatar","ef-avatar-prev",(_person&&_person.avatar_url)||"");
+    var ac=document.getElementById("ef-avatar-clear");
+    if(ac) ac.onclick=function(){ var i=document.getElementById("ef-avatar"); if(i){ i.value=""; i.dispatchEvent(new Event("input")); } };
+    if(c){
+      var cur=(_covMap&&_covMap[c.game_slug])?_covMap[c.game_slug]:"";
+      bindPreview("ef-cover","ef-cover-prev",cur);
+      var cc=document.getElementById("ef-cover-clear");
+      if(cc) cc.onclick=function(){ var i=document.getElementById("ef-cover"); if(i){ i.value=""; i.dataset.cleared="1"; i.dispatchEvent(new Event("input")); } };
+    }
+  }
+  function applyTileCover(ci, url){
+    try{
+      var t=document.querySelector('#stage .tile[data-i="'+ci+'"]'); if(!t) return;
+      var img=t.querySelector("img.art");
+      if(url){ if(!img){ img=new Image(); img.className="art"; img.loading="lazy"; img.alt=""; t.appendChild(img); } img.style.display=""; img.src=url; }
+      else if(img){ img.remove(); }
+    }catch(e){}
   }
   function profileFormHTML(p){
     var links={}; (p.links||[]).forEach(function(l){ links[l.type]=l.url; });
@@ -594,6 +680,8 @@
       '<label class="eflabel">Location</label><input id="ef-loc" value="'+esc(p.location||"")+'">'+
       '<label class="eflabel">About / bio</label><textarea id="ef-bio">'+esc(p.bio||"")+'</textarea>'+
       '<div class="efchk"><input type="checkbox" id="ef-otw" '+(p.open_to_work?"checked":"")+'><label for="ef-otw">Show &ldquo;Open to opportunities&rdquo;</label></div>'+
+      '<label class="eflabel">Profile portrait <span class="mut">&mdash; optional headshot; shown instead of your initials</span></label>'+
+      '<div class="uprow"><div class="upprev port" id="ef-avatar-prev">Photo</div><div style="flex:1"><input id="ef-avatar" placeholder="https://… or upload a photo" value="'+esc(p.avatar_url||"")+'"><div class="upbtns"><button type="button" class="upbtn" data-upload-for="ef-avatar">⬆ Upload photo</button><button type="button" class="upbtn ghost" id="ef-avatar-clear">Remove</button></div></div></div>'+
       '<label class="eflabel">Links</label>'+
       '<div class="efrow"><div><input id="ef-linkedin" placeholder="LinkedIn URL" value="'+esc(links.linkedin||"")+'"></div><div><input id="ef-portfolio" placeholder="Website URL" value="'+esc(links.portfolio||"")+'"></div></div>'+
       '<div class="efrow" style="margin-top:8px"><div><input id="ef-artstation" placeholder="ArtStation URL" value="'+esc(links.artstation||"")+'"></div><div><input id="ef-github" placeholder="GitHub URL" value="'+esc(links.github||"")+'"></div></div>'+
@@ -604,10 +692,10 @@
     var g=function(id){ var e=document.getElementById(id); return e?e.value.trim():""; };
     var links=[];
     [["linkedin","ef-linkedin"],["portfolio","ef-portfolio"],["artstation","ef-artstation"],["github","ef-github"]].forEach(function(x){ var u=g(x[1]); if(u) links.push({type:x[0],url:u}); });
-    var payload={ name:g("ef-name"), headline:g("ef-head"), location:g("ef-loc"), bio:g("ef-bio"), open_to_work: document.getElementById("ef-otw").checked?1:0, links:links };
+    var payload={ name:g("ef-name"), headline:g("ef-head"), location:g("ef-loc"), bio:g("ef-bio"), open_to_work: document.getElementById("ef-otw").checked?1:0, avatar_url:g("ef-avatar"), links:links };
     var st=document.getElementById("ef-status"); st.textContent="Saving…"; st.className="efstatus";
     DQAPI.updateProfile(payload).then(function(r){
-      if(r&&r.ok){ _person.name=payload.name; _person.headline=payload.headline; _person.location=payload.location; _person.bio=payload.bio; _person.open_to_work=payload.open_to_work; _person.links=links; renderHero(); st.textContent="Saved ✓"; st.className="efstatus ok"; setTimeout(closeSheet,450); }
+      if(r&&r.ok){ _person.name=payload.name; _person.headline=payload.headline; _person.location=payload.location; _person.bio=payload.bio; _person.open_to_work=payload.open_to_work; _person.avatar_url=payload.avatar_url; _person.links=links; renderHero(); st.textContent="Saved ✓"; st.className="efstatus ok"; setTimeout(closeSheet,450); }
       else { st.textContent=(r&&r.data&&r.data.error)||"Could not save."; st.className="efstatus err"; }
     }).catch(function(){ st.textContent="Network error."; st.className="efstatus err"; });
   }
@@ -620,6 +708,7 @@
     sheet.querySelector(".osclose").onclick=closeSheet;
     sheet.querySelector("#ef-scancel").onclick=function(){ openSheet(ci); };
     sheet.querySelector("#ef-ssave").onclick=function(){ saveSheetEdit(ci); };
+    initFormMedia(sheet, c);
     sheet.scrollTop=0;
   }
   function sheetFormHTML(c){
@@ -647,8 +736,11 @@
       '</div>'+
       '<input id="ef-rurl" placeholder="Link to the score page (https://…)" value="'+esc(rv.url||"")+'" style="margin-top:8px">'+
       '<label class="eflabel">Release date <span class="mut">— set only if unreleased; shows &ldquo;Coming Soon&rdquo; until then</span></label><input type="date" id="ef-release" value="'+esc(s.release_date||"")+'">'+
-      '<label class="eflabel">Banner image URL <span class="mut">— optional wide art (blank uses box art)</span></label><input id="ef-banner" placeholder="https://..." value="'+esc(s.banner_url||"")+'">'+
+      '<label class="eflabel">Cover image <span class="mut">— the box art on your wall &amp; timeline</span></label>'+
+      '<div class="uprow"><div class="upprev" id="ef-cover-prev">Cover</div><div style="flex:1"><input id="ef-cover" placeholder="Upload or paste https://… to change the cover"><div class="upbtns"><button type="button" class="upbtn" data-upload-for="ef-cover">⬆ Upload cover</button><button type="button" class="upbtn ghost" id="ef-cover-clear">Remove cover</button></div></div></div>'+
+      '<label class="eflabel">Banner image <span class="mut">— optional wide art (blank uses box art)</span></label><input id="ef-banner" placeholder="https://… or upload" value="'+esc(s.banner_url||"")+'"><div class="upbtns"><button type="button" class="upbtn" data-upload-for="ef-banner">⬆ Upload banner</button></div>'+
       '<label class="eflabel">Screenshots &amp; videos <span class="mut">— one URL per line; images or videos (YouTube, Vimeo, .mp4)</span></label><textarea id="ef-shots" placeholder="One image or video URL per line">'+esc(shots)+'</textarea>'+
+      '<div class="upbtns"><button type="button" class="upbtn" data-upload-for="ef-shots">⬆ Upload image</button></div>'+
       '<div class="efactions"><span class="efbtn primary" id="ef-ssave">Save</span><span class="efbtn" id="ef-scancel">Cancel</span><span class="efstatus" id="ef-sstatus"></span></div>'+
       '</div>';
   }
@@ -670,9 +762,11 @@
       release_date: g("ef-release").trim(),
       review_score: review_score
     };
+    var covEl=document.getElementById("ef-cover"); var cov=covEl?covEl.value.trim():"";
+    if(cov) payload.cover_url=cov; else if(covEl&&covEl.dataset.cleared==="1") payload.cover_url="";
     var st=document.getElementById("ef-sstatus"); st.textContent="Saving…"; st.className="efstatus";
     DQAPI.saveSheet(c.id, payload).then(function(r){
-      if(r&&r.ok){ c.sheet={ summary:payload.summary, contributions:payload.contributions, challenges:payload.challenges, stats:payload.stats, keywords:payload.keywords, banner_url:payload.banner_url||null, screenshots:payload.screenshots, release_date:payload.release_date||null, review_score:payload.review_score||null }; renderHero(); st.textContent="Saved ✓"; st.className="efstatus ok"; setTimeout(function(){ openSheet(ci); },420); }
+      if(r&&r.ok){ c.sheet={ summary:payload.summary, contributions:payload.contributions, challenges:payload.challenges, stats:payload.stats, keywords:payload.keywords, banner_url:payload.banner_url||null, screenshots:payload.screenshots, release_date:payload.release_date||null, review_score:payload.review_score||null }; if("cover_url" in payload){ var _nu=payload.cover_url||""; _covMap[c.game_slug]=_nu||undefined; applyTileCover(ci,_nu); } renderHero(); st.textContent="Saved ✓"; st.className="efstatus ok"; setTimeout(function(){ openSheet(ci); },420); }
       else { st.textContent=(r&&r.data&&r.data.error)||"Could not save."; st.className="efstatus err"; }
     }).catch(function(){ st.textContent="Network error."; st.className="efstatus err"; });
   }
@@ -749,7 +843,8 @@
       '<div id="ag-picked"></div>'+
       '<div id="ag-studio-wrap" style="display:none"><label class="eflabel">Studio / developer <span class="mut">— pick a known studio or type a new one</span></label><input id="ag-studio" placeholder="Start typing a studio…" autocomplete="off"><div id="ag-sresults" class="sdrop"></div></div>'+
       '<label class="eflabel">Your role on it</label><input id="ag-role" placeholder="e.g. Senior Producer">'+
-      '<label class="eflabel">Box art URL <span class="mut">— optional; leave blank to keep the catalogue art</span></label><input id="ag-cover" placeholder="https://…  link to a cover image" autocomplete="off">'+
+      '<label class="eflabel">Box art URL <span class="mut">— optional; leave blank to keep the catalogue art</span></label><input id="ag-cover" placeholder="https://…  link to a cover image, or upload" autocomplete="off">'+
+      '<div class="upbtns"><button type="button" class="upbtn" data-upload-for="ag-cover">⬆ Upload cover</button></div>'+
       '<div id="ag-preview"></div>'+
       '<div class="efactions"><span class="efbtn primary" id="ag-add">Add to my portfolio</span><span class="efbtn" id="ag-cancel">Cancel</span><span class="efstatus" id="ag-status"></span></div>'+
       '</div>';
@@ -760,6 +855,7 @@
     sheet.innerHTML=addGameHTML();
     sheet.querySelector(".osclose").onclick=closeSheet;
     sheet.querySelector("#ag-cancel").onclick=closeSheet;
+    initFormMedia(sheet);
     var q=sheet.querySelector("#ag-q"), res=sheet.querySelector("#ag-results"), picked=sheet.querySelector("#ag-picked");
     var studioWrap=sheet.querySelector("#ag-studio-wrap"), studioIn=sheet.querySelector("#ag-studio"), studioRes=sheet.querySelector("#ag-sresults");
     wireStudioTypeahead(studioIn, studioRes);
