@@ -229,6 +229,13 @@
   .rcst{display:flex;flex-direction:column}.rcst b{font-size:26px;font-weight:850;letter-spacing:-.5px;line-height:1}.rcst span{font-size:12.5px;color:var(--muted);margin-top:5px}
   .rcstudios{margin-top:16px;padding-top:14px;border-top:1px solid var(--border);font-size:13px;color:#cdd8e6;line-height:1.75}
   .rcslab{font-size:10.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--gold);margin-right:12px}
+  .rcsx{display:inline;background:none;border:0;padding:0;font:inherit;color:#cdd8e6;cursor:pointer;transition:color .14s;border-radius:4px}
+  .rcsx:hover{color:var(--accent)}
+  .rcsx.on{color:var(--accent);font-weight:750}
+  .rcsx:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .rcfltcount{font-size:12px;color:var(--muted);margin-left:10px}
+  .rcrow.rchidden{display:none}
+  .rcempty{font-size:13px;color:var(--muted);border:1px dashed var(--border);border-radius:12px;padding:14px 16px;text-align:center;margin-top:2px}
   .rcsdot{color:var(--dim);margin:0 8px}
   .rclist{display:flex;flex-direction:column;gap:12px}
   .rcrow{display:flex;gap:16px;border:1px solid var(--border);border-radius:14px;background:var(--panel);padding:15px 17px;cursor:pointer;transition:border-color .14s,transform .14s}
@@ -264,6 +271,10 @@
 
   /* unified wall <-> timeline stage */
   .stagehead{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap}
+  .headtext{min-width:0}
+  .own-head{display:none}
+  body.is-owner .pub-head{display:none}
+  body.is-owner .own-head{display:block}
   .vtoggle{display:inline-flex;background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:4px;gap:4px;flex:none}
   .vtoggle button{appearance:none;border:0;background:transparent;color:var(--muted);font-weight:750;font-size:13.5px;padding:8px 15px;border-radius:9px;cursor:pointer;transition:.15s}
   .vtoggle button.on{background:linear-gradient(135deg,#1f6feb,#6d3bd6);color:#fff;box-shadow:0 4px 14px rgba(88,120,255,.35)}
@@ -475,7 +486,7 @@
 
     // ---- the work: unified wall <-> timeline stage ----
     _covMap = covMap; _credits = credits; _person = p; _positions = positions;
-    var stageSection = credits.length ? '<div class="wrap"><section><div class="stagehead"><div><div class="eyebrow">The Work</div><h2 class="sec">Every game, your way</h2><p class="sub">Arrange the wall however you like — then flip to the timeline and watch them fall into place.</p></div><div class="vtoggle" id="vtoggle"><button data-m="grid" class="on">▦ Wall</button><button data-m="timeline">↳ Timeline</button><button data-m="recruiter">▤ Recruiter</button></div></div><div class="vhint" id="vhint"></div><div id="stage" class="grid"><div id="chrome"><div id="spine"></div></div></div><div id="recruiter" style="display:none"></div></section></div>' : '';
+    var stageSection = credits.length ? '<div class="wrap"><section><div class="stagehead"><div class="headtext pub-head"><div class="eyebrow">The Work</div><h2 class="sec">'+(credits.length?credits.length+' shipped titles':'Selected work')+'</h2><p class="sub">Every game I\'ve shipped. Click any cover for the one-sheet: my role, the scope, and the impact.</p></div><div class="headtext own-head"><div class="eyebrow">The Work</div><h2 class="sec">Every game, your way</h2><p class="sub">Arrange the wall however you like — then flip to the timeline and watch them fall into place. <span class="mut">Only you see this editing view — visitors get the public work view above.</span></p></div><div class="vtoggle" id="vtoggle"><button data-m="grid" class="on">▦ Wall</button><button data-m="timeline">↳ Timeline</button><button data-m="recruiter">▤ Recruiter</button></div></div><div class="vhint" id="vhint"></div><div id="stage" class="grid"><div id="chrome"><div id="spine"></div></div></div><div id="recruiter" style="display:none"></div></section></div>' : '';
 
     // ---- skills ----
     var groups = (p.skills && p.skills.groups) ? p.skills.groups : [];
@@ -854,7 +865,9 @@
     var ac=avgCritic(credits);
     var stdSeen={}, stdList=[];
     positions.forEach(function(p){ if(!p.studio) return; var k=String(p.studio_slug||p.studio).toLowerCase(); if(stdSeen[k]) return; stdSeen[k]=1; stdList.push(p.studio); });
-    var studiosLine = stdList.length ? '<div class="rcstudios"><span class="rcslab">Studios</span>'+stdList.map(function(s){ return esc(s); }).join('<span class="rcsdot">·</span>')+'</div>' : '';
+    var _nrm = function(x){ return String(x||"").trim().toLowerCase().replace(/\s+/g,' '); };
+    var _studioChips = stdList.map(function(s){ return '<button class="rcsx" data-studio="'+esc(_nrm(s))+'">'+esc(s)+'</button>'; }).join('<span class="rcsdot">·</span>');
+    var studiosLine = stdList.length ? '<div class="rcstudios"><span class="rcslab">Studios</span><button class="rcsx on" data-studio="">All</button><span class="rcsdot">·</span>'+_studioChips+'<span class="rcfltcount"></span></div>' : '';
     var why='<div class="rcwhy"><div class="rceyebrow">Why this matters</div><div class="rcstats">'+
       rcstat((CUR-minY)+" yrs","in the industry")+rcstat(credits.length,"shipped titles")+(ac?rcstat(ac.avg,"avg. critic score"):"")+rcstat(Object.keys(studioSet).length,"studios")+rcstat(live,"live-service")+rcstat(Object.keys(vset).length,"peer confirmations")+
       '</div>'+studiosLine+'</div>';
@@ -866,12 +879,12 @@
       var scope=(sh.stats&&sh.stats.length)?'<div class="rcscope">'+sh.stats.slice(0,4).map(function(s){ return '<span><b>'+esc(s.value)+'</b> '+esc(s.label)+'</span>'; }).join("")+'</div>':'';
       var impact=(sh.contributions&&sh.contributions.length)?'<ul class="rcimp">'+sh.contributions.slice(0,3).map(function(d){ return '<li>'+linkify(d)+'</li>'; }).join("")+'</ul>':'<div class="rcnone">No impact details added yet.</div>';
       var chal=(sh.challenges&&sh.challenges.length)?'<div class="rcchal"><span class="rclab">Challenges</span>'+esc(sh.challenges.slice(0,2).join("  ·  "))+'</div>':'';
-      return '<div class="rcrow" data-ci="'+ci+'"><div class="rcthumb">'+thumb+'</div>'+
+      return '<div class="rcrow" data-ci="'+ci+'" data-studio="'+esc(_nrm(c.studio))+'"><div class="rcthumb">'+thumb+'</div>'+
         '<div class="rcmain"><div class="rchead"><span class="rcgame">'+esc(c.game_title)+'</span>'+ver+'</div>'+
         '<div class="rcrole">'+esc(c.role)+(c.studio?' · '+esc(c.studio):'')+(creditYear(c)?' · '+creditYear(c):'')+'</div>'+
         scope+impact+chal+'</div></div>';
     }).join("");
-    return why+'<div class="rclist">'+rows+'</div>';
+    return why+'<div class="rclist">'+rows+'<div class="rcempty rchidden">No shipped titles listed under <b class="rcemptyname"></b> yet. <button class="rcsx" data-studio="">Show all</button></div></div>';
   }
   function deslug(s){ return String(s||"").split("-").map(function(w){ return w?w.charAt(0).toUpperCase()+w.slice(1):w; }).join(" "); }
 
@@ -989,7 +1002,16 @@
 
     var vt=document.getElementById("vtoggle"), vh=document.getElementById("vhint"), rec=document.getElementById("recruiter");
     function setHint(){ vh.textContent = mode==="grid" ? (IS_OWNER?"Drag your best games into the three big Featured slots up top. Click a game for its one-sheet.":"Click any game for its one-sheet.") : (mode==="timeline" ? "Same games — now on your career spine, newest first." : "A recruiter-first read: role, scope, impact, and proof — in the same order, every title."); }
-    function wireRecruiter(el){ el.onclick=function(e){ var v=e.target.closest(".rcver.ok"); if(v){ e.stopPropagation(); var rw=v.closest(".rcrow"); if(rw) openConfirmers(credits[+rw.dataset.ci].id, credits[+rw.dataset.ci].game_title); return; } var row=e.target.closest(".rcrow"); if(row) openSheet(+row.dataset.ci); }; }
+    function filterStudio(rec, chip){
+      var key=chip.dataset.studio||"", name=chip.textContent;
+      [].forEach.call(rec.querySelectorAll(".rcstudios .rcsx"),function(c){ c.classList.toggle("on",(c.dataset.studio||"")===key); });
+      var rows=[].slice.call(rec.querySelectorAll(".rclist .rcrow")), shown=0;
+      rows.forEach(function(r){ var m=!key||(r.dataset.studio||"")===key; r.classList.toggle("rchidden",!m); if(m)shown++; });
+      var empty=rec.querySelector(".rcempty");
+      if(empty){ if(key&&shown===0){ var nm=empty.querySelector(".rcemptyname"); if(nm)nm.textContent=name; empty.classList.remove("rchidden"); } else empty.classList.add("rchidden"); }
+      var cnt=rec.querySelector(".rcfltcount"); if(cnt) cnt.textContent = key ? (shown+" title"+(shown===1?"":"s")) : "";
+    }
+    function wireRecruiter(el){ el.onclick=function(e){ var chip=e.target.closest(".rcsx"); if(chip){ e.stopPropagation(); filterStudio(el, chip); return; } var v=e.target.closest(".rcver.ok"); if(v){ e.stopPropagation(); var rw=v.closest(".rcrow"); if(rw) openConfirmers(credits[+rw.dataset.ci].id, credits[+rw.dataset.ci].game_title); return; } var row=e.target.closest(".rcrow"); if(row) openSheet(+row.dataset.ci); }; }
     vt.addEventListener("click",function(e){
       var b=e.target.closest("button"); if(!b||b.dataset.m===mode) return;
       var prev=mode;
