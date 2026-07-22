@@ -866,6 +866,9 @@
     var stdSeen={}, stdList=[];
     positions.forEach(function(p){ if(!p.studio) return; var k=String(p.studio_slug||p.studio).toLowerCase(); if(stdSeen[k]) return; stdSeen[k]=1; stdList.push(p.studio); });
     var _nrm = function(x){ return String(x||"").trim().toLowerCase().replace(/\s+/g,' '); };
+    var _chipKeys={}; stdList.forEach(function(s){ _chipKeys[_nrm(s)]=1; });
+    var _bands = positions.map(function(p){ var s=p.start_year||CUR, e=p.is_current?CUR:(p.end_year||s); if(e<s)e=s; return {key:_nrm(p.studio), s:s, e:e}; });
+    var _studioKeyOf = function(c){ if(c.studio){ var k=_nrm(c.studio); if(_chipKeys[k]) return k; } var y=c.work_start||c.work_end||c.year||null; if(y){ for(var i=0;i<_bands.length;i++){ if(y>=_bands[i].s&&y<=_bands[i].e) return _bands[i].key; } } return ""; };
     var _studioChips = stdList.map(function(s){ return '<button class="rcsx" data-studio="'+esc(_nrm(s))+'">'+esc(s)+'</button>'; }).join('<span class="rcsdot">·</span>');
     var studiosLine = stdList.length ? '<div class="rcstudios"><span class="rcslab">Studios</span><button class="rcsx on" data-studio="">All</button><span class="rcsdot">·</span>'+_studioChips+'<span class="rcfltcount"></span></div>' : '';
     var why='<div class="rcwhy"><div class="rceyebrow">Why this matters</div><div class="rcstats">'+
@@ -879,7 +882,7 @@
       var scope=(sh.stats&&sh.stats.length)?'<div class="rcscope">'+sh.stats.slice(0,4).map(function(s){ return '<span><b>'+esc(s.value)+'</b> '+esc(s.label)+'</span>'; }).join("")+'</div>':'';
       var impact=(sh.contributions&&sh.contributions.length)?'<ul class="rcimp">'+sh.contributions.slice(0,3).map(function(d){ return '<li>'+linkify(d)+'</li>'; }).join("")+'</ul>':'<div class="rcnone">No impact details added yet.</div>';
       var chal=(sh.challenges&&sh.challenges.length)?'<div class="rcchal"><span class="rclab">Challenges</span>'+esc(sh.challenges.slice(0,2).join("  ·  "))+'</div>':'';
-      return '<div class="rcrow" data-ci="'+ci+'" data-studio="'+esc(_nrm(c.studio))+'"><div class="rcthumb">'+thumb+'</div>'+
+      return '<div class="rcrow" data-ci="'+ci+'" data-studio="'+esc(_studioKeyOf(c))+'"><div class="rcthumb">'+thumb+'</div>'+
         '<div class="rcmain"><div class="rchead"><span class="rcgame">'+esc(c.game_title)+'</span>'+ver+'</div>'+
         '<div class="rcrole">'+esc(c.role)+(c.studio?' · '+esc(c.studio):'')+(creditYear(c)?' · '+creditYear(c):'')+'</div>'+
         scope+impact+chal+'</div></div>';
