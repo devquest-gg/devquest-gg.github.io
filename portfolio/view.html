@@ -207,7 +207,22 @@
   .osdid.chal li::before{background:linear-gradient(135deg,var(--gold),var(--pink))}
 
   /* recruiter mode */
-  #recruiter{margin:16px 0 10px}
+  #recruiter{margin:16px 0 10px;opacity:0;transition:opacity .24s ease}
+  #recruiter.show{opacity:1}
+  @keyframes rcRise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+  #recruiter.show .rcwhy{animation:rcRise .5s cubic-bezier(.2,.8,.2,1) backwards}
+  #recruiter.show .rclist .rcrow{animation:rcRise .5s cubic-bezier(.2,.8,.2,1) backwards}
+  #recruiter.show .rclist .rcrow:nth-child(1){animation-delay:0.04s}
+  #recruiter.show .rclist .rcrow:nth-child(2){animation-delay:0.08s}
+  #recruiter.show .rclist .rcrow:nth-child(3){animation-delay:0.12s}
+  #recruiter.show .rclist .rcrow:nth-child(4){animation-delay:0.16s}
+  #recruiter.show .rclist .rcrow:nth-child(5){animation-delay:0.20s}
+  #recruiter.show .rclist .rcrow:nth-child(6){animation-delay:0.24s}
+  #recruiter.show .rclist .rcrow:nth-child(7){animation-delay:0.28s}
+  #recruiter.show .rclist .rcrow:nth-child(8){animation-delay:0.32s}
+  #recruiter.show .rclist .rcrow:nth-child(9){animation-delay:0.36s}
+  #recruiter.show .rclist .rcrow:nth-child(n+10){animation-delay:.4s}
+  @media (prefers-reduced-motion: reduce){#stage,#recruiter{transition:none}#recruiter.show .rcwhy,#recruiter.show .rclist .rcrow{animation:none}}
   .rcwhy{border:1px solid var(--border);border-radius:16px;background:radial-gradient(600px 200px at 15% 0%,rgba(88,166,255,.1),transparent),var(--panel);padding:20px 22px;margin-bottom:16px}
   .rceyebrow{font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin-bottom:12px}
   .rcstats{display:flex;gap:28px;flex-wrap:wrap}
@@ -249,15 +264,12 @@
 
   /* unified wall <-> timeline stage */
   .stagehead{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap}
-  .headtext{min-width:0}
-  .own-head{display:none}
-  body.is-owner .pub-head{display:none}
-  body.is-owner .own-head{display:block}
   .vtoggle{display:inline-flex;background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:4px;gap:4px;flex:none}
   .vtoggle button{appearance:none;border:0;background:transparent;color:var(--muted);font-weight:750;font-size:13.5px;padding:8px 15px;border-radius:9px;cursor:pointer;transition:.15s}
   .vtoggle button.on{background:linear-gradient(135deg,#1f6feb,#6d3bd6);color:#fff;box-shadow:0 4px 14px rgba(88,120,255,.35)}
   .vhint{font-size:12.5px;color:var(--dim);margin:12px 0 0;min-height:15px}
-  #stage{position:relative;margin:16px 0 10px;transition:height .55s cubic-bezier(.2,.8,.2,1)}
+  #stage{position:relative;margin:16px 0 10px;transition:height .55s cubic-bezier(.2,.8,.2,1),opacity .24s ease}
+  #stage.vanish{opacity:0}
   #stage .tile{position:absolute;top:0;left:0;transform-origin:0 0;border-radius:12px;overflow:hidden;cursor:pointer;background:#141b26;box-shadow:0 10px 24px rgba(0,0,0,.5),inset 0 0 0 1px rgba(255,255,255,.07);transition:transform .55s cubic-bezier(.2,.8,.2,1),box-shadow .18s;will-change:transform;touch-action:none;user-select:none}
   #stage .tile:hover{box-shadow:0 18px 40px rgba(0,0,0,.6),inset 0 0 0 1px rgba(255,255,255,.16)}
   #stage .tile.drag{transition:box-shadow .15s;z-index:50;box-shadow:0 30px 60px rgba(0,0,0,.7),inset 0 0 0 1px rgba(255,255,255,.28)}
@@ -463,7 +475,7 @@
 
     // ---- the work: unified wall <-> timeline stage ----
     _covMap = covMap; _credits = credits; _person = p; _positions = positions;
-    var stageSection = credits.length ? '<div class="wrap"><section><div class="stagehead"><div class="headtext pub-head"><div class="eyebrow">The Work</div><h2 class="sec">'+(credits.length?credits.length+' shipped titles':'Selected work')+'</h2><p class="sub">Every game I\'ve shipped. Click any cover for the one-sheet: my role, the scope, and the impact.</p></div><div class="headtext own-head"><div class="eyebrow">The Work</div><h2 class="sec">Every game, your way</h2><p class="sub">Arrange the wall however you like — then flip to the timeline and watch them fall into place. <span class="mut">Only you see this editing view — visitors get the public work view above.</span></p></div><div class="vtoggle" id="vtoggle"><button data-m="grid" class="on">▦ Wall</button><button data-m="timeline">↳ Timeline</button><button data-m="recruiter">▤ Recruiter</button></div></div><div class="vhint" id="vhint"></div><div id="stage" class="grid"><div id="chrome"><div id="spine"></div></div></div><div id="recruiter" style="display:none"></div></section></div>' : '';
+    var stageSection = credits.length ? '<div class="wrap"><section><div class="stagehead"><div><div class="eyebrow">The Work</div><h2 class="sec">Every game, your way</h2><p class="sub">Arrange the wall however you like — then flip to the timeline and watch them fall into place.</p></div><div class="vtoggle" id="vtoggle"><button data-m="grid" class="on">▦ Wall</button><button data-m="timeline">↳ Timeline</button><button data-m="recruiter">▤ Recruiter</button></div></div><div class="vhint" id="vhint"></div><div id="stage" class="grid"><div id="chrome"><div id="spine"></div></div></div><div id="recruiter" style="display:none"></div></section></div>' : '';
 
     // ---- skills ----
     var groups = (p.skills && p.skills.groups) ? p.skills.groups : [];
@@ -980,10 +992,30 @@
     function wireRecruiter(el){ el.onclick=function(e){ var v=e.target.closest(".rcver.ok"); if(v){ e.stopPropagation(); var rw=v.closest(".rcrow"); if(rw) openConfirmers(credits[+rw.dataset.ci].id, credits[+rw.dataset.ci].game_title); return; } var row=e.target.closest(".rcrow"); if(row) openSheet(+row.dataset.ci); }; }
     vt.addEventListener("click",function(e){
       var b=e.target.closest("button"); if(!b||b.dataset.m===mode) return;
+      var prev=mode;
       mode=b.dataset.m;
       [].forEach.call(vt.children,function(x){x.classList.toggle("on",x.dataset.m===mode);});
-      if(mode==="recruiter"){ stage.style.display="none"; if(rec){ rec.style.display="block"; rec.innerHTML=recruiterHTML(credits, positions, covMap); wireRecruiter(rec); } setHint(); }
-      else { if(rec) rec.style.display="none"; stage.style.display=""; stage.className=mode; setHint(); layout(); }
+      setHint();
+      if(mode==="recruiter"){
+        if(rec){ rec.innerHTML=recruiterHTML(credits, positions, covMap); wireRecruiter(rec); }
+        stage.classList.add("vanish");
+        setTimeout(function(){
+          stage.style.display="none"; stage.classList.remove("vanish");
+          if(rec){ rec.style.display="block"; rec.classList.remove("show"); void rec.offsetWidth; rec.classList.add("show"); }
+        },240);
+      } else if(prev==="recruiter"){
+        if(rec) rec.classList.remove("show");
+        setTimeout(function(){
+          if(rec) rec.style.display="none";
+          stage.style.display=""; stage.className=mode;
+          stage.classList.add("vanish"); void stage.offsetWidth;
+          layout();
+          requestAnimationFrame(function(){ stage.classList.remove("vanish"); });
+        },240);
+      } else {
+        if(rec) rec.style.display="none";
+        stage.style.display=""; stage.className=mode; layout();
+      }
     });
 
     var drag=null, saveT=null;
