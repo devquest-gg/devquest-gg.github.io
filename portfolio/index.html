@@ -4,7 +4,7 @@
 <!-- DevQuest Credits homepage -->
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DevQuest Portfolio · The portfolio game developers deserve</title>
+<title>DevQuest Portfolio — build the game-dev portfolio your games deserve</title>
 <meta name="description" content="An opt-in, dev-controlled game credits database. Find your credits, claim your page, and let the peers you shipped with vouch for it.">
 <meta name="robots" content="noindex, nofollow">
 <link rel="canonical" href="https://devquest.gg/credits">
@@ -267,6 +267,24 @@
     .stat{min-width:100%}
     .hero h1{font-size:27px}
   }
+
+  /* --- portfolio-first hero + showcase --- */
+  .herocta{display:flex;gap:12px;flex-wrap:wrap;margin:24px 0 14px}
+  .btn.big{font-size:15.5px;padding:13px 24px;border-radius:12px}
+  .btn.ghost{background:transparent;border:1px solid var(--border);color:var(--text)}
+  .btn.ghost:hover{border-color:var(--accent)}
+  .findwrap{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:14px}
+  .findlbl{color:var(--muted);font-size:14px}
+  .findwrap .search{flex:1;min-width:220px}
+  .showcase .ssub{color:var(--muted);font-size:15px;max-width:700px;margin:6px 0 30px;line-height:1.6}
+  .shot{display:grid;grid-template-columns:1.32fr 1fr;gap:30px;align-items:center;margin:0 0 34px}
+  .shot.rev{grid-template-columns:1fr 1.32fr}
+  .shot.rev .shotimg{order:2}
+  .shotimg img{width:100%;border-radius:14px;border:1px solid var(--border);box-shadow:0 24px 60px rgba(0,0,0,.55);display:block;background:var(--panel)}
+  .shotcap{font-size:15.5px;line-height:1.65;color:var(--muted)}
+  .shotcap b{color:var(--text);font-weight:750;display:block;margin-bottom:7px;font-size:17px;letter-spacing:-.2px}
+  .showcase .scfoot{text-align:center;margin-top:14px;display:flex;gap:16px;justify-content:center;align-items:center;flex-wrap:wrap}
+  @media(max-width:760px){ .shot,.shot.rev{grid-template-columns:1fr;gap:16px} .shot.rev .shotimg{order:0} }
 </style>
 </head>
 <body>
@@ -280,15 +298,19 @@
 
 <!-- HERO -->
 <div class="hero"><div class="container">
-  <div class="eyebrow">Portfolios built for game developers</div>
-  <h1>Your game-dev career,<br><span class="grad">worth showing off.</span></h1>
-  <p class="lede">A beautiful portfolio and an ATS-ready résumé, built from the games you've actually shipped — every credit confirmed by the teammates who were there. One profile that outlives any studio, and plugs straight into the job board.</p>
-  <div class="searchwrap">
-    <div class="search"><span class="ic">🔍</span><input id="hs" placeholder="Search a game, a studio, or your own name..." autocomplete="off"></div>
-    <span class="btn primary" id="hsbtn">Search</span>
+  <div class="eyebrow">Free portfolios for game developers</div>
+  <h1>Build the portfolio<br><span class="grad">your games deserve.</span></h1>
+  <p class="lede">A living showcase of every game you've shipped — a cover wall, a career timeline, a recruiter view, and a one-sheet for every title. Free, yours to keep, and confirmed by the people you shipped with.</p>
+  <div class="herocta">
+    <a id="startprofile" class="btn primary big" style="cursor:pointer">Build your portfolio — it's free →</a>
+    <a class="btn ghost big" href="/portfolio/destin-bales/">See a live example →</a>
   </div>
-  <div class="trustline">Completely free · opt-in · <b>your data is exportable and yours</b></div>
-  <div class="heroadd" style="margin-top:13px;font-size:14.5px"><span class="mut">Shipped games already?</span> <a id="startprofile" style="color:var(--accent);font-weight:700;cursor:pointer">Build your portfolio →</a> <span class="mut" style="font-size:12.5px">· takes about a minute</span></div>
+  <div class="trustline">Completely free · no password, just your email · <b>your data is exportable and yours</b></div>
+  <div class="findwrap">
+    <span class="findlbl">Already shipped games? Find them:</span>
+    <div class="search"><span class="ic">🔍</span><input id="hs" placeholder="Search a game, a studio, or your own name..." autocomplete="off"></div>
+    <span class="btn" id="hsbtn">Search</span>
+  </div>
 
   <!-- cover wall -->
   <div class="wall">
@@ -308,6 +330,33 @@
   <div style="text-align:center;margin-top:26px"><a class="more" href="/credits/search.html" id="allgames" style="font-size:15px">Browse all games →</a></div>
 </div></div>
 
+<!-- SHOWCASE -->
+<section class="blk showcase"><div class="container">
+  <div class="eyebrow">See it in action</div>
+  <h2 class="sec">This is what your portfolio looks like</h2>
+  <p class="ssub">A real DevQuest portfolio — Destin Bales, 25 years of production across Insomniac, Riot, Ubisoft, Sony Bend and more. Here's what a visitor sees.</p>
+
+  <div class="shot">
+    <div class="shotimg"><img src="/portfolio/demo/views.gif" alt="Flipping between the cover wall and the career timeline" loading="lazy"></div>
+    <div class="shotcap"><b>Every game, three ways.</b> A cover wall, a career timeline on your studio spine, and a recruiter view — flip between them in a click and watch your games fall into place.</div>
+  </div>
+
+  <div class="shot rev">
+    <div class="shotimg"><img src="/portfolio/demo/recruiter.gif" alt="Filtering the recruiter view by studio" loading="lazy"></div>
+    <div class="shotcap"><b>Filter a whole career by studio.</b> The recruiter view reads role, scope, impact, and proof in the same order for every title — and narrows to any studio in one click.</div>
+  </div>
+
+  <div class="shot">
+    <div class="shotimg"><img src="/portfolio/demo/onesheet.gif" alt="A game one-sheet with stats, impact, and a critic score" loading="lazy"></div>
+    <div class="shotcap"><b>A one-sheet for every title.</b> A short summary, the stats that matter, what you led, the challenges you solved, and a critic score — the recruiter-ready story behind each game.</div>
+  </div>
+
+  <div class="scfoot">
+    <a class="btn primary big" style="cursor:pointer" onclick="if(window.DQ&&DQ.openClaim)DQ.openClaim({mode:'addGame'});else location.href='#how';">Build yours — it's free →</a>
+    <a class="more" href="/portfolio/destin-bales/">See the full live example →</a>
+  </div>
+</div></section>
+
 <!-- DEV SPOTLIGHT -->
 <section class="blk" id="devs"><div class="container">
   <div class="rowhead">
@@ -323,9 +372,9 @@
   <div class="eyebrow">Dead simple</div><h2 class="sec">Your portfolio in a few minutes</h2>
   <p class="secsub">No account, no password, no fussy builder. Start from the games you shipped and it assembles itself.</p>
   <div class="steps">
-    <div class="step"><div class="num">1</div><h4>Find your game</h4><p>Search the catalogue for a game you shipped. If a teammate already added you, your name is there too, ready to claim.</p></div>
-    <div class="step"><div class="num">2</div><h4>Claim with a link</h4><p>Tap "I worked on this game," verify an email once, and a magic link lets you edit forever. That's the whole signup.</p></div>
-    <div class="step"><div class="num">3</div><h4>Peers confirm it</h4><p>Colleagues who shipped the same game confirm your role in one click — proof no other portfolio can show — and your page is ready to send.</p></div>
+    <div class="step"><div class="num">1</div><h4>Add the games you shipped</h4><p>Search the catalogue and add each title you worked on, or create one that's missing. Your portfolio starts building itself around them.</p></div>
+    <div class="step"><div class="num">2</div><h4>Make it yours</h4><p>Add your role, your impact, and a one-sheet per game; arrange your wall and write your story. Verify your email once and it's yours to edit forever — no password.</p></div>
+    <div class="step"><div class="num">3</div><h4>Proof only you can show</h4><p>Colleagues who shipped the same games confirm your credits in one click — proof no other portfolio can offer — and your page is ready to send.</p></div>
   </div>
 </div></section>
 
