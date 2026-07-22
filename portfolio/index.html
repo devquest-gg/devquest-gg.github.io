@@ -285,6 +285,14 @@
   .shotcap b{color:var(--text);font-weight:750;display:block;margin-bottom:7px;font-size:17px;letter-spacing:-.2px}
   .showcase .scfoot{text-align:center;margin-top:14px;display:flex;gap:16px;justify-content:center;align-items:center;flex-wrap:wrap}
   @media(max-width:760px){ .shot,.shot.rev{grid-template-columns:1fr;gap:16px} .shot.rev .shotimg{order:0} }
+  .embedwrap{border:1px solid var(--border);border-radius:16px;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,.55);background:var(--panel);margin-top:6px}
+  .embedbar{display:flex;align-items:center;gap:8px;padding:10px 14px;background:#0d131d;border-bottom:1px solid var(--border)}
+  .embedbar .dot{width:11px;height:11px;border-radius:50%;flex:none}
+  .embedbar .dot.r{background:#ff5f56}.embedbar .dot.y{background:#ffbd2e}.embedbar .dot.g{background:#27c93f}
+  .embedurl{margin-left:10px;font-size:12.5px;color:var(--muted);font-family:ui-monospace,Menlo,Consolas,monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .embedtry{margin-left:auto;font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--accent);white-space:nowrap}
+  .embedframe{width:100%;height:660px;border:0;display:block;background:var(--bg)}
+  @media(max-width:760px){.embedframe{height:560px}.embedurl{font-size:11px}}
 </style>
 </head>
 <body>
@@ -333,22 +341,12 @@
 <!-- SHOWCASE -->
 <section class="blk showcase"><div class="container">
   <div class="eyebrow">See it in action</div>
-  <h2 class="sec">This is what your portfolio looks like</h2>
-  <p class="ssub">A real DevQuest portfolio — Destin Bales, 25 years of production across Insomniac, Riot, Ubisoft, Sony Bend and more. Here's what a visitor sees.</p>
+  <h2 class="sec">A real portfolio &mdash; take it for a spin</h2>
+  <p class="ssub">This is a real, live portfolio — Destin Bales, 25 years of production across Insomniac, Riot, Ubisoft, Sony Bend and more. Flip between the wall, timeline, and recruiter views, filter by studio, and open any game's one-sheet, right here.</p>
 
-  <div class="shot">
-    <div class="shotimg"><img src="/portfolio/demo/views.gif" alt="Flipping between the cover wall and the career timeline" loading="lazy"></div>
-    <div class="shotcap"><b>Every game, three ways.</b> A cover wall, a career timeline on your studio spine, and a recruiter view — flip between them in a click and watch your games fall into place.</div>
-  </div>
-
-  <div class="shot rev">
-    <div class="shotimg"><img src="/portfolio/demo/recruiter.gif" alt="Filtering the recruiter view by studio" loading="lazy"></div>
-    <div class="shotcap"><b>Filter a whole career by studio.</b> The recruiter view reads role, scope, impact, and proof in the same order for every title — and narrows to any studio in one click.</div>
-  </div>
-
-  <div class="shot">
-    <div class="shotimg"><img src="/portfolio/demo/onesheet.gif" alt="A game one-sheet with stats, impact, and a critic score" loading="lazy"></div>
-    <div class="shotcap"><b>A one-sheet for every title.</b> A short summary, the stats that matter, what you led, the challenges you solved, and a critic score — the recruiter-ready story behind each game.</div>
+  <div class="embedwrap">
+    <div class="embedbar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="embedurl">devquest.gg/portfolio/destin-bales</span><span class="embedtry">◆ Live &mdash; try it</span></div>
+    <iframe class="embedframe" src="/portfolio/destin-bales/?embed=1" title="A live example DevQuest portfolio you can interact with" loading="lazy"></iframe>
   </div>
 
   <div class="scfoot">

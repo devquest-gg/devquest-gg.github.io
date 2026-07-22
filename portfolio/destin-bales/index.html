@@ -377,6 +377,8 @@
   .agnew{color:var(--accent);font-weight:700;cursor:pointer;font-size:13px}
   .agprev{margin-top:10px;display:flex;gap:12px;align-items:center}
   .agprev img{width:84px;height:112px;object-fit:cover;border-radius:8px;border:1px solid var(--border);background:#141b26}
+  body.embed .bar, body.embed .nav, body.embed .editlink{display:none !important}
+  body.embed .hero .banner{height:150px}
 </style>
 </head>
 <body>
@@ -398,6 +400,7 @@
   var parts = location.pathname.replace(/\/+$/,"").split("/");
   var pslug = parts[parts.length-1] || "";
   var slug = String(qslug || pslug || "").trim().toLowerCase();
+  var IS_EMBED = new URLSearchParams(location.search).get("embed")==="1"; if(IS_EMBED){ try{ document.body.classList.add("embed"); }catch(e){} }
   if(slug==="portfolio" || slug==="view.html" || !slug){ app.innerHTML='<div class="wrap" style="padding:60px 22px;color:var(--muted)">No profile specified.</div>'; return; }
   document.getElementById("creditslink").href="/credits/"+slug;
 
@@ -431,7 +434,7 @@
     DQAPI.portfolio(slug).then(function(r){
       if(!(r && r.ok && r.data && r.data.person)){ app.innerHTML='<div class="wrap" style="padding:60px 22px"><h1>Not found</h1><p style="color:var(--muted)">No portfolio at this address yet.</p></div>'; return; }
       var person=r.data.person, positions=r.data.positions||[], credits=r.data.credits||[];
-      resolveCovers(credits).then(function(covMap){ render(person, positions, credits, covMap||{}); });
+      resolveCovers(credits).then(function(covMap){ render(person, positions, credits, covMap||{}); if(IS_EMBED){ setTimeout(function(){ var h=document.querySelector(".stagehead"); if(h) h.scrollIntoView({block:"start"}); },350); } });
       if(DQAPI.isSignedIn()){ document.body.classList.add("is-auth"); DQAPI.me().then(function(mr){ var me=mr&&mr.data&&mr.data.person; if(me && me.slug===slug){ IS_OWNER=true; document.body.classList.add("is-owner"); document.getElementById("editlink").style.display="inline-block"; if(_relayout) _relayout(); } }).catch(function(){}); }
     }).catch(function(){ app.innerHTML='<div class="wrap" style="padding:60px 22px;color:var(--pink)">Could not load this portfolio. Try again.</div>'; });
   }
