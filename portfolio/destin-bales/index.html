@@ -249,6 +249,10 @@
 
   /* unified wall <-> timeline stage */
   .stagehead{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap}
+  .headtext{min-width:0}
+  .own-head{display:none}
+  body.is-owner .pub-head{display:none}
+  body.is-owner .own-head{display:block}
   .vtoggle{display:inline-flex;background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:4px;gap:4px;flex:none}
   .vtoggle button{appearance:none;border:0;background:transparent;color:var(--muted);font-weight:750;font-size:13.5px;padding:8px 15px;border-radius:9px;cursor:pointer;transition:.15s}
   .vtoggle button.on{background:linear-gradient(135deg,#1f6feb,#6d3bd6);color:#fff;box-shadow:0 4px 14px rgba(88,120,255,.35)}
@@ -459,7 +463,7 @@
 
     // ---- the work: unified wall <-> timeline stage ----
     _covMap = covMap; _credits = credits; _person = p; _positions = positions;
-    var stageSection = credits.length ? '<div class="wrap"><section><div class="stagehead"><div><div class="eyebrow">The Work</div><h2 class="sec">Every game, your way</h2><p class="sub">Arrange the wall however you like — then flip to the timeline and watch them fall into place.</p></div><div class="vtoggle" id="vtoggle"><button data-m="grid" class="on">▦ Wall</button><button data-m="timeline">↳ Timeline</button><button data-m="recruiter">▤ Recruiter</button></div></div><div class="vhint" id="vhint"></div><div id="stage" class="grid"><div id="chrome"><div id="spine"></div></div></div><div id="recruiter" style="display:none"></div></section></div>' : '';
+    var stageSection = credits.length ? '<div class="wrap"><section><div class="stagehead"><div class="headtext pub-head"><div class="eyebrow">The Work</div><h2 class="sec">'+(credits.length?credits.length+' shipped titles':'Selected work')+'</h2><p class="sub">Every game I\'ve shipped — click any cover for the one-sheet: my role, the scope, and the impact.</p></div><div class="headtext own-head"><div class="eyebrow">The Work</div><h2 class="sec">Every game, your way</h2><p class="sub">Arrange the wall however you like — then flip to the timeline and watch them fall into place. <span class="mut">Only you see this editing view — visitors get the public work view above.</span></p></div><div class="vtoggle" id="vtoggle"><button data-m="grid" class="on">▦ Wall</button><button data-m="timeline">↳ Timeline</button><button data-m="recruiter">▤ Recruiter</button></div></div><div class="vhint" id="vhint"></div><div id="stage" class="grid"><div id="chrome"><div id="spine"></div></div></div><div id="recruiter" style="display:none"></div></section></div>' : '';
 
     // ---- skills ----
     var groups = (p.skills && p.skills.groups) ? p.skills.groups : [];
