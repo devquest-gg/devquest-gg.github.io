@@ -286,31 +286,40 @@
   .shotcap b{color:var(--text);font-weight:750;display:block;margin-bottom:7px;font-size:17px;letter-spacing:-.2px}
   .showcase .scfoot{text-align:center;margin-top:14px;display:flex;gap:16px;justify-content:center;align-items:center;flex-wrap:wrap}
   @media(max-width:760px){ .shot,.shot.rev{grid-template-columns:1fr;gap:16px} .shot.rev .shotimg{order:0} }
-  /* --- feature carousel --- */
-  .fcar{margin:6px 0 2px}
-  .fcar-tabs{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:24px}
-  .fcar-tab{font-size:13.5px;font-weight:650;color:var(--muted);background:transparent;border:1px solid var(--border);padding:8px 16px;border-radius:999px;cursor:pointer;transition:color .18s,background .18s,border-color .18s;white-space:nowrap}
-  .fcar-tab:hover{color:var(--text);border-color:var(--accent)}
-  .fcar-tab.on{color:#fff;background:var(--accent);border-color:var(--accent)}
-  .fcar-stage{position:relative;height:clamp(360px,54vh,540px);display:flex;align-items:center;justify-content:center}
+  /* --- feature carousel (two-column) --- */
+  .fcar{margin:8px 0 2px}
+  .fcar-row{display:grid;grid-template-columns:minmax(0,1.08fr) minmax(0,.92fr);gap:46px;align-items:center}
+  .fcar-stage{position:relative;height:clamp(430px,64vh,640px)}
   .fcar-slide{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;opacity:0;visibility:hidden;transition:opacity .5s ease;pointer-events:none}
   .fcar-slide.on{opacity:1;visibility:visible;pointer-events:auto}
-  .fcar-slide img{max-height:100%;max-width:100%;border-radius:14px;border:1px solid var(--border);box-shadow:0 24px 60px rgba(0,0,0,.55);background:var(--panel);display:block}
-  .fcar-arrow{position:absolute;top:50%;transform:translateY(-50%);z-index:3;width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(20,26,38,.82);border:1px solid var(--border);color:var(--text);cursor:pointer;font-size:22px;line-height:1;transition:color .18s,background .18s,border-color .18s;-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}
-  .fcar-arrow:hover{background:var(--accent);border-color:var(--accent);color:#fff}
-  .fcar-prev{left:2px}.fcar-next{right:2px}
-  .fcar-cap{max-width:640px;margin:24px auto 0;text-align:center;font-size:15.5px;line-height:1.65;color:var(--muted);min-height:96px;position:relative}
-  .fcar-cap b{color:var(--text);font-weight:750;display:block;margin-bottom:7px;font-size:18px;letter-spacing:-.2px}
-  .capline{display:none}
-  .capline.on{display:block}
-  .fcar-dots{display:flex;gap:9px;justify-content:center;margin-top:16px}
-  .fcar-dot{width:8px;height:8px;border-radius:50%;background:var(--border);border:0;cursor:pointer;padding:0;transition:background .2s,transform .2s}
-  .fcar-dot.on{background:var(--accent);transform:scale(1.3)}
-  @media(max-width:600px){
-    .fcar-stage{height:clamp(300px,66vw,430px)}
-    .fcar-arrow{width:36px;height:36px;font-size:18px}
-    .fcar-cap{min-height:132px;font-size:14.5px}
+  .fcar-slide img{max-height:100%;max-width:100%;border-radius:14px;border:1px solid var(--border);box-shadow:0 30px 70px rgba(0,0,0,.6);background:var(--panel);display:block}
+  .fcar-nav{display:flex;flex-direction:column;gap:4px}
+  .fcar-item{display:block;width:100%;text-align:left;background:transparent;border:0;border-left:2px solid transparent;border-radius:12px;padding:15px 20px;cursor:pointer;transition:background .2s,border-color .2s}
+  .fcar-item:hover{background:rgba(255,255,255,.03)}
+  .fcar-item.on{background:linear-gradient(90deg,rgba(88,166,255,.10),rgba(88,166,255,0));border-left-color:var(--accent)}
+  .fcar-iname{display:block;font-size:19px;font-weight:750;letter-spacing:-.2px;color:var(--muted);transition:color .2s}
+  .fcar-item:hover .fcar-iname,.fcar-item.on .fcar-iname{color:var(--text)}
+  .fcar-idesc{display:block;max-height:0;overflow:hidden;opacity:0;font-size:15px;line-height:1.62;color:var(--muted);transition:max-height .35s ease,opacity .3s ease,margin-top .35s ease;margin-top:0}
+  .fcar-item.on .fcar-idesc{max-height:240px;opacity:1;margin-top:9px}
+  @media(max-width:820px){
+    .fcar-row{grid-template-columns:1fr;gap:18px}
+    .fcar-stage{height:clamp(320px,72vw,480px)}
+    .fcar-item{padding:12px 16px}
+    .fcar-iname{font-size:17px}
+    .fcar-idesc{font-size:14.5px}
   }
+  /* --- feature highlights --- */
+  .feats .ssub{margin-bottom:28px}
+  .featgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+  .featc{position:relative;background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:24px 22px;transition:border-color .18s,transform .18s}
+  .featc:hover{border-color:rgba(88,166,255,.45);transform:translateY(-2px)}
+  .featic{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:rgba(88,166,255,.12);color:var(--accent);margin-bottom:15px}
+  .featic svg{width:22px;height:22px}
+  .featc h3{font-size:16.5px;font-weight:750;margin:0 0 8px;letter-spacing:-.2px;color:var(--text)}
+  .featc p{font-size:14.5px;line-height:1.6;color:var(--muted);margin:0}
+  .soon{position:absolute;top:18px;right:18px;font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:#e0b23a;background:rgba(224,178,58,.13);border:1px solid rgba(224,178,58,.34);padding:3px 9px;border-radius:999px}
+  @media(max-width:860px){.featgrid{grid-template-columns:repeat(2,1fr)}}
+  @media(max-width:540px){.featgrid{grid-template-columns:1fr}}
   .embedwrap{border:1px solid var(--border);border-radius:16px;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,.55);background:var(--panel);margin-top:6px}
   .embedhead{display:flex;align-items:center;gap:11px;padding:12px 18px;background:linear-gradient(180deg,#121a27,#0e141e);border-bottom:1px solid var(--border)}
   .livedot{width:9px;height:9px;border-radius:50%;background:#3fb950;box-shadow:0 0 0 4px rgba(63,185,80,.14);flex:none;animation:lpulse 2.4s ease-in-out infinite}
@@ -370,31 +379,19 @@
   <div class="eyebrow">See it in action</div>
   <h2 class="sec">Your work, shown to get you hired</h2>
   <div class="fcar" id="fcar">
-    <div class="fcar-tabs">
-      <button class="fcar-tab on" type="button">The wall</button>
-      <button class="fcar-tab" type="button">The one-sheet</button>
-      <button class="fcar-tab" type="button">The timeline</button>
-      <button class="fcar-tab" type="button">The recruiter view</button>
-    </div>
-    <div class="fcar-stage">
-      <button class="fcar-arrow fcar-prev" type="button" aria-label="Previous feature">&#8249;</button>
-      <div class="fcar-slide on"><img src="/portfolio/demo/wall.jpg" alt="The cover wall of shipped games" loading="lazy"></div>
-      <div class="fcar-slide"><img src="/portfolio/demo/onesheet.jpg" alt="A game one-sheet with an OpenCritic score and key challenges" loading="lazy"></div>
-      <div class="fcar-slide"><img src="/portfolio/demo/timeline.png" alt="The career timeline view" loading="lazy"></div>
-      <div class="fcar-slide"><img src="/portfolio/demo/recruiter.png" alt="The recruiter view filtered by studio" loading="lazy"></div>
-      <button class="fcar-arrow fcar-next" type="button" aria-label="Next feature">&#8250;</button>
-    </div>
-    <div class="fcar-cap">
-      <div class="capline on"><b>The wall.</b> Every game you've shipped, as cover art. Drag your best into the three Featured slots up top, and each title earns a <span class="acc">&#10003;</span> the moment a teammate who shipped it confirms your role.</div>
-      <div class="capline"><b>A one-sheet for every game.</b> The real story behind each title: the stats that matter, what you led, the <span class="acc">key challenges</span> you solved, and an <span class="acc">OpenCritic score</span> pulled in automatically. Recruiter-ready, one click away.</div>
-      <div class="capline"><b>The timeline.</b> Flip the wall onto your career spine and watch your games fall into place by studio and year. The same games, a whole new read.</div>
-      <div class="capline"><b>The recruiter view.</b> Role, scope, impact, and proof for every title, in the same order every time, and filterable by studio. Built for the person deciding whether to hire you.</div>
-    </div>
-    <div class="fcar-dots">
-      <button class="fcar-dot on" type="button" aria-label="Show the wall"></button>
-      <button class="fcar-dot" type="button" aria-label="Show the one-sheet"></button>
-      <button class="fcar-dot" type="button" aria-label="Show the timeline"></button>
-      <button class="fcar-dot" type="button" aria-label="Show the recruiter view"></button>
+    <div class="fcar-row">
+      <div class="fcar-stage">
+        <div class="fcar-slide on"><img src="/portfolio/demo/wall.jpg" alt="The cover wall of shipped games" loading="lazy"></div>
+        <div class="fcar-slide"><img src="/portfolio/demo/onesheet.jpg" alt="A game one-sheet with an OpenCritic score and key challenges" loading="lazy"></div>
+        <div class="fcar-slide"><img src="/portfolio/demo/timeline.png" alt="The career timeline view" loading="lazy"></div>
+        <div class="fcar-slide"><img src="/portfolio/demo/recruiter.png" alt="The recruiter view filtered by studio" loading="lazy"></div>
+      </div>
+      <div class="fcar-nav">
+        <button class="fcar-item on" type="button"><span class="fcar-iname">The wall</span><span class="fcar-idesc">Every game you've shipped, as cover art. Drag your best into the three Featured slots up top, and each title earns a <span class="acc">&#10003;</span> the moment a teammate who shipped it confirms your role.</span></button>
+        <button class="fcar-item" type="button"><span class="fcar-iname">The one-sheet</span><span class="fcar-idesc">The real story behind each title: the stats that matter, what you led, the <span class="acc">key challenges</span> you solved, and an <span class="acc">OpenCritic score</span> pulled in automatically. Recruiter-ready, one click away.</span></button>
+        <button class="fcar-item" type="button"><span class="fcar-iname">The timeline</span><span class="fcar-idesc">Flip the wall onto your career spine and watch your games fall into place by studio and year. The same games, a whole new read.</span></button>
+        <button class="fcar-item" type="button"><span class="fcar-iname">The recruiter view</span><span class="fcar-idesc">Role, scope, impact, and proof for every title, in the same order every time, and filterable by studio. Built for the person deciding whether to hire you.</span></button>
+      </div>
     </div>
   </div>
 
@@ -406,26 +403,18 @@
   (function(){
     var car=document.getElementById('fcar'); if(!car) return;
     var slides=car.querySelectorAll('.fcar-slide');
-    var caps=car.querySelectorAll('.capline');
-    var tabs=car.querySelectorAll('.fcar-tab');
-    var dots=car.querySelectorAll('.fcar-dot');
+    var items=car.querySelectorAll('.fcar-item');
     var n=slides.length, i=0, timer=null;
     function show(k){
       i=(k%n+n)%n;
       for(var j=0;j<n;j++){
         slides[j].classList.toggle('on',j===i);
-        caps[j].classList.toggle('on',j===i);
-        tabs[j].classList.toggle('on',j===i);
-        dots[j].classList.toggle('on',j===i);
+        items[j].classList.toggle('on',j===i);
       }
     }
     function reset(){ if(timer)clearInterval(timer); timer=setInterval(function(){ show(i+1); },5200); }
     function go(k){ show(k); reset(); }
-    for(var t=0;t<tabs.length;t++){ (function(k){ tabs[k].onclick=function(){ go(k); }; })(t); }
-    for(var d=0;d<dots.length;d++){ (function(k){ dots[k].onclick=function(){ go(k); }; })(d); }
-    var prev=car.querySelector('.fcar-prev'), next=car.querySelector('.fcar-next');
-    if(prev) prev.onclick=function(){ go(i-1); };
-    if(next) next.onclick=function(){ go(i+1); };
+    for(var t=0;t<items.length;t++){ (function(k){ items[k].onclick=function(){ go(k); }; })(t); }
     car.addEventListener('mouseenter',function(){ if(timer)clearInterval(timer); });
     car.addEventListener('mouseleave',reset);
     show(0); reset();
@@ -435,6 +424,21 @@
 <!-- HOW IT WORKS -->
 
 <!-- MANIFESTO -->
+
+<!-- FEATURE HIGHLIGHTS -->
+<section class="blk feats"><div class="container">
+  <div class="eyebrow">Under the hood</div>
+  <h2 class="sec">More than a pretty page</h2>
+  <p class="ssub">The parts that make a portfolio hold up when someone is deciding whether to hire you.</p>
+  <div class="featgrid">
+    <div class="featc"><div class="featic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></div><h3>Peer-verified credits</h3><p>Teammates who shipped the game confirm your role. A green check no r&eacute;sum&eacute;, LinkedIn, or database can fake.</p></div>
+    <div class="featc"><div class="featic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9 6.8 19.2l1-5.8L3.5 9.3l5.9-.9z"/></svg></div><h3>Portfolio critic average</h3><p>Every shipped title's OpenCritic score rolled into one number across your whole career, not just game by game.</p></div>
+    <div class="featc"><span class="soon">Soon</span><div class="featic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg></div><h3>Discipline-based templates</h3><p>Layouts tuned to your craft, whether you ship as production, design, art, engineering, or QA.</p></div>
+    <div class="featc"><div class="featic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg></div><h3>Cover art, automatically</h3><p>Box art pulls in from Steam and our library. Nothing to hunt down, upload, or design yourself.</p></div>
+    <div class="featc"><div class="featic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1" fill="currentColor" stroke="none"/></svg></div><h3>Challenges, not just titles</h3><p>Each game carries the real problems you solved, in your words, sitting right next to the outcome.</p></div>
+    <div class="featc"><div class="featic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3m0 0L8 7m4-4l4 4"/><path d="M4 13v6a2 2 0 002 2h12a2 2 0 002-2v-6"/></svg></div><h3>Free, and yours to keep</h3><p>No password, just your email. Your data exports cleanly and travels with you, with no lock-in.</p></div>
+  </div>
+</div></section>
 
 <!-- CTA -->
 <section class="blk"><div class="container">
