@@ -4,7 +4,7 @@
 <!-- DevQuest Credits homepage -->
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DevQuest Portfolio — build the game-dev portfolio your games deserve</title>
+<title>DevQuest Portfolio: build the game-dev portfolio your games deserve</title>
 <meta name="description" content="An opt-in, dev-controlled game credits database. Find your credits, claim your page, and let the peers you shipped with vouch for it.">
 <meta name="robots" content="noindex, nofollow">
 <link rel="canonical" href="https://devquest.gg/credits">
@@ -286,6 +286,31 @@
   .shotcap b{color:var(--text);font-weight:750;display:block;margin-bottom:7px;font-size:17px;letter-spacing:-.2px}
   .showcase .scfoot{text-align:center;margin-top:14px;display:flex;gap:16px;justify-content:center;align-items:center;flex-wrap:wrap}
   @media(max-width:760px){ .shot,.shot.rev{grid-template-columns:1fr;gap:16px} .shot.rev .shotimg{order:0} }
+  /* --- feature carousel --- */
+  .fcar{margin:6px 0 2px}
+  .fcar-tabs{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:24px}
+  .fcar-tab{font-size:13.5px;font-weight:650;color:var(--muted);background:transparent;border:1px solid var(--border);padding:8px 16px;border-radius:999px;cursor:pointer;transition:color .18s,background .18s,border-color .18s;white-space:nowrap}
+  .fcar-tab:hover{color:var(--text);border-color:var(--accent)}
+  .fcar-tab.on{color:#fff;background:var(--accent);border-color:var(--accent)}
+  .fcar-stage{position:relative;height:clamp(360px,54vh,540px);display:flex;align-items:center;justify-content:center}
+  .fcar-slide{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;opacity:0;visibility:hidden;transition:opacity .5s ease;pointer-events:none}
+  .fcar-slide.on{opacity:1;visibility:visible;pointer-events:auto}
+  .fcar-slide img{max-height:100%;max-width:100%;border-radius:14px;border:1px solid var(--border);box-shadow:0 24px 60px rgba(0,0,0,.55);background:var(--panel);display:block}
+  .fcar-arrow{position:absolute;top:50%;transform:translateY(-50%);z-index:3;width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(20,26,38,.82);border:1px solid var(--border);color:var(--text);cursor:pointer;font-size:22px;line-height:1;transition:color .18s,background .18s,border-color .18s;-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}
+  .fcar-arrow:hover{background:var(--accent);border-color:var(--accent);color:#fff}
+  .fcar-prev{left:2px}.fcar-next{right:2px}
+  .fcar-cap{max-width:640px;margin:24px auto 0;text-align:center;font-size:15.5px;line-height:1.65;color:var(--muted);min-height:96px;position:relative}
+  .fcar-cap b{color:var(--text);font-weight:750;display:block;margin-bottom:7px;font-size:18px;letter-spacing:-.2px}
+  .capline{display:none}
+  .capline.on{display:block}
+  .fcar-dots{display:flex;gap:9px;justify-content:center;margin-top:16px}
+  .fcar-dot{width:8px;height:8px;border-radius:50%;background:var(--border);border:0;cursor:pointer;padding:0;transition:background .2s,transform .2s}
+  .fcar-dot.on{background:var(--accent);transform:scale(1.3)}
+  @media(max-width:600px){
+    .fcar-stage{height:clamp(300px,66vw,430px)}
+    .fcar-arrow{width:36px;height:36px;font-size:18px}
+    .fcar-cap{min-height:132px;font-size:14.5px}
+  }
   .embedwrap{border:1px solid var(--border);border-radius:16px;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,.55);background:var(--panel);margin-top:6px}
   .embedhead{display:flex;align-items:center;gap:11px;padding:12px 18px;background:linear-gradient(180deg,#121a27,#0e141e);border-bottom:1px solid var(--border)}
   .livedot{width:9px;height:9px;border-radius:50%;background:#3fb950;box-shadow:0 0 0 4px rgba(63,185,80,.14);flex:none;animation:lpulse 2.4s ease-in-out infinite}
@@ -324,16 +349,16 @@
 <div class="hero"><div class="container">
   <div class="eyebrow">Free portfolios for game developers</div>
   <h1>Build the portfolio<br><span class="grad">your games deserve.</span></h1>
-  <p class="lede">A living showcase of every game you've shipped — a cover wall, a career timeline, a recruiter view, and a one-sheet for every title. Free, yours to keep, and confirmed by the people you shipped with.</p>
+  <p class="lede">A living showcase of every game you've shipped: a cover wall, a career timeline, a recruiter view, and a one-sheet for every title. Free, yours to keep, and confirmed by the people you shipped with.</p>
   <div class="ctapair">
     <a class="ctacard primary" href="/portfolio/edit/">
       <div class="ctatop"><span class="ctaicon">✦</span><span class="ctahead">Build your free portfolio</span></div>
-      <div class="ctasub">For developers — a living showcase of every game you've shipped. Free, no password, yours to keep.</div>
+      <div class="ctasub">For developers: a living showcase of every game you've shipped. Free, no password, yours to keep.</div>
       <div class="ctago">Start building →</div>
     </a>
     <a class="ctacard" href="/credits/search.html">
       <div class="ctatop"><span class="ctaicon">⌕</span><span class="ctahead">Find the perfect candidate</span></div>
-      <div class="ctasub">For studios &amp; recruiters — search developers, games, and studios by the work they actually shipped.</div>
+      <div class="ctasub">For studios &amp; recruiters: search developers, games, and studios by the work they actually shipped.</div>
       <div class="ctago">Search the catalogue →</div>
     </a>
   </div>
@@ -344,30 +369,68 @@
 <section class="blk showcase"><div class="container">
   <div class="eyebrow">See it in action</div>
   <h2 class="sec">Your work, shown to get you hired</h2>
-  <div class="shot">
-    <div class="shotimg"><img src="/portfolio/demo/wall.jpg" alt="The cover wall of shipped games" loading="lazy"></div>
-    <div class="shotcap"><b>The wall.</b> Every game you've shipped, as cover art. Drag your best into the three Featured slots up top — and each title earns a <span class="acc">✓</span> the moment a teammate who shipped it confirms your role.</div>
-  </div>
-
-  <div class="shot rev">
-    <div class="shotimg"><img src="/portfolio/demo/onesheet.jpg" alt="A game one-sheet with an OpenCritic score and key challenges" loading="lazy"></div>
-    <div class="shotcap"><b>A one-sheet for every game.</b> The real story behind each title — the stats that matter, what you led, the <span class="acc">key challenges</span> you solved, and an <span class="acc">OpenCritic score</span> pulled in automatically. Recruiter-ready, one click away.</div>
-  </div>
-
-  <div class="shot">
-    <div class="shotimg"><img src="/portfolio/demo/timeline.png" alt="The career timeline view" loading="lazy"></div>
-    <div class="shotcap"><b>The timeline.</b> Flip the wall onto your career spine and watch your games fall into place by studio and year — the same games, a whole new read.</div>
-  </div>
-
-  <div class="shot rev">
-    <div class="shotimg"><img src="/portfolio/demo/recruiter.png" alt="The recruiter view filtered by studio" loading="lazy"></div>
-    <div class="shotcap"><b>The recruiter view.</b> Role, scope, impact, and proof for every title — in the same order, every time — and filterable by studio. Built for the person deciding whether to hire you.</div>
+  <div class="fcar" id="fcar">
+    <div class="fcar-tabs">
+      <button class="fcar-tab on" type="button">The wall</button>
+      <button class="fcar-tab" type="button">The one-sheet</button>
+      <button class="fcar-tab" type="button">The timeline</button>
+      <button class="fcar-tab" type="button">The recruiter view</button>
+    </div>
+    <div class="fcar-stage">
+      <button class="fcar-arrow fcar-prev" type="button" aria-label="Previous feature">&#8249;</button>
+      <div class="fcar-slide on"><img src="/portfolio/demo/wall.jpg" alt="The cover wall of shipped games" loading="lazy"></div>
+      <div class="fcar-slide"><img src="/portfolio/demo/onesheet.jpg" alt="A game one-sheet with an OpenCritic score and key challenges" loading="lazy"></div>
+      <div class="fcar-slide"><img src="/portfolio/demo/timeline.png" alt="The career timeline view" loading="lazy"></div>
+      <div class="fcar-slide"><img src="/portfolio/demo/recruiter.png" alt="The recruiter view filtered by studio" loading="lazy"></div>
+      <button class="fcar-arrow fcar-next" type="button" aria-label="Next feature">&#8250;</button>
+    </div>
+    <div class="fcar-cap">
+      <div class="capline on"><b>The wall.</b> Every game you've shipped, as cover art. Drag your best into the three Featured slots up top, and each title earns a <span class="acc">&#10003;</span> the moment a teammate who shipped it confirms your role.</div>
+      <div class="capline"><b>A one-sheet for every game.</b> The real story behind each title: the stats that matter, what you led, the <span class="acc">key challenges</span> you solved, and an <span class="acc">OpenCritic score</span> pulled in automatically. Recruiter-ready, one click away.</div>
+      <div class="capline"><b>The timeline.</b> Flip the wall onto your career spine and watch your games fall into place by studio and year. The same games, a whole new read.</div>
+      <div class="capline"><b>The recruiter view.</b> Role, scope, impact, and proof for every title, in the same order every time, and filterable by studio. Built for the person deciding whether to hire you.</div>
+    </div>
+    <div class="fcar-dots">
+      <button class="fcar-dot on" type="button" aria-label="Show the wall"></button>
+      <button class="fcar-dot" type="button" aria-label="Show the one-sheet"></button>
+      <button class="fcar-dot" type="button" aria-label="Show the timeline"></button>
+      <button class="fcar-dot" type="button" aria-label="Show the recruiter view"></button>
+    </div>
   </div>
 
   <div class="scfoot">
     <a class="btn primary big" href="/portfolio/destin-bales/">See the full live example →</a>
   </div>
 </div></section>
+<script>
+  (function(){
+    var car=document.getElementById('fcar'); if(!car) return;
+    var slides=car.querySelectorAll('.fcar-slide');
+    var caps=car.querySelectorAll('.capline');
+    var tabs=car.querySelectorAll('.fcar-tab');
+    var dots=car.querySelectorAll('.fcar-dot');
+    var n=slides.length, i=0, timer=null;
+    function show(k){
+      i=(k%n+n)%n;
+      for(var j=0;j<n;j++){
+        slides[j].classList.toggle('on',j===i);
+        caps[j].classList.toggle('on',j===i);
+        tabs[j].classList.toggle('on',j===i);
+        dots[j].classList.toggle('on',j===i);
+      }
+    }
+    function reset(){ if(timer)clearInterval(timer); timer=setInterval(function(){ show(i+1); },5200); }
+    function go(k){ show(k); reset(); }
+    for(var t=0;t<tabs.length;t++){ (function(k){ tabs[k].onclick=function(){ go(k); }; })(t); }
+    for(var d=0;d<dots.length;d++){ (function(k){ dots[k].onclick=function(){ go(k); }; })(d); }
+    var prev=car.querySelector('.fcar-prev'), next=car.querySelector('.fcar-next');
+    if(prev) prev.onclick=function(){ go(i-1); };
+    if(next) next.onclick=function(){ go(i+1); };
+    car.addEventListener('mouseenter',function(){ if(timer)clearInterval(timer); });
+    car.addEventListener('mouseleave',reset);
+    show(0); reset();
+  })();
+</script>
 
 <!-- HOW IT WORKS -->
 
@@ -409,7 +472,7 @@
     var src=coverSrc(c);
     var art='<span class="fph">'+dEsc(c.game_title)+'</span>'+(src?'<img loading="lazy" referrerpolicy="no-referrer" src="'+dEsc(src)+'" onerror="this.remove()" alt="">':'');
     var vb=c.vouch_count?'<span class="fvb '+(c.vouch_count>=2?'team':'peer')+'" title="'+(c.vouch_count>=2?'Team-confirmed':'Peer-confirmed')+' by teammates who shipped this game">✓</span>':'';
-    var meta=(c.studio?dEsc(c.studio)+'  ·  ':'')+(c.year?c.year:'—');
+    var meta=(c.studio?dEsc(c.studio)+'  ·  ':'')+(c.year?c.year:'');
     return '<a class="ftile" href="/credits/game/'+encodeURIComponent(c.game_slug)+'"><div class="fcov">'+art+vb+
       '<div class="fscrim"><b class="ftt">'+dEsc(c.game_title)+'</b><span class="fmt">'+dEsc(c.role||'Role not recorded')+'</span><span class="fsub">'+meta+'</span></div></div></a>';
   }
@@ -417,7 +480,7 @@
     var src=coverSrc(c);
     var thumb='<span class="ftlph">'+dEsc(c.game_title)+'</span>'+(src?'<img loading="lazy" referrerpolicy="no-referrer" src="'+dEsc(src)+'" onerror="this.remove()" alt="">':'');
     var seal=c.vouch_count?' <span class="dseal '+(c.vouch_count>=2?'team':'peer')+'" title="'+(c.vouch_count>=2?'Team-confirmed':'Peer-confirmed')+' by a teammate">✓</span>':'';
-    return '<div class="ftlrow"><div class="ftlyear">'+(c.year||'—')+'</div><div class="ftlrail"><span class="ftldot"></span></div>'+
+    return '<div class="ftlrow"><div class="ftlyear">'+(c.year||'')+'</div><div class="ftlrail"><span class="ftldot"></span></div>'+
       '<div class="ftlcard"><a class="ftlthumb" href="/credits/game/'+encodeURIComponent(c.game_slug)+'">'+thumb+'</a>'+
       '<div class="ftlbody"><div class="ftlname">'+dEsc(c.game_title)+seal+'</div><div class="ftlrole">'+dEsc(c.role||'Role not recorded')+'</div></div></div></div>';
   }
@@ -548,11 +611,11 @@
   fetch('/credits/data/site/home.json?t='+Date.now()).then(function(r){return r.ok?r.json():null;}).then(function(h){
     if(!h)return;
     if(h.covers&&h.covers.length){
-      // [slug,title,year,studio,genre,art] — real box art when we have it (Steam capsule or an
+      // [slug,title,year,studio,genre,art]: real box art when we have it (Steam capsule or an
       // admin cover); the gradient stays as the card background so a missing/failed image just
       // shows the typographic card instead of a blank.
       function coverCard(c){
-        // Art sits on top (z-index) so the box art — which already has the title baked in — is all
+        // Art sits on top (z-index) so the box art, which already has the title baked in, is all
         // you see. The genre/title/studio overlays stay in the DOM only as a fallback: if the image
         // ever fails, onerror removes it and the text shows over the gradient instead of a blank card.
         var art=c[5]?'<img loading="lazy" referrerpolicy="no-referrer" src="'+esc(c[5])+'" onerror="this.remove()" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1">':'';
