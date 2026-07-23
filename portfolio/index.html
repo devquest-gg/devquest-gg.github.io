@@ -296,6 +296,18 @@
   .embedvp{width:100%;overflow:hidden;background:var(--bg)}
   .embedframe{border:0;display:block;background:var(--bg);transform-origin:top left}
   @media(max-width:760px){.embedurl{font-size:11px}}
+  .ctapair{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:26px 0 14px;max-width:840px}
+  .ctacard{display:block;padding:20px 22px;border-radius:16px;text-decoration:none;border:1px solid var(--border);background:linear-gradient(180deg,#151d2b,#0f1520);transition:border-color .16s,transform .16s,box-shadow .16s}
+  .ctacard:hover{transform:translateY(-3px);border-color:var(--accent);box-shadow:0 18px 40px rgba(0,0,0,.4)}
+  .ctacard.primary{background:linear-gradient(135deg,rgba(124,192,255,.16),rgba(163,113,247,.13));border-color:rgba(124,192,255,.4)}
+  .ctatop{display:flex;align-items:center;gap:10px;margin-bottom:9px}
+  .ctaicon{width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:15px;background:rgba(255,255,255,.06);border:1px solid var(--border);flex:none}
+  .ctacard.primary .ctaicon{background:linear-gradient(135deg,#7cc0ff,#a371f7);color:#0a0d14;border:0}
+  .ctahead{font-size:18px;font-weight:800;letter-spacing:-.3px;color:var(--text)}
+  .ctasub{font-size:13.5px;color:var(--muted);line-height:1.5;margin-bottom:12px}
+  .ctago{font-size:13.5px;font-weight:750;color:var(--accent)}
+  .shotcap .acc{color:var(--accent);font-weight:700}
+  @media(max-width:640px){.ctapair{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -312,60 +324,50 @@
   <div class="eyebrow">Free portfolios for game developers</div>
   <h1>Build the portfolio<br><span class="grad">your games deserve.</span></h1>
   <p class="lede">A living showcase of every game you've shipped — a cover wall, a career timeline, a recruiter view, and a one-sheet for every title. Free, yours to keep, and confirmed by the people you shipped with.</p>
-  <div class="herocta">
-    <a id="startprofile" class="btn primary big" style="cursor:pointer">Build your portfolio — it's free →</a>
-    <a class="btn ghost big" href="/portfolio/destin-bales/">See a live example →</a>
+  <div class="ctapair">
+    <a class="ctacard primary" href="/portfolio/edit/">
+      <div class="ctatop"><span class="ctaicon">✦</span><span class="ctahead">Build your free portfolio</span></div>
+      <div class="ctasub">For developers — a living showcase of every game you've shipped. Free, no password, yours to keep.</div>
+      <div class="ctago">Start building →</div>
+    </a>
+    <a class="ctacard" href="/credits/search.html">
+      <div class="ctatop"><span class="ctaicon">⌕</span><span class="ctahead">Find the perfect candidate</span></div>
+      <div class="ctasub">For studios &amp; recruiters — search developers, games, and studios by the work they actually shipped.</div>
+      <div class="ctago">Search the catalogue →</div>
+    </a>
   </div>
   <div class="trustline">Completely free · no password, just your email · <b>your data is exportable and yours</b></div>
-  <div class="findwrap">
-    <span class="findlbl">Already shipped games? Find them:</span>
-    <div class="search"><span class="ic">🔍</span><input id="hs" placeholder="Search a game, a studio, or your own name..." autocomplete="off"></div>
-    <span class="btn" id="hsbtn">Search</span>
-  </div>
 </div></div>
 
 <!-- SHOWCASE -->
 <section class="blk showcase"><div class="container">
   <div class="eyebrow">See it in action</div>
-  <h2 class="sec">A real portfolio &mdash; take it for a spin</h2>
-  <p class="ssub">This is a real, live portfolio — Destin Bales, 25 years of production across Insomniac, Riot, Ubisoft, Sony Bend and more. Flip between the wall, timeline, and recruiter views, filter by studio, and open any game's one-sheet, right here.</p>
+  <h2 class="sec">Your work, shown to get you hired</h2>
+  <p class="ssub">A real DevQuest portfolio — Destin Bales, 25 years of production across Insomniac, Riot, Ubisoft, Sony Bend and more. Here's what a recruiter sees.</p>
 
-  <div class="embedwrap">
-    <div class="embedhead"><span class="livedot"></span><span class="embedhl">Live preview &mdash; a real portfolio, go ahead and click around</span><a class="embedopen" href="/portfolio/destin-bales/" target="_blank" rel="noopener">Open full portfolio ↗</a></div>
-    <div class="embedvp" id="embedvp"><iframe class="embedframe" id="embedframe" src="/portfolio/destin-bales/?embed=1" title="A live example DevQuest portfolio you can interact with" loading="lazy"></iframe></div>
+  <div class="shot">
+    <div class="shotimg"><img src="/portfolio/demo/wall.png" alt="The cover wall of shipped games" loading="lazy"></div>
+    <div class="shotcap"><b>The wall.</b> Every game you've shipped, as cover art. Drag your best into the three Featured slots up top — and each title earns a <span class="acc">✓</span> the moment a teammate who shipped it confirms your role.</div>
   </div>
-  <script>
-    (function(){
-      var vp=document.getElementById('embedvp'), fr=document.getElementById('embedframe');
-      function fit(){
-        var w=vp.clientWidth; if(!w) return;
-        var big = w>=760;
-        var LW = big ? 1440 : w;          // render at a wide desktop viewport, then scale down
-        var LH = big ? 1040 : 660;
-        var s = w/LW;
-        fr.style.width=LW+'px'; fr.style.height=LH+'px';
-        fr.style.transform='scale('+s+')';
-        vp.style.height=Math.round(LH*s)+'px';
-      }
-      fit();
-      window.addEventListener('resize', fit);
-    })();
-  </script>
+
+  <div class="shot rev">
+    <div class="shotimg"><img src="/portfolio/demo/onesheet.png" alt="A game one-sheet with an OpenCritic score and key challenges" loading="lazy"></div>
+    <div class="shotcap"><b>A one-sheet for every game.</b> The real story behind each title — the stats that matter, what you led, the <span class="acc">key challenges</span> you solved, and an <span class="acc">OpenCritic score</span> pulled in automatically. Recruiter-ready, one click away.</div>
+  </div>
+
+  <div class="shot">
+    <div class="shotimg"><img src="/portfolio/demo/views.gif" alt="Flipping from the wall to the career timeline" loading="lazy"></div>
+    <div class="shotcap"><b>The timeline.</b> Flip the wall onto your career spine and watch your games fall into place by studio and year — the same games, a whole new read.</div>
+  </div>
+
+  <div class="shot rev">
+    <div class="shotimg"><img src="/portfolio/demo/recruiter.png" alt="The recruiter view filtered by studio" loading="lazy"></div>
+    <div class="shotcap"><b>The recruiter view.</b> Role, scope, impact, and proof for every title — in the same order, every time — and filterable by studio. Built for the person deciding whether to hire you.</div>
+  </div>
 
   <div class="scfoot">
-    <a class="btn primary big" style="cursor:pointer" onclick="if(window.DQ&&DQ.openClaim)DQ.openClaim({mode:'addGame'});else location.href='#how';">Build yours — it's free →</a>
-    <a class="more" href="/portfolio/destin-bales/">See the full live example →</a>
+    <a class="btn primary big" href="/portfolio/destin-bales/">See the full live example →</a>
   </div>
-</div></section>
-
-<!-- DEV SPOTLIGHT -->
-<section class="blk" id="devs"><div class="container">
-  <div class="rowhead">
-    <div><div class="eyebrow">The people</div><h2 class="sec">What a portfolio looks like</h2>
-      <p class="secsub" style="margin:0">Not a résumé bullet: a cover-rich, peer-confirmed page owned by the person who did the work. A real one from the catalogue, refresh to see another.</p></div>
-    <a class="more" href="/credits/search.html?tab=people">Browse people →</a>
-  </div>
-  <div class="featframe" id="featwrap"><div class="fbody"><div style="color:var(--muted);padding:16px 2px">Loading a profile…</div></div></div>
 </div></section>
 
 <!-- HOW IT WORKS -->
@@ -538,10 +540,10 @@
 
   // ---- search: live combined dropdown + see-all button ----
   var hsIn=document.getElementById('hs');
-  var suggest=(window.DQ&&DQ.attachSuggest)?DQ.attachSuggest(hsIn):null;
-  function goSearch(){ if(suggest){suggest.seeAll();return;} var q=hsIn.value.trim();location.href='/credits/search.html'+(q?'?q='+encodeURIComponent(q):''); }
-  document.getElementById('hsbtn').addEventListener('click',goSearch);
-  if(!suggest){ hsIn.addEventListener('keydown',function(e){if(e.key==='Enter')goSearch();}); }
+  var suggest=(hsIn && window.DQ&&DQ.attachSuggest)?DQ.attachSuggest(hsIn):null;
+  function goSearch(){ if(suggest){suggest.seeAll();return;} var q=hsIn?hsIn.value.trim():'';location.href='/credits/search.html'+(q?'?q='+encodeURIComponent(q):''); }
+  var _hb=document.getElementById('hsbtn'); if(_hb) _hb.addEventListener('click',goSearch);
+  if(hsIn && !suggest){ hsIn.addEventListener('keydown',function(e){if(e.key==='Enter')goSearch();}); }
   // "Claim your credits" buttons → jump to the search box (finding your name is step one).
   document.querySelectorAll('.claimcta').forEach(function(b){ b.style.cursor='pointer'; b.addEventListener('click',function(){ window.scrollTo({top:0,behavior:'smooth'}); if(hsIn){ setTimeout(function(){ hsIn.focus(); },350); } }); });
   // Identity-first entry: open the add-a-game/claim flow (which materializes the profile).
