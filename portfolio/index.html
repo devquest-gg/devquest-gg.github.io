@@ -286,11 +286,13 @@
   .showcase .scfoot{text-align:center;margin-top:14px;display:flex;gap:16px;justify-content:center;align-items:center;flex-wrap:wrap}
   @media(max-width:760px){ .shot,.shot.rev{grid-template-columns:1fr;gap:16px} .shot.rev .shotimg{order:0} }
   .embedwrap{border:1px solid var(--border);border-radius:16px;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,.55);background:var(--panel);margin-top:6px}
-  .embedbar{display:flex;align-items:center;gap:8px;padding:10px 14px;background:#0d131d;border-bottom:1px solid var(--border)}
-  .embedbar .dot{width:11px;height:11px;border-radius:50%;flex:none}
-  .embedbar .dot.r{background:#ff5f56}.embedbar .dot.y{background:#ffbd2e}.embedbar .dot.g{background:#27c93f}
-  .embedurl{margin-left:10px;font-size:12.5px;color:var(--muted);font-family:ui-monospace,Menlo,Consolas,monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .embedtry{margin-left:auto;font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--accent);white-space:nowrap}
+  .embedhead{display:flex;align-items:center;gap:11px;padding:12px 18px;background:linear-gradient(180deg,#121a27,#0e141e);border-bottom:1px solid var(--border)}
+  .livedot{width:9px;height:9px;border-radius:50%;background:#3fb950;box-shadow:0 0 0 4px rgba(63,185,80,.14);flex:none;animation:lpulse 2.4s ease-in-out infinite}
+  @keyframes lpulse{0%,100%{opacity:1}50%{opacity:.4}}
+  .embedhl{font-size:13px;color:var(--muted);font-weight:600}
+  .embedopen{margin-left:auto;font-size:12.5px;font-weight:700;color:var(--accent);text-decoration:none;white-space:nowrap}
+  .embedopen:hover{text-decoration:underline}
+  @media(max-width:600px){.embedhl{font-size:11.5px}}
   .embedvp{width:100%;overflow:hidden;background:var(--bg)}
   .embedframe{border:0;display:block;background:var(--bg);transform-origin:top left}
   @media(max-width:760px){.embedurl{font-size:11px}}
@@ -320,23 +322,6 @@
     <div class="search"><span class="ic">🔍</span><input id="hs" placeholder="Search a game, a studio, or your own name..." autocomplete="off"></div>
     <span class="btn" id="hsbtn">Search</span>
   </div>
-
-  <!-- cover wall -->
-  <div class="wall">
-    <div class="marquee" id="m1"></div>
-    <div class="marquee rev" id="m2"></div>
-  </div>
-
-  <!-- stats: cold-start-safe (seeded catalogue scale, unclaimed framed as opportunity) -->
-  <div class="statslead">The catalogue is seeded from public records (CC0, via Wikidata). Developers claim their own credits and add the ones missing.</div>
-  <div class="stats">
-    <div class="stat hl"><b data-to="0" id="st-games">0</b><span>games catalogued</span></div>
-    <div class="stat"><b data-to="0" id="st-studios">0</b><span>studios</span></div>
-    <div class="stat hl"><b data-to="0" id="st-portfolios">0</b><span>live portfolios</span></div>
-    <div class="stat"><b data-to="0" id="st-credits">0</b><span>credits added by developers</span></div>
-    <div class="stat"><b data-to="0" id="st-vouches">0</b><span>peer confirmations</span></div>
-  </div>
-  <div style="text-align:center;margin-top:26px"><a class="more" href="/credits/search.html" id="allgames" style="font-size:15px">Browse all games →</a></div>
 </div></div>
 
 <!-- SHOWCASE -->
@@ -346,7 +331,7 @@
   <p class="ssub">This is a real, live portfolio — Destin Bales, 25 years of production across Insomniac, Riot, Ubisoft, Sony Bend and more. Flip between the wall, timeline, and recruiter views, filter by studio, and open any game's one-sheet, right here.</p>
 
   <div class="embedwrap">
-    <div class="embedbar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="embedurl">devquest.gg/portfolio/destin-bales</span><span class="embedtry">◆ Live &mdash; try it</span></div>
+    <div class="embedhead"><span class="livedot"></span><span class="embedhl">Live preview &mdash; a real portfolio, go ahead and click around</span><a class="embedopen" href="/portfolio/destin-bales/" target="_blank" rel="noopener">Open full portfolio ↗</a></div>
     <div class="embedvp" id="embedvp"><iframe class="embedframe" id="embedframe" src="/portfolio/destin-bales/?embed=1" title="A live example DevQuest portfolio you can interact with" loading="lazy"></iframe></div>
   </div>
   <script>
@@ -593,9 +578,9 @@
           '<span class="cc">'+esc(c[3]|| (c[2]?('· '+c[2]):''))+'</span></div>'+art+'</a>';
       }
       var cov=h.covers.map(coverCard).join('');
-      document.getElementById('m1').innerHTML=cov+cov;
+      var _e1=document.getElementById('m1'); if(_e1)_e1.innerHTML=cov+cov;
       var rc=h.covers.slice().reverse().map(coverCard).join('');
-      document.getElementById('m2').innerHTML=rc+rc;
+      var _e2=document.getElementById('m2'); if(_e2)_e2.innerHTML=rc+rc;
       // Start the animation only AFTER the strips have content, so it measures the real width.
       // Starting it while a strip was still empty is what left the top row "frozen" on mobile.
       requestAnimationFrame(function(){ var a=document.getElementById('m1'), b=document.getElementById('m2'); if(a)a.classList.add('play'); if(b)b.classList.add('play'); });
