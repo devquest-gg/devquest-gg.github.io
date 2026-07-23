@@ -15,6 +15,24 @@
   .addhint{font-size:13px;color:var(--muted);margin-top:14px}
   .addhint a{color:var(--accent);font-weight:600;cursor:pointer}
   .addhint a:hover{color:var(--text)}
+  /* cover wall marquee (ported from Credits home) */
+  .wall{position:relative;overflow:hidden;padding:10px 0}
+  .wall.wallbanner{margin:26px 0 6px}
+  .wall::before,.wall::after{content:"";position:absolute;top:0;bottom:0;width:110px;z-index:2;pointer-events:none}
+  .wall::before{left:0;background:linear-gradient(90deg,var(--bg),transparent)}
+  .wall::after{right:0;background:linear-gradient(270deg,var(--bg),transparent)}
+  .marquee{display:flex;gap:14px;width:max-content;will-change:transform}
+  .marquee.play{animation:wallslide 42s linear infinite}
+  .marquee.rev{margin-top:14px}
+  .marquee.rev.play{animation-direction:reverse;animation-duration:52s}
+  .wall:hover .marquee.play{animation-play-state:paused}
+  @keyframes wallslide{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+  .cover{width:132px;height:176px;border-radius:12px;flex:none;position:relative;overflow:hidden;box-shadow:0 8px 22px rgba(0,0,0,.5),inset 0 0 0 1px rgba(255,255,255,.06);cursor:pointer;transition:transform .18s;text-decoration:none;color:#fff}
+  .cover:hover{transform:translateY(-4px) scale(1.02)}
+  .cover .cgenre{position:absolute;top:12px;left:13px;right:13px;font-size:9px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.52)}
+  .cover .ct{position:absolute;left:0;right:0;bottom:0;padding:13px;font-size:14.5px;font-weight:800;line-height:1.15;background:linear-gradient(180deg,transparent,rgba(0,0,0,.5))}
+  .cover .cc{display:block;font-size:10.5px;font-weight:600;color:rgba(255,255,255,.72);margin-top:3px}
+  @media(max-width:600px){.wall.wallbanner{margin-top:16px}.cover{width:108px;height:144px}.cover .ct{font-size:13px}}
 </style>
 </head>
 <body>
@@ -25,6 +43,8 @@
     <a class="back" href="/">← Jobs board</a>
   </div>
 </div></div>
+
+<div class="container"><div class="wall wallbanner"><div class="marquee" id="m1"></div><div class="marquee rev" id="m2"></div></div></div>
 
 <div class="container">
   <div class="crumbs"><a href="/credits/">Credits</a><span class="sep">/</span><span class="mut">Search</span></div>
@@ -295,6 +315,28 @@
   input.value = q0;
   ensure().then(function(ok){ if(ok) render(); });
   input.focus();
+})();
+</script>
+<script>
+(function(){
+  function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+  var PAL=[["#b23a48","#3a1720"],["#e0662a","#3a1a10"],["#7b3fb0","#1c1030"],["#4aa5e0","#10233a"],["#c8a23a","#2a2210"],["#4caf50","#12331a"],["#2a6fb0","#0f1c30"],["#3a8fb0","#10283a"],["#5a5fb0","#161a30"],["#c02a5a","#300f1c"]];
+  function grad(str){str=String(str||'');var h=0;for(var i=0;i<str.length;i++)h=(h*31+str.charCodeAt(i))>>>0;var p=PAL[h%PAL.length];return 'linear-gradient(160deg,'+p[0]+','+p[1]+')';}
+  function coverCard(c){
+    var art=c[5]?'<img loading="lazy" referrerpolicy="no-referrer" src="'+esc(c[5])+'" onerror="this.remove()" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1">':'';
+    return '<a class="cover" href="/credits/game/'+encodeURIComponent(c[0])+'" style="background:'+grad(c[1])+'">'+
+      '<span class="cgenre">'+esc(c[4]||'Game')+'</span><div class="ct">'+esc(c[1])+
+      '<span class="cc">'+esc(c[3]||(c[2]?('\u00b7 '+c[2]):''))+'</span></div>'+art+'</a>';
+  }
+  fetch('/credits/data/site/home.json?t='+Date.now()).then(function(r){return r.ok?r.json():null;}).then(function(h){
+    if(!h||!h.covers||!h.covers.length)return;
+    var m1=document.getElementById('m1'), m2=document.getElementById('m2');
+    var cov=h.covers.map(coverCard).join('');
+    if(m1)m1.innerHTML=cov+cov;
+    var rc=h.covers.slice().reverse().map(coverCard).join('');
+    if(m2)m2.innerHTML=rc+rc;
+    requestAnimationFrame(function(){ if(m1)m1.classList.add('play'); if(m2)m2.classList.add('play'); });
+  }).catch(function(){});
 })();
 </script>
 </body>
