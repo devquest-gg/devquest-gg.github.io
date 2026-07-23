@@ -291,8 +291,9 @@
   .embedbar .dot.r{background:#ff5f56}.embedbar .dot.y{background:#ffbd2e}.embedbar .dot.g{background:#27c93f}
   .embedurl{margin-left:10px;font-size:12.5px;color:var(--muted);font-family:ui-monospace,Menlo,Consolas,monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .embedtry{margin-left:auto;font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--accent);white-space:nowrap}
-  .embedframe{width:100%;height:660px;border:0;display:block;background:var(--bg)}
-  @media(max-width:760px){.embedframe{height:560px}.embedurl{font-size:11px}}
+  .embedvp{width:100%;overflow:hidden;background:var(--bg)}
+  .embedframe{border:0;display:block;background:var(--bg);transform-origin:top left}
+  @media(max-width:760px){.embedurl{font-size:11px}}
 </style>
 </head>
 <body>
@@ -346,8 +347,25 @@
 
   <div class="embedwrap">
     <div class="embedbar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="embedurl">devquest.gg/portfolio/destin-bales</span><span class="embedtry">◆ Live &mdash; try it</span></div>
-    <iframe class="embedframe" src="/portfolio/destin-bales/?embed=1" title="A live example DevQuest portfolio you can interact with" loading="lazy"></iframe>
+    <div class="embedvp" id="embedvp"><iframe class="embedframe" id="embedframe" src="/portfolio/destin-bales/?embed=1" title="A live example DevQuest portfolio you can interact with" loading="lazy"></iframe></div>
   </div>
+  <script>
+    (function(){
+      var vp=document.getElementById('embedvp'), fr=document.getElementById('embedframe');
+      function fit(){
+        var w=vp.clientWidth; if(!w) return;
+        var big = w>=760;
+        var LW = big ? 1440 : w;          // render at a wide desktop viewport, then scale down
+        var LH = big ? 1040 : 660;
+        var s = w/LW;
+        fr.style.width=LW+'px'; fr.style.height=LH+'px';
+        fr.style.transform='scale('+s+')';
+        vp.style.height=Math.round(LH*s)+'px';
+      }
+      fit();
+      window.addEventListener('resize', fit);
+    })();
+  </script>
 
   <div class="scfoot">
     <a class="btn primary big" style="cursor:pointer" onclick="if(window.DQ&&DQ.openClaim)DQ.openClaim({mode:'addGame'});else location.href='#how';">Build yours — it's free →</a>
