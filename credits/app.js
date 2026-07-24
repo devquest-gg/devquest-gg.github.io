@@ -842,6 +842,7 @@
         g.rows.forEach(function(it){
           h += '<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px solid var(--border,#2d333b)">'+
             '<div style="flex:1;min-width:0"><div style="font-weight:700;font-size:13.5px">'+esc(it.person_name)+'</div>'+(it.role?'<div style="color:var(--muted,#8b98a9);font-size:12px">'+esc(it.role)+'</div>':'')+'</div>'+
+            '<span class="dq-vskip" data-cid="'+it.credit_id+'" title="Did not work with them" style="cursor:pointer;font-size:12px;color:var(--muted,#8b98a9);white-space:nowrap;padding:5px 8px">Not with them</span>'+
             '<span class="dq-vgo" data-cid="'+it.credit_id+'" style="cursor:pointer;font-size:12.5px;font-weight:800;color:#04220f;background:var(--green,#3fb950);border-radius:8px;padding:5px 14px;white-space:nowrap">Vouch</span>'+
           '</div>';
         });
@@ -857,6 +858,18 @@
               updateVouchBanner(d); render();
             } else { btn.textContent = "Vouch"; alert((r && r.data && r.data.error) || "Could not confirm. You can only confirm someone on a game you also shipped."); }
           }).catch(function(){ btn.textContent = "Vouch"; alert("Network error. Try again."); });
+        };
+      });
+      Array.prototype.forEach.call(listEl.querySelectorAll(".dq-vskip"), function(btn){
+        btn.onclick = function(){
+          if(!(w.DQAPI && w.DQAPI.dismissVouch)) return;
+          var cid = btn.getAttribute("data-cid"); btn.textContent = "…";
+          w.DQAPI.dismissVouch(cid).then(function(r){
+            if(r && r.ok){
+              var d = vGet() || { items: [] }; d.items = (d.items||[]).filter(function(x){ return String(x.credit_id) !== String(cid); }); d.count = d.items.length; vSet(d);
+              updateVouchBanner(d); render();
+            } else { btn.textContent = "Not with them"; alert((r && r.data && r.data.error) || "Could not clear. Try again."); }
+          }).catch(function(){ btn.textContent = "Not with them"; alert("Network error. Try again."); });
         };
       });
     }

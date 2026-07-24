@@ -31,15 +31,6 @@
     requestLink: function (email) { return req("POST", "/auth/request", { email: email }); },
     me: function () { return req("GET", "/auth/me"); },
     logout: function () { clearToken(); return req("POST", "/auth/logout"); },
-    // image upload: send the raw File with its own content-type; returns { url }
-    uploadImage: function (file) {
-      var headers = {};
-      var tok = getToken();
-      if (tok) headers["Authorization"] = "Bearer " + tok;
-      if (file && file.type) headers["Content-Type"] = file.type;
-      return fetch(API + "/upload", { method: "POST", headers: headers, body: file })
-        .then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { return { status: r.status, ok: r.ok, data: j }; }); });
-    },
     // reads
     stats: function () { return req("GET", "/stats"); },
     spotlight: function () { return req("GET", "/spotlight"); },
@@ -59,6 +50,7 @@
     saveSheet: function (creditId, payload) { return req("PUT", "/me/credits/" + creditId + "/sheet", payload); },
     vouch: function (creditId) { return req("POST", "/vouch", { credit_id: creditId }); },
     unvouch: function (creditId) { return req("DELETE", "/vouch", { credit_id: creditId }); },
+    dismissVouch: function (creditId) { return req("POST", "/me/vouchable/dismiss", { credit_id: creditId }); },
     updateProfile: function (payload) { return req("PATCH", "/me", payload); },
     updateGame: function (slug, payload) { return req("PUT", "/games/" + encodeURIComponent(slug), payload); },
     portfolio: function (slug) { return req("GET", "/portfolio/" + encodeURIComponent(slug)); },
