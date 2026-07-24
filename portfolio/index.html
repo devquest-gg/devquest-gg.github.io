@@ -296,7 +296,8 @@
   /* --- feature carousel (two-column) --- */
   .fcar{margin:8px 0 2px}
   .fcar-row{display:grid;grid-template-columns:minmax(0,1.08fr) minmax(0,.92fr);gap:46px;align-items:center}
-  .fcar-stage{position:relative;height:clamp(430px,64vh,640px)}
+  .fcar-stage{position:relative;height:clamp(430px,64vh,640px);display:flex;align-items:center;justify-content:center}
+  .fcar-video{max-width:100%;max-height:100%;display:block}
   .fcar-slide{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;opacity:0;visibility:hidden;transition:opacity .5s ease;pointer-events:none}
   .fcar-slide.on{opacity:1;visibility:visible;pointer-events:auto}
   .fcar-slide img{max-height:100%;max-width:100%;border-radius:14px;border:1px solid var(--border);box-shadow:0 30px 70px rgba(0,0,0,.6);background:var(--panel);display:block;cursor:zoom-in;transition:transform .22s ease}
@@ -427,10 +428,7 @@
   <div class="fcar" id="fcar">
     <div class="fcar-row">
       <div class="fcar-stage">
-        <div class="fcar-slide on"><img src="/portfolio/demo/wall.jpg" alt="The cover wall of shipped games" loading="lazy"></div>
-        <div class="fcar-slide"><img src="/portfolio/demo/onesheet.jpg" alt="A game one-sheet with an OpenCritic score and key challenges" loading="lazy"></div>
-        <div class="fcar-slide"><img src="/portfolio/demo/timeline.png" alt="The career timeline view" loading="lazy"></div>
-        <div class="fcar-slide"><img src="/portfolio/demo/recruiter.png" alt="The recruiter view filtered by studio" loading="lazy"></div>
+        <video class="fcar-video" autoplay loop muted playsinline preload="auto" poster="/portfolio/demo/views-poster.jpg"><source src="/portfolio/demo/views.mp4" type="video/mp4"><source src="/portfolio/demo/views.webm" type="video/webm"></video>
       </div>
       <div class="fcar-nav">
         <button class="fcar-item on" type="button"><span class="fcar-kick">Everything you've shipped</span><span class="fcar-iname">The wall</span><span class="fcar-idesc">Every game you've shipped, as cover art. Drag your best into the three Featured slots up top, and each title earns a <span class="acc">&#10003;</span> the moment a teammate who shipped it confirms your role.</span></button>
@@ -448,22 +446,21 @@
 <script>
   (function(){
     var car=document.getElementById('fcar'); if(!car) return;
-    var slides=car.querySelectorAll('.fcar-slide');
+    var video=car.querySelector('.fcar-video');
     var items=car.querySelectorAll('.fcar-item');
-    var n=slides.length, i=0, timer=null;
-    function show(k){
-      i=(k%n+n)%n;
-      for(var j=0;j<n;j++){
-        slides[j].classList.toggle('on',j===i);
-        items[j].classList.toggle('on',j===i);
-      }
+    var n=items.length;
+    function seg(){ var d=video&&video.duration; return ((d&&isFinite(d)&&d>0)?d:8.96)/n; }
+    function setActive(i){ for(var j=0;j<n;j++) items[j].classList.toggle('on', j===i); }
+    if(video){
+      video.addEventListener('timeupdate',function(){
+        var s=seg(); var i=Math.floor((video.currentTime%(s*n))/s);
+        if(i<0)i=0; if(i>=n)i=n-1;
+        if(!items[i].classList.contains('on')) setActive(i);
+      });
+      for(var t=0;t<items.length;t++){ (function(k){ items[k].onclick=function(){ try{ video.currentTime=k*seg()+0.12; }catch(e){} setActive(k); var pr=video.play&&video.play(); if(pr&&pr.catch)pr.catch(function(){}); }; })(t); }
+      var pr0=video.play&&video.play(); if(pr0&&pr0.catch)pr0.catch(function(){});
     }
-    function reset(){ if(timer)clearInterval(timer); timer=setInterval(function(){ show(i+1); },5200); }
-    function go(k){ show(k); reset(); }
-    for(var t=0;t<items.length;t++){ (function(k){ items[k].onclick=function(){ go(k); }; })(t); }
-    car.addEventListener('mouseenter',function(){ if(timer)clearInterval(timer); });
-    car.addEventListener('mouseleave',reset);
-    show(0); reset();
+    setActive(0);
   })();
 </script>
 

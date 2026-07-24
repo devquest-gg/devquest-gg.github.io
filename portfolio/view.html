@@ -1031,6 +1031,8 @@
   }
 
   // ---- unified wall <-> timeline stage ----
+  function _studioKey(s){ return String(s==null?"":s).toLowerCase().replace(/[^a-z0-9]+/g,""); }
+  function assignBand(c, bands){ var y=creditYear(c); var ck=_studioKey(c.studio); if(ck){ var m=[]; for(var i=0;i<bands.length;i++){ var b=bands[i]; var pk=_studioKey(b.p&&(b.p.studio_slug||b.p.studio)); if(pk&&pk===ck) m.push(i); } if(m.length===1) return m[0]; if(m.length>1){ if(y){ for(var j=0;j<m.length;j++){ if(y>=bands[m[j]].s&&y<=bands[m[j]].e) return m[j]; } } return m[0]; } } if(y){ for(var k=0;k<bands.length;k++){ if(y>=bands[k].s&&y<=bands[k].e) return k; } } return -1; }
   function buildStage(credits, positions, covMap){
     var stage=document.getElementById("stage"); if(!stage) return;
     var chrome=document.getElementById("chrome"), spine=document.getElementById("spine");
@@ -1038,7 +1040,7 @@
     var mode="grid", tiles=[], labels=[], dots=[], geo={}, GAP=16, SLOTS=3;
 
     var bands=positions.map(function(p){ var s=p.start_year||CUR, e=p.is_current?CUR:(p.end_year||s); if(e<s)e=s; return {p:p,s:s,e:e}; });
-    function bandOf(c){ var y=creditYear(c); if(!y) return -1; for(var i=0;i<bands.length;i++){ if(y>=bands[i].s && y<=bands[i].e) return i; } return -1; }
+    function bandOf(c){ return assignBand(c, bands); }
 
     credits.forEach(function(c,i){
       var el=document.createElement("div"); el.className="tile"; el.dataset.i=i;
@@ -1201,8 +1203,7 @@
     // assign credits to the studio they belong to by year-in-range; else orphan
     var orphans=[];
     credits.forEach(function(c){
-      var y=creditYear(c), bi=-1;
-      if(y){ for(var i=0;i<bands.length;i++){ if(y>=bands[i].s && y<=bands[i].e){ bi=i; break; } } }
+      var bi=assignBand(c, bands);
       if(bi<0) orphans.push(c); else bands[bi].credits.push(c);
     });
     // one row per studio: meta left of the spine, games right of it
