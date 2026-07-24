@@ -31,7 +31,7 @@
   body{margin:0;background:var(--bg);color:var(--text);
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.5;-webkit-font-smoothing:antialiased}
   a{color:inherit;text-decoration:none}
-  .container{max-width:1080px;margin:0 auto;padding:0 22px}
+  .container{max-width:1180px;margin:0 auto;padding:0 22px}
   .mut{color:var(--muted)}
 
   body::before{content:"";position:fixed;inset:0;z-index:-2;
@@ -65,9 +65,16 @@
 
   /* HERO */
   .hero{position:relative;overflow:hidden;padding:66px 0 20px}
-  .hero h1{font-size:52px;line-height:1.04;font-weight:850;letter-spacing:-1.2px;margin:0 0 18px;max-width:760px}
+  .hero h1{font-size:44px;line-height:1.06;font-weight:850;letter-spacing:-1px;margin:0 0 18px;max-width:640px}
   .hero h1 .grad{background:linear-gradient(100deg,#7cc0ff,#a371f7 55%,#e0b23a);-webkit-background-clip:text;background-clip:text;color:transparent}
-  .hero p.lede{font-size:18px;color:#c4cfdd;max-width:620px;margin:0 0 26px}
+  .hero p.lede{font-size:18px;color:#c4cfdd;max-width:560px;margin:0 0 26px}
+  .herorow{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);gap:44px;align-items:center;margin-bottom:6px}
+  .herotext{min-width:0}
+  .herovisual{display:flex;justify-content:center;align-items:center;perspective:1600px;min-width:0}
+  .herovisual img{max-width:100%;max-height:480px;border-radius:14px;border:1px solid var(--border);box-shadow:0 40px 90px rgba(0,0,0,.62);transform:rotateY(-9deg) rotateX(2deg);transition:transform .55s cubic-bezier(.2,.8,.2,1)}
+  .herovisual:hover img{transform:rotateY(-3deg) rotateX(1deg)}
+  @media(max-width:900px){ .herorow{grid-template-columns:1fr;gap:22px} .herovisual{order:2} .herovisual img{max-height:360px;transform:none} }
+  @media(max-width:560px){ .herovisual{display:none} }
   .searchwrap{display:flex;gap:10px;max-width:640px;margin-bottom:14px}
   .search{flex:1;display:flex;align-items:center;gap:10px;background:var(--panel);border:1px solid var(--border);border-radius:13px;padding:13px 16px;box-shadow:0 8px 30px rgba(0,0,0,.35)}
   .search:focus-within{border-color:var(--accent)}
@@ -381,6 +388,7 @@
 
 <!-- HERO -->
 <div class="hero"><div class="container">
+  <div class="herorow"><div class="herotext">
   <div class="eyebrow">Free · built for game developers</div>
   <h1>Give yourself <span class="grad">an edge</span><br>in a tough hiring market.</h1>
   <p class="lede">A standout, recruiter-ready portfolio (and an ATS-ready résumé), built from the games you've shipped. Finally, a portfolio made for game developers.</p>
@@ -395,6 +403,9 @@
       <div class="ctasub">For studios &amp; recruiters: search developers, games, and studios by the work they actually shipped.</div>
       <div class="ctago">Search the catalogue →</div>
     </a>
+  </div>
+    </div>
+    <div class="herovisual"><img src="/portfolio/demo/wall.jpg" alt="A DevQuest portfolio of shipped games" loading="eager"></div>
   </div>
   <div class="whybelieve"><span class="wb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>Recruiter-ready in minutes</span><span class="wb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>Made for game developers</span><span class="wb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>ATS-ready résumé</span><span class="wb"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>Yours to keep and reuse</span></div>
   <div class="trustline">Completely free · no password, just your email · <b>your data is exportable and yours</b></div>
