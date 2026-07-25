@@ -3,7 +3,7 @@
  * app shell (online visitors always get the freshest index.html, so deploys show immediately), with
  * a cached copy as an offline fallback only. The live data files (jobs.js / jobs.json / trends.json /
  * seen.json) and any API calls are never intercepted, so jobs are always fresh. Bump CACHE to flush. */
-const CACHE = "devquest-shell-v2";
+const CACHE = "devquest-shell-v3";
 const SHELL = ["/", "/index.html", "/favicon.svg", "/icon-192.png", "/manifest.webmanifest"];
 
 self.addEventListener("install", (e) => {
@@ -32,9 +32,10 @@ self.addEventListener("fetch", (e) => {
     return;
   }
   if (/\.(json|js)(\?|$)/i.test(url) || url.includes("/cdn-cgi/")) return;
-  // Network-first for everything else (HTML, icons, css-in-html): fresh when online, cache when offline.
+  // Network-first with NO browser cache for everything else (HTML pages, icons): a deploy always
+  // shows on a normal refresh, never a stale browser-cached page. Cached shell is the offline fallback.
   e.respondWith(
-    fetch(req)
+    fetch(req, { cache: "no-store" })
       .then((res) => {
         if (res && res.ok) {
           const copy = res.clone();
