@@ -679,7 +679,7 @@
     var p=_person||{};
     var email=p.email||"";
     if(!email && window.DQAPI && DQAPI.isSignedIn && DQAPI.isSignedIn() && DQAPI.me){
-      try{ var mr=await DQAPI.me(); if(mr&&mr.data&&mr.data.person&&mr.data.person.email) email=mr.data.person.email; }catch(e){}
+      try{ var mr=await DQAPI.me(); var pe=mr&&mr.data&&mr.data.person; if(pe) email=pe.email||pe.primary_email||(pe.emails&&pe.emails[0]&&(pe.emails[0].email||pe.emails[0]))||""; }catch(e){}
     }
     var links=(p.links||[]).map(function(l){ return l.url; }).filter(Boolean);
     var experience=(_positions||[]).map(function(x){
@@ -727,13 +727,59 @@
     if(w.document.readyState==="complete") setTimeout(go,350); else w.onload=function(){ setTimeout(go,350); };
   }
   function _rTrigger(blob,fname){ var u=URL.createObjectURL(blob); var a=document.createElement("a"); a.href=u; a.download=fname; document.body.appendChild(a); a.click(); setTimeout(function(){ URL.revokeObjectURL(u); a.remove(); },3000); }
-  function _loadHtmlDocx(cb){ if(window.htmlDocx){ cb(true); return; } var s=document.createElement("script"); s.src="https://cdn.jsdelivr.net/npm/html-docx-js/dist/html-docx.js"; s.onload=function(){ cb(!!window.htmlDocx); }; s.onerror=function(){ cb(false); }; document.head.appendChild(s); }
-  async function downloadResumeDOCX(){
-    var m=await resumeModel(); var html=resumeFullHTML(m), base=resumeDocName(m);
-    _loadHtmlDocx(function(ok){
-      if(ok && window.htmlDocx){ try{ _rTrigger(window.htmlDocx.asBlob(html), base+".docx"); return; }catch(e){} }
-      _rTrigger(new Blob(["﻿"+html],{type:"application/msword"}), base+".doc"); // fallback: Word-openable
+  // --- native .docx builder: real OOXML paragraphs/runs so ATS parses the text (no libraries) ---
+  var _crcT=(function(){ var t=[]; for(var n=0;n<256;n++){ var c=n; for(var k=0;k<8;k++) c=(c&1)?(0xEDB88320^(c>>>1)):(c>>>1); t[n]=c>>>0; } return t; })();
+  function _crc32(b){ var c=0xFFFFFFFF; for(var i=0;i<b.length;i++) c=_crcT[(c^b[i])&0xFF]^(c>>>8); return (c^0xFFFFFFFF)>>>0; }
+  function _u16(n){ return [n&0xFF,(n>>>8)&0xFF]; }
+  function _u32(n){ n=n>>>0; return [n&0xFF,(n>>>8)&0xFF,(n>>>16)&0xFF,(n>>>24)&0xFF]; }
+  function _zipStore(files){
+    var enc=new TextEncoder(), chunks=[], central=[], offset=0;
+    files.forEach(function(f){
+      var nb=enc.encode(f.name), d=(typeof f.data==="string")?enc.encode(f.data):f.data, crc=_crc32(d);
+      var lh=[].concat(_u32(0x04034b50),_u16(20),_u16(0),_u16(0),_u16(0),_u16(0),_u32(crc),_u32(d.length),_u32(d.length),_u16(nb.length),_u16(0));
+      var la=new Uint8Array(lh.length+nb.length+d.length); la.set(lh,0); la.set(nb,lh.length); la.set(d,lh.length+nb.length); chunks.push(la);
+      var cd=[].concat(_u32(0x02014b50),_u16(20),_u16(20),_u16(0),_u16(0),_u16(0),_u16(0),_u32(crc),_u32(d.length),_u32(d.length),_u16(nb.length),_u16(0),_u16(0),_u16(0),_u16(0),_u32(0),_u32(offset));
+      var ca=new Uint8Array(cd.length+nb.length); ca.set(cd,0); ca.set(nb,cd.length); central.push(ca);
+      offset+=la.length;
     });
+    var cs=central.reduce(function(a,c){return a+c.length;},0), co=offset;
+    var eocd=new Uint8Array([].concat(_u32(0x06054b50),_u16(0),_u16(0),_u16(files.length),_u16(files.length),_u32(cs),_u32(co),_u16(0)));
+    return new Blob(chunks.concat(central).concat([eocd]),{type:"application/vnd.openxmlformats-officedocument.wordprocessingml.document"});
+  }
+  function _xE(s){ return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+  function _run(t,o){ o=o||{}; var r='<w:rPr><w:rFonts w:ascii="Arial" w:hAnsi="Arial"/>'+(o.b?"<w:b/>":"")+(o.caps?"<w:caps/>":"")+'<w:sz w:val="'+(o.sz||22)+'"/><w:szCs w:val="'+(o.sz||22)+'"/>'+(o.color?'<w:color w:val="'+o.color+'"/>':"")+'</w:rPr>'; return '<w:r>'+r+'<w:t xml:space="preserve">'+_xE(t)+'</w:t></w:r>'; }
+  function _para(runs,o){ o=o||{}; var sp=(o.before!=null||o.after!=null)?'<w:spacing '+(o.before!=null?'w:before="'+o.before+'" ':"")+(o.after!=null?'w:after="'+o.after+'"':"")+'/>':""; var bd=o.border?'<w:pBdr><w:bottom w:val="single" w:sz="4" w:space="2" w:color="888888"/></w:pBdr>':""; return '<w:p><w:pPr>'+sp+bd+'</w:pPr>'+runs+'</w:p>'; }
+  function resumeDocXml(m){
+    var b="";
+    b+=_para(_run(m.name,{b:true,sz:40}),{after:20});
+    if(m.headline) b+=_para(_run(m.headline,{b:true,sz:23}),{after:20});
+    var ct=[]; if(m.location)ct.push(m.location); if(m.email)ct.push(m.email); m.links.forEach(function(u){ct.push(u.replace(/^https?:\/\//,""));});
+    if(ct.length) b+=_para(_run(ct.join("   |   "),{sz:20,color:"333333"}),{after:160});
+    function H(t){ return _para(_run(t,{b:true,caps:true,sz:22}),{before:200,after:80,border:true}); }
+    function BL(t){ return _para(_run("• "+t,{sz:22}),{after:40}); }
+    if(m.summary){ b+=H("Summary"); b+=_para(_run(rPlain(m.summary),{sz:22}),{after:80}); }
+    if(m.experience.length){ b+=H("Experience"); m.experience.forEach(function(j){
+      var line=[j.company,j.location].filter(Boolean).join(" — ");
+      b+=_para(_run(j.title,{b:true,sz:22})+(line?_run(", "+line,{sz:22}):"")+(j.dates?_run("   ("+j.dates+")",{sz:20,color:"333333"}):""),{before:60,after:20});
+      j.bullets.forEach(function(x){ b+=BL(x); });
+    }); }
+    if(m.projects.length){ b+=H("Shipped Titles"); m.projects.forEach(function(pr){
+      var meta=[pr.role,pr.studio].filter(Boolean).join(", ");
+      b+=_para(_run(pr.title,{b:true,sz:22})+(meta?_run(" — "+meta,{sz:22}):"")+(pr.years?_run("   ("+pr.years+")",{sz:20,color:"333333"}):""),{before:60,after:20});
+      pr.bullets.forEach(function(x){ b+=BL(x); });
+    }); }
+    if(m.skills.length){ b+=H("Skills"); m.skills.forEach(function(g){
+      b+=_para((g.label?_run(g.label+": ",{b:true,sz:22}):"")+_run(g.items.join(", "),{sz:22}),{after:40});
+    }); }
+    var sect='<w:sectPr><w:pgSz w:w="12240" w:h="15840"/><w:pgMar w:top="720" w:right="720" w:bottom="720" w:left="720"/></w:sectPr>';
+    return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body>'+b+sect+'</w:body></w:document>';
+  }
+  var _CT='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/></Types>';
+  var _RELS='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>';
+  async function downloadResumeDOCX(){
+    var m=await resumeModel();
+    var blob=_zipStore([ {name:"[Content_Types].xml",data:_CT}, {name:"_rels/.rels",data:_RELS}, {name:"word/document.xml",data:resumeDocXml(m)} ]);
+    _rTrigger(blob, resumeDocName(m)+".docx");
   }
   document.addEventListener("click",function(e){
     if(!e.target||!e.target.closest) return;
