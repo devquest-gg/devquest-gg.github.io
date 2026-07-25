@@ -406,6 +406,7 @@
   #welcomebar .wb-txt{flex:1;min-width:200px;font-size:13.5px;color:var(--text,#eef3fa)}
   #welcomebar .wb-btn{font-size:13px;font-weight:800;color:#04121f;background:var(--gold,#e0b23a);border-radius:999px;padding:7px 14px;white-space:nowrap}
   #welcomebar .wb-x{background:transparent;border:0;color:var(--muted,#8b98a9);font-size:20px;cursor:pointer;line-height:1}
+  body.is-draft .pedit{display:none}
   body.embed .hero .banner{height:150px}
   html.embed{scrollbar-width:thin;scrollbar-color:#2b3648 transparent}
   html.embed::-webkit-scrollbar{width:9px;height:9px}
@@ -477,12 +478,19 @@
   // ===== games-only DRAFT mode: build a wall from localStorage, no account yet =====
   function dGet(){ try{ return JSON.parse(localStorage.getItem("dq_draft")||"null")||{name:"",credits:[]}; }catch(e){ return {name:"",credits:[]}; } }
   function dSet(d){ try{ localStorage.setItem("dq_draft", JSON.stringify(d||{name:"",credits:[]})); }catch(e){} }
-  function draftCredit(c,i){ return { id:"draft-"+i, game_slug:c.game_slug, game_title:c.game_title||c.game_slug, studio:c.studio||"", year:c.year||null, work_start:c.year||null, work_end:null, role:c.role||"", roles_other:[], releases:[], links:[], source_url:"", verification:[], vouch_count:0, sheet:null, scope:"base" }; }
+  function draftCredit(c,i){ return { id:"draft-"+i, game_slug:c.game_slug, game_title:c.game_title||c.game_slug, studio:c.studio||"", year:c.year||null, work_start:(c.work_start!=null?c.work_start:(c.year||null)), work_end:(c.work_end!=null?c.work_end:null), role:c.role||"", roles_other:[], releases:[], links:[], source_url:"", verification:[], vouch_count:0, sheet:c.sheet||null, scope:"base" }; }
   function loadDraft(){
     document.body.classList.add("is-draft");
+    IS_OWNER=true; document.body.classList.add("is-owner");   // draft acts like owner; writes go to localStorage, never the API
     var d=dGet(); var credits=(d.credits||[]).map(draftCredit);
     var person={ name:d.name||"Your name", slug:null, headline:"", links:[], skills:{groups:[]}, portfolio_style:"production", open_to_work:false, avatar_url:"" };
-    resolveCovers(credits).then(function(cm){ render(person,[],credits,cm||{}); mountDraftBar(credits.length); }).catch(function(){ render(person,[],credits,{}); mountDraftBar(credits.length); });
+    resolveCovers(credits).then(function(cm){ cm=cm||{}; (d.credits||[]).forEach(function(c){ if(c.cover_url) cm[c.game_slug]=c.cover_url; }); render(person,[],credits,cm); mountDraftBar(credits.length); }).catch(function(){ render(person,[],credits,{}); mountDraftBar(credits.length); });
+  }
+  // Mirror the rendered _credits back into the localStorage draft (role, work years, one-sheet, cover, order).
+  function draftSyncFromCredits(){
+    var d=dGet();
+    d.credits=(_credits||[]).map(function(c){ return { game_slug:c.game_slug, game_title:c.game_title, studio:c.studio||"", year:c.year||"", role:c.role||"", work_start:(c.work_start!=null?c.work_start:null), work_end:(c.work_end!=null?c.work_end:null), sheet:c.sheet||null, cover_url:(_covMap[c.game_slug]||"") }; });
+    dSet(d);
   }
   function reloadDraft(){ loadDraft(); }
   function mountDraftBar(count){
@@ -864,6 +872,14 @@
     if(!role){ st.textContent="Role can\u2019t be empty."; st.className="efstatus err"; return; }
     var creditPayload={ role:role, work_start:(wsRaw!==""?parseInt(wsRaw,10):null), work_end:(weRaw!==""?parseInt(weRaw,10):null) };
     st.textContent="Saving…"; st.className="efstatus";
+    if(IS_DRAFT){
+      c.role=role; c.work_start=creditPayload.work_start; c.work_end=creditPayload.work_end;
+      c.sheet={ summary:payload.summary, contributions:payload.contributions, challenges:payload.challenges, stats:payload.stats, keywords:payload.keywords, banner_url:payload.banner_url||null, screenshots:payload.screenshots, release_date:payload.release_date||null, review_score:payload.review_score||null };
+      if("cover_url" in payload){ var _nud=payload.cover_url||""; _covMap[c.game_slug]=_nud||undefined; applyTileCover(ci,_nud); }
+      draftSyncFromCredits(); renderHero();
+      st.textContent="Saved ✓"; st.className="efstatus ok"; setTimeout(function(){ openSheet(ci); },300);
+      return;
+    }
     Promise.all([ DQAPI.updateCredit(c.id, creditPayload), DQAPI.saveSheet(c.id, payload) ]).then(function(res){
       var cr=res[0], r=res[1];
       if((cr&&cr.ok!==false) && r&&r.ok){ c.role=role; c.work_start=creditPayload.work_start; c.work_end=creditPayload.work_end; c.sheet={ summary:payload.summary, contributions:payload.contributions, challenges:payload.challenges, stats:payload.stats, keywords:payload.keywords, banner_url:payload.banner_url||null, screenshots:payload.screenshots, release_date:payload.release_date||null, review_score:payload.review_score||null }; if("cover_url" in payload){ var _nu=payload.cover_url||""; _covMap[c.game_slug]=_nu||undefined; applyTileCover(ci,_nu); } renderHero(); st.textContent="Saved ✓"; st.className="efstatus ok"; setTimeout(function(){ openSheet(ci); },420); }
@@ -950,6 +966,7 @@
       '</div>';
   }
   function openAddGame(){
+    if(IS_DRAFT){ draftAddSearch(); return; }   // draft: search + append to localStorage, no account
     ensureOvl();
     var sheet=document.getElementById("ossheet");
     sheet.innerHTML=addGameHTML();
@@ -1242,7 +1259,9 @@
     });
 
     var drag=null, saveT=null;
-    function persist(){ if(!IS_OWNER) return; clearTimeout(saveT); saveT=setTimeout(function(){ try{ DQAPI.reorderCredits(order.map(function(gi){return credits[gi].id;})); }catch(e){} },700); }
+    function persist(){ if(!IS_OWNER) return;
+      if(IS_DRAFT){ clearTimeout(saveT); saveT=setTimeout(function(){ var d=dGet(); var bySlug={}; (d.credits||[]).forEach(function(x){ bySlug[x.game_slug]=x; }); var nw=order.map(function(gi){ return bySlug[credits[gi].game_slug]; }).filter(Boolean); if(nw.length===(d.credits||[]).length){ d.credits=nw; dSet(d); } },600); return; }
+      clearTimeout(saveT); saveT=setTimeout(function(){ try{ DQAPI.reorderCredits(order.map(function(gi){return credits[gi].id;})); }catch(e){} },700); }
     stage.addEventListener("pointerdown",function(e){
       if(mode!=="grid"||!IS_OWNER) return;
       var el=e.target.closest(".tile"); if(!el) return;
