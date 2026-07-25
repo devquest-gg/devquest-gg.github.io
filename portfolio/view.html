@@ -622,7 +622,7 @@
 
     // ---- confirm count ----
     var confirmed = credits.filter(function(c){ return (c.vouch_count||0)>0; }).length;
-    var contact = '<div class="wrap"><div class="contact"><h3>'+esc(p.name.split(" ")[0])+' is '+(p.open_to_work?'open to new roles':'on DevQuest')+'</h3><p>Résumé tailors to your posting in one click.</p><div class="clinks"><a class="btn primary">⬇ Download résumé (PDF)</a>'+linkBtns+'</div>'+
+    var contact = '<div class="wrap"><div class="contact"><h3>'+esc(p.name.split(" ")[0])+' is '+(p.open_to_work?'open to new roles':'on DevQuest')+'</h3><p>Résumé tailors to your posting in one click.</p><div class="clinks"><a class="btn primary dq-rpdf" style="cursor:pointer">⬇ Résumé (PDF)</a><a class="btn ghost dq-rdocx" style="cursor:pointer">⬇ Word (.docx)</a>'+linkBtns+'</div>'+
       (confirmed?'<div class="vfoot"><span class="v2">✓</span> '+confirmed+' of '+credits.length+' credits confirmed by teammates who shipped the same game · <a href="/credits/how-evidence-works.html" style="color:var(--accent)">how evidence works →</a></div>':'')+
       '</div></div>';
 
@@ -657,7 +657,7 @@
         (p.headline ? '<div class="role">'+esc(p.headline)+'</div>' : '')+
         (p.bio ? '<p class="bio">'+esc(p.bio)+'</p>' : '')+
         '<div class="tags">'+tags.map(function(t){return '<span class="tag spec">'+esc(t)+'</span>';}).join("")+'</div>'+
-        '<div class="cta"><a class="btn primary">⬇ Download résumé</a>'+lb+'</div>'+
+        '<div class="cta"><a class="btn primary dq-rpdf" style="cursor:pointer">⬇ Résumé (PDF)</a><a class="btn ghost dq-rdocx" style="cursor:pointer">⬇ Word (.docx)</a>'+lb+'</div>'+
         '</div></div>'+
         '<div class="stats">'+
           stat((CUR-minY)+" yrs","In the industry")+stat(nStudios,"Studios")+stat(credits.length,"Credits")+
@@ -668,6 +668,78 @@
   }
   function renderHero(){ var hb=document.getElementById("herobox"); if(hb){ hb.innerHTML=heroHTML(_person,_positions,_credits); wireHeroEdit(); } if(_person) document.title=_person.name+" · DevQuest Portfolio"; }
   function wireHeroEdit(){ var b=document.getElementById("editProfile"); if(b) b.onclick=openProfileEdit; }
+
+  // ===== ATS résumé (built client-side from the loaded profile; PDF via print, DOCX via export) =====
+  var _RMONTHS=["","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  function rEsc(s){ return String(s==null?"":s).replace(/[&<>]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;"}[c];}); }
+  function rPlain(s){ return String(s==null?"":s).replace(/\[([^\]]+)\]\(([^)]+)\)/g,"$1 ($2)").replace(/\s+$/,""); }
+  function rDates(p){ function fmt(y,m){ if(!y) return ""; return (m?_RMONTHS[m]+" ":"")+y; } var s=fmt(p.start_year,p.start_month), e=p.is_current?"Present":fmt(p.end_year,p.end_month); return (s&&e)?(s+" – "+e):(s||e||""); }
+  function rCreditYears(c){ var s=c.work_start||null, e=c.work_end||null, y=c.year||creditYear(c); if(s&&e&&e!==s) return s+" – "+e; if(s) return String(s); return y?String(y):""; }
+  async function resumeModel(){
+    var p=_person||{};
+    var email=p.email||"";
+    if(!email && window.DQAPI && DQAPI.isSignedIn && DQAPI.isSignedIn() && DQAPI.me){
+      try{ var mr=await DQAPI.me(); if(mr&&mr.data&&mr.data.person&&mr.data.person.email) email=mr.data.person.email; }catch(e){}
+    }
+    var links=(p.links||[]).map(function(l){ return l.url; }).filter(Boolean);
+    var experience=(_positions||[]).map(function(x){
+      var bullets=String(x.description||"").split(/\n+/).map(function(b){return rPlain(b).trim();}).filter(Boolean);
+      return { title:x.title||"", company:x.studio||"", location:x.location||"", dates:rDates(x), bullets:bullets };
+    });
+    var creds=(_credits||[]).slice().sort(function(a,b){ return (b.work_start||b.year||0)-(a.work_start||a.year||0); });
+    var projects=creds.map(function(c){
+      var sh=c.sheet||{};
+      var bullets=(sh.contributions||[]).slice(0,4).map(function(b){return rPlain(b).trim();}).filter(Boolean);
+      if(!bullets.length && sh.summary) bullets=[rPlain(sh.summary).trim()];
+      return { title:c.game_title||"", role:c.role||"", studio:c.studio||"", years:rCreditYears(c), bullets:bullets };
+    });
+    var skills=((p.skills&&p.skills.groups)||[]).map(function(g){ return { label:g.label||"", items:(g.items||[]) }; });
+    return { name:p.name||"", headline:p.headline||"", location:p.location||"", email:email, links:links, summary:p.bio||"", experience:experience, projects:projects, skills:skills };
+  }
+  function resumeBody(m){
+    var h='<h1>'+rEsc(m.name)+'</h1>';
+    if(m.headline) h+='<p class="rsub">'+rEsc(m.headline)+'</p>';
+    var contact=[]; if(m.location) contact.push(rEsc(m.location)); if(m.email) contact.push(rEsc(m.email)); m.links.forEach(function(u){ contact.push(rEsc(u.replace(/^https?:\/\//,""))); });
+    if(contact.length) h+='<p class="rcon">'+contact.join(" &middot; ")+'</p>';
+    if(m.summary) h+='<h2>Summary</h2><p>'+rEsc(rPlain(m.summary))+'</p>';
+    if(m.experience.length){ h+='<h2>Experience</h2>'; m.experience.forEach(function(j){
+      h+='<div class="ritem"><p class="rhd"><strong>'+rEsc(j.title)+'</strong>'+(j.company?', '+rEsc(j.company):'')+(j.location?' — '+rEsc(j.location):'')+(j.dates?'<span class="rdt">'+rEsc(j.dates)+'</span>':'')+'</p>';
+      if(j.bullets.length) h+='<ul>'+j.bullets.map(function(b){return '<li>'+rEsc(b)+'</li>';}).join("")+'</ul>';
+      h+='</div>';
+    }); }
+    if(m.projects.length){ h+='<h2>Shipped Titles</h2>'; m.projects.forEach(function(pr){
+      h+='<div class="ritem"><p class="rhd"><strong>'+rEsc(pr.title)+'</strong>'+(pr.role?' — '+rEsc(pr.role):'')+(pr.studio?', '+rEsc(pr.studio):'')+(pr.years?'<span class="rdt">'+rEsc(pr.years)+'</span>':'')+'</p>';
+      if(pr.bullets.length) h+='<ul>'+pr.bullets.map(function(b){return '<li>'+rEsc(b)+'</li>';}).join("")+'</ul>';
+      h+='</div>';
+    }); }
+    if(m.skills.length){ h+='<h2>Skills</h2>'; m.skills.forEach(function(g){ h+='<p class="rsk">'+(g.label?'<strong>'+rEsc(g.label)+':</strong> ':'')+rEsc(g.items.join(", "))+'</p>'; }); }
+    return h;
+  }
+  function resumeCSS(){ return "body{font-family:Arial,Calibri,'Helvetica Neue',sans-serif;color:#111;font-size:11pt;line-height:1.35;margin:0}.rwrap{max-width:7.5in;margin:0 auto;padding:0.5in}h1{font-size:20pt;margin:0 0 2pt}.rsub{font-size:11.5pt;font-weight:bold;margin:0 0 2pt}.rcon{font-size:10pt;color:#333;margin:0 0 10pt}h2{font-size:12pt;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid #888;padding-bottom:2pt;margin:14pt 0 6pt}p{margin:0 0 4pt}.ritem{margin:0 0 9pt}.rhd{margin:0 0 2pt}.rdt{float:right;font-weight:normal;color:#333}ul{margin:2pt 0 0;padding-left:18pt}li{margin:0 0 2pt}.rsk{margin:0 0 3pt}@page{size:letter;margin:0.5in}@media print{.rwrap{padding:0}}"; }
+  function resumeDocName(m){ return ((m.name||"resume").replace(/[^\w\- ]+/g,"").trim()||"resume")+" Resume"; }
+  function resumeFullHTML(m){ return '<!doctype html><html><head><meta charset="utf-8"><title>'+rEsc(m.name)+' Resume</title><style>'+resumeCSS()+'</style></head><body><div class="rwrap">'+resumeBody(m)+'</div></body></html>'; }
+  async function downloadResumePDF(){
+    var m=await resumeModel();
+    var w=window.open("","_blank");
+    if(!w){ alert("Allow pop-ups for this site to save the résumé as PDF, or use the Word download."); return; }
+    w.document.open(); w.document.write(resumeFullHTML(m)); w.document.close();
+    var go=function(){ try{ w.focus(); w.print(); }catch(e){} };
+    if(w.document.readyState==="complete") setTimeout(go,350); else w.onload=function(){ setTimeout(go,350); };
+  }
+  function _rTrigger(blob,fname){ var u=URL.createObjectURL(blob); var a=document.createElement("a"); a.href=u; a.download=fname; document.body.appendChild(a); a.click(); setTimeout(function(){ URL.revokeObjectURL(u); a.remove(); },3000); }
+  function _loadHtmlDocx(cb){ if(window.htmlDocx){ cb(true); return; } var s=document.createElement("script"); s.src="https://cdn.jsdelivr.net/npm/html-docx-js/dist/html-docx.js"; s.onload=function(){ cb(!!window.htmlDocx); }; s.onerror=function(){ cb(false); }; document.head.appendChild(s); }
+  async function downloadResumeDOCX(){
+    var m=await resumeModel(); var html=resumeFullHTML(m), base=resumeDocName(m);
+    _loadHtmlDocx(function(ok){
+      if(ok && window.htmlDocx){ try{ _rTrigger(window.htmlDocx.asBlob(html), base+".docx"); return; }catch(e){} }
+      _rTrigger(new Blob(["﻿"+html],{type:"application/msword"}), base+".doc"); // fallback: Word-openable
+    });
+  }
+  document.addEventListener("click",function(e){
+    if(!e.target||!e.target.closest) return;
+    if(e.target.closest(".dq-rpdf")){ e.preventDefault(); downloadResumePDF(); }
+    else if(e.target.closest(".dq-rdocx")){ e.preventDefault(); downloadResumeDOCX(); }
+  });
 
   function stat(n,l){ return '<div class="stat"><div class="n">'+n+'</div><div class="l">'+l+'</div></div>'; }
   function cap(s){ return String(s).charAt(0).toUpperCase()+String(s).slice(1); }
