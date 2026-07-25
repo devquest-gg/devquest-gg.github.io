@@ -406,7 +406,6 @@
   #welcomebar .wb-txt{flex:1;min-width:200px;font-size:13.5px;color:var(--text,#eef3fa)}
   #welcomebar .wb-btn{font-size:13px;font-weight:800;color:#04121f;background:var(--gold,#e0b23a);border-radius:999px;padding:7px 14px;white-space:nowrap}
   #welcomebar .wb-x{background:transparent;border:0;color:var(--muted,#8b98a9);font-size:20px;cursor:pointer;line-height:1}
-  body.is-draft .pedit{display:none}
   body.embed .hero .banner{height:150px}
   html.embed{scrollbar-width:thin;scrollbar-color:#2b3648 transparent}
   html.embed::-webkit-scrollbar{width:9px;height:9px}
@@ -483,7 +482,8 @@
     document.body.classList.add("is-draft");
     IS_OWNER=true; document.body.classList.add("is-owner");   // draft acts like owner; writes go to localStorage, never the API
     var d=dGet(); var credits=(d.credits||[]).map(draftCredit);
-    var person={ name:d.name||"Your name", slug:null, headline:"", links:[], skills:{groups:[]}, portfolio_style:"production", open_to_work:false, avatar_url:"" };
+    var pf=d.profile||{};
+    var person={ name:d.name||"Your name", slug:null, headline:pf.headline||"", location:pf.location||"", bio:pf.bio||"", links:pf.links||[], skills:{groups:[]}, portfolio_style:"production", open_to_work:pf.open_to_work?1:0, avatar_url:pf.avatar_url||"" };
     resolveCovers(credits).then(function(cm){ cm=cm||{}; (d.credits||[]).forEach(function(c){ if(c.cover_url) cm[c.game_slug]=c.cover_url; }); render(person,[],credits,cm); mountDraftBar(credits.length); }).catch(function(){ render(person,[],credits,{}); mountDraftBar(credits.length); });
   }
   // Mirror the rendered _credits back into the localStorage draft (role, work years, one-sheet, cover, order).
@@ -795,6 +795,15 @@
     [["linkedin","ef-linkedin"],["portfolio","ef-portfolio"],["artstation","ef-artstation"],["github","ef-github"]].forEach(function(x){ var u=g(x[1]); if(u) links.push({type:x[0],url:u}); });
     var payload={ name:g("ef-name"), headline:g("ef-head"), location:g("ef-loc"), bio:g("ef-bio"), open_to_work: document.getElementById("ef-otw").checked?1:0, avatar_url:g("ef-avatar"), links:links };
     var st=document.getElementById("ef-status"); st.textContent="Saving…"; st.className="efstatus";
+    if(IS_DRAFT){
+      var d=dGet();
+      if(payload.name) d.name=payload.name;
+      d.profile={ headline:payload.headline, location:payload.location, bio:payload.bio, open_to_work:payload.open_to_work, avatar_url:payload.avatar_url, links:links };
+      dSet(d);
+      _person.name=payload.name; _person.headline=payload.headline; _person.location=payload.location; _person.bio=payload.bio; _person.open_to_work=payload.open_to_work; _person.avatar_url=payload.avatar_url; _person.links=links;
+      renderHero(); st.textContent="Saved ✓"; st.className="efstatus ok"; setTimeout(closeSheet,400);
+      return;
+    }
     DQAPI.updateProfile(payload).then(function(r){
       if(r&&r.ok){ _person.name=payload.name; _person.headline=payload.headline; _person.location=payload.location; _person.bio=payload.bio; _person.open_to_work=payload.open_to_work; _person.avatar_url=payload.avatar_url; _person.links=links; renderHero(); st.textContent="Saved ✓"; st.className="efstatus ok"; setTimeout(closeSheet,450); }
       else { st.textContent=(r&&r.data&&r.data.error)||"Could not save."; st.className="efstatus err"; }
