@@ -379,8 +379,15 @@
   .agprev img{width:84px;height:112px;object-fit:cover;border-radius:8px;border:1px solid var(--border);background:#141b26}
   body.embed .bar, body.embed .nav, body.embed .editlink{display:none !important}
   /* ===== draft mode (games-only, pre-account) ===== */
-  body.is-draft{padding-bottom:88px}
+  body.is-draft{padding-top:46px;padding-bottom:88px}
   body.is-draft .contact{display:none}
+  body.is-draft .nav{top:46px}
+  #draftpub{position:fixed;top:0;left:0;right:0;z-index:100;background:linear-gradient(135deg,#182238,#211838);border-bottom:1px solid var(--border,#242c38)}
+  #draftpub .dp-inner{max-width:1100px;margin:0 auto;padding:0 20px;display:flex;align-items:center;gap:14px;height:46px;flex-wrap:nowrap}
+  #draftpub .dp-msg{flex:1;min-width:0;font-size:13px;color:#dbe5f1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  #draftpub .dp-msg b{color:#fff}
+  #draftpub #dp-save{white-space:nowrap;flex:none;padding:7px 14px}
+  @media(max-width:520px){#draftpub .dp-msg{font-size:12px}}
   #draftbar{position:fixed;left:0;right:0;bottom:0;z-index:70;background:rgba(11,14,20,.93);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border-top:1px solid var(--border,#242c38)}
   #draftbar .db-inner{max-width:1100px;margin:0 auto;padding:12px 20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
   #draftbar .db-note{flex:1;min-width:180px;font-size:13.5px;color:var(--muted,#8b98a9)}
@@ -494,6 +501,12 @@
   }
   function reloadDraft(){ loadDraft(); }
   function mountDraftBar(count){
+    // Persistent publish banner pinned to the very top for the whole draft session.
+    var oldp=document.getElementById("draftpub"); if(oldp) oldp.remove();
+    var pub=document.createElement("div"); pub.id="draftpub";
+    pub.innerHTML='<div class="dp-inner"><span class="dp-msg">'+(count?('You’re building a draft · <b>'+count+' game'+(count===1?'':'s')+'</b> saved on this device only. Publish to keep it for good.'):'You’re building a draft portfolio. Publish to save it to your account.')+'</span><button type="button" id="dp-save" class="db-btn primary">Save &amp; publish →</button></div>';
+    document.body.appendChild(pub);
+    document.getElementById("dp-save").onclick=draftSave;
     var old=document.getElementById("draftbar"); if(old) old.remove();
     var bar=document.createElement("div"); bar.id="draftbar";
     bar.innerHTML='<div class="db-inner"><div class="db-note">'+(count?('<b>'+count+'</b> game'+(count===1?'':'s')+' on your wall · saved on this device'):'Your wall is empty — add a game you shipped to start')+'</div><div class="db-actions"><button type="button" id="db-add" class="db-btn ghost">+ Add a game</button><button type="button" id="db-save" class="db-btn primary">Save my portfolio →</button></div></div>';
