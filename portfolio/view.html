@@ -850,9 +850,6 @@
       '<label class="eflabel">Your role</label><input id="ef-role" placeholder="e.g. Senior Producer" value="'+esc(c.role||"")+'">'+
       '<label class="eflabel">Years on it <span class="mut">— optional; the span shown under the title</span></label><div class="efrow"><input id="ef-wstart" type="number" min="1970" max="2100" style="flex:1;min-width:140px" placeholder="From (e.g. 2012)" value="'+esc(c.work_start!=null?c.work_start:"")+'"><input id="ef-wend" type="number" min="1970" max="2100" style="flex:1;min-width:140px" placeholder="To (e.g. 2015)" value="'+esc(c.work_end!=null?c.work_end:"")+'"></div>'+
       '<label class="eflabel">One-line summary</label><textarea id="ef-summary" placeholder="What was this game, and your part in it?">'+esc(s.summary||"")+'</textarea>'+
-      '<label class="eflabel">Stats <span class="mut">— label + value tiles</span></label><div id="ef-stats">'+
-        stats.map(function(st){ return '<div class="efstat-row"><input class="ef-slabel" placeholder="Label (e.g. Players)" value="'+esc(st.label||"")+'"><input class="ef-svalue" placeholder="Value (e.g. 85M+)" value="'+esc(st.value||"")+'"></div>'; }).join("")+
-      '</div>'+
       '<label class="eflabel">What I led <span class="mut">— one per line; paste a link or use [label](url)</span></label><textarea id="ef-did" placeholder="One achievement per line">'+esc(contribs)+'</textarea>'+
       '<label class="eflabel">Key challenges <span class="mut">— problems you solved; one per line; links work here too</span></label><textarea id="ef-challenges" placeholder="One challenge per line">'+esc(chals)+'</textarea>'+
       '<label class="eflabel">Focus / keywords <span class="mut">— comma-separated</span></label><input id="ef-kw" value="'+esc(kw)+'">'+
@@ -863,12 +860,15 @@
         '<div><select id="ef-rtier"><option value="">Tier — OpenCritic only</option>'+["Mighty","Strong","Fair","Weak"].map(function(t){ return '<option'+(rv.tier===t?" selected":"")+'>'+t+'</option>'; }).join("")+'</select></div>'+
       '</div>'+
       '<input id="ef-rurl" placeholder="Link to the score page (https://…)" value="'+esc(rv.url||"")+'" style="margin-top:8px">'+
-      '<label class="eflabel">Release date <span class="mut">— set only if unreleased; shows &ldquo;Coming Soon&rdquo; until then</span></label><input type="date" id="ef-release" value="'+esc(s.release_date||"")+'">'+
+      '<label class="eflabel">Stats <span class="mut">— label + value tiles; shown as Game Context</span></label><div id="ef-stats">'+
+        stats.map(function(st){ return '<div class="efstat-row"><input class="ef-slabel" placeholder="Label (e.g. Players)" value="'+esc(st.label||"")+'"><input class="ef-svalue" placeholder="Value (e.g. 85M+)" value="'+esc(st.value||"")+'"></div>'; }).join("")+
+      '</div>'+
+      '<label class="eflabel">Screenshots &amp; videos <span class="mut">— one URL per line; images or videos (YouTube, Vimeo, .mp4)</span></label><textarea id="ef-shots" placeholder="One image or video URL per line">'+esc(shots)+'</textarea>'+
+      '<div class="upbtns"><button type="button" class="upbtn" data-upload-for="ef-shots">⬆ Upload image</button></div>'+
       '<label class="eflabel">Cover image <span class="mut">— the box art on your wall &amp; timeline</span></label>'+
       '<div class="uprow"><div class="upprev" id="ef-cover-prev">Cover</div><div style="flex:1"><input id="ef-cover" placeholder="Upload or paste https://… to change the cover"><div class="upbtns"><button type="button" class="upbtn" data-upload-for="ef-cover">⬆ Upload cover</button><button type="button" class="upbtn ghost" id="ef-cover-clear">Remove cover</button></div></div></div>'+
       '<label class="eflabel">Banner image <span class="mut">— optional wide art (blank uses box art)</span></label><input id="ef-banner" placeholder="https://… or upload" value="'+esc(s.banner_url||"")+'"><div class="upbtns"><button type="button" class="upbtn" data-upload-for="ef-banner">⬆ Upload banner</button></div>'+
-      '<label class="eflabel">Screenshots &amp; videos <span class="mut">— one URL per line; images or videos (YouTube, Vimeo, .mp4)</span></label><textarea id="ef-shots" placeholder="One image or video URL per line">'+esc(shots)+'</textarea>'+
-      '<div class="upbtns"><button type="button" class="upbtn" data-upload-for="ef-shots">⬆ Upload image</button></div>'+
+      '<label class="eflabel">Release date <span class="mut">— set only if unreleased; shows &ldquo;Coming Soon&rdquo; until then</span></label><input type="date" id="ef-release" value="'+esc(s.release_date||"")+'">'+
       '<div class="efactions"><span class="efbtn primary" id="ef-ssave">Save</span><span class="efbtn" id="ef-scancel">Cancel</span><span class="efstatus" id="ef-sstatus"></span></div>'+
       '</div>';
   }
