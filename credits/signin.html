@@ -111,7 +111,14 @@
       try{ localStorage.removeItem("dq_draft"); }catch(e){}
       var dcreds = draft.credits, di = 0, dslug = null;
       (function nextDraft(){
-        if(di >= dcreds.length){ location.href = dslug ? ("/portfolio/view.html?slug=" + encodeURIComponent(dslug) + "&welcome=1") : "/credits/"; return; }
+        if(di >= dcreds.length){
+          var _fin = function(){ location.href = dslug ? ("/portfolio/view.html?slug=" + encodeURIComponent(dslug) + "&welcome=1") : "/credits/"; };
+          var prof = draft.profile || {};
+          if(dslug && DQAPI.updateProfile && (draft.name || draft.profile)){
+            DQAPI.updateProfile({ name: draft.name||"", headline: prof.headline||"", location: prof.location||"", bio: prof.bio||"", open_to_work: prof.open_to_work?1:0, avatar_url: prof.avatar_url||"", links: prof.links||[] }).then(_fin).catch(_fin);
+          } else { _fin(); }
+          return;
+        }
         var c = dcreds[di];
         DQAPI.createCredit({ name: draft.name||"", role: c.role||"", game_slug: c.game_slug, game_title: c.game_title, studio: c.studio||null, scope: "base", roles_other: [], verification: [], links: [], releases: [] })
           .then(function(r){
