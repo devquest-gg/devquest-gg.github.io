@@ -659,6 +659,23 @@
   // ---- search: live combined dropdown + see-all button ----
   var hsIn=document.getElementById('hs');
   var suggest=(hsIn && window.DQ&&DQ.attachSuggest)?DQ.attachSuggest(hsIn):null;
+  // Build-a-portfolio intent: clicking a GAME in the hero search starts a local draft
+  // (role only, no email) and drops you into the draft wall. People/studio rows behave normally.
+  (function(){
+    if(!hsIn) return;
+    var wrap = hsIn.closest('.search') || hsIn.parentNode; if(!wrap) return;
+    wrap.addEventListener('click', function(e){
+      var a = e.target.closest && e.target.closest('a.dq-row[href*="/credits/game/"]');
+      if(!a || !wrap.contains(a)) return;
+      e.preventDefault(); e.stopPropagation();
+      var m = a.getAttribute('href').match(/\/credits\/game\/([^\/?#]+)/);
+      var slug = m ? decodeURIComponent(m[1]) : '';
+      var nmEl = a.querySelector('.nm'), sbEl = a.querySelector('.sb');
+      var title = nmEl ? (nmEl.textContent||'').trim() : (a.textContent||'').trim();
+      var studio = sbEl ? (sbEl.textContent||'').trim().split('·')[0].trim() : '';
+      if(slug && window.DQ && DQ.openDraftGame) DQ.openDraftGame({game_slug:slug, game_title:title, studio:studio});
+    }, true);
+  })();
   function goSearch(){ if(suggest){suggest.seeAll();return;} var q=hsIn?hsIn.value.trim():'';location.href='/credits/search.html'+(q?'?q='+encodeURIComponent(q):''); }
   var _hb=document.getElementById('hsbtn'); if(_hb) _hb.addEventListener('click',goSearch);
   if(hsIn && !suggest){ hsIn.addEventListener('keydown',function(e){if(e.key==='Enter')goSearch();}); }

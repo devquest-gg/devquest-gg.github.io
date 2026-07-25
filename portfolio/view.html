@@ -378,6 +378,34 @@
   .agprev{margin-top:10px;display:flex;gap:12px;align-items:center}
   .agprev img{width:84px;height:112px;object-fit:cover;border-radius:8px;border:1px solid var(--border);background:#141b26}
   body.embed .bar, body.embed .nav, body.embed .editlink{display:none !important}
+  /* ===== draft mode (games-only, pre-account) ===== */
+  body.is-draft{padding-bottom:88px}
+  body.is-draft .contact{display:none}
+  #draftbar{position:fixed;left:0;right:0;bottom:0;z-index:70;background:rgba(11,14,20,.93);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border-top:1px solid var(--border,#242c38)}
+  #draftbar .db-inner{max-width:1100px;margin:0 auto;padding:12px 20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+  #draftbar .db-note{flex:1;min-width:180px;font-size:13.5px;color:var(--muted,#8b98a9)}
+  #draftbar .db-note b{color:var(--text,#eef3fa)}
+  #draftbar .db-actions{display:flex;gap:10px}
+  .db-btn{border-radius:10px;padding:10px 16px;font-size:14px;font-weight:800;cursor:pointer;border:1px solid transparent;font-family:inherit}
+  .db-btn.ghost{background:transparent;border-color:var(--border,#242c38);color:var(--text,#eef3fa)}
+  .db-btn.ghost:hover{border-color:var(--accent,#58a6ff)}
+  .db-btn.primary{background:linear-gradient(135deg,var(--accent,#58a6ff),var(--purple,#a371f7));color:#fff}
+  .db-btn.primary:hover{filter:brightness(1.08)}
+  .dmodal-ov{position:fixed;inset:0;z-index:200;background:rgba(4,7,12,.7);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);display:flex;align-items:flex-start;justify-content:center;padding:60px 16px;overflow:auto}
+  .dmodal{background:var(--panel,#141a23);border:1px solid var(--border,#242c38);border-radius:16px;max-width:520px;width:100%;padding:22px;box-shadow:0 30px 80px rgba(0,0,0,.6);position:relative}
+  .dmodal h3{margin:0 0 4px;font-size:19px}
+  .dmodal .dsub{color:var(--muted,#8b98a9);font-size:13.5px;margin:0 0 14px;line-height:1.5}
+  .dmodal label{display:block;font-size:12.5px;font-weight:700;margin:12px 0 5px}
+  .dmodal input{width:100%;background:var(--bg,#0b0e14);border:1px solid var(--border,#242c38);border-radius:9px;padding:11px 12px;color:var(--text,#eef3fa);font-size:14px;font-family:inherit}
+  .dmodal input:focus{outline:none;border-color:var(--accent,#58a6ff)}
+  .dmodal .dact{display:flex;justify-content:flex-end;gap:10px;margin-top:18px}
+  .dmodal .dfoot{font-size:11.5px;color:var(--muted,#8b98a9);margin-top:12px;line-height:1.4}
+  .dmodal .dx{position:absolute;top:12px;right:14px;background:transparent;border:0;color:var(--muted,#8b98a9);font-size:22px;cursor:pointer;line-height:1}
+  #welcomebar{position:fixed;left:50%;transform:translateX(-50%);bottom:16px;z-index:75;max-width:min(680px,calc(100vw - 28px));background:linear-gradient(135deg,rgba(88,166,255,.18),rgba(163,113,247,.14));border:1px solid var(--border,#242c38);border-radius:14px;box-shadow:0 20px 50px rgba(0,0,0,.5);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+  #welcomebar .wb-inner{padding:12px 16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  #welcomebar .wb-txt{flex:1;min-width:200px;font-size:13.5px;color:var(--text,#eef3fa)}
+  #welcomebar .wb-btn{font-size:13px;font-weight:800;color:#04121f;background:var(--gold,#e0b23a);border-radius:999px;padding:7px 14px;white-space:nowrap}
+  #welcomebar .wb-x{background:transparent;border:0;color:var(--muted,#8b98a9);font-size:20px;cursor:pointer;line-height:1}
   body.embed .hero .banner{height:150px}
   html.embed{scrollbar-width:thin;scrollbar-color:#2b3648 transparent}
   html.embed::-webkit-scrollbar{width:9px;height:9px}
@@ -406,8 +434,9 @@
   var pslug = parts[parts.length-1] || "";
   var slug = String(qslug || pslug || "").trim().toLowerCase();
   var IS_EMBED = new URLSearchParams(location.search).get("embed")==="1"; if(IS_EMBED){ try{ document.body.classList.add("embed"); document.documentElement.classList.add("embed"); }catch(e){} }
-  if(slug==="portfolio" || slug==="view.html" || !slug){ app.innerHTML='<div class="wrap" style="padding:60px 22px;color:var(--muted)">No profile specified.</div>'; return; }
-  document.getElementById("creditslink").href="/credits/"+slug;
+  var IS_DRAFT = new URLSearchParams(location.search).get("draft")==="1";
+  if(!IS_DRAFT && (slug==="portfolio" || slug==="view.html" || !slug)){ app.innerHTML='<div class="wrap" style="padding:60px 22px;color:var(--muted)">No profile specified.</div>'; return; }
+  if(!IS_DRAFT){ document.getElementById("creditslink").href="/credits/"+slug; }
 
   // --- box art: resolve Steam capsules + admin covers, same as the credits person page ---
   function bkt(s){ var h=2166136261>>>0; for(var i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=Math.imul(h,16777619)>>>0; } return h%256; }
@@ -440,10 +469,66 @@
       if(!(r && r.ok && r.data && r.data.person)){ app.innerHTML='<div class="wrap" style="padding:60px 22px"><h1>Not found</h1><p style="color:var(--muted)">No portfolio at this address yet.</p></div>'; return; }
       var person=r.data.person, positions=r.data.positions||[], credits=r.data.credits||[];
       resolveCovers(credits).then(function(covMap){ render(person, positions, credits, covMap||{}); if(IS_EMBED){ setTimeout(function(){ var h=document.querySelector(".stagehead"); if(h){ var y=h.getBoundingClientRect().top + (window.pageYOffset||0) - 8; window.scrollTo(0, y); } },350); } });
-      if(!IS_EMBED && DQAPI.isSignedIn()){ document.body.classList.add("is-auth"); DQAPI.me().then(function(mr){ var me=mr&&mr.data&&mr.data.person; if(me && me.slug===slug){ IS_OWNER=true; document.body.classList.add("is-owner"); document.getElementById("editlink").style.display="inline-block"; if(_relayout) _relayout(); } }).catch(function(){}); }
+      if(!IS_EMBED && DQAPI.isSignedIn()){ document.body.classList.add("is-auth"); DQAPI.me().then(function(mr){ var me=mr&&mr.data&&mr.data.person; if(me && me.slug===slug){ IS_OWNER=true; document.body.classList.add("is-owner"); document.getElementById("editlink").style.display="inline-block"; if(_relayout) _relayout(); if(new URLSearchParams(location.search).get("welcome")==="1") showWelcomeBanner(); } }).catch(function(){}); }
     }).catch(function(){ app.innerHTML='<div class="wrap" style="padding:60px 22px;color:var(--pink)">Could not load this portfolio. Try again.</div>'; });
   }
-  loadPortfolio();
+  if(IS_DRAFT){ loadDraft(); } else { loadPortfolio(); }
+
+  // ===== games-only DRAFT mode: build a wall from localStorage, no account yet =====
+  function dGet(){ try{ return JSON.parse(localStorage.getItem("dq_draft")||"null")||{name:"",credits:[]}; }catch(e){ return {name:"",credits:[]}; } }
+  function dSet(d){ try{ localStorage.setItem("dq_draft", JSON.stringify(d||{name:"",credits:[]})); }catch(e){} }
+  function draftCredit(c,i){ return { id:"draft-"+i, game_slug:c.game_slug, game_title:c.game_title||c.game_slug, studio:c.studio||"", year:c.year||null, work_start:c.year||null, work_end:null, role:c.role||"", roles_other:[], releases:[], links:[], source_url:"", verification:[], vouch_count:0, sheet:null, scope:"base" }; }
+  function loadDraft(){
+    document.body.classList.add("is-draft");
+    var d=dGet(); var credits=(d.credits||[]).map(draftCredit);
+    var person={ name:d.name||"Your name", slug:null, headline:"", links:[], skills:{groups:[]}, portfolio_style:"production", open_to_work:false, avatar_url:"" };
+    resolveCovers(credits).then(function(cm){ render(person,[],credits,cm||{}); mountDraftBar(credits.length); }).catch(function(){ render(person,[],credits,{}); mountDraftBar(credits.length); });
+  }
+  function reloadDraft(){ loadDraft(); }
+  function mountDraftBar(count){
+    var old=document.getElementById("draftbar"); if(old) old.remove();
+    var bar=document.createElement("div"); bar.id="draftbar";
+    bar.innerHTML='<div class="db-inner"><div class="db-note">'+(count?('<b>'+count+'</b> game'+(count===1?'':'s')+' on your wall · saved on this device'):'Your wall is empty — add a game you shipped to start')+'</div><div class="db-actions"><button type="button" id="db-add" class="db-btn ghost">+ Add a game</button><button type="button" id="db-save" class="db-btn primary">Save my portfolio →</button></div></div>';
+    document.body.appendChild(bar);
+    document.getElementById("db-add").onclick=draftAddSearch;
+    document.getElementById("db-save").onclick=draftSave;
+  }
+  function draftModal(inner){ var ov=document.createElement("div"); ov.className="dmodal-ov"; ov.innerHTML='<div class="dmodal"><button class="dx" aria-label="Close">×</button>'+inner+'</div>'; document.body.appendChild(ov); ov.querySelector(".dx").onclick=function(){ ov.remove(); }; return ov; }
+  function draftRole(game, onDone){
+    var d=dGet();
+    var ov=draftModal('<h3>Add '+esc(game.game_title||"this game")+' to your wall</h3><div class="dsub">No account needed yet. Add your role and it goes straight on your portfolio.</div>'+(d.name?'':'<label>Your name</label><input id="dr-name" placeholder="Jane Doe">')+'<label>Your role on '+esc(game.game_title||"this game")+'</label><input id="dr-role" placeholder="e.g. Senior Producer" autocomplete="off"><div class="dact"><button class="db-btn ghost" data-x>Cancel</button><button class="db-btn primary" id="dr-add">Add to my wall →</button></div><div class="dfoot">Saved on this device. We only ask for an email when you save your portfolio.</div>');
+    ov.querySelector("[data-x]").onclick=function(){ ov.remove(); };
+    ov.querySelector("#dr-add").onclick=function(){
+      var role=((ov.querySelector("#dr-role")||{}).value||"").trim(); if(!role){ alert("Add your role first."); return; }
+      var dd=dGet(); var nmEl=ov.querySelector("#dr-name"); if(nmEl && nmEl.value.trim()) dd.name=nmEl.value.trim();
+      if(!dd.credits.some(function(c){return c.game_slug===game.game_slug;})) dd.credits.push({game_slug:game.game_slug,game_title:game.game_title,studio:game.studio||"",year:game.year||"",role:role});
+      dSet(dd); ov.remove(); if(onDone) onDone();
+    };
+    setTimeout(function(){ var r=ov.querySelector("#dr-role"); if(r) r.focus(); },40);
+  }
+  function draftAddSearch(){
+    var have={}; (dGet().credits||[]).forEach(function(c){ have[c.game_slug]=1; });
+    var ov=draftModal('<h3>Add a game you shipped</h3><div class="dsub">Search the catalogue and pick a title you worked on.</div><input id="da-q" placeholder="Start typing a game title…" autocomplete="off"><div id="da-res" style="margin-top:10px;max-height:320px;overflow:auto"></div><div class="dfoot">Not in the catalogue? You can add a missing game once you save.</div>');
+    var qi=ov.querySelector("#da-q"), res=ov.querySelector("#da-res"), t;
+    function paint(gs){ if(!gs.length){ res.innerHTML='<div style="color:var(--muted,#8b98a9);font-size:13px;padding:8px 2px">No matches yet.</div>'; return; } res.innerHTML=gs.map(function(g){ var added=have[g.slug]; return '<button class="da-row" data-slug="'+esc(g.slug)+'" data-title="'+esc(g.title)+'" data-studio="'+esc(g.studio||"")+'" data-year="'+esc(g.year||"")+'" '+(added?"disabled":"")+' style="display:flex;width:100%;text-align:left;align-items:center;gap:10px;background:transparent;border:0;border-top:1px solid var(--border,#242c38);padding:10px 4px;cursor:'+(added?"default":"pointer")+';color:inherit"><span style="flex:1;min-width:0"><span style="display:block;font-weight:700;font-size:14px">'+esc(g.title)+'</span>'+((g.studio||g.year)?'<span style="display:block;color:var(--muted,#8b98a9);font-size:12px">'+esc((g.studio||"")+(g.studio&&g.year?" · ":"")+(g.year||""))+'</span>':'')+'</span><span style="font-size:12px;font-weight:800;color:'+(added?"var(--muted,#8b98a9)":"var(--accent,#58a6ff)")+';white-space:nowrap">'+(added?"Added ✓":"Add →")+'</span></button>'; }).join(""); }
+    qi.addEventListener("input",function(){ clearTimeout(t); var q=qi.value.trim(); if(!q){ res.innerHTML=""; return; } t=setTimeout(function(){ if(DQAPI.searchGames) DQAPI.searchGames(q).then(function(r){ paint(((r.data&&r.data.games)||[]).slice(0,12)); }).catch(function(){}); },140); });
+    res.addEventListener("click",function(e){ var b=e.target.closest&&e.target.closest(".da-row"); if(!b||b.disabled) return; var g={game_slug:b.getAttribute("data-slug"),game_title:b.getAttribute("data-title"),studio:b.getAttribute("data-studio"),year:b.getAttribute("data-year")}; ov.remove(); draftRole(g, reloadDraft); });
+    setTimeout(function(){ qi.focus(); },40);
+  }
+  function draftSave(){
+    var d=dGet(); if(!(d.credits&&d.credits.length)){ alert("Add at least one game to your wall first."); return; }
+    var ov=draftModal('<h3>Save &amp; publish your portfolio</h3><div class="dsub">You have <b>'+d.credits.length+'</b> game'+(d.credits.length===1?'':'s')+' on your wall. Confirm your name, then we\'ll email you a one-tap link to save it. This is the first time we ask for an email.</div><label>Your name (as it should be credited)</label><input id="ds-name" value="'+esc(d.name||"")+'" placeholder="Jane Doe"><div class="dact"><button class="db-btn ghost" data-x>Not yet</button><button class="db-btn primary" id="ds-go">Continue to save →</button></div><div class="dfoot">Your games stay saved on this device until then.</div>');
+    ov.querySelector("[data-x]").onclick=function(){ ov.remove(); };
+    ov.querySelector("#ds-go").onclick=function(){ var name=((ov.querySelector("#ds-name")||{}).value||"").trim(); if(!name){ alert("Add your name first."); return; } var dd=dGet(); dd.name=name; dSet(dd); location.href="/credits/signin.html?publish=1"; };
+    setTimeout(function(){ var n=ov.querySelector("#ds-name"); if(n) n.focus(); },40);
+  }
+  function showWelcomeBanner(){
+    if(document.getElementById("welcomebar")) return;
+    var b=document.createElement("div"); b.id="welcomebar";
+    b.innerHTML='<div class="wb-inner"><div class="wb-txt"><b>Your portfolio is live.</b> Finish it: add a photo, your work history, and a short bio.</div><a class="wb-btn" href="/portfolio/edit/">Finish my profile →</a><button type="button" class="wb-x" aria-label="Dismiss">×</button></div>';
+    document.body.appendChild(b);
+    b.querySelector(".wb-x").onclick=function(){ b.remove(); };
+  }
 
   function creditYear(c){ return c.work_start || c.year || c.work_end || null; }
   function isLive(c){ return (c.releases||[]).some(function(x){ return /live/i.test(x); }); }

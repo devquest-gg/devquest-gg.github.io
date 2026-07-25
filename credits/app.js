@@ -248,6 +248,112 @@
   function setIdentity(name, email) { try { if (name && email) w.localStorage.setItem("dq_identity", JSON.stringify({ name: name, email: email })); } catch (e) {} }
   function clearIdentity() { try { w.localStorage.removeItem("dq_identity"); } catch (e) {} }
 
+  // ---- local draft (games-only, pre-account) ----------------------------------
+  // Lets a new developer claim games and build a wall BEFORE giving an email. The
+  // draft lives only in this browser until "Save my portfolio" runs the magic-link
+  // flow, at which point signin.html replays every drafted game to the backend.
+  function getDraft() { try { return JSON.parse(w.localStorage.getItem("dq_draft") || "null") || { name: "", credits: [] }; } catch (e) { return { name: "", credits: [] }; } }
+  function setDraft(d) { try { w.localStorage.setItem("dq_draft", JSON.stringify(d || { name: "", credits: [] })); } catch (e) {} }
+  function clearDraft() { try { w.localStorage.removeItem("dq_draft"); } catch (e) {} }
+  function draftAddGame(g) {
+    var d = getDraft(); g = g || {};
+    if (!g.game_slug) return d;
+    if (!d.credits.some(function (c) { return c.game_slug === g.game_slug; })) {
+      d.credits.push({ game_slug: g.game_slug, game_title: g.game_title || g.game_slug, studio: g.studio || "", year: g.year || "", role: g.role || "" });
+    }
+    setDraft(d); return d;
+  }
+  function draftRemoveGame(slug) { var d = getDraft(); d.credits = (d.credits || []).filter(function (c) { return c.game_slug !== slug; }); setDraft(d); return d; }
+
+  // Slim "add this game" modal: role only, no email, no heavy questions.
+  function openDraftGame(game, onDone) {
+    injectClaimStyles(); game = game || {};
+    var ident = getIdentity(), draft = getDraft();
+    var haveName = !!(draft.name || ident.name);
+    var ov = document.createElement("div"); ov.className = "dq-modal-ov";
+    ov.innerHTML = '<div class="dq-modal" role="dialog" aria-modal="true">' +
+      '<button class="dq-x" aria-label="Close">×</button>' +
+      '<div class="dq-mh">Add ' + esc(game.game_title || "this game") + ' to your wall</div>' +
+      '<div class="dq-sub">No account needed yet. Add your role and it goes straight on your portfolio.</div>' +
+      (haveName ? '' : '<label>Your name</label><input id="dg-name" value="' + esc(ident.name || "") + '" placeholder="Jane Doe">') +
+      '<label>Your role on ' + esc(game.game_title || "this game") + '</label><input id="dg-role" list="dg-roles" autocomplete="off" placeholder="Start typing a role…"><datalist id="dg-roles">' + ROLES.map(function (r) { return '<option value="' + esc(r) + '"></option>'; }).join("") + '</datalist>' +
+      '<div class="dq-actions"><button class="dq-cancel">Cancel</button><button class="dq-submit">Add to my wall →</button></div>' +
+      '<div class="dq-foot">Saved on this device. We only ask for an email when you save your portfolio.</div>' +
+      '</div>';
+    document.body.appendChild(ov);
+    function close() { ov.remove(); }
+    ov.querySelector(".dq-x").onclick = close; ov.querySelector(".dq-cancel").onclick = close;
+    ov.querySelector(".dq-submit").onclick = function () {
+      var role = ((ov.querySelector("#dg-role") || {}).value || "").trim();
+      if (!role) { alert("Add your role first."); return; }
+      var d = getDraft();
+      var nmEl = ov.querySelector("#dg-name"); if (nmEl && nmEl.value.trim()) { d.name = nmEl.value.trim(); setDraft(d); setIdentity(d.name, ident.email || ""); }
+      draftAddGame({ game_slug: game.game_slug, game_title: game.game_title, studio: game.studio, year: game.year, role: role });
+      close();
+      if (typeof onDone === "function") onDone(); else w.location.href = "/portfolio/view.html?draft=1";
+    };
+  }
+
+  // Search-the-catalogue modal for adding MORE games to the draft wall.
+  function openDraftAddSearch(onAdded) {
+    injectClaimStyles();
+    var ov = document.createElement("div"); ov.className = "dq-modal-ov";
+    ov.innerHTML = '<div class="dq-modal" role="dialog" aria-modal="true">' +
+      '<button class="dq-x" aria-label="Close">×</button>' +
+      '<div class="dq-mh">Add a game you shipped</div>' +
+      '<div class="dq-sub">Search the catalogue and pick a title you worked on.</div>' +
+      '<input id="dqa-q" autocomplete="off" placeholder="Start typing a game title…">' +
+      '<div id="dqa-res" style="margin-top:10px;max-height:320px;overflow:auto"></div>' +
+      '<div class="dq-foot">Not in the catalogue? You can add a missing game from your profile once you save.</div>' +
+      '</div>';
+    document.body.appendChild(ov);
+    function close() { ov.remove(); }
+    ov.querySelector(".dq-x").onclick = close;
+    var qi = ov.querySelector("#dqa-q"), res = ov.querySelector("#dqa-res"), t;
+    var have = {}; (getDraft().credits || []).forEach(function (c) { have[c.game_slug] = 1; });
+    function paint(games) {
+      if (!games.length) { res.innerHTML = '<div style="color:var(--muted,#8b98a9);font-size:13px;padding:8px 2px">No matches yet.</div>'; return; }
+      res.innerHTML = games.map(function (g) {
+        var added = have[g.slug];
+        return '<button class="dqa-row" data-slug="' + esc(g.slug) + '" data-title="' + esc(g.title) + '" data-studio="' + esc(g.studio || "") + '" data-year="' + esc(g.year || "") + '" ' + (added ? "disabled" : "") + ' style="display:flex;width:100%;text-align:left;align-items:center;gap:10px;background:transparent;border:0;border-top:1px solid var(--border,#2d333b);padding:10px 4px;cursor:' + (added ? "default" : "pointer") + ';color:inherit">' +
+          '<span style="flex:1;min-width:0"><span style="display:block;font-weight:700;font-size:14px">' + esc(g.title) + '</span>' + ((g.studio || g.year) ? '<span style="display:block;color:var(--muted,#8b98a9);font-size:12px">' + esc((g.studio || "") + (g.studio && g.year ? " · " : "") + (g.year || "")) + '</span>' : '') + '</span>' +
+          '<span style="font-size:12px;font-weight:800;color:' + (added ? "var(--muted,#8b98a9)" : "var(--accent,#58a6ff)") + ';white-space:nowrap">' + (added ? "Added ✓" : "Add →") + '</span>' +
+          '</button>';
+      }).join("");
+    }
+    qi.addEventListener("input", function () { clearTimeout(t); var q = qi.value.trim(); if (!q) { res.innerHTML = ""; return; } t = setTimeout(function () { if (w.DQAPI && w.DQAPI.searchGames) w.DQAPI.searchGames(q).then(function (r) { paint(((r.data && r.data.games) || []).slice(0, 12)); }).catch(function () {}); }, 140); });
+    res.addEventListener("click", function (e) { var b = e.target.closest && e.target.closest(".dqa-row"); if (!b || b.disabled) return; var g = { game_slug: b.getAttribute("data-slug"), game_title: b.getAttribute("data-title"), studio: b.getAttribute("data-studio"), year: b.getAttribute("data-year") }; close(); openDraftGame(g, function () { if (typeof onAdded === "function") onAdded(); }); });
+    setTimeout(function () { qi.focus(); }, 40);
+  }
+
+  // "Save my portfolio": confirm the name, then hand off to the magic-link flow.
+  // The draft is already in localStorage; signin.html replays it after verification.
+  function openDraftSave() {
+    injectClaimStyles();
+    var d = getDraft();
+    if (!(d.credits && d.credits.length)) { alert("Add at least one game to your wall first."); return; }
+    var nm = d.name || getIdentity().name || "";
+    var ov = document.createElement("div"); ov.className = "dq-modal-ov";
+    ov.innerHTML = '<div class="dq-modal" role="dialog" aria-modal="true">' +
+      '<button class="dq-x" aria-label="Close">×</button>' +
+      '<div class="dq-mh">Save &amp; publish your portfolio</div>' +
+      '<div class="dq-sub">You have <b>' + d.credits.length + '</b> game' + (d.credits.length === 1 ? "" : "s") + ' on your wall. Confirm your name, then we\'ll email you a one-tap link to save it. This is the first time we ask for an email.</div>' +
+      '<label>Your name (as it should be credited)</label><input id="ds-name" value="' + esc(nm) + '" placeholder="Jane Doe">' +
+      '<div class="dq-actions"><button class="dq-cancel">Not yet</button><button class="dq-submit">Continue to save →</button></div>' +
+      '<div class="dq-foot">Your games stay saved on this device until then.</div>' +
+      '</div>';
+    document.body.appendChild(ov);
+    function close() { ov.remove(); }
+    ov.querySelector(".dq-x").onclick = close; ov.querySelector(".dq-cancel").onclick = close;
+    ov.querySelector(".dq-submit").onclick = function () {
+      var name = ((ov.querySelector("#ds-name") || {}).value || "").trim();
+      if (!name) { alert("Add your name first."); return; }
+      var dd = getDraft(); dd.name = name; setDraft(dd);
+      try { setIdentity(name, getIdentity().email || ""); } catch (e) {}
+      w.location.href = "/credits/signin.html?publish=1";
+    };
+  }
+
   var ROLES = ["Producer","Executive Producer","Associate Producer","Production Director","Game Designer","Lead Designer","Design Director","Systems Designer","Level Designer","Narrative Designer","Content Designer","Combat Designer","Encounter Designer","Programmer","Gameplay Programmer","Engine Programmer","Graphics Programmer","Network Programmer","Tools Programmer","AI Programmer","Lead Programmer","Technical Director","Artist","Concept Artist","Environment Artist","Character Artist","Technical Artist","Art Director","Animator","Lead Artist","VFX Artist","UI Artist","UI/UX Designer","Audio Designer","Composer","Sound Designer","Audio Director","Writer","Narrative Director","QA Tester","QA Lead","QA Analyst","Community Manager","Live Operations","Product Manager","Creative Director","Studio Head","Technical Support Lead","Localization","Marketing"];
 
   function titleCase(s) {
@@ -1002,6 +1108,7 @@
   w.DQ = {
     bkt: bkt, qs: qs, getJSON: getJSON, loadEntity: loadEntity, loadIndex: loadIndex, openReport: openReport,
     rank: rank, searchRows: searchRows, attachSuggest: attachSuggest, openClaim: openClaim, openSuggest: openSuggest, openVouchRequest: openVouchRequest, openVouchConfirm: openVouchConfirm,
+    getDraft: getDraft, setDraft: setDraft, clearDraft: clearDraft, draftAddGame: draftAddGame, draftRemoveGame: draftRemoveGame, openDraftGame: openDraftGame, openDraftAddSearch: openDraftAddSearch, openDraftSave: openDraftSave,
     discipline: discipline, DISCIPLINE_ORDER: DISCIPLINE_ORDER,
     uniq: uniq, releaseClass: releaseClass,
     esc: esc, safeUrl: safeUrl, initials: initials, slugify: slugify,

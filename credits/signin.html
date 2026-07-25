@@ -102,6 +102,25 @@
     }
   }
 
+  // 1a4) Or you built a games-only draft on the landing page (no email until now).
+  //      Replay every drafted game to the backend, then open the freshly-built wall.
+  var pendingDraft = null; try{ pendingDraft = localStorage.getItem("dq_draft"); }catch(e){}
+  if(pendingDraft && DQAPI.isSignedIn()){
+    var draft = null; try{ draft = JSON.parse(pendingDraft); }catch(e){ draft = null; }
+    if(draft && draft.credits && draft.credits.length){
+      try{ localStorage.removeItem("dq_draft"); }catch(e){}
+      var dcreds = draft.credits, di = 0, dslug = null;
+      (function nextDraft(){
+        if(di >= dcreds.length){ location.href = dslug ? ("/portfolio/view.html?slug=" + encodeURIComponent(dslug) + "&welcome=1") : "/credits/"; return; }
+        var c = dcreds[di];
+        DQAPI.createCredit({ name: draft.name||"", role: c.role||"", game_slug: c.game_slug, game_title: c.game_title, studio: c.studio||null, scope: "base", roles_other: [], verification: [], links: [], releases: [] })
+          .then(function(r){ if(r && r.data && r.data.person_slug) dslug = r.data.person_slug; di++; nextDraft(); })
+          .catch(function(){ di++; nextDraft(); });
+      })();
+      return;
+    } else { try{ localStorage.removeItem("dq_draft"); }catch(e){} }
+  }
+
   // 1a5) Or you came from a game's "I worked on this game" button (signed out). Now signed
   // in, go back to that game — its page reopens the claim form (and clears this flag).
   var claimGame = null; try{ claimGame = localStorage.getItem("dq_claim_game"); }catch(e){}
