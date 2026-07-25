@@ -114,7 +114,15 @@
         if(di >= dcreds.length){ location.href = dslug ? ("/portfolio/view.html?slug=" + encodeURIComponent(dslug) + "&welcome=1") : "/credits/"; return; }
         var c = dcreds[di];
         DQAPI.createCredit({ name: draft.name||"", role: c.role||"", game_slug: c.game_slug, game_title: c.game_title, studio: c.studio||null, scope: "base", roles_other: [], verification: [], links: [], releases: [] })
-          .then(function(r){ if(r && r.data && r.data.person_slug) dslug = r.data.person_slug; di++; nextDraft(); })
+          .then(function(r){
+            if(r && r.data && r.data.person_slug) dslug = r.data.person_slug;
+            var cid = r && r.data && r.data.credit_id;
+            var after = [];
+            if(cid && (c.work_start!=null || c.work_end!=null) && DQAPI.updateCredit) after.push(DQAPI.updateCredit(cid, { work_start:(c.work_start!=null?c.work_start:null), work_end:(c.work_end!=null?c.work_end:null) }));
+            var sh = c.sheet ? JSON.parse(JSON.stringify(c.sheet)) : null;
+            if(cid && (sh || c.cover_url) && DQAPI.saveSheet){ sh = sh || {}; if(c.cover_url) sh.cover_url = c.cover_url; after.push(DQAPI.saveSheet(cid, sh)); }
+            (after.length ? Promise.all(after) : Promise.resolve()).then(function(){ di++; nextDraft(); }).catch(function(){ di++; nextDraft(); });
+          })
           .catch(function(){ di++; nextDraft(); });
       })();
       return;
