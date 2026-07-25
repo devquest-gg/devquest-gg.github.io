@@ -680,7 +680,10 @@
     if(_ovl) return;
     _ovl=document.createElement("div"); _ovl.className="osovl"; _ovl.innerHTML='<div class="ossheet" id="ossheet"></div>';
     document.body.appendChild(_ovl);
-    _ovl.addEventListener("click",function(e){ if(e.target===_ovl) closeSheet(); });
+    // Outside-click closes ONLY a read-only view. If the modal has form fields (any edit
+    // sheet: one-sheet, profile, add-game), don't close on a stray backdrop click, so a
+    // long write can't be lost by accident. Use the ×, Cancel, or Save instead.
+    _ovl.addEventListener("click",function(e){ if(e.target===_ovl && !_ovl.querySelector("input,textarea,select")) closeSheet(); });
     document.addEventListener("keydown",function(e){ if(e.key==="Escape") closeSheet(); });
   }
   function closeSheet(){ if(_ovl){ _ovl.classList.remove("on"); document.body.style.overflow=""; } }
