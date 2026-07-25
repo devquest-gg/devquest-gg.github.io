@@ -1136,7 +1136,31 @@
   })();
 
   // Prompt signed-in developers to confirm teammates they can vouch for (once per session).
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", initVouchNudge); else initVouchNudge();
+  // A pre-account draft (games in localStorage, no login yet) has no home in the nav, so once
+  // you leave the draft wall there's no way back. This floating pill appears on every page while
+  // a draft exists and takes you straight back to it. It vanishes once the draft is published.
+  function injectResumeStyles(){
+    if(document.getElementById("dq-resume-styles")) return;
+    var s=document.createElement("style"); s.id="dq-resume-styles";
+    s.textContent=".dq-resume{position:fixed;top:10px;left:50%;transform:translateX(-50%);z-index:120;display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:800;color:#04121f;background:linear-gradient(135deg,#7cc0ff,#a371f7);border-radius:999px;padding:8px 15px;box-shadow:0 8px 24px rgba(0,0,0,.45);text-decoration:none;white-space:nowrap;max-width:calc(100vw - 24px)}.dq-resume:hover{filter:brightness(1.06)}.dq-resume .dqr-dot{opacity:.85}.dq-resume .dqr-n{font-weight:600;opacity:.85}@media(max-width:520px){.dq-resume .dqr-n{display:none}}";
+    document.head.appendChild(s);
+  }
+  function initDraftResume(){
+    try{
+      var d = JSON.parse(w.localStorage.getItem("dq_draft")||"null");
+      if(!d || !d.credits || !d.credits.length) return;
+      if(/[?&]draft=1/.test(w.location.search)) return;   // already on the draft wall
+      if(document.getElementById("dq-resume")) return;
+      injectResumeStyles();
+      var n = d.credits.length;
+      var a = document.createElement("a");
+      a.id = "dq-resume"; a.className = "dq-resume"; a.href = "/portfolio/view.html?draft=1";
+      a.innerHTML = '<span class="dqr-dot">◆</span> Resume your portfolio <span class="dqr-n">'+n+' game'+(n===1?'':'s')+'</span> <span class="dqr-arrow">→</span>';
+      document.body.appendChild(a);
+    }catch(e){}
+  }
+  function _dqInit(){ initVouchNudge(); initDraftResume(); }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", _dqInit); else _dqInit();
 
   // Clean-URL links (/credits/<slug>, /credits/game/<slug>, /credits/studio/<slug>) are what
   // we render for copy/hover/share, but the real files live at *.html?slug=. Intercept a
