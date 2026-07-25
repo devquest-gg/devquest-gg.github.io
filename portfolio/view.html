@@ -1171,6 +1171,20 @@
     var mode="grid", tiles=[], labels=[], dots=[], geo={}, GAP=16, SLOTS=3;
 
     var bands=positions.map(function(p){ var s=p.start_year||CUR, e=p.is_current?CUR:(p.end_year||s); if(e<s)e=s; return {p:p,s:s,e:e}; });
+    // No work history yet (e.g. a games-only draft): build a career spine from the games' own
+    // studios + work years, so the timeline lays them out chronologically instead of dumping
+    // everything into one "Also credited" pile.
+    if(!bands.length){
+      var _bs={}, _order=[];
+      credits.forEach(function(c){
+        var key=_studioKey(c.studio) || ("g:"+(c.game_slug||c.game_title||""));
+        var y=creditYear(c);
+        if(!_bs[key]){ _bs[key]={ studio:c.studio||c.game_title||"Other", s:(y||CUR), e:(y||CUR) }; _order.push(key); }
+        else if(y){ if(y<_bs[key].s)_bs[key].s=y; if(y>_bs[key].e)_bs[key].e=y; }
+      });
+      bands=_order.map(function(k){ var b=_bs[k]; return { p:{ studio:b.studio, studio_slug:"", is_current:false, start_year:b.s, end_year:b.e }, s:b.s, e:b.e }; });
+      bands.sort(function(a,b){ return (b.s||0)-(a.s||0); }); // newest first
+    }
     function bandOf(c){ return assignBand(c, bands); }
 
     credits.forEach(function(c,i){
