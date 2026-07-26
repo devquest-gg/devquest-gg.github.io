@@ -59,7 +59,7 @@
 </head>
 <body>
 <div class="bar"></div>
-<div class="nav"><div class="wrap"><div class="brand">Dev<span class="q">Quest</span><span class="tld">.gg</span><span class="cr">PORTFOLIO</span></div><div style="font-size:13px"><a href="/">Jobs board →</a></div></div></div>
+<div class="nav"><div class="wrap"><div class="brand">Dev<span class="q">Quest</span><span class="tld">.gg</span><span class="cr">PORTFOLIO</span></div><div style="font-size:13px"><a id="nav-portfolio" href="/portfolio/" style="margin-right:16px">← Back to my portfolio</a><a href="/">Jobs board →</a></div></div></div>
 
 <div class="wrap">
   <h1>Work history &amp; skills</h1>
@@ -92,7 +92,8 @@
       return;
     }
     SLUG = person.slug;
-    topcta.innerHTML = '<a class="btn sm" href="/portfolio/'+esc(SLUG)+'/" target="_blank">View my portfolio ↗</a><a class="btn sm" href="/credits/'+esc(SLUG)+'" target="_blank">My credits page ↗</a>';
+    var navp=document.getElementById("nav-portfolio"); if(navp) navp.href="/portfolio/"+esc(SLUG)+"/";
+    topcta.innerHTML = '<a class="btn primary sm" href="/portfolio/'+esc(SLUG)+'/">✓ Done — back to my portfolio</a><a class="btn sm" href="/portfolio/'+esc(SLUG)+'/" target="_blank">Preview ↗</a><a class="btn sm" href="/credits/'+esc(SLUG)+'" target="_blank">My credits ↗</a>';
     return DQAPI.portfolio(SLUG).then(function(pr){
       var d = (pr && pr.data) || {}; render(d.person||{}, d.positions||[], d.credits||[]);
     });
@@ -121,7 +122,9 @@
       '<div class="blk"><h2>Work history</h2><div class="desc">Your studios and roles — the spine of your résumé and the right-hand track of the timeline. On roles that shipped games, &ldquo;What you did&rdquo; becomes the role&rsquo;s scope line; on roles with no games, it becomes the bullets.</div>'+
         '<div id="poslist"></div>'+
         '<div class="actions"><span class="btn" id="add-pos">+ Add a position</span></div>'+
-      '</div>';
+      '</div>'+
+      // DONE
+      '<div style="text-align:center;margin:10px 0 4px"><a class="btn primary" href="/portfolio/'+esc(SLUG)+'/">✓ Done — back to my portfolio</a><div class="mut" style="font-size:12px;margin-top:9px">Each section saves on its own — make sure you’ve clicked <b>Save</b> in the ones you changed before leaving.</div></div>';
 
     renderPositions();
     skInitSelected(p); renderSkillsPicker(p, false); wireSkills();
