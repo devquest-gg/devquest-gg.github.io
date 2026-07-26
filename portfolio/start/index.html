@@ -195,7 +195,8 @@
       if(res.jobs.length) STUDIOS=res.jobs.map(function(j){ return { name:j.company, from:(j.from||""), to:(j.to||"") }; });
       renderStudios();
       var st2=document.getElementById("pt-status"); var n=res.jobs.length;
-      if(st2){ st2.textContent = n ? ("Found "+n+" studio"+(n===1?"":"s")+(res.name?" and your name":"")+" — review below, fix anything, then Find my games.") : "Couldn’t spot studios in that text — add them manually below."; st2.style.color = n?"var(--green)":"var(--muted)"; }
+      if(st2){ st2.textContent = n ? ("Found "+n+" studio"+(n===1?"":"s")+(res.name?" and your name":"")+" — check the list below (scrolling to it now), remove any wrong ones, then Find my games.") : "Couldn’t spot studios in that text — add them manually below."; st2.style.color = n?"var(--green)":"var(--muted)"; }
+      if(n){ var le=document.getElementById("st-list"); if(le){ try{ le.scrollIntoView({behavior:"smooth",block:"center"}); }catch(e){} } }
     }).catch(function(){ var s3=document.getElementById("pt-status"); if(s3){ s3.textContent="Something went wrong reading that."; s3.style.color="var(--pink)"; } });
   }
 
@@ -259,7 +260,7 @@
   function renderStudioList(){
     var box=document.getElementById("st-list"); if(!box) return;
     if(!STUDIOS.length){ box.innerHTML='<div class="empty">No studios yet — add your first above.</div>'; }
-    else { box.innerHTML = STUDIOS.map(function(s,i){ var yr=(s.from||s.to)?((s.from||"?")+" – "+(s.to||"now")):""; return '<span class="studio-chip"><b>'+esc(s.name)+'</b>'+(yr?' <span class="yr">'+esc(yr)+'</span>':'')+'<button class="x" data-i="'+i+'" aria-label="Remove">×</button></span>'; }).join("");
+    else { box.innerHTML = '<div style="font-size:12.5px;font-weight:800;color:var(--gold);margin:0 0 9px">✓ Your studios ('+STUDIOS.length+') — tap × to remove any that are wrong:</div>' + STUDIOS.map(function(s,i){ var yr=(s.from||s.to)?((s.from||"?")+" – "+(s.to||"now")):""; return '<span class="studio-chip"><b>'+esc(s.name)+'</b>'+(yr?' <span class="yr">'+esc(yr)+'</span>':'')+'<button class="x" data-i="'+i+'" aria-label="Remove">×</button></span>'; }).join("");
       box.querySelectorAll(".x").forEach(function(el){ el.onclick=function(){ STUDIOS.splice(+el.getAttribute("data-i"),1); renderStudioList(); }; }); }
     var go=document.getElementById("to-games"); if(go) go.disabled = STUDIOS.length===0;
   }
