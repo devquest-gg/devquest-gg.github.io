@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quick start · DevQuest Portfolio</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<style>
+  :root{--bg:#0a0d14;--panel:#11161f;--panel2:#141b26;--border:#232c3a;--text:#eaf0f8;--muted:#8b98ab;--dim:#5f6b7d;--accent:#58a6ff;--purple:#a371f7;--gold:#e0b23a;--green:#3fb950;--pink:#f778ba}
+  *{box-sizing:border-box}html,body{margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,-apple-system,Roboto,Helvetica,Arial,sans-serif;line-height:1.5;-webkit-font-smoothing:antialiased}
+  a{color:var(--accent);text-decoration:none}
+  .bar{height:3px;background:linear-gradient(90deg,var(--gold),var(--purple) 55%,var(--accent))}
+  .wrap{max-width:720px;margin:0 auto;padding:0 20px}
+  .nav{border-bottom:1px solid var(--border)}.nav .wrap{display:flex;align-items:center;justify-content:space-between;height:54px}
+  .brand{font-weight:800;font-size:17px}.brand .q{color:var(--accent)}.brand .tld{color:var(--gold)}
+  .brand .cr{font-size:10px;font-weight:800;letter-spacing:.2em;color:var(--accent);border:1px solid var(--border);border-radius:5px;padding:2px 6px;margin-left:6px}
+  h1{font-size:26px;font-weight:850;letter-spacing:-.4px;margin:24px 0 4px}
+  .lede{color:var(--muted);font-size:14px;margin:0 0 6px}
+  .steps{display:flex;gap:8px;margin:16px 0 6px}
+  .stepdot{flex:1;height:5px;border-radius:3px;background:var(--border)}
+  .stepdot.on{background:linear-gradient(90deg,var(--purple),var(--accent))}
+  .steplabel{font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--accent);margin:4px 0 0}
+  .blk{border:1px solid var(--border);background:var(--panel);border-radius:16px;padding:20px 22px;margin:16px 0}
+  .blk h2{font-size:18px;font-weight:800;margin:0 0 3px}
+  .blk .desc{color:var(--muted);font-size:13px;margin:0 0 14px}
+  label{display:block;font-size:12px;font-weight:700;color:#cdd8e6;margin:12px 0 5px}
+  input{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:9px;padding:10px 12px;color:var(--text);font-size:14px;font-family:inherit;outline:none}
+  input:focus{border-color:var(--accent)}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
+  .row>div{flex:1;min-width:90px}
+  .btn{display:inline-flex;align-items:center;gap:7px;font-size:14px;font-weight:750;border-radius:10px;padding:10px 18px;cursor:pointer;border:1px solid var(--border);background:var(--panel2);color:var(--text)}
+  .btn.primary{color:#04121f;background:linear-gradient(135deg,#7cc0ff,#58a6ff);border:0}
+  .btn.sm{padding:8px 13px;font-size:13px}
+  .btn[disabled]{opacity:.45;cursor:default}
+  .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px;align-items:center}
+  .studio-chip{display:inline-flex;align-items:center;gap:8px;background:var(--panel2);border:1px solid var(--border);border-radius:20px;padding:6px 8px 6px 13px;font-size:13px;margin:4px 6px 0 0}
+  .studio-chip b{font-weight:700}.studio-chip .yr{color:var(--muted);font-size:12px}
+  .studio-chip .x{cursor:pointer;color:var(--muted);border:0;background:none;font-size:16px;line-height:1;padding:0 2px}
+  .studio-chip .x:hover{color:var(--pink)}
+  .sdrop{position:relative}
+  .sdrop-list{position:absolute;left:0;right:0;top:calc(100% + 2px);z-index:20;background:var(--panel2);border:1px solid var(--border);border-radius:10px;overflow:hidden;box-shadow:0 12px 30px rgba(0,0,0,.5);max-height:240px;overflow-y:auto}
+  .sdrop-list div{padding:9px 12px;cursor:pointer;font-size:13.5px}
+  .sdrop-list div:hover{background:rgba(88,166,255,.14)}
+  .gstudio{margin:16px 0 6px;font-size:13px;font-weight:800;color:var(--gold)}
+  .gstudio .n{color:var(--muted);font-weight:600;font-size:12px;margin-left:6px}
+  .glist{display:flex;flex-direction:column;gap:2px}
+  .grow{display:flex;align-items:center;gap:10px;padding:7px 9px;border-radius:9px;cursor:pointer}
+  .grow:hover{background:rgba(255,255,255,.03)}
+  .grow input{width:auto;flex:0 0 auto;accent-color:var(--accent);width:17px;height:17px}
+  .grow .gt{font-size:14px}
+  .grow .gy{color:var(--muted);font-size:12.5px;margin-left:auto;flex:0 0 auto}
+  .gmore{color:var(--muted);font-size:12.5px;padding:6px 9px}
+  .gcount{font-weight:800;color:var(--accent)}
+  .empty{color:var(--muted);font-size:13.5px;padding:8px 0}
+  .status{font-size:13px;color:var(--muted);min-height:16px}
+  footer{border-top:1px solid var(--border);margin-top:28px;padding:18px 0 40px;font-size:12.5px;color:var(--dim)}
+  .hide{display:none}
+</style>
+</head>
+<body>
+<div class="bar"></div>
+<div class="nav"><div class="wrap"><div class="brand">Dev<span class="q">Quest</span><span class="tld">.gg</span><span class="cr">PORTFOLIO</span></div><div style="font-size:13px"><a href="/portfolio/">Skip — build manually →</a></div></div></div>
+
+<div class="wrap">
+  <h1>Let’s build your portfolio, fast</h1>
+  <p class="lede">Tell us where you’ve worked and we’ll pull the games from those studios out of our catalogue — you just check the ones that were yours. No searching one title at a time.</p>
+  <div class="steps"><div class="stepdot on" id="d1"></div><div class="stepdot" id="d2"></div><div class="stepdot" id="d3"></div></div>
+  <div class="steplabel" id="steplabel">Step 1 of 3 · Your studios</div>
+  <div id="app"></div>
+</div>
+<footer><div class="wrap">DevQuest.gg · quick start · your picks are saved as a draft until you publish</div></footer>
+
+<script src="/credits/api.js"></script>
+<script>
+(function(){
+  var app = document.getElementById("app");
+  var STUDIOS = [];        // [{name, from, to}]
+  var CATALOG = null;      // [[slug,title,year,studio], ...]
+  var PICKED = {};         // slug -> {slug,title,year,studio}
+  var STEP = 1;
+
+  function esc(s){ return String(s==null?"":s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];}); }
+  function nrm(s){ return String(s==null?"":s).toLowerCase().replace(/[^a-z0-9]+/g," ").trim(); }
+  function setStep(n){ STEP=n; ["d1","d2","d3"].forEach(function(id,i){ document.getElementById(id).classList.toggle("on", i < n); });
+    document.getElementById("steplabel").textContent = "Step "+n+" of 3 · "+(n===1?"Your studios":n===2?"Your games":"Your name");
+    if(n===1) renderStudios(); else if(n===2) renderGames(); else renderBasics();
+    window.scrollTo(0,0);
+  }
+
+  // ---------- catalogue ----------
+  function loadCatalog(){
+    if(CATALOG) return Promise.resolve(CATALOG);
+    return fetch("/credits/data/site/index.json").then(function(r){ return r.ok?r.json():[]; })
+      .then(function(rows){ CATALOG = Array.isArray(rows)?rows:[]; return CATALOG; })
+      .catch(function(){ CATALOG=[]; return CATALOG; });
+  }
+  // games for a studio (fuzzy name match) within an optional year window
+  function gamesForStudio(st){
+    if(!CATALOG) return [];
+    var key = nrm(st.name); if(key.length < 2) return [];
+    var from = parseInt(st.from,10), to = parseInt(st.to,10);
+    var hasFrom = !isNaN(from), hasTo = !isNaN(to);
+    var out = [];
+    for(var i=0;i<CATALOG.length;i++){
+      var r = CATALOG[i]; if(!r) continue;
+      var gStudio = nrm(r[3]); if(!gStudio) continue;
+      if(gStudio.indexOf(key) === -1 && key.indexOf(gStudio) === -1) continue;   // fuzzy contains either way
+      var y = parseInt(r[2],10);
+      if(!isNaN(y)){ if(hasFrom && y < from-1) continue; if(hasTo && y > to+1) continue; }
+      out.push({ slug:r[0], title:r[1], year:r[2], studio:r[3] });
+    }
+    out.sort(function(a,b){ return (parseInt(b.year,10)||0)-(parseInt(a.year,10)||0) || String(a.title).localeCompare(String(b.title)); });
+    return out;
+  }
+
+  // ---------- Step 1: studios ----------
+  function renderStudios(){
+    app.innerHTML =
+      '<div class="blk"><h2>Where have you worked?</h2><div class="desc">Add each studio and roughly when you were there. Years are optional but help us show the right games.</div>'+
+        '<div class="sdrop"><label>Studio / developer</label><input id="st-name" placeholder="e.g. Insomniac Games" autocomplete="off"><div id="st-sug"></div></div>'+
+        '<div class="row" style="margin-top:10px"><div><label>From (year)</label><input id="st-from" inputmode="numeric" placeholder="2019"></div><div><label>To (year, or blank if current)</label><input id="st-to" inputmode="numeric" placeholder="2022"></div><div style="flex:0 0 auto"><button class="btn sm" id="st-add">+ Add studio</button></div></div>'+
+        '<div id="st-list" style="margin-top:14px"></div>'+
+        '<div class="actions"><button class="btn primary" id="to-games" disabled>Find my games →</button></div>'+
+      '</div>';
+    renderStudioList();
+    var nameEl=document.getElementById("st-name");
+    document.getElementById("st-add").onclick=addStudio;
+    nameEl.addEventListener("keydown", function(e){ if(e.key==="Enter"){ e.preventDefault(); addStudio(); } });
+    nameEl.addEventListener("input", studioSuggest);
+    document.getElementById("to-games").onclick=function(){ loadCatalog().then(function(){ setStep(2); }); };
+  }
+  var _sugT=null;
+  function studioSuggest(){
+    var q=document.getElementById("st-name").value.trim(); var box=document.getElementById("st-sug");
+    if(_sugT) clearTimeout(_sugT);
+    if(q.length<2 || !(window.DQAPI&&DQAPI.searchStudios)){ box.innerHTML=""; return; }
+    _sugT=setTimeout(function(){
+      DQAPI.searchStudios(q).then(function(r){
+        var list=((r&&r.data&&r.data.studios)||[]).slice(0,8);
+        if(!list.length){ box.innerHTML=""; return; }
+        box.innerHTML='<div class="sdrop-list">'+list.map(function(s){ return '<div data-n="'+esc(s.name||s.title||"")+'">'+esc(s.name||s.title||"")+'</div>'; }).join("")+'</div>';
+        box.querySelectorAll("div[data-n]").forEach(function(el){ el.onclick=function(){ document.getElementById("st-name").value=el.getAttribute("data-n"); box.innerHTML=""; document.getElementById("st-from").focus(); }; });
+      }).catch(function(){ box.innerHTML=""; });
+    }, 220);
+  }
+  function addStudio(){
+    var name=document.getElementById("st-name").value.trim(); if(!name) return;
+    var from=document.getElementById("st-from").value.trim(), to=document.getElementById("st-to").value.trim();
+    STUDIOS.push({ name:name, from:from, to:to });
+    document.getElementById("st-name").value=""; document.getElementById("st-from").value=""; document.getElementById("st-to").value="";
+    document.getElementById("st-sug").innerHTML="";
+    renderStudioList(); document.getElementById("st-name").focus();
+  }
+  function renderStudioList(){
+    var box=document.getElementById("st-list"); if(!box) return;
+    if(!STUDIOS.length){ box.innerHTML='<div class="empty">No studios yet — add your first above.</div>'; }
+    else { box.innerHTML = STUDIOS.map(function(s,i){ var yr=(s.from||s.to)?((s.from||"?")+" – "+(s.to||"now")):""; return '<span class="studio-chip"><b>'+esc(s.name)+'</b>'+(yr?' <span class="yr">'+esc(yr)+'</span>':'')+'<button class="x" data-i="'+i+'" aria-label="Remove">×</button></span>'; }).join("");
+      box.querySelectorAll(".x").forEach(function(el){ el.onclick=function(){ STUDIOS.splice(+el.getAttribute("data-i"),1); renderStudioList(); }; }); }
+    var go=document.getElementById("to-games"); if(go) go.disabled = STUDIOS.length===0;
+  }
+
+  // ---------- Step 2: games ----------
+  function renderGames(){
+    var anyGames=false;
+    var sections = STUDIOS.map(function(s){
+      var games=gamesForStudio(s);
+      if(games.length) anyGames=true;
+      var CAP=50, shown=games.slice(0,CAP);
+      var rows = shown.map(function(g){
+        var ck = PICKED[g.slug] ? "checked" : "";
+        return '<label class="grow"><input type="checkbox" data-slug="'+esc(g.slug)+'" '+ck+'><span class="gt">'+esc(g.title)+'</span><span class="gy">'+esc(g.studio||"")+(g.year?' · '+esc(g.year):'')+'</span></label>';
+      }).join("");
+      var more = games.length>CAP ? '<div class="gmore">+ '+(games.length-CAP)+' more — narrow the year range on the previous step to trim this list.</div>' : '';
+      var body = games.length ? ('<div class="glist">'+rows+'</div>'+more)
+        : '<div class="empty">No catalogue matches for “'+esc(s.name)+'”'+((s.from||s.to)?' in those years':'')+'. You can add these by hand later.</div>';
+      return '<div class="gstudio">'+esc(s.name)+' <span class="n">'+games.length+' found</span></div>'+body;
+    }).join("");
+    app.innerHTML =
+      '<div class="blk"><h2>Check the games you shipped</h2><div class="desc">These come straight from our catalogue for the studios you listed. Tick the ones you worked on — skip the rest. You can fine-tune roles and add one-sheets after.</div>'+
+        '<label>Your main role <span style="font-weight:400;color:var(--muted)">— applied to all; you can change any of them later</span></label><input id="g-role" placeholder="e.g. Senior Producer" value="'+esc(window._qsRole||"")+'">'+
+        '<div style="margin-top:14px" id="g-sections">'+ (sections || '<div class="empty">No studios to search.</div>') +'</div>'+
+        '<div class="actions"><button class="btn" id="back-1">← Studios</button><button class="btn primary" id="to-basics">Next · <span class="gcount" id="g-count">'+Object.keys(PICKED).length+'</span> selected →</button></div>'+
+      '</div>';
+    document.getElementById("g-sections").addEventListener("change", function(e){
+      var cb=e.target; if(!cb || cb.type!=="checkbox") return;
+      var slug=cb.getAttribute("data-slug"); if(!slug) return;
+      if(cb.checked){ var g=findGame(slug); if(g) PICKED[slug]=g; } else { delete PICKED[slug]; }
+      document.getElementById("g-count").textContent=Object.keys(PICKED).length;
+    });
+    document.getElementById("g-role").addEventListener("input", function(e){ window._qsRole=e.target.value; });
+    document.getElementById("back-1").onclick=function(){ setStep(1); };
+    document.getElementById("to-basics").onclick=function(){ window._qsRole=document.getElementById("g-role").value.trim(); setStep(3); };
+  }
+  function findGame(slug){ for(var i=0;i<CATALOG.length;i++){ if(CATALOG[i] && CATALOG[i][0]===slug) return {slug:CATALOG[i][0],title:CATALOG[i][1],year:CATALOG[i][2],studio:CATALOG[i][3]}; } return null; }
+
+  // ---------- Step 3: basics + build ----------
+  function renderBasics(){
+    var n=Object.keys(PICKED).length;
+    app.innerHTML =
+      '<div class="blk"><h2>Last thing — your name</h2><div class="desc">'+(n?('We’ll start your portfolio with the <b>'+n+' game'+(n===1?'':'s')+'</b> you picked. Add a photo, bio, and work-history details after — your portfolio is publishable right away.'):'You didn’t pick any games yet — you can add them by hand after, or go back and check some.')+'</div>'+
+        '<label>Your name</label><input id="b-name" placeholder="Jane Dev" value="'+esc(window._qsName||"")+'">'+
+        '<label>Headline <span style="font-weight:400;color:var(--muted)">— optional; your current role &amp; studio</span></label><input id="b-head" placeholder="Senior Producer at Studio X" value="'+esc(window._qsHead||"")+'">'+
+        '<div class="actions"><button class="btn" id="back-2">← Games</button><button class="btn primary" id="build">Build my portfolio →</button><span class="status" id="b-status"></span></div>'+
+      '</div>';
+    document.getElementById("back-2").onclick=function(){ window._qsName=document.getElementById("b-name").value; window._qsHead=document.getElementById("b-head").value; setStep(2); };
+    document.getElementById("build").onclick=buildDraft;
+    document.getElementById("b-name").addEventListener("input", function(e){ window._qsName=e.target.value; });
+    document.getElementById("b-head").addEventListener("input", function(e){ window._qsHead=e.target.value; });
+  }
+  function buildDraft(){
+    var st=document.getElementById("b-status");
+    var name=document.getElementById("b-name").value.trim();
+    if(!name){ st.textContent="Add your name to continue."; st.style.color="var(--pink)"; document.getElementById("b-name").focus(); return; }
+    var head=document.getElementById("b-head").value.trim();
+    var role=(window._qsRole||"").trim();
+    var credits=Object.keys(PICKED).map(function(slug){ var g=PICKED[slug]; var y=parseInt(g.year,10);
+      return { game_slug:g.slug, game_title:g.title, studio:g.studio||"", year:(isNaN(y)?null:y), work_start:(isNaN(y)?null:y), work_end:null, role:role, sheet:null, cover_url:"" };
+    });
+    var draft={ name:name, profile:{ headline:head, location:"", bio:"", open_to_work:0, avatar_url:"", links:[] }, credits:credits };
+    try{ localStorage.setItem("dq_draft", JSON.stringify(draft)); }catch(e){ st.textContent="Could not save locally — check browser storage settings."; st.style.color="var(--pink)"; return; }
+    st.textContent="Building your wall…"; st.style.color="var(--muted)";
+    location.href="/portfolio/view.html?draft=1";
+  }
+
+  // boot
+  if(window.DQAPI && DQAPI.isSignedIn && DQAPI.isSignedIn()){
+    // already have an account — send them to the real editor instead of the draft flow
+    app.innerHTML='<div class="blk"><h2>You’re already signed in</h2><div class="desc">Quick start builds a brand-new draft. Since you already have a portfolio, edit it directly instead.</div><div class="actions"><a class="btn primary" href="/portfolio/edit/">Edit my portfolio →</a><a class="btn" href="/portfolio/">View my portfolio</a></div></div>';
+    document.getElementById("steplabel").textContent="";
+    ["d1","d2","d3"].forEach(function(id){ document.getElementById(id).classList.remove("on"); });
+  } else {
+    setStep(1);
+  }
+})();
+</script>
+</body>
+</html>
