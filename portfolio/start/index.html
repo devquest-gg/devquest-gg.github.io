@@ -26,8 +26,9 @@
   .blk h2{font-size:18px;font-weight:800;margin:0 0 3px}
   .blk .desc{color:var(--muted);font-size:13px;margin:0 0 14px}
   label{display:block;font-size:12px;font-weight:700;color:#cdd8e6;margin:12px 0 5px}
-  input{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:9px;padding:10px 12px;color:var(--text);font-size:14px;font-family:inherit;outline:none}
-  input:focus{border-color:var(--accent)}
+  input,textarea{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:9px;padding:10px 12px;color:var(--text);font-size:14px;font-family:inherit;outline:none}
+  textarea{min-height:120px;resize:vertical;line-height:1.5}
+  input:focus,textarea:focus{border-color:var(--accent)}
   .row{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
   .row>div{flex:1;min-width:90px}
   .btn{display:inline-flex;align-items:center;gap:7px;font-size:14px;font-weight:750;border-radius:10px;padding:10px 18px;cursor:pointer;border:1px solid var(--border);background:var(--panel2);color:var(--text)}
@@ -115,15 +116,86 @@
     return out;
   }
 
+  // ---------- paste importer: LinkedIn / résumé text → studios + name + headline ----------
+  var _MONRE="jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec";
+  var _DRRE=new RegExp("(?:(?:"+_MONRE+")[a-z]*\\.?\\s+)?(\\d{4})\\s*(?:\\u2013|\\u2014|-|to|through)\\s*((?:(?:"+_MONRE+")[a-z]*\\.?\\s+)?\\d{4}|present|current|now|today|ongoing)","i");
+  var _TITLERE=/\b(producer|engineer|programmer|developer|designer|artist|director|manager|lead|president|animator|writer|analyst|architect|founder|owner|head|specialist|coordinator|technical|creative|executive|principal|qa|tester|scrum|product|vp)\b/i;
+  var _SUFFIXRE=/\b(games?|studios?|entertainment|interactive|software|inc|llc|ltd|corp|corporation|media|digital|works|worldwide|productions?|technologies|labs?)\b/i;
+  function _pnorm(s){ return String(s==null?"":s).toLowerCase().replace(/[^a-z0-9]+/g," ").trim(); }
+  function _year4(s){ var m=String(s==null?"":s).match(/\d{4}/); return m?parseInt(m[0],10):null; }
+  function _looksLikeName(l){ if(!l||l.length>44||/\d/.test(l)||/[@|·:/]/.test(l)) return false; if(_TITLERE.test(l)||_SUFFIXRE.test(l)) return false; var w=l.split(/\s+/); if(w.length<2||w.length>4) return false; for(var i=0;i<w.length;i++){ if(!/^[A-Z][A-Za-z'’.\-]*$/.test(w[i])) return false; } return true; }
+  function _stripJunk(s){ return String(s==null?"":s).replace(/·.*$/,"").replace(/\|.*$/,"").replace(/\b(full[\s-]?time|part[\s-]?time|contract|freelance|internship|permanent|remote|hybrid|on-?site)\b/ig,"").replace(/\s{2,}/g," ").replace(/^[\s,·|–—-]+|[\s,·|–—-]+$/g,"").trim(); }
+  function _segs(l){ return String(l==null?"":l).split(/[·|]|\s[–—-]\s|,/).map(function(s){return s.trim();}).filter(Boolean); }
+  function _studioIndex(rows){ var seen={}, arr=[]; for(var i=0;i<rows.length;i++){ var s=rows[i]&&rows[i][3]; if(!s) continue; var k=_pnorm(s); if(k.length<3||seen[k]) continue; seen[k]=1; arr.push({k:k,name:String(s)}); } return arr; }
+  function _findCompany(ctx, studioArr){
+    var exact=null, shortest=null, shortestLen=1e9;
+    for(var c=0;c<ctx.length;c++){ var segs=_segs(ctx[c]);
+      for(var s=0;s<segs.length;s++){ var sn=_pnorm(segs[s]); if(sn.length<3) continue;
+        for(var i=0;i<studioArr.length;i++){ var st=studioArr[i];
+          if(st.k===sn){ return st.name; }                                                   // exact catalogue hit wins
+          if((sn.length>=4 && st.k.indexOf(sn)>=0) || (st.k.length>=4 && sn.indexOf(st.k)>=0)){ if(st.k.length<shortestLen){ shortest=st.name; shortestLen=st.k.length; } }
+        }
+      }
+    }
+    if(shortest) return shortest;
+    for(var c2=0;c2<ctx.length;c2++){ var sg=_segs(ctx[c2]); for(var s2=0;s2<sg.length;s2++){ if(_SUFFIXRE.test(sg[s2]) && !_TITLERE.test(sg[s2]) && !/\d{4}/.test(sg[s2])){ return _stripJunk(sg[s2]); } } }  // suffix fallback
+    return "";
+  }
+  function _findTitle(ctx){ for(var c=0;c<ctx.length;c++){ var segs=_segs(ctx[c]); for(var s=0;s<segs.length;s++){ var seg=segs[s]; if(_TITLERE.test(seg) && !/\d{4}/.test(seg) && seg.length<=48){ return _stripJunk(seg); } } } return ""; }
+  function parseProfile(text, studioArr){
+    var lines=String(text==null?"":text).split(/\r?\n/).map(function(l){return l.replace(/\s+/g," ").trim();});
+    var ne=lines.filter(Boolean);
+    var name="", headline="";
+    for(var i=0;i<Math.min(ne.length,5);i++){ if(_looksLikeName(ne[i])){ name=ne[i]; var nx=ne[i+1]||""; if(nx && !/\d{4}/.test(nx) && nx.length<=100 && !_looksLikeName(nx)) headline=nx; break; } }
+    var jobs=[];
+    for(var li=0;li<lines.length;li++){
+      if(/^\s*(shipped\s*:|•|•|○|▪)/i.test(lines[li])) continue;   // skip résumé "Shipped:" / bullet lines that carry year ranges
+      var dr=lines[li].match(_DRRE); if(!dr) continue;
+      var from=_year4(dr[1]); var to=/present|current|now|today|ongoing/i.test(dr[2])?"":(_year4(dr[2])||"");
+      var ctx=[]; for(var k=li-2;k<=li;k++){ if(k>=0 && lines[k]) ctx.push(lines[k].replace(_DRRE,"").trim()); }
+      var company=_findCompany(ctx, studioArr); var title=_findTitle(ctx);
+      if(!company) company=_stripJunk((lines[li-1]||"").replace(_DRRE,""));
+      if(company) jobs.push({company:company, title:title, from:from, to:to});
+    }
+    var byC={}, order=[];
+    jobs.forEach(function(j){ var k=_pnorm(j.company); if(!k) return; if(!byC[k]){ byC[k]={company:j.company,title:j.title||"",from:j.from||"",to:j.to}; order.push(k); }
+      else { var e=byC[k]; if(j.from && (!e.from || j.from<e.from)) e.from=j.from; if(e.to===""){} else if(j.to===""){ e.to=""; } else if(j.to && (!e.to || j.to>e.to)) e.to=j.to; if(!e.title && j.title) e.title=j.title; } });
+    var merged=order.map(function(k){ return byC[k]; });
+    merged.sort(function(a,b){ var at=(a.to===""?9999:(a.to||0)), bt=(b.to===""?9999:(b.to||0)); return bt-at || (b.from||0)-(a.from||0); });
+    var role=""; if(headline){ var ai=headline.toLowerCase().indexOf(" at "); role=ai>0?headline.slice(0,ai).trim():""; }
+    if(!role && merged[0]) role=merged[0].title||"";
+    return { name:name, headline:headline, jobs:merged, role:role };
+  }
+  function autofillFromPaste(){
+    var ta=document.getElementById("pt-text"); var st=document.getElementById("pt-status");
+    var text=ta?ta.value:""; if(!text.trim()){ if(st){ st.textContent="Paste your LinkedIn or résumé text first."; st.style.color="var(--pink)"; } return; }
+    if(st){ st.textContent="Reading…"; st.style.color="var(--muted)"; }
+    loadCatalog().then(function(rows){
+      var res=parseProfile(text, _studioIndex(rows));
+      if(res.name) window._qsName=res.name;
+      if(res.headline) window._qsHead=res.headline;
+      if(res.role) window._qsRole=res.role;
+      if(res.jobs.length) STUDIOS=res.jobs.map(function(j){ return { name:j.company, from:(j.from||""), to:(j.to||"") }; });
+      renderStudios();
+      var st2=document.getElementById("pt-status"); var n=res.jobs.length;
+      if(st2){ st2.textContent = n ? ("Found "+n+" studio"+(n===1?"":"s")+(res.name?" and your name":"")+" — review below, fix anything, then Find my games.") : "Couldn’t spot studios in that text — add them manually below."; st2.style.color = n?"var(--green)":"var(--muted)"; }
+    }).catch(function(){ var s3=document.getElementById("pt-status"); if(s3){ s3.textContent="Something went wrong reading that."; s3.style.color="var(--pink)"; } });
+  }
+
   // ---------- Step 1: studios ----------
   function renderStudios(){
     app.innerHTML =
-      '<div class="blk"><h2>Where have you worked?</h2><div class="desc">Add each studio and roughly when you were there. Years are optional but help us show the right games.</div>'+
+      '<div class="blk"><h2>Have a LinkedIn or résumé? Paste it. <span style="font-size:12px;font-weight:700;color:var(--gold);vertical-align:middle;border:1px solid rgba(224,178,58,.4);border-radius:6px;padding:1px 7px">FASTEST</span></h2><div class="desc">We’ll read your name, headline, and the studios you worked at — then you just confirm below. Nothing is uploaded; it’s parsed right here in your browser.</div>'+
+        '<textarea id="pt-text" placeholder="Paste your LinkedIn profile text or your résumé here…"></textarea>'+
+        '<div class="actions"><button class="btn primary" id="pt-go">Autofill from this →</button><span class="status" id="pt-status"></span></div>'+
+      '</div>'+
+      '<div class="blk"><h2>Where have you worked?</h2><div class="desc">Add each studio and roughly when you were there — or edit what the paste found above. Years are optional but help us show the right games.</div>'+
         '<div class="sdrop"><label>Studio / developer</label><input id="st-name" placeholder="e.g. Insomniac Games" autocomplete="off"><div id="st-sug"></div></div>'+
         '<div class="row" style="margin-top:10px"><div><label>From (year)</label><input id="st-from" inputmode="numeric" placeholder="2019"></div><div><label>To (year, or blank if current)</label><input id="st-to" inputmode="numeric" placeholder="2022"></div><div style="flex:0 0 auto"><button class="btn sm" id="st-add">+ Add studio</button></div></div>'+
         '<div id="st-list" style="margin-top:14px"></div>'+
         '<div class="actions"><button class="btn primary" id="to-games" disabled>Find my games →</button></div>'+
       '</div>';
+    var ptg=document.getElementById("pt-go"); if(ptg) ptg.onclick=autofillFromPaste;
     renderStudioList();
     var nameEl=document.getElementById("st-name");
     document.getElementById("st-add").onclick=addStudio;
