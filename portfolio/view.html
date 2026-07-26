@@ -622,7 +622,7 @@
 
     // ---- confirm count ----
     var confirmed = credits.filter(function(c){ return (c.vouch_count||0)>0; }).length;
-    var contact = '<div class="wrap"><div class="contact"><h3>'+esc(p.name.split(" ")[0])+' is '+(p.open_to_work?'open to new roles':'on DevQuest')+'</h3><p>Résumé tailors to your posting in one click.</p><div class="clinks"><a class="btn primary dq-rpdf" style="cursor:pointer">⬇ Résumé (PDF)</a><a class="btn ghost dq-rdocx" style="cursor:pointer">⬇ Word (.docx)</a>'+linkBtns+'</div>'+
+    var contact = '<div class="wrap"><div class="contact"><h3>'+esc(p.name.split(" ")[0])+' is '+(p.open_to_work?'open to new roles':'on DevQuest')+'</h3><p>Résumé tailors to your posting in one click.</p><div class="clinks"><a class="btn primary dq-rpdf" style="cursor:pointer">⬇ Résumé (PDF)</a><a class="btn ghost dq-rdocx" style="cursor:pointer">⬇ Word (.docx)</a><a class="btn ghost dq-tailor" style="cursor:pointer">🎯 Tailor to a job</a>'+linkBtns+'</div>'+
       (confirmed?'<div class="vfoot"><span class="v2">✓</span> '+confirmed+' of '+credits.length+' credits confirmed by teammates who shipped the same game · <a href="/credits/how-evidence-works.html" style="color:var(--accent)">how evidence works →</a></div>':'')+
       '</div></div>';
 
@@ -657,7 +657,7 @@
         (p.headline ? '<div class="role">'+esc(p.headline)+'</div>' : '')+
         (p.bio ? '<p class="bio">'+esc(p.bio)+'</p>' : '')+
         '<div class="tags">'+tags.map(function(t){return '<span class="tag spec">'+esc(t)+'</span>';}).join("")+'</div>'+
-        '<div class="cta"><a class="btn primary dq-rpdf" style="cursor:pointer">⬇ Résumé (PDF)</a><a class="btn ghost dq-rdocx" style="cursor:pointer">⬇ Word (.docx)</a>'+lb+'</div>'+
+        '<div class="cta"><a class="btn primary dq-rpdf" style="cursor:pointer">⬇ Résumé (PDF)</a><a class="btn ghost dq-rdocx" style="cursor:pointer">⬇ Word (.docx)</a><a class="btn ghost dq-tailor" style="cursor:pointer">🎯 Tailor to a job</a>'+lb+'</div>'+
         '</div></div>'+
         '<div class="stats">'+
           stat((CUR-minY)+" yrs","In the industry")+stat(nStudios,"Studios")+stat(credits.length,"Credits")+
@@ -682,19 +682,41 @@
       try{ var mr=await DQAPI.me(); var pe=mr&&mr.data&&mr.data.person; if(pe) email=pe.email||pe.primary_email||(pe.emails&&pe.emails[0]&&(pe.emails[0].email||pe.emails[0]))||""; }catch(e){}
     }
     var links=(p.links||[]).map(function(l){ return l.url; }).filter(Boolean);
-    var experience=(_positions||[]).map(function(x){
-      var bullets=String(x.description||"").split(/\n+/).map(function(b){return rPlain(b).trim();}).filter(Boolean);
-      return { title:x.title||"", company:x.studio||"", location:x.location||"", dates:rDates(x), bullets:bullets };
+    var RN=function(x){ return String(x||"").trim().toLowerCase().replace(/[^a-z0-9]+/g," ").trim(); };
+    var NOWY=(new Date()).getFullYear();
+    // Positions become the primary unit. Each carries a numeric span so games can be matched into it.
+    var pos=(_positions||[]).map(function(x){
+      var s=x.start_year||null, e=x.is_current?NOWY:(x.end_year||s||null);
+      return { title:x.title||"", company:x.studio||"", location:x.location||"", dates:rDates(x), _s:s||0, _e:e||s||0,
+        descBullets:String(x.description||"").split(/\n+/).map(function(b){return rPlain(b).trim();}).filter(Boolean),
+        games:[] };
     });
+    var posByStudio={}; pos.forEach(function(pp){ var k=RN(pp.company); if(k && !(k in posByStudio)) posByStudio[k]=pp; });
+    // Credits (games) newest-first, then routed under the job that shipped them.
     var creds=(_credits||[]).slice().sort(function(a,b){ return (b.work_start||b.year||0)-(a.work_start||a.year||0); });
-    var projects=creds.map(function(c){
+    var orphans=[];
+    creds.forEach(function(c){
       var sh=c.sheet||{};
-      var bullets=(sh.contributions||[]).slice(0,4).map(function(b){return rPlain(b).trim();}).filter(Boolean);
-      if(!bullets.length && sh.summary) bullets=[rPlain(sh.summary).trim()];
-      return { title:c.game_title||"", role:c.role||"", studio:c.studio||"", years:rCreditYears(c), bullets:bullets };
+      var bl=(sh.contributions||[]).slice(0,4).map(function(b){return rPlain(b).trim();}).filter(Boolean);
+      if(!bl.length && sh.summary) bl=[rPlain(sh.summary).trim()];
+      var y=(c.work_start||c.year||c.work_end||null);
+      var g={ title:c.game_title||"", role:c.role||"", studio:c.studio||"", years:rCreditYears(c), bullets:bl, _y:y };
+      var host=null, k=RN(c.studio);
+      if(k && posByStudio[k]) host=posByStudio[k];                         // 1) match by studio name
+      if(!host && y){ for(var i=0;i<pos.length;i++){ if(pos[i]._s && y>=pos[i]._s && y<=(pos[i]._e||pos[i]._s)){ host=pos[i]; break; } } } // 2) else by date overlap
+      if(host) host.games.push(g); else orphans.push(g);                   // 3) else an orphan title
     });
+    // Assemble each job: a "Shipped:" line naming its titles, then position bullets + the games' contribution bullets (deduped).
+    var experience=pos.map(function(pp){
+      var shipped=pp.games.map(function(g){ return g.title+(g.years?" ("+g.years+")":""); });
+      var bullets=[], seen={};
+      pp.descBullets.forEach(function(b){ var kk=b.toLowerCase(); if(b&&!seen[kk]){ seen[kk]=1; bullets.push(b); } });
+      pp.games.forEach(function(g){ g.bullets.forEach(function(b){ var kk=b.toLowerCase(); if(b&&!seen[kk]){ seen[kk]=1; bullets.push(b); } }); });
+      return { title:pp.title, company:pp.company, location:pp.location, dates:pp.dates, _s:pp._s||0, shipped:shipped, bullets:bullets };
+    }).sort(function(a,b){ return (b._s||0)-(a._s||0); });
+    var additional=orphans.map(function(g){ return { title:g.title, role:g.role, studio:g.studio, years:g.years, bullets:g.bullets.slice(0,2) }; });
     var skills=((p.skills&&p.skills.groups)||[]).map(function(g){ return { label:g.label||"", items:(g.items||[]) }; });
-    return { name:p.name||"", headline:p.headline||"", location:p.location||"", email:email, links:links, summary:p.bio||"", experience:experience, projects:projects, skills:skills };
+    return { name:p.name||"", headline:p.headline||"", location:p.location||"", email:email, links:links, summary:p.bio||"", experience:experience, additional:additional, skills:skills };
   }
   function resumeBody(m){
     var h='<h1>'+rEsc(m.name)+'</h1>';
@@ -704,10 +726,11 @@
     if(m.summary) h+='<h2>Summary</h2><p>'+rEsc(rPlain(m.summary))+'</p>';
     if(m.experience.length){ h+='<h2>Experience</h2>'; m.experience.forEach(function(j){
       h+='<div class="ritem"><p class="rhd"><strong>'+rEsc(j.title)+'</strong>'+(j.company?', '+rEsc(j.company):'')+(j.location?' — '+rEsc(j.location):'')+(j.dates?'<span class="rdt">'+rEsc(j.dates)+'</span>':'')+'</p>';
+      if(j.shipped&&j.shipped.length) h+='<p class="rship"><strong>Shipped:</strong> '+rEsc(j.shipped.join(", "))+'</p>';
       if(j.bullets.length) h+='<ul>'+j.bullets.map(function(b){return '<li>'+rEsc(b)+'</li>';}).join("")+'</ul>';
       h+='</div>';
     }); }
-    if(m.projects.length){ h+='<h2>Shipped Titles</h2>'; m.projects.forEach(function(pr){
+    if(m.additional&&m.additional.length){ h+='<h2>Additional Shipped Titles</h2>'; m.additional.forEach(function(pr){
       h+='<div class="ritem"><p class="rhd"><strong>'+rEsc(pr.title)+'</strong>'+(pr.role?' — '+rEsc(pr.role):'')+(pr.studio?', '+rEsc(pr.studio):'')+(pr.years?'<span class="rdt">'+rEsc(pr.years)+'</span>':'')+'</p>';
       if(pr.bullets.length) h+='<ul>'+pr.bullets.map(function(b){return '<li>'+rEsc(b)+'</li>';}).join("")+'</ul>';
       h+='</div>';
@@ -715,11 +738,11 @@
     if(m.skills.length){ h+='<h2>Skills</h2>'; m.skills.forEach(function(g){ h+='<p class="rsk">'+(g.label?'<strong>'+rEsc(g.label)+':</strong> ':'')+rEsc(g.items.join(", "))+'</p>'; }); }
     return h;
   }
-  function resumeCSS(){ return "body{font-family:Arial,Calibri,'Helvetica Neue',sans-serif;color:#111;font-size:11pt;line-height:1.35;margin:0}.rwrap{max-width:7.5in;margin:0 auto;padding:0.5in}h1{font-size:20pt;margin:0 0 2pt}.rsub{font-size:11.5pt;font-weight:bold;margin:0 0 2pt}.rcon{font-size:10pt;color:#333;margin:0 0 10pt}h2{font-size:12pt;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid #888;padding-bottom:2pt;margin:14pt 0 6pt}p{margin:0 0 4pt}.ritem{margin:0 0 9pt}.rhd{margin:0 0 2pt}.rdt{float:right;font-weight:normal;color:#333}ul{margin:2pt 0 0;padding-left:18pt}li{margin:0 0 2pt}.rsk{margin:0 0 3pt}@page{size:letter;margin:0.5in}@media print{.rwrap{padding:0}}"; }
+  function resumeCSS(){ return "body{font-family:Arial,Calibri,'Helvetica Neue',sans-serif;color:#111;font-size:11pt;line-height:1.35;margin:0}.rwrap{max-width:7.5in;margin:0 auto;padding:0.5in}h1{font-size:20pt;margin:0 0 2pt}.rsub{font-size:11.5pt;font-weight:bold;margin:0 0 2pt}.rcon{font-size:10pt;color:#333;margin:0 0 10pt}h2{font-size:12pt;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid #888;padding-bottom:2pt;margin:14pt 0 6pt}p{margin:0 0 4pt}.ritem{margin:0 0 9pt}.rhd{margin:0 0 2pt}.rship{margin:0 0 3pt;font-size:10pt;color:#222}.rdt{float:right;font-weight:normal;color:#333}ul{margin:2pt 0 0;padding-left:18pt}li{margin:0 0 2pt}.rsk{margin:0 0 3pt}@page{size:letter;margin:0.5in}@media print{.rwrap{padding:0}}"; }
   function resumeDocName(m){ return ((m.name||"resume").replace(/[^\w\- ]+/g,"").trim()||"resume")+" Resume"; }
   function resumeFullHTML(m){ return '<!doctype html><html><head><meta charset="utf-8"><title>'+rEsc(m.name)+' Resume</title><style>'+resumeCSS()+'</style></head><body><div class="rwrap">'+resumeBody(m)+'</div></body></html>'; }
-  async function downloadResumePDF(){
-    var m=await resumeModel();
+  async function downloadResumePDF(mOverride){
+    var m=mOverride||await resumeModel();
     var w=window.open("","_blank");
     if(!w){ alert("Allow pop-ups for this site to save the résumé as PDF, or use the Word download."); return; }
     w.document.open(); w.document.write(resumeFullHTML(m)); w.document.close();
@@ -761,9 +784,10 @@
     if(m.experience.length){ b+=H("Experience"); m.experience.forEach(function(j){
       var line=[j.company,j.location].filter(Boolean).join(" — ");
       b+=_para(_run(j.title,{b:true,sz:22})+(line?_run(", "+line,{sz:22}):"")+(j.dates?_run("   ("+j.dates+")",{sz:20,color:"333333"}):""),{before:60,after:20});
+      if(j.shipped&&j.shipped.length) b+=_para(_run("Shipped: ",{b:true,sz:21})+_run(j.shipped.join(", "),{sz:21}),{after:20});
       j.bullets.forEach(function(x){ b+=BL(x); });
     }); }
-    if(m.projects.length){ b+=H("Shipped Titles"); m.projects.forEach(function(pr){
+    if(m.additional&&m.additional.length){ b+=H("Additional Shipped Titles"); m.additional.forEach(function(pr){
       var meta=[pr.role,pr.studio].filter(Boolean).join(", ");
       b+=_para(_run(pr.title,{b:true,sz:22})+(meta?_run(" — "+meta,{sz:22}):"")+(pr.years?_run("   ("+pr.years+")",{sz:20,color:"333333"}):""),{before:60,after:20});
       pr.bullets.forEach(function(x){ b+=BL(x); });
@@ -776,8 +800,8 @@
   }
   var _CT='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/></Types>';
   var _RELS='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>';
-  async function downloadResumeDOCX(){
-    var m=await resumeModel();
+  async function downloadResumeDOCX(mOverride){
+    var m=mOverride||await resumeModel();
     var blob=_zipStore([ {name:"[Content_Types].xml",data:_CT}, {name:"_rels/.rels",data:_RELS}, {name:"word/document.xml",data:resumeDocXml(m)} ]);
     _rTrigger(blob, resumeDocName(m)+".docx");
   }
@@ -785,7 +809,179 @@
     if(!e.target||!e.target.closest) return;
     if(e.target.closest(".dq-rpdf")){ e.preventDefault(); downloadResumePDF(); }
     else if(e.target.closest(".dq-rdocx")){ e.preventDefault(); downloadResumeDOCX(); }
+    else if(e.target.closest(".dq-tailor")){ e.preventDefault(); openTailor(); }
   });
+
+  /* ================= Deterministic job-tailoring (no LLM) =================
+     Paste a job description → we extract the requirements it names, check each
+     against what's actually in the profile (via a game-dev synonym map), score
+     the fit, list the gaps, and reorder each job's bullets so the relevant work
+     leads. Nothing is invented or rewritten — we only reorder and report. */
+  // Canonical term → the surface forms that mean the same thing. Drives both
+  // "what does the posting ask for" and "does the résumé already say it".
+  var TLEX=[
+    {canon:"unreal",label:"Unreal Engine",v:["unreal","unreal engine","ue4","ue5","ue 4","ue 5"]},
+    {canon:"unity",label:"Unity",v:["unity","unity3d"]},
+    {canon:"cpp",label:"C++",v:["c++","cpp"]},
+    {canon:"csharp",label:"C#",v:["c#","c sharp"]},
+    {canon:"python",label:"Python",v:["python"]},
+    {canon:"multiplayer",label:"Multiplayer / netcode",v:["multiplayer","netcode","networking","online","pvp","matchmaking","replication"]},
+    {canon:"liveops",label:"Live-ops / live service",v:["live ops","liveops","live service","live-service","games as a service","gaas","seasonal content","seasons","post launch","post-launch"]},
+    {canon:"aaa",label:"AAA production",v:["aaa","triple a","aaaa"]},
+    {canon:"console",label:"Console",v:["console","playstation","ps5","xbox","nintendo","switch"]},
+    {canon:"pc",label:"PC",v:["pc","steam","epic"]},
+    {canon:"mobile",label:"Mobile",v:["mobile","ios","android"]},
+    {canon:"gameplay",label:"Gameplay",v:["gameplay","game feel","mechanics","combat"]},
+    {canon:"engine",label:"Engine / tech",v:["engine","engine programming","runtime","tooling","tools programming"]},
+    {canon:"tools",label:"Tools / pipeline",v:["tools","pipeline","content pipeline","workflow tooling"]},
+    {canon:"ai",label:"AI",v:["ai","artificial intelligence","behavior tree","navmesh","pathfinding"]},
+    {canon:"animation",label:"Animation",v:["animation","rigging","skeletal","mocap","motion capture"]},
+    {canon:"rendering",label:"Rendering / graphics",v:["rendering","graphics","shader","shaders","lighting","gpu","render pipeline"]},
+    {canon:"physics",label:"Physics",v:["physics","collision","simulation"]},
+    {canon:"optimization",label:"Optimization / perf",v:["optimization","optimisation","performance","profiling","frame rate","fps","memory budget"]},
+    {canon:"ui",label:"UI/UX",v:["ui","ux","user interface","user experience","hud","front end"]},
+    {canon:"production",label:"Production",v:["production","producer","program management","project management","delivery"]},
+    {canon:"agile",label:"Agile / Scrum",v:["agile","scrum","kanban","sprint","sprints","backlog"]},
+    {canon:"leadership",label:"Leadership / management",v:["leadership","lead","led","manager","managed","management","mentor","mentoring","people management","direct reports"]},
+    {canon:"crossfunc",label:"Cross-functional",v:["cross functional","cross-functional","cross discipline","cross-discipline","stakeholder","stakeholders"]},
+    {canon:"roadmap",label:"Roadmap / planning",v:["roadmap","milestone","milestones","planning","scheduling","forecasting"]},
+    {canon:"shipped",label:"Shipped a title",v:["shipped","launched","released","ship a game","shipped titles"]},
+    {canon:"perforce",label:"Perforce",v:["perforce","p4","version control","source control"]},
+    {canon:"git",label:"Git",v:["git","github","gitlab"]},
+    {canon:"jira",label:"Jira",v:["jira","confluence"]},
+    {canon:"analytics",label:"Analytics / data",v:["analytics","data driven","data-driven","kpis","metrics","telemetry","a/b testing"]},
+    {canon:"narrative",label:"Narrative / design",v:["narrative","story","writing","level design","game design","systems design","encounter design"]},
+    {canon:"audio",label:"Audio",v:["audio","sound design","wwise","fmod"]},
+    {canon:"vfx",label:"VFX",v:["vfx","visual effects","particles","niagara"]},
+    {canon:"qa",label:"QA / testing",v:["qa","quality assurance","testing","test plans","automation testing"]},
+    {canon:"publishing",label:"Publishing",v:["publishing","publisher","go to market","go-to-market","marketing","community"]},
+    {canon:"remote",label:"Remote / distributed",v:["remote","distributed team","hybrid","work from home"]}
+  ];
+  var TSTOP={the:1,and:1,for:1,with:1,you:1,our:1,are:1,will:1,that:1,this:1,have:1,from:1,your:1,who:1,all:1,not:1,but:1,can:1,job:1,role:1,work:1,team:1,teams:1,years:1,year:1,experience:1,ability:1,strong:1,skills:1,including:1,across:1,within:1,help:1,were:1,what:1,when:1,into:1,they:1,them:1,their:1,about:1,other:1,more:1,such:1,also:1,plus:1,per:1,etc:1,using:1,use:1,new:1,well:1,like:1,we:1,a:1,an:1,to:1,of:1,in:1,on:1,or:1,is:1,as:1,at:1,be:1,by:1,it:1};
+  // Lower-cased, boundary-padded text that keeps + and # so "c++"/"c#" survive.
+  function _tlc(s){ return " "+String(s==null?"":s).toLowerCase().replace(/[^a-z0-9+#.\s-]/g," ").replace(/\s+/g," ").trim()+" "; }
+  function _tHas(text,v){
+    if(!v) return false;
+    if(v.indexOf(" ")>=0 || v.length>4) return text.indexOf(v)>=0;   // multiword / long → substring is safe
+    var re=new RegExp("(^|[^a-z0-9+#])"+v.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")+"([^a-z0-9+#]|$)");
+    return re.test(text);                                            // short token → word boundary (avoids "ai" in "said")
+  }
+  function _tReq(jd){                                                // requirements the posting names
+    var t=_tlc(jd), req=[], used={};
+    TLEX.forEach(function(L){ for(var i=0;i<L.v.length;i++){ if(_tHas(t,L.v[i])){ req.push(L); used[L.canon]=1; break; } } });
+    // supplemental: repeated meaningful words the lexicon didn't catch (shown, not scored)
+    var freq={}, m=t.match(/[a-z][a-z0-9+#]{3,}/g)||[];
+    m.forEach(function(w){ if(!TSTOP[w]) freq[w]=(freq[w]||0)+1; });
+    var extra=Object.keys(freq).filter(function(w){ return freq[w]>=2; })
+      .filter(function(w){ for(var i=0;i<TLEX.length;i++){ for(var j=0;j<TLEX[i].v.length;j++){ if(TLEX[i].v[j].indexOf(w)>=0) return false; } } return true; })
+      .sort(function(a,b){ return freq[b]-freq[a]; }).slice(0,8);
+    return { req:req, extra:extra };
+  }
+  function _tInv(m){                                                 // everything the résumé actually says
+    var parts=[m.headline,m.summary];
+    (m.experience||[]).forEach(function(j){ parts.push(j.title,j.company,(j.shipped||[]).join(" "),(j.bullets||[]).join(" ")); });
+    (m.additional||[]).forEach(function(a){ parts.push(a.title,a.role,a.studio,(a.bullets||[]).join(" ")); });
+    (m.skills||[]).forEach(function(g){ parts.push(g.label,(g.items||[]).join(" ")); });
+    return _tlc(parts.join(" "));
+  }
+  function tailorAnalyze(jd,m){
+    var ex=_tReq(jd), inv=_tInv(m), matched=[], missing=[];
+    ex.req.forEach(function(L){ var hit=false; for(var i=0;i<L.v.length;i++){ if(_tHas(inv,L.v[i])){ hit=true; break; } } (hit?matched:missing).push(L); });
+    var score=ex.req.length?Math.round(100*matched.length/ex.req.length):0;
+    var mv=[]; matched.forEach(function(L){ mv=mv.concat(L.v); });
+    function bscore(txt){ var tt=_tlc(txt),n=0; for(var i=0;i<mv.length;i++){ if(_tHas(tt,mv[i])) n++; } return n; }
+    var tm=JSON.parse(JSON.stringify(m));                            // tailored copy (plain data → safe clone)
+    (tm.experience||[]).forEach(function(j){
+      j.bullets=(j.bullets||[]).map(function(b,i){ return {b:b,i:i,s:bscore(b)}; })
+        .sort(function(a,b){ return b.s-a.s || a.i-b.i; }).map(function(o){ return o.b; });  // relevant bullets lead, stable otherwise
+    });
+    (tm.additional||[]).sort(function(a,b){ return bscore(b.title+" "+(b.bullets||[]).join(" ")) - bscore(a.title+" "+(a.bullets||[]).join(" ")); });
+    return { score:score, matched:matched, missing:missing, extra:ex.extra, total:ex.req.length, tm:tm };
+  }
+
+  // ---- Tailor variants (saved locally, keyed to this profile slug) ----
+  var _tVarKey="dq_resume_variants:"+(function(){ try{ return new URLSearchParams(location.search).get("slug")||"me"; }catch(e){ return "me"; } })();
+  function _tVarsGet(){ try{ return JSON.parse(localStorage.getItem(_tVarKey)||"[]"); }catch(e){ return []; } }
+  function _tVarsSet(a){ try{ localStorage.setItem(_tVarKey, JSON.stringify(a.slice(0,20))); }catch(e){} }
+
+  var _tState={jd:"",res:null};
+  function _tEsc(s){ return rEsc(s); }
+  function openTailor(){
+    var o=document.getElementById("tailovl");
+    if(!o){ o=document.createElement("div"); o.id="tailovl"; document.body.appendChild(o);
+      o.addEventListener("click",function(e){ if(e.target===o) closeTailor(); });
+      document.addEventListener("keydown",function(e){ if(e.key==="Escape" && o.classList.contains("on")) closeTailor(); });
+      _injectTailorCSS();
+    }
+    o.innerHTML=_tailorHTML(); o.classList.add("on"); document.body.style.overflow="hidden";
+    var ta=document.getElementById("tjd"); if(ta){ ta.value=_tState.jd||""; ta.focus(); }
+    _wireTailor(o);
+    if(_tState.res) _renderTailorResult();
+  }
+  function closeTailor(){ var o=document.getElementById("tailovl"); if(o){ o.classList.remove("on"); document.body.style.overflow=""; } }
+  function _tailorHTML(){
+    var vars=_tVarsGet();
+    var vhtml=vars.length?('<div class="tvars"><span class="tvl">Saved:</span> '+vars.map(function(v,i){ return '<button class="tvchip" data-vi="'+i+'">'+_tEsc(v.label)+'</button>'; }).join(" ")+'</div>'):'';
+    return '<div class="tsheet"><button class="tclose" id="tclose" aria-label="Close">×</button>'+
+      '<h2 class="tttl">Tailor your résumé to a job</h2>'+
+      '<p class="tsub">Paste the job posting. We check it against your profile, show your fit and any gaps, and reorder your bullets so the relevant work leads. Nothing is rewritten or invented.</p>'+
+      vhtml+
+      '<textarea id="tjd" class="tjd" placeholder="Paste the full job description here…"></textarea>'+
+      '<div class="trow"><button class="btn primary" id="tanalyze">Analyze fit</button><button class="btn ghost" id="tclear2">Clear</button></div>'+
+      '<div id="tout" class="tout"></div></div>';
+  }
+  function _wireTailor(o){
+    var cl=function(id,fn){ var el=o.querySelector("#"+id); if(el) el.addEventListener("click",fn); };
+    cl("tclose",closeTailor);
+    cl("tanalyze",function(){ var ta=document.getElementById("tjd"); _tState.jd=ta?ta.value:""; if(!_tState.jd.trim()){ ta&&ta.focus(); return; }
+      resumeModel().then(function(m){ _tState.res=tailorAnalyze(_tState.jd,m); _renderTailorResult(); }); });
+    cl("tclear2",function(){ var ta=document.getElementById("tjd"); if(ta){ ta.value=""; ta.focus(); } _tState.jd=""; _tState.res=null; var out=document.getElementById("tout"); if(out) out.innerHTML=""; });
+    o.querySelectorAll(".tvchip").forEach(function(b){ b.addEventListener("click",function(){ var v=_tVarsGet()[+b.getAttribute("data-vi")]; if(!v) return; _tState.jd=v.jd; var ta=document.getElementById("tjd"); if(ta) ta.value=v.jd;
+      resumeModel().then(function(m){ _tState.res=tailorAnalyze(v.jd,m); _renderTailorResult(); }); }); });
+  }
+  function _renderTailorResult(){
+    var out=document.getElementById("tout"); if(!out) return; var r=_tState.res; if(!r) return;
+    if(!r.total){ out.innerHTML='<div class="tnote">We couldn\'t spot specific requirements in that text — paste the full posting (responsibilities and qualifications) for a useful read.</div>'; return; }
+    var ring=r.score>=70?"g":(r.score>=40?"a":"r");
+    var chips=function(arr,cls){ return arr.map(function(L){ return '<span class="tchip '+cls+'">'+_tEsc(L.label)+'</span>'; }).join(""); };
+    var extra=r.extra&&r.extra.length?('<div class="tblk"><div class="tbh">Also mentioned in the posting</div><div class="tchips">'+r.extra.map(function(w){ return '<span class="tchip x">'+_tEsc(w)+'</span>'; }).join("")+'</div><div class="thint">Not scored — check these are reflected somewhere in your profile if they matter to you.</div></div>'):'';
+    out.innerHTML=
+      '<div class="tscore"><div class="tring '+ring+'">'+r.score+'<span>%</span></div><div class="tsx"><div class="tsxn">You match '+r.matched.length+' of '+r.total+' things this posting asks for.</div><div class="tsxs">Your bullets have been reordered for this role in the downloads below.</div></div></div>'+
+      '<div class="tblk"><div class="tbh ok">Matched — surface these</div><div class="tchips">'+(r.matched.length?chips(r.matched,"ok"):'<span class="tnone">None yet.</span>')+'</div></div>'+
+      '<div class="tblk"><div class="tbh gap">Gaps — not found in your profile</div><div class="tchips">'+(r.missing.length?chips(r.missing,"gap"):'<span class="tnone">Nothing missing — strong match.</span>')+'</div>'+(r.missing.length?'<div class="thint">If you genuinely have any of these, add them to a game one-sheet or your bio and your fit climbs. Don\'t claim ones you can\'t back up.</div>':'')+'</div>'+
+      extra+
+      '<div class="trow tdl"><button class="btn primary" id="tdpdf">⬇ Tailored résumé (PDF)</button><button class="btn ghost" id="tddocx">⬇ Tailored Word (.docx)</button><button class="btn ghost" id="tsave">Save this version</button></div>'+
+      '<div id="tsavemsg" class="tsavemsg"></div>';
+    var q=function(id){ return document.getElementById(id); };
+    q("tdpdf").addEventListener("click",function(){ downloadResumePDF(_tState.res.tm); });
+    q("tddocx").addEventListener("click",function(){ downloadResumeDOCX(_tState.res.tm); });
+    q("tsave").addEventListener("click",function(){
+      var def="Tailored "+((_tVarsGet().length+1)); var label=(window.prompt&&window.prompt("Name this tailored version (e.g. company or role):",def))||def;
+      var vars=_tVarsGet(); vars.unshift({label:label.slice(0,40),jd:_tState.jd}); _tVarsSet(vars);
+      var mm=q("tsavemsg"); if(mm){ mm.textContent="Saved \""+label+"\" — it'll be here next time you open this."; }
+    });
+  }
+  function _injectTailorCSS(){
+    if(document.getElementById("tailcss")) return;
+    var s=document.createElement("style"); s.id="tailcss";
+    s.textContent="#tailovl{position:fixed;inset:0;background:rgba(8,10,16,.72);backdrop-filter:blur(3px);z-index:1200;display:none;align-items:flex-start;justify-content:center;overflow:auto;padding:40px 16px}#tailovl.on{display:flex}"+
+      ".tsheet{background:var(--card,#12151d);color:var(--fg,#e9edf5);border:1px solid rgba(255,255,255,.08);border-radius:16px;max-width:640px;width:100%;padding:26px 26px 30px;position:relative;box-shadow:0 24px 60px rgba(0,0,0,.5)}"+
+      ".tclose{position:absolute;top:14px;right:16px;background:none;border:none;color:var(--fg,#e9edf5);font-size:26px;line-height:1;cursor:pointer;opacity:.7}.tclose:hover{opacity:1}"+
+      ".tttl{margin:0 0 6px;font-size:20px}.tsub{margin:0 0 14px;color:var(--muted,#9aa4b5);font-size:13.5px;line-height:1.5}"+
+      ".tvars{margin:0 0 12px;font-size:12.5px}.tvl{color:var(--muted,#9aa4b5);margin-right:4px}.tvchip{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);color:var(--fg,#e9edf5);border-radius:20px;padding:3px 11px;font-size:12px;cursor:pointer;margin:2px}.tvchip:hover{background:rgba(255,255,255,.12)}"+
+      ".tjd{width:100%;min-height:150px;box-sizing:border-box;background:rgba(0,0,0,.28);color:var(--fg,#e9edf5);border:1px solid rgba(255,255,255,.14);border-radius:10px;padding:12px;font:14px/1.5 inherit;resize:vertical}"+
+      ".trow{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap}.tdl{margin-top:18px;border-top:1px solid rgba(255,255,255,.08);padding-top:16px}"+
+      ".tout{margin-top:6px}.tnote,.tnone,.thint{color:var(--muted,#9aa4b5);font-size:13px}.tnote{padding:14px 0}"+
+      ".tscore{display:flex;align-items:center;gap:16px;margin:20px 0 8px}"+
+      ".tring{width:78px;height:78px;flex:0 0 78px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:700;border:5px solid;position:relative}.tring span{font-size:13px;font-weight:600;margin-left:1px}"+
+      ".tring.g{border-color:#3ecf8e;color:#3ecf8e}.tring.a{border-color:#e2b23a;color:#e2b23a}.tring.r{border-color:#e06060;color:#e06060}"+
+      ".tsxn{font-weight:600;font-size:15px;margin-bottom:3px}.tsxs{color:var(--muted,#9aa4b5);font-size:13px}"+
+      ".tblk{margin:16px 0}.tbh{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted,#9aa4b5);margin-bottom:8px;font-weight:700}.tbh.ok{color:#3ecf8e}.tbh.gap{color:#e2b23a}"+
+      ".tchips{display:flex;flex-wrap:wrap;gap:7px}.tchip{border-radius:20px;padding:4px 12px;font-size:12.5px;border:1px solid}"+
+      ".tchip.ok{background:rgba(62,207,142,.12);border-color:rgba(62,207,142,.4);color:#9ff0c8}.tchip.gap{background:rgba(226,178,58,.12);border-color:rgba(226,178,58,.4);color:#f2d98a}.tchip.x{background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.14);color:var(--muted,#9aa4b5)}"+
+      ".thint{margin-top:8px;line-height:1.5}.tsavemsg{margin-top:10px;color:#3ecf8e;font-size:13px}";
+    document.head.appendChild(s);
+  }
 
   function stat(n,l){ return '<div class="stat"><div class="n">'+n+'</div><div class="l">'+l+'</div></div>'; }
   function cap(s){ return String(s).charAt(0).toUpperCase()+String(s).slice(1); }
