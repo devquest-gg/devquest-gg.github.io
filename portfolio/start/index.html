@@ -46,6 +46,7 @@
   .sdrop-list div:hover{background:rgba(88,166,255,.14)}
   .gstudio{margin:16px 0 6px;font-size:13px;font-weight:800;color:var(--gold)}
   .gstudio .n{color:var(--muted);font-weight:600;font-size:12px;margin-left:6px}
+  .gsearch{margin:2px 0 9px;font-size:13px;padding:8px 11px}
   .glist{display:flex;flex-direction:column;gap:2px}
   .grow{display:flex;align-items:center;gap:10px;padding:7px 9px;border-radius:9px;cursor:pointer}
   .grow:hover{background:rgba(255,255,255,.03)}
@@ -97,7 +98,9 @@
       .then(function(rows){ CATALOG = Array.isArray(rows)?rows:[]; return CATALOG; })
       .catch(function(){ CATALOG=[]; return CATALOG; });
   }
-  // games for a studio (fuzzy name match) within an optional year window
+  // games for a studio (fuzzy name match). We do NOT hard-exclude by release year — a dev works on
+  // live-service titles that shipped years before they joined (LoL, Rainbow Six, City of Heroes) —
+  // instead we score by how close the release is to the tenure, and let a search box find the rest.
   function gamesForStudio(st){
     if(!CATALOG) return [];
     var key = nrm(st.name); if(key.length < 2) return [];
@@ -108,11 +111,15 @@
       var r = CATALOG[i]; if(!r) continue;
       var gStudio = nrm(r[3]); if(!gStudio) continue;
       if(gStudio.indexOf(key) === -1 && key.indexOf(gStudio) === -1) continue;   // fuzzy contains either way
-      var y = parseInt(r[2],10);
-      if(!isNaN(y)){ if(hasFrom && y < from-1) continue; if(hasTo && y > to+1) continue; }
-      out.push({ slug:r[0], title:r[1], year:r[2], studio:r[3] });
+      var y = parseInt(r[2],10), score;
+      if(isNaN(y)) score=400;                                                    // no year → low priority
+      else if(hasFrom && hasTo) score=(y>=from && y<=to)?0:Math.min(Math.abs(y-from),Math.abs(y-to));  // in tenure → 0; else years away
+      else if(hasFrom) score=(y>=from)?0:(from-y);
+      else if(hasTo) score=(y<=to)?0:(y-to);
+      else score=0;
+      out.push({ slug:r[0], title:r[1], year:r[2], studio:r[3], _score:score, _y:(isNaN(y)?0:y) });
     }
-    out.sort(function(a,b){ return (parseInt(b.year,10)||0)-(parseInt(a.year,10)||0) || String(a.title).localeCompare(String(b.title)); });
+    out.sort(function(a,b){ return a._score-b._score || b._y-a._y || String(a.title).localeCompare(String(b.title)); });   // most relevant first
     return out;
   }
 
@@ -153,7 +160,7 @@
     for(var i=0;i<Math.min(ne.length,40) && !name;i++){ if(!_looksLikeName(ne[i])) continue; var nx=ne[i+1]||"";
       if(nx && !/\d{4}/.test(nx) && (/ at /i.test(nx) || _TITLERE.test(nx)) && nx.length<=120){ name=ne[i]; headline=nx; } }
     var start=0; for(var i=0;i<L.length;i++){ if(/^experience$/i.test(L[i])){ start=i+1; break; } }
-    var jobs=[], currentCompany="", pendingTitle="";
+    var jobs=[], currentCompany="", pendingTitle="", pgames=[], activeStudio="";
     for(var i=start;i<L.length;i++){ var line=L[i]; if(!line) continue;
       if(/^(profile language|who your viewers|about$|privacy|linkedin corporation|help center|select language|messaging|status is online)/i.test(line)) break;   // footer
       if(_isDate(line)){
@@ -166,13 +173,14 @@
         var title=pendingTitle;
         if(!title){ var t=_prevNE(L,pv.idx); if(t.line && _isTitleLine(t.line)) title=t.line; else if(prev && _isTitleLine(prev)) title=prev; }
         company=_cleanCo(company); var canon=_matchStudioStrict(company, studioArr); if(canon) company=canon;
-        if(company) jobs.push({company:company, title:_stripJunk(title), from:from, to:to});
+        if(company){ jobs.push({company:company, title:_stripJunk(title), from:from, to:to}); activeStudio=company; }
         pendingTitle="";
       } else if(_isDur(line)){                                                                                                         // a grouped-company total → the line above is the company
         var pv2=_prevNE(L,i);
         if(pv2.line && !_isTitleLine(pv2.line) && !_isDate(pv2.line) && !_hasType(pv2.line) && pv2.line.indexOf(",")<0){ currentCompany=pv2.line; }
         else if(pv2.line && _hasType(pv2.line)){ var p3=_prevNE(L,pv2.idx); if(p3.line && !_isTitleLine(p3.line)) currentCompany=p3.line; }
       } else if(_isTitleLine(line)){ pendingTitle=line; }
+      else if(activeStudio && line.length<=70 && line.split(" ").length<=10 && line.indexOf(",")<0 && !/[.]$/.test(line) && !_hasType(line) && !/^\d/.test(line)){ pgames.push({title:line, studio:activeStudio}); }  // candidate game name under a role → matched to the catalogue later
     }
     var byC={}, order=[];
     jobs.forEach(function(j){ var k=_pnorm(j.company); if(!k) return; if(!byC[k]){ byC[k]={company:j.company,title:j.title||"",from:j.from||"",to:j.to}; order.push(k); }
@@ -181,8 +189,9 @@
     merged.sort(function(a,b){ var at=(a.to===""?9999:(a.to||0)), bt=(b.to===""?9999:(b.to||0)); return bt-at || (b.from||0)-(a.from||0); });
     var role=""; if(headline){ var ai=headline.toLowerCase().indexOf(" at "); role=ai>0?headline.slice(0,ai).trim():""; }
     if(!role && merged[0]) role=merged[0].title||"";
-    return { name:name, headline:headline, jobs:merged, role:role };
+    return { name:name, headline:headline, jobs:merged, role:role, games:pgames };
   }
+  function _catTitleIndex(rows){ var m={}; for(var i=0;i<rows.length;i++){ var r=rows[i]; if(!r) continue; var k=nrm(r[1]); if(k && !m[k]) m[k]={slug:r[0],title:r[1],year:r[2],studio:r[3]}; } return m; }
   function autofillFromPaste(){
     var ta=document.getElementById("pt-text"); var st=document.getElementById("pt-status");
     var text=ta?ta.value:""; if(!text.trim()){ if(st){ st.textContent="Paste your LinkedIn or résumé text first."; st.style.color="var(--pink)"; } return; }
@@ -193,9 +202,12 @@
       if(res.headline) window._qsHead=res.headline;
       if(res.role) window._qsRole=res.role;
       if(res.jobs.length) STUDIOS=res.jobs.map(function(j){ return { name:j.company, from:(j.from||""), to:(j.to||"") }; });
+      // Pre-select the games your LinkedIn listed under each role: match their titles to the catalogue.
+      var gmatched=0; if(res.games && res.games.length){ var tIdx=_catTitleIndex(rows);
+        res.games.forEach(function(pg){ var g=tIdx[nrm(pg.title)]; if(g && !PICKED[g.slug]){ PICKED[g.slug]={slug:g.slug,title:g.title,year:g.year,studio:g.studio}; gmatched++; } }); }
       renderStudios();
       var st2=document.getElementById("pt-status"); var n=res.jobs.length;
-      if(st2){ st2.textContent = n ? ("Found "+n+" studio"+(n===1?"":"s")+(res.name?" and your name":"")+" — check the list below (scrolling to it now), remove any wrong ones, then Find my games.") : "Couldn’t spot studios in that text — add them manually below."; st2.style.color = n?"var(--green)":"var(--muted)"; }
+      if(st2){ st2.textContent = n ? ("Found "+n+" studio"+(n===1?"":"s")+(res.name?" and your name":"")+(gmatched?(" and pre-checked "+gmatched+" game"+(gmatched===1?"":"s")+" you listed"):"")+" — review below (scrolling to it), remove any wrong ones, then Find my games.") : "Couldn’t spot studios in that text — add them manually below."; st2.style.color = n?"var(--green)":"var(--muted)"; }
       if(n){ var le=document.getElementById("st-list"); if(le){ try{ le.scrollIntoView({behavior:"smooth",block:"center"}); }catch(e){} } }
     }).catch(function(){ var s3=document.getElementById("pt-status"); if(s3){ s3.textContent="Something went wrong reading that."; s3.style.color="var(--pink)"; } });
   }
@@ -266,27 +278,33 @@
   }
 
   // ---------- Step 2: games ----------
+  function _gameRow(g){ var ck=PICKED[g.slug]?"checked":""; return '<label class="grow"><input type="checkbox" data-slug="'+esc(g.slug)+'" '+ck+'><span class="gt">'+esc(g.title)+'</span><span class="gy">'+esc(g.studio||"")+(g.year?' · '+esc(g.year):'')+'</span></label>'; }
+  function renderStudioGames(si, all, q){
+    var box=document.getElementById("glist-"+si); if(!box) return;
+    var ql=nrm(q||"");
+    var list = ql ? all.filter(function(g){ return nrm(g.title).indexOf(ql)>=0; }) : all;
+    var picked = list.filter(function(g){ return PICKED[g.slug]; });         // your picks (incl. pre-checked from LinkedIn) float to the top
+    var rest = list.filter(function(g){ return !PICKED[g.slug]; });
+    var CAP = ql ? 60 : 18;
+    var shown = picked.concat(rest.slice(0, Math.max(0, CAP - picked.length)));
+    var rows = shown.map(_gameRow).join("");
+    var more = list.length>shown.length ? '<div class="gmore">+ '+(list.length-shown.length)+' more — type a title above to find it.</div>' : '';
+    box.innerHTML = rows ? (rows+more) : '<div class="empty">No'+(ql?' match for “'+esc(q)+'”':' catalogue games')+' — you can add games by hand after this step.</div>';
+  }
   function renderGames(){
-    var anyGames=false;
-    var sections = STUDIOS.map(function(s){
-      var games=gamesForStudio(s);
-      if(games.length) anyGames=true;
-      var CAP=50, shown=games.slice(0,CAP);
-      var rows = shown.map(function(g){
-        var ck = PICKED[g.slug] ? "checked" : "";
-        return '<label class="grow"><input type="checkbox" data-slug="'+esc(g.slug)+'" '+ck+'><span class="gt">'+esc(g.title)+'</span><span class="gy">'+esc(g.studio||"")+(g.year?' · '+esc(g.year):'')+'</span></label>';
-      }).join("");
-      var more = games.length>CAP ? '<div class="gmore">+ '+(games.length-CAP)+' more — narrow the year range on the previous step to trim this list.</div>' : '';
-      var body = games.length ? ('<div class="glist">'+rows+'</div>'+more)
-        : '<div class="empty">No catalogue matches for “'+esc(s.name)+'”'+((s.from||s.to)?' in those years':'')+'. You can add these by hand later.</div>';
-      return '<div class="gstudio">'+esc(s.name)+' <span class="n">'+games.length+' found</span></div>'+body;
+    var SEC = STUDIOS.map(function(s){ return { s:s, all:gamesForStudio(s) }; });
+    var sections = SEC.map(function(o,si){
+      var searchBox = o.all.length>16 ? '<input class="gsearch" data-si="'+si+'" placeholder="Search '+esc(o.s.name)+' titles… (find any game you shipped)">' : '';
+      return '<div class="gstudio">'+esc(o.s.name)+' <span class="n">'+o.all.length+' in catalogue</span></div>'+searchBox+'<div class="glist" id="glist-'+si+'"></div>';
     }).join("");
     app.innerHTML =
-      '<div class="blk"><h2>Check the games you shipped</h2><div class="desc">These come straight from our catalogue for the studios you listed. Tick the ones you worked on — skip the rest. You can fine-tune roles and add one-sheets after.</div>'+
+      '<div class="blk"><h2>Check the games you shipped</h2><div class="desc">Games your LinkedIn listed are already ticked. Add any others from your studios — including live-service titles that launched before you joined. Use a studio’s search box to find a specific title.</div>'+
         '<label>Your main role <span style="font-weight:400;color:var(--muted)">— applied to all; you can change any of them later</span></label><input id="g-role" placeholder="e.g. Senior Producer" value="'+esc(window._qsRole||"")+'">'+
         '<div style="margin-top:14px" id="g-sections">'+ (sections || '<div class="empty">No studios to search.</div>') +'</div>'+
         '<div class="actions"><button class="btn" id="back-1">← Studios</button><button class="btn primary" id="to-basics">Next · <span class="gcount" id="g-count">'+Object.keys(PICKED).length+'</span> selected →</button></div>'+
       '</div>';
+    SEC.forEach(function(o,si){ renderStudioGames(si, o.all, ""); });
+    document.querySelectorAll(".gsearch").forEach(function(inp){ inp.addEventListener("input", function(){ var si=+inp.getAttribute("data-si"); renderStudioGames(si, SEC[si].all, inp.value); }); });
     document.getElementById("g-sections").addEventListener("change", function(e){
       var cb=e.target; if(!cb || cb.type!=="checkbox") return;
       var slug=cb.getAttribute("data-slug"); if(!slug) return;
