@@ -133,17 +133,31 @@
   }
   var _sugT=null;
   function studioSuggest(){
-    var q=document.getElementById("st-name").value.trim(); var box=document.getElementById("st-sug");
+    var el=document.getElementById("st-name"); var box=document.getElementById("st-sug");
+    var q=(el.value||"").trim();
     if(_sugT) clearTimeout(_sugT);
-    if(q.length<2 || !(window.DQAPI&&DQAPI.searchStudios)){ box.innerHTML=""; return; }
+    if(q.length<2){ box.innerHTML=""; return; }
     _sugT=setTimeout(function(){
-      DQAPI.searchStudios(q).then(function(r){
-        var list=((r&&r.data&&r.data.studios)||[]).slice(0,8);
-        if(!list.length){ box.innerHTML=""; return; }
-        box.innerHTML='<div class="sdrop-list">'+list.map(function(s){ return '<div data-n="'+esc(s.name||s.title||"")+'">'+esc(s.name||s.title||"")+'</div>'; }).join("")+'</div>';
-        box.querySelectorAll("div[data-n]").forEach(function(el){ el.onclick=function(){ document.getElementById("st-name").value=el.getAttribute("data-n"); box.innerHTML=""; document.getElementById("st-from").focus(); }; });
-      }).catch(function(){ box.innerHTML=""; });
-    }, 220);
+      var ql=q.toLowerCase();
+      // Primary: distinct studio names from the catalogue index (same data step 2 matches against).
+      var staticP=loadCatalog().then(function(rows){
+        var seen={}, out=[];
+        for(var i=0;i<rows.length && out.length<40;i++){ var s=rows[i]&&rows[i][3]; if(!s) continue; var sl=String(s).toLowerCase(); if(sl.indexOf(ql)!==-1 && !seen[sl]){ seen[sl]=1; out.push(String(s)); } }
+        return out;
+      }).catch(function(){ return []; });
+      // Secondary: the live studios API (adds studios not present in the static catalogue).
+      var liveP=(window.DQAPI&&DQAPI.searchStudios)?DQAPI.searchStudios(q).then(function(r){ return ((r&&r.data&&r.data.studios)||[]).map(function(s){ return s.name; }); }).catch(function(){ return []; }):Promise.resolve([]);
+      Promise.all([staticP,liveP]).then(function(a){
+        if(((document.getElementById("st-name")||{}).value||"").trim().toLowerCase()!==ql) return;   // input moved on
+        var seen={}, names=[];
+        a[0].concat(a[1]).forEach(function(n){ if(!n) return; var k=String(n).toLowerCase(); if(seen[k]) return; seen[k]=1; names.push(String(n)); });
+        names.sort(function(x,y){ var xs=x.toLowerCase().indexOf(ql)===0?0:1, ys=y.toLowerCase().indexOf(ql)===0?0:1; return xs-ys || x.localeCompare(y); });
+        names=names.slice(0,10);
+        if(!names.length){ box.innerHTML=""; return; }
+        box.innerHTML='<div class="sdrop-list">'+names.map(function(n){ return '<div data-n="'+esc(n)+'">'+esc(n)+'</div>'; }).join("")+'</div>';
+        box.querySelectorAll("div[data-n]").forEach(function(d){ d.onclick=function(){ document.getElementById("st-name").value=d.getAttribute("data-n"); box.innerHTML=""; document.getElementById("st-from").focus(); }; });
+      });
+    }, 200);
   }
   function addStudio(){
     var name=document.getElementById("st-name").value.trim(); if(!name) return;
