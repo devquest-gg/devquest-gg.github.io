@@ -127,41 +127,52 @@
   function _stripJunk(s){ return String(s==null?"":s).replace(/·.*$/,"").replace(/\|.*$/,"").replace(/\b(full[\s-]?time|part[\s-]?time|contract|freelance|internship|permanent|remote|hybrid|on-?site)\b/ig,"").replace(/\s{2,}/g," ").replace(/^[\s,·|–—-]+|[\s,·|–—-]+$/g,"").trim(); }
   function _segs(l){ return String(l==null?"":l).split(/[·|]|\s[–—-]\s|,/).map(function(s){return s.trim();}).filter(Boolean); }
   function _studioIndex(rows){ var seen={}, arr=[]; for(var i=0;i<rows.length;i++){ var s=rows[i]&&rows[i][3]; if(!s) continue; var k=_pnorm(s); if(k.length<3||seen[k]) continue; seen[k]=1; arr.push({k:k,name:String(s)}); } return arr; }
-  function _findCompany(ctx, studioArr){
-    // Strict matching only: a segment matches a studio when it EQUALS the studio name, or the
-    // studio name appears as WHOLE WORDS inside the segment. No loose substring matching — that's
-    // what turned title words ("Producer","Manager") into bogus studios ("Produce!","Mana") and
-    // over-specified "Ubisoft" into "Ubisoft Pune". When nothing matches, we keep the typed text.
-    var best=null, bestLen=0;
-    for(var c=0;c<ctx.length;c++){ var segs=_segs(ctx[c]);
-      for(var s=0;s<segs.length;s++){ var sn=_pnorm(segs[s]); if(sn.length<3) continue;
-        if(_TITLERE.test(segs[s]) && !_SUFFIXRE.test(segs[s])) continue;                        // don't treat a pure job-title segment as a company
-        var padded=" "+sn+" ";
-        for(var i=0;i<studioArr.length;i++){ var st=studioArr[i];
-          if(st.k===sn) return st.name;                                                        // exact catalogue hit wins outright
-          if(st.k.length>=5 && st.k.indexOf(" ")>=0 && padded.indexOf(" "+st.k+" ")>=0){ if(st.k.length>bestLen){ best=st.name; bestLen=st.k.length; } }  // multi-word studio appears verbatim as whole words
-        }
-      }
+  function _md(l){ return String(l==null?"":l).replace(/\[([^\]]*)\]\([^)]*\)/g,"$1").replace(/^\s*[\*\-•▪○]\s*/,"").replace(/\s+/g," ").trim(); }   // [text](url) → text, drop bullets
+  function _hasType(l){ return /\b(full[\s-]?time|part[\s-]?time|contract|freelance|internship|permanent|self[\s-]?employed|apprenticeship|seasonal)\b/i.test(l); }
+  function _isDur(l){ return !/\d{4}/.test(l) && /\d+\s*(yrs?|years?|mos?|months?)\b/i.test(l); }   // "2 yrs 9 mos" — a grouped-company total, not a role date
+  function _isTitleLine(l){ return _TITLERE.test(l) && !/·/.test(l) && !/\d{4}/.test(l); }
+  function _isDate(l){ return _DRRE.test(l); }
+  function _prevNE(L,i){ for(var k=i-1;k>=0;k--){ if(L[k]) return {line:L[k],idx:k}; } return {line:"",idx:-1}; }
+  function _seg1(l){ var s=_segs(l); return s.length?s[0]:l; }
+  function _cleanCo(s){ return _stripJunk(String(s==null?"":s).replace(/\s*\([^)]*\)\s*/g," ")); }   // drop "(An EA Company)" etc.
+  function _matchStudioStrict(seg, studioArr){
+    var sn=_pnorm(seg); if(sn.length<3) return "";
+    var padded=" "+sn+" ", best="", bestLen=0;
+    for(var i=0;i<studioArr.length;i++){ var st=studioArr[i];
+      if(st.k===sn) return st.name;                                                                        // exact catalogue hit
+      if(st.k.length>=5 && st.k.indexOf(" ")>=0 && padded.indexOf(" "+st.k+" ")>=0){ if(st.k.length>bestLen){ best=st.name; bestLen=st.k.length; } }  // multi-word studio as whole words
     }
-    if(best) return best;
-    for(var c2=0;c2<ctx.length;c2++){ var sg=_segs(ctx[c2]); for(var s2=0;s2<sg.length;s2++){ if(_SUFFIXRE.test(sg[s2]) && !_TITLERE.test(sg[s2]) && !/\d{4}/.test(sg[s2])){ return _stripJunk(sg[s2]); } } }  // suffix fallback (Games/Studios/…)
-    return "";
+    return best;
   }
-  function _findTitle(ctx){ for(var c=0;c<ctx.length;c++){ var segs=_segs(ctx[c]); for(var s=0;s<segs.length;s++){ var seg=segs[s]; if(_TITLERE.test(seg) && !/\d{4}/.test(seg) && seg.length<=48){ return _stripJunk(seg); } } } return ""; }
+  // LinkedIn / résumé parser. Handles markdown-link export, flat "Title / Company·Type / Dates"
+  // entries, AND grouped entries where one company heads several nested roles (Bend, Paragon, Mythic).
   function parseProfile(text, studioArr){
-    var lines=String(text==null?"":text).split(/\r?\n/).map(function(l){return l.replace(/\s+/g," ").trim();});
-    var ne=lines.filter(Boolean);
+    var L=String(text==null?"":text).split(/\r?\n/).map(_md);
+    var ne=L.filter(Boolean);
     var name="", headline="";
-    for(var i=0;i<Math.min(ne.length,5);i++){ if(_looksLikeName(ne[i])){ name=ne[i]; var nx=ne[i+1]||""; if(nx && !/\d{4}/.test(nx) && nx.length<=100 && !_looksLikeName(nx)) headline=nx; break; } }
-    var jobs=[];
-    for(var li=0;li<lines.length;li++){
-      if(/^\s*(shipped\s*:|•|•|○|▪)/i.test(lines[li])) continue;   // skip résumé "Shipped:" / bullet lines that carry year ranges
-      var dr=lines[li].match(_DRRE); if(!dr) continue;
-      var from=_year4(dr[1]); var to=/present|current|now|today|ongoing/i.test(dr[2])?"":(_year4(dr[2])||"");
-      var ctx=[]; for(var k=li-2;k<=li;k++){ if(k>=0 && lines[k]) ctx.push(lines[k].replace(_DRRE,"").trim()); }
-      var company=_findCompany(ctx, studioArr); var title=_findTitle(ctx);
-      if(!company) company=_stripJunk((lines[li-1]||"").replace(_DRRE,""));
-      if(company) jobs.push({company:company, title:title, from:from, to:to});
+    for(var i=0;i<Math.min(ne.length,40) && !name;i++){ if(!_looksLikeName(ne[i])) continue; var nx=ne[i+1]||"";
+      if(nx && !/\d{4}/.test(nx) && (/ at /i.test(nx) || _TITLERE.test(nx)) && nx.length<=120){ name=ne[i]; headline=nx; } }
+    var start=0; for(var i=0;i<L.length;i++){ if(/^experience$/i.test(L[i])){ start=i+1; break; } }
+    var jobs=[], currentCompany="", pendingTitle="";
+    for(var i=start;i<L.length;i++){ var line=L[i]; if(!line) continue;
+      if(/^(profile language|who your viewers|about$|privacy|linkedin corporation|help center|select language|messaging|status is online)/i.test(line)) break;   // footer
+      if(_isDate(line)){
+        var dr=line.match(_DRRE); var from=_year4(dr[1]); var to=/present|current|now|today|ongoing/i.test(dr[2])?"":(_year4(dr[2])||"");
+        var pv=_prevNE(L,i), prev=pv.line, company="";
+        if(prev && /·/.test(prev) && _hasType(prev)) company=_seg1(prev);                                                             // flat: "Company · Full-time"
+        else if(prev && !_isTitleLine(prev) && !_hasType(prev) && !_isDur(prev) && !_isDate(prev) && prev.indexOf(",")<0) company=prev;  // flat: plain company line above
+        if(!company) company=currentCompany;                                                                                          // grouped: use the company heading the block
+        if(!company && prev) company=_seg1(prev);
+        var title=pendingTitle;
+        if(!title){ var t=_prevNE(L,pv.idx); if(t.line && _isTitleLine(t.line)) title=t.line; else if(prev && _isTitleLine(prev)) title=prev; }
+        company=_cleanCo(company); var canon=_matchStudioStrict(company, studioArr); if(canon) company=canon;
+        if(company) jobs.push({company:company, title:_stripJunk(title), from:from, to:to});
+        pendingTitle="";
+      } else if(_isDur(line)){                                                                                                         // a grouped-company total → the line above is the company
+        var pv2=_prevNE(L,i);
+        if(pv2.line && !_isTitleLine(pv2.line) && !_isDate(pv2.line) && !_hasType(pv2.line) && pv2.line.indexOf(",")<0){ currentCompany=pv2.line; }
+        else if(pv2.line && _hasType(pv2.line)){ var p3=_prevNE(L,pv2.idx); if(p3.line && !_isTitleLine(p3.line)) currentCompany=p3.line; }
+      } else if(_isTitleLine(line)){ pendingTitle=line; }
     }
     var byC={}, order=[];
     jobs.forEach(function(j){ var k=_pnorm(j.company); if(!k) return; if(!byC[k]){ byC[k]={company:j.company,title:j.title||"",from:j.from||"",to:j.to}; order.push(k); }
