@@ -49,6 +49,12 @@
   .sheet-body{padding:4px 16px 16px}
   .sf-stats .row{margin-bottom:8px}
   .sf-filled{font-size:11px;font-weight:800;color:var(--gold);border:1px solid rgba(224,178,58,.4);border-radius:6px;padding:1px 7px}
+  .skcat{margin:11px 0 5px;font-size:11.5px;font-weight:700;color:#aeb9c8}
+  .skdisc{margin:18px 0 3px;font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--gold);font-weight:800}
+  .chips{display:flex;flex-wrap:wrap;gap:7px}
+  .chip{cursor:pointer;font-size:12.5px;border-radius:20px;padding:5px 12px;border:1px solid var(--border);background:var(--panel2);color:var(--muted);font-family:inherit}
+  .chip:hover{border-color:var(--accent);color:var(--text)}
+  .chip.sel{background:rgba(88,166,255,.16);border-color:var(--accent);color:#cfe6ff;font-weight:650}
 </style>
 </head>
 <body>
@@ -68,7 +74,7 @@
 (function(){
   var app = document.getElementById("app");
   var topcta = document.getElementById("topcta");
-  var ME = null, SLUG = null, POS = [], NEWCTR = 0;
+  var ME = null, SLUG = null, POS = [], NEWCTR = 0, P = null;
 
   function esc(s){ return String(s==null?"":s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];}); }
   function val(id){ var e=document.getElementById(id); return e?e.value.trim():""; }
@@ -93,19 +99,19 @@
   }).catch(function(){ app.innerHTML='<div class="blk"><div class="err">Could not load your profile. Reload and try again.</div></div>'; });
 
   function render(p, positions, credits){
+    P = p;
     POS = positions.slice();
-    var links = {}; (p.links||[]).forEach(function(l){ links[l.type]=l.url; });
-    var sk = (p.skills && p.skills.groups) ? p.skills.groups : [];
-    while(sk.length < 3) sk.push({label:"",items:[]});
 
     app.innerHTML =
       // HEADER POINTER (basics live in the portfolio's "Edit header" modal — no duplication here)
       '<div class="blk" style="padding:13px 18px"><div class="desc" style="margin:0">Your <b>profile header</b> — name, headline, bio, photo, and links — is edited from the <b>&ldquo;Edit header&rdquo;</b> button on your portfolio. <a href="/portfolio/'+esc(SLUG)+'/" target="_blank">Open my portfolio →</a></div></div>'+
 
       // SKILLS
-      '<div class="blk"><h2>Skills &amp; tools</h2><div class="desc">Group them however makes sense — e.g. &ldquo;Production &amp; Leadership&rdquo;, &ldquo;Tools&rdquo;. Comma-separated.</div>'+
-        '<div id="skills">'+ sk.slice(0,6).map(function(g,i){ return skillRow(g,i); }).join("") +'</div>'+
-        '<div class="actions"><span class="btn sm" id="add-skill">+ Add a group</span><span class="btn primary" id="save-skills">Save skills</span><span class="status" id="st-skills"></span></div>'+
+      '<div class="blk"><h2>Skills &amp; tools</h2><div class="desc">Pick what fits — grouped for your discipline. These power your résumé and how job postings match you, so the wording is standardized. Toggle a chip to add or remove it; add your own for anything not listed.</div>'+
+        '<div id="skills"></div>'+
+        '<div class="chk" style="margin-top:8px"><input type="checkbox" id="sk-all"><label for="sk-all" style="margin:0">Also show skills from other disciplines</label></div>'+
+        '<div style="margin-top:10px"><label>Add your own</label><div class="row"><div><input id="sk-custom" placeholder="Type a skill, press Enter"></div><div style="flex:0 0 auto;align-self:flex-end"><span class="btn sm" id="sk-add">Add</span></div></div></div>'+
+        '<div class="actions"><span class="btn primary" id="save-skills">Save skills</span><span class="status" id="st-skills"></span></div>'+
       '</div>'+
 
       // WORK HISTORY
@@ -115,32 +121,107 @@
       '</div>';
 
     renderPositions();
-    wireSkills();
+    skInitSelected(p); renderSkillsPicker(p, false); wireSkills();
   }
 
-  function skillRow(g,i){
-    return '<div class="row skrow" style="margin-bottom:8px"><div style="flex:0 0 34%"><input class="sk-label" placeholder="Group (e.g. Tools)" value="'+esc(g.label||"")+'"></div>'+
-      '<div><input class="sk-items" placeholder="Jira, Perforce, Unreal, …" value="'+esc((g.items||[]).join(", "))+'"></div></div>';
+  // ----- discipline-aware skill palettes (shared vocabulary with the résumé tailoring lexicon) -----
+  var SKILL_PALETTES = {
+    production: [
+      {cat:"Leadership", items:["Portfolio Leadership","People Management","Studio Leadership","Cross-functional Leadership","Mentoring"]},
+      {cat:"Production", items:["Roadmapping","Milestone Planning","Scheduling","Risk Management","Resource Planning","Dependency Management"]},
+      {cat:"Live & Ops", items:["Live-Service Operations","Seasonal Content","Content Cadence","Post-Launch Support","Community"]},
+      {cat:"Process", items:["Agile","Scrum","Kanban","Stakeholder Management","Analytics / Data-Driven"]},
+      {cat:"Tools", items:["Jira","Confluence","Perforce","ShotGrid","Hansoft"]}
+    ],
+    engineering: [
+      {cat:"Languages", items:["C++","C#","Python","Rust","Lua"]},
+      {cat:"Engines", items:["Unreal Engine","Unity","Proprietary Engine"]},
+      {cat:"Domains", items:["Gameplay","Engine / Runtime","Tools","Multiplayer / Netcode","Rendering / Graphics","Physics","AI","Animation Systems","UI"]},
+      {cat:"Practice", items:["Optimization","Profiling","Memory Budgeting","Build Systems","CI/CD"]},
+      {cat:"Tools", items:["Perforce","Git","Visual Studio","RenderDoc","PIX"]}
+    ],
+    art: [
+      {cat:"Disciplines", items:["Environment Art","Character Art","Concept Art","3D Modeling","Texturing","Lighting","VFX","Technical Art","Rigging"]},
+      {cat:"Tools", items:["Maya","3ds Max","Blender","ZBrush","Substance Painter","Substance Designer","Photoshop","Houdini","Marmoset"]},
+      {cat:"Engine", items:["Unreal Engine","Unity","Shader Authoring","Material Pipelines"]},
+      {cat:"Practice", items:["Stylized","Photoreal","PBR","Optimization","Art Direction"]}
+    ],
+    audio: [
+      {cat:"Disciplines", items:["Sound Design","Music Composition","Audio Implementation","Dialogue","Mixing","Mastering"]},
+      {cat:"Middleware", items:["Wwise","FMOD"]},
+      {cat:"Tools", items:["Pro Tools","Reaper","Ableton Live","Nuendo"]},
+      {cat:"Engine", items:["Unreal Engine","Unity","Interactive Audio","Adaptive Music"]}
+    ],
+    design: [
+      {cat:"Disciplines", items:["Systems Design","Level Design","Encounter Design","Combat Design","Narrative Design","Economy Design","UX Design","Progression"]},
+      {cat:"Practice", items:["Prototyping","Playtesting","Balancing","Player Psychology","Documentation"]},
+      {cat:"Engine / Tools", items:["Unreal Engine","Unity","Blueprints","Scripting","Miro","Figma"]}
+    ],
+    qa: [
+      {cat:"Disciplines", items:["Functional QA","Compliance / Cert","Test Automation","Performance Testing","Localization QA","Playtesting"]},
+      {cat:"Practice", items:["Test Planning","Bug Triage","Regression","Root-Cause Analysis"]},
+      {cat:"Tools", items:["Jira","TestRail","Perforce","Selenium","Python"]}
+    ]
+  };
+  var SK_SELECTED = {};   // lowercased skill -> { skill, cat }
+  function skInitSelected(p){ SK_SELECTED={}; ((p.skills&&p.skills.groups)||[]).forEach(function(g){ (g.items||[]).forEach(function(it){ var s=String(it||"").trim(); if(s) SK_SELECTED[s.toLowerCase()]={skill:s, cat:g.label||"More"}; }); }); }
+  function skChip(skill,cat){ var sel=SK_SELECTED[skill.toLowerCase()]?" sel":""; return '<button type="button" class="chip'+sel+'" data-skill="'+esc(skill)+'" data-cat="'+esc(cat)+'">'+esc(skill)+'</button>'; }
+  function skTitle(d){ return d.charAt(0).toUpperCase()+d.slice(1); }
+  function renderSkillsPicker(p, showAll){
+    var disc=(p.portfolio_style||"production"); if(!SKILL_PALETTES[disc]) disc="production";
+    var order=[disc].concat(Object.keys(SKILL_PALETTES).filter(function(d){return d!==disc;}));
+    var seen={}, html="";
+    order.forEach(function(d){
+      if(d!==disc && !showAll) return;
+      var cats="";
+      SKILL_PALETTES[d].forEach(function(co){
+        var items=co.items.filter(function(it){ var k=it.toLowerCase(); if(seen[k]) return false; seen[k]=1; return true; });
+        if(!items.length) return;
+        cats+='<div class="skcat">'+esc(co.cat)+'</div><div class="chips">'+items.map(function(it){return skChip(it,co.cat);}).join("")+'</div>';
+      });
+      if(!cats) return;
+      if(showAll) html+='<div class="skdisc">'+esc(d===disc?skTitle(d)+" — your discipline":skTitle(d))+'</div>';
+      html+=cats;
+    });
+    var allPal={}; Object.keys(SKILL_PALETTES).forEach(function(d){ SKILL_PALETTES[d].forEach(function(c){ c.items.forEach(function(it){ allPal[it.toLowerCase()]=1; }); }); });
+    var customs=Object.keys(SK_SELECTED).filter(function(k){ return !allPal[k]; }).map(function(k){ return SK_SELECTED[k].skill; });
+    html+='<div class="skcat">Your additions</div><div class="chips" id="sk-custom-chips">'+customs.map(function(it){return skChip(it,SK_SELECTED[it.toLowerCase()].cat||"More");}).join("")+'</div>';
+    document.getElementById("skills").innerHTML=html;
   }
+  function skAddCustom(){
+    var inp=document.getElementById("sk-custom"); if(!inp) return; var v=(inp.value||"").trim(); if(!v) return;
+    var k=v.toLowerCase(), found=null;
+    Array.prototype.forEach.call(document.querySelectorAll("#skills .chip"), function(c){ if((c.getAttribute("data-skill")||"").toLowerCase()===k) found=c; });
+    SK_SELECTED[k]={skill:(found?found.getAttribute("data-skill"):v), cat:(found?(found.getAttribute("data-cat")||"More"):"More")};
+    if(found){ found.classList.add("sel"); } else { document.getElementById("sk-custom-chips").insertAdjacentHTML("beforeend", skChip(v,"More")); }
+    inp.value=""; inp.focus();
+  }
+  // toggle a chip on/off
+  document.addEventListener("click", function(e){
+    var chip=(e.target && e.target.closest) ? e.target.closest(".chip") : null;
+    var box=document.getElementById("skills");
+    if(chip && box && box.contains(chip)){
+      var skill=chip.getAttribute("data-skill"), cat=chip.getAttribute("data-cat")||"More", k=skill.toLowerCase();
+      if(chip.classList.contains("sel")){ chip.classList.remove("sel"); delete SK_SELECTED[k]; }
+      else { chip.classList.add("sel"); SK_SELECTED[k]={skill:skill, cat:cat}; }
+    }
+  });
 
   // ---------- SKILLS ----------
   function wireSkills(){
-    document.getElementById("add-skill").onclick=function(){
-      document.getElementById("skills").insertAdjacentHTML("beforeend", skillRow({},0));
-    };
-    document.getElementById("save-skills").onclick=function(){
+    var save=document.getElementById("save-skills"); if(save) save.onclick=function(){
       var st=document.getElementById("st-skills"); st.textContent="Saving…"; st.className="status mut";
-      var groups=[];
-      Array.prototype.forEach.call(document.querySelectorAll(".skrow"), function(row){
-        var label=(row.querySelector(".sk-label").value||"").trim();
-        var items=(row.querySelector(".sk-items").value||"").split(",").map(function(x){return x.trim();}).filter(Boolean);
-        if(label && items.length) groups.push({label:label, items:items});
-      });
+      var byCat={}, order=[];
+      Object.keys(SK_SELECTED).forEach(function(k){ var o=SK_SELECTED[k], cat=o.cat||"More"; if(!byCat[cat]){ byCat[cat]=[]; order.push(cat); } byCat[cat].push(o.skill); });
+      var groups=order.map(function(c){ return {label:c, items:byCat[c]}; }).filter(function(g){ return g.items.length; });
       DQAPI.updateProfile({ skills:{ groups:groups } }).then(function(r){
         if(r&&r.ok){ st.textContent="✓ Saved"; st.className="status ok"; }
         else { st.textContent=(r&&r.data&&r.data.error)||"Could not save."; st.className="status err"; }
       }).catch(function(){ st.textContent="Network error."; st.className="status err"; });
     };
+    var add=document.getElementById("sk-add"); if(add) add.onclick=skAddCustom;
+    var inp=document.getElementById("sk-custom"); if(inp) inp.addEventListener("keydown", function(e){ if(e.key==="Enter"){ e.preventDefault(); skAddCustom(); } });
+    var all=document.getElementById("sk-all"); if(all) all.addEventListener("change", function(){ renderSkillsPicker(P||{}, all.checked); });
   }
 
   // ---------- POSITIONS ----------
