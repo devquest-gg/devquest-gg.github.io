@@ -684,7 +684,12 @@
   function rDates(p){ function fmt(y,m){ if(!y) return ""; return (m?_RMONTHS[m]+" ":"")+y; } var s=fmt(p.start_year,p.start_month), e=p.is_current?"Present":fmt(p.end_year,p.end_month); return (s&&e)?(s+" – "+e):(s||e||""); }
   function rCreditYears(c){ var s=c.work_start||null, e=c.work_end||null, y=c.year||creditYear(c); if(s&&e&&e!==s) return s+" – "+e; if(s) return String(s); return y?String(y):""; }
   async function resumeModel(){
-    var p=_person||{};
+    var p=_person||{}, RPOS=_positions||[], RCRE=_credits||[];
+    // Build from the FRESHEST saved data (not the page's load-time snapshot), so edits made in the
+    // editor — skills, work history — appear on the résumé without needing a portfolio-page refresh.
+    if(!IS_DRAFT && window.DQAPI && DQAPI.portfolio && slug){
+      try{ var fr=await DQAPI.portfolio(slug); if(fr && fr.data && fr.data.person){ p=fr.data.person; RPOS=fr.data.positions||RPOS; RCRE=fr.data.credits||RCRE; } }catch(e){}
+    }
     var email=p.email||"";
     if(!email && window.DQAPI && DQAPI.isSignedIn && DQAPI.isSignedIn() && DQAPI.me){
       try{ var mr=await DQAPI.me(); var pe=mr&&mr.data&&mr.data.person; if(pe) email=pe.email||pe.primary_email||(pe.emails&&pe.emails[0]&&(pe.emails[0].email||pe.emails[0]))||""; }catch(e){}
@@ -693,7 +698,7 @@
     var RN=function(x){ return String(x||"").trim().toLowerCase().replace(/[^a-z0-9]+/g," ").trim(); };
     var NOWY=(new Date()).getFullYear();
     // Positions become the primary unit. Each carries a numeric span so games can be matched into it.
-    var pos=(_positions||[]).map(function(x){
+    var pos=(RPOS||[]).map(function(x){
       var s=x.start_year||null, e=x.is_current?NOWY:(x.end_year||s||null);
       return { title:x.title||"", company:x.studio||"", location:x.location||"", dates:rDates(x), _s:s||0, _e:e||s||0,
         descBullets:String(x.description||"").split(/\n+/).map(function(b){return rPlain(b).trim();}).filter(Boolean),
@@ -701,7 +706,7 @@
     });
     var posByStudio={}; pos.forEach(function(pp){ var k=RN(pp.company); if(k && !(k in posByStudio)) posByStudio[k]=pp; });
     // Credits (games) newest-first, then routed under the job that shipped them.
-    var creds=(_credits||[]).slice().sort(function(a,b){ return (b.work_start||b.year||0)-(a.work_start||a.year||0); });
+    var creds=(RCRE||[]).slice().sort(function(a,b){ return (b.work_start||b.year||0)-(a.work_start||a.year||0); });
     var orphans=[];
     creds.forEach(function(c){
       var sh=c.sheet||{};
