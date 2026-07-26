@@ -424,7 +424,7 @@
 <body>
 <div class="bar"></div>
 <div class="nav"><div class="wrap"><div class="brand"><a class="brandhome" href="/portfolio/" aria-label="DevQuest Portfolio home"><svg class="mark" viewBox="0 0 32 32" aria-hidden="true"><rect x="1" y="1" width="8" height="8" rx="2" fill="var(--gold)"/><rect x="12" y="1" width="8" height="8" rx="2" fill="#2d333b"/><rect x="23" y="1" width="8" height="8" rx="2" fill="#2d333b"/><rect x="1" y="12" width="8" height="8" rx="2" fill="#2d333b"/><rect x="12" y="12" width="8" height="8" rx="2" fill="var(--gold)"/><rect x="23" y="12" width="8" height="8" rx="2" fill="#2d333b"/><rect x="1" y="23" width="8" height="8" rx="2" fill="#2d333b"/><rect x="12" y="23" width="8" height="8" rx="2" fill="#2d333b"/><rect x="23" y="23" width="8" height="8" rx="2" fill="var(--gold)"/></svg><span class="wm">Dev<span class="q">Quest</span><span class="tld">.gg</span></span></a> <span class="cr">PORTFOLIO</span> <span class="beta">BETA</span></div><div class="navlinks"><a id="creditslink">Credits</a><a href="/">Jobs board →</a></div></div></div></div>
-<a class="editlink" id="editlink" href="/portfolio/edit/">✎ Edit my portfolio</a>
+<a class="editlink" id="editlink" href="/portfolio/edit/">✎ Edit work history &amp; skills</a>
 <div id="app"><div class="wrap" style="padding:60px 22px;color:var(--muted)">Loading portfolio…</div></div>
 <footer><div class="wrap"><div><b style="color:var(--text)">DevQuest.gg</b> · portfolio</div><div>Verified by the people you shipped with.</div></div></footer>
 
@@ -546,7 +546,7 @@
   function showWelcomeBanner(){
     if(document.getElementById("welcomebar")) return;
     var b=document.createElement("div"); b.id="welcomebar";
-    b.innerHTML='<div class="wb-inner"><div class="wb-txt"><b>Your portfolio is live.</b> Finish it: add a photo, your work history, and a short bio.</div><a class="wb-btn" href="/portfolio/edit/">Finish my profile →</a><button type="button" class="wb-x" aria-label="Dismiss">×</button></div>';
+    b.innerHTML='<div class="wb-inner"><div class="wb-txt"><b>Your portfolio is live.</b> Add your work history and skills to finish it — and use “Edit header” up top for your photo and bio.</div><a class="wb-btn" href="/portfolio/edit/">Add work history →</a><button type="button" class="wb-x" aria-label="Dismiss">×</button></div>';
     document.body.appendChild(b);
     b.querySelector(".wb-x").onclick=function(){ b.remove(); };
   }
@@ -649,7 +649,7 @@
     if(links.artstation) lb+='<a class="btn ghost" href="'+esc(links.artstation)+'" target="_blank">ArtStation</a>';
     if(links.github) lb+='<a class="btn ghost" href="'+esc(links.github)+'" target="_blank">GitHub</a>';
     return '<div class="hero"><div class="banner"></div><div class="scrim"></div>'+
-      '<button class="pedit owner-only" id="editProfile">✎ Edit</button>'+
+      '<button class="pedit owner-only" id="editProfile">✎ Edit header</button>'+
       '<div class="wrap"><div class="htop">'+
         '<div class="avatar'+(p.avatar_url?' has-photo':'')+'">'+(p.avatar_url?'<img src="'+esc(p.avatar_url)+'" alt="" onerror="this.remove();this.parentNode.classList.remove(\'has-photo\')">':'')+'<span class="ini">'+esc(av)+'</span></div><div class="hmeta">'+
         (p.open_to_work ? '<div class="oa"><span class="d"></span> Open to opportunities</div>' : '')+
@@ -1237,12 +1237,13 @@
   function profileFormHTML(p){
     var links={}; (p.links||[]).forEach(function(l){ links[l.type]=l.url; });
     return '<div class="efwrap"><button class="osclose" aria-label="Close">✕</button>'+
-      '<h3>Edit profile</h3><div class="efdesc">The header of your portfolio.</div>'+
+      '<h3>Edit profile header</h3><div class="efdesc">The top of your portfolio: name, headline, bio, photo, and links. (Your work history &amp; skills are edited from the “Edit work history &amp; skills” button.)</div>'+
       '<label class="eflabel">Display name</label><input id="ef-name" value="'+esc(p.name||"")+'">'+
       '<label class="eflabel">Headline <span class="mut">— current role &amp; studio</span></label><input id="ef-head" value="'+esc(p.headline||"")+'">'+
       '<label class="eflabel">Location</label><input id="ef-loc" value="'+esc(p.location||"")+'">'+
       '<label class="eflabel">About / bio</label><textarea id="ef-bio">'+esc(p.bio||"")+'</textarea>'+
       '<div class="efchk"><input type="checkbox" id="ef-otw" '+(p.open_to_work?"checked":"")+'><label for="ef-otw">Show &ldquo;Open to opportunities&rdquo;</label></div>'+
+      '<label class="eflabel">Portfolio style</label><select id="ef-style">'+['production','engineering','art','audio','design','qa'].map(function(s){ return '<option value="'+s+'" '+((p.portfolio_style||"production")===s?"selected":"")+'>'+s.charAt(0).toUpperCase()+s.slice(1)+'</option>'; }).join("")+'</select>'+
       '<label class="eflabel">Profile portrait <span class="mut">&mdash; optional headshot; shown instead of your initials</span></label>'+
       '<div class="uprow"><div class="upprev port" id="ef-avatar-prev">Photo</div><div style="flex:1"><input id="ef-avatar" placeholder="https://… or upload a photo" value="'+esc(p.avatar_url||"")+'"><div class="upbtns"><button type="button" class="upbtn" data-upload-for="ef-avatar">⬆ Upload photo</button><button type="button" class="upbtn ghost" id="ef-avatar-clear">Remove</button></div></div></div>'+
       '<label class="eflabel">Links</label>'+
@@ -1255,7 +1256,7 @@
     var g=function(id){ var e=document.getElementById(id); return e?e.value.trim():""; };
     var links=[];
     [["linkedin","ef-linkedin"],["portfolio","ef-portfolio"],["artstation","ef-artstation"],["github","ef-github"]].forEach(function(x){ var u=g(x[1]); if(u) links.push({type:x[0],url:u}); });
-    var payload={ name:g("ef-name"), headline:g("ef-head"), location:g("ef-loc"), bio:g("ef-bio"), open_to_work: document.getElementById("ef-otw").checked?1:0, avatar_url:g("ef-avatar"), links:links };
+    var payload={ name:g("ef-name"), headline:g("ef-head"), location:g("ef-loc"), bio:g("ef-bio"), open_to_work: document.getElementById("ef-otw").checked?1:0, portfolio_style:g("ef-style"), avatar_url:g("ef-avatar"), links:links };
     var st=document.getElementById("ef-status"); st.textContent="Saving…"; st.className="efstatus";
     if(IS_DRAFT){
       var d=dGet();
@@ -1267,7 +1268,7 @@
       return;
     }
     DQAPI.updateProfile(payload).then(function(r){
-      if(r&&r.ok){ _person.name=payload.name; _person.headline=payload.headline; _person.location=payload.location; _person.bio=payload.bio; _person.open_to_work=payload.open_to_work; _person.avatar_url=payload.avatar_url; _person.links=links; renderHero(); st.textContent="Saved ✓"; st.className="efstatus ok"; setTimeout(closeSheet,450); }
+      if(r&&r.ok){ _person.name=payload.name; _person.headline=payload.headline; _person.location=payload.location; _person.bio=payload.bio; _person.open_to_work=payload.open_to_work; _person.portfolio_style=payload.portfolio_style; _person.avatar_url=payload.avatar_url; _person.links=links; renderHero(); st.textContent="Saved ✓"; st.className="efstatus ok"; setTimeout(closeSheet,450); }
       else { st.textContent=(r&&r.data&&r.data.error)||"Could not save."; st.className="efstatus err"; }
     }).catch(function(){ st.textContent="Network error."; st.className="efstatus err"; });
   }
@@ -1526,8 +1527,8 @@
     var reviewHTML=rb?'<div class="osreview">'+rb+'</div>':'';
 
     return '<button class="osclose" aria-label="Close">✕</button>'+
-      '<button class="osedit owner-only">✎ Edit</button>'+
-      '<button class="oseditgame">✎ Game info</button>'+
+      '<button class="osedit owner-only">✎ Edit one-sheet</button>'+
+      '<button class="oseditgame">✎ Studio &amp; dates</button>'+
       '<div class="osbanner">'+bannerFill+'<div class="osscrim"></div><div class="osgloss"></div>'+
         '<div class="osbtitle"><div class="oskicker">'+
           (c.studio?'<span class="oschip">'+esc(c.studio)+'</span>':"")+
