@@ -673,6 +673,14 @@
   var _RMONTHS=["","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
   function rEsc(s){ return String(s==null?"":s).replace(/[&<>]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;"}[c];}); }
   function rPlain(s){ return String(s==null?"":s).replace(/\[([^\]]+)\]\(([^)]+)\)/g,"$1 ($2)").replace(/\s+$/,""); }
+  // Résumé bullets/summary: drop raw links (a bare URL in a bullet looks unpolished on a résumé).
+  function rNoUrl(s){ s=String(s==null?"":s)
+    .replace(/\[([^\]]+)\]\([^)]+\)/g,"$1")            // [text](url) -> text
+    .replace(/\(\s*https?:\/\/[^\s)]+\s*\)/gi,"")       // (https://…) wrapper
+    .replace(/\(\s*www\.[^\s)]+\s*\)/gi,"")
+    .replace(/\bhttps?:\/\/[^\s)]+/gi,"")               // bare url
+    .replace(/\bwww\.[^\s)]+/gi,"");
+    return s.replace(/\(\s*\)/g,"").replace(/\s+([.,;:])/g,"$1").replace(/\s{2,}/g," ").trim(); }
   function rDates(p){ function fmt(y,m){ if(!y) return ""; return (m?_RMONTHS[m]+" ":"")+y; } var s=fmt(p.start_year,p.start_month), e=p.is_current?"Present":fmt(p.end_year,p.end_month); return (s&&e)?(s+" – "+e):(s||e||""); }
   function rCreditYears(c){ var s=c.work_start||null, e=c.work_end||null, y=c.year||creditYear(c); if(s&&e&&e!==s) return s+" – "+e; if(s) return String(s); return y?String(y):""; }
   async function resumeModel(){
@@ -697,10 +705,10 @@
     var orphans=[];
     creds.forEach(function(c){
       var sh=c.sheet||{};
-      var bl=(sh.contributions||[]).slice(0,4).map(function(b){return rPlain(b).trim();}).filter(Boolean);
-      if(!bl.length && sh.summary) bl=[rPlain(sh.summary).trim()];
+      var bl=(sh.contributions||[]).slice(0,4).map(function(b){return rNoUrl(b);}).filter(Boolean);
+      if(!bl.length && sh.summary) bl=[rNoUrl(sh.summary)];
       var y=(c.work_start||c.year||c.work_end||null);
-      var g={ title:c.game_title||"", role:c.role||"", studio:c.studio||"", years:rCreditYears(c), bullets:bl, _y:y };
+      var g={ title:c.game_title||"", role:c.role||"", studio:c.studio||"", years:rCreditYears(c), bullets:bl, _y:y, _sum:rNoUrl(sh.summary||"") };
       var host=null, k=RN(c.studio);
       if(k && posByStudio[k]) host=posByStudio[k];                         // 1) match by studio name
       if(!host && y){ for(var i=0;i<pos.length;i++){ if(pos[i]._s && y>=pos[i]._s && y<=(pos[i]._e||pos[i]._s)){ host=pos[i]; break; } } } // 2) else by date overlap
@@ -712,7 +720,9 @@
       var bullets=[], seen={};
       pp.descBullets.forEach(function(b){ var kk=b.toLowerCase(); if(b&&!seen[kk]){ seen[kk]=1; bullets.push(b); } });
       pp.games.forEach(function(g){ g.bullets.forEach(function(b){ var kk=b.toLowerCase(); if(b&&!seen[kk]){ seen[kk]=1; bullets.push(b); } }); });
-      return { title:pp.title, company:pp.company, location:pp.location, dates:pp.dates, _s:pp._s||0, shipped:shipped, bullets:bullets };
+      // Scope line (LEGO-style role framing): the lead game's summary, if it isn't already a bullet.
+      var scope=""; for(var gi=0; gi<pp.games.length; gi++){ var sm=pp.games[gi]._sum; if(sm){ var smk=sm.toLowerCase(); if(!seen[smk]){ scope=sm; } break; } }
+      return { title:pp.title, company:pp.company, location:pp.location, dates:pp.dates, _s:pp._s||0, scope:scope, shipped:shipped, bullets:bullets };
     }).sort(function(a,b){ return (b._s||0)-(a._s||0); });
     var additional=orphans.map(function(g){ return { title:g.title, role:g.role, studio:g.studio, years:g.years, bullets:g.bullets.slice(0,2) }; });
     var skills=((p.skills&&p.skills.groups)||[]).map(function(g){ return { label:g.label||"", items:(g.items||[]) }; });
@@ -731,6 +741,7 @@
     if(m.summary) h+='<h2>Summary</h2><p>'+rEsc(rPlain(m.summary))+'</p>';
     if(m.experience.length){ h+='<h2>Experience</h2>'; m.experience.forEach(function(j){
       h+='<div class="ritem"><p class="rhd"><strong>'+rEsc(j.title)+'</strong>'+(j.company?', '+rEsc(j.company):'')+(j.location?' — '+rEsc(j.location):'')+(j.dates?'<span class="rdt">'+rEsc(j.dates)+'</span>':'')+'</p>';
+      if(j.scope) h+='<p class="rscope">'+rEsc(j.scope)+'</p>';
       if(j.shipped&&j.shipped.length) h+='<p class="rship"><strong>Shipped:</strong> '+rEsc(j.shipped.join(", "))+'</p>';
       if(j.bullets.length) h+='<ul>'+j.bullets.map(function(b){return '<li>'+rEsc(b)+'</li>';}).join("")+'</ul>';
       h+='</div>';
@@ -743,7 +754,7 @@
     if(m.skills.length){ h+='<h2>Skills</h2>'; m.skills.forEach(function(g){ h+='<p class="rsk">'+(g.label?'<strong>'+rEsc(g.label)+':</strong> ':'')+rEsc(g.items.join(", "))+'</p>'; }); }
     return h;
   }
-  function resumeCSS(){ return "body{font-family:Arial,Calibri,'Helvetica Neue',sans-serif;color:#111;font-size:11pt;line-height:1.35;margin:0}.rwrap{max-width:7.5in;margin:0 auto;padding:0.5in}h1{font-size:20pt;margin:0 0 2pt}.rsub{font-size:11.5pt;font-weight:bold;margin:0 0 2pt}.rcon{font-size:10pt;color:#333;margin:0 0 10pt}h2{font-size:12pt;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid #888;padding-bottom:2pt;margin:14pt 0 6pt}p{margin:0 0 4pt}.ritem{margin:0 0 9pt}.rhd{margin:0 0 2pt}.rship{margin:0 0 3pt;font-size:10pt;color:#222}.rdt{float:right;font-weight:normal;color:#333}ul{margin:2pt 0 0;padding-left:18pt}li{margin:0 0 2pt}.rsk{margin:0 0 3pt}@page{size:letter;margin:0.5in}@media print{.rwrap{padding:0}}"; }
+  function resumeCSS(){ return "body{font-family:Arial,Calibri,'Helvetica Neue',sans-serif;color:#111;font-size:11pt;line-height:1.35;margin:0}.rwrap{max-width:7.5in;margin:0 auto;padding:0.5in}h1{font-size:20pt;margin:0 0 2pt}.rsub{font-size:11.5pt;font-weight:bold;margin:0 0 2pt}.rcon{font-size:10pt;color:#333;margin:0 0 10pt}h2{font-size:12pt;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid #888;padding-bottom:2pt;margin:14pt 0 6pt}p{margin:0 0 4pt}.ritem{margin:0 0 9pt}.rhd{margin:0 0 2pt}.rscope{margin:0 0 3pt;font-size:10pt;color:#444}.rship{margin:0 0 3pt;font-size:10pt;color:#222}.rdt{float:right;font-weight:normal;color:#333}ul{margin:2pt 0 0;padding-left:18pt}li{margin:0 0 2pt}.rsk{margin:0 0 3pt}@page{size:letter;margin:0.5in}@media print{.rwrap{padding:0}}"; }
   function resumeDocName(m){ return ((m.name||"resume").replace(/[^\w\- ]+/g,"").trim()||"resume")+" Resume"; }
   function resumeFullHTML(m){ return '<!doctype html><html><head><meta charset="utf-8"><title>'+rEsc(m.name)+' Resume</title><style>'+resumeCSS()+'</style></head><body><div class="rwrap">'+resumeBody(m)+'</div></body></html>'; }
   // ===== native, zero-dependency PDF with a REAL text layer =====
@@ -807,6 +818,7 @@
       if(rest) run(ML+_pmeasure(head,10.5,true), rest, 10.5, false);
       if(j.dates) run(RX-_pmeasure(j.dates,9.5,false), j.dates, 9.5, false, 0.25);
       nl(13.5);
+      if(j.scope){ _pwrap(j.scope,9.5,false,CW).forEach(function(ln){ need(12); run(ML,ln,9.5,false,0.27); nl(12); }); }
       if(j.shipped && j.shipped.length){ var full="Shipped: "+j.shipped.join(", ");
         _pwrap(full,9.5,false,CW).forEach(function(ln,idx){ need(12);
           if(idx===0){ var lbl="Shipped:"; run(ML,lbl,9.5,true); run(ML+_pmeasure(lbl,9.5,true), ln.slice(lbl.length),9.5,false); }
@@ -899,6 +911,7 @@
     if(m.experience.length){ b+=H("Experience"); m.experience.forEach(function(j){
       var line=[j.company,j.location].filter(Boolean).join(" — ");
       b+=_para(_run(j.title,{b:true,sz:22})+(line?_run(", "+line,{sz:22}):"")+(j.dates?_run("   ("+j.dates+")",{sz:20,color:"333333"}):""),{before:60,after:20});
+      if(j.scope) b+=_para(_run(j.scope,{sz:21,color:"444444"}),{after:20});
       if(j.shipped&&j.shipped.length) b+=_para(_run("Shipped: ",{b:true,sz:21})+_run(j.shipped.join(", "),{sz:21}),{after:20});
       j.bullets.forEach(function(x){ b+=BL(x); });
     }); }
