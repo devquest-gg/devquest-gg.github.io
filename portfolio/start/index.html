@@ -128,17 +128,23 @@
   function _segs(l){ return String(l==null?"":l).split(/[·|]|\s[–—-]\s|,/).map(function(s){return s.trim();}).filter(Boolean); }
   function _studioIndex(rows){ var seen={}, arr=[]; for(var i=0;i<rows.length;i++){ var s=rows[i]&&rows[i][3]; if(!s) continue; var k=_pnorm(s); if(k.length<3||seen[k]) continue; seen[k]=1; arr.push({k:k,name:String(s)}); } return arr; }
   function _findCompany(ctx, studioArr){
-    var exact=null, shortest=null, shortestLen=1e9;
+    // Strict matching only: a segment matches a studio when it EQUALS the studio name, or the
+    // studio name appears as WHOLE WORDS inside the segment. No loose substring matching — that's
+    // what turned title words ("Producer","Manager") into bogus studios ("Produce!","Mana") and
+    // over-specified "Ubisoft" into "Ubisoft Pune". When nothing matches, we keep the typed text.
+    var best=null, bestLen=0;
     for(var c=0;c<ctx.length;c++){ var segs=_segs(ctx[c]);
       for(var s=0;s<segs.length;s++){ var sn=_pnorm(segs[s]); if(sn.length<3) continue;
+        if(_TITLERE.test(segs[s]) && !_SUFFIXRE.test(segs[s])) continue;                        // don't treat a pure job-title segment as a company
+        var padded=" "+sn+" ";
         for(var i=0;i<studioArr.length;i++){ var st=studioArr[i];
-          if(st.k===sn){ return st.name; }                                                   // exact catalogue hit wins
-          if((sn.length>=4 && st.k.indexOf(sn)>=0) || (st.k.length>=4 && sn.indexOf(st.k)>=0)){ if(st.k.length<shortestLen){ shortest=st.name; shortestLen=st.k.length; } }
+          if(st.k===sn) return st.name;                                                        // exact catalogue hit wins outright
+          if(st.k.length>=5 && st.k.indexOf(" ")>=0 && padded.indexOf(" "+st.k+" ")>=0){ if(st.k.length>bestLen){ best=st.name; bestLen=st.k.length; } }  // multi-word studio appears verbatim as whole words
         }
       }
     }
-    if(shortest) return shortest;
-    for(var c2=0;c2<ctx.length;c2++){ var sg=_segs(ctx[c2]); for(var s2=0;s2<sg.length;s2++){ if(_SUFFIXRE.test(sg[s2]) && !_TITLERE.test(sg[s2]) && !/\d{4}/.test(sg[s2])){ return _stripJunk(sg[s2]); } } }  // suffix fallback
+    if(best) return best;
+    for(var c2=0;c2<ctx.length;c2++){ var sg=_segs(ctx[c2]); for(var s2=0;s2<sg.length;s2++){ if(_SUFFIXRE.test(sg[s2]) && !_TITLERE.test(sg[s2]) && !/\d{4}/.test(sg[s2])){ return _stripJunk(sg[s2]); } } }  // suffix fallback (Games/Studios/…)
     return "";
   }
   function _findTitle(ctx){ for(var c=0;c<ctx.length;c++){ var segs=_segs(ctx[c]); for(var s=0;s<segs.length;s++){ var seg=segs[s]; if(_TITLERE.test(seg) && !/\d{4}/.test(seg) && seg.length<=48){ return _stripJunk(seg); } } } return ""; }
