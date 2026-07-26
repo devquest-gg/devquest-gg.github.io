@@ -122,6 +122,19 @@
     out.sort(function(a,b){ return a._score-b._score || b._y-a._y || String(a.title).localeCompare(String(b.title)); });   // most relevant first
     return out;
   }
+  // The DEFAULT per-studio list is narrowed to titles that launched from 5 years before you started
+  // through the end of your time there — game dev cycles are long, so a title shipping shortly after
+  // you joined, or in the few years before, is plausibly yours. Anything outside this window stays
+  // reachable through the studio's search box; picked games always show regardless.
+  function inWindow(g, st){
+    var y=parseInt(g.year,10); if(isNaN(y)) return false;
+    var from=parseInt(st.from,10), to=parseInt(st.to,10);
+    var lo=isNaN(from)?null:from-5, hi=isNaN(to)?null:to;
+    if(lo==null && hi==null) return true;   // no years given → can't narrow, so show all
+    if(lo!=null && y<lo) return false;
+    if(hi!=null && y>hi) return false;
+    return true;
+  }
 
   // ---------- paste importer: LinkedIn / résumé text → studios + name + headline ----------
   var _MONRE="jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec";
@@ -201,21 +214,32 @@
       if(res.name) window._qsName=res.name;
       if(res.headline) window._qsHead=res.headline;
       if(res.role) window._qsRole=res.role;
-      if(res.jobs.length) STUDIOS=res.jobs.map(function(j){ return { name:j.company, from:(j.from||""), to:(j.to||"") }; });
-      // Pre-select the games your LinkedIn listed under each role: match their titles to the catalogue.
-      var gmatched=0; if(res.games && res.games.length){ var tIdx=_catTitleIndex(rows);
+      var tIdx=_catTitleIndex(rows), sIdx={}; _studioIndex(rows).forEach(function(s){ sIdx[s.k]=1; });
+      var jobs=res.jobs||[];
+      // A "studio" from the paste that is really a catalogue GAME (e.g. "League of Legends") — one that
+      // isn't a known studio, but IS a game whose real studio is among your other studios — gets moved
+      // out of the studio list and into your games instead.
+      var studioKeys={}; jobs.forEach(function(j){ studioKeys[nrm(j.company)]=1; });
+      var keptJobs=[];
+      jobs.forEach(function(j){ var k=nrm(j.company), asGame=tIdx[k];
+        if(!sIdx[k] && asGame && asGame.studio && studioKeys[nrm(asGame.studio)]) res.games.push({title:asGame.title, studio:asGame.studio});
+        else keptJobs.push(j);
+      });
+      if(keptJobs.length) STUDIOS=keptJobs.map(function(j){ return { name:j.company, from:(j.from||""), to:(j.to||"") }; });
+      // Match the games your paste listed to the catalogue and add them (shown as chips below).
+      var gmatched=0; if(res.games && res.games.length){
         res.games.forEach(function(pg){ var g=tIdx[nrm(pg.title)]; if(g && !PICKED[g.slug]){ PICKED[g.slug]={slug:g.slug,title:g.title,year:g.year,studio:g.studio}; gmatched++; } }); }
       renderStudios();
-      var st2=document.getElementById("pt-status"); var n=res.jobs.length;
-      if(st2){ st2.textContent = n ? ("Found "+n+" studio"+(n===1?"":"s")+(res.name?" and your name":"")+(gmatched?(" and pre-checked "+gmatched+" game"+(gmatched===1?"":"s")+" you listed"):"")+" — review below (scrolling to it), remove any wrong ones, then Find my games.") : "Couldn’t spot studios in that text — add them manually below."; st2.style.color = n?"var(--green)":"var(--muted)"; }
-      if(n){ var le=document.getElementById("st-list"); if(le){ try{ le.scrollIntoView({behavior:"smooth",block:"center"}); }catch(e){} } }
+      var st2=document.getElementById("pt-status"); var n=STUDIOS.length;
+      if(st2){ st2.textContent = n ? ("Found "+n+" studio"+(n===1?"":"s")+(res.name?" and your name":"")+(gmatched?(" and "+gmatched+" game"+(gmatched===1?"":"s")):"")+" — review below, remove anything wrong, then continue.") : "Couldn’t spot studios in that text — add them manually below."; st2.style.color = n?"var(--green)":"var(--muted)"; }
+      if(n){ var le=document.getElementById(gmatched?"found-games-card":"st-list"); if(le){ try{ le.scrollIntoView({behavior:"smooth",block:"center"}); }catch(e){} } }
     }).catch(function(){ var s3=document.getElementById("pt-status"); if(s3){ s3.textContent="Something went wrong reading that."; s3.style.color="var(--pink)"; } });
   }
 
   // ---------- Step 1: studios ----------
   function renderStudios(){
     app.innerHTML =
-      '<div class="blk"><h2>Have a LinkedIn or résumé? Paste it. <span style="font-size:12px;font-weight:700;color:var(--gold);vertical-align:middle;border:1px solid rgba(224,178,58,.4);border-radius:6px;padding:1px 7px">FASTEST</span></h2><div class="desc">We’ll read your name, headline, and the studios you worked at — then you just confirm below. Nothing is uploaded; it’s parsed right here in your browser.</div>'+
+      '<div class="blk"><h2>Have a LinkedIn or résumé? Paste it. <span style="font-size:12px;font-weight:700;color:var(--gold);vertical-align:middle;border:1px solid rgba(224,178,58,.4);border-radius:6px;padding:1px 7px">FASTEST</span></h2><div class="desc">We’ll read your name, headline, the studios you worked at, and the games you listed — then you just confirm below. Nothing is uploaded; it’s parsed right here in your browser.</div>'+
         '<textarea id="pt-text" placeholder="Paste your LinkedIn profile text or your résumé here…"></textarea>'+
         '<div class="actions"><button class="btn primary" id="pt-go">Autofill from this →</button><span class="status" id="pt-status"></span></div>'+
       '</div>'+
@@ -223,15 +247,33 @@
         '<div class="sdrop"><label>Studio / developer</label><input id="st-name" placeholder="e.g. Insomniac Games" autocomplete="off"><div id="st-sug"></div></div>'+
         '<div class="row" style="margin-top:10px"><div><label>From (year)</label><input id="st-from" inputmode="numeric" placeholder="2019"></div><div><label>To (year, or blank if current)</label><input id="st-to" inputmode="numeric" placeholder="2022"></div><div style="flex:0 0 auto"><button class="btn sm" id="st-add">+ Add studio</button></div></div>'+
         '<div id="st-list" style="margin-top:14px"></div>'+
-        '<div class="actions"><button class="btn primary" id="to-games" disabled>Find my games →</button></div>'+
-      '</div>';
+      '</div>'+
+      '<div class="blk hide" id="found-games-card"></div>'+
+      '<div class="actions"><button class="btn primary" id="to-games" disabled>Find my games →</button></div>';
     var ptg=document.getElementById("pt-go"); if(ptg) ptg.onclick=autofillFromPaste;
     renderStudioList();
+    renderFoundGames();
     var nameEl=document.getElementById("st-name");
     document.getElementById("st-add").onclick=addStudio;
     nameEl.addEventListener("keydown", function(e){ if(e.key==="Enter"){ e.preventDefault(); addStudio(); } });
     nameEl.addEventListener("input", studioSuggest);
     document.getElementById("to-games").onclick=function(){ loadCatalog().then(function(){ setStep(2); }); };
+  }
+  function updateCTALabel(){ var go=document.getElementById("to-games"); if(!go) return; go.disabled=STUDIOS.length===0; go.textContent=(Object.keys(PICKED).length?"Add more games →":"Find my games →"); }
+  // Games matched from the paste, shown as removable chips — same pattern as the studio chips.
+  function renderFoundGames(){
+    var card=document.getElementById("found-games-card"); if(!card) return;
+    var slugs=Object.keys(PICKED);
+    if(!slugs.length){ card.classList.add("hide"); card.innerHTML=""; updateCTALabel(); return; }
+    card.classList.remove("hide");
+    var games=slugs.map(function(s){ return PICKED[s]; });
+    games.sort(function(a,b){ return String(a.studio||"").localeCompare(String(b.studio||"")) || (parseInt(b.year,10)||0)-(parseInt(a.year,10)||0) || String(a.title).localeCompare(String(b.title)); });
+    card.innerHTML =
+      '<h2>Games we found <span style="font-size:13px;font-weight:700;color:var(--muted)">— '+games.length+'</span></h2>'+
+      '<div class="desc">Pulled from the titles in your paste. Tap × to remove any that weren’t yours — you can add more on the next step.</div>'+
+      '<div>'+games.map(function(g){ var meta=(g.studio?esc(g.studio):"")+(g.year?' · '+esc(g.year):""); return '<span class="studio-chip"><b>'+esc(g.title)+'</b>'+(meta?' <span class="yr">'+esc(meta)+'</span>':'')+'<button class="x" data-slug="'+esc(g.slug)+'" aria-label="Remove">×</button></span>'; }).join("")+'</div>';
+    card.querySelectorAll(".x").forEach(function(el){ el.onclick=function(){ delete PICKED[el.getAttribute("data-slug")]; renderFoundGames(); }; });
+    updateCTALabel();
   }
   var _sugT=null;
   function studioSuggest(){
@@ -274,37 +316,42 @@
     if(!STUDIOS.length){ box.innerHTML='<div class="empty">No studios yet — add your first above.</div>'; }
     else { box.innerHTML = '<div style="font-size:12.5px;font-weight:800;color:var(--gold);margin:0 0 9px">✓ Your studios ('+STUDIOS.length+') — tap × to remove any that are wrong:</div>' + STUDIOS.map(function(s,i){ var yr=(s.from||s.to)?((s.from||"?")+" – "+(s.to||"now")):""; return '<span class="studio-chip"><b>'+esc(s.name)+'</b>'+(yr?' <span class="yr">'+esc(yr)+'</span>':'')+'<button class="x" data-i="'+i+'" aria-label="Remove">×</button></span>'; }).join("");
       box.querySelectorAll(".x").forEach(function(el){ el.onclick=function(){ STUDIOS.splice(+el.getAttribute("data-i"),1); renderStudioList(); }; }); }
-    var go=document.getElementById("to-games"); if(go) go.disabled = STUDIOS.length===0;
+    updateCTALabel();
   }
 
   // ---------- Step 2: games ----------
   function _gameRow(g){ var ck=PICKED[g.slug]?"checked":""; return '<label class="grow"><input type="checkbox" data-slug="'+esc(g.slug)+'" '+ck+'><span class="gt">'+esc(g.title)+'</span><span class="gy">'+esc(g.studio||"")+(g.year?' · '+esc(g.year):'')+'</span></label>'; }
-  function renderStudioGames(si, all, q){
+  function renderStudioGames(si, full, win, q){
     var box=document.getElementById("glist-"+si); if(!box) return;
     var ql=nrm(q||"");
-    var list = ql ? all.filter(function(g){ return nrm(g.title).indexOf(ql)>=0; }) : all;
-    var picked = list.filter(function(g){ return PICKED[g.slug]; });         // your picks (incl. pre-checked from LinkedIn) float to the top
+    var list = ql ? full.filter(function(g){ return nrm(g.title).indexOf(ql)>=0; }) : win;   // default = windowed; search spans the full studio catalogue
+    var picked = list.filter(function(g){ return PICKED[g.slug]; });         // your picks float to the top
     var rest = list.filter(function(g){ return !PICKED[g.slug]; });
     var CAP = ql ? 60 : 18;
     var shown = picked.concat(rest.slice(0, Math.max(0, CAP - picked.length)));
     var rows = shown.map(_gameRow).join("");
-    var more = list.length>shown.length ? '<div class="gmore">+ '+(list.length-shown.length)+' more — type a title above to find it.</div>' : '';
-    box.innerHTML = rows ? (rows+more) : '<div class="empty">No'+(ql?' match for “'+esc(q)+'”':' catalogue games')+' — you can add games by hand after this step.</div>';
+    var more;
+    if(list.length>shown.length) more='<div class="gmore">+ '+(list.length-shown.length)+' more — type a title above to find it.</div>';
+    else if(!ql && full.length>win.length) more='<div class="gmore">+ '+(full.length-win.length)+' more from this studio — search above to find any title.</div>';
+    else more='';
+    box.innerHTML = rows ? (rows+more) : '<div class="empty">No'+(ql?' match for “'+esc(q)+'”':' titles around your time')+' — search above for any title, or add games by hand later.</div>';
   }
   function renderGames(){
-    var SEC = STUDIOS.map(function(s){ return { s:s, all:gamesForStudio(s) }; });
+    var SEC = STUDIOS.map(function(s){ var all=gamesForStudio(s); var win=all.filter(function(g){ return PICKED[g.slug]||inWindow(g,s); }); return { s:s, all:all, win:win }; });
+    var anyPicked = Object.keys(PICKED).length>0;
     var sections = SEC.map(function(o,si){
-      var searchBox = o.all.length>16 ? '<input class="gsearch" data-si="'+si+'" placeholder="Search '+esc(o.s.name)+' titles… (find any game you shipped)">' : '';
-      return '<div class="gstudio">'+esc(o.s.name)+' <span class="n">'+o.all.length+' in catalogue</span></div>'+searchBox+'<div class="glist" id="glist-'+si+'"></div>';
+      var more = o.all.length - o.win.length;
+      var searchBox = (o.all.length>16 || more>0) ? '<input class="gsearch" data-si="'+si+'" placeholder="Search '+esc(o.s.name)+' titles… (find any game you shipped)">' : '';
+      return '<div class="gstudio">'+esc(o.s.name)+' <span class="n">'+o.win.length+' around your time'+(more>0?' · '+more+' more via search':'')+'</span></div>'+searchBox+'<div class="glist" id="glist-'+si+'"></div>';
     }).join("");
     app.innerHTML =
-      '<div class="blk"><h2>Check the games you shipped</h2><div class="desc">Games your LinkedIn listed are already ticked. Add any others from your studios — including live-service titles that launched before you joined. Use a studio’s search box to find a specific title.</div>'+
+      '<div class="blk"><h2>'+(anyPicked?'Add any more games you shipped':'Check the games you shipped')+'</h2><div class="desc">'+(anyPicked?'The games from your paste are already added. Below are other titles from your studios around the time you were there — tick any we missed. Use a studio’s search box to find a specific title, including live-service games that launched before you joined.':'These are the titles each studio shipped around the time you were there. Tick the ones you worked on — and use a studio’s search box to find anything else, including live-service games that launched before you joined.')+'</div>'+
         '<label>Your main role <span style="font-weight:400;color:var(--muted)">— applied to all; you can change any of them later</span></label><input id="g-role" placeholder="e.g. Senior Producer" value="'+esc(window._qsRole||"")+'">'+
         '<div style="margin-top:14px" id="g-sections">'+ (sections || '<div class="empty">No studios to search.</div>') +'</div>'+
         '<div class="actions"><button class="btn" id="back-1">← Studios</button><button class="btn primary" id="to-basics">Next · <span class="gcount" id="g-count">'+Object.keys(PICKED).length+'</span> selected →</button></div>'+
       '</div>';
-    SEC.forEach(function(o,si){ renderStudioGames(si, o.all, ""); });
-    document.querySelectorAll(".gsearch").forEach(function(inp){ inp.addEventListener("input", function(){ var si=+inp.getAttribute("data-si"); renderStudioGames(si, SEC[si].all, inp.value); }); });
+    SEC.forEach(function(o,si){ renderStudioGames(si, o.all, o.win, ""); });
+    document.querySelectorAll(".gsearch").forEach(function(inp){ inp.addEventListener("input", function(){ var si=+inp.getAttribute("data-si"); renderStudioGames(si, SEC[si].all, SEC[si].win, inp.value); }); });
     document.getElementById("g-sections").addEventListener("change", function(e){
       var cb=e.target; if(!cb || cb.type!=="checkbox") return;
       var slug=cb.getAttribute("data-slug"); if(!slug) return;
