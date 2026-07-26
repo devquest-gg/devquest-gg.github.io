@@ -175,7 +175,7 @@
     var start=0; for(var i=0;i<L.length;i++){ if(/^experience$/i.test(L[i])){ start=i+1; break; } }
     var jobs=[], currentCompany="", pendingTitle="", pgames=[], activeStudio="";
     for(var i=start;i<L.length;i++){ var line=L[i]; if(!line) continue;
-      if(/^(profile language|who your viewers|about$|privacy|linkedin corporation|help center|select language|messaging|status is online)/i.test(line)) break;   // footer
+      if(/^(profile language|who your viewers|about$|privacy|linkedin corporation|help center|select language|messaging|status is online|connected apps|add connected|projects|skills|recommendations|interests|education|licenses|volunteering|volunteer|courses|honors|test scores|languages|organizations|causes|people you|you might like|pages for you)\b/i.test(line)) break;   // footer / next profile section
       if(_isDate(line)){
         var dr=line.match(_DRRE); var from=_year4(dr[1]); var to=/present|current|now|today|ongoing/i.test(dr[2])?"":(_year4(dr[2])||"");
         var pv=_prevNE(L,i), prev=pv.line, company="";
@@ -202,6 +202,17 @@
     merged.sort(function(a,b){ var at=(a.to===""?9999:(a.to||0)), bt=(b.to===""?9999:(b.to||0)); return bt-at || (b.from||0)-(a.from||0); });
     var role=""; if(headline){ var ai=headline.toLowerCase().indexOf(" at "); role=ai>0?headline.slice(0,ai).trim():""; }
     if(!role && merged[0]) role=merged[0].title||"";
+    // LinkedIn's "Projects" section is a clean list of titles, each often tagged "Associated with <studio>".
+    // Parse it directly — it's the most reliable place your shipped games appear.
+    var projStart=-1; for(var pi=0;pi<L.length;pi++){ if(/^projects(\s*\(\d+\))?$/i.test(L[pi])){ projStart=pi+1; break; } }
+    if(projStart>=0){ var lastG=null;
+      for(var pj=projStart;pj<L.length;pj++){ var pl=L[pj]; if(!pl) continue;
+        if(/^(show all|recommendations|interests|skills|education|licenses|volunteering|volunteer|courses|honors|languages|organizations|causes|people you|you might like|pages for you)\b/i.test(pl)) break;   // next section
+        if(_isDate(pl)||_isDur(pl)||/^show project/i.test(pl)) continue;                                   // a project's date / link line
+        if(/^associated with /i.test(pl)){ if(lastG) lastG.studio=_stripJunk(pl.replace(/^associated with\s+/i,"")); continue; }
+        lastG={title:pl, studio:""}; pgames.push(lastG);                                                   // a project title → a game candidate
+      }
+    }
     return { name:name, headline:headline, jobs:merged, role:role, games:pgames };
   }
   function _catTitleIndex(rows){ var m={}; for(var i=0;i<rows.length;i++){ var r=rows[i]; if(!r) continue; var k=nrm(r[1]); if(k && !m[k]) m[k]={slug:r[0],title:r[1],year:r[2],studio:r[3]}; } return m; }
@@ -240,6 +251,7 @@
   function renderStudios(){
     app.innerHTML =
       '<div class="blk"><h2>Have a LinkedIn or résumé? Paste it. <span style="font-size:12px;font-weight:700;color:var(--gold);vertical-align:middle;border:1px solid rgba(224,178,58,.4);border-radius:6px;padding:1px 7px">FASTEST</span></h2><div class="desc">We’ll read your name, headline, the studios you worked at, and the games you listed — then you just confirm below. Nothing is uploaded; it’s parsed right here in your browser.</div>'+
+        '<div class="desc" style="color:var(--gold);font-size:12.5px;margin:-6px 0 12px">Tip: on LinkedIn, click <b>“Show all experiences”</b> and <b>“Show all projects”</b> before you copy — older studios and games are hidden behind those links, and we can only read what’s in the text.</div>'+
         '<textarea id="pt-text" placeholder="Paste your LinkedIn profile text or your résumé here…"></textarea>'+
         '<div class="actions"><button class="btn primary" id="pt-go">Autofill from this →</button><span class="status" id="pt-status"></span></div>'+
       '</div>'+
