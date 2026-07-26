@@ -708,7 +708,7 @@
       var bl=(sh.contributions||[]).slice(0,4).map(function(b){return rNoUrl(b);}).filter(Boolean);
       if(!bl.length && sh.summary) bl=[rNoUrl(sh.summary)];
       var y=(c.work_start||c.year||c.work_end||null);
-      var g={ title:c.game_title||"", role:c.role||"", studio:c.studio||"", years:rCreditYears(c), bullets:bl, _y:y, _sum:rNoUrl(sh.summary||"") };
+      var g={ title:c.game_title||"", role:c.role||"", studio:c.studio||"", years:rCreditYears(c), bullets:bl, _y:y };
       var host=null, k=RN(c.studio);
       if(k && posByStudio[k]) host=posByStudio[k];                         // 1) match by studio name
       if(!host && y){ for(var i=0;i<pos.length;i++){ if(pos[i]._s && y>=pos[i]._s && y<=(pos[i]._e||pos[i]._s)){ host=pos[i]; break; } } } // 2) else by date overlap
@@ -717,11 +717,13 @@
     // Assemble each job: a "Shipped:" line naming its titles, then position bullets + the games' contribution bullets (deduped).
     var experience=pos.map(function(pp){
       var shipped=pp.games.map(function(g){ return g.title+(g.years?" ("+g.years+")":""); });
+      var hasGames=pp.games.length>0;
       var bullets=[], seen={};
-      pp.descBullets.forEach(function(b){ var kk=b.toLowerCase(); if(b&&!seen[kk]){ seen[kk]=1; bullets.push(b); } });
+      // A role's own description: it's the ROLE's scope statement when the role's games supply the
+      // bullets; but when the role shipped no games, that description IS the role's bullets.
+      if(!hasGames) pp.descBullets.forEach(function(b){ var kk=b.toLowerCase(); if(b&&!seen[kk]){ seen[kk]=1; bullets.push(b); } });
       pp.games.forEach(function(g){ g.bullets.forEach(function(b){ var kk=b.toLowerCase(); if(b&&!seen[kk]){ seen[kk]=1; bullets.push(b); } }); });
-      // Scope line (LEGO-style role framing): the lead game's summary, if it isn't already a bullet.
-      var scope=""; for(var gi=0; gi<pp.games.length; gi++){ var sm=pp.games[gi]._sum; if(sm){ var smk=sm.toLowerCase(); if(!seen[smk]){ scope=sm; } break; } }
+      var scope = hasGames ? pp.descBullets.join(" ").trim() : "";   // role-authored scope, never a game blurb
       return { title:pp.title, company:pp.company, location:pp.location, dates:pp.dates, _s:pp._s||0, scope:scope, shipped:shipped, bullets:bullets };
     }).sort(function(a,b){ return (b._s||0)-(a._s||0); });
     var additional=orphans.map(function(g){ return { title:g.title, role:g.role, studio:g.studio, years:g.years, bullets:g.bullets.slice(0,2) }; });
