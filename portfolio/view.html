@@ -716,6 +716,11 @@
     }).sort(function(a,b){ return (b._s||0)-(a._s||0); });
     var additional=orphans.map(function(g){ return { title:g.title, role:g.role, studio:g.studio, years:g.years, bullets:g.bullets.slice(0,2) }; });
     var skills=((p.skills&&p.skills.groups)||[]).map(function(g){ return { label:g.label||"", items:(g.items||[]) }; });
+    // Fold each game's "Focus / keywords" tags into a résumé Skills group so they
+    // render on the résumé (an ATS can see them) AND count in the tailoring match.
+    var kwseen={}, kwlist=[];
+    (_credits||[]).forEach(function(c){ ((c.sheet&&c.sheet.keywords)||[]).forEach(function(k){ k=String(k||"").trim(); var kk=k.toLowerCase(); if(k && !kwseen[kk]){ kwseen[kk]=1; kwlist.push(k); } }); });
+    if(kwlist.length) skills.push({ label:"Focus", items:kwlist.slice(0,30) });
     return { name:p.name||"", headline:p.headline||"", location:p.location||"", email:email, links:links, summary:p.bio||"", experience:experience, additional:additional, skills:skills };
   }
   function resumeBody(m){
@@ -741,13 +746,123 @@
   function resumeCSS(){ return "body{font-family:Arial,Calibri,'Helvetica Neue',sans-serif;color:#111;font-size:11pt;line-height:1.35;margin:0}.rwrap{max-width:7.5in;margin:0 auto;padding:0.5in}h1{font-size:20pt;margin:0 0 2pt}.rsub{font-size:11.5pt;font-weight:bold;margin:0 0 2pt}.rcon{font-size:10pt;color:#333;margin:0 0 10pt}h2{font-size:12pt;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid #888;padding-bottom:2pt;margin:14pt 0 6pt}p{margin:0 0 4pt}.ritem{margin:0 0 9pt}.rhd{margin:0 0 2pt}.rship{margin:0 0 3pt;font-size:10pt;color:#222}.rdt{float:right;font-weight:normal;color:#333}ul{margin:2pt 0 0;padding-left:18pt}li{margin:0 0 2pt}.rsk{margin:0 0 3pt}@page{size:letter;margin:0.5in}@media print{.rwrap{padding:0}}"; }
   function resumeDocName(m){ return ((m.name||"resume").replace(/[^\w\- ]+/g,"").trim()||"resume")+" Resume"; }
   function resumeFullHTML(m){ return '<!doctype html><html><head><meta charset="utf-8"><title>'+rEsc(m.name)+' Resume</title><style>'+resumeCSS()+'</style></head><body><div class="rwrap">'+resumeBody(m)+'</div></body></html>'; }
+  // ===== native, zero-dependency PDF with a REAL text layer =====
+  // Uses the base-14 Helvetica fonts (no embedding needed) and writes actual text
+  // operators, so the output is selectable/ATS-parseable — unlike "print to PDF",
+  // which can flatten the page to outlines with no text at all.
+  // Helvetica + Helvetica-Bold advance widths (units/1000), char codes 32..126.
+  var _HVW=[278,278,355,556,556,889,667,191,333,333,389,584,278,333,278,278,556,556,556,556,556,556,556,556,556,556,278,278,584,584,584,556,1015,667,667,722,722,667,611,778,722,278,500,667,556,833,722,778,667,778,722,667,611,722,667,944,667,667,611,278,278,278,469,556,333,556,556,500,556,556,278,556,556,222,222,500,222,833,556,556,556,556,333,500,278,556,500,722,500,500,500,334,260,334,584];
+  var _HBW=[278,333,474,556,556,889,722,238,333,333,389,584,278,333,278,278,556,556,556,556,556,556,556,556,556,556,333,333,584,584,584,611,975,722,722,722,722,667,611,778,722,278,556,722,611,833,722,778,667,778,722,667,611,722,667,944,667,667,611,333,278,333,584,556,333,556,611,556,611,556,333,611,611,278,278,556,278,889,611,611,611,611,389,556,333,611,556,778,556,556,500,389,280,389,584];
+  function _cp1252(cp){
+    if(cp>=0x20 && cp<=0x7E) return cp;
+    switch(cp){ case 0x2014:return 0x97; case 0x2013:return 0x96; case 0x2019:return 0x92; case 0x2018:return 0x91;
+      case 0x201C:return 0x93; case 0x201D:return 0x94; case 0x2022:return 0x95; case 0x2026:return 0x85;
+      case 0x00B7:return 0xB7; case 0x2122:return 0x99; case 0x00A0:return 0x20; }
+    if(cp>=0xA1 && cp<=0xFF) return cp;
+    return 0x3F; // "?"
+  }
+  function _pw(byte,bold){
+    if(byte>=32 && byte<=126) return (bold?_HBW:_HVW)[byte-32];
+    switch(byte){ case 0x95:return 350; case 0x97:return 1000; case 0x96:return 556; case 0x92:case 0x91:return 250;
+      case 0x93:case 0x94:return 420; case 0x85:return 1000; case 0xB7:return 278; }
+    if(byte>=0xC0 && byte<=0xDF) return 722;
+    if(byte>=0xE0) return 556;
+    return 556;
+  }
+  function _pdfEsc(text){ var out=""; text=String(text==null?"":text);
+    for(var i=0;i<text.length;i++){ var cp=text.codePointAt(i); if(cp>0xFFFF)i++; var b=_cp1252(cp);
+      if(b===0x28||b===0x29||b===0x5C) out+="\\"; out+=String.fromCharCode(b); } return out; }
+  function _pmeasure(text,size,bold){ text=String(text==null?"":text); var w=0;
+    for(var i=0;i<text.length;i++){ var cp=text.codePointAt(i); if(cp>0xFFFF)i++; w+=_pw(_cp1252(cp),bold); } return w*size/1000; }
+  function _pwrap(text,size,bold,maxW){ var words=String(text==null?"":text).split(/\s+/).filter(Boolean), lines=[], cur="";
+    for(var i=0;i<words.length;i++){ var t=cur?cur+" "+words[i]:words[i]; if(!cur || _pmeasure(t,size,bold)<=maxW) cur=t; else { lines.push(cur); cur=words[i]; } }
+    if(cur) lines.push(cur); return lines.length?lines:[""]; }
+  function _pdfBuild(m){
+    var PW=612, PH=792, ML=42, MR=42, MT=52, MB=46, RX=PW-MR, CW=PW-ML-MR;
+    var pages=[], ops=[], y=PH-MT;
+    function _f(n){ return Math.round(n*100)/100; }
+    function nl(h){ y-=h; }
+    function newpage(){ if(ops.length) pages.push(ops); ops=[]; y=PH-MT; }
+    function need(h){ if(y-h < MB) newpage(); }
+    function run(x,text,size,bold,gray){ if(text==null||text==="") return;
+      ops.push("BT /"+(bold?"F2":"F1")+" "+size+" Tf "+(gray!=null?gray+" "+gray+" "+gray:"0 0 0")+" rg "+_f(x)+" "+_f(y)+" Td ("+_pdfEsc(text)+") Tj ET"); }
+    function rule(){ ops.push("q 0.62 0.62 0.62 RG 0.6 w "+_f(ML)+" "+_f(y)+" m "+_f(RX)+" "+_f(y)+" l S Q"); }
+    function heading(t){ need(24); nl(8); run(ML, t.toUpperCase(), 10.5, true); nl(5); rule(); nl(11); }
+    function bullets(arr){ arr.forEach(function(b){ var lines=_pwrap(b,10,false,CW-16); need(lines.length*12.5+3);
+      run(ML+3, "•", 10, false);
+      lines.forEach(function(ln){ run(ML+15, ln, 10, false); nl(12.5); }); nl(2); }); }
+
+    need(24); run(ML, m.name||"", 20, true); nl(23);
+    if(m.headline){ need(16); run(ML, m.headline, 12, true); nl(15); }
+    var contact=[]; if(m.location)contact.push(m.location); if(m.email)contact.push(m.email);
+    (m.links||[]).forEach(function(u){ contact.push(u.replace(/^https?:\/\//,"")); });
+    if(contact.length){ need(13); run(ML, contact.join("  ·  "), 9.5, false, 0.25); nl(15); }
+
+    if(m.summary){ heading("Summary"); _pwrap(rPlain(m.summary),10,false,CW).forEach(function(ln){ need(12.5); run(ML,ln,10,false); nl(12.5); }); nl(2); }
+
+    if(m.experience && m.experience.length){ heading("Experience"); m.experience.forEach(function(j){
+      need(15);
+      var head=j.title||""; run(ML, head, 10.5, true);
+      var rest=(j.company?", "+j.company:"")+(j.location?" — "+j.location:"");
+      if(rest) run(ML+_pmeasure(head,10.5,true), rest, 10.5, false);
+      if(j.dates) run(RX-_pmeasure(j.dates,9.5,false), j.dates, 9.5, false, 0.25);
+      nl(13.5);
+      if(j.shipped && j.shipped.length){ var full="Shipped: "+j.shipped.join(", ");
+        _pwrap(full,9.5,false,CW).forEach(function(ln,idx){ need(12);
+          if(idx===0){ var lbl="Shipped:"; run(ML,lbl,9.5,true); run(ML+_pmeasure(lbl,9.5,true), ln.slice(lbl.length),9.5,false); }
+          else run(ML,ln,9.5,false); nl(12); }); }
+      if(j.bullets && j.bullets.length) bullets(j.bullets);
+      nl(5);
+    }); }
+
+    if(m.additional && m.additional.length){ heading("Additional Shipped Titles"); m.additional.forEach(function(pr){
+      need(14); var head=pr.title||""; run(ML, head, 10.5, true);
+      var rest=(pr.role?" — "+pr.role:"")+(pr.studio?", "+pr.studio:"");
+      if(rest) run(ML+_pmeasure(head,10.5,true), rest, 10.5, false);
+      if(pr.years) run(RX-_pmeasure(pr.years,9.5,false), pr.years, 9.5, false, 0.25);
+      nl(13.5);
+      if(pr.bullets && pr.bullets.length) bullets(pr.bullets);
+      nl(5);
+    }); }
+
+    if(m.skills && m.skills.length){ heading("Skills"); m.skills.forEach(function(g){
+      var label=g.label?g.label+": ":"", items=(g.items||[]).join(", "), lines=_pwrap(label+items,10,false,CW);
+      lines.forEach(function(ln,idx){ need(12.5);
+        if(idx===0 && label && ln.indexOf(label)===0){ run(ML,label,10,true); run(ML+_pmeasure(label,10,true), ln.slice(label.length),10,false); }
+        else run(ML, ln, 10, false); nl(12.5); }); nl(1);
+    }); }
+
+    newpage();
+
+    // ---- assemble objects (1 catalog, 2 pages, N page objs, N content objs, 2 fonts) ----
+    var N=pages.length, out="%PDF-1.4\n%\xE2\xE3\xCF\xD3\n", offsets=[], num=0;
+    function obj(body){ num++; offsets[num]=out.length; out+=num+" 0 obj\n"+body+"\nendobj\n"; }
+    var F1=3+2*N, F2=4+2*N;
+    obj("<< /Type /Catalog /Pages 2 0 R >>");
+    var kids=""; for(var i=0;i<N;i++) kids+=(3+i)+" 0 R "; obj("<< /Type /Pages /Kids ["+kids.replace(/\s+$/,"")+"] /Count "+N+" >>");
+    for(i=0;i<N;i++){ obj("<< /Type /Page /Parent 2 0 R /MediaBox [0 0 "+PW+" "+PH+"] /Resources << /Font << /F1 "+F1+" 0 R /F2 "+F2+" 0 R >> >> /Contents "+(3+N+i)+" 0 R >>"); }
+    for(i=0;i<N;i++){ var content=pages[i].join("\n"); obj("<< /Length "+content.length+" >>\nstream\n"+content+"\nendstream"); }
+    obj("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>");
+    obj("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>");
+    var xref=out.length, total=num+1;
+    out+="xref\n0 "+total+"\n0000000000 65535 f \n";
+    for(i=1;i<=num;i++){ out+=("0000000000"+offsets[i]).slice(-10)+" 00000 n \n"; }
+    out+="trailer\n<< /Size "+total+" /Root 1 0 R >>\nstartxref\n"+xref+"\n%%EOF";
+    var arr=new Uint8Array(out.length); for(i=0;i<out.length;i++) arr[i]=out.charCodeAt(i)&0xFF;
+    return new Blob([arr],{type:"application/pdf"});
+  }
   async function downloadResumePDF(mOverride){
     var m=mOverride||await resumeModel();
-    var w=window.open("","_blank");
-    if(!w){ alert("Allow pop-ups for this site to save the résumé as PDF, or use the Word download."); return; }
-    w.document.open(); w.document.write(resumeFullHTML(m)); w.document.close();
-    var go=function(){ try{ w.focus(); w.print(); }catch(e){} };
-    if(w.document.readyState==="complete") setTimeout(go,350); else w.onload=function(){ setTimeout(go,350); };
+    try{
+      _rTrigger(_pdfBuild(m), resumeDocName(m)+".pdf");   // one-click, real text layer, no print dialog
+    }catch(err){
+      // Fallback to browser print only if native generation ever fails.
+      var w=window.open("","_blank");
+      if(!w){ alert("Allow pop-ups for this site to save the résumé as PDF, or use the Word download."); return; }
+      w.document.open(); w.document.write(resumeFullHTML(m)); w.document.close();
+      var go=function(){ try{ w.focus(); w.print(); }catch(e){} };
+      if(w.document.readyState==="complete") setTimeout(go,350); else w.onload=function(){ setTimeout(go,350); };
+    }
   }
   function _rTrigger(blob,fname){ var u=URL.createObjectURL(blob); var a=document.createElement("a"); a.href=u; a.download=fname; document.body.appendChild(a); a.click(); setTimeout(function(){ URL.revokeObjectURL(u); a.remove(); },3000); }
   // --- native .docx builder: real OOXML paragraphs/runs so ATS parses the text (no libraries) ---
@@ -859,8 +974,10 @@
   ];
   var TSTOP={the:1,and:1,for:1,with:1,you:1,our:1,are:1,will:1,that:1,this:1,have:1,from:1,your:1,who:1,all:1,not:1,but:1,can:1,job:1,role:1,work:1,team:1,teams:1,years:1,year:1,experience:1,ability:1,strong:1,skills:1,including:1,across:1,within:1,help:1,were:1,what:1,when:1,into:1,they:1,them:1,their:1,about:1,other:1,more:1,such:1,also:1,plus:1,per:1,etc:1,using:1,use:1,new:1,well:1,like:1,we:1,a:1,an:1,to:1,of:1,in:1,on:1,or:1,is:1,as:1,at:1,be:1,by:1,it:1};
   // Lower-cased, boundary-padded text that keeps + and # so "c++"/"c#" survive.
-  function _tlc(s){ return " "+String(s==null?"":s).toLowerCase().replace(/[^a-z0-9+#.\s-]/g," ").replace(/\s+/g," ").trim()+" "; }
+  function _tlc(s){ return " "+String(s==null?"":s).toLowerCase().replace(/[^a-z0-9+#.\s-]/g," ").replace(/-/g," ").replace(/\s+/g," ").trim()+" "; }
   function _tHas(text,v){
+    if(!v) return false;
+    v=String(v).replace(/-/g," ").replace(/\s+/g," ").trim();   // "live-ops"/"live ops"/"liveops" all comparable
     if(!v) return false;
     if(v.indexOf(" ")>=0 || v.length>4) return text.indexOf(v)>=0;   // multiword / long → substring is safe
     var re=new RegExp("(^|[^a-z0-9+#])"+v.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")+"([^a-z0-9+#]|$)");
