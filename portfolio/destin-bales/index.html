@@ -297,7 +297,7 @@
   #stage .tile:hover{box-shadow:0 18px 40px rgba(0,0,0,.6),inset 0 0 0 1px rgba(255,255,255,.16)}
   #stage .tile.drag{transition:box-shadow .15s;z-index:50;box-shadow:0 30px 60px rgba(0,0,0,.7),inset 0 0 0 1px rgba(255,255,255,.28)}
   #stage .tile .art{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1;pointer-events:none;-webkit-user-drag:none}
-  #stage .tile .fb{position:absolute;inset:0;z-index:0;display:flex;align-items:flex-end;padding:11px}
+  #stage .tile .fb{position:absolute;inset:0;z-index:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:14px}
   #stage .tile .fb span{font-weight:850;font-size:15px;letter-spacing:-.3px;text-shadow:0 2px 12px rgba(0,0,0,.85);line-height:1.1}
   #stage .tile .gloss{position:absolute;inset:0;z-index:2;pointer-events:none;background:linear-gradient(160deg,rgba(255,255,255,.13),transparent 34%)}
   #stage .tile .vb{position:absolute;top:7px;right:7px;z-index:3;width:22px;height:22px;border-radius:50%;background:rgba(63,185,80,.96);color:#04220f;font-weight:900;font-size:12px;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 6px rgba(0,0,0,.5)}
@@ -378,6 +378,41 @@
   .agprev{margin-top:10px;display:flex;gap:12px;align-items:center}
   .agprev img{width:84px;height:112px;object-fit:cover;border-radius:8px;border:1px solid var(--border);background:#141b26}
   body.embed .bar, body.embed .nav, body.embed .editlink{display:none !important}
+  /* ===== draft mode (games-only, pre-account) ===== */
+  body.is-draft{padding-top:46px;padding-bottom:88px}
+  body.is-draft .contact{display:none}
+  body.is-draft .nav{top:46px}
+  #draftpub{position:fixed;top:0;left:0;right:0;z-index:100;background:linear-gradient(135deg,#182238,#211838);border-bottom:1px solid var(--border,#242c38)}
+  #draftpub .dp-inner{max-width:1100px;margin:0 auto;padding:0 20px;display:flex;align-items:center;gap:14px;height:46px;flex-wrap:nowrap}
+  #draftpub .dp-msg{flex:1;min-width:0;font-size:13px;color:#dbe5f1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  #draftpub .dp-msg b{color:#fff}
+  #draftpub #dp-save{white-space:nowrap;flex:none;padding:7px 14px}
+  @media(max-width:520px){#draftpub .dp-msg{font-size:12px}}
+  #draftbar{position:fixed;left:0;right:0;bottom:0;z-index:70;background:rgba(11,14,20,.93);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border-top:1px solid var(--border,#242c38)}
+  #draftbar .db-inner{max-width:1100px;margin:0 auto;padding:12px 20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+  #draftbar .db-note{flex:1;min-width:180px;font-size:13.5px;color:var(--muted,#8b98a9)}
+  #draftbar .db-note b{color:var(--text,#eef3fa)}
+  #draftbar .db-actions{display:flex;gap:10px}
+  .db-btn{border-radius:10px;padding:10px 16px;font-size:14px;font-weight:800;cursor:pointer;border:1px solid transparent;font-family:inherit}
+  .db-btn.ghost{background:transparent;border-color:var(--border,#242c38);color:var(--text,#eef3fa)}
+  .db-btn.ghost:hover{border-color:var(--accent,#58a6ff)}
+  .db-btn.primary{background:linear-gradient(135deg,var(--accent,#58a6ff),var(--purple,#a371f7));color:#fff}
+  .db-btn.primary:hover{filter:brightness(1.08)}
+  .dmodal-ov{position:fixed;inset:0;z-index:200;background:rgba(4,7,12,.7);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);display:flex;align-items:flex-start;justify-content:center;padding:60px 16px;overflow:auto}
+  .dmodal{background:var(--panel,#141a23);border:1px solid var(--border,#242c38);border-radius:16px;max-width:520px;width:100%;padding:22px;box-shadow:0 30px 80px rgba(0,0,0,.6);position:relative}
+  .dmodal h3{margin:0 0 4px;font-size:19px}
+  .dmodal .dsub{color:var(--muted,#8b98a9);font-size:13.5px;margin:0 0 14px;line-height:1.5}
+  .dmodal label{display:block;font-size:12.5px;font-weight:700;margin:12px 0 5px}
+  .dmodal input{width:100%;background:var(--bg,#0b0e14);border:1px solid var(--border,#242c38);border-radius:9px;padding:11px 12px;color:var(--text,#eef3fa);font-size:14px;font-family:inherit}
+  .dmodal input:focus{outline:none;border-color:var(--accent,#58a6ff)}
+  .dmodal .dact{display:flex;justify-content:flex-end;gap:10px;margin-top:18px}
+  .dmodal .dfoot{font-size:11.5px;color:var(--muted,#8b98a9);margin-top:12px;line-height:1.4}
+  .dmodal .dx{position:absolute;top:12px;right:14px;background:transparent;border:0;color:var(--muted,#8b98a9);font-size:22px;cursor:pointer;line-height:1}
+  #welcomebar{position:fixed;left:50%;transform:translateX(-50%);bottom:16px;z-index:75;max-width:min(680px,calc(100vw - 28px));background:linear-gradient(135deg,rgba(88,166,255,.18),rgba(163,113,247,.14));border:1px solid var(--border,#242c38);border-radius:14px;box-shadow:0 20px 50px rgba(0,0,0,.5);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+  #welcomebar .wb-inner{padding:12px 16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  #welcomebar .wb-txt{flex:1;min-width:200px;font-size:13.5px;color:var(--text,#eef3fa)}
+  #welcomebar .wb-btn{font-size:13px;font-weight:800;color:#04121f;background:var(--gold,#e0b23a);border-radius:999px;padding:7px 14px;white-space:nowrap}
+  #welcomebar .wb-x{background:transparent;border:0;color:var(--muted,#8b98a9);font-size:20px;cursor:pointer;line-height:1}
   body.embed .hero .banner{height:150px}
   html.embed{scrollbar-width:thin;scrollbar-color:#2b3648 transparent}
   html.embed::-webkit-scrollbar{width:9px;height:9px}
@@ -389,7 +424,7 @@
 <body>
 <div class="bar"></div>
 <div class="nav"><div class="wrap"><div class="brand"><a class="brandhome" href="/portfolio/" aria-label="DevQuest Portfolio home"><svg class="mark" viewBox="0 0 32 32" aria-hidden="true"><rect x="1" y="1" width="8" height="8" rx="2" fill="var(--gold)"/><rect x="12" y="1" width="8" height="8" rx="2" fill="#2d333b"/><rect x="23" y="1" width="8" height="8" rx="2" fill="#2d333b"/><rect x="1" y="12" width="8" height="8" rx="2" fill="#2d333b"/><rect x="12" y="12" width="8" height="8" rx="2" fill="var(--gold)"/><rect x="23" y="12" width="8" height="8" rx="2" fill="#2d333b"/><rect x="1" y="23" width="8" height="8" rx="2" fill="#2d333b"/><rect x="12" y="23" width="8" height="8" rx="2" fill="#2d333b"/><rect x="23" y="23" width="8" height="8" rx="2" fill="var(--gold)"/></svg><span class="wm">Dev<span class="q">Quest</span><span class="tld">.gg</span></span></a> <span class="cr">PORTFOLIO</span> <span class="beta">BETA</span></div><div class="navlinks"><a id="creditslink">Credits</a><a href="/">Jobs board →</a></div></div></div></div>
-<a class="editlink" id="editlink" href="/portfolio/edit/">✎ Edit my portfolio</a>
+<a class="editlink" id="editlink" href="/portfolio/edit/">✎ Edit work history &amp; skills</a>
 <div id="app"><div class="wrap" style="padding:60px 22px;color:var(--muted)">Loading portfolio…</div></div>
 <footer><div class="wrap"><div><b style="color:var(--text)">DevQuest.gg</b> · portfolio</div><div>Verified by the people you shipped with.</div></div></footer>
 
@@ -406,8 +441,9 @@
   var pslug = parts[parts.length-1] || "";
   var slug = String(qslug || pslug || "").trim().toLowerCase();
   var IS_EMBED = new URLSearchParams(location.search).get("embed")==="1"; if(IS_EMBED){ try{ document.body.classList.add("embed"); document.documentElement.classList.add("embed"); }catch(e){} }
-  if(slug==="portfolio" || slug==="view.html" || !slug){ app.innerHTML='<div class="wrap" style="padding:60px 22px;color:var(--muted)">No profile specified.</div>'; return; }
-  document.getElementById("creditslink").href="/credits/"+slug;
+  var IS_DRAFT = new URLSearchParams(location.search).get("draft")==="1";
+  if(!IS_DRAFT && (slug==="portfolio" || slug==="view.html" || !slug)){ app.innerHTML='<div class="wrap" style="padding:60px 22px;color:var(--muted)">No profile specified.</div>'; return; }
+  if(!IS_DRAFT){ document.getElementById("creditslink").href="/credits/"+slug; }
 
   // --- box art: resolve Steam capsules + admin covers, same as the credits person page ---
   function bkt(s){ var h=2166136261>>>0; for(var i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=Math.imul(h,16777619)>>>0; } return h%256; }
@@ -440,10 +476,80 @@
       if(!(r && r.ok && r.data && r.data.person)){ app.innerHTML='<div class="wrap" style="padding:60px 22px"><h1>Not found</h1><p style="color:var(--muted)">No portfolio at this address yet.</p></div>'; return; }
       var person=r.data.person, positions=r.data.positions||[], credits=r.data.credits||[];
       resolveCovers(credits).then(function(covMap){ render(person, positions, credits, covMap||{}); if(IS_EMBED){ setTimeout(function(){ var h=document.querySelector(".stagehead"); if(h){ var y=h.getBoundingClientRect().top + (window.pageYOffset||0) - 8; window.scrollTo(0, y); } },350); } });
-      if(!IS_EMBED && DQAPI.isSignedIn()){ document.body.classList.add("is-auth"); DQAPI.me().then(function(mr){ var me=mr&&mr.data&&mr.data.person; if(me && me.slug===slug){ IS_OWNER=true; document.body.classList.add("is-owner"); document.getElementById("editlink").style.display="inline-block"; if(_relayout) _relayout(); } }).catch(function(){}); }
+      if(!IS_EMBED && DQAPI.isSignedIn()){ document.body.classList.add("is-auth"); DQAPI.me().then(function(mr){ var me=mr&&mr.data&&mr.data.person; if(me && me.slug===slug){ IS_OWNER=true; document.body.classList.add("is-owner"); document.getElementById("editlink").style.display="inline-block"; if(_relayout) _relayout(); if(new URLSearchParams(location.search).get("welcome")==="1") showWelcomeBanner(); } }).catch(function(){}); }
     }).catch(function(){ app.innerHTML='<div class="wrap" style="padding:60px 22px;color:var(--pink)">Could not load this portfolio. Try again.</div>'; });
   }
-  loadPortfolio();
+  if(IS_DRAFT){ loadDraft(); } else { loadPortfolio(); }
+
+  // ===== games-only DRAFT mode: build a wall from localStorage, no account yet =====
+  function dGet(){ try{ return JSON.parse(localStorage.getItem("dq_draft")||"null")||{name:"",credits:[]}; }catch(e){ return {name:"",credits:[]}; } }
+  function dSet(d){ try{ localStorage.setItem("dq_draft", JSON.stringify(d||{name:"",credits:[]})); }catch(e){} }
+  function draftCredit(c,i){ return { id:"draft-"+i, game_slug:c.game_slug, game_title:c.game_title||c.game_slug, studio:c.studio||"", year:c.year||null, work_start:(c.work_start!=null?c.work_start:(c.year||null)), work_end:(c.work_end!=null?c.work_end:null), role:c.role||"", roles_other:[], releases:[], links:[], source_url:"", verification:[], vouch_count:0, sheet:c.sheet||null, scope:"base" }; }
+  function loadDraft(){
+    document.body.classList.add("is-draft");
+    IS_OWNER=true; document.body.classList.add("is-owner");   // draft acts like owner; writes go to localStorage, never the API
+    var d=dGet(); var credits=(d.credits||[]).map(draftCredit);
+    var pf=d.profile||{};
+    var person={ name:d.name||"Your name", slug:null, headline:pf.headline||"", location:pf.location||"", bio:pf.bio||"", links:pf.links||[], skills:{groups:[]}, portfolio_style:"production", open_to_work:pf.open_to_work?1:0, avatar_url:pf.avatar_url||"" };
+    resolveCovers(credits).then(function(cm){ cm=cm||{}; (d.credits||[]).forEach(function(c){ if(c.cover_url) cm[c.game_slug]=c.cover_url; }); render(person,[],credits,cm); mountDraftBar(credits.length); }).catch(function(){ render(person,[],credits,{}); mountDraftBar(credits.length); });
+  }
+  // Mirror the rendered _credits back into the localStorage draft (role, work years, one-sheet, cover, order).
+  function draftSyncFromCredits(){
+    var d=dGet();
+    d.credits=(_credits||[]).map(function(c){ return { game_slug:c.game_slug, game_title:c.game_title, studio:c.studio||"", year:c.year||"", role:c.role||"", work_start:(c.work_start!=null?c.work_start:null), work_end:(c.work_end!=null?c.work_end:null), sheet:c.sheet||null, cover_url:(_covMap[c.game_slug]||"") }; });
+    dSet(d);
+  }
+  function reloadDraft(){ loadDraft(); }
+  function mountDraftBar(count){
+    // Persistent publish banner pinned to the very top for the whole draft session.
+    var oldp=document.getElementById("draftpub"); if(oldp) oldp.remove();
+    var pub=document.createElement("div"); pub.id="draftpub";
+    pub.innerHTML='<div class="dp-inner"><span class="dp-msg">'+(count?('You’re building a draft · <b>'+count+' game'+(count===1?'':'s')+'</b> saved on this device only. Publish to keep it for good.'):'You’re building a draft portfolio. Publish to save it to your account.')+'</span><button type="button" id="dp-save" class="db-btn primary">Save &amp; publish →</button></div>';
+    document.body.appendChild(pub);
+    document.getElementById("dp-save").onclick=draftSave;
+    var old=document.getElementById("draftbar"); if(old) old.remove();
+    var bar=document.createElement("div"); bar.id="draftbar";
+    bar.innerHTML='<div class="db-inner"><div class="db-note">'+(count?('<b>'+count+'</b> game'+(count===1?'':'s')+' on your wall · saved on this device'):'Your wall is empty — add a game you shipped to start')+'</div><div class="db-actions"><button type="button" id="db-add" class="db-btn ghost">+ Add a game</button><button type="button" id="db-save" class="db-btn primary">Save my portfolio →</button></div></div>';
+    document.body.appendChild(bar);
+    document.getElementById("db-add").onclick=draftAddSearch;
+    document.getElementById("db-save").onclick=draftSave;
+  }
+  function draftModal(inner){ var ov=document.createElement("div"); ov.className="dmodal-ov"; ov.innerHTML='<div class="dmodal"><button class="dx" aria-label="Close">×</button>'+inner+'</div>'; document.body.appendChild(ov); ov.querySelector(".dx").onclick=function(){ ov.remove(); }; return ov; }
+  function draftRole(game, onDone){
+    var d=dGet();
+    var ov=draftModal('<h3>Add '+esc(game.game_title||"this game")+' to your wall</h3><div class="dsub">No account needed yet. Add your role and it goes straight on your portfolio.</div>'+(d.name?'':'<label>Your name</label><input id="dr-name" placeholder="Jane Doe">')+'<label>Your role on '+esc(game.game_title||"this game")+'</label><input id="dr-role" placeholder="e.g. Senior Producer" autocomplete="off"><div class="dact"><button class="db-btn ghost" data-x>Cancel</button><button class="db-btn primary" id="dr-add">Add to my wall →</button></div><div class="dfoot">Saved on this device. We only ask for an email when you save your portfolio.</div>');
+    ov.querySelector("[data-x]").onclick=function(){ ov.remove(); };
+    ov.querySelector("#dr-add").onclick=function(){
+      var role=((ov.querySelector("#dr-role")||{}).value||"").trim(); if(!role){ alert("Add your role first."); return; }
+      var dd=dGet(); var nmEl=ov.querySelector("#dr-name"); if(nmEl && nmEl.value.trim()) dd.name=nmEl.value.trim();
+      if(!dd.credits.some(function(c){return c.game_slug===game.game_slug;})) dd.credits.push({game_slug:game.game_slug,game_title:game.game_title,studio:game.studio||"",year:game.year||"",role:role});
+      dSet(dd); ov.remove(); if(onDone) onDone();
+    };
+    setTimeout(function(){ var r=ov.querySelector("#dr-role"); if(r) r.focus(); },40);
+  }
+  function draftAddSearch(){
+    var have={}; (dGet().credits||[]).forEach(function(c){ have[c.game_slug]=1; });
+    var ov=draftModal('<h3>Add a game you shipped</h3><div class="dsub">Search the catalogue and pick a title you worked on.</div><input id="da-q" placeholder="Start typing a game title…" autocomplete="off"><div id="da-res" style="margin-top:10px;max-height:320px;overflow:auto"></div><div class="dfoot">Not in the catalogue? You can add a missing game once you save.</div>');
+    var qi=ov.querySelector("#da-q"), res=ov.querySelector("#da-res"), t;
+    function paint(gs){ if(!gs.length){ res.innerHTML='<div style="color:var(--muted,#8b98a9);font-size:13px;padding:8px 2px">No matches yet.</div>'; return; } res.innerHTML=gs.map(function(g){ var added=have[g.slug]; return '<button class="da-row" data-slug="'+esc(g.slug)+'" data-title="'+esc(g.title)+'" data-studio="'+esc(g.studio||"")+'" data-year="'+esc(g.year||"")+'" '+(added?"disabled":"")+' style="display:flex;width:100%;text-align:left;align-items:center;gap:10px;background:transparent;border:0;border-top:1px solid var(--border,#242c38);padding:10px 4px;cursor:'+(added?"default":"pointer")+';color:inherit"><span style="flex:1;min-width:0"><span style="display:block;font-weight:700;font-size:14px">'+esc(g.title)+'</span>'+((g.studio||g.year)?'<span style="display:block;color:var(--muted,#8b98a9);font-size:12px">'+esc((g.studio||"")+(g.studio&&g.year?" · ":"")+(g.year||""))+'</span>':'')+'</span><span style="font-size:12px;font-weight:800;color:'+(added?"var(--muted,#8b98a9)":"var(--accent,#58a6ff)")+';white-space:nowrap">'+(added?"Added ✓":"Add →")+'</span></button>'; }).join(""); }
+    qi.addEventListener("input",function(){ clearTimeout(t); var q=qi.value.trim(); if(!q){ res.innerHTML=""; return; } t=setTimeout(function(){ if(DQAPI.searchGames) DQAPI.searchGames(q).then(function(r){ paint(((r.data&&r.data.games)||[]).slice(0,12)); }).catch(function(){}); },140); });
+    res.addEventListener("click",function(e){ var b=e.target.closest&&e.target.closest(".da-row"); if(!b||b.disabled) return; var g={game_slug:b.getAttribute("data-slug"),game_title:b.getAttribute("data-title"),studio:b.getAttribute("data-studio"),year:b.getAttribute("data-year")}; ov.remove(); draftRole(g, reloadDraft); });
+    setTimeout(function(){ qi.focus(); },40);
+  }
+  function draftSave(){
+    var d=dGet(); if(!(d.credits&&d.credits.length)){ alert("Add at least one game to your wall first."); return; }
+    var ov=draftModal('<h3>Save &amp; publish your portfolio</h3><div class="dsub">You have <b>'+d.credits.length+'</b> game'+(d.credits.length===1?'':'s')+' on your wall. Confirm your name, then we\'ll email you a one-tap link to save it. This is the first time we ask for an email.</div><label>Your name (as it should be credited)</label><input id="ds-name" value="'+esc(d.name||"")+'" placeholder="Jane Doe"><div class="dact"><button class="db-btn ghost" data-x>Not yet</button><button class="db-btn primary" id="ds-go">Continue to save →</button></div><div class="dfoot">Your games stay saved on this device until then.</div>');
+    ov.querySelector("[data-x]").onclick=function(){ ov.remove(); };
+    ov.querySelector("#ds-go").onclick=function(){ var name=((ov.querySelector("#ds-name")||{}).value||"").trim(); if(!name){ alert("Add your name first."); return; } var dd=dGet(); dd.name=name; dSet(dd); location.href="/credits/signin.html?publish=1"; };
+    setTimeout(function(){ var n=ov.querySelector("#ds-name"); if(n) n.focus(); },40);
+  }
+  function showWelcomeBanner(){
+    if(document.getElementById("welcomebar")) return;
+    var b=document.createElement("div"); b.id="welcomebar";
+    b.innerHTML='<div class="wb-inner"><div class="wb-txt"><b>Your portfolio is live.</b> Add your work history and skills to finish it — and use “Edit header” up top for your photo and bio.</div><a class="wb-btn" href="/portfolio/edit/">Add work history →</a><button type="button" class="wb-x" aria-label="Dismiss">×</button></div>';
+    document.body.appendChild(b);
+    b.querySelector(".wb-x").onclick=function(){ b.remove(); };
+  }
 
   function creditYear(c){ return c.work_start || c.year || c.work_end || null; }
   function isLive(c){ return (c.releases||[]).some(function(x){ return /live/i.test(x); }); }
@@ -516,7 +622,7 @@
 
     // ---- confirm count ----
     var confirmed = credits.filter(function(c){ return (c.vouch_count||0)>0; }).length;
-    var contact = '<div class="wrap"><div class="contact"><h3>'+esc(p.name.split(" ")[0])+' is '+(p.open_to_work?'open to new roles':'on DevQuest')+'</h3><p>Résumé tailors to your posting in one click.</p><div class="clinks"><a class="btn primary">⬇ Download résumé (PDF)</a>'+linkBtns+'</div>'+
+    var contact = '<div class="wrap"><div class="contact"><h3>'+esc(p.name.split(" ")[0])+' is '+(p.open_to_work?'open to new roles':'on DevQuest')+'</h3><p>Résumé tailors to your posting in one click.</p><div class="clinks"><a class="btn primary dq-rpdf" style="cursor:pointer">⬇ Résumé (PDF)</a><a class="btn ghost dq-rdocx" style="cursor:pointer">⬇ Word (.docx)</a><a class="btn ghost dq-tailor" style="cursor:pointer">🎯 Tailor to a job</a>'+linkBtns+'</div>'+
       (confirmed?'<div class="vfoot"><span class="v2">✓</span> '+confirmed+' of '+credits.length+' credits confirmed by teammates who shipped the same game · <a href="/credits/how-evidence-works.html" style="color:var(--accent)">how evidence works →</a></div>':'')+
       '</div></div>';
 
@@ -543,7 +649,7 @@
     if(links.artstation) lb+='<a class="btn ghost" href="'+esc(links.artstation)+'" target="_blank">ArtStation</a>';
     if(links.github) lb+='<a class="btn ghost" href="'+esc(links.github)+'" target="_blank">GitHub</a>';
     return '<div class="hero"><div class="banner"></div><div class="scrim"></div>'+
-      '<button class="pedit owner-only" id="editProfile">✎ Edit</button>'+
+      '<button class="pedit owner-only" id="editProfile">✎ Edit header</button>'+
       '<div class="wrap"><div class="htop">'+
         '<div class="avatar'+(p.avatar_url?' has-photo':'')+'">'+(p.avatar_url?'<img src="'+esc(p.avatar_url)+'" alt="" onerror="this.remove();this.parentNode.classList.remove(\'has-photo\')">':'')+'<span class="ini">'+esc(av)+'</span></div><div class="hmeta">'+
         (p.open_to_work ? '<div class="oa"><span class="d"></span> Open to opportunities</div>' : '')+
@@ -551,7 +657,7 @@
         (p.headline ? '<div class="role">'+esc(p.headline)+'</div>' : '')+
         (p.bio ? '<p class="bio">'+esc(p.bio)+'</p>' : '')+
         '<div class="tags">'+tags.map(function(t){return '<span class="tag spec">'+esc(t)+'</span>';}).join("")+'</div>'+
-        '<div class="cta"><a class="btn primary">⬇ Download résumé</a>'+lb+'</div>'+
+        '<div class="cta"><a class="btn primary dq-rpdf" style="cursor:pointer">⬇ Résumé (PDF)</a><a class="btn ghost dq-rdocx" style="cursor:pointer">⬇ Word (.docx)</a><a class="btn ghost dq-tailor" style="cursor:pointer">🎯 Tailor to a job</a>'+lb+'</div>'+
         '</div></div>'+
         '<div class="stats">'+
           stat((CUR-minY)+" yrs","In the industry")+stat(nStudios,"Studios")+stat(credits.length,"Credits")+
@@ -562,6 +668,455 @@
   }
   function renderHero(){ var hb=document.getElementById("herobox"); if(hb){ hb.innerHTML=heroHTML(_person,_positions,_credits); wireHeroEdit(); } if(_person) document.title=_person.name+" · DevQuest Portfolio"; }
   function wireHeroEdit(){ var b=document.getElementById("editProfile"); if(b) b.onclick=openProfileEdit; }
+
+  // ===== ATS résumé (built client-side from the loaded profile; PDF via print, DOCX via export) =====
+  var _RMONTHS=["","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  function rEsc(s){ return String(s==null?"":s).replace(/[&<>]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;"}[c];}); }
+  function rPlain(s){ return String(s==null?"":s).replace(/\[([^\]]+)\]\(([^)]+)\)/g,"$1 ($2)").replace(/\s+$/,""); }
+  // Résumé bullets/summary: drop raw links (a bare URL in a bullet looks unpolished on a résumé).
+  function rNoUrl(s){ s=String(s==null?"":s)
+    .replace(/\[([^\]]+)\]\([^)]+\)/g,"$1")            // [text](url) -> text
+    .replace(/\(\s*https?:\/\/[^\s)]+\s*\)/gi,"")       // (https://…) wrapper
+    .replace(/\(\s*www\.[^\s)]+\s*\)/gi,"")
+    .replace(/\bhttps?:\/\/[^\s)]+/gi,"")               // bare url
+    .replace(/\bwww\.[^\s)]+/gi,"");
+    return s.replace(/\(\s*\)/g,"").replace(/\s+([.,;:])/g,"$1").replace(/\s{2,}/g," ").trim(); }
+  function rDates(p){ function fmt(y,m){ if(!y) return ""; return (m?_RMONTHS[m]+" ":"")+y; } var s=fmt(p.start_year,p.start_month), e=p.is_current?"Present":fmt(p.end_year,p.end_month); return (s&&e)?(s+" – "+e):(s||e||""); }
+  function rCreditYears(c){ var s=c.work_start||null, e=c.work_end||null, y=c.year||creditYear(c); if(s&&e&&e!==s) return s+" – "+e; if(s) return String(s); return y?String(y):""; }
+  async function resumeModel(){
+    var p=_person||{}, RPOS=_positions||[], RCRE=_credits||[];
+    // Build from the FRESHEST saved data (not the page's load-time snapshot), so edits made in the
+    // editor — skills, work history — appear on the résumé without needing a portfolio-page refresh.
+    if(!IS_DRAFT && window.DQAPI && DQAPI.portfolio && slug){
+      try{ var fr=await DQAPI.portfolio(slug); if(fr && fr.data && fr.data.person){ p=fr.data.person; RPOS=fr.data.positions||RPOS; RCRE=fr.data.credits||RCRE; } }catch(e){}
+    }
+    var email=p.email||"";
+    if(!email && window.DQAPI && DQAPI.isSignedIn && DQAPI.isSignedIn() && DQAPI.me){
+      try{ var mr=await DQAPI.me(); var pe=mr&&mr.data&&mr.data.person; if(pe) email=pe.email||pe.primary_email||(pe.emails&&pe.emails[0]&&(pe.emails[0].email||pe.emails[0]))||""; }catch(e){}
+    }
+    var links=(p.links||[]).map(function(l){ return l.url; }).filter(Boolean);
+    var RN=function(x){ return String(x||"").trim().toLowerCase().replace(/[^a-z0-9]+/g," ").trim(); };
+    var NOWY=(new Date()).getFullYear();
+    // Positions become the primary unit. Each carries a numeric span so games can be matched into it.
+    var pos=(RPOS||[]).map(function(x){
+      var s=x.start_year||null, e=x.is_current?NOWY:(x.end_year||s||null);
+      return { title:x.title||"", company:x.studio||"", location:x.location||"", dates:rDates(x), _s:s||0, _e:e||s||0,
+        descBullets:String(x.description||"").split(/\n+/).map(function(b){return rPlain(b).trim();}).filter(Boolean),
+        games:[] };
+    });
+    var posByStudio={}; pos.forEach(function(pp){ var k=RN(pp.company); if(k && !(k in posByStudio)) posByStudio[k]=pp; });
+    // Credits (games) newest-first, then routed under the job that shipped them.
+    var creds=(RCRE||[]).slice().sort(function(a,b){ return (b.work_start||b.year||0)-(a.work_start||a.year||0); });
+    var orphans=[];
+    creds.forEach(function(c){
+      var sh=c.sheet||{};
+      var bl=(sh.contributions||[]).slice(0,4).map(function(b){return rNoUrl(b);}).filter(Boolean);
+      if(!bl.length && sh.summary) bl=[rNoUrl(sh.summary)];
+      var y=(c.work_start||c.year||c.work_end||null);
+      var g={ title:c.game_title||"", role:c.role||"", studio:c.studio||"", years:rCreditYears(c), bullets:bl, _y:y };
+      var host=null, k=RN(c.studio);
+      if(k && posByStudio[k]) host=posByStudio[k];                         // 1) match by studio name
+      if(!host && y){ for(var i=0;i<pos.length;i++){ if(pos[i]._s && y>=pos[i]._s && y<=(pos[i]._e||pos[i]._s)){ host=pos[i]; break; } } } // 2) else by date overlap
+      if(host) host.games.push(g); else orphans.push(g);                   // 3) else an orphan title
+    });
+    // Assemble each job: a "Shipped:" line naming its titles, then position bullets + the games' contribution bullets (deduped).
+    var experience=pos.map(function(pp){
+      var shipped=pp.games.map(function(g){ return g.title+(g.years?" ("+g.years+")":""); });
+      var hasGames=pp.games.length>0;
+      var bullets=[], seen={};
+      // A role's own description: it's the ROLE's scope statement when the role's games supply the
+      // bullets; but when the role shipped no games, that description IS the role's bullets.
+      if(!hasGames) pp.descBullets.forEach(function(b){ var kk=b.toLowerCase(); if(b&&!seen[kk]){ seen[kk]=1; bullets.push(b); } });
+      pp.games.forEach(function(g){ g.bullets.forEach(function(b){ var kk=b.toLowerCase(); if(b&&!seen[kk]){ seen[kk]=1; bullets.push(b); } }); });
+      var scope = hasGames ? pp.descBullets.join(" ").trim() : "";   // role-authored scope, never a game blurb
+      return { title:pp.title, company:pp.company, location:pp.location, dates:pp.dates, _s:pp._s||0, scope:scope, shipped:shipped, bullets:bullets };
+    }).sort(function(a,b){ return (b._s||0)-(a._s||0); });
+    var additional=orphans.map(function(g){ return { title:g.title, role:g.role, studio:g.studio, years:g.years, bullets:g.bullets.slice(0,2) }; });
+    // Skills come solely from the picker (person.skills.groups) — the single source of truth.
+    // Game one-sheet "Focus" tags are NOT auto-injected; the editor lets you import them into
+    // the picker so you curate what appears, rather than the résumé dumping every game tag.
+    var skills=((p.skills&&p.skills.groups)||[]).map(function(g){ return { label:g.label||"", items:(g.items||[]) }; });
+    return { name:p.name||"", headline:p.headline||"", location:p.location||"", email:email, links:links, summary:p.bio||"", experience:experience, additional:additional, skills:skills };
+  }
+  function resumeBody(m){
+    var h='<h1>'+rEsc(m.name)+'</h1>';
+    if(m.headline) h+='<p class="rsub">'+rEsc(m.headline)+'</p>';
+    var contact=[]; if(m.location) contact.push(rEsc(m.location)); if(m.email) contact.push(rEsc(m.email)); m.links.forEach(function(u){ contact.push(rEsc(u.replace(/^https?:\/\//,""))); });
+    if(contact.length) h+='<p class="rcon">'+contact.join(" &middot; ")+'</p>';
+    if(m.summary) h+='<h2>Summary</h2><p>'+rEsc(rPlain(m.summary))+'</p>';
+    if(m.experience.length){ h+='<h2>Experience</h2>'; m.experience.forEach(function(j){
+      h+='<div class="ritem"><p class="rhd"><strong>'+rEsc(j.title)+'</strong>'+(j.company?', '+rEsc(j.company):'')+(j.location?' — '+rEsc(j.location):'')+(j.dates?'<span class="rdt">'+rEsc(j.dates)+'</span>':'')+'</p>';
+      if(j.scope) h+='<p class="rscope">'+rEsc(j.scope)+'</p>';
+      if(j.shipped&&j.shipped.length) h+='<p class="rship"><strong>Shipped:</strong> '+rEsc(j.shipped.join(", "))+'</p>';
+      if(j.bullets.length) h+='<ul>'+j.bullets.map(function(b){return '<li>'+rEsc(b)+'</li>';}).join("")+'</ul>';
+      h+='</div>';
+    }); }
+    if(m.additional&&m.additional.length){ h+='<h2>Additional Shipped Titles</h2>'; m.additional.forEach(function(pr){
+      h+='<div class="ritem"><p class="rhd"><strong>'+rEsc(pr.title)+'</strong>'+(pr.role?' — '+rEsc(pr.role):'')+(pr.studio?', '+rEsc(pr.studio):'')+(pr.years?'<span class="rdt">'+rEsc(pr.years)+'</span>':'')+'</p>';
+      if(pr.bullets.length) h+='<ul>'+pr.bullets.map(function(b){return '<li>'+rEsc(b)+'</li>';}).join("")+'</ul>';
+      h+='</div>';
+    }); }
+    if(m.skills.length){ h+='<h2>Skills</h2>'; m.skills.forEach(function(g){ h+='<p class="rsk">'+(g.label?'<strong>'+rEsc(g.label)+':</strong> ':'')+rEsc(g.items.join(", "))+'</p>'; }); }
+    return h;
+  }
+  function resumeCSS(){ return "body{font-family:Arial,Calibri,'Helvetica Neue',sans-serif;color:#111;font-size:11pt;line-height:1.35;margin:0}.rwrap{max-width:7.5in;margin:0 auto;padding:0.5in}h1{font-size:20pt;margin:0 0 2pt}.rsub{font-size:11.5pt;font-weight:bold;margin:0 0 2pt}.rcon{font-size:10pt;color:#333;margin:0 0 10pt}h2{font-size:12pt;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid #888;padding-bottom:2pt;margin:14pt 0 6pt}p{margin:0 0 4pt}.ritem{margin:0 0 9pt}.rhd{margin:0 0 2pt}.rscope{margin:0 0 3pt;font-size:10pt;color:#444}.rship{margin:0 0 3pt;font-size:10pt;color:#222}.rdt{float:right;font-weight:normal;color:#333}ul{margin:2pt 0 0;padding-left:18pt}li{margin:0 0 2pt}.rsk{margin:0 0 3pt}@page{size:letter;margin:0.5in}@media print{.rwrap{padding:0}}"; }
+  function resumeDocName(m){ return ((m.name||"resume").replace(/[^\w\- ]+/g,"").trim()||"resume")+" Resume"; }
+  function resumeFullHTML(m){ return '<!doctype html><html><head><meta charset="utf-8"><title>'+rEsc(m.name)+' Resume</title><style>'+resumeCSS()+'</style></head><body><div class="rwrap">'+resumeBody(m)+'</div></body></html>'; }
+  // ===== native, zero-dependency PDF with a REAL text layer =====
+  // Uses the base-14 Helvetica fonts (no embedding needed) and writes actual text
+  // operators, so the output is selectable/ATS-parseable — unlike "print to PDF",
+  // which can flatten the page to outlines with no text at all.
+  // Helvetica + Helvetica-Bold advance widths (units/1000), char codes 32..126.
+  var _HVW=[278,278,355,556,556,889,667,191,333,333,389,584,278,333,278,278,556,556,556,556,556,556,556,556,556,556,278,278,584,584,584,556,1015,667,667,722,722,667,611,778,722,278,500,667,556,833,722,778,667,778,722,667,611,722,667,944,667,667,611,278,278,278,469,556,333,556,556,500,556,556,278,556,556,222,222,500,222,833,556,556,556,556,333,500,278,556,500,722,500,500,500,334,260,334,584];
+  var _HBW=[278,333,474,556,556,889,722,238,333,333,389,584,278,333,278,278,556,556,556,556,556,556,556,556,556,556,333,333,584,584,584,611,975,722,722,722,722,667,611,778,722,278,556,722,611,833,722,778,667,778,722,667,611,722,667,944,667,667,611,333,278,333,584,556,333,556,611,556,611,556,333,611,611,278,278,556,278,889,611,611,611,611,389,556,333,611,556,778,556,556,500,389,280,389,584];
+  function _cp1252(cp){
+    if(cp>=0x20 && cp<=0x7E) return cp;
+    switch(cp){ case 0x2014:return 0x97; case 0x2013:return 0x96; case 0x2019:return 0x92; case 0x2018:return 0x91;
+      case 0x201C:return 0x93; case 0x201D:return 0x94; case 0x2022:return 0x95; case 0x2026:return 0x85;
+      case 0x00B7:return 0xB7; case 0x2122:return 0x99; case 0x00A0:return 0x20; }
+    if(cp>=0xA1 && cp<=0xFF) return cp;
+    return 0x3F; // "?"
+  }
+  function _pw(byte,bold){
+    if(byte>=32 && byte<=126) return (bold?_HBW:_HVW)[byte-32];
+    switch(byte){ case 0x95:return 350; case 0x97:return 1000; case 0x96:return 556; case 0x92:case 0x91:return 250;
+      case 0x93:case 0x94:return 420; case 0x85:return 1000; case 0xB7:return 278; }
+    if(byte>=0xC0 && byte<=0xDF) return 722;
+    if(byte>=0xE0) return 556;
+    return 556;
+  }
+  function _pdfEsc(text){ var out=""; text=String(text==null?"":text);
+    for(var i=0;i<text.length;i++){ var cp=text.codePointAt(i); if(cp>0xFFFF)i++; var b=_cp1252(cp);
+      if(b===0x28||b===0x29||b===0x5C) out+="\\"; out+=String.fromCharCode(b); } return out; }
+  function _pmeasure(text,size,bold){ text=String(text==null?"":text); var w=0;
+    for(var i=0;i<text.length;i++){ var cp=text.codePointAt(i); if(cp>0xFFFF)i++; w+=_pw(_cp1252(cp),bold); } return w*size/1000; }
+  function _pwrap(text,size,bold,maxW){ var words=String(text==null?"":text).split(/\s+/).filter(Boolean), lines=[], cur="";
+    for(var i=0;i<words.length;i++){ var t=cur?cur+" "+words[i]:words[i]; if(!cur || _pmeasure(t,size,bold)<=maxW) cur=t; else { lines.push(cur); cur=words[i]; } }
+    if(cur) lines.push(cur); return lines.length?lines:[""]; }
+  function _pdfBuild(m){
+    var PW=612, PH=792, ML=42, MR=42, MT=52, MB=46, RX=PW-MR, CW=PW-ML-MR;
+    var pages=[], ops=[], y=PH-MT;
+    function _f(n){ return Math.round(n*100)/100; }
+    function nl(h){ y-=h; }
+    function newpage(){ if(ops.length) pages.push(ops); ops=[]; y=PH-MT; }
+    function need(h){ if(y-h < MB) newpage(); }
+    function run(x,text,size,bold,gray){ if(text==null||text==="") return;
+      ops.push("BT /"+(bold?"F2":"F1")+" "+size+" Tf "+(gray!=null?gray+" "+gray+" "+gray:"0 0 0")+" rg "+_f(x)+" "+_f(y)+" Td ("+_pdfEsc(text)+") Tj ET"); }
+    function rule(){ ops.push("q 0.62 0.62 0.62 RG 0.6 w "+_f(ML)+" "+_f(y)+" m "+_f(RX)+" "+_f(y)+" l S Q"); }
+    function heading(t){ need(24); nl(8); run(ML, t.toUpperCase(), 10.5, true); nl(5); rule(); nl(11); }
+    function bullets(arr){ arr.forEach(function(b){ var lines=_pwrap(b,10,false,CW-16); need(lines.length*12.5+3);
+      run(ML+3, "•", 10, false);
+      lines.forEach(function(ln){ run(ML+15, ln, 10, false); nl(12.5); }); nl(2); }); }
+
+    need(24); run(ML, m.name||"", 20, true); nl(23);
+    if(m.headline){ need(16); run(ML, m.headline, 12, true); nl(15); }
+    var contact=[]; if(m.location)contact.push(m.location); if(m.email)contact.push(m.email);
+    (m.links||[]).forEach(function(u){ contact.push(u.replace(/^https?:\/\//,"")); });
+    if(contact.length){ need(13); run(ML, contact.join("  ·  "), 9.5, false, 0.25); nl(15); }
+
+    if(m.summary){ heading("Summary"); _pwrap(rPlain(m.summary),10,false,CW).forEach(function(ln){ need(12.5); run(ML,ln,10,false); nl(12.5); }); nl(2); }
+
+    if(m.experience && m.experience.length){ heading("Experience"); m.experience.forEach(function(j){
+      need(15);
+      var head=j.title||""; run(ML, head, 10.5, true);
+      var rest=(j.company?", "+j.company:"")+(j.location?" — "+j.location:"");
+      if(rest) run(ML+_pmeasure(head,10.5,true), rest, 10.5, false);
+      if(j.dates) run(RX-_pmeasure(j.dates,9.5,false), j.dates, 9.5, false, 0.25);
+      nl(13.5);
+      if(j.scope){ _pwrap(j.scope,9.5,false,CW).forEach(function(ln){ need(12); run(ML,ln,9.5,false,0.27); nl(12); }); }
+      if(j.shipped && j.shipped.length){ var full="Shipped: "+j.shipped.join(", ");
+        _pwrap(full,9.5,false,CW).forEach(function(ln,idx){ need(12);
+          if(idx===0){ var lbl="Shipped:"; run(ML,lbl,9.5,true); run(ML+_pmeasure(lbl,9.5,true), ln.slice(lbl.length),9.5,false); }
+          else run(ML,ln,9.5,false); nl(12); }); }
+      if(j.bullets && j.bullets.length) bullets(j.bullets);
+      nl(5);
+    }); }
+
+    if(m.additional && m.additional.length){ heading("Additional Shipped Titles"); m.additional.forEach(function(pr){
+      need(14); var head=pr.title||""; run(ML, head, 10.5, true);
+      var rest=(pr.role?" — "+pr.role:"")+(pr.studio?", "+pr.studio:"");
+      if(rest) run(ML+_pmeasure(head,10.5,true), rest, 10.5, false);
+      if(pr.years) run(RX-_pmeasure(pr.years,9.5,false), pr.years, 9.5, false, 0.25);
+      nl(13.5);
+      if(pr.bullets && pr.bullets.length) bullets(pr.bullets);
+      nl(5);
+    }); }
+
+    if(m.skills && m.skills.length){ heading("Skills"); m.skills.forEach(function(g){
+      var label=g.label?g.label+": ":"", items=(g.items||[]).join(", "), lines=_pwrap(label+items,10,false,CW);
+      lines.forEach(function(ln,idx){ need(12.5);
+        if(idx===0 && label && ln.indexOf(label)===0){ run(ML,label,10,true); run(ML+_pmeasure(label,10,true), ln.slice(label.length),10,false); }
+        else run(ML, ln, 10, false); nl(12.5); }); nl(1);
+    }); }
+
+    newpage();
+
+    // ---- assemble objects (1 catalog, 2 pages, N page objs, N content objs, 2 fonts) ----
+    var N=pages.length, out="%PDF-1.4\n%\xE2\xE3\xCF\xD3\n", offsets=[], num=0;
+    function obj(body){ num++; offsets[num]=out.length; out+=num+" 0 obj\n"+body+"\nendobj\n"; }
+    var F1=3+2*N, F2=4+2*N;
+    obj("<< /Type /Catalog /Pages 2 0 R >>");
+    var kids=""; for(var i=0;i<N;i++) kids+=(3+i)+" 0 R "; obj("<< /Type /Pages /Kids ["+kids.replace(/\s+$/,"")+"] /Count "+N+" >>");
+    for(i=0;i<N;i++){ obj("<< /Type /Page /Parent 2 0 R /MediaBox [0 0 "+PW+" "+PH+"] /Resources << /Font << /F1 "+F1+" 0 R /F2 "+F2+" 0 R >> >> /Contents "+(3+N+i)+" 0 R >>"); }
+    for(i=0;i<N;i++){ var content=pages[i].join("\n"); obj("<< /Length "+content.length+" >>\nstream\n"+content+"\nendstream"); }
+    obj("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>");
+    obj("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>");
+    var xref=out.length, total=num+1;
+    out+="xref\n0 "+total+"\n0000000000 65535 f \n";
+    for(i=1;i<=num;i++){ out+=("0000000000"+offsets[i]).slice(-10)+" 00000 n \n"; }
+    out+="trailer\n<< /Size "+total+" /Root 1 0 R >>\nstartxref\n"+xref+"\n%%EOF";
+    var arr=new Uint8Array(out.length); for(i=0;i<out.length;i++) arr[i]=out.charCodeAt(i)&0xFF;
+    return new Blob([arr],{type:"application/pdf"});
+  }
+  async function downloadResumePDF(mOverride){
+    var m=mOverride||await resumeModel();
+    try{
+      _rTrigger(_pdfBuild(m), resumeDocName(m)+".pdf");   // one-click, real text layer, no print dialog
+    }catch(err){
+      // Fallback to browser print only if native generation ever fails.
+      var w=window.open("","_blank");
+      if(!w){ alert("Allow pop-ups for this site to save the résumé as PDF, or use the Word download."); return; }
+      w.document.open(); w.document.write(resumeFullHTML(m)); w.document.close();
+      var go=function(){ try{ w.focus(); w.print(); }catch(e){} };
+      if(w.document.readyState==="complete") setTimeout(go,350); else w.onload=function(){ setTimeout(go,350); };
+    }
+  }
+  function _rTrigger(blob,fname){ var u=URL.createObjectURL(blob); var a=document.createElement("a"); a.href=u; a.download=fname; document.body.appendChild(a); a.click(); setTimeout(function(){ URL.revokeObjectURL(u); a.remove(); },3000); }
+  // --- native .docx builder: real OOXML paragraphs/runs so ATS parses the text (no libraries) ---
+  var _crcT=(function(){ var t=[]; for(var n=0;n<256;n++){ var c=n; for(var k=0;k<8;k++) c=(c&1)?(0xEDB88320^(c>>>1)):(c>>>1); t[n]=c>>>0; } return t; })();
+  function _crc32(b){ var c=0xFFFFFFFF; for(var i=0;i<b.length;i++) c=_crcT[(c^b[i])&0xFF]^(c>>>8); return (c^0xFFFFFFFF)>>>0; }
+  function _u16(n){ return [n&0xFF,(n>>>8)&0xFF]; }
+  function _u32(n){ n=n>>>0; return [n&0xFF,(n>>>8)&0xFF,(n>>>16)&0xFF,(n>>>24)&0xFF]; }
+  function _zipStore(files){
+    var enc=new TextEncoder(), chunks=[], central=[], offset=0;
+    files.forEach(function(f){
+      var nb=enc.encode(f.name), d=(typeof f.data==="string")?enc.encode(f.data):f.data, crc=_crc32(d);
+      var lh=[].concat(_u32(0x04034b50),_u16(20),_u16(0),_u16(0),_u16(0),_u16(0),_u32(crc),_u32(d.length),_u32(d.length),_u16(nb.length),_u16(0));
+      var la=new Uint8Array(lh.length+nb.length+d.length); la.set(lh,0); la.set(nb,lh.length); la.set(d,lh.length+nb.length); chunks.push(la);
+      var cd=[].concat(_u32(0x02014b50),_u16(20),_u16(20),_u16(0),_u16(0),_u16(0),_u16(0),_u32(crc),_u32(d.length),_u32(d.length),_u16(nb.length),_u16(0),_u16(0),_u16(0),_u16(0),_u32(0),_u32(offset));
+      var ca=new Uint8Array(cd.length+nb.length); ca.set(cd,0); ca.set(nb,cd.length); central.push(ca);
+      offset+=la.length;
+    });
+    var cs=central.reduce(function(a,c){return a+c.length;},0), co=offset;
+    var eocd=new Uint8Array([].concat(_u32(0x06054b50),_u16(0),_u16(0),_u16(files.length),_u16(files.length),_u32(cs),_u32(co),_u16(0)));
+    return new Blob(chunks.concat(central).concat([eocd]),{type:"application/vnd.openxmlformats-officedocument.wordprocessingml.document"});
+  }
+  function _xE(s){ return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+  function _run(t,o){ o=o||{}; var r='<w:rPr><w:rFonts w:ascii="Arial" w:hAnsi="Arial"/>'+(o.b?"<w:b/>":"")+(o.caps?"<w:caps/>":"")+'<w:sz w:val="'+(o.sz||22)+'"/><w:szCs w:val="'+(o.sz||22)+'"/>'+(o.color?'<w:color w:val="'+o.color+'"/>':"")+'</w:rPr>'; return '<w:r>'+r+'<w:t xml:space="preserve">'+_xE(t)+'</w:t></w:r>'; }
+  function _para(runs,o){ o=o||{}; var sp=(o.before!=null||o.after!=null)?'<w:spacing '+(o.before!=null?'w:before="'+o.before+'" ':"")+(o.after!=null?'w:after="'+o.after+'"':"")+'/>':""; var bd=o.border?'<w:pBdr><w:bottom w:val="single" w:sz="4" w:space="2" w:color="888888"/></w:pBdr>':""; return '<w:p><w:pPr>'+sp+bd+'</w:pPr>'+runs+'</w:p>'; }
+  function resumeDocXml(m){
+    var b="";
+    b+=_para(_run(m.name,{b:true,sz:40}),{after:20});
+    if(m.headline) b+=_para(_run(m.headline,{b:true,sz:23}),{after:20});
+    var ct=[]; if(m.location)ct.push(m.location); if(m.email)ct.push(m.email); m.links.forEach(function(u){ct.push(u.replace(/^https?:\/\//,""));});
+    if(ct.length) b+=_para(_run(ct.join("   |   "),{sz:20,color:"333333"}),{after:160});
+    function H(t){ return _para(_run(t,{b:true,caps:true,sz:22}),{before:200,after:80,border:true}); }
+    function BL(t){ return _para(_run("• "+t,{sz:22}),{after:40}); }
+    if(m.summary){ b+=H("Summary"); b+=_para(_run(rPlain(m.summary),{sz:22}),{after:80}); }
+    if(m.experience.length){ b+=H("Experience"); m.experience.forEach(function(j){
+      var line=[j.company,j.location].filter(Boolean).join(" — ");
+      b+=_para(_run(j.title,{b:true,sz:22})+(line?_run(", "+line,{sz:22}):"")+(j.dates?_run("   ("+j.dates+")",{sz:20,color:"333333"}):""),{before:60,after:20});
+      if(j.scope) b+=_para(_run(j.scope,{sz:21,color:"444444"}),{after:20});
+      if(j.shipped&&j.shipped.length) b+=_para(_run("Shipped: ",{b:true,sz:21})+_run(j.shipped.join(", "),{sz:21}),{after:20});
+      j.bullets.forEach(function(x){ b+=BL(x); });
+    }); }
+    if(m.additional&&m.additional.length){ b+=H("Additional Shipped Titles"); m.additional.forEach(function(pr){
+      var meta=[pr.role,pr.studio].filter(Boolean).join(", ");
+      b+=_para(_run(pr.title,{b:true,sz:22})+(meta?_run(" — "+meta,{sz:22}):"")+(pr.years?_run("   ("+pr.years+")",{sz:20,color:"333333"}):""),{before:60,after:20});
+      pr.bullets.forEach(function(x){ b+=BL(x); });
+    }); }
+    if(m.skills.length){ b+=H("Skills"); m.skills.forEach(function(g){
+      b+=_para((g.label?_run(g.label+": ",{b:true,sz:22}):"")+_run(g.items.join(", "),{sz:22}),{after:40});
+    }); }
+    var sect='<w:sectPr><w:pgSz w:w="12240" w:h="15840"/><w:pgMar w:top="720" w:right="720" w:bottom="720" w:left="720"/></w:sectPr>';
+    return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body>'+b+sect+'</w:body></w:document>';
+  }
+  var _CT='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/></Types>';
+  var _RELS='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>';
+  async function downloadResumeDOCX(mOverride){
+    var m=mOverride||await resumeModel();
+    var blob=_zipStore([ {name:"[Content_Types].xml",data:_CT}, {name:"_rels/.rels",data:_RELS}, {name:"word/document.xml",data:resumeDocXml(m)} ]);
+    _rTrigger(blob, resumeDocName(m)+".docx");
+  }
+  document.addEventListener("click",function(e){
+    if(!e.target||!e.target.closest) return;
+    if(e.target.closest(".dq-rpdf")){ e.preventDefault(); downloadResumePDF(); }
+    else if(e.target.closest(".dq-rdocx")){ e.preventDefault(); downloadResumeDOCX(); }
+    else if(e.target.closest(".dq-tailor")){ e.preventDefault(); openTailor(); }
+  });
+
+  /* ================= Deterministic job-tailoring (no LLM) =================
+     Paste a job description → we extract the requirements it names, check each
+     against what's actually in the profile (via a game-dev synonym map), score
+     the fit, list the gaps, and reorder each job's bullets so the relevant work
+     leads. Nothing is invented or rewritten — we only reorder and report. */
+  // Canonical term → the surface forms that mean the same thing. Drives both
+  // "what does the posting ask for" and "does the résumé already say it".
+  var TLEX=[
+    {canon:"unreal",label:"Unreal Engine",v:["unreal","unreal engine","ue4","ue5","ue 4","ue 5"]},
+    {canon:"unity",label:"Unity",v:["unity","unity3d"]},
+    {canon:"cpp",label:"C++",v:["c++","cpp"]},
+    {canon:"csharp",label:"C#",v:["c#","c sharp"]},
+    {canon:"python",label:"Python",v:["python"]},
+    {canon:"multiplayer",label:"Multiplayer / netcode",v:["multiplayer","netcode","networking","online","pvp","matchmaking","replication"]},
+    {canon:"liveops",label:"Live-ops / live service",v:["live ops","liveops","live service","live-service","games as a service","gaas","seasonal content","seasons","post launch","post-launch"]},
+    {canon:"aaa",label:"AAA production",v:["aaa","triple a","aaaa"]},
+    {canon:"console",label:"Console",v:["console","playstation","ps5","xbox","nintendo","switch"]},
+    {canon:"pc",label:"PC",v:["pc","steam","epic"]},
+    {canon:"mobile",label:"Mobile",v:["mobile","ios","android"]},
+    {canon:"gameplay",label:"Gameplay",v:["gameplay","game feel","mechanics","combat"]},
+    {canon:"engine",label:"Engine / tech",v:["engine","engine programming","runtime","tooling","tools programming"]},
+    {canon:"tools",label:"Tools / pipeline",v:["tools","pipeline","content pipeline","workflow tooling"]},
+    {canon:"ai",label:"AI",v:["ai","artificial intelligence","behavior tree","navmesh","pathfinding"]},
+    {canon:"animation",label:"Animation",v:["animation","rigging","skeletal","mocap","motion capture"]},
+    {canon:"rendering",label:"Rendering / graphics",v:["rendering","graphics","shader","shaders","lighting","gpu","render pipeline"]},
+    {canon:"physics",label:"Physics",v:["physics","collision","simulation"]},
+    {canon:"optimization",label:"Optimization / perf",v:["optimization","optimisation","performance","profiling","frame rate","fps","memory budget"]},
+    {canon:"ui",label:"UI/UX",v:["ui","ux","user interface","user experience","hud","front end"]},
+    {canon:"production",label:"Production",v:["production","producer","program management","project management","delivery"]},
+    {canon:"agile",label:"Agile / Scrum",v:["agile","scrum","kanban","sprint","sprints","backlog"]},
+    {canon:"leadership",label:"Leadership / management",v:["leadership","lead","led","manager","managed","management","mentor","mentoring","people management","direct reports"]},
+    {canon:"crossfunc",label:"Cross-functional",v:["cross functional","cross-functional","cross discipline","cross-discipline","stakeholder","stakeholders"]},
+    {canon:"roadmap",label:"Roadmap / planning",v:["roadmap","milestone","milestones","planning","scheduling","forecasting"]},
+    {canon:"shipped",label:"Shipped a title",v:["shipped","launched","released","ship a game","shipped titles"]},
+    {canon:"perforce",label:"Perforce",v:["perforce","p4","version control","source control"]},
+    {canon:"git",label:"Git",v:["git","github","gitlab"]},
+    {canon:"jira",label:"Jira",v:["jira","confluence"]},
+    {canon:"analytics",label:"Analytics / data",v:["analytics","data driven","data-driven","kpis","metrics","telemetry","a/b testing"]},
+    {canon:"narrative",label:"Narrative / design",v:["narrative","story","writing","level design","game design","systems design","encounter design"]},
+    {canon:"audio",label:"Audio",v:["audio","sound design","wwise","fmod"]},
+    {canon:"vfx",label:"VFX",v:["vfx","visual effects","particles","niagara"]},
+    {canon:"qa",label:"QA / testing",v:["qa","quality assurance","testing","test plans","automation testing"]},
+    {canon:"publishing",label:"Publishing",v:["publishing","publisher","go to market","go-to-market","marketing","community"]},
+    {canon:"remote",label:"Remote / distributed",v:["remote","distributed team","hybrid","work from home"]}
+  ];
+  var TSTOP={the:1,and:1,for:1,with:1,you:1,our:1,are:1,will:1,that:1,this:1,have:1,from:1,your:1,who:1,all:1,not:1,but:1,can:1,job:1,role:1,work:1,team:1,teams:1,years:1,year:1,experience:1,ability:1,strong:1,skills:1,including:1,across:1,within:1,help:1,were:1,what:1,when:1,into:1,they:1,them:1,their:1,about:1,other:1,more:1,such:1,also:1,plus:1,per:1,etc:1,using:1,use:1,new:1,well:1,like:1,we:1,a:1,an:1,to:1,of:1,in:1,on:1,or:1,is:1,as:1,at:1,be:1,by:1,it:1};
+  // Lower-cased, boundary-padded text that keeps + and # so "c++"/"c#" survive.
+  function _tlc(s){ return " "+String(s==null?"":s).toLowerCase().replace(/[^a-z0-9+#.\s-]/g," ").replace(/-/g," ").replace(/\s+/g," ").trim()+" "; }
+  function _tHas(text,v){
+    if(!v) return false;
+    v=String(v).replace(/-/g," ").replace(/\s+/g," ").trim();   // "live-ops"/"live ops"/"liveops" all comparable
+    if(!v) return false;
+    if(v.indexOf(" ")>=0 || v.length>4) return text.indexOf(v)>=0;   // multiword / long → substring is safe
+    var re=new RegExp("(^|[^a-z0-9+#])"+v.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")+"([^a-z0-9+#]|$)");
+    return re.test(text);                                            // short token → word boundary (avoids "ai" in "said")
+  }
+  function _tReq(jd){                                                // requirements the posting names
+    var t=_tlc(jd), req=[], used={};
+    TLEX.forEach(function(L){ for(var i=0;i<L.v.length;i++){ if(_tHas(t,L.v[i])){ req.push(L); used[L.canon]=1; break; } } });
+    // supplemental: repeated meaningful words the lexicon didn't catch (shown, not scored)
+    var freq={}, m=t.match(/[a-z][a-z0-9+#]{3,}/g)||[];
+    m.forEach(function(w){ if(!TSTOP[w]) freq[w]=(freq[w]||0)+1; });
+    var extra=Object.keys(freq).filter(function(w){ return freq[w]>=2; })
+      .filter(function(w){ for(var i=0;i<TLEX.length;i++){ for(var j=0;j<TLEX[i].v.length;j++){ if(TLEX[i].v[j].indexOf(w)>=0) return false; } } return true; })
+      .sort(function(a,b){ return freq[b]-freq[a]; }).slice(0,8);
+    return { req:req, extra:extra };
+  }
+  function _tInv(m){                                                 // everything the résumé actually says
+    var parts=[m.headline,m.summary];
+    (m.experience||[]).forEach(function(j){ parts.push(j.title,j.company,(j.shipped||[]).join(" "),(j.bullets||[]).join(" ")); });
+    (m.additional||[]).forEach(function(a){ parts.push(a.title,a.role,a.studio,(a.bullets||[]).join(" ")); });
+    (m.skills||[]).forEach(function(g){ parts.push(g.label,(g.items||[]).join(" ")); });
+    return _tlc(parts.join(" "));
+  }
+  function tailorAnalyze(jd,m){
+    var ex=_tReq(jd), inv=_tInv(m), matched=[], missing=[];
+    ex.req.forEach(function(L){ var hit=false; for(var i=0;i<L.v.length;i++){ if(_tHas(inv,L.v[i])){ hit=true; break; } } (hit?matched:missing).push(L); });
+    var score=ex.req.length?Math.round(100*matched.length/ex.req.length):0;
+    var mv=[]; matched.forEach(function(L){ mv=mv.concat(L.v); });
+    function bscore(txt){ var tt=_tlc(txt),n=0; for(var i=0;i<mv.length;i++){ if(_tHas(tt,mv[i])) n++; } return n; }
+    var tm=JSON.parse(JSON.stringify(m));                            // tailored copy (plain data → safe clone)
+    (tm.experience||[]).forEach(function(j){
+      j.bullets=(j.bullets||[]).map(function(b,i){ return {b:b,i:i,s:bscore(b)}; })
+        .sort(function(a,b){ return b.s-a.s || a.i-b.i; }).map(function(o){ return o.b; });  // relevant bullets lead, stable otherwise
+    });
+    (tm.additional||[]).sort(function(a,b){ return bscore(b.title+" "+(b.bullets||[]).join(" ")) - bscore(a.title+" "+(a.bullets||[]).join(" ")); });
+    return { score:score, matched:matched, missing:missing, extra:ex.extra, total:ex.req.length, tm:tm };
+  }
+
+  // ---- Tailor variants (saved locally, keyed to this profile slug) ----
+  var _tVarKey="dq_resume_variants:"+(function(){ try{ return new URLSearchParams(location.search).get("slug")||"me"; }catch(e){ return "me"; } })();
+  function _tVarsGet(){ try{ return JSON.parse(localStorage.getItem(_tVarKey)||"[]"); }catch(e){ return []; } }
+  function _tVarsSet(a){ try{ localStorage.setItem(_tVarKey, JSON.stringify(a.slice(0,20))); }catch(e){} }
+
+  var _tState={jd:"",res:null};
+  function _tEsc(s){ return rEsc(s); }
+  function openTailor(){
+    var o=document.getElementById("tailovl");
+    if(!o){ o=document.createElement("div"); o.id="tailovl"; document.body.appendChild(o);
+      o.addEventListener("click",function(e){ if(e.target===o) closeTailor(); });
+      document.addEventListener("keydown",function(e){ if(e.key==="Escape" && o.classList.contains("on")) closeTailor(); });
+      _injectTailorCSS();
+    }
+    o.innerHTML=_tailorHTML(); o.classList.add("on"); document.body.style.overflow="hidden";
+    var ta=document.getElementById("tjd"); if(ta){ ta.value=_tState.jd||""; ta.focus(); }
+    _wireTailor(o);
+    if(_tState.res) _renderTailorResult();
+  }
+  function closeTailor(){ var o=document.getElementById("tailovl"); if(o){ o.classList.remove("on"); document.body.style.overflow=""; } }
+  function _tailorHTML(){
+    var vars=_tVarsGet();
+    var vhtml=vars.length?('<div class="tvars"><span class="tvl">Saved:</span> '+vars.map(function(v,i){ return '<button class="tvchip" data-vi="'+i+'">'+_tEsc(v.label)+'</button>'; }).join(" ")+'</div>'):'';
+    return '<div class="tsheet"><button class="tclose" id="tclose" aria-label="Close">×</button>'+
+      '<h2 class="tttl">Tailor your résumé to a job</h2>'+
+      '<p class="tsub">Paste the job posting. We check it against your profile, show your fit and any gaps, and reorder your bullets so the relevant work leads. Nothing is rewritten or invented.</p>'+
+      vhtml+
+      '<textarea id="tjd" class="tjd" placeholder="Paste the full job description here…"></textarea>'+
+      '<div class="trow"><button class="btn primary" id="tanalyze">Analyze fit</button><button class="btn ghost" id="tclear2">Clear</button></div>'+
+      '<div id="tout" class="tout"></div></div>';
+  }
+  function _wireTailor(o){
+    var cl=function(id,fn){ var el=o.querySelector("#"+id); if(el) el.addEventListener("click",fn); };
+    cl("tclose",closeTailor);
+    cl("tanalyze",function(){ var ta=document.getElementById("tjd"); _tState.jd=ta?ta.value:""; if(!_tState.jd.trim()){ ta&&ta.focus(); return; }
+      resumeModel().then(function(m){ _tState.res=tailorAnalyze(_tState.jd,m); _renderTailorResult(); }); });
+    cl("tclear2",function(){ var ta=document.getElementById("tjd"); if(ta){ ta.value=""; ta.focus(); } _tState.jd=""; _tState.res=null; var out=document.getElementById("tout"); if(out) out.innerHTML=""; });
+    o.querySelectorAll(".tvchip").forEach(function(b){ b.addEventListener("click",function(){ var v=_tVarsGet()[+b.getAttribute("data-vi")]; if(!v) return; _tState.jd=v.jd; var ta=document.getElementById("tjd"); if(ta) ta.value=v.jd;
+      resumeModel().then(function(m){ _tState.res=tailorAnalyze(v.jd,m); _renderTailorResult(); }); }); });
+  }
+  function _renderTailorResult(){
+    var out=document.getElementById("tout"); if(!out) return; var r=_tState.res; if(!r) return;
+    if(!r.total){ out.innerHTML='<div class="tnote">We couldn\'t spot specific requirements in that text — paste the full posting (responsibilities and qualifications) for a useful read.</div>'; return; }
+    var ring=r.score>=70?"g":(r.score>=40?"a":"r");
+    var chips=function(arr,cls){ return arr.map(function(L){ return '<span class="tchip '+cls+'">'+_tEsc(L.label)+'</span>'; }).join(""); };
+    var extra=r.extra&&r.extra.length?('<div class="tblk"><div class="tbh">Also mentioned in the posting</div><div class="tchips">'+r.extra.map(function(w){ return '<span class="tchip x">'+_tEsc(w)+'</span>'; }).join("")+'</div><div class="thint">Not scored — check these are reflected somewhere in your profile if they matter to you.</div></div>'):'';
+    out.innerHTML=
+      '<div class="tscore"><div class="tring '+ring+'">'+r.score+'<span>%</span></div><div class="tsx"><div class="tsxn">You match '+r.matched.length+' of '+r.total+' things this posting asks for.</div><div class="tsxs">Your bullets have been reordered for this role in the downloads below.</div></div></div>'+
+      '<div class="tblk"><div class="tbh ok">Matched — surface these</div><div class="tchips">'+(r.matched.length?chips(r.matched,"ok"):'<span class="tnone">None yet.</span>')+'</div></div>'+
+      '<div class="tblk"><div class="tbh gap">Gaps — not found in your profile</div><div class="tchips">'+(r.missing.length?chips(r.missing,"gap"):'<span class="tnone">Nothing missing — strong match.</span>')+'</div>'+(r.missing.length?'<div class="thint">If you genuinely have any of these, add them to a game one-sheet or your bio and your fit climbs. Don\'t claim ones you can\'t back up.</div>':'')+'</div>'+
+      extra+
+      '<div class="trow tdl"><button class="btn primary" id="tdpdf">⬇ Tailored résumé (PDF)</button><button class="btn ghost" id="tddocx">⬇ Tailored Word (.docx)</button><button class="btn ghost" id="tsave">Save this version</button></div>'+
+      '<div id="tsavemsg" class="tsavemsg"></div>';
+    var q=function(id){ return document.getElementById(id); };
+    q("tdpdf").addEventListener("click",function(){ downloadResumePDF(_tState.res.tm); });
+    q("tddocx").addEventListener("click",function(){ downloadResumeDOCX(_tState.res.tm); });
+    q("tsave").addEventListener("click",function(){
+      var def="Tailored "+((_tVarsGet().length+1)); var label=(window.prompt&&window.prompt("Name this tailored version (e.g. company or role):",def))||def;
+      var vars=_tVarsGet(); vars.unshift({label:label.slice(0,40),jd:_tState.jd}); _tVarsSet(vars);
+      var mm=q("tsavemsg"); if(mm){ mm.textContent="Saved \""+label+"\" — it'll be here next time you open this."; }
+    });
+  }
+  function _injectTailorCSS(){
+    if(document.getElementById("tailcss")) return;
+    var s=document.createElement("style"); s.id="tailcss";
+    s.textContent="#tailovl{position:fixed;inset:0;background:rgba(8,10,16,.72);backdrop-filter:blur(3px);z-index:1200;display:none;align-items:flex-start;justify-content:center;overflow:auto;padding:40px 16px}#tailovl.on{display:flex}"+
+      ".tsheet{background:var(--card,#12151d);color:var(--fg,#e9edf5);border:1px solid rgba(255,255,255,.08);border-radius:16px;max-width:640px;width:100%;padding:26px 26px 30px;position:relative;box-shadow:0 24px 60px rgba(0,0,0,.5)}"+
+      ".tclose{position:absolute;top:14px;right:16px;background:none;border:none;color:var(--fg,#e9edf5);font-size:26px;line-height:1;cursor:pointer;opacity:.7}.tclose:hover{opacity:1}"+
+      ".tttl{margin:0 0 6px;font-size:20px}.tsub{margin:0 0 14px;color:var(--muted,#9aa4b5);font-size:13.5px;line-height:1.5}"+
+      ".tvars{margin:0 0 12px;font-size:12.5px}.tvl{color:var(--muted,#9aa4b5);margin-right:4px}.tvchip{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);color:var(--fg,#e9edf5);border-radius:20px;padding:3px 11px;font-size:12px;cursor:pointer;margin:2px}.tvchip:hover{background:rgba(255,255,255,.12)}"+
+      ".tjd{width:100%;min-height:150px;box-sizing:border-box;background:rgba(0,0,0,.28);color:var(--fg,#e9edf5);border:1px solid rgba(255,255,255,.14);border-radius:10px;padding:12px;font:14px/1.5 inherit;resize:vertical}"+
+      ".trow{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap}.tdl{margin-top:18px;border-top:1px solid rgba(255,255,255,.08);padding-top:16px}"+
+      ".tout{margin-top:6px}.tnote,.tnone,.thint{color:var(--muted,#9aa4b5);font-size:13px}.tnote{padding:14px 0}"+
+      ".tscore{display:flex;align-items:center;gap:16px;margin:20px 0 8px}"+
+      ".tring{width:78px;height:78px;flex:0 0 78px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:700;border:5px solid;position:relative}.tring span{font-size:13px;font-weight:600;margin-left:1px}"+
+      ".tring.g{border-color:#3ecf8e;color:#3ecf8e}.tring.a{border-color:#e2b23a;color:#e2b23a}.tring.r{border-color:#e06060;color:#e06060}"+
+      ".tsxn{font-weight:600;font-size:15px;margin-bottom:3px}.tsxs{color:var(--muted,#9aa4b5);font-size:13px}"+
+      ".tblk{margin:16px 0}.tbh{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted,#9aa4b5);margin-bottom:8px;font-weight:700}.tbh.ok{color:#3ecf8e}.tbh.gap{color:#e2b23a}"+
+      ".tchips{display:flex;flex-wrap:wrap;gap:7px}.tchip{border-radius:20px;padding:4px 12px;font-size:12.5px;border:1px solid}"+
+      ".tchip.ok{background:rgba(62,207,142,.12);border-color:rgba(62,207,142,.4);color:#9ff0c8}.tchip.gap{background:rgba(226,178,58,.12);border-color:rgba(226,178,58,.4);color:#f2d98a}.tchip.x{background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.14);color:var(--muted,#9aa4b5)}"+
+      ".thint{margin-top:8px;line-height:1.5}.tsavemsg{margin-top:10px;color:#3ecf8e;font-size:13px}";
+    document.head.appendChild(s);
+  }
 
   function stat(n,l){ return '<div class="stat"><div class="n">'+n+'</div><div class="l">'+l+'</div></div>'; }
   function cap(s){ return String(s).charAt(0).toUpperCase()+String(s).slice(1); }
@@ -574,7 +1129,10 @@
     if(_ovl) return;
     _ovl=document.createElement("div"); _ovl.className="osovl"; _ovl.innerHTML='<div class="ossheet" id="ossheet"></div>';
     document.body.appendChild(_ovl);
-    _ovl.addEventListener("click",function(e){ if(e.target===_ovl) closeSheet(); });
+    // Outside-click closes ONLY a read-only view. If the modal has form fields (any edit
+    // sheet: one-sheet, profile, add-game), don't close on a stray backdrop click, so a
+    // long write can't be lost by accident. Use the ×, Cancel, or Save instead.
+    _ovl.addEventListener("click",function(e){ if(e.target===_ovl && !_ovl.querySelector("input,textarea,select")) closeSheet(); });
     document.addEventListener("keydown",function(e){ if(e.key==="Escape") closeSheet(); });
   }
   function closeSheet(){ if(_ovl){ _ovl.classList.remove("on"); document.body.style.overflow=""; } }
@@ -682,12 +1240,13 @@
   function profileFormHTML(p){
     var links={}; (p.links||[]).forEach(function(l){ links[l.type]=l.url; });
     return '<div class="efwrap"><button class="osclose" aria-label="Close">✕</button>'+
-      '<h3>Edit profile</h3><div class="efdesc">The header of your portfolio.</div>'+
+      '<h3>Edit profile header</h3><div class="efdesc">The top of your portfolio: name, headline, bio, photo, and links. (Your work history &amp; skills are edited from the “Edit work history &amp; skills” button.)</div>'+
       '<label class="eflabel">Display name</label><input id="ef-name" value="'+esc(p.name||"")+'">'+
       '<label class="eflabel">Headline <span class="mut">— current role &amp; studio</span></label><input id="ef-head" value="'+esc(p.headline||"")+'">'+
       '<label class="eflabel">Location</label><input id="ef-loc" value="'+esc(p.location||"")+'">'+
       '<label class="eflabel">About / bio</label><textarea id="ef-bio">'+esc(p.bio||"")+'</textarea>'+
       '<div class="efchk"><input type="checkbox" id="ef-otw" '+(p.open_to_work?"checked":"")+'><label for="ef-otw">Show &ldquo;Open to opportunities&rdquo;</label></div>'+
+      '<label class="eflabel">Portfolio style</label><select id="ef-style">'+['production','engineering','art','audio','design','qa'].map(function(s){ return '<option value="'+s+'" '+((p.portfolio_style||"production")===s?"selected":"")+'>'+s.charAt(0).toUpperCase()+s.slice(1)+'</option>'; }).join("")+'</select>'+
       '<label class="eflabel">Profile portrait <span class="mut">&mdash; optional headshot; shown instead of your initials</span></label>'+
       '<div class="uprow"><div class="upprev port" id="ef-avatar-prev">Photo</div><div style="flex:1"><input id="ef-avatar" placeholder="https://… or upload a photo" value="'+esc(p.avatar_url||"")+'"><div class="upbtns"><button type="button" class="upbtn" data-upload-for="ef-avatar">⬆ Upload photo</button><button type="button" class="upbtn ghost" id="ef-avatar-clear">Remove</button></div></div></div>'+
       '<label class="eflabel">Links</label>'+
@@ -700,10 +1259,19 @@
     var g=function(id){ var e=document.getElementById(id); return e?e.value.trim():""; };
     var links=[];
     [["linkedin","ef-linkedin"],["portfolio","ef-portfolio"],["artstation","ef-artstation"],["github","ef-github"]].forEach(function(x){ var u=g(x[1]); if(u) links.push({type:x[0],url:u}); });
-    var payload={ name:g("ef-name"), headline:g("ef-head"), location:g("ef-loc"), bio:g("ef-bio"), open_to_work: document.getElementById("ef-otw").checked?1:0, avatar_url:g("ef-avatar"), links:links };
+    var payload={ name:g("ef-name"), headline:g("ef-head"), location:g("ef-loc"), bio:g("ef-bio"), open_to_work: document.getElementById("ef-otw").checked?1:0, portfolio_style:g("ef-style"), avatar_url:g("ef-avatar"), links:links };
     var st=document.getElementById("ef-status"); st.textContent="Saving…"; st.className="efstatus";
+    if(IS_DRAFT){
+      var d=dGet();
+      if(payload.name) d.name=payload.name;
+      d.profile={ headline:payload.headline, location:payload.location, bio:payload.bio, open_to_work:payload.open_to_work, avatar_url:payload.avatar_url, links:links };
+      dSet(d);
+      _person.name=payload.name; _person.headline=payload.headline; _person.location=payload.location; _person.bio=payload.bio; _person.open_to_work=payload.open_to_work; _person.avatar_url=payload.avatar_url; _person.links=links;
+      renderHero(); st.textContent="Saved ✓"; st.className="efstatus ok"; setTimeout(closeSheet,400);
+      return;
+    }
     DQAPI.updateProfile(payload).then(function(r){
-      if(r&&r.ok){ _person.name=payload.name; _person.headline=payload.headline; _person.location=payload.location; _person.bio=payload.bio; _person.open_to_work=payload.open_to_work; _person.avatar_url=payload.avatar_url; _person.links=links; renderHero(); st.textContent="Saved ✓"; st.className="efstatus ok"; setTimeout(closeSheet,450); }
+      if(r&&r.ok){ _person.name=payload.name; _person.headline=payload.headline; _person.location=payload.location; _person.bio=payload.bio; _person.open_to_work=payload.open_to_work; _person.portfolio_style=payload.portfolio_style; _person.avatar_url=payload.avatar_url; _person.links=links; renderHero(); st.textContent="Saved ✓"; st.className="efstatus ok"; setTimeout(closeSheet,450); }
       else { st.textContent=(r&&r.data&&r.data.error)||"Could not save."; st.className="efstatus err"; }
     }).catch(function(){ st.textContent="Network error."; st.className="efstatus err"; });
   }
@@ -732,9 +1300,6 @@
       '<label class="eflabel">Your role</label><input id="ef-role" placeholder="e.g. Senior Producer" value="'+esc(c.role||"")+'">'+
       '<label class="eflabel">Years on it <span class="mut">— optional; the span shown under the title</span></label><div class="efrow"><input id="ef-wstart" type="number" min="1970" max="2100" style="flex:1;min-width:140px" placeholder="From (e.g. 2012)" value="'+esc(c.work_start!=null?c.work_start:"")+'"><input id="ef-wend" type="number" min="1970" max="2100" style="flex:1;min-width:140px" placeholder="To (e.g. 2015)" value="'+esc(c.work_end!=null?c.work_end:"")+'"></div>'+
       '<label class="eflabel">One-line summary</label><textarea id="ef-summary" placeholder="What was this game, and your part in it?">'+esc(s.summary||"")+'</textarea>'+
-      '<label class="eflabel">Stats <span class="mut">— label + value tiles</span></label><div id="ef-stats">'+
-        stats.map(function(st){ return '<div class="efstat-row"><input class="ef-slabel" placeholder="Label (e.g. Players)" value="'+esc(st.label||"")+'"><input class="ef-svalue" placeholder="Value (e.g. 85M+)" value="'+esc(st.value||"")+'"></div>'; }).join("")+
-      '</div>'+
       '<label class="eflabel">What I led <span class="mut">— one per line; paste a link or use [label](url)</span></label><textarea id="ef-did" placeholder="One achievement per line">'+esc(contribs)+'</textarea>'+
       '<label class="eflabel">Key challenges <span class="mut">— problems you solved; one per line; links work here too</span></label><textarea id="ef-challenges" placeholder="One challenge per line">'+esc(chals)+'</textarea>'+
       '<label class="eflabel">Focus / keywords <span class="mut">— comma-separated</span></label><input id="ef-kw" value="'+esc(kw)+'">'+
@@ -745,12 +1310,15 @@
         '<div><select id="ef-rtier"><option value="">Tier — OpenCritic only</option>'+["Mighty","Strong","Fair","Weak"].map(function(t){ return '<option'+(rv.tier===t?" selected":"")+'>'+t+'</option>'; }).join("")+'</select></div>'+
       '</div>'+
       '<input id="ef-rurl" placeholder="Link to the score page (https://…)" value="'+esc(rv.url||"")+'" style="margin-top:8px">'+
-      '<label class="eflabel">Release date <span class="mut">— set only if unreleased; shows &ldquo;Coming Soon&rdquo; until then</span></label><input type="date" id="ef-release" value="'+esc(s.release_date||"")+'">'+
+      '<label class="eflabel">Stats <span class="mut">— label + value tiles; shown as Game Context</span></label><div id="ef-stats">'+
+        stats.map(function(st){ return '<div class="efstat-row"><input class="ef-slabel" placeholder="Label (e.g. Players)" value="'+esc(st.label||"")+'"><input class="ef-svalue" placeholder="Value (e.g. 85M+)" value="'+esc(st.value||"")+'"></div>'; }).join("")+
+      '</div>'+
+      '<label class="eflabel">Screenshots &amp; videos <span class="mut">— one URL per line; images or videos (YouTube, Vimeo, .mp4)</span></label><textarea id="ef-shots" placeholder="One image or video URL per line">'+esc(shots)+'</textarea>'+
+      '<div class="upbtns"><button type="button" class="upbtn" data-upload-for="ef-shots">⬆ Upload image</button></div>'+
       '<label class="eflabel">Cover image <span class="mut">— the box art on your wall &amp; timeline</span></label>'+
       '<div class="uprow"><div class="upprev" id="ef-cover-prev">Cover</div><div style="flex:1"><input id="ef-cover" placeholder="Upload or paste https://… to change the cover"><div class="upbtns"><button type="button" class="upbtn" data-upload-for="ef-cover">⬆ Upload cover</button><button type="button" class="upbtn ghost" id="ef-cover-clear">Remove cover</button></div></div></div>'+
       '<label class="eflabel">Banner image <span class="mut">— optional wide art (blank uses box art)</span></label><input id="ef-banner" placeholder="https://… or upload" value="'+esc(s.banner_url||"")+'"><div class="upbtns"><button type="button" class="upbtn" data-upload-for="ef-banner">⬆ Upload banner</button></div>'+
-      '<label class="eflabel">Screenshots &amp; videos <span class="mut">— one URL per line; images or videos (YouTube, Vimeo, .mp4)</span></label><textarea id="ef-shots" placeholder="One image or video URL per line">'+esc(shots)+'</textarea>'+
-      '<div class="upbtns"><button type="button" class="upbtn" data-upload-for="ef-shots">⬆ Upload image</button></div>'+
+      '<label class="eflabel">Release date <span class="mut">— set only if unreleased; shows &ldquo;Coming Soon&rdquo; until then</span></label><input type="date" id="ef-release" value="'+esc(s.release_date||"")+'">'+
       '<div class="efactions"><span class="efbtn primary" id="ef-ssave">Save</span><span class="efbtn" id="ef-scancel">Cancel</span><span class="efstatus" id="ef-sstatus"></span></div>'+
       '</div>';
   }
@@ -779,6 +1347,14 @@
     if(!role){ st.textContent="Role can\u2019t be empty."; st.className="efstatus err"; return; }
     var creditPayload={ role:role, work_start:(wsRaw!==""?parseInt(wsRaw,10):null), work_end:(weRaw!==""?parseInt(weRaw,10):null) };
     st.textContent="Saving…"; st.className="efstatus";
+    if(IS_DRAFT){
+      c.role=role; c.work_start=creditPayload.work_start; c.work_end=creditPayload.work_end;
+      c.sheet={ summary:payload.summary, contributions:payload.contributions, challenges:payload.challenges, stats:payload.stats, keywords:payload.keywords, banner_url:payload.banner_url||null, screenshots:payload.screenshots, release_date:payload.release_date||null, review_score:payload.review_score||null };
+      if("cover_url" in payload){ var _nud=payload.cover_url||""; _covMap[c.game_slug]=_nud||undefined; applyTileCover(ci,_nud); }
+      draftSyncFromCredits(); renderHero();
+      st.textContent="Saved ✓"; st.className="efstatus ok"; setTimeout(function(){ openSheet(ci); },300);
+      return;
+    }
     Promise.all([ DQAPI.updateCredit(c.id, creditPayload), DQAPI.saveSheet(c.id, payload) ]).then(function(res){
       var cr=res[0], r=res[1];
       if((cr&&cr.ok!==false) && r&&r.ok){ c.role=role; c.work_start=creditPayload.work_start; c.work_end=creditPayload.work_end; c.sheet={ summary:payload.summary, contributions:payload.contributions, challenges:payload.challenges, stats:payload.stats, keywords:payload.keywords, banner_url:payload.banner_url||null, screenshots:payload.screenshots, release_date:payload.release_date||null, review_score:payload.review_score||null }; if("cover_url" in payload){ var _nu=payload.cover_url||""; _covMap[c.game_slug]=_nu||undefined; applyTileCover(ci,_nu); } renderHero(); st.textContent="Saved ✓"; st.className="efstatus ok"; setTimeout(function(){ openSheet(ci); },420); }
@@ -865,6 +1441,7 @@
       '</div>';
   }
   function openAddGame(){
+    if(IS_DRAFT){ draftAddSearch(); return; }   // draft: search + append to localStorage, no account
     ensureOvl();
     var sheet=document.getElementById("ossheet");
     sheet.innerHTML=addGameHTML();
@@ -953,8 +1530,8 @@
     var reviewHTML=rb?'<div class="osreview">'+rb+'</div>':'';
 
     return '<button class="osclose" aria-label="Close">✕</button>'+
-      '<button class="osedit owner-only">✎ Edit</button>'+
-      '<button class="oseditgame">✎ Game info</button>'+
+      '<button class="osedit owner-only">✎ Edit one-sheet</button>'+
+      '<button class="oseditgame">✎ Studio &amp; dates</button>'+
       '<div class="osbanner">'+bannerFill+'<div class="osscrim"></div><div class="osgloss"></div>'+
         '<div class="osbtitle"><div class="oskicker">'+
           (c.studio?'<span class="oschip">'+esc(c.studio)+'</span>':"")+
@@ -1047,6 +1624,20 @@
     var mode="grid", tiles=[], labels=[], dots=[], geo={}, GAP=16, SLOTS=3;
 
     var bands=positions.map(function(p){ var s=p.start_year||CUR, e=p.is_current?CUR:(p.end_year||s); if(e<s)e=s; return {p:p,s:s,e:e}; });
+    // No work history yet (e.g. a games-only draft): build a career spine from the games' own
+    // studios + work years, so the timeline lays them out chronologically instead of dumping
+    // everything into one "Also credited" pile.
+    if(!bands.length){
+      var _bs={}, _order=[];
+      credits.forEach(function(c){
+        var key=_studioKey(c.studio) || ("g:"+(c.game_slug||c.game_title||""));
+        var y=creditYear(c);
+        if(!_bs[key]){ _bs[key]={ studio:c.studio||c.game_title||"Other", s:(y||CUR), e:(y||CUR) }; _order.push(key); }
+        else if(y){ if(y<_bs[key].s)_bs[key].s=y; if(y>_bs[key].e)_bs[key].e=y; }
+      });
+      bands=_order.map(function(k){ var b=_bs[k]; return { p:{ studio:b.studio, studio_slug:"", is_current:false, start_year:b.s, end_year:b.e }, s:b.s, e:b.e }; });
+      bands.sort(function(a,b){ return (b.s||0)-(a.s||0); }); // newest first
+    }
     function bandOf(c){ return assignBand(c, bands); }
 
     credits.forEach(function(c,i){
@@ -1157,7 +1748,9 @@
     });
 
     var drag=null, saveT=null;
-    function persist(){ if(!IS_OWNER) return; clearTimeout(saveT); saveT=setTimeout(function(){ try{ DQAPI.reorderCredits(order.map(function(gi){return credits[gi].id;})); }catch(e){} },700); }
+    function persist(){ if(!IS_OWNER) return;
+      if(IS_DRAFT){ clearTimeout(saveT); saveT=setTimeout(function(){ var d=dGet(); var bySlug={}; (d.credits||[]).forEach(function(x){ bySlug[x.game_slug]=x; }); var nw=order.map(function(gi){ return bySlug[credits[gi].game_slug]; }).filter(Boolean); if(nw.length===(d.credits||[]).length){ d.credits=nw; dSet(d); } },600); return; }
+      clearTimeout(saveT); saveT=setTimeout(function(){ try{ DQAPI.reorderCredits(order.map(function(gi){return credits[gi].id;})); }catch(e){} },700); }
     stage.addEventListener("pointerdown",function(e){
       if(mode!=="grid"||!IS_OWNER) return;
       var el=e.target.closest(".tile"); if(!el) return;
