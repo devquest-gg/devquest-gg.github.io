@@ -74,7 +74,7 @@
 (function(){
   var app = document.getElementById("app");
   var topcta = document.getElementById("topcta");
-  var ME = null, SLUG = null, POS = [], NEWCTR = 0, P = null;
+  var ME = null, SLUG = null, POS = [], NEWCTR = 0, P = null, CREDITS = [];
 
   function esc(s){ return String(s==null?"":s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];}); }
   function val(id){ var e=document.getElementById(id); return e?e.value.trim():""; }
@@ -100,7 +100,9 @@
 
   function render(p, positions, credits){
     P = p;
+    CREDITS = credits || [];
     POS = positions.slice();
+    var gtN = skGameTags().length;
 
     app.innerHTML =
       // HEADER POINTER (basics live in the portfolio's "Edit header" modal — no duplication here)
@@ -110,6 +112,7 @@
       '<div class="blk"><h2>Skills &amp; tools</h2><div class="desc">Pick what fits — grouped for your discipline. These power your résumé and how job postings match you, so the wording is standardized. Toggle a chip to add or remove it; add your own for anything not listed.</div>'+
         '<div id="skills"></div>'+
         '<div class="chk" style="margin-top:8px"><input type="checkbox" id="sk-all"><label for="sk-all" style="margin:0">Also show skills from other disciplines</label></div>'+
+        (gtN ? '<div style="margin-top:10px"><span class="btn sm" id="sk-import">⭳ Import '+gtN+' tag'+(gtN===1?'':'s')+' from your games</span> <span class="mut" style="font-size:12px">— pull in your game one-sheet Focus keywords to curate here</span></div>' : '')+
         '<div style="margin-top:10px"><label>Add your own</label><div class="row"><div><input id="sk-custom" placeholder="Type a skill, press Enter"></div><div style="flex:0 0 auto;align-self:flex-end"><span class="btn sm" id="sk-add">Add</span></div></div></div>'+
         '<div class="actions"><span class="btn primary" id="save-skills">Save skills</span><span class="status" id="st-skills"></span></div>'+
       '</div>'+
@@ -188,6 +191,14 @@
     html+='<div class="skcat">Your additions</div><div class="chips" id="sk-custom-chips">'+customs.map(function(it){return skChip(it,SK_SELECTED[it.toLowerCase()].cat||"More");}).join("")+'</div>';
     document.getElementById("skills").innerHTML=html;
   }
+  // game one-sheet "Focus / keywords" across all credits (deduped) — importable into the picker
+  function skGameTags(){ var seen={}, out=[]; (CREDITS||[]).forEach(function(c){ ((c.sheet&&c.sheet.keywords)||[]).forEach(function(k){ k=String(k||"").trim(); var kk=k.toLowerCase(); if(k&&!seen[kk]){ seen[kk]=1; out.push(k); } }); }); return out; }
+  function skCatFor(skill){ var k=skill.toLowerCase(); for(var d in SKILL_PALETTES){ for(var i=0;i<SKILL_PALETTES[d].length;i++){ var co=SKILL_PALETTES[d][i]; for(var j=0;j<co.items.length;j++){ if(co.items[j].toLowerCase()===k) return co.cat; } } } return "More"; }
+  function skImportGameTags(){
+    var added=0; skGameTags().forEach(function(t){ var k=t.toLowerCase(); if(!SK_SELECTED[k]){ SK_SELECTED[k]={skill:t, cat:skCatFor(t)}; added++; } });
+    var all=document.getElementById("sk-all"); renderSkillsPicker(P||{}, all&&all.checked);
+    var st=document.getElementById("st-skills"); if(st){ st.textContent=added?("Imported "+added+" — review, un-click any you don’t want, then Save skills."):"Your game tags are already in the list."; st.className="status mut"; }
+  }
   function skAddCustom(){
     var inp=document.getElementById("sk-custom"); if(!inp) return; var v=(inp.value||"").trim(); if(!v) return;
     var k=v.toLowerCase(), found=null;
@@ -220,6 +231,7 @@
       }).catch(function(){ st.textContent="Network error."; st.className="status err"; });
     };
     var add=document.getElementById("sk-add"); if(add) add.onclick=skAddCustom;
+    var imp=document.getElementById("sk-import"); if(imp) imp.onclick=skImportGameTags;
     var inp=document.getElementById("sk-custom"); if(inp) inp.addEventListener("keydown", function(e){ if(e.key==="Enter"){ e.preventDefault(); skAddCustom(); } });
     var all=document.getElementById("sk-all"); if(all) all.addEventListener("change", function(){ renderSkillsPicker(P||{}, all.checked); });
   }

@@ -727,12 +727,10 @@
       return { title:pp.title, company:pp.company, location:pp.location, dates:pp.dates, _s:pp._s||0, scope:scope, shipped:shipped, bullets:bullets };
     }).sort(function(a,b){ return (b._s||0)-(a._s||0); });
     var additional=orphans.map(function(g){ return { title:g.title, role:g.role, studio:g.studio, years:g.years, bullets:g.bullets.slice(0,2) }; });
+    // Skills come solely from the picker (person.skills.groups) — the single source of truth.
+    // Game one-sheet "Focus" tags are NOT auto-injected; the editor lets you import them into
+    // the picker so you curate what appears, rather than the résumé dumping every game tag.
     var skills=((p.skills&&p.skills.groups)||[]).map(function(g){ return { label:g.label||"", items:(g.items||[]) }; });
-    // Fold each game's "Focus / keywords" tags into a résumé Skills group so they
-    // render on the résumé (an ATS can see them) AND count in the tailoring match.
-    var kwseen={}, kwlist=[];
-    (_credits||[]).forEach(function(c){ ((c.sheet&&c.sheet.keywords)||[]).forEach(function(k){ k=String(k||"").trim(); var kk=k.toLowerCase(); if(k && !kwseen[kk]){ kwseen[kk]=1; kwlist.push(k); } }); });
-    if(kwlist.length) skills.push({ label:"Focus", items:kwlist.slice(0,30) });
     return { name:p.name||"", headline:p.headline||"", location:p.location||"", email:email, links:links, summary:p.bio||"", experience:experience, additional:additional, skills:skills };
   }
   function resumeBody(m){
