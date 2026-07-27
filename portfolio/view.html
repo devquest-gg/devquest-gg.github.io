@@ -116,6 +116,12 @@
   .skgroup h4{margin:0 0 10px;font-size:12.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
   .pills{display:flex;gap:7px;flex-wrap:wrap}
   .pill{font-size:12.5px;font-weight:650;color:#d3dcea;border:1px solid var(--border);background:var(--panel2);border-radius:8px;padding:5px 11px}
+  .edu{display:flex;flex-direction:column;gap:12px}
+  .edurow{display:flex;justify-content:space-between;gap:16px;align-items:baseline;border:1px solid var(--border);border-radius:14px;background:var(--panel);padding:15px 18px}
+  .edurow .es{font-weight:750;font-size:15px}
+  .edurow .ed{color:var(--muted);font-size:13px;margin-top:2px}
+  .edurow .ey{color:var(--dim);font-size:13px;font-weight:650;white-space:nowrap}
+  @media(max-width:600px){.edurow{flex-direction:column;gap:4px}}
 
   .contact{margin-top:30px;border:1px solid var(--border);border-radius:18px;background:radial-gradient(600px 200px at 20% 0%,rgba(88,166,255,.12),transparent),linear-gradient(180deg,var(--panel),#0d121b);padding:28px 26px;text-align:center}
   .contact h3{margin:0 0 6px;font-size:22px;font-weight:800}.contact p{margin:0 0 18px;color:var(--muted);font-size:14px}
@@ -490,7 +496,7 @@
     IS_OWNER=true; document.body.classList.add("is-owner");   // draft acts like owner; writes go to localStorage, never the API
     var d=dGet(); var credits=(d.credits||[]).map(draftCredit);
     var pf=d.profile||{};
-    var person={ name:d.name||"Your name", slug:null, headline:pf.headline||"", location:pf.location||"", bio:pf.bio||"", links:pf.links||[], skills:{groups:[]}, portfolio_style:"production", open_to_work:pf.open_to_work?1:0, avatar_url:pf.avatar_url||"", unshipped:pf.unshipped||0 };
+    var person={ name:d.name||"Your name", slug:null, headline:pf.headline||"", location:pf.location||"", bio:pf.bio||"", links:pf.links||[], skills:{groups:[]}, portfolio_style:"production", open_to_work:pf.open_to_work?1:0, avatar_url:pf.avatar_url||"", unshipped:pf.unshipped||0, education:(Array.isArray(d.education)?d.education:(Array.isArray(pf.education)?pf.education:[])) };
     // Work history carried from the wizard — so gameless studios (e.g. Possibility Space) show on the timeline.
     var positions=(d.positions||[]).map(function(pp){ var cur=(pp.is_current?true:false); return { studio:pp.studio||pp.studio_name||"", studio_slug:"", title:pp.title||"", start_year:pp.start_year||null, start_month:null, end_year:(cur?null:(pp.end_year||null)), end_month:null, is_current:cur, description:pp.description||"", location:pp.location||"" }; });
     resolveCovers(credits).then(function(cm){ cm=cm||{}; (d.credits||[]).forEach(function(c){ if(c.cover_url) cm[c.game_slug]=c.cover_url; }); render(person,positions,credits,cm); mountDraftBar(credits.length); }).catch(function(){ render(person,positions,credits,{}); mountDraftBar(credits.length); });
@@ -628,13 +634,23 @@
       groups.map(function(g){ return '<div class="skgroup"><h4>'+esc(g.label)+'</h4><div class="pills">'+(g.items||[]).map(function(it){return '<span class="pill">'+esc(it)+'</span>';}).join("")+'</div></div>'; }).join("")+
       '</div></section></div>' : '';
 
+    // ---- education (opt-in: only renders if entries exist) ----
+    var eduList = Array.isArray(p.education) ? p.education : [];
+    var edu = eduList.length ? '<div class="wrap"><section><div class="eyebrow">Background</div><h2 class="sec">Education</h2><div class="edu">'+
+      eduList.map(function(e){ e=e||{};
+        var deg=[e.degree,e.field].filter(Boolean).join(", ");
+        var yrs=(e.start_year&&e.end_year)?(e.start_year+" – "+e.end_year):(e.end_year?String(e.end_year):(e.start_year?e.start_year+" –":""));
+        return '<div class="edurow"><div><div class="es">'+esc(e.school||"")+'</div>'+(deg?'<div class="ed">'+esc(deg)+'</div>':'')+'</div>'+(yrs?'<div class="ey">'+esc(yrs)+'</div>':'')+'</div>';
+      }).join("")+
+      '</div></section></div>' : '';
+
     // ---- confirm count ----
     var confirmed = credits.filter(function(c){ return (c.vouch_count||0)>0; }).length;
     var contact = '<div class="wrap"><div class="contact"><h3>'+esc(p.name.split(" ")[0])+' is '+(p.open_to_work?'open to new roles':'on DevQuest')+'</h3><p>Résumé tailors to your posting in one click.</p><div class="clinks"><a class="btn primary dq-rpdf" style="cursor:pointer">⬇ Résumé (PDF)</a><a class="btn ghost dq-rdocx" style="cursor:pointer">⬇ Word (.docx)</a><a class="btn ghost dq-tailor" style="cursor:pointer">🎯 Tailor to a job</a>'+linkBtns+'</div>'+
       (confirmed?'<div class="vfoot"><span class="v2">✓</span> '+confirmed+' of '+credits.length+' credits confirmed by teammates who shipped the same game · <a href="/credits/how-evidence-works.html" style="color:var(--accent)">how evidence works →</a></div>':'')+
       '</div></div>';
 
-    app.innerHTML = hero + stageSection + skills + contact;
+    app.innerHTML = hero + stageSection + skills + edu + contact;
     wireHeroEdit();
     if(credits.length) buildStage(credits, positions, covMap);
   }
@@ -744,7 +760,12 @@
     // Game one-sheet "Focus" tags are NOT auto-injected; the editor lets you import them into
     // the picker so you curate what appears, rather than the résumé dumping every game tag.
     var skills=((p.skills&&p.skills.groups)||[]).map(function(g){ return { label:g.label||"", items:(g.items||[]) }; });
-    return { name:p.name||"", headline:p.headline||"", location:p.location||"", email:email, links:links, summary:p.bio||"", experience:experience, additional:additional, skills:skills };
+    var education=(Array.isArray(p.education)?p.education:[]).map(function(e){ e=e||{};
+      var deg=[e.degree,e.field].filter(Boolean).join(", ");
+      var yrs=(e.start_year&&e.end_year)?(e.start_year+" – "+e.end_year):(e.end_year?String(e.end_year):(e.start_year?String(e.start_year):""));
+      return { school:String(e.school||"").trim(), detail:deg, years:yrs };
+    }).filter(function(e){ return e.school; });
+    return { name:p.name||"", headline:p.headline||"", location:p.location||"", email:email, links:links, summary:p.bio||"", experience:experience, additional:additional, skills:skills, education:education };
   }
   function resumeBody(m){
     var h='<h1>'+rEsc(m.name)+'</h1>';
@@ -765,6 +786,9 @@
       h+='</div>';
     }); }
     if(m.skills.length){ h+='<h2>Skills</h2>'; m.skills.forEach(function(g){ h+='<p class="rsk">'+(g.label?'<strong>'+rEsc(g.label)+':</strong> ':'')+rEsc(g.items.join(", "))+'</p>'; }); }
+    if(m.education&&m.education.length){ h+='<h2>Education</h2>'; m.education.forEach(function(e){
+      h+='<p class="rhd"><strong>'+rEsc(e.school)+'</strong>'+(e.detail?' — '+rEsc(e.detail):'')+(e.years?'<span class="rdt">'+rEsc(e.years)+'</span>':'')+'</p>';
+    }); }
     return h;
   }
   function resumeCSS(){ return "body{font-family:Arial,Calibri,'Helvetica Neue',sans-serif;color:#111;font-size:11pt;line-height:1.35;margin:0}.rwrap{max-width:7.5in;margin:0 auto;padding:0.5in}h1{font-size:20pt;margin:0 0 2pt}.rsub{font-size:11.5pt;font-weight:bold;margin:0 0 2pt}.rcon{font-size:10pt;color:#333;margin:0 0 10pt}h2{font-size:12pt;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid #888;padding-bottom:2pt;margin:14pt 0 6pt}p{margin:0 0 4pt}.ritem{margin:0 0 9pt}.rhd{margin:0 0 2pt}.rscope{margin:0 0 3pt;font-size:10pt;color:#444}.rship{margin:0 0 3pt;font-size:10pt;color:#222}.rdt{float:right;font-weight:normal;color:#333}ul{margin:2pt 0 0;padding-left:18pt}li{margin:0 0 2pt}.rsk{margin:0 0 3pt}@page{size:letter;margin:0.5in}@media print{.rwrap{padding:0}}"; }
@@ -857,6 +881,13 @@
         else run(ML, ln, 10, false); nl(12.5); }); nl(1);
     }); }
 
+    if(m.education && m.education.length){ heading("Education"); m.education.forEach(function(e){
+      need(14); var head=e.school||""; run(ML, head, 10.5, true);
+      if(e.detail) run(ML+_pmeasure(head,10.5,true), " — "+e.detail, 10.5, false);
+      if(e.years) run(RX-_pmeasure(e.years,9.5,false), e.years, 9.5, false, 0.25);
+      nl(13.5); nl(2);
+    }); }
+
     newpage();
 
     // ---- assemble objects (1 catalog, 2 pages, N page objs, N content objs, 2 fonts) ----
@@ -935,6 +966,9 @@
     }); }
     if(m.skills.length){ b+=H("Skills"); m.skills.forEach(function(g){
       b+=_para((g.label?_run(g.label+": ",{b:true,sz:22}):"")+_run(g.items.join(", "),{sz:22}),{after:40});
+    }); }
+    if(m.education&&m.education.length){ b+=H("Education"); m.education.forEach(function(e){
+      b+=_para(_run(e.school,{b:true,sz:22})+(e.detail?_run(" — "+e.detail,{sz:22}):"")+(e.years?_run("   ("+e.years+")",{sz:20,color:"333333"}):""),{before:60,after:40});
     }); }
     var sect='<w:sectPr><w:pgSz w:w="12240" w:h="15840"/><w:pgMar w:top="720" w:right="720" w:bottom="720" w:left="720"/></w:sectPr>';
     return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body>'+b+sect+'</w:body></w:document>';

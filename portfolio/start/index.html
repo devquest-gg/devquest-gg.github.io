@@ -180,6 +180,37 @@
   }
   // LinkedIn / résumé parser. Handles markdown-link export, flat "Title / Company·Type / Dates"
   // entries, AND grouped entries where one company heads several nested roles (Bend, Paragon, Mythic).
+  // LinkedIn "Education" section → [{school,degree,field,start_year,end_year}]. Entries are
+  // school / (degree, field) / date-range, interleaved with logo alt-text and "Grade:" lines.
+  var _DEGRE=/\b(bachelor|master|doctor|doctorate|ph\.?d|b\.?sc|b\.?a\b|b\.?eng|m\.?sc|m\.?a\b|m\.?eng|m\.?f\.?a|mba|associate('s)?|diploma|certificate|certification|degree|foundation|hnd|higher national|gcse|a-?levels?|btec|bootcamp|nanodegree|apprenticeship)\b/i;
+  function _eduClean(s){ return String(s==null?"":s).replace(/\s{2,}/g," ").replace(/^[\s,·|–—-]+|[\s,·|–—-]+$/g,"").trim(); }
+  function _parseEducation(L){
+    var start=-1;
+    for(var i=0;i<L.length;i++){ if(/^education(\s*\(\d+\))?$/i.test(L[i])){ start=i+1; break; } }
+    if(start<0) return [];
+    var out=[], cur=null;
+    function flush(){ if(cur && cur.school) out.push(cur); cur=null; }
+    for(var i=start;i<L.length;i++){ var line=L[i]; if(!line) continue;
+      if(/^(licen[sc]es?|volunteering|volunteer|skills|recommendations|interests|courses|honors|test scores|languages|organi[sz]ations|causes|projects|experience|publications|patents|about$|people you|people also viewed|more profiles|you might like|pages for you|activity)\b/i.test(line)){ flush(); break; }   // next section
+      if(/^(show all|show \d)/i.test(line)) continue;
+      if(_isImgAlt(line)) continue;                                          // school logo alt-text
+      if(/^(grade|activities and societies|activities)\b/i.test(line)){ continue; }
+      if(_isDur(line)) continue;
+      if(_isDate(line)){ if(cur){ var dr=line.match(_DRRE); if(dr){ cur.start=_year4(dr[1]); cur.end=(/present|current|now|today|ongoing/i.test(dr[2])?null:_year4(dr[2])); } flush(); } continue; }
+      var ys=line.match(/^(\d{4})$/); if(ys){ if(cur){ if(cur.start==null) cur.start=parseInt(ys[1],10); else if(cur.end==null) cur.end=parseInt(ys[1],10); } continue; }
+      // a text line: school (start of entry), then degree/field, then a new school ⇒ next entry
+      if(!cur){ cur={school:line, degreeRaw:"", start:null, end:null}; }
+      else if(!cur.degreeRaw){ cur.degreeRaw=line; }
+      else { flush(); cur={school:line, degreeRaw:"", start:null, end:null}; }
+    }
+    flush();
+    return out.map(function(e){ var d=e.degreeRaw||"", deg="", fld="";
+      if(d){ var parts=d.split(/\s*[,·]\s*/).map(_eduClean).filter(Boolean);
+        if(parts.length>=2){ deg=parts[0]; fld=parts.slice(1).join(", "); }
+        else if(_DEGRE.test(d)){ deg=d; } else { fld=d; } }   // a lone line: a degree if it names one, else a field of study
+      return { school:_eduClean(e.school), degree:_eduClean(deg), field:_eduClean(fld), start_year:e.start||null, end_year:e.end||null };
+    }).filter(function(e){ return e.school && e.school.length<=140; }).slice(0,20);
+  }
   function parseProfile(text, studioArr){
     var L=String(text==null?"":text).split(/\r?\n/).map(_md);
     var ne=L.filter(Boolean);
@@ -227,7 +258,8 @@
         lastG={title:pl, studio:""}; pgames.push(lastG);                                                   // a project title → a game candidate
       }
     }
-    return { name:name, headline:headline, jobs:merged, role:role, games:pgames };
+    var education=_parseEducation(L);
+    return { name:name, headline:headline, jobs:merged, role:role, games:pgames, education:education };
   }
   function _catTitleIndex(rows){ var m={}; for(var i=0;i<rows.length;i++){ var r=rows[i]; if(!r) continue; var k=nrm(r[1]); if(k && !m[k]) m[k]={slug:r[0],title:r[1],year:r[2],studio:r[3]}; } return m; }
   function autofillFromPaste(){
@@ -239,6 +271,7 @@
       if(res.name) window._qsName=res.name;
       if(res.headline) window._qsHead=res.headline;
       if(res.role) window._qsRole=res.role;
+      if(res.education && res.education.length) window._qsEdu=res.education;
       var tIdx=_catTitleIndex(rows), sIdx={}; _studioIndex(rows).forEach(function(s){ sIdx[s.k]=1; });
       var jobs=res.jobs||[];
       // A "studio" from the paste that is really a catalogue GAME (e.g. "League of Legends") — one that
@@ -495,7 +528,7 @@
     var positions=STUDIOS.map(function(s){ var sf=parseInt(s.from,10), sto=parseInt(s.to,10); var cur=(s.to===""||s.to==null);
       return { studio:s.name, title:(s.title||role||"Team member"), start_year:(isNaN(sf)?null:sf), end_year:(cur||isNaN(sto)?null:sto), is_current:cur?1:0 };
     });
-    var draft={ name:name, profile:{ headline:head, location:"", bio:"", open_to_work:0, avatar_url:"", links:[] }, credits:credits, positions:positions };
+    var draft={ name:name, profile:{ headline:head, location:"", bio:"", open_to_work:0, avatar_url:"", links:[] }, credits:credits, positions:positions, education:(Array.isArray(window._qsEdu)?window._qsEdu:[]) };
     try{ localStorage.setItem("dq_draft", JSON.stringify(draft)); }catch(e){ st.textContent="Could not save locally — check browser storage settings."; st.style.color="var(--pink)"; return; }
     st.textContent="Building your wall…"; st.style.color="var(--muted)";
     location.href="/portfolio/view.html?draft=1";

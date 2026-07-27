@@ -74,7 +74,7 @@
 (function(){
   var app = document.getElementById("app");
   var topcta = document.getElementById("topcta");
-  var ME = null, SLUG = null, POS = [], NEWCTR = 0, P = null, CREDITS = [];
+  var ME = null, SLUG = null, POS = [], NEWCTR = 0, P = null, CREDITS = [], EDU = [], ENEWCTR = 0;
 
   function esc(s){ return String(s==null?"":s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];}); }
   function val(id){ var e=document.getElementById(id); return e?e.value.trim():""; }
@@ -103,6 +103,7 @@
     P = p;
     CREDITS = credits || [];
     POS = positions.slice();
+    EDU = (Array.isArray(p.education) ? p.education : []).map(function(e){ e=e||{}; return {id:"edu"+(++ENEWCTR), school:e.school||"", degree:e.degree||"", field:e.field||"", start_year:e.start_year||null, end_year:e.end_year||null}; });
     var gtN = skGameTags().length;
 
     app.innerHTML =
@@ -123,10 +124,17 @@
         '<div id="poslist"></div>'+
         '<div class="actions"><span class="btn" id="add-pos">+ Add a position</span></div>'+
       '</div>'+
+
+      // EDUCATION (opt-in — leave empty and the section simply won't show on your portfolio)
+      '<div class="blk"><h2>Education</h2><div class="desc">Optional. Degrees, diplomas, bootcamps — whatever you want on your résumé. Leave it empty and no education section shows on your portfolio. Add and save each entry on its own.</div>'+
+        '<div id="edulist"></div>'+
+        '<div class="actions"><span class="btn" id="add-edu">+ Add education</span><span class="status" id="st-edu"></span></div>'+
+      '</div>'+
       // DONE
       '<div style="text-align:center;margin:10px 0 4px"><a class="btn primary" href="/portfolio/'+esc(SLUG)+'/">✓ Done — back to my portfolio</a><div class="mut" style="font-size:12px;margin-top:9px">Each section saves on its own — make sure you’ve clicked <b>Save</b> in the ones you changed before leaving.</div></div>';
 
     renderPositions();
+    renderEducation();
     skInitSelected(p); renderSkillsPicker(p, false); wireSkills();
   }
 
@@ -310,6 +318,70 @@
       var el=document.querySelector('.pos[data-id="'+nid+'"]'); if(el) el.scrollIntoView({behavior:"smooth",block:"center"});
     }
   });
+  // ---------- EDUCATION ----------
+  function renderEducation(){
+    var box=document.getElementById("edulist"); if(!box) return;
+    if(!EDU.length){ box.innerHTML='<div class="empty">No education added — optional. Add an entry below if you want it on your résumé.</div>'; return; }
+    box.innerHTML = EDU.map(eduCard).join("");
+    EDU.forEach(function(e){ wireEdu(e.id); });
+  }
+  function eduCard(e){
+    return '<div class="pos" data-eid="'+e.id+'">'+
+      '<div class="top"><span class="pt">'+esc(e.school||"New entry")+(e.degree?' · '+esc(e.degree):'')+'</span></div>'+
+      '<div class="row" style="margin-top:10px"><div><label>School / institution</label><input class="e-school" value="'+esc(e.school||"")+'" placeholder="e.g. DigiPen Institute of Technology"></div></div>'+
+      '<div class="row" style="margin-top:8px"><div><label>Degree <span class="mut" style="font-weight:400">— optional</span></label><input class="e-degree" value="'+esc(e.degree||"")+'" placeholder="e.g. BS"></div><div><label>Field of study <span class="mut" style="font-weight:400">— optional</span></label><input class="e-field" value="'+esc(e.field||"")+'" placeholder="e.g. Computer Science"></div></div>'+
+      '<div class="row" style="margin-top:8px"><div><label>Start year</label><select class="e-sy">'+yearOpts(e.start_year)+'</select></div><div><label>End year <span class="mut" style="font-weight:400">— or expected</span></label><select class="e-ey">'+yearOpts(e.end_year)+'</select></div></div>'+
+      '<div class="actions"><span class="btn primary sm e-save">Save</span><span class="btn danger sm e-del">Remove</span><span class="status e-st"></span></div>'+
+    '</div>';
+  }
+  function collectEdu(){
+    var out=[];
+    document.querySelectorAll('.pos[data-eid]').forEach(function(card){
+      var school=card.querySelector(".e-school").value.trim();
+      out.push({
+        school: school,
+        degree: card.querySelector(".e-degree").value.trim(),
+        field: card.querySelector(".e-field").value.trim(),
+        start_year: card.querySelector(".e-sy").value || null,
+        end_year: card.querySelector(".e-ey").value || null
+      });
+    });
+    return out;
+  }
+  function saveEdu(status, onOk){
+    var all=collectEdu();
+    // sync the in-memory model so re-renders keep edits
+    var cards=document.querySelectorAll('.pos[data-eid]');
+    if(status){ status.textContent="Saving…"; status.className="status mut"; }
+    DQAPI.updateProfile({ education: all.filter(function(e){ return e.school; }) }).then(function(r){
+      if(r&&r.ok){ if(status){ status.textContent="✓ Saved"; status.className="status ok"; } if(onOk) onOk(); }
+      else { if(status){ status.textContent=(r&&r.data&&r.data.error)||"Could not save."; status.className="status err"; } }
+    }).catch(function(){ if(status){ status.textContent="Network error."; status.className="status err"; } });
+  }
+  function wireEdu(id){
+    var card=document.querySelector('.pos[data-eid="'+id+'"]'); if(!card) return;
+    var st=card.querySelector(".e-st");
+    card.querySelector(".e-save").onclick=function(){
+      if(!card.querySelector(".e-school").value.trim()){ st.textContent="School is required."; st.className="status err"; return; }
+      saveEdu(st);
+    };
+    card.querySelector(".e-del").onclick=function(){
+      if(!confirm("Remove this education entry?")) return;
+      EDU=EDU.filter(function(x){return String(x.id)!==String(id);});
+      card.parentNode.removeChild(card);
+      if(!document.querySelectorAll('.pos[data-eid]').length) renderEducation();
+      saveEdu(document.getElementById("st-edu"));
+    };
+  }
+  document.addEventListener("click", function(e){
+    if(e.target && e.target.id==="add-edu"){
+      var nid="edu"+(++ENEWCTR);
+      EDU.push({id:nid, school:"", degree:"", field:"", start_year:null, end_year:null});
+      renderEducation();
+      var el=document.querySelector('.pos[data-eid="'+nid+'"]'); if(el) el.scrollIntoView({behavior:"smooth",block:"center"});
+    }
+  });
+
   function sheetsSection(credits){
     return '<div class="blk"><h2>Game one-sheets</h2><div class="desc">The expandable sell-sheet behind each game on your portfolio — scale, what you led, screenshots. Fill in the ones that matter most.</div><div id="sheets">'+ credits.map(sheetCard).join("") +'</div></div>';
   }
