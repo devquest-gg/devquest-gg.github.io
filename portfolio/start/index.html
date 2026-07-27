@@ -150,6 +150,7 @@
   function _studioIndex(rows){ var seen={}, arr=[]; for(var i=0;i<rows.length;i++){ var s=rows[i]&&rows[i][3]; if(!s) continue; var k=_pnorm(s); if(k.length<3||seen[k]) continue; seen[k]=1; arr.push({k:k,name:String(s)}); } return arr; }
   function _md(l){ return String(l==null?"":l).replace(/\[([^\]]*)\]\([^)]*\)/g,"$1").replace(/^\s*[\*\-•▪○]\s*/,"").replace(/\s+/g," ").trim(); }   // [text](url) → text, drop bullets
   function _hasType(l){ return /\b(full[\s-]?time|part[\s-]?time|contract|freelance|internship|permanent|self[\s-]?employed|apprenticeship|seasonal)\b/i.test(l); }
+  function _isImgAlt(l){ return /^(thumbnail|image|photo|picture|icon|logo|banner|screenshot|avatar|graphic)\b/i.test(l) || /\b(logo|icon|banner|thumbnail|screenshot|avatar)$/i.test(l); }   // LinkedIn image alt-text: "Thumbnail for X", "Ubisoft logo"
   function _isDur(l){ return !/\d{4}/.test(l) && /\d+\s*(yrs?|years?|mos?|months?)\b/i.test(l); }   // "2 yrs 9 mos" — a grouped-company total, not a role date
   function _isTitleLine(l){ return _TITLERE.test(l) && !/·/.test(l) && !/\d{4}/.test(l); }
   function _isDate(l){ return _DRRE.test(l); }
@@ -194,7 +195,7 @@
         if(pv2.line && !_isTitleLine(pv2.line) && !_isDate(pv2.line) && !_hasType(pv2.line) && pv2.line.indexOf(",")<0){ currentCompany=pv2.line; }
         else if(pv2.line && _hasType(pv2.line)){ var p3=_prevNE(L,pv2.idx); if(p3.line && !_isTitleLine(p3.line)) currentCompany=p3.line; }
       } else if(_isTitleLine(line)){ pendingTitle=line; }
-      else if(activeStudio && line.length<=70 && line.split(" ").length<=10 && line.indexOf(",")<0 && !/[.]$/.test(line) && !_hasType(line) && !/^\d/.test(line)){ pgames.push({title:line, studio:activeStudio}); }  // candidate game name under a role → matched to the catalogue later
+      else if(activeStudio && line.length<=70 && line.split(" ").length<=10 && line.indexOf(",")<0 && !/[.]$/.test(line) && !_hasType(line) && !/^\d/.test(line) && !_isImgAlt(line)){ pgames.push({title:line, studio:activeStudio}); }  // candidate game name under a role → matched to the catalogue later
     }
     var byC={}, order=[];
     jobs.forEach(function(j){ var k=_pnorm(j.company); if(!k) return; if(!byC[k]){ byC[k]={company:j.company,title:j.title||"",from:j.from||"",to:j.to}; order.push(k); }
@@ -209,7 +210,7 @@
     if(projStart>=0){ var lastG=null;
       for(var pj=projStart;pj<L.length;pj++){ var pl=L[pj]; if(!pl) continue;
         if(/^(show all|recommendations|interests|skills|education|licenses|volunteering|volunteer|courses|honors|languages|organizations|causes|people you|you might like|pages for you)\b/i.test(pl)) break;   // next section
-        if(_isDate(pl)||_isDur(pl)||/^show project/i.test(pl)) continue;                                   // a project's date / link line
+        if(_isDate(pl)||_isDur(pl)||/^show project/i.test(pl)||_isImgAlt(pl)) continue;                     // a project's date / link / image-alt line
         if(/^associated with /i.test(pl)){ if(lastG) lastG.studio=_stripJunk(pl.replace(/^associated with\s+/i,"")); continue; }
         lastG={title:pl, studio:""}; pgames.push(lastG);                                                   // a project title → a game candidate
       }
@@ -246,7 +247,7 @@
           if(g){ if(!PICKED[g.slug]){ PICKED[g.slug]={slug:g.slug,title:g.title,year:g.year,studio:g.studio}; gmatched++; } return; }
           // no catalogue match → keep only plausible game titles (drop studio names & role/section noise)
           if(seenU[key]||studioKeys[key]||sIdx[key]) return;
-          if(_SUFFIXRE.test(pg.title)||_TITLERE.test(pg.title)) return;   // "…Studios/Games/Entertainment" or a role
+          if(_SUFFIXRE.test(pg.title)||_TITLERE.test(pg.title)||_isImgAlt(pg.title)) return;   // "…Studios/Games/Entertainment", a role, or image alt-text
           if(pg.title.split(/\s+/).length<2) return;                     // single word → noise
           seenU[key]=1; UNMATCHED.push(pg.title);
         });
