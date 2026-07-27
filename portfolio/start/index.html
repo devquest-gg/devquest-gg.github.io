@@ -302,6 +302,10 @@
       if(res.role) window._qsRole=res.role;
       if(res.education && res.education.length) window._qsEdu=res.education;
       var tIdx=_catTitleIndex(rows), sIdx={}; _studioIndex(rows).forEach(function(s){ sIdx[s.k]=1; });
+      // Subtitle index: base name (before a ": "/" - " subtitle) → catalogue entries. Lets us auto-link a
+      // base title from a paste ("Warhammer Online") to its catalogued full title ("Warhammer Online: Age of Reckoning").
+      var subIdx={};
+      for(var _si=0;_si<rows.length;_si++){ var _r=rows[_si]; if(!_r||!_r[1]) continue; var _parts=String(_r[1]).split(/\s*[:–—-]\s+/); if(_parts.length<2) continue; var _bk=nrm(_parts[0]); if(_bk.length<3) continue; (subIdx[_bk]=subIdx[_bk]||[]).push({slug:_r[0],title:_r[1],year:_r[2],studio:_r[3]}); }
       var jobs=res.jobs||[];
       // A "studio" from the paste that is really a catalogue GAME (e.g. "League of Legends") — one that
       // isn't a known studio, but IS a game whose real studio is among your other studios — gets moved
@@ -330,6 +334,14 @@
             var gs=nrm(g.studio||"");
             if(key.split(" ").length<=1 && gs && !Object.keys(studioKeys).some(function(k){ return k && (k.indexOf(gs)>=0 || gs.indexOf(k)>=0); })) return;
             if(!PICKED[g.slug]){ PICKED[g.slug]={slug:g.slug,title:g.title,year:g.year,studio:g.studio}; gmatched++; } return;
+          }
+          // no exact match → subtitle match: a distinctive multi-word base name from the paste vs a catalogued
+          // "Base: Subtitle" title ("Warhammer Online" → "Warhammer Online: Age of Reckoning"). Multi-word only,
+          // so a lone common word can't mis-link; several variants → the base game (shortest title).
+          var subs=subIdx[key];
+          if(subs && subs.length && key.split(" ").length>=2){
+            var pick = subs.length===1 ? subs[0] : subs.slice().sort(function(a,b){ return String(a.title).length-String(b.title).length; })[0];
+            if(pick){ if(!PICKED[pick.slug]){ PICKED[pick.slug]={slug:pick.slug,title:pick.title,year:pick.year,studio:pick.studio}; gmatched++; } return; }
           }
           // no catalogue match → keep only plausible game titles (drop studio names & role/section noise)
           if(pg.fromDomain) return;                                      // recovered from a URL and unmatched — too speculative to surface as "unmatched"
@@ -477,17 +489,29 @@
   function renderStudioGames(si, full, win, q){
     var box=document.getElementById("glist-"+si); if(!box) return;
     var ql=nrm(q||"");
-    var list = ql ? full.filter(function(g){ return nrm(g.title).indexOf(ql)>=0; }) : win;   // default = windowed; search spans the full studio catalogue
+    var list, coDev=false;
+    if(ql){
+      // Search this studio's titles first, then fall through to the WHOLE catalogue — so co-dev / support-studio
+      // work (e.g. Hogwarts Legacy, credited to another studio) is findable under the studio you did it at.
+      var studioMatches = full.filter(function(g){ return nrm(g.title).indexOf(ql)>=0; });
+      var haveSlug={}; studioMatches.forEach(function(g){ haveSlug[g.slug]=1; });
+      var others=[];
+      for(var i=0;i<CATALOG.length && (studioMatches.length+others.length)<60;i++){ var r=CATALOG[i]; if(!r||haveSlug[r[0]]) continue; if(nrm(r[1]).indexOf(ql)<0) continue; haveSlug[r[0]]=1; others.push({slug:r[0],title:r[1],year:r[2],studio:r[3]}); }
+      others.sort(function(a,b){ return (PICKED[a.slug]?0:1)-(PICKED[b.slug]?0:1) || String(a.title).length-String(b.title).length; });
+      coDev = others.length>0;
+      list = studioMatches.concat(others);
+    } else { list = win; }
     var picked = list.filter(function(g){ return PICKED[g.slug]; });         // your picks float to the top
     var rest = list.filter(function(g){ return !PICKED[g.slug]; });
     var CAP = ql ? 60 : 18;
     var shown = picked.concat(rest.slice(0, Math.max(0, CAP - picked.length)));
     var rows = shown.map(_gameRow).join("");
     var more;
-    if(list.length>shown.length) more='<div class="gmore">+ '+(list.length-shown.length)+' more — type a title above to find it.</div>';
+    if(list.length>shown.length) more='<div class="gmore">+ '+(list.length-shown.length)+' more — keep typing to narrow it down.</div>';
     else if(!ql && full.length>win.length) more='<div class="gmore">+ '+(full.length-win.length)+' more from this studio — search above to find any title.</div>';
     else more='';
-    box.innerHTML = rows ? (rows+more) : '<div class="empty">No'+(ql?' match for “'+esc(q)+'”':' titles around your time')+' — search above for any title, or add games by hand later.</div>';
+    var note = (ql && coDev) ? '<div class="gmore" style="color:var(--muted)">Searching the whole catalogue — pick a title from another studio too if you co-developed it here.</div>' : '';
+    box.innerHTML = rows ? (note+rows+more) : '<div class="empty">No'+(ql?' game in the catalogue matches “'+esc(q)+'”':' titles around your time')+' — try a different spelling, or add games by hand later.</div>';
   }
   // Catalogue-wide search over the WHOLE index — the escape hatch for games not tied to any of your
   // studios (studio-less catalogue entries, or a game you shipped at a studio you didn't list).
@@ -510,7 +534,9 @@
     var anyPicked = Object.keys(PICKED).length>0;
     var sections = SEC.map(function(o,si){
       var more = o.all.length - o.win.length;
-      var searchBox = (o.all.length>16 || more>0) ? '<input class="gsearch" data-si="'+si+'" placeholder="Search '+esc(o.s.name)+' titles… (find any game you shipped)">' : '';
+      // Always show the search box — even for studios with no catalogued titles (co-dev / support studios like
+      // Certain Affinity), so you can pull up a game you shipped there that's credited to another studio.
+      var searchBox = '<input class="gsearch" data-si="'+si+'" placeholder="Search '+esc(o.s.name)+' or any catalogue title (incl. co-dev)…">';
       return '<div class="gstudio">'+esc(o.s.name)+' <span class="n">'+o.win.length+' around your time'+(more>0?' · '+more+' more via search':'')+'</span></div>'+searchBox+'<div class="glist" id="glist-'+si+'"></div>';
     }).join("");
     app.innerHTML =
