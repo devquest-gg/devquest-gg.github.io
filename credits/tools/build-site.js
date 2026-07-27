@@ -84,6 +84,19 @@ async function fetchPeople() {
   return readJSON("people-live.json", { people: [] });
 }
 
+// Live DB games — admin/user-added games (games_added) plus any game that exists only as a claimed
+// credit. These are NOT in the Wikidata games.json, so without merging them here they're invisible to
+// the search index, the Quick Start wizard, and the client typeahead (they only render on portfolios).
+// Same rationale and fallback chain as fetchPeople, so an offline run or a hiccup never fails the build.
+async function fetchAddedGames() {
+  const url = "https://devquest-credits-api.balesdestin.workers.dev/export/games";
+  try {
+    const r = await fetch(url);
+    if (r.ok) { const j = await r.json(); if (j && Array.isArray(j.games)) { console.log(`  live DB games fetched: ${j.games.length}`); return j; } }
+  } catch (e) { console.log(`  (live games fetch failed: ${e && e.message} — falling back to file/empty)`); }
+  return readJSON("games-live.json", { games: [] });
+}
+
 (async function main() {
   console.log("Building /credits site data from", DATA_DIR);
 
@@ -122,6 +135,30 @@ async function fetchPeople() {
       }))
     );
   }
+
+  // ---- live DB games -----------------------------------------------------
+  // Games the Wikidata import doesn't have: admin/user-added games and games that exist only as a
+  // claimed credit. Pulled live from the API (like people), so anything anyone adds becomes part of
+  // the searchable catalogue + wizard matching — not just visible on portfolios. New games are added;
+  // an existing catalogue entry is only enriched (studio/year) where it was missing that field.
+  const liveG = await fetchAddedGames();
+  let gNew = 0, gEnrich = 0;
+  for (const ag of (liveG && liveG.games) || []) {
+    if (!ag || !ag.slug) continue;
+    let g = bySlug.get(ag.slug);
+    if (!g) {
+      g = {
+        slug: ag.slug, title: ag.title || ag.slug, year: ag.year || null,
+        studios: ag.studio ? [ag.studio] : [], studio: ag.studio || null,
+        publishers: [], platforms: [], genres: [], wikidata_qid: "", source: "added",
+      };
+      bySlug.set(ag.slug, g); games.push(g); gNew++;
+    } else {
+      if (ag.studio && !g.studio) { g.studio = ag.studio; if (!(g.studios && g.studios.length)) g.studios = [ag.studio]; gEnrich++; }
+      if (ag.year && !g.year) g.year = ag.year;
+    }
+  }
+  if (gNew || gEnrich) console.log(`  live DB games merged: ${gNew} new, ${gEnrich} enriched`);
 
   // ---- moderation studio links -------------------------------------------
   // Games an admin linked to a studio the import missed (or mis-attributed), exported
