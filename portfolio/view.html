@@ -122,6 +122,20 @@
   .edurow .ed{color:var(--muted);font-size:13px;margin-top:2px}
   .edurow .ey{color:var(--dim);font-size:13px;font-weight:650;white-space:nowrap}
   @media(max-width:600px){.edurow{flex-direction:column;gap:4px}}
+  .draftedit{border:1px dashed var(--border);border-radius:18px;background:linear-gradient(180deg,rgba(163,113,247,.06),transparent);padding:22px 24px;margin-top:22px}
+  .draftedit .dh{font-size:14px;font-weight:800;letter-spacing:.02em;color:#cdd8e6;margin:22px 0 10px;text-transform:uppercase}
+  .draftedit .dh:first-of-type{margin-top:6px}
+  .decard{border:1px solid var(--border);border-radius:13px;background:var(--panel2);padding:14px 15px;margin-bottom:11px}
+  .decard label{display:block;font-size:11.5px;font-weight:700;color:#cdd8e6;margin:10px 0 4px}
+  .decard input,.decard textarea{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px 11px;color:var(--text);font-size:13.5px;font-family:inherit;outline:none}
+  .decard input:focus,.decard textarea:focus{border-color:var(--accent)}
+  .decard textarea{resize:vertical;min-height:52px;line-height:1.5}
+  .derow{display:flex;gap:10px;flex-wrap:wrap}.derow>div{flex:1;min-width:110px}
+  .dechk{display:flex;align-items:center;gap:7px;font-size:12.5px;font-weight:600;margin-top:11px;cursor:pointer;color:#cdd8e6}.dechk input{width:auto}
+  .deact{display:flex;justify-content:flex-end;margin-top:11px}
+  .de-del{font-size:12.5px;font-weight:700;color:var(--pink);background:transparent;border:1px solid rgba(247,120,186,.3);border-radius:8px;padding:6px 12px;cursor:pointer}
+  .draftedit .btn.ghost{margin-top:2px}
+  .de-empty{color:var(--muted);font-size:13px;padding:2px 0 8px}
 
   .contact{margin-top:30px;border:1px solid var(--border);border-radius:18px;background:radial-gradient(600px 200px at 20% 0%,rgba(88,166,255,.12),transparent),linear-gradient(180deg,var(--panel),#0d121b);padding:28px 26px;text-align:center}
   .contact h3{margin:0 0 6px;font-size:22px;font-weight:800}.contact p{margin:0 0 18px;color:var(--muted);font-size:14px}
@@ -498,7 +512,7 @@
     var pf=d.profile||{};
     var person={ name:d.name||"Your name", slug:null, headline:pf.headline||"", location:pf.location||"", bio:pf.bio||"", links:pf.links||[], skills:{groups:[]}, portfolio_style:"production", open_to_work:pf.open_to_work?1:0, avatar_url:pf.avatar_url||"", unshipped:pf.unshipped||0, education:(Array.isArray(d.education)?d.education:(Array.isArray(pf.education)?pf.education:[])) };
     // Work history carried from the wizard — so gameless studios (e.g. Possibility Space) show on the timeline.
-    var positions=(d.positions||[]).map(function(pp){ var cur=(pp.is_current?true:false); return { studio:pp.studio||pp.studio_name||"", studio_slug:"", title:pp.title||"", start_year:pp.start_year||null, start_month:null, end_year:(cur?null:(pp.end_year||null)), end_month:null, is_current:cur, description:pp.description||"", location:pp.location||"" }; });
+    var positions=(d.positions||[]).map(function(pp){ var cur=(pp.is_current?true:false); return { studio:pp.studio||pp.studio_name||"", studio_slug:"", title:pp.title||"", start_year:pp.start_year||null, start_month:null, end_year:(cur?null:(pp.end_year||null)), end_month:null, is_current:cur, description:pp.description||"", location:pp.location||"", is_game_studio:(pp.is_game_studio===0?0:1) }; });
     resolveCovers(credits).then(function(cm){ cm=cm||{}; (d.credits||[]).forEach(function(c){ if(c.cover_url) cm[c.game_slug]=c.cover_url; }); render(person,positions,credits,cm); mountDraftBar(credits.length); }).catch(function(){ render(person,positions,credits,{}); mountDraftBar(credits.length); });
   }
   // Mirror the rendered _credits back into the localStorage draft (role, work years, one-sheet, cover, order).
@@ -634,15 +648,8 @@
       groups.map(function(g){ return '<div class="skgroup"><h4>'+esc(g.label)+'</h4><div class="pills">'+(g.items||[]).map(function(it){return '<span class="pill">'+esc(it)+'</span>';}).join("")+'</div></div>'; }).join("")+
       '</div></section></div>' : '';
 
-    // ---- education (opt-in: only renders if entries exist) ----
-    var eduList = Array.isArray(p.education) ? p.education : [];
-    var edu = eduList.length ? '<div class="wrap"><section><div class="eyebrow">Background</div><h2 class="sec">Education</h2><div class="edu">'+
-      eduList.map(function(e){ e=e||{};
-        var deg=[e.degree,e.field].filter(Boolean).join(", ");
-        var yrs=(e.start_year&&e.end_year)?(e.start_year+" – "+e.end_year):(e.end_year?String(e.end_year):(e.start_year?e.start_year+" –":""));
-        return '<div class="edurow"><div><div class="es">'+esc(e.school||"")+'</div>'+(deg?'<div class="ed">'+esc(deg)+'</div>':'')+'</div>'+(yrs?'<div class="ey">'+esc(yrs)+'</div>':'')+'</div>';
-      }).join("")+
-      '</div></section></div>' : '';
+    // ---- education (opt-in: only renders if entries exist; slot lets the draft editor live-update it) ----
+    var edu = '<div class="wrap"><div id="edu-slot">'+eduSlotHTML(p)+'</div></div>';
 
     // ---- confirm count ----
     var confirmed = credits.filter(function(c){ return (c.vouch_count||0)>0; }).length;
@@ -653,6 +660,83 @@
     app.innerHTML = hero + stageSection + skills + edu + contact;
     wireHeroEdit();
     if(credits.length) buildStage(credits, positions, covMap);
+    if(IS_DRAFT) mountDraftEditor();
+  }
+
+  // ===== DRAFT-ONLY inline editor for work history + education (writes straight to localStorage) =====
+  function _mapDraftPos(pp){ var cur=(pp.is_current?true:false); return { studio:pp.studio||pp.studio_name||"", studio_slug:"", title:pp.title||"", start_year:pp.start_year||null, start_month:null, end_year:(cur?null:(pp.end_year||null)), end_month:null, is_current:cur, description:pp.description||"", location:pp.location||"", is_game_studio:(pp.is_game_studio===0?0:1) }; }
+  function _deRefreshHero(){ var d=dGet(); _positions=(d.positions||[]).map(_mapDraftPos); if(_person){ _person.education=(Array.isArray(d.education)?d.education:[]); } renderHero(); }
+  function mountDraftEditor(){
+    if(document.getElementById("draftedit")) return;
+    var wrap=document.createElement("div"); wrap.className="wrap";
+    wrap.innerHTML='<section id="draftedit" class="draftedit">'+
+      '<div class="eyebrow">Draft tools · only you see this</div><h2 class="sec">Work history &amp; education</h2>'+
+      '<p class="sub">Add or fix your roles and education here — they show on your timeline and résumé right away, and save to your account when you publish.</p>'+
+      '<h3 class="dh">Work history</h3><div id="de-poslist"></div><button type="button" class="btn ghost" id="de-addpos">+ Add a position</button>'+
+      '<h3 class="dh">Education</h3><div id="de-edulist"></div><button type="button" class="btn ghost" id="de-addedu">+ Add education</button>'+
+    '</section>';
+    app.appendChild(wrap);
+    renderDePos(); renderDeEdu();
+    document.getElementById("de-addpos").onclick=function(){ var d=dGet(); d.positions=d.positions||[]; d.positions.push({studio:"",title:"",start_year:null,end_year:null,is_current:0,description:"",is_game_studio:1}); dSet(d); renderDePos(); _deRefreshHero(); var c=document.querySelector('#de-poslist .decard:last-child'); if(c){ try{ c.scrollIntoView({behavior:"smooth",block:"center"}); }catch(e){} var inp=c.querySelector("input"); if(inp) inp.focus(); } };
+    document.getElementById("de-addedu").onclick=function(){ var d=dGet(); d.education=d.education||[]; d.education.push({school:"",degree:"",field:"",start_year:null,end_year:null}); dSet(d); if(_person) _person.education=(d.education||[]); renderDeEdu(); renderEduSlot(); var c=document.querySelector('#de-edulist .decard:last-child'); if(c){ try{ c.scrollIntoView({behavior:"smooth",block:"center"}); }catch(e){} var inp=c.querySelector("input"); if(inp) inp.focus(); } };
+  }
+  function renderDePos(){
+    var box=document.getElementById("de-poslist"); if(!box) return;
+    var pos=(dGet().positions||[]);
+    if(!pos.length){ box.innerHTML='<div class="de-empty">No positions yet. Add the studios and companies you’ve worked at — game studios count toward your Studios total; other jobs still show on your timeline.</div>'; return; }
+    box.innerHTML=pos.map(function(p,i){
+      return '<div class="decard" data-i="'+i+'">'+
+        '<div class="derow"><div><label>Studio / company</label><input data-k="studio" value="'+esc(p.studio||"")+'" placeholder="e.g. Insomniac Games"></div><div><label>Title</label><input data-k="title" value="'+esc(p.title||"")+'" placeholder="e.g. Senior Producer"></div></div>'+
+        '<div class="derow"><div><label>From (year)</label><input data-k="start_year" inputmode="numeric" value="'+esc(p.start_year||"")+'" placeholder="2019"></div><div><label>To (year)</label><input data-k="end_year" inputmode="numeric" value="'+esc(p.is_current?"":(p.end_year||""))+'" placeholder="2022"'+(p.is_current?" disabled":"")+'></div></div>'+
+        '<label class="dechk"><input type="checkbox" data-k="is_current" '+(p.is_current?"checked":"")+'> I currently work here</label>'+
+        '<label class="dechk"><input type="checkbox" data-k="is_game_studio" '+((p.is_game_studio===0)?"":"checked")+'> This is a game studio <span style="color:var(--muted);font-weight:400">— counts toward your Studios total</span></label>'+
+        '<label>What you did <span style="color:var(--muted);font-weight:400">— optional</span></label><textarea data-k="description" placeholder="One scope line, or a bullet per line.">'+esc(p.description||"")+'</textarea>'+
+        '<div class="deact"><button type="button" class="de-del">Remove</button></div>'+
+      '</div>';
+    }).join("");
+    box.querySelectorAll(".decard").forEach(function(card){
+      var i=+card.getAttribute("data-i");
+      card.querySelectorAll("[data-k]").forEach(function(el){
+        var k=el.getAttribute("data-k");
+        var ev=(el.type==="checkbox")?"change":"input";
+        el.addEventListener(ev, function(){
+          var d=dGet(); var p=(d.positions||[])[i]; if(!p) return;
+          if(el.type==="checkbox"){ p[k]=el.checked?1:0; }
+          else if(k==="start_year"||k==="end_year"){ var v=parseInt(el.value,10); p[k]=isNaN(v)?null:v; }
+          else p[k]=el.value;
+          dSet(d);
+          if(k==="is_current") renderDePos();       // toggling current enables/disables the end-year field
+          _deRefreshHero();
+        });
+      });
+      card.querySelector(".de-del").onclick=function(){ var d=dGet(); (d.positions||[]).splice(i,1); dSet(d); renderDePos(); _deRefreshHero(); };
+    });
+  }
+  function renderDeEdu(){
+    var box=document.getElementById("de-edulist"); if(!box) return;
+    var edu=(dGet().education||[]);
+    if(!edu.length){ box.innerHTML='<div class="de-empty">No education added — optional. Add a degree, diploma, or bootcamp if you want it on your résumé.</div>'; return; }
+    box.innerHTML=edu.map(function(e,i){
+      return '<div class="decard" data-i="'+i+'">'+
+        '<div class="derow"><div><label>School / institution</label><input data-k="school" value="'+esc(e.school||"")+'" placeholder="e.g. DigiPen Institute of Technology"></div></div>'+
+        '<div class="derow"><div><label>Degree <span style="color:var(--muted);font-weight:400">— optional</span></label><input data-k="degree" value="'+esc(e.degree||"")+'" placeholder="e.g. BS"></div><div><label>Field <span style="color:var(--muted);font-weight:400">— optional</span></label><input data-k="field" value="'+esc(e.field||"")+'" placeholder="e.g. Computer Science"></div></div>'+
+        '<div class="derow"><div><label>Start year</label><input data-k="start_year" inputmode="numeric" value="'+esc(e.start_year||"")+'" placeholder="2008"></div><div><label>End year</label><input data-k="end_year" inputmode="numeric" value="'+esc(e.end_year||"")+'" placeholder="2012"></div></div>'+
+        '<div class="deact"><button type="button" class="de-del">Remove</button></div>'+
+      '</div>';
+    }).join("");
+    box.querySelectorAll(".decard").forEach(function(card){
+      var i=+card.getAttribute("data-i");
+      card.querySelectorAll("[data-k]").forEach(function(el){
+        var k=el.getAttribute("data-k");
+        el.addEventListener("input", function(){
+          var d=dGet(); var e=(d.education||[])[i]; if(!e) return;
+          if(k==="start_year"||k==="end_year"){ var v=parseInt(el.value,10); e[k]=isNaN(v)?null:v; }
+          else e[k]=el.value;
+          dSet(d); if(_person) _person.education=(d.education||[]); renderEduSlot();
+        });
+      });
+      card.querySelector(".de-del").onclick=function(){ var d=dGet(); (d.education||[]).splice(i,1); dSet(d); if(_person) _person.education=(d.education||[]); renderDeEdu(); renderEduSlot(); };
+    });
   }
 
   function heroHTML(p, positions, credits){
@@ -660,8 +744,11 @@
     positions.forEach(function(x){ if(x.start_year) startYears.push(x.start_year); });
     credits.forEach(function(c){ var y=creditYear(c); if(y) startYears.push(y); });
     var minY=startYears.length?Math.min.apply(null,startYears):CUR;
-    var studioSet={}; positions.forEach(function(x){ if(x.studio) studioSet[x.studio.toLowerCase()]=1; }); credits.forEach(function(c){ if(c.studio) studioSet[String(c.studio).toLowerCase()]=1; });
-    var nStudios=Object.keys(studioSet).length||positions.length;
+    // "Studios" counts GAME studios only: a position counts unless it's explicitly flagged a non-game
+    // employer (is_game_studio===0). Any studio that shipped a credit always counts. Legacy positions
+    // with no flag (is_game_studio undefined) count as before.
+    var studioSet={}; positions.forEach(function(x){ if(!x.studio) return; var isGame=(x.is_game_studio===0)?false:true; if(isGame) studioSet[x.studio.toLowerCase()]=1; }); credits.forEach(function(c){ if(c.studio) studioSet[String(c.studio).toLowerCase()]=1; });
+    var nStudios=Object.keys(studioSet).length||positions.filter(function(x){return x.is_game_studio!==0;}).length;
     var liveCount=credits.filter(isLive).length;
     var ac=avgCritic(credits);
     var av=(p.name||"?").split(/\s+/).map(function(x){return x[0];}).slice(0,2).join("").toUpperCase();
@@ -690,6 +777,18 @@
         '</div>'+
       '</div></div>';
   }
+  function eduSlotHTML(p){
+    var eduList = Array.isArray(p.education) ? p.education : [];
+    if(!eduList.length) return "";
+    return '<section><div class="eyebrow">Background</div><h2 class="sec">Education</h2><div class="edu">'+
+      eduList.map(function(e){ e=e||{};
+        var deg=[e.degree,e.field].filter(Boolean).join(", ");
+        var yrs=(e.start_year&&e.end_year)?(e.start_year+" – "+e.end_year):(e.end_year?String(e.end_year):(e.start_year?e.start_year+" –":""));
+        return '<div class="edurow"><div><div class="es">'+esc(e.school||"")+'</div>'+(deg?'<div class="ed">'+esc(deg)+'</div>':'')+'</div>'+(yrs?'<div class="ey">'+esc(yrs)+'</div>':'')+'</div>';
+      }).join("")+
+      '</div></section>';
+  }
+  function renderEduSlot(){ var s=document.getElementById("edu-slot"); if(s) s.innerHTML=eduSlotHTML(_person||{}); }
   function renderHero(){ var hb=document.getElementById("herobox"); if(hb){ hb.innerHTML=heroHTML(_person,_positions,_credits); wireHeroEdit(); } if(_person) document.title=_person.name+" · DevQuest Portfolio"; }
   function wireHeroEdit(){ var b=document.getElementById("editProfile"); if(b) b.onclick=openProfileEdit; }
 

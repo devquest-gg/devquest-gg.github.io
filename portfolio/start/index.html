@@ -152,6 +152,14 @@
   function _md(l){ return String(l==null?"":l).replace(/\[([^\]]*)\]\([^)]*\)/g,"$1").replace(/^\s*[\*\-•▪○]\s*/,"").replace(/\s+/g," ").trim(); }   // [text](url) → text, drop bullets
   function _hasType(l){ return /\b(full[\s-]?time|part[\s-]?time|contract|freelance|internship|permanent|self[\s-]?employed|apprenticeship|seasonal)\b/i.test(l); }
   function _isImgAlt(l){ l=String(l==null?"":l); return /^(thumbnail|image|photo|picture|icon|logo|banner|screenshot|avatar|graphic)\b/i.test(l) || /\b(logo|icon|banner|thumbnail|screenshot|avatar)$/i.test(l) || /\.(jpe?g|png|gif|webp|svg|bmp|pdf|mp4|mov)$/i.test(l) || /https?:\/\//i.test(l) || /\b[a-z0-9-]{2,}\.(com|net|org|io|gg|co|tv|dev|xyz|app)\b/i.test(l); }   // image alt-text ("Thumbnail for X", "Ubisoft logo"), image filenames ("CoH.jpg"), and URLs ("GuildWars2.com")
+  // LinkedIn location & alias lines that sit under a role — never a game or a studio.
+  // "Los Angeles Metropolitan Area", "New York, NY", "Melbourne, Australia", "Remote", "aka Overture Services".
+  function _isLoc(l){ l=String(l==null?"":l).trim();
+    if(/^aka\b/i.test(l)) return true;                                                  // "aka Overture Services" — a company alias note
+    if(/\b(metropolitan area|bay area|greater\s+[a-z].*\barea|\bremote\b|\bhybrid\b|on-?site)\b/i.test(l)) return true;
+    if(/,\s*([A-Z]{2}|[A-Z][a-z]+)$/.test(l)) return true;                              // "City, NY" / "City, Australia"
+    if(/\barea$/i.test(l) && /^[A-Z]/.test(l) && l.split(/\s+/).length>=3) return true; // "… Metropolitan Area"
+    return false; }
   // Producers often name their game in the job title: "Producer - Dark Age of Camelot",
   // "Development Director - Fortune Online, Jumpgate Evolution". Split off the part after a " - "/" | "/" : "
   // separator as game candidate(s) (comma / and / & separated) and return the cleaned title.
@@ -238,7 +246,7 @@
         if(pv2.line && !_isTitleLine(pv2.line) && !_isDate(pv2.line) && !_hasType(pv2.line) && pv2.line.indexOf(",")<0){ currentCompany=pv2.line; }
         else if(pv2.line && _hasType(pv2.line)){ var p3=_prevNE(L,pv2.idx); if(p3.line && !_isTitleLine(p3.line)) currentCompany=p3.line; }
       } else if(_isTitleLine(line)){ pendingTitle=line; }
-      else if(activeStudio && line.length<=70 && line.split(" ").length<=10 && line.indexOf(",")<0 && !/[.]$/.test(line) && !_hasType(line) && !/^\d/.test(line) && !_isImgAlt(line)){ pgames.push({title:line, studio:activeStudio}); }  // candidate game name under a role → matched to the catalogue later
+      else if(activeStudio && line.length<=70 && line.split(" ").length<=10 && line.indexOf(",")<0 && !/[.]$/.test(line) && !_hasType(line) && !/^\d/.test(line) && !_isImgAlt(line) && !_isLoc(line)){ pgames.push({title:line, studio:activeStudio}); }  // candidate game name under a role → matched to the catalogue later
     }
     var byC={}, order=[];
     jobs.forEach(function(j){ var k=_pnorm(j.company); if(!k) return; if(!byC[k]){ byC[k]={company:j.company,title:j.title||"",from:j.from||"",to:j.to}; order.push(k); }
@@ -292,6 +300,7 @@
         res.games.forEach(function(pg){ var key=nrm(pg.title); if(!key) return;
           if(finalStudioKeys[key]) return;                              // a company you worked at (retailer, employer) — never a game
           if(_isImgAlt(pg.title)) return;                                // filename / URL / image alt-text → never a real title
+          if(_isLoc(pg.title)) return;                                   // location line ("Los Angeles Metropolitan Area") / "aka …" alias → never a game
           var g=tIdx[key];
           if(g){
             // Guard generic single-word false positives (e.g. "Home", "Connect" from a treasury link or a
@@ -309,6 +318,11 @@
           seenU[key]=1; UNMATCHED.push(pg.title);
         });
       }
+      // Classify each studio: a GAME studio if it's in our game-studio catalogue, or it shipped one of
+      // your matched games. Non-game employers (a bank, a TV network, MLB) stay on your work history but
+      // won't be counted as studios. gameStudio is carried through to the draft as is_game_studio.
+      var gameStudioKeys={}; Object.keys(PICKED).forEach(function(slug){ var st=nrm(PICKED[slug].studio||""); if(st) gameStudioKeys[st]=1; });
+      STUDIOS.forEach(function(s){ var k=nrm(s.name); s.gameStudio = !!(sIdx[k] || gameStudioKeys[k]); });
       REVEALED=true; renderStudios();
       var st2=document.getElementById("pt-status"); var n=STUDIOS.length;
       if(st2){ st2.textContent = n ? ("Found "+n+" studio"+(n===1?"":"s")+(res.name?" and your name":"")+(gmatched?(" and "+gmatched+" game"+(gmatched===1?"":"s")):"")+" — review below, remove anything wrong, then continue.") : "Couldn’t spot studios in that text — add them manually below."; st2.style.color = n?"var(--green)":"var(--muted)"; }
@@ -416,7 +430,7 @@
   function addStudio(){
     var name=document.getElementById("st-name").value.trim(); if(!name) return;
     var from=document.getElementById("st-from").value.trim(), to=document.getElementById("st-to").value.trim();
-    STUDIOS.push({ name:name, from:from, to:to, title:"" });
+    STUDIOS.push({ name:name, from:from, to:to, title:"", gameStudio:true });
     document.getElementById("st-name").value=""; document.getElementById("st-from").value=""; document.getElementById("st-to").value="";
     document.getElementById("st-sug").innerHTML="";
     renderStudioList(); document.getElementById("st-name").focus();
@@ -424,7 +438,10 @@
   function renderStudioList(){
     var box=document.getElementById("st-list"); if(!box) return;
     if(!STUDIOS.length){ box.innerHTML='<div class="empty">No studios yet — add your first above.</div>'; }
-    else { box.innerHTML = '<div style="font-size:12.5px;font-weight:800;color:var(--gold);margin:0 0 9px">✓ Your studios ('+STUDIOS.length+') — tap × to remove any that are wrong:</div>' + STUDIOS.map(function(s,i){ var yr=(s.from||s.to)?((s.from||"?")+" – "+(s.to||"now")):""; return '<span class="studio-chip"><b>'+esc(s.name)+'</b>'+(yr?' <span class="yr">'+esc(yr)+'</span>':'')+'<button class="x" data-i="'+i+'" aria-label="Remove">×</button></span>'; }).join("");
+    else {
+      var nonGame=STUDIOS.filter(function(s){ return s.gameStudio===false; }).length;
+      box.innerHTML = '<div style="font-size:12.5px;font-weight:800;color:var(--gold);margin:0 0 9px">✓ Your studios ('+STUDIOS.length+') — tap × to remove any that are wrong:</div>' + STUDIOS.map(function(s,i){ var yr=(s.from||s.to)?((s.from||"?")+" – "+(s.to||"now")):""; var ng=(s.gameStudio===false); return '<span class="studio-chip"'+(ng?' style="opacity:.72"':'')+'><b>'+esc(s.name)+'</b>'+(yr?' <span class="yr">'+esc(yr)+'</span>':'')+(ng?' <span class="yr" style="color:var(--dim);font-style:italic">· work history</span>':'')+'<button class="x" data-i="'+i+'" aria-label="Remove">×</button></span>'; }).join("")+
+        (nonGame?'<div class="desc" style="font-size:12px;margin-top:9px;color:var(--dim)">Roles marked <i>work history</i> aren’t game studios, so they don’t count toward your Studios total — but they still appear on your résumé timeline. Remove any that don’t belong.</div>':'');
       box.querySelectorAll(".x").forEach(function(el){ el.onclick=function(){ STUDIOS.splice(+el.getAttribute("data-i"),1); renderStudioList(); }; }); }
     updateCTALabel();
   }
@@ -526,7 +543,7 @@
     // Every studio becomes a work-history position — including gameless roles (e.g. Possibility Space) that
     // no game would anchor. addPosition needs a title, so fall back to the main role, then a generic label.
     var positions=STUDIOS.map(function(s){ var sf=parseInt(s.from,10), sto=parseInt(s.to,10); var cur=(s.to===""||s.to==null);
-      return { studio:s.name, title:(s.title||role||"Team member"), start_year:(isNaN(sf)?null:sf), end_year:(cur||isNaN(sto)?null:sto), is_current:cur?1:0 };
+      return { studio:s.name, title:(s.title||role||"Team member"), start_year:(isNaN(sf)?null:sf), end_year:(cur||isNaN(sto)?null:sto), is_current:cur?1:0, is_game_studio:(s.gameStudio===false?0:1) };
     });
     var draft={ name:name, profile:{ headline:head, location:"", bio:"", open_to_work:0, avatar_url:"", links:[] }, credits:credits, positions:positions, education:(Array.isArray(window._qsEdu)?window._qsEdu:[]) };
     try{ localStorage.setItem("dq_draft", JSON.stringify(draft)); }catch(e){ st.textContent="Could not save locally — check browser storage settings."; st.style.color="var(--pink)"; return; }
