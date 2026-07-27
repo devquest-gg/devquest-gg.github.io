@@ -401,7 +401,14 @@
   /* ===== draft mode (games-only, pre-account) ===== */
   body.is-draft{padding-top:46px;padding-bottom:88px}
   body.is-draft .contact{display:none}
-  body.is-draft .nav{top:46px}
+  body.is-draft.previewing .contact{display:block}          /* visitor preview shows the real public contact card */
+  body.is-draft .nav{top:46px}                                /* sits below the 46px top bar (publish bar, or the preview bar) */
+  #previewback{position:fixed;top:0;left:0;right:0;z-index:120;background:linear-gradient(135deg,#241833,#1a2740);border-bottom:1px solid var(--border,#242c38)}
+  #previewback .pb-inner{max-width:1100px;margin:0 auto;padding:0 20px;display:flex;align-items:center;gap:14px;height:46px;flex-wrap:nowrap}
+  #previewback .pb-msg{flex:1;min-width:0;font-size:13px;color:#dbe5f1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  #previewback .pb-msg b{color:#fff}
+  #previewback #pb-btn{white-space:nowrap;flex:none;padding:7px 14px}
+  @media(max-width:520px){#previewback .pb-msg{font-size:12px}}
   #draftpub{position:fixed;top:0;left:0;right:0;z-index:100;background:linear-gradient(135deg,#182238,#211838);border-bottom:1px solid var(--border,#242c38)}
   #draftpub .dp-inner{max-width:1100px;margin:0 auto;padding:0 20px;display:flex;align-items:center;gap:14px;height:46px;flex-wrap:nowrap}
   #draftpub .dp-msg{flex:1;min-width:0;font-size:13px;color:#dbe5f1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -462,6 +469,7 @@
   var slug = String(qslug || pslug || "").trim().toLowerCase();
   var IS_EMBED = new URLSearchParams(location.search).get("embed")==="1"; if(IS_EMBED){ try{ document.body.classList.add("embed"); document.documentElement.classList.add("embed"); }catch(e){} }
   var IS_DRAFT = new URLSearchParams(location.search).get("draft")==="1";
+  var PREVIEW = false;   // draft "preview as visitor" mode: temporarily render the public view, no publish
   if(!IS_DRAFT && (slug==="portfolio" || slug==="view.html" || !slug)){ app.innerHTML='<div class="wrap" style="padding:60px 22px;color:var(--muted)">No profile specified.</div>'; return; }
   if(!IS_DRAFT){ document.getElementById("creditslink").href="/credits/"+slug; }
 
@@ -507,6 +515,7 @@
   function draftCredit(c,i){ return { id:"draft-"+i, game_slug:c.game_slug, game_title:c.game_title||c.game_slug, studio:c.studio||"", year:c.year||null, work_start:(c.work_start!=null?c.work_start:(c.year||null)), work_end:(c.work_end!=null?c.work_end:null), role:c.role||"", roles_other:[], releases:[], links:[], source_url:"", verification:[], vouch_count:0, sheet:c.sheet||null, scope:"base" }; }
   function loadDraft(){
     document.body.classList.add("is-draft");
+    PREVIEW=false; document.body.classList.remove("previewing");   // a fresh load always returns to editing mode
     IS_OWNER=true; document.body.classList.add("is-owner");   // draft acts like owner; writes go to localStorage, never the API
     var d=dGet(); var credits=(d.credits||[]).map(draftCredit);
     var pf=d.profile||{};
@@ -526,14 +535,15 @@
     // Persistent publish banner pinned to the very top for the whole draft session.
     var oldp=document.getElementById("draftpub"); if(oldp) oldp.remove();
     var pub=document.createElement("div"); pub.id="draftpub";
-    pub.innerHTML='<div class="dp-inner"><span class="dp-msg">'+(count?('You’re building a draft · <b>'+count+' game'+(count===1?'':'s')+'</b> saved on this device only. Publish to keep it for good.'):'You’re building a draft portfolio. Publish to save it to your account.')+'</span><button type="button" id="dp-save" class="db-btn primary">Save &amp; publish →</button></div>';
+    pub.innerHTML='<div class="dp-inner"><span class="dp-msg">'+(count?('You’re building a draft · <b>'+count+' game'+(count===1?'':'s')+'</b> saved on this device. No email needed to build or preview — <b>publishing</b> saves it to your account and gives you a shareable link.'):'You’re building a draft portfolio — saved on this device. No email needed to build or preview; publish when you’re ready.')+'</span><button type="button" id="dp-save" class="db-btn primary">Save &amp; publish →</button></div>';
     document.body.appendChild(pub);
     document.getElementById("dp-save").onclick=draftSave;
     var old=document.getElementById("draftbar"); if(old) old.remove();
     var bar=document.createElement("div"); bar.id="draftbar";
-    bar.innerHTML='<div class="db-inner"><div class="db-note">'+(count?('<b>'+count+'</b> game'+(count===1?'':'s')+' on your wall · saved on this device'):'Your wall is empty — add a game you shipped to start')+'</div><div class="db-actions"><button type="button" id="db-add" class="db-btn ghost">+ Add a game</button><button type="button" id="db-save" class="db-btn primary">Save my portfolio →</button></div></div>';
+    bar.innerHTML='<div class="db-inner"><div class="db-note">'+(count?('<b>'+count+'</b> game'+(count===1?'':'s')+' on your wall · saved on this device'):'Your wall is empty — add a game you shipped to start')+'</div><div class="db-actions"><button type="button" id="db-add" class="db-btn ghost">+ Add a game</button><button type="button" id="db-preview" class="db-btn ghost">👁 Preview as visitor</button><button type="button" id="db-save" class="db-btn primary">Publish →</button></div></div>';
     document.body.appendChild(bar);
     document.getElementById("db-add").onclick=draftAddSearch;
+    document.getElementById("db-preview").onclick=function(){ setPreview(true); };
     document.getElementById("db-save").onclick=draftSave;
   }
   function draftModal(inner){ var ov=document.createElement("div"); ov.className="dmodal-ov"; ov.innerHTML='<div class="dmodal"><button class="dx" aria-label="Close">×</button>'+inner+'</div>'; document.body.appendChild(ov); ov.querySelector(".dx").onclick=function(){ ov.remove(); }; return ov; }
@@ -660,7 +670,26 @@
     app.innerHTML = hero + stageSection + skills + edu + contact;
     wireHeroEdit();
     if(credits.length) buildStage(credits, positions, covMap);
-    if(IS_DRAFT) mountDraftEditor();
+    if(IS_DRAFT && !PREVIEW) mountDraftEditor();
+  }
+
+  // ===== DRAFT "preview as visitor": flip the page to the exact public view, no email, no publish =====
+  function setPreview(on){
+    PREVIEW=!!on; IS_OWNER=!PREVIEW;
+    document.body.classList.toggle("is-owner", !PREVIEW);
+    document.body.classList.toggle("previewing", PREVIEW);
+    var pub=document.getElementById("draftpub"), bar=document.getElementById("draftbar");
+    if(pub) pub.style.display=PREVIEW?"none":"";
+    if(bar) bar.style.display=PREVIEW?"none":"";
+    var back=document.getElementById("previewback");
+    if(PREVIEW){
+      if(!back){ back=document.createElement("div"); back.id="previewback";
+        back.innerHTML='<div class="pb-inner"><span class="pb-msg">👁 <b>Preview</b> — exactly what a visitor sees. Nothing is published; your draft stays on this device.</span><button type="button" id="pb-btn" class="db-btn primary">✎ Back to editing</button></div>';
+        document.body.appendChild(back); document.getElementById("pb-btn").onclick=function(){ setPreview(false); }; }
+      back.style.display="";
+    } else if(back){ back.style.display="none"; }
+    render(_person,_positions,_credits,_covMap);
+    try{ window.scrollTo({top:0,behavior:"auto"}); }catch(e){}
   }
 
   // ===== DRAFT-ONLY inline editor for work history + education (writes straight to localStorage) =====
