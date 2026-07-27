@@ -141,7 +141,7 @@
   // ---------- paste importer: LinkedIn / résumé text → studios + name + headline ----------
   var _MONRE="jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec";
   var _DRRE=new RegExp("(?:(?:"+_MONRE+")[a-z]*\\.?\\s+)?(\\d{4})\\s*(?:\\u2013|\\u2014|-|to|through)\\s*((?:(?:"+_MONRE+")[a-z]*\\.?\\s+)?\\d{4}|present|current|now|today|ongoing)","i");
-  var _TITLERE=/\b(producer|engineer|programmer|developer|designer|artist|director|manager|lead|president|animator|writer|analyst|architect|founder|owner|head|specialist|coordinator|technical|creative|executive|principal|qa|tester|scrum|product|vp|professor|adjunct|instructor|lecturer|teacher|consultant|advisor|deputy)\b/i;
+  var _TITLERE=/\b(producer|engineer|programmer|developer|designer|artist|director|manager|lead|president|animator|writer|analyst|architect|founder|owner|head|specialist|coordinator|technical|creative|executive|principal|qa|tester|scrum|product|vp|professor|adjunct|instructor|lecturer|teacher|consultant|advisor|deputy|assistant|administrator|facilitator|associate|representative|receptionist|clerk|cashier|officer|supervisor|nurse|ambassador|strategist|communications?|marketing|sales|customer|service|retail|intern|apprentice|steward|porter|operator|acquisition|talent|business)\b/i;
   var _SUFFIXRE=/\b(games?|studios?|entertainment|interactive|software|inc|llc|ltd|corp|corporation|media|digital|works|worldwide|productions?|technologies|labs?)\b/i;
   function _pnorm(s){ return String(s==null?"":s).toLowerCase().replace(/[^a-z0-9]+/g," ").trim(); }
   function _year4(s){ var m=String(s==null?"":s).match(/\d{4}/); return m?parseInt(m[0],10):null; }
@@ -251,11 +251,13 @@
         else keptJobs.push(j);
       });
       if(keptJobs.length) STUDIOS=keptJobs.map(function(j){ return { name:j.company, from:(j.from||""), to:(j.to||""), title:(j.title||"") }; });
+      var finalStudioKeys={}; STUDIOS.forEach(function(s){ finalStudioKeys[nrm(s.name)]=1; });   // your ACTUAL companies (post-reclassification): a candidate matching one is a company (e.g. "Argos"/"Tesco"), not a game
       // Match the games your paste listed to the catalogue and add them (shown as chips below).
       // Titles we read but can't find in the catalogue are surfaced separately so nothing drops silently.
       var gmatched=0; UNMATCHED=[]; var seenU={};
       if(res.games && res.games.length){
         res.games.forEach(function(pg){ var key=nrm(pg.title); if(!key) return;
+          if(finalStudioKeys[key]) return;                              // a company you worked at (retailer, employer) — never a game
           if(_isImgAlt(pg.title)) return;                                // filename / URL / image alt-text → never a real title
           var g=tIdx[key];
           if(g){
