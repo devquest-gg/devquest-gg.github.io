@@ -559,6 +559,7 @@
 
   function creditYear(c){ return c.work_start || c.year || c.work_end || null; }
   function isLive(c){ return (c.releases||[]).some(function(x){ return /live/i.test(x); }); }
+  function isUnshipped(c){ return (c.releases||[]).some(function(x){ return /cancel|unshipped|never shipped/i.test(x); }); }
   function comingSoon(c){ var d=c.sheet&&c.sheet.release_date; if(!d) return false; var t=Date.parse(d); return !isNaN(t) && t>Date.now(); }
   // portfolio-level average critic score across titles that have one (auto-shows only with 2+ scored titles)
   var MIN_SCORED = 2;
@@ -668,7 +669,7 @@
         '<div class="stats">'+
           stat((CUR-minY)+" yrs","In the industry")+stat(nStudios,"Studios")+stat(credits.length,"Credits")+
           (ac?stat(ac.avg,"Avg. critic score"):"")+
-          stat(liveCount,"Live-service")+stat(p.unshipped||0,"Cancelled / unshipped")+
+          stat(liveCount,"Live-service")+stat(credits.filter(isUnshipped).length,"Cancelled / unshipped")+
         '</div>'+
       '</div></div>';
   }
@@ -1295,6 +1296,8 @@
   }
   function sheetFormHTML(c){
     var s=c.sheet||{};
+    var isLiveNow=(c.releases||[]).some(function(x){ return /live/i.test(x); });
+    var isCancelledNow=(c.releases||[]).some(function(x){ return /cancel|unshipped|never shipped/i.test(x); });
     var stats=(s.stats||[]).slice(0,6); while(stats.length<4){ stats.push({label:"",value:""}); }
     var contribs=(s.contributions||[]).join("\n");
     var chals=(s.challenges||[]).join("\n");
@@ -1305,6 +1308,11 @@
       '<h3>Edit one-sheet</h3><div class="efdesc">'+esc(c.game_title)+' · '+esc(c.role||"")+'</div>'+
       '<label class="eflabel">Your role</label><input id="ef-role" placeholder="e.g. Senior Producer" value="'+esc(c.role||"")+'">'+
       '<label class="eflabel">Years on it <span class="mut">— optional; the span shown under the title</span></label><div class="efrow"><input id="ef-wstart" type="number" min="1970" max="2100" style="flex:1;min-width:140px" placeholder="From (e.g. 2012)" value="'+esc(c.work_start!=null?c.work_start:"")+'"><input id="ef-wend" type="number" min="1970" max="2100" style="flex:1;min-width:140px" placeholder="To (e.g. 2015)" value="'+esc(c.work_end!=null?c.work_end:"")+'"></div>'+
+      '<label class="eflabel">Status <span class="mut">— optional; drives the badges &amp; the stat tiles on your wall</span></label>'+
+      '<div style="display:flex;flex-direction:column;gap:9px;margin:2px 0 6px">'+
+        '<label style="display:flex;align-items:center;gap:9px;font-size:14px;cursor:pointer"><input type="checkbox" id="ef-live" style="width:16px;height:16px;flex:none;accent-color:var(--accent)" '+(isLiveNow?"checked":"")+'>Live-service game <span class="mut">— ongoing / games-as-a-service</span></label>'+
+        '<label style="display:flex;align-items:center;gap:9px;font-size:14px;cursor:pointer"><input type="checkbox" id="ef-cancelled" style="width:16px;height:16px;flex:none;accent-color:var(--accent)" '+(isCancelledNow?"checked":"")+'>Cancelled / never shipped</label>'+
+      '</div>'+
       '<label class="eflabel">One-line summary</label><textarea id="ef-summary" placeholder="What was this game, and your part in it?">'+esc(s.summary||"")+'</textarea>'+
       '<label class="eflabel">What I led <span class="mut">— one per line; paste a link or use [label](url)</span></label><textarea id="ef-did" placeholder="One achievement per line">'+esc(contribs)+'</textarea>'+
       '<label class="eflabel">Key challenges <span class="mut">— problems you solved; one per line; links work here too</span></label><textarea id="ef-challenges" placeholder="One challenge per line">'+esc(chals)+'</textarea>'+
@@ -1351,10 +1359,14 @@
     var role=g("ef-role").trim(), wsRaw=g("ef-wstart").trim(), weRaw=g("ef-wend").trim();
     var st=document.getElementById("ef-sstatus");
     if(!role){ st.textContent="Role can\u2019t be empty."; st.className="efstatus err"; return; }
-    var creditPayload={ role:role, work_start:(wsRaw!==""?parseInt(wsRaw,10):null), work_end:(weRaw!==""?parseInt(weRaw,10):null) };
+    var _keepRel=(c.releases||[]).filter(function(x){ return !/live|cancel|unship|never shipped/i.test(x); });   // preserve any other release tags
+    var releases=_keepRel.slice();
+    if((document.getElementById("ef-live")||{}).checked) releases.push("Live");
+    if((document.getElementById("ef-cancelled")||{}).checked) releases.push("Cancelled");
+    var creditPayload={ role:role, work_start:(wsRaw!==""?parseInt(wsRaw,10):null), work_end:(weRaw!==""?parseInt(weRaw,10):null), releases:releases };
     st.textContent="Saving…"; st.className="efstatus";
     if(IS_DRAFT){
-      c.role=role; c.work_start=creditPayload.work_start; c.work_end=creditPayload.work_end;
+      c.role=role; c.work_start=creditPayload.work_start; c.work_end=creditPayload.work_end; c.releases=releases;
       c.sheet={ summary:payload.summary, contributions:payload.contributions, challenges:payload.challenges, stats:payload.stats, keywords:payload.keywords, banner_url:payload.banner_url||null, screenshots:payload.screenshots, release_date:payload.release_date||null, review_score:payload.review_score||null };
       if("cover_url" in payload){ var _nud=payload.cover_url||""; _covMap[c.game_slug]=_nud||undefined; applyTileCover(ci,_nud); }
       draftSyncFromCredits(); renderHero();
@@ -1363,7 +1375,7 @@
     }
     Promise.all([ DQAPI.updateCredit(c.id, creditPayload), DQAPI.saveSheet(c.id, payload) ]).then(function(res){
       var cr=res[0], r=res[1];
-      if((cr&&cr.ok!==false) && r&&r.ok){ c.role=role; c.work_start=creditPayload.work_start; c.work_end=creditPayload.work_end; c.sheet={ summary:payload.summary, contributions:payload.contributions, challenges:payload.challenges, stats:payload.stats, keywords:payload.keywords, banner_url:payload.banner_url||null, screenshots:payload.screenshots, release_date:payload.release_date||null, review_score:payload.review_score||null }; if("cover_url" in payload){ var _nu=payload.cover_url||""; _covMap[c.game_slug]=_nu||undefined; applyTileCover(ci,_nu); } renderHero(); st.textContent="Saved ✓"; st.className="efstatus ok"; setTimeout(function(){ openSheet(ci); },420); }
+      if((cr&&cr.ok!==false) && r&&r.ok){ c.role=role; c.work_start=creditPayload.work_start; c.work_end=creditPayload.work_end; c.releases=releases; c.sheet={ summary:payload.summary, contributions:payload.contributions, challenges:payload.challenges, stats:payload.stats, keywords:payload.keywords, banner_url:payload.banner_url||null, screenshots:payload.screenshots, release_date:payload.release_date||null, review_score:payload.review_score||null }; if("cover_url" in payload){ var _nu=payload.cover_url||""; _covMap[c.game_slug]=_nu||undefined; applyTileCover(ci,_nu); } renderHero(); st.textContent="Saved ✓"; st.className="efstatus ok"; setTimeout(function(){ openSheet(ci); },420); }
       else { st.textContent=(r&&r.data&&r.data.error)||(cr&&cr.data&&cr.data.error)||"Could not save."; st.className="efstatus err"; }
     }).catch(function(){ st.textContent="Network error."; st.className="efstatus err"; });
   }
