@@ -730,9 +730,12 @@
       '<p class="sub">Add or fix your roles and education here — they show on your timeline and résumé right away, and save to your account when you publish.</p>'+
       '<h3 class="dh">Work history</h3><div id="de-poslist"></div><button type="button" class="btn ghost" id="de-addpos">+ Add a position</button>'+
       '<h3 class="dh">Education</h3><div id="de-edulist"></div><button type="button" class="btn ghost" id="de-addedu">+ Add education</button>'+
+      '<h3 class="dh">Visual work &amp; showreel</h3>'+
+      '<p class="sub" style="margin:-4px 0 10px">'+(["art","audio"].indexOf((_person&&_person.portfolio_style)||"")>=0?'Because your style is <b>'+esc(_person.portfolio_style)+'</b>, this leads your page — add a reel and images and they jump to the top.':'Add a reel or images here. <b>Tip:</b> set your style to Art or Audio (Edit header) to make these lead your page.')+'</p>'+
+      '<div id="de-media"></div>'+
     '</section>';
     app.appendChild(wrap);
-    renderDePos(); renderDeEdu();
+    renderDePos(); renderDeEdu(); renderDeMedia();
     document.getElementById("de-addpos").onclick=function(){ var d=dGet(); d.positions=d.positions||[]; d.positions.push({studio:"",title:"",start_year:null,end_year:null,is_current:0,description:"",is_game_studio:1}); dSet(d); renderDePos(); _deRefreshHero(); var c=document.querySelector('#de-poslist .decard:last-child'); if(c){ try{ c.scrollIntoView({behavior:"smooth",block:"center"}); }catch(e){} var inp=c.querySelector("input"); if(inp) inp.focus(); } };
     document.getElementById("de-addedu").onclick=function(){ var d=dGet(); d.education=d.education||[]; d.education.push({school:"",degree:"",field:"",start_year:null,end_year:null}); dSet(d); if(_person) _person.education=(d.education||[]); renderDeEdu(); renderEduSlot(); var c=document.querySelector('#de-edulist .decard:last-child'); if(c){ try{ c.scrollIntoView({behavior:"smooth",block:"center"}); }catch(e){} var inp=c.querySelector("input"); if(inp) inp.focus(); } };
   }
@@ -794,6 +797,51 @@
       card.querySelector(".de-del").onclick=function(){ var d=dGet(); (d.education||[]).splice(i,1); dSet(d); if(_person) _person.education=(d.education||[]); renderDeEdu(); renderEduSlot(); };
     });
   }
+  // draft Visual work: reel + gallery, written to d.profile; re-renders the page so art/audio can lead live
+  function _deMediaGet(){ var pf=(dGet().profile||{}); return { reel:pf.reel_url||"", gallery:(Array.isArray(pf.gallery)?pf.gallery:[]) }; }
+  function _deMediaSave(reel, gallery){ var d=dGet(); d.profile=d.profile||{}; d.profile.reel_url=reel; d.profile.gallery=gallery; dSet(d); if(_person){ _person.reel_url=reel; _person.gallery=gallery; } }
+  function renderDeMedia(){
+    var box=document.getElementById("de-media"); if(!box) return;
+    var m=_deMediaGet();
+    var gh = m.gallery.length ? m.gallery.map(function(g,i){
+      return '<div class="decard" data-gmi="'+i+'" style="padding:10px 12px"><div class="derow" style="align-items:center">'+
+        '<div style="flex:0 0 auto"><img src="'+esc(g.url)+'" alt="" style="width:60px;height:44px;object-fit:cover;border-radius:6px;border:1px solid var(--border);background:var(--bg)" onerror="this.style.opacity=.25"></div>'+
+        '<div style="min-width:110px"><input class="dgm-cap" value="'+esc(g.caption||"")+'" placeholder="Caption (optional)"></div>'+
+        '<div style="flex:0 0 auto;display:flex;gap:6px"><button type="button" class="de-del dgm-up"'+(i===0?' style="opacity:.4;pointer-events:none"':'')+'>↑</button><button type="button" class="de-del dgm-down"'+(i===m.gallery.length-1?' style="opacity:.4;pointer-events:none"':'')+'>↓</button><button type="button" class="de-del dgm-del">Remove</button></div>'+
+      '</div></div>';
+    }).join("") : '<div class="de-empty">No images yet.</div>';
+    box.innerHTML =
+      '<div class="decard"><label style="display:block;font-size:11.5px;font-weight:700;color:#cdd8e6;margin:0 0 4px">Showreel <span style="color:var(--muted);font-weight:400">— YouTube or Vimeo link</span></label>'+
+      '<input id="dgm-reel" value="'+esc(m.reel)+'" placeholder="https://youtube.com/watch?v=…  or  https://vimeo.com/…" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px 11px;color:var(--text);font-size:13.5px;font-family:inherit;outline:none">'+
+      '<div id="dgm-reelerr" class="de-empty" style="color:var(--pink);display:none"></div></div>'+
+      '<div style="margin-top:2px">'+gh+'</div>'+
+      '<div class="derow" style="margin-top:8px"><div><input id="dgm-url" placeholder="https://…  image URL" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px 11px;color:var(--text);font-size:13.5px;font-family:inherit;outline:none"></div><div style="flex:0 0 auto;align-self:center"><button type="button" class="btn ghost" id="dgm-add">Add image</button></div></div>';
+    // reel wiring
+    var reelEl=document.getElementById("dgm-reel");
+    function reelPersist(){ var v=reelEl.value.trim(), err=document.getElementById("dgm-reelerr");
+      if(v && !/^https?:\/\/([\w-]+\.)*(youtube\.com|youtu\.be|vimeo\.com|player\.vimeo\.com)\//i.test(v)){ err.textContent="Reel must be a YouTube or Vimeo link."; err.style.display="block"; return false; }
+      err.style.display="none"; var mm=_deMediaGet(); _deMediaSave(v, mm.gallery); return true; }
+    reelEl.addEventListener("input", reelPersist);                                  // save as they type, no disruptive re-render
+    reelEl.addEventListener("change", function(){ if(reelPersist()) _deReRender(); });  // reflect on the page when they finish (blur)
+    // add image
+    document.getElementById("dgm-add").onclick=function(){
+      var u=(document.getElementById("dgm-url").value||"").trim(); if(!u) return;
+      if(!/^https?:\/\//i.test(u)){ return; }
+      var mm=_deMediaGet(); mm.gallery.push({url:u, caption:""}); _deMediaSave(_deMediaGet().reel, mm.gallery); renderDeMedia(); _deReRender();
+    };
+    document.getElementById("dgm-url").addEventListener("keydown", function(e){ if(e.key==="Enter"){ e.preventDefault(); document.getElementById("dgm-add").click(); } });
+    // per-image wiring
+    box.querySelectorAll(".decard[data-gmi]").forEach(function(card){
+      var i=+card.getAttribute("data-gmi");
+      card.querySelector(".dgm-cap").addEventListener("input", function(){ var mm=_deMediaGet(); if(mm.gallery[i]){ mm.gallery[i].caption=this.value; _deMediaSave(mm.reel, mm.gallery); } });   // caption saves silently; no re-render (would steal focus)
+      card.querySelector(".dgm-del").onclick=function(){ var mm=_deMediaGet(); mm.gallery.splice(i,1); _deMediaSave(mm.reel, mm.gallery); renderDeMedia(); _deReRender(); };
+      card.querySelector(".dgm-up").onclick=function(){ var mm=_deMediaGet(); if(i>0){ var t=mm.gallery[i-1]; mm.gallery[i-1]=mm.gallery[i]; mm.gallery[i]=t; _deMediaSave(mm.reel, mm.gallery); renderDeMedia(); _deReRender(); } };
+      card.querySelector(".dgm-down").onclick=function(){ var mm=_deMediaGet(); if(i<mm.gallery.length-1){ var t=mm.gallery[i+1]; mm.gallery[i+1]=mm.gallery[i]; mm.gallery[i]=t; _deMediaSave(mm.reel, mm.gallery); renderDeMedia(); _deReRender(); } };
+    });
+  }
+  // re-render the public part of the page (media can reorder it), keeping the draft editor intact
+  var _deReRenderT=null;
+  function _deReRender(){ if(_deReRenderT) clearTimeout(_deReRenderT); _deReRenderT=setTimeout(function(){ render(_person,_positions,_credits,_covMap); var el=document.getElementById("de-media"); if(el){ try{ el.scrollIntoView({behavior:"auto",block:"nearest"}); }catch(e){} } }, 350); }
 
   function heroHTML(p, positions, credits){
     var startYears=[];
@@ -1493,12 +1541,14 @@
     var payload={ name:g("ef-name"), headline:g("ef-head"), location:g("ef-loc"), bio:g("ef-bio"), open_to_work: document.getElementById("ef-otw").checked?1:0, portfolio_style:g("ef-style"), avatar_url:g("ef-avatar"), links:links, unshipped_count:unc };
     var st=document.getElementById("ef-status"); st.textContent="Saving…"; st.className="efstatus";
     if(IS_DRAFT){
-      var d=dGet();
+      var d=dGet(); var prev=d.profile||{};
       if(payload.name) d.name=payload.name;
-      d.profile={ headline:payload.headline, location:payload.location, bio:payload.bio, open_to_work:payload.open_to_work, avatar_url:payload.avatar_url, links:links, unshipped:unc };
+      // Preserve draft-only media (gallery/reel) and persist the chosen discipline so the art/audio layout applies.
+      d.profile={ headline:payload.headline, location:payload.location, bio:payload.bio, open_to_work:payload.open_to_work, avatar_url:payload.avatar_url, links:links, unshipped:unc, portfolio_style:payload.portfolio_style, gallery:(prev.gallery||[]), reel_url:(prev.reel_url||"") };
       dSet(d);
-      _person.name=payload.name; _person.headline=payload.headline; _person.location=payload.location; _person.bio=payload.bio; _person.open_to_work=payload.open_to_work; _person.avatar_url=payload.avatar_url; _person.links=links; _person.unshipped=unc;
-      renderHero(); st.textContent="Saved ✓"; st.className="efstatus ok"; setTimeout(closeSheet,400);
+      _person.name=payload.name; _person.headline=payload.headline; _person.location=payload.location; _person.bio=payload.bio; _person.open_to_work=payload.open_to_work; _person.avatar_url=payload.avatar_url; _person.links=links; _person.unshipped=unc; _person.portfolio_style=payload.portfolio_style;
+      render(_person,_positions,_credits,_covMap);   // discipline can reorder the whole page, so re-render (not just the hero)
+      st.textContent="Saved ✓"; st.className="efstatus ok"; setTimeout(closeSheet,400);
       return;
     }
     DQAPI.updateProfile(payload).then(function(r){
