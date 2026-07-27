@@ -122,6 +122,23 @@
   .edurow .ed{color:var(--muted);font-size:13px;margin-top:2px}
   .edurow .ey{color:var(--dim);font-size:13px;font-weight:650;white-space:nowrap}
   @media(max-width:600px){.edurow{flex-direction:column;gap:4px}}
+  .mediasec{margin-top:4px}
+  .reelwrap{position:relative;width:100%;aspect-ratio:16/9;border-radius:16px;overflow:hidden;border:1px solid var(--border);background:#000;margin:6px 0 20px}
+  .reelwrap iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+  .gallery{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+  .gcell{position:relative;border:0;padding:0;background:var(--panel2);border-radius:13px;overflow:hidden;aspect-ratio:4/3;cursor:zoom-in}
+  .gcell img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .35s ease}
+  .gcell:hover img{transform:scale(1.06)}
+  .gcap{position:absolute;left:0;right:0;bottom:0;padding:16px 11px 8px;font-size:12px;color:#fff;background:linear-gradient(180deg,transparent,rgba(0,0,0,.72));text-align:left;pointer-events:none}
+  @media(max-width:700px){.gallery{grid-template-columns:repeat(2,1fr)}}
+  .lbox{position:fixed;inset:0;z-index:300;background:rgba(4,7,12,.93);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;padding:34px}
+  .lbox img{max-width:92vw;max-height:82vh;object-fit:contain;border-radius:8px;box-shadow:0 30px 90px rgba(0,0,0,.6)}
+  .lbox .lcap{position:absolute;bottom:20px;left:0;right:0;text-align:center;color:#dbe5f1;font-size:14px;padding:0 24px}
+  .lbox .lx{position:absolute;top:16px;right:22px;font-size:30px;color:#fff;cursor:pointer;background:none;border:0;line-height:1}
+  .lbox .lnav{position:absolute;top:50%;transform:translateY(-50%);font-size:42px;color:#fff;cursor:pointer;background:none;border:0;padding:10px 16px;opacity:.85}
+  .lbox .lnav:hover{opacity:1}.lbox .lprev{left:6px}.lbox .lnext{right:6px}
+  body.art-led .stagehead .sec{font-size:19px}
+  body.art-led #vhint,body.art-led .stagehead .sub{opacity:.85}
   .draftedit{border:1px dashed var(--border);border-radius:18px;background:linear-gradient(180deg,rgba(163,113,247,.06),transparent);padding:22px 24px;margin-top:22px}
   .draftedit .dh{font-size:14px;font-weight:800;letter-spacing:.02em;color:#cdd8e6;margin:22px 0 10px;text-transform:uppercase}
   .draftedit .dh:first-of-type{margin-top:6px}
@@ -519,7 +536,7 @@
     IS_OWNER=true; document.body.classList.add("is-owner");   // draft acts like owner; writes go to localStorage, never the API
     var d=dGet(); var credits=(d.credits||[]).map(draftCredit);
     var pf=d.profile||{};
-    var person={ name:d.name||"Your name", slug:null, headline:pf.headline||"", location:pf.location||"", bio:pf.bio||"", links:pf.links||[], skills:{groups:[]}, portfolio_style:"production", open_to_work:pf.open_to_work?1:0, avatar_url:pf.avatar_url||"", unshipped:pf.unshipped||0, education:(Array.isArray(d.education)?d.education:(Array.isArray(pf.education)?pf.education:[])) };
+    var person={ name:d.name||"Your name", slug:null, headline:pf.headline||"", location:pf.location||"", bio:pf.bio||"", links:pf.links||[], skills:{groups:[]}, portfolio_style:pf.portfolio_style||"production", open_to_work:pf.open_to_work?1:0, avatar_url:pf.avatar_url||"", unshipped:pf.unshipped||0, education:(Array.isArray(d.education)?d.education:(Array.isArray(pf.education)?pf.education:[])), gallery:(Array.isArray(d.gallery)?d.gallery:(Array.isArray(pf.gallery)?pf.gallery:[])), reel_url:pf.reel_url||d.reel_url||"" };
     // Work history carried from the wizard — so gameless studios (e.g. Possibility Space) show on the timeline.
     var positions=(d.positions||[]).map(function(pp){ var cur=(pp.is_current?true:false); return { studio:pp.studio||pp.studio_name||"", studio_slug:"", title:pp.title||"", start_year:pp.start_year||null, start_month:null, end_year:(cur?null:(pp.end_year||null)), end_month:null, is_current:cur, description:pp.description||"", location:pp.location||"", is_game_studio:(pp.is_game_studio===0?0:1) }; });
     resolveCovers(credits).then(function(cm){ cm=cm||{}; (d.credits||[]).forEach(function(c){ if(c.cover_url) cm[c.game_slug]=c.cover_url; }); render(person,positions,credits,cm); mountDraftBar(credits.length); }).catch(function(){ render(person,positions,credits,{}); mountDraftBar(credits.length); });
@@ -650,7 +667,13 @@
 
     // ---- the work: unified wall <-> timeline stage ----
     _covMap = covMap; _credits = credits; _person = p; _positions = positions;
-    var stageSection = credits.length ? '<div class="wrap"><section><div class="stagehead"><div class="headtext pub-head"><div class="eyebrow">The Work</div><h2 class="sec">'+(credits.length?credits.length+' shipped titles':'Selected work')+'</h2><p class="sub">Every game I\'ve shipped. Click any cover for the one-sheet: my role, the scope, and the impact.</p></div><div class="headtext own-head"><div class="eyebrow">The Work</div><h2 class="sec">Every game, your way</h2><p class="sub">Arrange the wall however you like — then flip to the timeline and watch them fall into place. <span class="mut">Only you see this editing view — visitors get the public work view above.</span></p></div><div class="vtoggle" id="vtoggle"><button data-m="grid" class="on">▦ Wall</button><button data-m="timeline">↳ Timeline</button><button data-m="recruiter">▤ Recruiter</button></div></div><div class="vhint" id="vhint"></div><div id="stage" class="grid"><div id="chrome"><div id="spine"></div></div></div><div id="recruiter" style="display:none"></div></section></div>' : '';
+    // When Art/Audio leads with visual work, the games wall becomes a supporting "Also shipped" strip.
+    var _media = mediaSlotHTML(p);
+    var _artLed = (["art","audio"].indexOf(p.portfolio_style||"")>=0) && !!_media;
+    var _workEyebrow = _artLed ? "Also shipped" : "The Work";
+    var _workHead = _artLed ? "Games I\'ve shipped" : (credits.length?credits.length+' shipped titles':'Selected work');
+    var _workSub = _artLed ? "The titles I contributed to — peer-confirmed by teammates who shipped them. Click any cover for my role and scope." : "Every game I\'ve shipped. Click any cover for the one-sheet: my role, the scope, and the impact.";
+    var stageSection = credits.length ? '<div class="wrap"><section><div class="stagehead"><div class="headtext pub-head"><div class="eyebrow">'+_workEyebrow+'</div><h2 class="sec">'+_workHead+'</h2><p class="sub">'+_workSub+'</p></div><div class="headtext own-head"><div class="eyebrow">The Work</div><h2 class="sec">Every game, your way</h2><p class="sub">Arrange the wall however you like — then flip to the timeline and watch them fall into place. <span class="mut">Only you see this editing view — visitors get the public work view above.</span></p></div><div class="vtoggle" id="vtoggle"><button data-m="grid" class="on">▦ Wall</button><button data-m="timeline">↳ Timeline</button><button data-m="recruiter">▤ Recruiter</button></div></div><div class="vhint" id="vhint"></div><div id="stage" class="grid"><div id="chrome"><div id="spine"></div></div></div><div id="recruiter" style="display:none"></div></section></div>' : '';
 
     // ---- skills ----
     var groups = (p.skills && p.skills.groups) ? p.skills.groups : [];
@@ -667,9 +690,13 @@
       (confirmed?'<div class="vfoot"><span class="v2">✓</span> '+confirmed+' of '+credits.length+' credits confirmed by teammates who shipped the same game · <a href="/credits/how-evidence-works.html" style="color:var(--accent)">how evidence works →</a></div>':'')+
       '</div></div>';
 
-    app.innerHTML = hero + stageSection + skills + edu + contact;
+    // ---- discipline-adaptive ordering: Art & Audio lead with the visual/audio work ----
+    document.body.classList.toggle("art-led", _artLed);
+    if(_artLed) app.innerHTML = hero + _media + stageSection + skills + edu + contact;   // gallery + reel front and centre; games below
+    else        app.innerHTML = hero + stageSection + skills + _media + edu + contact;   // media still shows for other disciplines, just secondary
     wireHeroEdit();
     if(credits.length) buildStage(credits, positions, covMap);
+    wireGallery();
     if(IS_DRAFT && !PREVIEW) mountDraftEditor();
   }
 
@@ -818,6 +845,38 @@
       '</div></section>';
   }
   function renderEduSlot(){ var s=document.getElementById("edu-slot"); if(s) s.innerHTML=eduSlotHTML(_person||{}); }
+  // ---- visual work (gallery + showreel), discipline-led ----
+  function reelEmbed(url){ url=String(url||""); var m;
+    if((m=url.match(/(?:youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{6,})/i))) return "https://www.youtube.com/embed/"+m[1];
+    if((m=url.match(/(?:player\.)?vimeo\.com\/(?:video\/)?(\d+)/i))) return "https://player.vimeo.com/video/"+m[1];
+    return ""; }
+  function mediaSlotHTML(p){
+    var gal=Array.isArray(p.gallery)?p.gallery:[]; var reel=reelEmbed(p.reel_url);
+    if(!gal.length && !reel) return "";
+    var h='<div class="wrap"><section class="mediasec"><div class="eyebrow">Selected work</div>';
+    if(reel) h+='<div class="reelwrap"><iframe src="'+esc(reel)+'" title="Showreel" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen loading="lazy"></iframe></div>';
+    if(gal.length) h+='<div class="gallery" id="gallery">'+gal.map(function(g,i){ return '<button class="gcell" data-gi="'+i+'"><img src="'+esc(g.url)+'" alt="'+esc(g.caption||"")+'" loading="lazy" onerror="var c=this.closest(\'.gcell\'); if(c) c.style.display=\'none\'">'+(g.caption?'<span class="gcap">'+esc(g.caption)+'</span>':'')+'</button>'; }).join("")+'</div>';
+    h+='</section></div>';
+    return h;
+  }
+  function wireGallery(){
+    var box=document.getElementById("gallery"); if(!box) return;
+    var gal=Array.isArray(_person&&_person.gallery)?_person.gallery:[];
+    box.querySelectorAll(".gcell").forEach(function(cell){ cell.onclick=function(){ openLightbox(gal, +cell.getAttribute("data-gi")); }; });
+  }
+  function openLightbox(gal, idx){
+    if(!gal||!gal.length) return; var cur=idx||0;
+    var ov=document.createElement("div"); ov.className="lbox";
+    function draw(){ var g=gal[cur]||{}; ov.innerHTML='<button class="lx" aria-label="Close">×</button>'+(gal.length>1?'<button class="lnav lprev" aria-label="Previous">‹</button><button class="lnav lnext" aria-label="Next">›</button>':'')+'<img src="'+esc(g.url)+'" alt="">'+(g.caption?'<div class="lcap">'+esc(g.caption)+'</div>':'');
+      ov.querySelector(".lx").onclick=close; var pv=ov.querySelector(".lprev"), nx=ov.querySelector(".lnext");
+      if(pv) pv.onclick=function(e){ e.stopPropagation(); cur=(cur-1+gal.length)%gal.length; draw(); };
+      if(nx) nx.onclick=function(e){ e.stopPropagation(); cur=(cur+1)%gal.length; draw(); }; }
+    function close(){ document.removeEventListener("keydown",key); ov.remove(); }
+    function key(e){ if(e.key==="Escape") close(); else if(e.key==="ArrowLeft"&&gal.length>1){ cur=(cur-1+gal.length)%gal.length; draw(); } else if(e.key==="ArrowRight"&&gal.length>1){ cur=(cur+1)%gal.length; draw(); } }
+    ov.addEventListener("click", function(e){ if(e.target===ov) close(); });
+    document.addEventListener("keydown", key);
+    document.body.appendChild(ov); draw();
+  }
   function renderHero(){ var hb=document.getElementById("herobox"); if(hb){ hb.innerHTML=heroHTML(_person,_positions,_credits); wireHeroEdit(); } if(_person) document.title=_person.name+" · DevQuest Portfolio"; }
   function wireHeroEdit(){ var b=document.getElementById("editProfile"); if(b) b.onclick=openProfileEdit; }
 

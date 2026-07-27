@@ -74,7 +74,7 @@
 (function(){
   var app = document.getElementById("app");
   var topcta = document.getElementById("topcta");
-  var ME = null, SLUG = null, POS = [], NEWCTR = 0, P = null, CREDITS = [], EDU = [], ENEWCTR = 0;
+  var ME = null, SLUG = null, POS = [], NEWCTR = 0, P = null, CREDITS = [], EDU = [], ENEWCTR = 0, GAL = [];
 
   function esc(s){ return String(s==null?"":s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];}); }
   function val(id){ var e=document.getElementById(id); return e?e.value.trim():""; }
@@ -130,12 +130,69 @@
         '<div id="edulist"></div>'+
         '<div class="actions"><span class="btn" id="add-edu">+ Add education</span><span class="status" id="st-edu"></span></div>'+
       '</div>'+
+
+      // VISUAL WORK (gallery + showreel) — leads the page on Art & Audio portfolios; hidden when empty
+      '<div class="blk"><h2>Visual work &amp; showreel</h2><div class="desc">For <b>Art</b> and <b>Audio</b> portfolios this leads your page — a gallery and a reel front and center, with your games below. Paste image links (from ArtStation, an image host, etc.) and a YouTube or Vimeo reel. Leave empty and none of it shows.'+(P&&P.portfolio_style&&["art","audio"].indexOf(P.portfolio_style)<0?' <span style="color:var(--gold)">Your portfolio style is <b>'+esc(P.portfolio_style)+'</b> — set it to Art or Audio (from “Edit header” on your portfolio) for this to lead the page.</span>':'')+'</div>'+
+        '<label>Showreel <span class="mut" style="font-weight:400">— a YouTube or Vimeo link; optional</span></label><div class="row"><div><input id="reel-url" placeholder="https://youtube.com/watch?v=…  or  https://vimeo.com/…"></div></div>'+
+        '<label style="margin-top:16px">Gallery <span class="mut" style="font-weight:400">— image links, shown as a grid; drag not needed, add in the order you want</span></label>'+
+        '<div id="gallist"></div>'+
+        '<div class="row" style="margin-top:8px"><div><input id="gal-url" placeholder="https://…  image URL (jpg/png/webp)"></div><div><input id="gal-cap" placeholder="Caption (optional)"></div><div style="flex:0 0 auto;align-self:flex-end"><span class="btn sm" id="gal-add">Add image</span></div></div>'+
+        '<div class="actions"><span class="btn primary" id="save-media">Save visual work</span><span class="status" id="st-media"></span></div>'+
+      '</div>'+
       // DONE
       '<div style="text-align:center;margin:10px 0 4px"><a class="btn primary" href="/portfolio/'+esc(SLUG)+'/">✓ Done — back to my portfolio</a><div class="mut" style="font-size:12px;margin-top:9px">Each section saves on its own — make sure you’ve clicked <b>Save</b> in the ones you changed before leaving.</div></div>';
 
     renderPositions();
     renderEducation();
+    GAL = (Array.isArray(p.gallery) ? p.gallery : []).map(function(g){ g=g||{}; return {url:String(g.url||""), caption:String(g.caption||"")}; });
+    renderGallery(); wireMedia(p);
     skInitSelected(p); renderSkillsPicker(p, false); wireSkills();
+  }
+
+  // ---------- VISUAL WORK (gallery + reel) ----------
+  function renderGallery(){
+    var box=document.getElementById("gallist"); if(!box) return;
+    if(!GAL.length){ box.innerHTML='<div class="empty">No images yet — paste an image URL below to build your gallery.</div>'; return; }
+    box.innerHTML = GAL.map(function(g,i){
+      return '<div class="pos" data-gi="'+i+'" style="padding:10px 12px"><div class="row" style="align-items:center">'+
+        '<div style="flex:0 0 auto"><img src="'+esc(g.url)+'" alt="" style="width:64px;height:48px;object-fit:cover;border-radius:7px;border:1px solid var(--border);background:var(--bg)" onerror="this.style.opacity=.25"></div>'+
+        '<div style="min-width:120px"><input class="g-cap" value="'+esc(g.caption||"")+'" placeholder="Caption (optional)"></div>'+
+        '<div style="flex:0 0 auto;display:flex;gap:6px">'+
+          '<span class="btn sm g-up" title="Move up"'+(i===0?' style="opacity:.4;pointer-events:none"':'')+'>↑</span>'+
+          '<span class="btn sm g-down" title="Move down"'+(i===GAL.length-1?' style="opacity:.4;pointer-events:none"':'')+'>↓</span>'+
+          '<span class="btn danger sm g-del">Remove</span>'+
+        '</div></div></div>';
+    }).join("");
+    box.querySelectorAll(".pos[data-gi]").forEach(function(card){
+      var i=+card.getAttribute("data-gi");
+      card.querySelector(".g-cap").addEventListener("input", function(){ if(GAL[i]) GAL[i].caption=this.value; });
+      card.querySelector(".g-del").onclick=function(){ GAL.splice(i,1); renderGallery(); };
+      card.querySelector(".g-up").onclick=function(){ if(i>0){ var t=GAL[i-1]; GAL[i-1]=GAL[i]; GAL[i]=t; renderGallery(); } };
+      card.querySelector(".g-down").onclick=function(){ if(i<GAL.length-1){ var t=GAL[i+1]; GAL[i+1]=GAL[i]; GAL[i]=t; renderGallery(); } };
+    });
+  }
+  function wireMedia(p){
+    var reel=document.getElementById("reel-url"); if(reel) reel.value=(p&&p.reel_url)||"";
+    var add=document.getElementById("gal-add"); if(add) add.onclick=galAdd;
+    var url=document.getElementById("gal-url"); if(url) url.addEventListener("keydown", function(e){ if(e.key==="Enter"){ e.preventDefault(); galAdd(); } });
+    var save=document.getElementById("save-media"); if(save) save.onclick=saveMedia;
+  }
+  function galAdd(){
+    var u=(val("gal-url")||"").trim(); if(!u){ return; }
+    if(!/^https?:\/\//i.test(u)){ var st=document.getElementById("st-media"); st.textContent="Image links must start with http(s)://"; st.className="status err"; return; }
+    GAL.push({url:u, caption:(val("gal-cap")||"").trim()});
+    var uEl=document.getElementById("gal-url"), cEl=document.getElementById("gal-cap"); if(uEl) uEl.value=""; if(cEl) cEl.value="";
+    renderGallery(); if(uEl) uEl.focus();
+  }
+  function saveMedia(){
+    var st=document.getElementById("st-media"); st.textContent="Saving…"; st.className="status mut";
+    var reel=(val("reel-url")||"").trim();
+    if(reel && !/^https?:\/\/([\w-]+\.)*(youtube\.com|youtu\.be|vimeo\.com|player\.vimeo\.com)\//i.test(reel)){ st.textContent="Showreel must be a YouTube or Vimeo link."; st.className="status err"; return; }
+    var gallery=GAL.map(function(g){ return {url:g.url, caption:g.caption||""}; }).filter(function(g){ return g.url; });
+    DQAPI.updateProfile({ gallery:gallery, reel_url:reel }).then(function(r){
+      if(r&&r.ok){ st.textContent="✓ Saved"; st.className="status ok"; }
+      else { st.textContent=(r&&r.data&&r.data.error)||"Could not save."; st.className="status err"; }
+    }).catch(function(){ st.textContent="Network error."; st.className="status err"; });
   }
 
   // ----- discipline-aware skill palettes (shared vocabulary with the résumé tailoring lexicon) -----
