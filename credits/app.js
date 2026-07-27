@@ -321,7 +321,13 @@
           '</button>';
       }).join("");
     }
-    qi.addEventListener("input", function () { clearTimeout(t); var q = qi.value.trim(); if (!q) { res.innerHTML = ""; return; } t = setTimeout(function () { if (w.DQAPI && w.DQAPI.searchGames) w.DQAPI.searchGames(q).then(function (r) { paint(((r.data && r.data.games) || []).slice(0, 12)); }).catch(function () {}); }, 140); });
+    qi.addEventListener("input", function () { clearTimeout(t); var q = qi.value.trim(); if (q.length < 2) { res.innerHTML = ""; return; } t = setTimeout(function () {
+      var ql = q.toLowerCase();
+      // Full catalogue (static index.json) + live user-added games, merged — same as the profile add-game search.
+      var statP = loadIndex("games").then(function (rows) { return searchRows(rows, 1, q, 60).rows; }).catch(function () { return []; });
+      var liveP = (w.DQAPI && w.DQAPI.searchGames) ? w.DQAPI.searchGames(q).then(function (r) { return ((r.data && r.data.games) || []).map(function (g) { return [g.slug, g.title, g.year || "", g.studio || ""]; }); }).catch(function () { return []; }) : Promise.resolve([]);
+      Promise.all([statP, liveP]).then(function (a) { if ((qi.value || "").trim().toLowerCase() !== ql) return; var seen = {}, out = []; (a[0] || []).concat(a[1] || []).forEach(function (r) { var k = r[0]; if (k && !seen[k]) { seen[k] = 1; out.push({ slug: r[0], title: r[1], year: r[2], studio: r[3] }); } }); paint(out.slice(0, 14)); });
+    }, 160); });
     res.addEventListener("click", function (e) { var b = e.target.closest && e.target.closest(".dqa-row"); if (!b || b.disabled) return; var g = { game_slug: b.getAttribute("data-slug"), game_title: b.getAttribute("data-title"), studio: b.getAttribute("data-studio"), year: b.getAttribute("data-year") }; close(); openDraftGame(g, function () { if (typeof onAdded === "function") onAdded(); }); });
     setTimeout(function () { qi.focus(); }, 40);
   }
