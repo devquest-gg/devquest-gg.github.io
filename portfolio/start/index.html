@@ -39,6 +39,7 @@
   .studio-chip{display:inline-flex;align-items:center;gap:8px;background:var(--panel2);border:1px solid var(--border);border-radius:20px;padding:6px 8px 6px 13px;font-size:13px;margin:4px 6px 0 0}
   .studio-chip b{font-weight:700}.studio-chip .yr{color:var(--muted);font-size:12px}
   .studio-chip .x{cursor:pointer;color:var(--muted);border:0;background:none;font-size:16px;line-height:1;padding:0 2px}
+  .sc-toggle{cursor:pointer;user-select:none}.sc-toggle:hover{border-color:var(--accent)}
   .studio-chip .x:hover{color:var(--pink)}
   .sdrop{position:relative}
   .sdrop-list{position:absolute;left:0;right:0;top:calc(100% + 2px);z-index:20;background:var(--panel2);border:1px solid var(--border);border-radius:10px;overflow:hidden;box-shadow:0 12px 30px rgba(0,0,0,.5);max-height:240px;overflow-y:auto}
@@ -440,9 +441,14 @@
     if(!STUDIOS.length){ box.innerHTML='<div class="empty">No studios yet — add your first above.</div>'; }
     else {
       var nonGame=STUDIOS.filter(function(s){ return s.gameStudio===false; }).length;
-      box.innerHTML = '<div style="font-size:12.5px;font-weight:800;color:var(--gold);margin:0 0 9px">✓ Your studios ('+STUDIOS.length+') — tap × to remove any that are wrong:</div>' + STUDIOS.map(function(s,i){ var yr=(s.from||s.to)?((s.from||"?")+" – "+(s.to||"now")):""; var ng=(s.gameStudio===false); return '<span class="studio-chip"'+(ng?' style="opacity:.72"':'')+'><b>'+esc(s.name)+'</b>'+(yr?' <span class="yr">'+esc(yr)+'</span>':'')+(ng?' <span class="yr" style="color:var(--dim);font-style:italic">· work history</span>':'')+'<button class="x" data-i="'+i+'" aria-label="Remove">×</button></span>'; }).join("")+
-        (nonGame?'<div class="desc" style="font-size:12px;margin-top:9px;color:var(--dim)">Roles marked <i>work history</i> aren’t game studios, so they don’t count toward your Studios total — but they still appear on your résumé timeline. Remove any that don’t belong.</div>':'');
-      box.querySelectorAll(".x").forEach(function(el){ el.onclick=function(){ STUDIOS.splice(+el.getAttribute("data-i"),1); renderStudioList(); }; }); }
+      box.innerHTML = '<div style="font-size:12.5px;font-weight:800;color:var(--gold);margin:0 0 9px">✓ Your studios ('+STUDIOS.length+') — tap a chip to toggle game studio ↔ work history · tap × to remove:</div>' + STUDIOS.map(function(s,i){ var yr=(s.from||s.to)?((s.from||"?")+" – "+(s.to||"now")):""; var ng=(s.gameStudio===false); return '<span class="studio-chip sc-toggle" data-i="'+i+'" role="button" tabindex="0" title="'+(ng?'Not counted — click to count this as a game studio':'Counts as a game studio — click to mark as work history only')+'"'+(ng?' style="opacity:.72"':'')+'><b>'+esc(s.name)+'</b>'+(yr?' <span class="yr">'+esc(yr)+'</span>':'')+(ng?' <span class="yr" style="color:var(--dim);font-style:italic">· work history</span>':'')+'<button class="x" data-i="'+i+'" aria-label="Remove">×</button></span>'; }).join("")+
+        '<div class="desc" style="font-size:12px;margin-top:9px;color:var(--dim)">'+(nonGame?'Roles marked <i>work history</i> aren’t counted as game studios, but still appear on your résumé timeline. ':'')+'Studio guessed wrong? <b>Tap the chip</b> to flip it between game studio and work history.</div>';
+      box.querySelectorAll(".sc-toggle").forEach(function(chip){
+        function toggle(){ var i=+chip.getAttribute("data-i"); var s=STUDIOS[i]; if(!s) return; s.gameStudio=(s.gameStudio===false); renderStudioList(); }
+        chip.addEventListener("click", function(e){ if(e.target.closest(".x")) return; toggle(); });   // × handled separately below
+        chip.addEventListener("keydown", function(e){ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); toggle(); } });
+      });
+      box.querySelectorAll(".x").forEach(function(el){ el.onclick=function(e){ e.stopPropagation(); STUDIOS.splice(+el.getAttribute("data-i"),1); renderStudioList(); }; }); }
     updateCTALabel();
   }
 
