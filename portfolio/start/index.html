@@ -81,6 +81,7 @@
   var STUDIOS = [];        // [{name, from, to}]
   var CATALOG = null;      // [[slug,title,year,studio], ...]
   var PICKED = {};         // slug -> {slug,title,year,studio}
+  var UNMATCHED = [];      // game titles the paste listed that aren't in our catalogue yet
   var STEP = 1;
 
   function esc(s){ return String(s==null?"":s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];}); }
@@ -238,8 +239,18 @@
       });
       if(keptJobs.length) STUDIOS=keptJobs.map(function(j){ return { name:j.company, from:(j.from||""), to:(j.to||"") }; });
       // Match the games your paste listed to the catalogue and add them (shown as chips below).
-      var gmatched=0; if(res.games && res.games.length){
-        res.games.forEach(function(pg){ var g=tIdx[nrm(pg.title)]; if(g && !PICKED[g.slug]){ PICKED[g.slug]={slug:g.slug,title:g.title,year:g.year,studio:g.studio}; gmatched++; } }); }
+      // Titles we read but can't find in the catalogue are surfaced separately so nothing drops silently.
+      var gmatched=0; UNMATCHED=[]; var seenU={};
+      if(res.games && res.games.length){
+        res.games.forEach(function(pg){ var key=nrm(pg.title); if(!key) return; var g=tIdx[key];
+          if(g){ if(!PICKED[g.slug]){ PICKED[g.slug]={slug:g.slug,title:g.title,year:g.year,studio:g.studio}; gmatched++; } return; }
+          // no catalogue match → keep only plausible game titles (drop studio names & role/section noise)
+          if(seenU[key]||studioKeys[key]||sIdx[key]) return;
+          if(_SUFFIXRE.test(pg.title)||_TITLERE.test(pg.title)) return;   // "…Studios/Games/Entertainment" or a role
+          if(pg.title.split(/\s+/).length<2) return;                     // single word → noise
+          seenU[key]=1; UNMATCHED.push(pg.title);
+        });
+      }
       renderStudios();
       var st2=document.getElementById("pt-status"); var n=STUDIOS.length;
       if(st2){ st2.textContent = n ? ("Found "+n+" studio"+(n===1?"":"s")+(res.name?" and your name":"")+(gmatched?(" and "+gmatched+" game"+(gmatched===1?"":"s")):"")+" — review below, remove anything wrong, then continue.") : "Couldn’t spot studios in that text — add them manually below."; st2.style.color = n?"var(--green)":"var(--muted)"; }
@@ -276,14 +287,23 @@
   function renderFoundGames(){
     var card=document.getElementById("found-games-card"); if(!card) return;
     var slugs=Object.keys(PICKED);
-    if(!slugs.length){ card.classList.add("hide"); card.innerHTML=""; updateCTALabel(); return; }
+    if(!slugs.length && !UNMATCHED.length){ card.classList.add("hide"); card.innerHTML=""; updateCTALabel(); return; }
     card.classList.remove("hide");
     var games=slugs.map(function(s){ return PICKED[s]; });
     games.sort(function(a,b){ return String(a.studio||"").localeCompare(String(b.studio||"")) || (parseInt(b.year,10)||0)-(parseInt(a.year,10)||0) || String(a.title).localeCompare(String(b.title)); });
-    card.innerHTML =
-      '<h2>Games we found <span style="font-size:13px;font-weight:700;color:var(--muted)">— '+games.length+'</span></h2>'+
-      '<div class="desc">Pulled from the titles in your paste. Tap × to remove any that weren’t yours — you can add more on the next step.</div>'+
-      '<div>'+games.map(function(g){ var meta=(g.studio?esc(g.studio):"")+(g.year?' · '+esc(g.year):""); return '<span class="studio-chip"><b>'+esc(g.title)+'</b>'+(meta?' <span class="yr">'+esc(meta)+'</span>':'')+'<button class="x" data-slug="'+esc(g.slug)+'" aria-label="Remove">×</button></span>'; }).join("")+'</div>';
+    var chips = games.length ?
+      ('<h2>Games we found <span style="font-size:13px;font-weight:700;color:var(--muted)">— '+games.length+'</span></h2>'+
+       '<div class="desc">Pulled from the titles in your paste. Tap × to remove any that weren’t yours — you can add more on the next step.</div>'+
+       '<div>'+games.map(function(g){ var meta=(g.studio?esc(g.studio):"")+(g.year?' · '+esc(g.year):""); return '<span class="studio-chip"><b>'+esc(g.title)+'</b>'+(meta?' <span class="yr">'+esc(meta)+'</span>':'')+'<button class="x" data-slug="'+esc(g.slug)+'" aria-label="Remove">×</button></span>'; }).join("")+'</div>')
+      : '<h2>Games we found</h2>';
+    // Titles read from your profile that aren't in our catalogue yet — shown so nothing is silently dropped.
+    var unm = UNMATCHED.length ?
+      ('<div style="margin-top:'+(games.length?'14px':'2px')+';padding-top:'+(games.length?'12px':'0')+';'+(games.length?'border-top:1px solid var(--border)':'')+'">'+
+       '<div class="desc" style="color:var(--gold);margin-bottom:6px">Listed on your profile but not in our catalogue yet — we couldn’t link '+(UNMATCHED.length===1?'this title':'these titles')+':</div>'+
+       '<div>'+UNMATCHED.map(function(t){ return '<span class="studio-chip" style="border-style:dashed;opacity:.9"><b>'+esc(t)+'</b></span>'; }).join("")+'</div>'+
+       '<div class="desc" style="font-size:12px;margin-top:7px">These aren’t in our game catalogue, so we can’t add them automatically. We can get them added, or you can flag them.</div></div>')
+      : '';
+    card.innerHTML = chips + unm;
     card.querySelectorAll(".x").forEach(function(el){ el.onclick=function(){ delete PICKED[el.getAttribute("data-slug")]; renderFoundGames(); }; });
     updateCTALabel();
   }
@@ -348,6 +368,22 @@
     else more='';
     box.innerHTML = rows ? (rows+more) : '<div class="empty">No'+(ql?' match for “'+esc(q)+'”':' titles around your time')+' — search above for any title, or add games by hand later.</div>';
   }
+  // Catalogue-wide search over the WHOLE index — the escape hatch for games not tied to any of your
+  // studios (studio-less catalogue entries, or a game you shipped at a studio you didn't list).
+  function renderGlobalSearch(q){
+    var box=document.getElementById("g-global-list"); if(!box) return;
+    var ql=nrm(q||"");
+    if(ql.length<2){ box.innerHTML=""; return; }
+    var out=[], seen={};
+    for(var i=0;i<CATALOG.length && out.length<40;i++){
+      var r=CATALOG[i]; if(!r) continue;
+      if(nrm(r[1]).indexOf(ql)<0) continue;
+      if(seen[r[0]]) continue; seen[r[0]]=1;
+      out.push({ slug:r[0], title:r[1], year:r[2], studio:r[3] });
+    }
+    out.sort(function(a,b){ return (PICKED[a.slug]?0:1)-(PICKED[b.slug]?0:1) || String(a.title).length-String(b.title).length; });
+    box.innerHTML = out.length ? out.map(_gameRow).join("") : '<div class="empty">No game in the catalogue matches “'+esc(q)+'”.</div>';
+  }
   function renderGames(){
     var SEC = STUDIOS.map(function(s){ var all=gamesForStudio(s); var win=all.filter(function(g){ return PICKED[g.slug]||inWindow(g,s); }); return { s:s, all:all, win:win }; });
     var anyPicked = Object.keys(PICKED).length>0;
@@ -360,16 +396,26 @@
       '<div class="blk"><h2>'+(anyPicked?'Add any more games you shipped':'Check the games you shipped')+'</h2><div class="desc">'+(anyPicked?'The games from your paste are already added. Below are other titles from your studios around the time you were there — tick any we missed. Use a studio’s search box to find a specific title, including live-service games that launched before you joined.':'These are the titles each studio shipped around the time you were there. Tick the ones you worked on — and use a studio’s search box to find anything else, including live-service games that launched before you joined.')+'</div>'+
         '<label>Your main role <span style="font-weight:400;color:var(--muted)">— applied to all; you can change any of them later</span></label><input id="g-role" placeholder="e.g. Senior Producer" value="'+esc(window._qsRole||"")+'">'+
         '<div style="margin-top:14px" id="g-sections">'+ (sections || '<div class="empty">No studios to search.</div>') +'</div>'+
+        '<div style="margin-top:18px;padding-top:16px;border-top:1px solid var(--border)" id="g-global-wrap">'+
+          '<label>Can’t find a game above? Search the whole catalogue <span style="font-weight:400;color:var(--muted)">— for a title that isn’t tied to one of your studios</span></label>'+
+          '<input id="g-global-q" placeholder="Search every game by title… (e.g. XDefiant, Rainbow Six)">'+
+          '<div class="glist" id="g-global-list" style="margin-top:8px"></div>'+
+        '</div>'+
         '<div class="actions"><button class="btn" id="back-1">← Studios</button><button class="btn primary" id="to-basics">Next · <span class="gcount" id="g-count">'+Object.keys(PICKED).length+'</span> selected →</button></div>'+
       '</div>';
     SEC.forEach(function(o,si){ renderStudioGames(si, o.all, o.win, ""); });
     document.querySelectorAll(".gsearch").forEach(function(inp){ inp.addEventListener("input", function(){ var si=+inp.getAttribute("data-si"); renderStudioGames(si, SEC[si].all, SEC[si].win, inp.value); }); });
-    document.getElementById("g-sections").addEventListener("change", function(e){
+    // Checking a game (in a studio list OR the catalogue-wide search) toggles it in PICKED.
+    function onGameToggle(e){
       var cb=e.target; if(!cb || cb.type!=="checkbox") return;
       var slug=cb.getAttribute("data-slug"); if(!slug) return;
       if(cb.checked){ var g=findGame(slug); if(g) PICKED[slug]=g; } else { delete PICKED[slug]; }
       document.getElementById("g-count").textContent=Object.keys(PICKED).length;
-    });
+    }
+    document.getElementById("g-sections").addEventListener("change", onGameToggle);
+    var gq=document.getElementById("g-global-q");
+    if(gq){ gq.addEventListener("input", function(){ renderGlobalSearch(gq.value); }); }
+    document.getElementById("g-global-list").addEventListener("change", onGameToggle);
     document.getElementById("g-role").addEventListener("input", function(e){ window._qsRole=e.target.value; });
     document.getElementById("back-1").onclick=function(){ setStep(1); };
     document.getElementById("to-basics").onclick=function(){ window._qsRole=document.getElementById("g-role").value.trim(); setStep(3); };
