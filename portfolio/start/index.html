@@ -141,7 +141,7 @@
   // ---------- paste importer: LinkedIn / résumé text → studios + name + headline ----------
   var _MONRE="jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec";
   var _DRRE=new RegExp("(?:(?:"+_MONRE+")[a-z]*\\.?\\s+)?(\\d{4})\\s*(?:\\u2013|\\u2014|-|to|through)\\s*((?:(?:"+_MONRE+")[a-z]*\\.?\\s+)?\\d{4}|present|current|now|today|ongoing)","i");
-  var _TITLERE=/\b(producer|engineer|programmer|developer|designer|artist|director|manager|lead|president|animator|writer|analyst|architect|founder|owner|head|specialist|coordinator|technical|creative|executive|principal|qa|tester|scrum|product|vp)\b/i;
+  var _TITLERE=/\b(producer|engineer|programmer|developer|designer|artist|director|manager|lead|president|animator|writer|analyst|architect|founder|owner|head|specialist|coordinator|technical|creative|executive|principal|qa|tester|scrum|product|vp|professor|adjunct|instructor|lecturer|teacher|consultant|advisor|deputy)\b/i;
   var _SUFFIXRE=/\b(games?|studios?|entertainment|interactive|software|inc|llc|ltd|corp|corporation|media|digital|works|worldwide|productions?|technologies|labs?)\b/i;
   function _pnorm(s){ return String(s==null?"":s).toLowerCase().replace(/[^a-z0-9]+/g," ").trim(); }
   function _year4(s){ var m=String(s==null?"":s).match(/\d{4}/); return m?parseInt(m[0],10):null; }
@@ -151,7 +151,7 @@
   function _studioIndex(rows){ var seen={}, arr=[]; for(var i=0;i<rows.length;i++){ var s=rows[i]&&rows[i][3]; if(!s) continue; var k=_pnorm(s); if(k.length<3||seen[k]) continue; seen[k]=1; arr.push({k:k,name:String(s)}); } return arr; }
   function _md(l){ return String(l==null?"":l).replace(/\[([^\]]*)\]\([^)]*\)/g,"$1").replace(/^\s*[\*\-•▪○]\s*/,"").replace(/\s+/g," ").trim(); }   // [text](url) → text, drop bullets
   function _hasType(l){ return /\b(full[\s-]?time|part[\s-]?time|contract|freelance|internship|permanent|self[\s-]?employed|apprenticeship|seasonal)\b/i.test(l); }
-  function _isImgAlt(l){ return /^(thumbnail|image|photo|picture|icon|logo|banner|screenshot|avatar|graphic)\b/i.test(l) || /\b(logo|icon|banner|thumbnail|screenshot|avatar)$/i.test(l); }   // LinkedIn image alt-text: "Thumbnail for X", "Ubisoft logo"
+  function _isImgAlt(l){ l=String(l==null?"":l); return /^(thumbnail|image|photo|picture|icon|logo|banner|screenshot|avatar|graphic)\b/i.test(l) || /\b(logo|icon|banner|thumbnail|screenshot|avatar)$/i.test(l) || /\.(jpe?g|png|gif|webp|svg|bmp|pdf|mp4|mov)$/i.test(l) || /https?:\/\//i.test(l) || /\b[a-z0-9-]{2,}\.(com|net|org|io|gg|co|tv|dev|xyz|app)\b/i.test(l); }   // image alt-text ("Thumbnail for X", "Ubisoft logo"), image filenames ("CoH.jpg"), and URLs ("GuildWars2.com")
   function _isDur(l){ return !/\d{4}/.test(l) && /\d+\s*(yrs?|years?|mos?|months?)\b/i.test(l); }   // "2 yrs 9 mos" — a grouped-company total, not a role date
   function _isTitleLine(l){ return _TITLERE.test(l) && !/·/.test(l) && !/\d{4}/.test(l); }
   function _isDate(l){ return _DRRE.test(l); }
@@ -178,7 +178,7 @@
     var start=0; for(var i=0;i<L.length;i++){ if(/^experience$/i.test(L[i])){ start=i+1; break; } }
     var jobs=[], currentCompany="", pendingTitle="", pgames=[], activeStudio="";
     for(var i=start;i<L.length;i++){ var line=L[i]; if(!line) continue;
-      if(/^(profile language|who your viewers|about$|privacy|linkedin corporation|help center|select language|messaging|status is online|connected apps|add connected|projects|skills|recommendations|interests|education|licenses|volunteering|volunteer|courses|honors|test scores|languages|organizations|causes|people you|you might like|pages for you)\b/i.test(line)) break;   // footer / next profile section
+      if(/^(profile language|who your viewers|about$|privacy|linkedin corporation|help center|select language|messaging|status is online|connected apps|add connected|projects|skills|recommendations|interests|education|licenses|volunteering|volunteer|courses|honors|test scores|languages|organizations|causes|people you|people also viewed|more profiles|you might like|pages for you|show more|load more)\b/i.test(line)) break;   // footer / next profile section (incl. "More profiles for you" people block)
       if(_isDate(line)){
         var dr=line.match(_DRRE); var from=_year4(dr[1]); var to=/present|current|now|today|ongoing/i.test(dr[2])?"":(_year4(dr[2])||"");
         var pv=_prevNE(L,i), prev=pv.line, company="";
@@ -244,11 +244,20 @@
       // Titles we read but can't find in the catalogue are surfaced separately so nothing drops silently.
       var gmatched=0; UNMATCHED=[]; var seenU={};
       if(res.games && res.games.length){
-        res.games.forEach(function(pg){ var key=nrm(pg.title); if(!key) return; var g=tIdx[key];
-          if(g){ if(!PICKED[g.slug]){ PICKED[g.slug]={slug:g.slug,title:g.title,year:g.year,studio:g.studio}; gmatched++; } return; }
+        res.games.forEach(function(pg){ var key=nrm(pg.title); if(!key) return;
+          if(_isImgAlt(pg.title)) return;                                // filename / URL / image alt-text → never a real title
+          var g=tIdx[key];
+          if(g){
+            // Guard generic single-word false positives (e.g. "Home", "Connect" from a treasury link or a
+            // "Connect" button): a one-word matched title only counts if the game's studio is one of yours.
+            // Distinctive multi-word titles are trusted without that check.
+            var gs=nrm(g.studio||"");
+            if(key.split(" ").length<=1 && gs && !Object.keys(studioKeys).some(function(k){ return k && (k.indexOf(gs)>=0 || gs.indexOf(k)>=0); })) return;
+            if(!PICKED[g.slug]){ PICKED[g.slug]={slug:g.slug,title:g.title,year:g.year,studio:g.studio}; gmatched++; } return;
+          }
           // no catalogue match → keep only plausible game titles (drop studio names & role/section noise)
           if(seenU[key]||studioKeys[key]||sIdx[key]) return;
-          if(_SUFFIXRE.test(pg.title)||_TITLERE.test(pg.title)||_isImgAlt(pg.title)) return;   // "…Studios/Games/Entertainment", a role, or image alt-text
+          if(_SUFFIXRE.test(pg.title)||_TITLERE.test(pg.title)) return;   // "…Studios/Games/Entertainment" or a role
           if(pg.title.split(/\s+/).length<2) return;                     // single word → noise
           seenU[key]=1; UNMATCHED.push(pg.title);
         });
