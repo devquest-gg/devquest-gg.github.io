@@ -490,8 +490,10 @@
     IS_OWNER=true; document.body.classList.add("is-owner");   // draft acts like owner; writes go to localStorage, never the API
     var d=dGet(); var credits=(d.credits||[]).map(draftCredit);
     var pf=d.profile||{};
-    var person={ name:d.name||"Your name", slug:null, headline:pf.headline||"", location:pf.location||"", bio:pf.bio||"", links:pf.links||[], skills:{groups:[]}, portfolio_style:"production", open_to_work:pf.open_to_work?1:0, avatar_url:pf.avatar_url||"" };
-    resolveCovers(credits).then(function(cm){ cm=cm||{}; (d.credits||[]).forEach(function(c){ if(c.cover_url) cm[c.game_slug]=c.cover_url; }); render(person,[],credits,cm); mountDraftBar(credits.length); }).catch(function(){ render(person,[],credits,{}); mountDraftBar(credits.length); });
+    var person={ name:d.name||"Your name", slug:null, headline:pf.headline||"", location:pf.location||"", bio:pf.bio||"", links:pf.links||[], skills:{groups:[]}, portfolio_style:"production", open_to_work:pf.open_to_work?1:0, avatar_url:pf.avatar_url||"", unshipped:pf.unshipped||0 };
+    // Work history carried from the wizard — so gameless studios (e.g. Possibility Space) show on the timeline.
+    var positions=(d.positions||[]).map(function(pp){ var cur=(pp.is_current?true:false); return { studio:pp.studio||pp.studio_name||"", studio_slug:"", title:pp.title||"", start_year:pp.start_year||null, start_month:null, end_year:(cur?null:(pp.end_year||null)), end_month:null, is_current:cur, description:pp.description||"", location:pp.location||"" }; });
+    resolveCovers(credits).then(function(cm){ cm=cm||{}; (d.credits||[]).forEach(function(c){ if(c.cover_url) cm[c.game_slug]=c.cover_url; }); render(person,positions,credits,cm); mountDraftBar(credits.length); }).catch(function(){ render(person,positions,credits,{}); mountDraftBar(credits.length); });
   }
   // Mirror the rendered _credits back into the localStorage draft (role, work years, one-sheet, cover, order).
   function draftSyncFromCredits(){
@@ -559,7 +561,6 @@
 
   function creditYear(c){ return c.work_start || c.year || c.work_end || null; }
   function isLive(c){ return (c.releases||[]).some(function(x){ return /live/i.test(x); }); }
-  function isUnshipped(c){ return (c.releases||[]).some(function(x){ return /cancel|unshipped|never shipped/i.test(x); }); }
   function comingSoon(c){ var d=c.sheet&&c.sheet.release_date; if(!d) return false; var t=Date.parse(d); return !isNaN(t) && t>Date.now(); }
   // portfolio-level average critic score across titles that have one (auto-shows only with 2+ scored titles)
   var MIN_SCORED = 2;
@@ -669,7 +670,7 @@
         '<div class="stats">'+
           stat((CUR-minY)+" yrs","In the industry")+stat(nStudios,"Studios")+stat(credits.length,"Credits")+
           (ac?stat(ac.avg,"Avg. critic score"):"")+
-          stat(liveCount,"Live-service")+stat(credits.filter(isUnshipped).length,"Cancelled / unshipped")+
+          stat(liveCount,"Live-service")+stat(p.unshipped||0,"Cancelled / unshipped")+
         '</div>'+
       '</div></div>';
   }
@@ -1254,6 +1255,7 @@
       '<label class="eflabel">About / bio</label><textarea id="ef-bio">'+esc(p.bio||"")+'</textarea>'+
       '<div class="efchk"><input type="checkbox" id="ef-otw" '+(p.open_to_work?"checked":"")+'><label for="ef-otw">Show &ldquo;Open to opportunities&rdquo;</label></div>'+
       '<label class="eflabel">Portfolio style</label><select id="ef-style">'+['production','engineering','art','audio','design','qa'].map(function(s){ return '<option value="'+s+'" '+((p.portfolio_style||"production")===s?"selected":"")+'>'+s.charAt(0).toUpperCase()+s.slice(1)+'</option>'; }).join("")+'</select>'+
+      '<label class="eflabel">Cancelled / unshipped titles <span class="mut">— a count of projects that were cancelled or never shipped (often NDA, so you can’t name them); shown as a stat tile</span></label><input id="ef-unshipped" type="number" min="0" max="999" placeholder="0" value="'+esc(p.unshipped!=null?p.unshipped:"")+'">'+
       '<label class="eflabel">Profile portrait <span class="mut">&mdash; optional headshot; shown instead of your initials</span></label>'+
       '<div class="uprow"><div class="upprev port" id="ef-avatar-prev">Photo</div><div style="flex:1"><input id="ef-avatar" placeholder="https://… or upload a photo" value="'+esc(p.avatar_url||"")+'"><div class="upbtns"><button type="button" class="upbtn" data-upload-for="ef-avatar">⬆ Upload photo</button><button type="button" class="upbtn ghost" id="ef-avatar-clear">Remove</button></div></div></div>'+
       '<label class="eflabel">Links</label>'+
@@ -1266,19 +1268,20 @@
     var g=function(id){ var e=document.getElementById(id); return e?e.value.trim():""; };
     var links=[];
     [["linkedin","ef-linkedin"],["portfolio","ef-portfolio"],["artstation","ef-artstation"],["github","ef-github"]].forEach(function(x){ var u=g(x[1]); if(u) links.push({type:x[0],url:u}); });
-    var payload={ name:g("ef-name"), headline:g("ef-head"), location:g("ef-loc"), bio:g("ef-bio"), open_to_work: document.getElementById("ef-otw").checked?1:0, portfolio_style:g("ef-style"), avatar_url:g("ef-avatar"), links:links };
+    var _un=document.getElementById("ef-unshipped"); var unc=_un?parseInt(_un.value,10):NaN; if(isNaN(unc)||unc<0) unc=0; if(unc>999) unc=999;
+    var payload={ name:g("ef-name"), headline:g("ef-head"), location:g("ef-loc"), bio:g("ef-bio"), open_to_work: document.getElementById("ef-otw").checked?1:0, portfolio_style:g("ef-style"), avatar_url:g("ef-avatar"), links:links, unshipped_count:unc };
     var st=document.getElementById("ef-status"); st.textContent="Saving…"; st.className="efstatus";
     if(IS_DRAFT){
       var d=dGet();
       if(payload.name) d.name=payload.name;
-      d.profile={ headline:payload.headline, location:payload.location, bio:payload.bio, open_to_work:payload.open_to_work, avatar_url:payload.avatar_url, links:links };
+      d.profile={ headline:payload.headline, location:payload.location, bio:payload.bio, open_to_work:payload.open_to_work, avatar_url:payload.avatar_url, links:links, unshipped:unc };
       dSet(d);
-      _person.name=payload.name; _person.headline=payload.headline; _person.location=payload.location; _person.bio=payload.bio; _person.open_to_work=payload.open_to_work; _person.avatar_url=payload.avatar_url; _person.links=links;
+      _person.name=payload.name; _person.headline=payload.headline; _person.location=payload.location; _person.bio=payload.bio; _person.open_to_work=payload.open_to_work; _person.avatar_url=payload.avatar_url; _person.links=links; _person.unshipped=unc;
       renderHero(); st.textContent="Saved ✓"; st.className="efstatus ok"; setTimeout(closeSheet,400);
       return;
     }
     DQAPI.updateProfile(payload).then(function(r){
-      if(r&&r.ok){ _person.name=payload.name; _person.headline=payload.headline; _person.location=payload.location; _person.bio=payload.bio; _person.open_to_work=payload.open_to_work; _person.portfolio_style=payload.portfolio_style; _person.avatar_url=payload.avatar_url; _person.links=links; renderHero(); st.textContent="Saved ✓"; st.className="efstatus ok"; setTimeout(closeSheet,450); }
+      if(r&&r.ok){ _person.name=payload.name; _person.headline=payload.headline; _person.location=payload.location; _person.bio=payload.bio; _person.open_to_work=payload.open_to_work; _person.portfolio_style=payload.portfolio_style; _person.avatar_url=payload.avatar_url; _person.links=links; _person.unshipped=payload.unshipped_count; renderHero(); st.textContent="Saved ✓"; st.className="efstatus ok"; setTimeout(closeSheet,450); }
       else { st.textContent=(r&&r.data&&r.data.error)||"Could not save."; st.className="efstatus err"; }
     }).catch(function(){ st.textContent="Network error."; st.className="efstatus err"; });
   }
@@ -1297,7 +1300,6 @@
   function sheetFormHTML(c){
     var s=c.sheet||{};
     var isLiveNow=(c.releases||[]).some(function(x){ return /live/i.test(x); });
-    var isCancelledNow=(c.releases||[]).some(function(x){ return /cancel|unshipped|never shipped/i.test(x); });
     var stats=(s.stats||[]).slice(0,6); while(stats.length<4){ stats.push({label:"",value:""}); }
     var contribs=(s.contributions||[]).join("\n");
     var chals=(s.challenges||[]).join("\n");
@@ -1308,10 +1310,9 @@
       '<h3>Edit one-sheet</h3><div class="efdesc">'+esc(c.game_title)+' · '+esc(c.role||"")+'</div>'+
       '<label class="eflabel">Your role</label><input id="ef-role" placeholder="e.g. Senior Producer" value="'+esc(c.role||"")+'">'+
       '<label class="eflabel">Years on it <span class="mut">— optional; the span shown under the title</span></label><div class="efrow"><input id="ef-wstart" type="number" min="1970" max="2100" style="flex:1;min-width:140px" placeholder="From (e.g. 2012)" value="'+esc(c.work_start!=null?c.work_start:"")+'"><input id="ef-wend" type="number" min="1970" max="2100" style="flex:1;min-width:140px" placeholder="To (e.g. 2015)" value="'+esc(c.work_end!=null?c.work_end:"")+'"></div>'+
-      '<label class="eflabel">Status <span class="mut">— optional; drives the badges &amp; the stat tiles on your wall</span></label>'+
-      '<div style="display:flex;flex-direction:column;gap:9px;margin:2px 0 6px">'+
+      '<label class="eflabel">Status <span class="mut">— optional; shows a Live-service badge &amp; feeds the stat tile</span></label>'+
+      '<div style="margin:2px 0 6px">'+
         '<label style="display:flex;align-items:center;gap:9px;font-size:14px;cursor:pointer"><input type="checkbox" id="ef-live" style="width:16px;height:16px;flex:none;accent-color:var(--accent)" '+(isLiveNow?"checked":"")+'>Live-service game <span class="mut">— ongoing / games-as-a-service</span></label>'+
-        '<label style="display:flex;align-items:center;gap:9px;font-size:14px;cursor:pointer"><input type="checkbox" id="ef-cancelled" style="width:16px;height:16px;flex:none;accent-color:var(--accent)" '+(isCancelledNow?"checked":"")+'>Cancelled / never shipped</label>'+
       '</div>'+
       '<label class="eflabel">One-line summary</label><textarea id="ef-summary" placeholder="What was this game, and your part in it?">'+esc(s.summary||"")+'</textarea>'+
       '<label class="eflabel">What I led <span class="mut">— one per line; paste a link or use [label](url)</span></label><textarea id="ef-did" placeholder="One achievement per line">'+esc(contribs)+'</textarea>'+
@@ -1359,10 +1360,9 @@
     var role=g("ef-role").trim(), wsRaw=g("ef-wstart").trim(), weRaw=g("ef-wend").trim();
     var st=document.getElementById("ef-sstatus");
     if(!role){ st.textContent="Role can\u2019t be empty."; st.className="efstatus err"; return; }
-    var _keepRel=(c.releases||[]).filter(function(x){ return !/live|cancel|unship|never shipped/i.test(x); });   // preserve any other release tags
+    var _keepRel=(c.releases||[]).filter(function(x){ return !/live/i.test(x); });   // preserve other release tags; only the Live flag is toggled here
     var releases=_keepRel.slice();
     if((document.getElementById("ef-live")||{}).checked) releases.push("Live");
-    if((document.getElementById("ef-cancelled")||{}).checked) releases.push("Cancelled");
     var creditPayload={ role:role, work_start:(wsRaw!==""?parseInt(wsRaw,10):null), work_end:(weRaw!==""?parseInt(weRaw,10):null), releases:releases };
     st.textContent="Saving…"; st.className="efstatus";
     if(IS_DRAFT){

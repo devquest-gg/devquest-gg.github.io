@@ -238,7 +238,7 @@
         if(!sIdx[k] && asGame && asGame.studio && studioKeys[nrm(asGame.studio)]) res.games.push({title:asGame.title, studio:asGame.studio});
         else keptJobs.push(j);
       });
-      if(keptJobs.length) STUDIOS=keptJobs.map(function(j){ return { name:j.company, from:(j.from||""), to:(j.to||"") }; });
+      if(keptJobs.length) STUDIOS=keptJobs.map(function(j){ return { name:j.company, from:(j.from||""), to:(j.to||""), title:(j.title||"") }; });
       // Match the games your paste listed to the catalogue and add them (shown as chips below).
       // Titles we read but can't find in the catalogue are surfaced separately so nothing drops silently.
       var gmatched=0; UNMATCHED=[]; var seenU={};
@@ -339,7 +339,7 @@
   function addStudio(){
     var name=document.getElementById("st-name").value.trim(); if(!name) return;
     var from=document.getElementById("st-from").value.trim(), to=document.getElementById("st-to").value.trim();
-    STUDIOS.push({ name:name, from:from, to:to });
+    STUDIOS.push({ name:name, from:from, to:to, title:"" });
     document.getElementById("st-name").value=""; document.getElementById("st-from").value=""; document.getElementById("st-to").value="";
     document.getElementById("st-sug").innerHTML="";
     renderStudioList(); document.getElementById("st-name").focus();
@@ -446,7 +446,12 @@
     var credits=Object.keys(PICKED).map(function(slug){ var g=PICKED[slug]; var y=parseInt(g.year,10);
       return { game_slug:g.slug, game_title:g.title, studio:g.studio||"", year:(isNaN(y)?null:y), work_start:(isNaN(y)?null:y), work_end:null, role:role, sheet:null, cover_url:"" };
     });
-    var draft={ name:name, profile:{ headline:head, location:"", bio:"", open_to_work:0, avatar_url:"", links:[] }, credits:credits };
+    // Every studio becomes a work-history position — including gameless roles (e.g. Possibility Space) that
+    // no game would anchor. addPosition needs a title, so fall back to the main role, then a generic label.
+    var positions=STUDIOS.map(function(s){ var sf=parseInt(s.from,10), sto=parseInt(s.to,10); var cur=(s.to===""||s.to==null);
+      return { studio:s.name, title:(s.title||role||"Team member"), start_year:(isNaN(sf)?null:sf), end_year:(cur||isNaN(sto)?null:sto), is_current:cur?1:0 };
+    });
+    var draft={ name:name, profile:{ headline:head, location:"", bio:"", open_to_work:0, avatar_url:"", links:[] }, credits:credits, positions:positions };
     try{ localStorage.setItem("dq_draft", JSON.stringify(draft)); }catch(e){ st.textContent="Could not save locally — check browser storage settings."; st.style.color="var(--pink)"; return; }
     st.textContent="Building your wall…"; st.style.color="var(--muted)";
     location.href="/portfolio/view.html?draft=1";
