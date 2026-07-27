@@ -265,7 +265,13 @@
           // A caption/location wedged inside a media cluster — its neighbour above or below is a URL/domain/image.
           // Catches "Home" under "GuildWars2.com" and "Mountain View" above "CoH.jpg".
           var _adjMedia=((_pm.line && (_isImgAlt(_pm.line) || _domainGame(_pm.line))) || (_nm.line && (_isImgAlt(_nm.line) || _domainGame(_nm.line))));
-          if(line.length<=70 && line.split(" ").length<=10 && line.indexOf(",")<0 && !/[.]$/.test(line) && !_hasType(line) && !/^\d/.test(line) && !_isImgAlt(line) && !_isLoc(line) && !_adjMedia){ pgames.push({title:line, studio:activeStudio}); }  // candidate game name under a role → matched to the catalogue later
+          if(line.length<=70 && line.split(" ").length<=10 && line.indexOf(",")<0 && !/[.]$/.test(line) && !_hasType(line) && !/^\d/.test(line) && !_isImgAlt(line) && !_isLoc(line) && !_adjMedia){
+            // A treasury media-link caption often prefixes the game with a generic label: "Home - The Elder
+            // Scrolls Online". Split on " - "/" | "/" : " and take the title part(s); a plain line has no split.
+            var _cg=_titleGames(line);
+            if(_cg.games && _cg.games.length){ _cg.games.forEach(function(gn){ pgames.push({title:gn, studio:activeStudio, fromCaption:true}); }); }   // catalogue-match-only (like domains) — never surfaced as unmatched
+            else { pgames.push({title:line, studio:activeStudio}); }                                                                                     // candidate game name under a role → matched to the catalogue later
+          }
         }
       }
     }
@@ -344,7 +350,7 @@
             if(pick){ if(!PICKED[pick.slug]){ PICKED[pick.slug]={slug:pick.slug,title:pick.title,year:pick.year,studio:pick.studio}; gmatched++; } return; }
           }
           // no catalogue match → keep only plausible game titles (drop studio names & role/section noise)
-          if(pg.fromDomain) return;                                      // recovered from a URL and unmatched — too speculative to surface as "unmatched"
+          if(pg.fromDomain || pg.fromCaption) return;                    // recovered from a URL or a media-link caption and unmatched — too speculative to surface as "unmatched"
           if(seenU[key]||studioKeys[key]||sIdx[key]) return;
           if(_SUFFIXRE.test(pg.title)||_TITLERE.test(pg.title)) return;   // "…Studios/Games/Entertainment" or a role
           if(pg.title.split(/\s+/).length<2) return;                     // single word → noise
