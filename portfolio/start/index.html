@@ -82,6 +82,7 @@
   var CATALOG = null;      // [[slug,title,year,studio], ...]
   var PICKED = {};         // slug -> {slug,title,year,studio}
   var UNMATCHED = [];      // game titles the paste listed that aren't in our catalogue yet
+  var REVEALED = false;    // step 1 shows only the paste box until you autofill or choose "build from scratch"
   var STEP = 1;
 
   function esc(s){ return String(s==null?"":s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];}); }
@@ -252,29 +253,33 @@
           seenU[key]=1; UNMATCHED.push(pg.title);
         });
       }
-      renderStudios();
+      REVEALED=true; renderStudios();
       var st2=document.getElementById("pt-status"); var n=STUDIOS.length;
       if(st2){ st2.textContent = n ? ("Found "+n+" studio"+(n===1?"":"s")+(res.name?" and your name":"")+(gmatched?(" and "+gmatched+" game"+(gmatched===1?"":"s")):"")+" — review below, remove anything wrong, then continue.") : "Couldn’t spot studios in that text — add them manually below."; st2.style.color = n?"var(--green)":"var(--muted)"; }
       if(n){ var le=document.getElementById(gmatched?"found-games-card":"st-list"); if(le){ try{ le.scrollIntoView({behavior:"smooth",block:"center"}); }catch(e){} } }
     }).catch(function(){ var s3=document.getElementById("pt-status"); if(s3){ s3.textContent="Something went wrong reading that."; s3.style.color="var(--pink)"; } });
   }
 
-  // ---------- Step 1: studios ----------
+  // ---------- Step 1: paste → (revealed) studios + games ----------
   function renderStudios(){
     app.innerHTML =
-      '<div class="blk"><h2>Have a LinkedIn or résumé? Paste it. <span style="font-size:12px;font-weight:700;color:var(--gold);vertical-align:middle;border:1px solid rgba(224,178,58,.4);border-radius:6px;padding:1px 7px">FASTEST</span></h2><div class="desc">We’ll read your name, headline, the studios you worked at, and the games you listed — then you just confirm below. Nothing is uploaded; it’s parsed right here in your browser.</div>'+
+      '<div class="blk"><h2>Have a LinkedIn or résumé? Paste it. <span style="font-size:12px;font-weight:700;color:var(--gold);vertical-align:middle;border:1px solid rgba(224,178,58,.4);border-radius:6px;padding:1px 7px">FASTEST</span></h2><div class="desc">We’ll read your name, headline, the studios you worked at, and the games you listed — then you just confirm. Nothing is uploaded; it’s parsed right here in your browser.</div>'+
         '<div class="desc" style="color:var(--gold);font-size:12.5px;margin:-6px 0 12px">Tip: on LinkedIn, click <b>“Show all experiences”</b> and <b>“Show all projects”</b> before you copy — older studios and games are hidden behind those links, and we can only read what’s in the text.</div>'+
         '<textarea id="pt-text" placeholder="Paste your LinkedIn profile text or your résumé here…"></textarea>'+
         '<div class="actions"><button class="btn primary" id="pt-go">Autofill from this →</button><span class="status" id="pt-status"></span></div>'+
+        '<div class="desc" style="margin-top:12px">No LinkedIn or résumé handy? <a id="scratch" style="color:var(--accent);font-weight:700;cursor:pointer">Build from scratch instead →</a></div>'+
       '</div>'+
-      '<div class="blk"><h2>Where have you worked?</h2><div class="desc">Add each studio and roughly when you were there — or edit what the paste found above. Years are optional but help us show the right games.</div>'+
-        '<div class="sdrop"><label>Studio / developer</label><input id="st-name" placeholder="e.g. Insomniac Games" autocomplete="off"><div id="st-sug"></div></div>'+
-        '<div class="row" style="margin-top:10px"><div><label>From (year)</label><input id="st-from" inputmode="numeric" placeholder="2019"></div><div><label>To (year, or blank if current)</label><input id="st-to" inputmode="numeric" placeholder="2022"></div><div style="flex:0 0 auto"><button class="btn sm" id="st-add">+ Add studio</button></div></div>'+
-        '<div id="st-list" style="margin-top:14px"></div>'+
-      '</div>'+
-      '<div class="blk hide" id="found-games-card"></div>'+
-      '<div class="actions"><button class="btn primary" id="to-games" disabled>Find my games →</button></div>';
+      '<div id="reveal" class="'+(REVEALED?"":"hide")+'">'+
+        '<div class="blk"><h2>Where have you worked?</h2><div class="desc">Add each studio and roughly when you were there — or edit what the paste found. Years are optional but help us show the right games.</div>'+
+          '<div class="sdrop"><label>Studio / developer</label><input id="st-name" placeholder="e.g. Insomniac Games" autocomplete="off"><div id="st-sug"></div></div>'+
+          '<div class="row" style="margin-top:10px"><div><label>From (year)</label><input id="st-from" inputmode="numeric" placeholder="2019"></div><div><label>To (year, or blank if current)</label><input id="st-to" inputmode="numeric" placeholder="2022"></div><div style="flex:0 0 auto"><button class="btn sm" id="st-add">+ Add studio</button></div></div>'+
+          '<div id="st-list" style="margin-top:14px"></div>'+
+        '</div>'+
+        '<div class="blk" id="found-games-card"></div>'+
+        '<div class="actions"><button class="btn primary" id="to-games" disabled>Continue →</button></div>'+
+      '</div>';
     var ptg=document.getElementById("pt-go"); if(ptg) ptg.onclick=autofillFromPaste;
+    var scr=document.getElementById("scratch"); if(scr) scr.onclick=function(){ REVEALED=true; var rv=document.getElementById("reveal"); if(rv){ rv.classList.remove("hide"); try{ rv.scrollIntoView({behavior:"smooth",block:"start"}); }catch(e){} } var sn=document.getElementById("st-name"); if(sn) sn.focus(); };
     renderStudioList();
     renderFoundGames();
     var nameEl=document.getElementById("st-name");
@@ -283,30 +288,46 @@
     nameEl.addEventListener("input", studioSuggest);
     document.getElementById("to-games").onclick=function(){ loadCatalog().then(function(){ setStep(2); }); };
   }
-  function updateCTALabel(){ var go=document.getElementById("to-games"); if(!go) return; go.disabled=STUDIOS.length===0; go.textContent=(Object.keys(PICKED).length?"Add more games →":"Find my games →"); }
-  // Games matched from the paste, shown as removable chips — same pattern as the studio chips.
+  function updateCTALabel(){ var go=document.getElementById("to-games"); if(!go) return; go.disabled=(STUDIOS.length===0 && Object.keys(PICKED).length===0); go.textContent="Continue →"; }
+  // Games found from the paste, plus an inline add box — same interaction as the studio card:
+  // type a title to add a game right here (no need to go to the next step), tap × to remove.
   function renderFoundGames(){
     var card=document.getElementById("found-games-card"); if(!card) return;
     var slugs=Object.keys(PICKED);
-    if(!slugs.length && !UNMATCHED.length){ card.classList.add("hide"); card.innerHTML=""; updateCTALabel(); return; }
-    card.classList.remove("hide");
     var games=slugs.map(function(s){ return PICKED[s]; });
     games.sort(function(a,b){ return String(a.studio||"").localeCompare(String(b.studio||"")) || (parseInt(b.year,10)||0)-(parseInt(a.year,10)||0) || String(a.title).localeCompare(String(b.title)); });
-    var chips = games.length ?
-      ('<h2>Games we found <span style="font-size:13px;font-weight:700;color:var(--muted)">— '+games.length+'</span></h2>'+
-       '<div class="desc">Pulled from the titles in your paste. Tap × to remove any that weren’t yours — you can add more on the next step.</div>'+
-       '<div>'+games.map(function(g){ var meta=(g.studio?esc(g.studio):"")+(g.year?' · '+esc(g.year):""); return '<span class="studio-chip"><b>'+esc(g.title)+'</b>'+(meta?' <span class="yr">'+esc(meta)+'</span>':'')+'<button class="x" data-slug="'+esc(g.slug)+'" aria-label="Remove">×</button></span>'; }).join("")+'</div>')
-      : '<h2>Games we found</h2>';
-    // Titles read from your profile that aren't in our catalogue yet — shown so nothing is silently dropped.
+    var head = '<h2>'+(games.length?'Games we found <span style="font-size:13px;font-weight:700;color:var(--muted)">— '+games.length+'</span>':'Your games')+'</h2>'+
+      '<div class="desc">'+(games.length?'Pulled from your paste. Tap × to remove any that weren’t yours, or type below to add more.':'Type a game title below to add the games you shipped.')+'</div>';
+    var addbox = '<div class="sdrop"><input id="fg-q" placeholder="Add a game you shipped… (type a title)" autocomplete="off"><div id="fg-sug"></div></div>';
+    var chips = games.length ? '<div style="margin-top:10px">'+games.map(function(g){ var meta=(g.studio?esc(g.studio):"")+(g.year?' · '+esc(g.year):""); return '<span class="studio-chip"><b>'+esc(g.title)+'</b>'+(meta?' <span class="yr">'+esc(meta)+'</span>':'')+'<button class="x" data-slug="'+esc(g.slug)+'" aria-label="Remove">×</button></span>'; }).join("")+'</div>' : '';
     var unm = UNMATCHED.length ?
-      ('<div style="margin-top:'+(games.length?'14px':'2px')+';padding-top:'+(games.length?'12px':'0')+';'+(games.length?'border-top:1px solid var(--border)':'')+'">'+
+      ('<div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border)">'+
        '<div class="desc" style="color:var(--gold);margin-bottom:6px">Listed on your profile but not in our catalogue yet — we couldn’t link '+(UNMATCHED.length===1?'this title':'these titles')+':</div>'+
        '<div>'+UNMATCHED.map(function(t){ return '<span class="studio-chip" style="border-style:dashed;opacity:.9"><b>'+esc(t)+'</b></span>'; }).join("")+'</div>'+
-       '<div class="desc" style="font-size:12px;margin-top:7px">These aren’t in our game catalogue, so we can’t add them automatically. We can get them added, or you can flag them.</div></div>')
+       '<div class="desc" style="font-size:12px;margin-top:7px">These aren’t in our game catalogue yet, so we can’t add them automatically.</div></div>')
       : '';
-    card.innerHTML = chips + unm;
+    card.innerHTML = head + addbox + chips + unm;
     card.querySelectorAll(".x").forEach(function(el){ el.onclick=function(){ delete PICKED[el.getAttribute("data-slug")]; renderFoundGames(); }; });
+    var fq=document.getElementById("fg-q"); if(fq) fq.addEventListener("input", gameSuggest);
     updateCTALabel();
+  }
+  // Inline game typeahead (searches the whole catalogue by title) — mirrors studioSuggest.
+  var _gsugT=null;
+  function gameSuggest(){
+    var el=document.getElementById("fg-q"), box=document.getElementById("fg-sug"); if(!el||!box) return;
+    var q=(el.value||"").trim();
+    if(_gsugT) clearTimeout(_gsugT);
+    if(q.length<2){ box.innerHTML=""; return; }
+    _gsugT=setTimeout(function(){
+      loadCatalog().then(function(rows){
+        if((((document.getElementById("fg-q")||{}).value)||"").trim()!==q) return;
+        var ql=nrm(q), out=[], seen={};
+        for(var i=0;i<rows.length && out.length<10;i++){ var r=rows[i]; if(!r) continue; if(nrm(r[1]).indexOf(ql)<0) continue; if(seen[r[0]]||PICKED[r[0]]) continue; seen[r[0]]=1; out.push({slug:r[0],title:r[1],year:r[2],studio:r[3]}); }
+        if(!out.length){ box.innerHTML='<div class="sdrop-list"><div style="color:var(--muted);cursor:default">No catalogue match for “'+esc(q)+'”.</div></div>'; return; }
+        box.innerHTML='<div class="sdrop-list">'+out.map(function(g){ var meta=(g.studio?esc(g.studio):"")+(g.year?' · '+esc(g.year):""); return '<div data-slug="'+esc(g.slug)+'" data-title="'+esc(g.title)+'" data-year="'+esc(g.year||"")+'" data-studio="'+esc(g.studio||"")+'">'+esc(g.title)+(meta?' <span style="color:var(--muted);font-size:12px">'+esc(meta)+'</span>':'')+'</div>'; }).join("")+'</div>';
+        box.querySelectorAll("div[data-slug]").forEach(function(d){ d.onclick=function(){ var slug=d.getAttribute("data-slug"); if(slug) PICKED[slug]={slug:slug,title:d.getAttribute("data-title"),year:d.getAttribute("data-year"),studio:d.getAttribute("data-studio")}; renderFoundGames(); var f=document.getElementById("fg-q"); if(f) f.focus(); }; });
+      });
+    }, 180);
   }
   var _sugT=null;
   function studioSuggest(){
