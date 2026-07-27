@@ -152,6 +152,17 @@
   function _md(l){ return String(l==null?"":l).replace(/\[([^\]]*)\]\([^)]*\)/g,"$1").replace(/^\s*[\*\-•▪○]\s*/,"").replace(/\s+/g," ").trim(); }   // [text](url) → text, drop bullets
   function _hasType(l){ return /\b(full[\s-]?time|part[\s-]?time|contract|freelance|internship|permanent|self[\s-]?employed|apprenticeship|seasonal)\b/i.test(l); }
   function _isImgAlt(l){ l=String(l==null?"":l); return /^(thumbnail|image|photo|picture|icon|logo|banner|screenshot|avatar|graphic)\b/i.test(l) || /\b(logo|icon|banner|thumbnail|screenshot|avatar)$/i.test(l) || /\.(jpe?g|png|gif|webp|svg|bmp|pdf|mp4|mov)$/i.test(l) || /https?:\/\//i.test(l) || /\b[a-z0-9-]{2,}\.(com|net|org|io|gg|co|tv|dev|xyz|app)\b/i.test(l); }   // image alt-text ("Thumbnail for X", "Ubisoft logo"), image filenames ("CoH.jpg"), and URLs ("GuildWars2.com")
+  // Producers often name their game in the job title: "Producer - Dark Age of Camelot",
+  // "Development Director - Fortune Online, Jumpgate Evolution". Split off the part after a " - "/" | "/" : "
+  // separator as game candidate(s) (comma / and / & separated) and return the cleaned title.
+  function _titleGames(t){
+    t=String(t==null?"":t);
+    var parts=t.split(/\s[–—-]\s|\s[|:]\s/);
+    if(parts.length<2) return { clean:t, games:[] };
+    var rest=parts.slice(1).join(" — ").trim();
+    var games=rest.split(/\s*,\s*|\s+(?:and|&|\/)\s+/i).map(function(x){ return _stripJunk(x); }).filter(function(x){ return x && x.length>=2 && x.split(" ").length<=8 && !_hasType(x) && !_isImgAlt(x); });
+    return { clean:parts[0].trim()||t, games:games };
+  }
   function _isDur(l){ return !/\d{4}/.test(l) && /\d+\s*(yrs?|years?|mos?|months?)\b/i.test(l); }   // "2 yrs 9 mos" — a grouped-company total, not a role date
   function _isTitleLine(l){ return _TITLERE.test(l) && !/·/.test(l) && !/\d{4}/.test(l); }
   function _isDate(l){ return _DRRE.test(l); }
@@ -189,7 +200,7 @@
         var title=pendingTitle;
         if(!title){ var t=_prevNE(L,pv.idx); if(t.line && _isTitleLine(t.line)) title=t.line; else if(prev && _isTitleLine(prev)) title=prev; }
         company=_cleanCo(company); var canon=_matchStudioStrict(company, studioArr); if(canon) company=canon;
-        if(company){ jobs.push({company:company, title:_stripJunk(title), from:from, to:to}); activeStudio=company; }
+        if(company){ var _tg=_titleGames(title); jobs.push({company:company, title:_stripJunk(_tg.clean), from:from, to:to}); activeStudio=company; _tg.games.forEach(function(gn){ pgames.push({title:gn, studio:company, fromTitle:true}); }); }
         pendingTitle="";
       } else if(_isDur(line)){                                                                                                         // a grouped-company total → the line above is the company
         var pv2=_prevNE(L,i);
@@ -256,6 +267,7 @@
             if(!PICKED[g.slug]){ PICKED[g.slug]={slug:g.slug,title:g.title,year:g.year,studio:g.studio}; gmatched++; } return;
           }
           // no catalogue match → keep only plausible game titles (drop studio names & role/section noise)
+          if(pg.fromTitle) return;                                       // extracted from a job title — too speculative to surface as "unmatched"
           if(seenU[key]||studioKeys[key]||sIdx[key]) return;
           if(_SUFFIXRE.test(pg.title)||_TITLERE.test(pg.title)) return;   // "…Studios/Games/Entertainment" or a role
           if(pg.title.split(/\s+/).length<2) return;                     // single word → noise
