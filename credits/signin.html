@@ -114,9 +114,17 @@
         if(di >= dcreds.length){
           var _fin = function(){ location.href = dslug ? ("/portfolio/view.html?slug=" + encodeURIComponent(dslug) + "&welcome=1") : "/credits/"; };
           var prof = draft.profile || {};
+          var tasks = [];
           if(dslug && DQAPI.updateProfile && (draft.name || draft.profile)){
-            DQAPI.updateProfile({ name: draft.name||"", headline: prof.headline||"", location: prof.location||"", bio: prof.bio||"", open_to_work: prof.open_to_work?1:0, avatar_url: prof.avatar_url||"", links: prof.links||[] }).then(_fin).catch(_fin);
-          } else { _fin(); }
+            tasks.push(DQAPI.updateProfile({ name: draft.name||"", headline: prof.headline||"", location: prof.location||"", bio: prof.bio||"", open_to_work: prof.open_to_work?1:0, avatar_url: prof.avatar_url||"", links: prof.links||[], unshipped_count: (prof.unshipped!=null?prof.unshipped:0) }).catch(function(){}));
+          }
+          // Work history carried from the wizard (studios, including gameless roles). addPosition requires a title.
+          if(dslug && DQAPI.addPosition && draft.positions && draft.positions.length){
+            draft.positions.forEach(function(pos){ if(!pos) return; var studio=pos.studio||pos.studio_name||"", title=pos.title||""; if(!studio||!title) return;
+              tasks.push(DQAPI.addPosition({ studio_name:studio, title:title, start_year:(pos.start_year!=null?pos.start_year:null), end_year:(pos.is_current?null:(pos.end_year!=null?pos.end_year:null)), is_current:pos.is_current?1:0 }).catch(function(){}));
+            });
+          }
+          (tasks.length ? Promise.all(tasks) : Promise.resolve()).then(_fin).catch(_fin);
           return;
         }
         var c = dcreds[di];
