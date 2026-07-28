@@ -1462,6 +1462,19 @@
     {canon:"remote",label:"Remote / distributed",v:["remote","distributed team","hybrid","work from home"]}
   ];
   var TSTOP={the:1,and:1,for:1,with:1,you:1,our:1,are:1,will:1,that:1,this:1,have:1,from:1,your:1,who:1,all:1,not:1,but:1,can:1,job:1,role:1,work:1,team:1,teams:1,years:1,year:1,experience:1,ability:1,strong:1,skills:1,including:1,across:1,within:1,help:1,were:1,what:1,when:1,into:1,they:1,them:1,their:1,about:1,other:1,more:1,such:1,also:1,plus:1,per:1,etc:1,using:1,use:1,new:1,well:1,like:1,we:1,a:1,an:1,to:1,of:1,in:1,on:1,or:1,is:1,as:1,at:1,be:1,by:1,it:1};
+  // Extra boilerplate the "also mentioned" list should never surface: legal/trademark footers, generic
+  // company/role/HR filler, and common verbs. These aren't skills, so they're pure noise as suggestions.
+  var TXSTOP=("logo logos trademark trademarks reserved rights brand brands respective inc llc ltd corp corporation copyright registered owner owners name names product products entertainment interactive "+
+    "company companies business organization organizations industry industries world worldwide global leading leader group groups studio studios department division office offices "+
+    "being term terms building please apply application applications applicant applicants candidate candidates position positions opportunity opportunities employer employment benefits salary compensation "+
+    "requirements responsibilities qualifications preferred required requires must should would could ideal ideally looking seeking join joining passionate passion exciting growth culture diverse diversity inclusion equal "+
+    "above below between during through throughout include includes includes various multiple several many some most both each every others another following related relevant appropriate necessary essential key core excellent great good "+
+    "knowledge understanding familiar familiarity proficient proficiency expert expertise level levels month months week weeks day days time times part parts full best better high higher low lower large small current currently prior previous existing "+
+    "north south east west america american states united kingdom europe european elsewhere onsite "+
+    "working works helping make making create creating develop developing deliver delivering support supporting manage managing lead leading drive driving ensure ensuring provide providing collaborate collaborating contribute contributing define defining own owning run running get got used need needs want wants "+
+    "director manager producer designer engineer artist developer senior junior principal staff head chief specialist coordinator associate "+
+    "technology technologies solution solutions platform platforms system systems process processes project projects feature features content service services people person community members member partner partners customer customers user users player players game games gaming tournament")
+    .split(/\s+/).reduce(function(o,w){ if(w) o[w]=1; return o; },{});
   // Lower-cased, boundary-padded text that keeps + and # so "c++"/"c#" survive.
   function _tlc(s){ return " "+String(s==null?"":s).toLowerCase().replace(/[^a-z0-9+#.\s-]/g," ").replace(/-/g," ").replace(/\s+/g," ").trim()+" "; }
   function _tHas(text,v){
@@ -1477,10 +1490,10 @@
     TLEX.forEach(function(L){ for(var i=0;i<L.v.length;i++){ if(_tHas(t,L.v[i])){ req.push(L); used[L.canon]=1; break; } } });
     // supplemental: repeated meaningful words the lexicon didn't catch (shown, not scored)
     var freq={}, m=t.match(/[a-z][a-z0-9+#]{3,}/g)||[];
-    m.forEach(function(w){ if(!TSTOP[w]) freq[w]=(freq[w]||0)+1; });
+    m.forEach(function(w){ if(!TSTOP[w] && !TXSTOP[w]) freq[w]=(freq[w]||0)+1; });
     var extra=Object.keys(freq).filter(function(w){ return freq[w]>=2; })
       .filter(function(w){ for(var i=0;i<TLEX.length;i++){ for(var j=0;j<TLEX[i].v.length;j++){ if(TLEX[i].v[j].indexOf(w)>=0) return false; } } return true; })
-      .sort(function(a,b){ return freq[b]-freq[a]; }).slice(0,8);
+      .sort(function(a,b){ return freq[b]-freq[a]; }).slice(0,6);
     return { req:req, extra:extra };
   }
   function _tInv(m){                                                 // everything the résumé actually says
@@ -1548,13 +1561,17 @@
   function _renderTailorResult(){
     var out=document.getElementById("tout"); if(!out) return; var r=_tState.res; if(!r) return;
     if(!r.total){ out.innerHTML='<div class="tnote">We couldn\'t spot specific requirements in that text — paste the full posting (responsibilities and qualifications) for a useful read.</div>'; return; }
-    var ring=r.score>=70?"g":(r.score>=40?"a":"r");
+    var ring=r.score>=70?"g":(r.score>=45?"a":"r");
+    // Lead with a qualitative label + the count; the raw % reads like a school grade (69% ≈ C+) when
+    // 11/16 may be a strong fit. Percentage is kept as a small secondary detail.
+    var fitLabel=r.score>=70?"Strong fit":(r.score>=45?"Solid fit":(r.score>=25?"Partial fit":"Light match"));
+    var fitLine=r.score>=70?"Your profile covers most of what this role is looking for.":(r.score>=45?"You cover a good share of this role’s asks — close a gap or two below.":"There’s room to strengthen your fit — see what to add below.");
     var chips=function(arr,cls){ return arr.map(function(L){ return '<span class="tchip '+cls+'">'+_tEsc(L.label)+'</span>'; }).join(""); };
     var extra=r.extra&&r.extra.length?('<div class="tblk"><div class="tbh">Also mentioned in the posting</div><div class="tchips">'+r.extra.map(function(w){ return '<span class="tchip x">'+_tEsc(w)+'</span>'; }).join("")+'</div><div class="thint">Not scored — check these are reflected somewhere in your profile if they matter to you.</div></div>'):'';
     out.innerHTML=
-      '<div class="tscore"><div class="tring '+ring+'">'+r.score+'<span>%</span></div><div class="tsx"><div class="tsxn">You match '+r.matched.length+' of '+r.total+' things this posting asks for.</div><div class="tsxs">Your bullets have been reordered for this role in the downloads below.</div></div></div>'+
+      '<div class="tscore"><div class="tfit '+ring+'">'+fitLabel+'</div><div class="tsx"><div class="tsxn">You match <b>'+r.matched.length+' of '+r.total+'</b> things this posting asks for. <span class="tpct">('+r.score+'%)</span></div><div class="tsxs">'+fitLine+' Your relevant bullets move to the top in the downloads below.</div></div></div>'+
       '<div class="tblk"><div class="tbh ok">Matched — surface these</div><div class="tchips">'+(r.matched.length?chips(r.matched,"ok"):'<span class="tnone">None yet.</span>')+'</div></div>'+
-      '<div class="tblk"><div class="tbh gap">Gaps — not found in your profile</div><div class="tchips">'+(r.missing.length?chips(r.missing,"gap"):'<span class="tnone">Nothing missing — strong match.</span>')+'</div>'+(r.missing.length?'<div class="thint">If you genuinely have any of these, add them to a game one-sheet or your bio and your fit climbs. Don\'t claim ones you can\'t back up.</div>':'')+'</div>'+
+      '<div class="tblk"><div class="tbh gap">Add these if they apply</div><div class="tchips">'+(r.missing.length?chips(r.missing,"gap"):'<span class="tnone">Nothing missing — strong match.</span>')+'</div>'+(r.missing.length?'<div class="thint">These are in the posting but not yet on your profile. If you genuinely have any, add them to a game one-sheet or your bio and your fit climbs — don\'t claim ones you can\'t back up.</div>':'')+'</div>'+
       extra+
       '<div class="trow tdl"><button class="btn primary" id="tdpdf">⬇ Tailored résumé (PDF)</button><button class="btn ghost" id="tddocx">⬇ Tailored Word (.docx)</button><button class="btn ghost" id="tsave">Save this version</button></div>'+
       '<div id="tsavemsg" class="tsavemsg"></div>';
@@ -1579,9 +1596,9 @@
       ".trow{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap}.tdl{margin-top:18px;border-top:1px solid rgba(255,255,255,.08);padding-top:16px}"+
       ".tout{margin-top:6px}.tnote,.tnone,.thint{color:var(--muted,#9aa4b5);font-size:13px}.tnote{padding:14px 0}"+
       ".tscore{display:flex;align-items:center;gap:16px;margin:20px 0 8px}"+
-      ".tring{width:78px;height:78px;flex:0 0 78px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:700;border:5px solid;position:relative}.tring span{font-size:13px;font-weight:600;margin-left:1px}"+
-      ".tring.g{border-color:#3ecf8e;color:#3ecf8e}.tring.a{border-color:#e2b23a;color:#e2b23a}.tring.r{border-color:#e06060;color:#e06060}"+
-      ".tsxn{font-weight:600;font-size:15px;margin-bottom:3px}.tsxs{color:var(--muted,#9aa4b5);font-size:13px}"+
+      ".tfit{flex:0 0 auto;border-radius:22px;padding:9px 18px;font-size:15px;font-weight:800;border:1.5px solid;white-space:nowrap}"+
+      ".tfit.g{background:rgba(62,207,142,.14);border-color:rgba(62,207,142,.5);color:#7ff0be}.tfit.a{background:rgba(226,178,58,.14);border-color:rgba(226,178,58,.5);color:#f2d98a}.tfit.r{background:rgba(224,96,96,.14);border-color:rgba(224,96,96,.5);color:#f0a3a3}"+
+      ".tsxn{font-weight:600;font-size:15px;margin-bottom:3px}.tsxs{color:var(--muted,#9aa4b5);font-size:13px;line-height:1.5}.tpct{color:var(--muted,#9aa4b5);font-weight:600;font-size:13px}"+
       ".tblk{margin:16px 0}.tbh{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted,#9aa4b5);margin-bottom:8px;font-weight:700}.tbh.ok{color:#3ecf8e}.tbh.gap{color:#e2b23a}"+
       ".tchips{display:flex;flex-wrap:wrap;gap:7px}.tchip{border-radius:20px;padding:4px 12px;font-size:12.5px;border:1px solid}"+
       ".tchip.ok{background:rgba(62,207,142,.12);border-color:rgba(62,207,142,.4);color:#9ff0c8}.tchip.gap{background:rgba(226,178,58,.12);border-color:rgba(226,178,58,.4);color:#f2d98a}.tchip.x{background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.14);color:var(--muted,#9aa4b5)}"+
