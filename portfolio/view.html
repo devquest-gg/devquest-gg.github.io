@@ -1458,7 +1458,7 @@
     {canon:"audio",label:"Audio",v:["audio","sound design","wwise","fmod"]},
     {canon:"vfx",label:"VFX",v:["vfx","visual effects","particles","niagara"]},
     {canon:"qa",label:"QA / testing",v:["qa","quality assurance","testing","test plans","automation testing"]},
-    {canon:"publishing",label:"Publishing",v:["publishing","publisher","go to market","go-to-market","marketing","community"]},
+    {canon:"publishing",label:"Publishing",v:["publishing","publisher","go to market","go-to-market","marketing"]},
     {canon:"remote",label:"Remote / distributed",v:["remote","distributed team","hybrid","work from home"]}
   ];
   var TSTOP={the:1,and:1,for:1,with:1,you:1,our:1,are:1,will:1,that:1,this:1,have:1,from:1,your:1,who:1,all:1,not:1,but:1,can:1,job:1,role:1,work:1,team:1,teams:1,years:1,year:1,experience:1,ability:1,strong:1,skills:1,including:1,across:1,within:1,help:1,were:1,what:1,when:1,into:1,they:1,them:1,their:1,about:1,other:1,more:1,such:1,also:1,plus:1,per:1,etc:1,using:1,use:1,new:1,well:1,like:1,we:1,a:1,an:1,to:1,of:1,in:1,on:1,or:1,is:1,as:1,at:1,be:1,by:1,it:1};
@@ -1473,7 +1473,9 @@
     "north south east west america american states united kingdom europe european elsewhere onsite "+
     "working works helping make making create creating develop developing deliver delivering support supporting manage managing lead leading drive driving ensure ensuring provide providing collaborate collaborating contribute contributing define defining own owning run running get got used need needs want wants "+
     "director manager producer designer engineer artist developer senior junior principal staff head chief specialist coordinator associate "+
-    "technology technologies solution solutions platform platforms system systems process processes project projects feature features content service services people person community members member partner partners customer customers user users player players game games gaming tournament")
+    "technology technologies solution solutions platform platforms system systems process processes project projects feature features content service services people person community members member partner partners customer customers user users player players game games gaming tournament "+
+    // page chrome / footers / social / legal-EEO / benefits / locations that get pasted along with a posting
+    "riot development developing initiative initiatives notice support supported verify accessibility annual report reports peering information pact surface cookie cookies preference preferences follow share watch twitter instagram tiktok linkedin facebook youtube social media newsletter subscribe sign login register careers career blog news press investors legal policy policies privacy sitemap menu search accommodation accommodations disability disabilities veteran veterans gender race religion sexual orientation protected applicable law laws regardless regard consideration eligible eligibility authorization sponsor sponsorship relocation range bonus equity insurance dental vision medical benefits fair chance criminal history background check equal opportunity affirmative action angeles francisco york seattle austin boston chicago diego montreal vancouver london berlin tokyo city county state province headquarters")
     .split(/\s+/).reduce(function(o,w){ if(w) o[w]=1; return o; },{});
   // Lower-cased, boundary-padded text that keeps + and # so "c++"/"c#" survive.
   function _tlc(s){ return " "+String(s==null?"":s).toLowerCase().replace(/[^a-z0-9+#.\s-]/g," ").replace(/-/g," ").replace(/\s+/g," ").trim()+" "; }
@@ -1491,16 +1493,17 @@
     // supplemental: repeated meaningful words the lexicon didn't catch (shown, not scored)
     var freq={}, m=t.match(/[a-z][a-z0-9+#]{3,}/g)||[];
     m.forEach(function(w){ if(!TSTOP[w] && !TXSTOP[w]) freq[w]=(freq[w]||0)+1; });
-    var extra=Object.keys(freq).filter(function(w){ return freq[w]>=2; })
+    var extra=Object.keys(freq).filter(function(w){ return freq[w]>=3; })   // 3+ mentions = a real recurring theme, not stray footer/nav chrome
       .filter(function(w){ for(var i=0;i<TLEX.length;i++){ for(var j=0;j<TLEX[i].v.length;j++){ if(TLEX[i].v[j].indexOf(w)>=0) return false; } } return true; })
-      .sort(function(a,b){ return freq[b]-freq[a]; }).slice(0,6);
+      .sort(function(a,b){ return freq[b]-freq[a]; }).slice(0,5);
     return { req:req, extra:extra };
   }
   function _tInv(m){                                                 // everything the résumé actually says
-    var parts=[m.headline,m.summary];
-    (m.experience||[]).forEach(function(j){ parts.push(j.title,j.company,(j.shipped||[]).join(" "),(j.bullets||[]).join(" ")); });
-    (m.additional||[]).forEach(function(a){ parts.push(a.title,a.role,a.studio,(a.bullets||[]).join(" ")); });
+    var parts=[m.headline,m.summary], hasShipped=false;
+    (m.experience||[]).forEach(function(j){ parts.push(j.title,j.company,(j.shipped||[]).join(" "),(j.bullets||[]).join(" ")); if((j.shipped||[]).length) hasShipped=true; });
+    (m.additional||[]).forEach(function(a){ parts.push(a.title,a.role,a.studio,(a.bullets||[]).join(" ")); hasShipped=true; });
     (m.skills||[]).forEach(function(g){ parts.push(g.label,(g.items||[]).join(" ")); });
+    if(hasShipped) parts.push("shipped launched released a title titles");   // they demonstrably have shipped credits, even if a bullet never says the word
     return _tlc(parts.join(" "));
   }
   function tailorAnalyze(jd,m){
