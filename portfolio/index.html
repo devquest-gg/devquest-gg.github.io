@@ -1,817 +1,680 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- DevQuest Credits homepage -->
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DevQuest Portfolio: build the game-dev portfolio your games deserve</title>
-<meta name="description" content="An opt-in, dev-controlled game credits database. Find your credits, claim your page, and let the peers you shipped with vouch for it.">
+<title>Quick start · DevQuest Portfolio</title>
 <meta name="robots" content="noindex, nofollow">
-<link rel="canonical" href="https://devquest.gg/credits">
-<link rel="icon" href="/credits/favicon.svg" type="image/svg+xml">
-<meta property="og:type" content="website">
-<meta property="og:site_name" content="DevQuest Credits">
-<meta property="og:url" content="https://devquest.gg/credits">
-<meta property="og:title" content="DevQuest Credits: own the record of the games you made">
-<meta property="og:description" content="A developer-owned, peer-confirmed credits database. Claim your work, and let the people you shipped with confirm it.">
-<meta property="og:image" content="https://devquest.gg/credits/og-credits.png">
-<meta property="og:image:width" content="1200">
-<meta property="og:image:height" content="630">
-<meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="DevQuest Credits: own the record of the games you made">
-<meta name="twitter:description" content="A developer-owned, peer-confirmed credits database. Claim your work, and let the people you shipped with confirm it.">
-<meta name="twitter:image" content="https://devquest.gg/credits/og-credits.png">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <style>
-  :root{
-    --bg:#0b0e14; --panel:#141a23; --border:#242c38; --text:#eef3fa; --muted:#8b98a9;
-    --accent:#58a6ff; --green:#3fb950; --gold:#e0b23a; --purple:#a371f7; --pink:#f778ba;
-  }
-  *{box-sizing:border-box}
-  html{scroll-behavior:smooth}
-  body{margin:0;background:var(--bg);color:var(--text);
-    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.5;-webkit-font-smoothing:antialiased}
-  a{color:inherit;text-decoration:none}
-  .container{max-width:1180px;margin:0 auto;padding:0 22px}
-  .mut{color:var(--muted)}
-
-  body::before{content:"";position:fixed;inset:0;z-index:-2;
-    background:
-      radial-gradient(60% 50% at 20% 0%,rgba(88,166,255,.16),transparent 60%),
-      radial-gradient(50% 45% at 85% 5%,rgba(163,113,247,.15),transparent 60%),
-      radial-gradient(45% 40% at 60% 30%,rgba(224,178,58,.08),transparent 60%);}
-
-  /* top bar */
-  .topbar{position:sticky;top:0;z-index:50;backdrop-filter:blur(12px);
-    background:rgba(11,14,20,.72);border-bottom:1px solid var(--border)}
-  .topbar .container{display:flex;align-items:center;justify-content:space-between;height:60px}
+  :root{--bg:#0a0d14;--panel:#11161f;--panel2:#141b26;--border:#232c3a;--text:#eaf0f8;--muted:#8b98ab;--dim:#5f6b7d;--accent:#58a6ff;--purple:#a371f7;--gold:#e0b23a;--green:#3fb950;--pink:#f778ba}
+  *{box-sizing:border-box}html,body{margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,-apple-system,Roboto,Helvetica,Arial,sans-serif;line-height:1.5;-webkit-font-smoothing:antialiased}
+  a{color:var(--accent);text-decoration:none}
+  .bar{height:3px;background:linear-gradient(90deg,var(--gold),var(--purple) 55%,var(--accent))}
+  .wrap{max-width:720px;margin:0 auto;padding:0 20px}
+  .nav{border-bottom:1px solid var(--border);background:rgba(10,13,20,.85);backdrop-filter:blur(8px);position:sticky;top:0;z-index:50}
+  .nav .wrap{display:flex;align-items:center;justify-content:space-between;height:54px;max-width:1040px}
   .brand{display:flex;align-items:center;gap:8px}
-.brand .mark{width:24px;height:24px;flex:none;display:block}
-.brandhome{display:inline-flex;align-items:center;gap:8px;text-decoration:none;color:inherit;cursor:pointer;transition:opacity .15s;position:relative}
-.brandhome:hover{opacity:.85}
-.brandhome[data-tip]::after{content:attr(data-tip);position:absolute;top:calc(100% + 9px);left:0;background:var(--panel);border:1px solid var(--border);color:var(--text);font-size:12px;font-weight:600;padding:5px 9px;border-radius:7px;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .14s;box-shadow:0 8px 22px rgba(0,0,0,.5);z-index:60}
-.brandhome:hover[data-tip]::after{opacity:1}
+  .brand .mark{width:24px;height:24px;flex:none;display:block}
+  .brandhome{display:inline-flex;align-items:center;gap:8px;text-decoration:none;color:inherit;cursor:pointer;transition:opacity .15s}
+  .brandhome:hover{opacity:.85}
   .brand .wm{font-weight:800;font-size:20px;letter-spacing:-.3px;color:var(--text)}
   .brand .wm .q{color:var(--accent)}
   .brand .wm .tld{color:var(--gold)}
-  .brand .cr{font-size:12px;font-weight:700;color:var(--accent);border:1px solid rgba(88,166,255,.4);border-radius:999px;padding:2px 9px;background:rgba(88,166,255,.08);letter-spacing:.03em;position:relative;top:2px}
-  .brand .beta{font-size:10px;font-weight:800;letter-spacing:.09em;color:#0b0e14;background:var(--gold);border-radius:999px;padding:2px 7px;position:relative;top:2px}
-  .topnav{display:flex;align-items:center;gap:22px;font-size:14px;font-weight:600}
-  .topnav a{color:var(--muted)} .topnav a:hover{color:var(--text)}
-  .topnav .back{font-size:13px;color:var(--muted);border:1px solid var(--border);border-radius:7px;padding:7px 13px;white-space:nowrap}
-  .topnav .back:hover{background:var(--panel);color:var(--text)}
-  .btn{display:inline-flex;align-items:center;gap:7px;border-radius:10px;padding:9px 16px;font-size:14px;font-weight:700;cursor:pointer;border:1px solid transparent}
-  .btn.primary{background:linear-gradient(135deg,var(--accent),var(--purple));color:#fff;box-shadow:0 6px 22px rgba(88,166,255,.28)}
-  .btn.primary:hover{filter:brightness(1.08)}
-
-  /* HERO */
-  .hero{position:relative;overflow:hidden;padding:66px 0 20px}
-  .hero h1{font-size:44px;line-height:1.06;font-weight:850;letter-spacing:-1px;margin:0 0 18px;max-width:640px}
-  .hero h1 .grad{background:linear-gradient(100deg,#7cc0ff,#a371f7 55%,#e0b23a);-webkit-background-clip:text;background-clip:text;color:transparent}
-  .hero p.lede{font-size:18px;color:#c4cfdd;max-width:560px;margin:0 0 26px}
-  .herorow{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);gap:44px;align-items:center;margin-bottom:6px}
-  .herotext{min-width:0}
-  .herovisual{display:flex;justify-content:center;align-items:center;perspective:1600px;min-width:0}
-  .herovisual img{max-width:100%;max-height:480px;border-radius:14px;border:1px solid var(--border);box-shadow:0 40px 90px rgba(0,0,0,.62);transform:rotateY(-9deg) rotateX(2deg);transition:transform .55s cubic-bezier(.2,.8,.2,1)}
-  .herovisual:hover img{transform:rotateY(-3deg) rotateX(1deg)}
-  @media(max-width:900px){ .herorow{grid-template-columns:1fr;gap:22px} .herovisual{order:2} .herovisual img{max-height:360px;transform:none} }
-  @media(max-width:560px){ .herovisual{display:none} }
-  .searchwrap{display:flex;gap:10px;max-width:640px;margin-bottom:14px}
-  .search{flex:1;display:flex;align-items:center;gap:10px;background:var(--panel);border:1px solid var(--border);border-radius:13px;padding:13px 16px;box-shadow:0 8px 30px rgba(0,0,0,.35)}
-  .search:focus-within{border-color:var(--accent)}
-  .search input{flex:1;background:none;border:none;outline:none;color:var(--text);font-size:15.5px;font-family:inherit}
-  .search .ic{font-size:16px;opacity:.7}
-  .trustline{font-size:13px;color:var(--muted)}
-  .trustline b{color:var(--green)}
-  .heroquick{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
-  .qk{font-size:12.5px;color:var(--muted);border:1px solid var(--border);border-radius:999px;padding:5px 12px;cursor:pointer}
-  .qk:hover{border-color:var(--accent);color:var(--text)}
-
-  /* cover wall marquee: contained to center column, fades at edges */
-  .wall{margin-top:46px;position:relative;overflow:hidden;padding:10px 0}
-  .wall::before,.wall::after{content:"";position:absolute;top:0;bottom:0;width:110px;z-index:2;pointer-events:none}
-  .wall::before{left:0;background:linear-gradient(90deg,var(--bg),transparent)}
-  .wall::after{right:0;background:linear-gradient(270deg,var(--bg),transparent)}
-  .marquee{display:flex;gap:14px;width:max-content;will-change:transform}
-  .marquee.play{animation:slide 42s linear infinite}
-  .marquee.rev{margin-top:14px}
-  .marquee.rev.play{animation-direction:reverse;animation-duration:52s}
-  .wall:hover .marquee.play{animation-play-state:paused}
-  @keyframes slide{from{transform:translateX(0)}to{transform:translateX(-50%)}}
-  .cover{width:132px;height:176px;border-radius:12px;flex:none;position:relative;overflow:hidden;
-    box-shadow:0 8px 22px rgba(0,0,0,.5), inset 0 0 0 1px rgba(255,255,255,.06);cursor:pointer;transition:transform .18s}
-  .cover:hover{transform:translateY(-4px) scale(1.02)}
-  .cover .cgenre{position:absolute;top:12px;left:13px;right:13px;font-size:9px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.52)}
-  .cover .ct{position:absolute;left:0;right:0;bottom:0;padding:13px 13px 13px;font-size:14.5px;font-weight:800;line-height:1.15;
-    background:linear-gradient(180deg,transparent,rgba(0,0,0,.5))}
-  .cover .cc{display:block;font-size:10.5px;font-weight:600;color:rgba(255,255,255,.72);margin-top:3px}
-
-  section.blk{padding:56px 0}
-  .eyebrow{font-size:12px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);margin-bottom:10px}
-  h2.sec{font-size:30px;font-weight:800;letter-spacing:-.5px;margin:0 0 8px}
-  .secsub{color:var(--muted);font-size:15px;margin:0 0 26px;max-width:640px}
-  .rowhead{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:22px}
-  .rowhead a.more{font-size:13.5px;font-weight:700;color:var(--accent)}
-  /* the featured-profile section: tighten the gap above it, open up the gap below its header */
-  #devs{padding-top:34px}
-  #devs .rowhead{margin-bottom:38px}
-
-  /* stat strip */
-  .statslead{font-size:13px;color:var(--muted);font-style:italic;margin:44px 0 12px}
-  .stats{display:flex;flex-wrap:wrap;gap:14px;border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:22px 0}
-  .stat{flex:1;min-width:170px}
-  .stat b{display:block;font-size:32px;font-weight:850;letter-spacing:-.5px;
-    background:linear-gradient(120deg,#eef3fa,#9db4d0);-webkit-background-clip:text;background-clip:text;color:transparent}
-  .stat.hl b{background:linear-gradient(120deg,#7cc0ff,#a371f7);-webkit-background-clip:text;background-clip:text;color:transparent}
-  .stat span{font-size:13px;color:var(--muted)}
-
-  /* trending game cards */
-  .gcards{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
-  .gcard{background:var(--panel);border:1px solid var(--border);border-radius:14px;overflow:hidden;cursor:pointer;transition:border-color .16s,transform .16s}
-  .gcard:hover{border-color:var(--accent);transform:translateY(-3px)}
-  .gcard .art{height:120px;position:relative}
-  .gcard .art .genre{position:absolute;top:13px;left:15px;font-size:9.5px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.6)}
-  .gcard .art .bigt{position:absolute;left:15px;right:15px;bottom:12px;font-size:17px;font-weight:850;letter-spacing:-.3px;line-height:1.1;text-shadow:0 2px 10px rgba(0,0,0,.4)}
-  .gcard .body{padding:12px 15px 15px}
-  .gcard .gm{font-size:12px;color:var(--muted)}
-  .gcard .gstat{margin-top:9px;font-size:12.5px;color:var(--muted)}
-  .gcard .gstat b{color:var(--accent)}
-
-  /* dev spotlight cards */
-  .dcards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
-  .dcard{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:18px;position:relative;overflow:hidden}
-  .dcard .halo{position:absolute;top:-40px;right:-40px;width:120px;height:120px;border-radius:50%;filter:blur(30px);opacity:.5}
-  .dcard .av{width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:19px;color:#0b0e14}
-  .dcard .nm{font-weight:800;font-size:16px;margin-top:12px}
-  .dcard .rl{font-size:12.5px;color:var(--muted)}
-  .dcard .verified{color:var(--green);font-size:12px;font-weight:700}
-  .dcard .titles{margin-top:12px;display:flex;flex-direction:column;gap:6px}
-  .dcard .tl{font-size:12.5px;color:#c4cfdd;display:flex;justify-content:space-between}
-  .dcard .tl .v{color:var(--green);font-size:11.5px}
-  .dcard .skills{margin-top:12px}
-  .skchip{display:inline-block;font-size:11px;color:var(--accent);border:1px solid rgba(88,166,255,.3);background:rgba(88,166,255,.08);border-radius:999px;padding:2px 9px;margin:2px 4px 0 0}
-  /* redesigned profile-preview card (mirrors the live person page) */
-  .dcard .hl{font-size:12px;color:var(--muted);margin-top:3px;line-height:1.35}
-  .dcard .hlst{font-size:12px;color:#c4cfdd;margin-top:1px;line-height:1.35}
-  .dcard .snap{font-size:11.5px;color:#c4cfdd;margin-top:9px;font-variant-numeric:tabular-nums}
-  .dcard .gocred{margin-top:13px;display:flex;flex-direction:column;gap:10px}
-  .dcard .cr .crtop{font-size:12.5px;font-weight:700;color:#e6edf5;display:flex;align-items:center;flex-wrap:wrap;gap:6px}
-  .dcard .cr .crrole{font-size:11.5px;color:var(--gold);font-weight:700;margin-top:1px}
-  .dcard .cv{color:var(--green);font-size:11px;font-weight:700;margin-left:auto;white-space:nowrap}
-  .dpill{font-size:10px;font-weight:700;border-radius:5px;padding:1px 6px;color:var(--purple);border:1px solid rgba(163,113,247,.35);background:rgba(163,113,247,.09)}
-  .dpill.live{color:var(--green);border-color:rgba(63,185,80,.35);background:rgba(63,185,80,.09)}
-  .dpill.port{color:var(--accent);border-color:rgba(88,166,255,.35);background:rgba(88,166,255,.09)}
-  /* profile-preview cards mirror the real profile: no pills, green seal, muted worked-on */
-  .crg{color:var(--accent);font-weight:700}
-  .dseal{display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;border-radius:50%;background:var(--green);color:#0b0e14;font-size:9px;font-weight:800;line-height:1;vertical-align:middle}
-  .dseal.peer{background:var(--accent);color:#04122b} .dseal.team{background:var(--green);color:#04220f}
-  .dwork{font-size:11px;color:var(--muted);margin-top:2px}
-  .dverify{font-size:11.5px;font-weight:600;color:var(--green);background:rgba(63,185,80,.08);border:1px solid rgba(63,185,80,.28);border-radius:8px;padding:5px 10px;margin-top:11px}
-
-  /* featured profile: one real profile shown the way its live page looks (cover hero + timeline) */
-  .featframe{background:var(--panel);border:1px solid var(--border);border-radius:18px;overflow:hidden;position:relative;max-width:760px;margin-left:0;margin-right:auto}
-  .ftint{position:absolute;top:-70px;right:-50px;width:230px;height:230px;border-radius:50%;filter:blur(48px);opacity:.32;pointer-events:none;z-index:0}
-  .fhead{display:flex;align-items:center;gap:13px;padding:16px 20px 13px;border-bottom:1px solid var(--border);position:relative;z-index:1;flex-wrap:wrap}
-  .fav{width:46px;height:46px;flex:none;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:17px;color:#0b0e14}
-  .fident{min-width:0;flex:1}
-  .fname{font-weight:800;font-size:17px;letter-spacing:-.3px}
-  .fhl{font-size:13px;color:var(--muted);margin-top:2px}
-  .fhl b{color:#c4cfdd;font-weight:600}
-  .fmeta{display:flex;gap:8px;flex-wrap:wrap;margin-top:9px}
-  .fchip{font-size:11.5px;font-weight:600;color:#c4cfdd;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:999px;padding:3px 11px;font-variant-numeric:tabular-nums}
-  .fchip.vf{color:var(--green);border-color:rgba(63,185,80,.3);background:rgba(63,185,80,.08)}
-  .fview{margin-left:auto;font-size:13px;font-weight:700;color:var(--accent);white-space:nowrap;align-self:center}
-  .fbody{padding:16px 20px 20px;position:relative;z-index:1}
-  .feyebrow{font-size:10.5px;letter-spacing:1.4px;text-transform:uppercase;color:var(--muted);font-weight:700;margin:0 0 10px}
-  .feathero{display:grid;grid-template-columns:repeat(3,1fr);gap:13px}
-  .ftile{text-decoration:none;color:inherit;display:block}
-  .fcov{position:relative;aspect-ratio:2/3;border-radius:13px;overflow:hidden;background:#141b26;box-shadow:0 8px 22px rgba(0,0,0,.5),inset 0 0 0 1px rgba(255,255,255,.06);transition:transform .14s ease,box-shadow .14s ease}
-  .ftile:hover .fcov{transform:translateY(-4px);box-shadow:0 16px 34px rgba(0,0,0,.6),inset 0 0 0 1px rgba(255,255,255,.13)}
-  .fcov img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1}
-  .fph{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:14px;text-align:center;font-size:12.5px;font-weight:800;letter-spacing:.11em;text-transform:uppercase;color:rgba(255,255,255,.30);line-height:1.3}
-  .fscrim{position:absolute;left:0;right:0;bottom:0;z-index:2;padding:30px 11px 10px;background:linear-gradient(to top,rgba(4,7,12,.96) 12%,rgba(4,7,12,.70) 55%,transparent);pointer-events:none}
-  .ftt{display:block;color:#fff;font-weight:750;font-size:13.5px;line-height:1.2;margin-bottom:3px;overflow-wrap:break-word}
-  .fmt{display:block;color:var(--gold);font-weight:700;font-size:11px;line-height:1.3}
-  .fsub{display:block;color:#8b98a9;font-size:10.5px;margin-top:3px;font-variant-numeric:tabular-nums}
-  .fvb{position:absolute;top:8px;right:8px;z-index:3;width:21px;height:21px;border-radius:50%;background:rgba(63,185,80,.95);color:#04220f;font-size:12.5px;font-weight:900;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 5px rgba(0,0,0,.5)}
-  .fvb.peer{background:rgba(88,166,255,.96);color:#04122b} .fvb.team{background:rgba(63,185,80,.96);color:#04220f}
-  .ftl{margin-top:6px}
-  .ftlrow{display:grid;grid-template-columns:52px 20px 1fr;align-items:start}
-  .ftlyear{font-variant-numeric:tabular-nums;font-weight:800;font-size:14px;color:var(--accent);padding-top:2px}
-  .ftlrail{position:relative;display:flex;justify-content:center;align-self:stretch}
-  .ftlrail::before{content:"";position:absolute;top:0;bottom:0;width:2px;background:var(--border)}
-  .ftlrow:first-child .ftlrail::before{top:10px}
-  .ftlrow:last-child .ftlrail::before{bottom:auto;height:10px}
-  .ftldot{position:relative;z-index:1;width:10px;height:10px;border-radius:50%;background:var(--accent);margin-top:6px;box-shadow:0 0 0 4px var(--panel)}
-  .ftlcard{display:flex;gap:12px;align-items:center;padding:0 0 16px 12px;min-width:0}
-  .ftlthumb{position:relative;flex:none;width:40px;aspect-ratio:2/3;border-radius:6px;overflow:hidden;background:#141b26;box-shadow:0 3px 9px rgba(0,0,0,.5),inset 0 0 0 1px rgba(255,255,255,.06);display:block}
-  .ftlthumb img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
-  .ftlph{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:3px;text-align:center;font-size:7px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:rgba(255,255,255,.32);line-height:1.2}
-  .ftlbody{min-width:0}
-  .ftlname{font-weight:750;font-size:14px;color:#e6edf5;display:flex;align-items:center;gap:6px}
-  .ftlrole{font-size:12px;color:var(--muted);margin-top:1px}
-  .ftldotmore{background:var(--panel);border:2px solid var(--accent);box-sizing:border-box;width:9px;height:9px;opacity:.85}
-  .ftlmore{align-self:start;font-size:13px;font-weight:700;color:var(--accent);text-decoration:none;padding:1px 0 4px 12px;display:inline-flex;align-items:center;gap:5px}
-  .ftlmore:hover{text-decoration:underline}
-  @media(max-width:600px){.feathero{grid-template-columns:1fr 1fr}}
-
-  /* how it works */
-  .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
-  .step{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:22px}
-  .step .num{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-weight:800;
-    background:linear-gradient(135deg,var(--accent),var(--purple));color:#fff;margin-bottom:14px}
-  .step h4{margin:0 0 6px;font-size:16px}
-  .step p{margin:0;font-size:13.5px;color:var(--muted)}
-
-  /* manifesto */
-  .manifesto{background:linear-gradient(135deg,rgba(88,166,255,.1),rgba(163,113,247,.08));border:1px solid var(--border);border-radius:20px;padding:44px}
-  .manifesto h2{font-size:28px;font-weight:800;letter-spacing:-.5px;margin:0 0 14px;max-width:720px}
-  .manifesto p{font-size:15.5px;color:#c4cfdd;max-width:730px;margin:0 0 10px}
-  .manifesto p b{color:var(--text)}
-
-  /* CTA band */
-  .cta{text-align:center;background:linear-gradient(135deg,#131a2a,#0d1017);border:1px solid var(--border);border-radius:20px;padding:52px 24px;position:relative;overflow:hidden}
-  .cta .glow{position:absolute;top:-60px;left:50%;transform:translateX(-50%);width:340px;height:200px;background:radial-gradient(closest-side,rgba(88,166,255,.35),transparent);filter:blur(20px)}
-  .cta h2{font-size:32px;font-weight:850;letter-spacing:-.6px;margin:0 0 10px}
-  .cta p{color:var(--muted);margin:0 0 22px;font-size:15px}
-
-  footer{border-top:1px solid var(--border);padding:34px 0;margin-top:50px;color:var(--muted);font-size:13px}
-  footer .container{display:flex;justify-content:space-between;flex-wrap:wrap;gap:14px}
-  footer a:hover{color:var(--text)}
-
-  .concept{position:fixed;bottom:14px;left:14px;z-index:80;font-size:11px;color:var(--muted);background:rgba(11,14,20,.85);border:1px solid var(--border);border-radius:8px;padding:6px 10px}
-
-  @media(max-width:860px){
-    .hero h1{font-size:38px}.gcards{grid-template-columns:repeat(2,1fr)}
-    .dcards{grid-template-columns:1fr}.steps{grid-template-columns:1fr}.topnav a:not(.back){display:none}
-  }
-  @media(max-width:600px){
-    .container{padding:0 14px}
-    .topbar .container{height:54px}
-    .brand .wm{font-size:18px}
-    .topnav{gap:12px}
-    .topnav .claimcta{display:none}
-    .hero{padding:34px 0 24px}
-    .hero h1{font-size:31px;letter-spacing:-.6px;margin-bottom:14px}
-    .hero p.lede{font-size:15.5px;margin-bottom:20px}
-    .searchwrap{gap:8px}
-    .wall{margin-top:30px}.cover{width:108px;height:144px}.cover .ct{font-size:13px}
-    section.blk{padding:32px 0}
-    h2.sec{font-size:23px}
-    .secsub{font-size:14px;margin-bottom:18px}
-    .rowhead{margin-bottom:16px}
-    .stats{gap:10px;padding:18px 0}.stat{min-width:calc(50% - 10px)}.stat b{font-size:26px}
-    .gcards{gap:12px}.gcard .art{height:104px}
-    .gcards .gcard:nth-child(n+5){display:none}
-    .manifesto{padding:26px;border-radius:16px}.manifesto h2{font-size:22px}.manifesto p{font-size:14.5px}
-    .cta{padding:36px 18px}.cta h2{font-size:24px}.cta p{font-size:14px}
-    footer{margin-top:34px;padding:26px 0}
-    .concept{display:none}
-  }
-  @media(max-width:440px){
-    .brand .cr,.brand .beta{display:none}
-    .brand .wm{font-size:16px}
-    .gcards{grid-template-columns:1fr}
-    .stat{min-width:100%}
-    .hero h1{font-size:27px}
-  }
-
-  /* --- portfolio-first hero + showcase --- */
-  .herocta{display:flex;gap:12px;flex-wrap:wrap;margin:24px 0 14px}
-  .btn.big{font-size:15.5px;padding:13px 24px;border-radius:12px}
-  .btn.ghost{background:transparent;border:1px solid var(--border);color:var(--text)}
-  .btn.ghost:hover{border-color:var(--accent)}
-  .findwrap{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:14px}
-  .findlbl{color:var(--muted);font-size:14px}
-  .findwrap .search{flex:1;min-width:220px}
-  .showcase h2.sec{margin-bottom:26px}
-  .showcase .ssub{color:var(--muted);font-size:15px;max-width:700px;margin:6px 0 30px;line-height:1.6}
-  .shot{display:grid;grid-template-columns:1.32fr 1fr;gap:30px;align-items:center;margin:0 0 34px}
-  .shot.rev{grid-template-columns:1fr 1.32fr}
-  .shot.rev .shotimg{order:2}
-  .shotimg img{width:100%;border-radius:14px;border:1px solid var(--border);box-shadow:0 24px 60px rgba(0,0,0,.55);display:block;background:var(--panel)}
-  .shotcap{font-size:15.5px;line-height:1.65;color:var(--muted)}
-  .shotcap b{color:var(--text);font-weight:750;display:block;margin-bottom:7px;font-size:17px;letter-spacing:-.2px}
-  .showcase .scfoot{text-align:center;margin-top:14px;display:flex;gap:16px;justify-content:center;align-items:center;flex-wrap:wrap}
-  .scdemo{font-size:14.5px;font-weight:700;color:var(--accent)}
-  .scdemo:hover{text-decoration:underline}
-  @media(max-width:760px){ .shot,.shot.rev{grid-template-columns:1fr;gap:16px} .shot.rev .shotimg{order:0} }
-  /* --- feature carousel (two-column) --- */
-  .fcar{margin:8px 0 2px}
-  .fcar-row{display:grid;grid-template-columns:minmax(0,1.08fr) minmax(0,.92fr);gap:46px;align-items:center}
-  .fcar-stage{position:relative;height:clamp(430px,64vh,640px);display:flex;align-items:center;justify-content:center}
-  .fcar-video{max-width:100%;max-height:100%;display:block}
-  .fcar-slide{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;opacity:0;visibility:hidden;transition:opacity .5s ease;pointer-events:none}
-  .fcar-slide.on{opacity:1;visibility:visible;pointer-events:auto}
-  .fcar-slide img{max-height:100%;max-width:100%;border-radius:14px;border:1px solid var(--border);box-shadow:0 30px 70px rgba(0,0,0,.6);background:var(--panel);display:block;cursor:zoom-in;transition:transform .22s ease}
-  .fcar-slide.on img:hover{transform:scale(1.015)}
-  .herovisual img{cursor:zoom-in}
-  /* --- lightbox --- */
-  #lightbox{position:fixed;inset:0;z-index:200;display:none;align-items:center;justify-content:center;padding:26px;background:rgba(4,7,12,.87);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);cursor:zoom-out}
-  #lightbox.open{display:flex;animation:lbfade .18s ease}
-  @keyframes lbfade{from{opacity:0}to{opacity:1}}
-  #lightbox img{max-width:min(94vw,880px);max-height:92vh;border-radius:12px;border:1px solid var(--border);box-shadow:0 40px 110px rgba(0,0,0,.75);cursor:default}
-  #lbclose{position:absolute;top:18px;right:22px;width:44px;height:44px;border-radius:50%;border:1px solid rgba(255,255,255,.28);background:rgba(0,0,0,.55);color:#fff;font-size:20px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s}
-  #lbclose:hover{background:rgba(255,255,255,.16)}
-  .fcar-nav{display:flex;flex-direction:column;gap:4px}
-  .fcar-item{display:block;width:100%;text-align:left;background:transparent;border:0;border-left:2px solid transparent;border-radius:12px;padding:15px 20px;cursor:pointer;transition:background .2s,border-color .2s}
-  .fcar-item:hover{background:rgba(255,255,255,.03)}
-  .fcar-item.on{background:linear-gradient(90deg,rgba(88,166,255,.10),rgba(88,166,255,0));border-left-color:var(--accent)}
-  .fcar-iname{display:block;font-size:19px;font-weight:750;letter-spacing:-.2px;color:var(--muted);transition:color .2s}
-  .fcar-item:hover .fcar-iname,.fcar-item.on .fcar-iname{color:var(--text)}
-  .fcar-idesc{display:block;max-height:0;overflow:hidden;opacity:0;font-size:15px;line-height:1.62;color:var(--muted);transition:max-height .35s ease,opacity .3s ease,margin-top .35s ease;margin-top:0}
-  .fcar-item.on .fcar-idesc{max-height:240px;opacity:1;margin-top:9px}
-  @media(max-width:820px){
-    .fcar-row{grid-template-columns:1fr;gap:18px}
-    .fcar-stage{height:clamp(320px,72vw,480px)}
-    .fcar-item{padding:12px 16px}
-    .fcar-iname{font-size:17px}
-    .fcar-idesc{font-size:14.5px}
-  }
-  /* --- feature highlights --- */
-  .feats .ssub{margin-bottom:28px}
-  .featgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
-  .featc{position:relative;background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:24px 22px;transition:border-color .18s,transform .18s}
-  .featc:hover{border-color:rgba(88,166,255,.45);transform:translateY(-2px)}
-  .featic{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:rgba(88,166,255,.12);color:var(--accent);margin-bottom:15px}
-  .featic svg{width:22px;height:22px}
-  .featc h3{font-size:16.5px;font-weight:750;margin:0 0 8px;letter-spacing:-.2px;color:var(--text)}
-  .featc p{font-size:14.5px;line-height:1.6;color:var(--muted);margin:0}
-  .soon{position:absolute;top:18px;right:18px;font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:#e0b23a;background:rgba(224,178,58,.13);border:1px solid rgba(224,178,58,.34);padding:3px 9px;border-radius:999px}
-  @media(max-width:860px){.featgrid{grid-template-columns:repeat(2,1fr)}}
-  @media(max-width:540px){.featgrid{grid-template-columns:1fr}}
-  /* --- why-believe strip --- */
-  .whybelieve{display:flex;flex-wrap:wrap;gap:11px 24px;margin:22px 0 4px}
-  .wb{display:flex;align-items:center;gap:8px;font-size:13.5px;font-weight:650;color:#c4cfdd}
-  .wb svg{width:16px;height:16px;color:var(--green);flex:none}
-  /* --- carousel kicker --- */
-  .fcar-kick{display:none;font-size:11px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--accent);background:rgba(88,166,255,.1);border:1px solid rgba(88,166,255,.28);border-radius:999px;padding:3px 10px;margin-bottom:11px}
-  .fcar-kick.g{color:var(--green);background:rgba(63,185,80,.1);border-color:rgba(63,185,80,.3)}
-  .fcar-item.on .fcar-kick{display:inline-block}
-  /* --- comparison table --- */
-  .cmp{border:1px solid var(--border);border-radius:18px;overflow:hidden;margin-top:8px;background:var(--panel)}
-  .cmprow{display:grid;grid-template-columns:1fr 1fr}
-  .cmprow>div{padding:15px 22px;border-top:1px solid var(--border);font-size:15px}
-  .cmprow:first-child>div{border-top:0}
-  .cmp .l{color:var(--muted)}
-  .cmp .r{color:var(--text);background:rgba(88,166,255,.05);border-left:1px solid var(--border)}
-  .cmp .hd{font-size:12px;font-weight:800;letter-spacing:.09em;text-transform:uppercase}
-  .cmp .l.hd{color:var(--muted)}
-  .cmp .r.hd{color:var(--accent)}
-  .cmp .r .ck{color:var(--green);font-weight:800;margin-right:9px}
-  .cmp .l .xx{color:var(--muted);opacity:.5;margin-right:9px}
-  @media(max-width:600px){ .cmprow>div{padding:12px 15px;font-size:13.5px} }
-  /* --- engine band --- */
-  .engine{max-width:800px}
-  .engine .big{font-size:21px;line-height:1.55;font-weight:600;color:#cdd8e6;margin:8px 0 0}
-  .engine .big b{color:var(--text);font-weight:800}
-  .embedwrap{border:1px solid var(--border);border-radius:16px;overflow:hidden;box-shadow:0 30px 80px rgba(0,0,0,.55);background:var(--panel);margin-top:6px}
-  .embedhead{display:flex;align-items:center;gap:11px;padding:12px 18px;background:linear-gradient(180deg,#121a27,#0e141e);border-bottom:1px solid var(--border)}
-  .livedot{width:9px;height:9px;border-radius:50%;background:#3fb950;box-shadow:0 0 0 4px rgba(63,185,80,.14);flex:none;animation:lpulse 2.4s ease-in-out infinite}
-  @keyframes lpulse{0%,100%{opacity:1}50%{opacity:.4}}
-  .embedhl{font-size:13px;color:var(--muted);font-weight:600}
-  .embedopen{margin-left:auto;font-size:12.5px;font-weight:700;color:var(--accent);text-decoration:none;white-space:nowrap}
-  .embedopen:hover{text-decoration:underline}
-  @media(max-width:600px){.embedhl{font-size:11.5px}}
-  .embedvp{width:100%;overflow:hidden;background:var(--bg)}
-  .embedframe{border:0;display:block;background:var(--bg);transform-origin:top left}
-  @media(max-width:760px){.embedurl{font-size:11px}}
-  .ctapair{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:26px 0 14px;max-width:840px}
-  .ctacard{display:block;padding:20px 22px;border-radius:16px;text-decoration:none;border:1px solid var(--border);background:linear-gradient(180deg,#151d2b,#0f1520);transition:border-color .16s,transform .16s,box-shadow .16s}
-  .ctacard:hover{transform:translateY(-3px);border-color:var(--accent);box-shadow:0 18px 40px rgba(0,0,0,.4)}
-  .ctacard.primary{background:linear-gradient(135deg,rgba(124,192,255,.16),rgba(163,113,247,.13));border-color:rgba(124,192,255,.4)}
-  .ctatop{display:flex;align-items:center;gap:10px;margin-bottom:9px}
-  .ctaicon{width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:15px;background:rgba(255,255,255,.06);border:1px solid var(--border);flex:none}
-  .ctacard.primary .ctaicon{background:linear-gradient(135deg,#7cc0ff,#a371f7);color:#0a0d14;border:0}
-  .ctahead{font-size:18px;font-weight:800;letter-spacing:-.3px;color:var(--text)}
-  .ctasub{font-size:13.5px;color:var(--muted);line-height:1.5;margin-bottom:12px}
-  .ctago{font-size:13.5px;font-weight:750;color:var(--accent)}
-  .shotcap .acc{color:var(--accent);font-weight:700}
-  @media(max-width:640px){.ctapair{grid-template-columns:1fr}}
-  /* --- how it works (3-step) --- */
-  .hiw .secsub{margin-bottom:26px}
-  .hiw3{position:relative}
-  .hiw3 .step{position:relative}
-  .hiw3 .step h4{font-size:17px;letter-spacing:-.2px}
-  .hiw3 .step p{font-size:14px}
-  .step.out{background:linear-gradient(135deg,rgba(124,192,255,.12),rgba(163,113,247,.09));border-color:rgba(124,192,255,.36)}
-  .hiwout{list-style:none;margin:11px 0 0;padding:0;display:flex;flex-direction:column;gap:7px}
-  .hiwout li{position:relative;padding-left:23px;font-size:14px;color:#dbe5f1;font-weight:650}
-  .hiwout li::before{content:"\2713";position:absolute;left:0;top:0;color:var(--green);font-weight:800}
-  @media(min-width:861px){
-    .hiw3 .step:not(:last-child)::after{content:"\2192";position:absolute;top:50%;right:-13px;transform:translateY(-50%);color:var(--muted);font-size:19px;font-weight:800;z-index:3}
-  }
-  /* --- hero live search --- */
-  .searchwrap{margin-top:6px}
-  .search .ic{font-size:18px}
-  #hs{font-size:16px}
-  .herohint{font-size:13.5px;color:var(--muted);margin:12px 0 0;max-width:560px;line-height:1.55}
-  .heroalt{font-size:13.5px;color:var(--muted);margin:15px 0 0}
-  .heroalt a{color:var(--accent);font-weight:700}
-  .heroalt a:hover{text-decoration:underline}
+  .brand .cr{font-size:12px;font-weight:700;color:var(--accent);border:1px solid rgba(88,166,255,.4);border-radius:999px;padding:2px 9px;background:rgba(88,166,255,.08);letter-spacing:.03em;position:relative;top:1px}
+  .brand .beta{font-size:10px;font-weight:800;letter-spacing:.09em;color:#0b0e14;background:var(--gold);border-radius:999px;padding:2px 7px;position:relative;top:1px}
+  .navlinks{display:flex;align-items:center;gap:18px;font-size:14px;color:var(--muted)}.navlinks a{color:var(--muted)}.navlinks a:hover{color:var(--text)}
+  .navlinks .back{color:var(--muted);border:1px solid var(--border);border-radius:7px;padding:6px 12px;white-space:nowrap}
+  .navlinks .back:hover{background:var(--panel);color:var(--text)}
+  @media(max-width:640px){.navlinks a:not(.back){display:none}}
+  h1{font-size:26px;font-weight:850;letter-spacing:-.4px;margin:24px 0 4px}
+  .lede{color:var(--muted);font-size:14px;margin:0 0 6px}
+  .steps{display:flex;gap:8px;margin:16px 0 6px}
+  .stepdot{flex:1;height:5px;border-radius:3px;background:var(--border)}
+  .stepdot.on{background:linear-gradient(90deg,var(--purple),var(--accent))}
+  .steplabel{font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--accent);margin:4px 0 0}
+  .blk{border:1px solid var(--border);background:var(--panel);border-radius:16px;padding:20px 22px;margin:16px 0}
+  .blk h2{font-size:18px;font-weight:800;margin:0 0 3px}
+  .blk .desc{color:var(--muted);font-size:13px;margin:0 0 14px}
+  label{display:block;font-size:12px;font-weight:700;color:#cdd8e6;margin:12px 0 5px}
+  input,textarea{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:9px;padding:10px 12px;color:var(--text);font-size:14px;font-family:inherit;outline:none}
+  textarea{min-height:120px;resize:vertical;line-height:1.5}
+  input:focus,textarea:focus{border-color:var(--accent)}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
+  .row>div{flex:1;min-width:90px}
+  .btn{display:inline-flex;align-items:center;gap:7px;font-size:14px;font-weight:750;border-radius:10px;padding:10px 18px;cursor:pointer;border:1px solid var(--border);background:var(--panel2);color:var(--text)}
+  .btn.primary{color:#04121f;background:linear-gradient(135deg,#7cc0ff,#58a6ff);border:0}
+  .btn.sm{padding:8px 13px;font-size:13px}
+  .btn[disabled]{opacity:.45;cursor:default}
+  .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px;align-items:center}
+  .studio-chip{display:inline-flex;align-items:center;gap:8px;background:var(--panel2);border:1px solid var(--border);border-radius:20px;padding:6px 8px 6px 13px;font-size:13px;margin:4px 6px 0 0}
+  .studio-chip b{font-weight:700}.studio-chip .yr{color:var(--muted);font-size:12px}
+  .studio-chip .x{cursor:pointer;color:var(--muted);border:0;background:none;font-size:16px;line-height:1;padding:0 2px}
+  .sc-toggle{cursor:pointer;user-select:none}.sc-toggle:hover{border-color:var(--accent)}
+  .chiprow{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+  .dchip{cursor:pointer;font-size:13.5px;font-weight:650;border-radius:20px;padding:8px 16px;border:1px solid var(--border);background:var(--panel2);color:var(--muted);font-family:inherit}
+  .dchip:hover{border-color:var(--accent);color:var(--text)}
+  .dchip.on{background:rgba(88,166,255,.16);border-color:var(--accent);color:#cfe6ff}
+  .studio-chip .x:hover{color:var(--pink)}
+  .sdrop{position:relative}
+  .sdrop-list{position:absolute;left:0;right:0;top:calc(100% + 2px);z-index:20;background:var(--panel2);border:1px solid var(--border);border-radius:10px;overflow:hidden;box-shadow:0 12px 30px rgba(0,0,0,.5);max-height:240px;overflow-y:auto}
+  .sdrop-list div{padding:9px 12px;cursor:pointer;font-size:13.5px}
+  .sdrop-list div:hover{background:rgba(88,166,255,.14)}
+  .gstudio{margin:16px 0 6px;font-size:13px;font-weight:800;color:var(--gold)}
+  .gstudio .n{color:var(--muted);font-weight:600;font-size:12px;margin-left:6px}
+  .gsearch{margin:2px 0 9px;font-size:13px;padding:8px 11px}
+  .glist{display:flex;flex-direction:column;gap:2px}
+  .grow{display:flex;align-items:center;gap:10px;padding:7px 9px;border-radius:9px;cursor:pointer}
+  .grow:hover{background:rgba(255,255,255,.03)}
+  .grow input{width:auto;flex:0 0 auto;accent-color:var(--accent);width:17px;height:17px}
+  .grow .gt{font-size:14px}
+  .grow .gy{color:var(--muted);font-size:12.5px;margin-left:auto;flex:0 0 auto}
+  .gmore{color:var(--muted);font-size:12.5px;padding:6px 9px}
+  .gcount{font-weight:800;color:var(--accent)}
+  .empty{color:var(--muted);font-size:13.5px;padding:8px 0}
+  .status{font-size:13px;color:var(--muted);min-height:16px}
+  footer{border-top:1px solid var(--border);margin-top:28px;padding:18px 0 40px;font-size:12.5px;color:var(--dim)}
+  .hide{display:none}
 </style>
 </head>
 <body>
-<div class="topbar"><div class="container">
-  <div class="brand"><a class="brandhome" href="/portfolio/" data-tip="Back to Portfolio home" aria-label="DevQuest Portfolio home" onclick="if(event.metaKey||event.ctrlKey||event.shiftKey)return true;var h=location.origin+'/portfolio/';location.href===h?location.reload():location.assign(h);return false;"><svg class="mark" viewBox="0 0 32 32" aria-hidden="true"><rect x="1" y="1" width="8" height="8" rx="2" fill="var(--gold)"/><rect x="12" y="1" width="8" height="8" rx="2" fill="#2d333b"/><rect x="23" y="1" width="8" height="8" rx="2" fill="#2d333b"/><rect x="1" y="12" width="8" height="8" rx="2" fill="#2d333b"/><rect x="12" y="12" width="8" height="8" rx="2" fill="var(--gold)"/><rect x="23" y="12" width="8" height="8" rx="2" fill="#2d333b"/><rect x="1" y="23" width="8" height="8" rx="2" fill="#2d333b"/><rect x="12" y="23" width="8" height="8" rx="2" fill="#2d333b"/><rect x="23" y="23" width="8" height="8" rx="2" fill="var(--gold)"/></svg><span class="wm">Dev<span class="q">Quest</span><span class="tld">.gg</span></span></a> <span class="cr">PORTFOLIO</span> <span class="beta">BETA</span></div>
-  <div class="topnav">
-    <a href="/credits/search.html?tab=games">Games</a><a href="/credits/search.html?tab=studios">Studios</a><a href="/credits/search.html?tab=people">People</a>
-    <a class="back" href="/">← Jobs board</a>
-  </div>
-</div></div>
+<div class="bar"></div>
+<div class="nav"><div class="wrap"><div class="brand"><a class="brandhome" href="/portfolio/" aria-label="DevQuest Portfolio home"><svg class="mark" viewBox="0 0 32 32" aria-hidden="true"><rect x="1" y="1" width="8" height="8" rx="2" fill="var(--gold)"/><rect x="12" y="1" width="8" height="8" rx="2" fill="#2d333b"/><rect x="23" y="1" width="8" height="8" rx="2" fill="#2d333b"/><rect x="1" y="12" width="8" height="8" rx="2" fill="#2d333b"/><rect x="12" y="12" width="8" height="8" rx="2" fill="var(--gold)"/><rect x="23" y="12" width="8" height="8" rx="2" fill="#2d333b"/><rect x="1" y="23" width="8" height="8" rx="2" fill="#2d333b"/><rect x="12" y="23" width="8" height="8" rx="2" fill="#2d333b"/><rect x="23" y="23" width="8" height="8" rx="2" fill="var(--gold)"/></svg><span class="wm">Dev<span class="q">Quest</span><span class="tld">.gg</span></span></a> <span class="cr">PORTFOLIO</span> <span class="beta">BETA</span></div><div class="navlinks"><a href="/portfolio/">Skip, build manually →</a><a href="/credits/search.html?tab=games">Games</a><a href="/credits/search.html?tab=studios">Studios</a><a href="/credits/search.html?tab=people">People</a><a class="back" href="/">← Jobs board</a></div></div></div>
 
-<!-- HERO -->
-<div class="hero"><div class="container">
-  <div class="herorow"><div class="herotext">
-  <div class="eyebrow">Free · by and for game developers</div>
-  <h1>Give yourself <span class="grad">an edge</span><br>in a tough hiring market.</h1>
-  <p class="lede">The first portfolio built for game developers, from the titles you've already shipped.</p>
-  <div class="herocta">
-    <a class="btn primary big" href="/portfolio/start/">Build your portfolio in minutes →</a>
-  </div>
-  <div class="herohint">Paste your LinkedIn or name the studios you've worked at, and we surface the games that shipped there so you can check off the ones that were yours. No blank page, no password.</div>
-  <div class="searchwrap" style="max-width:520px;margin-top:18px">
-    <div class="search"><span class="ic">⌕</span><input id="hs" autocomplete="off" placeholder="Or search a specific game or your name…"></div>
-  </div>
-  <div class="heroalt">Completely free. &nbsp;·&nbsp; Hiring? <a href="/credits/search.html">Search developers, games, and studios →</a></div>
-    </div>
-    <div class="herovisual"><img src="/portfolio/demo/wall.jpg" alt="A DevQuest portfolio of shipped games" loading="eager"></div>
-  </div>
-</div></div>
+<div class="wrap">
+  <h1>Let’s build your portfolio, fast</h1>
+  <p class="lede">Tell us where you’ve worked and we’ll pull the games from those studios out of our catalogue — you just check the ones that were yours. No searching one title at a time.</p>
+  <div class="steps"><div class="stepdot on" id="d1"></div><div class="stepdot" id="d2"></div><div class="stepdot" id="d3"></div></div>
+  <div class="steplabel" id="steplabel">Step 1 of 3 · Your studios</div>
+  <div id="app"></div>
+</div>
+<footer><div class="wrap">DevQuest.gg · quick start · your picks are saved as a draft until you publish</div></footer>
 
-<style id="lshowcss">
-  .vqwrap{display:grid;grid-template-columns:1.05fr .95fr;gap:36px;align-items:center}
-  @media(max-width:860px){.vqwrap{grid-template-columns:1fr;gap:26px}}
-  .vqcopy .lead{color:var(--muted);font-size:16px;line-height:1.62;margin:0 0 16px;max-width:520px}
-  .vqbullets{list-style:none;margin:0;padding:0}
-  .vqbullets li{position:relative;padding-left:26px;margin:0 0 9px;font-size:14.5px;color:var(--text)}
-  .vqbullets li::before{content:"\2713";position:absolute;left:0;top:0;color:var(--green);font-weight:800}
-  .vqcard{background:var(--panel);border:1px solid var(--border);border-radius:18px;padding:18px;box-shadow:0 24px 60px rgba(0,0,0,.42)}
-  .vqtop{display:flex;gap:14px;align-items:center;margin-bottom:14px}
-  .vqcover{width:64px;height:86px;border-radius:10px;flex:0 0 auto;display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;font-size:19px;background:linear-gradient(150deg,#3a2f6b,#7a3b52)}
-  .vqtitle{font-weight:800;font-size:17px}
-  .vqrole{color:var(--muted);font-size:13.5px;margin-top:2px}
-  .vqverify{display:flex;gap:11px;align-items:flex-start;background:rgba(63,185,80,.1);border:1px solid rgba(63,185,80,.32);border-radius:12px;padding:12px 13px}
-  .vqck{flex:0 0 auto;width:24px;height:24px;border-radius:50%;background:var(--green);color:#04220f;font-weight:900;display:flex;align-items:center;justify-content:center;font-size:13px}
-  .vqverify b{font-size:13.5px;display:block;line-height:1.35}
-  .vqsub{color:var(--muted);font-size:12.5px;margin-top:3px}
-  .vqavs{display:flex;align-items:center;margin-top:13px;padding-left:2px}
-  .vqav{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--purple));color:#fff;font-weight:700;font-size:11.5px;display:flex;align-items:center;justify-content:center;border:2px solid var(--panel);margin-left:-8px}
-  .vqav:first-child{margin-left:0}
-  .vqavmore{color:var(--muted);font-size:12.5px;margin-left:10px}
-  .ftiles{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
-  @media(max-width:900px){.ftiles{grid-template-columns:1fr}}
-  .ftile{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:18px;display:flex;flex-direction:column}
-  .ftile .mock{background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:12px;height:158px;overflow:hidden;margin-bottom:14px;position:relative}
-  .ftile h3{margin:0 0 6px;font-size:16.5px}
-  .ftile p{margin:0;color:var(--muted);font-size:13.5px;line-height:1.55}
-  .mkart-tag{position:absolute;top:9px;right:9px;font-size:10px;font-weight:800;letter-spacing:.05em;color:var(--purple);border:1px solid rgba(163,113,247,.4);border-radius:6px;padding:1px 7px;background:rgba(163,113,247,.1);z-index:1}
-  .mkart-reel{height:34px;border-radius:6px;background:linear-gradient(120deg,#22314f,#3a2350);margin-bottom:7px;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.8);font-size:11px}
-  .mkart-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:5px}
-  .mkart-grid span{border-radius:5px;background:linear-gradient(150deg,#2a3550,#43324f)}
-  .mkart-grid span:nth-child(1){height:44px}.mkart-grid span:nth-child(2){height:60px}.mkart-grid span:nth-child(3){height:38px}
-  .mkart-grid span:nth-child(4){height:30px}.mkart-grid span:nth-child(5){height:16px}.mkart-grid span:nth-child(6){height:34px}
-  .mkcv{background:#f4f6fb;border-radius:7px;height:100%;padding:11px 12px;box-sizing:border-box}
-  .mkcv .n{height:9px;width:44%;background:#0b0e14;border-radius:3px;margin-bottom:4px}
-  .mkcv .sub{height:5px;width:30%;background:#8b98a9;border-radius:3px;margin-bottom:10px}
-  .mkcv .h{height:5px;width:24%;background:#58a6ff;border-radius:3px;margin:9px 0 5px}
-  .mkcv .l{height:4px;background:#c3ccda;border-radius:3px;margin-bottom:4px}
-  .mkcv .l.s{width:88%}.mkcv .l.m{width:74%}.mkcv .l.x{width:60%}
-  .mkfit-top{display:flex;align-items:center;gap:9px;margin-bottom:9px}
-  .mkfit-pill{font-size:11px;font-weight:800;color:#7ff0be;background:rgba(63,185,80,.14);border:1px solid rgba(63,185,80,.5);border-radius:20px;padding:3px 10px}
-  .mkfit-n{font-size:12px;color:var(--muted)}.mkfit-n b{color:var(--text)}
-  .mkfit-lbl{font-size:9.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;margin:9px 0 5px}
-  .mkfit-lbl.ok{color:var(--green)}.mkfit-lbl.gap{color:var(--gold)}
-  .mkchips{display:flex;flex-wrap:wrap;gap:4px}
-  .mkchip{font-size:10px;border-radius:20px;padding:2px 8px;border:1px solid}
-  .mkchip.ok{color:#9ff0c8;background:rgba(62,207,142,.12);border-color:rgba(62,207,142,.4)}
-  .mkchip.gap{color:#f2d98a;background:rgba(226,178,58,.12);border-color:rgba(226,178,58,.4)}
-</style>
-<!-- FEATURE TILES (live mockups), leads the showcase -->
-<section class="blk feats"><div class="container">
-  <div class="eyebrow">More than a portfolio</div>
-  <h2 class="sec">Every tool you need to get hired</h2>
-  <p class="secsub">Most portfolios start you at a blank page. Yours starts from the games you've shipped, then becomes all of this.</p>
-  <div class="ftiles">
-    <div class="ftile">
-      <div class="mock"><span class="mkart-tag">ART</span><div class="mkart-reel">&#9654; Showreel</div><div class="mkart-grid"><span></span><span></span><span></span><span></span><span></span><span></span></div></div>
-      <h3>Built for your discipline</h3>
-      <p>Artists lead with a gallery and showreel; producers lead with shipped titles. Your layout highlights what your craft is judged on, in the language of games.</p>
-    </div>
-    <div class="ftile">
-      <div class="mock"><div class="mkcv"><div class="n"></div><div class="sub"></div><div class="h"></div><div class="l s"></div><div class="l m"></div><div class="l x"></div><div class="h"></div><div class="l s"></div><div class="l m"></div></div></div>
-      <h3>An ATS-ready résumé, instantly</h3>
-      <p>One click turns your profile into a real, text-layer PDF or Word résumé that applicant systems can actually read, with no reformatting, ever.</p>
-    </div>
-    <div class="ftile">
-      <div class="mock"><div class="mkfit-top"><span class="mkfit-pill">Strong fit</span><span class="mkfit-n">You match <b>11 of 16</b></span></div><div class="mkfit-lbl ok">Matched, surface these</div><div class="mkchips"><span class="mkchip ok">Live-service</span><span class="mkchip ok">Netcode</span><span class="mkchip ok">Production</span></div><div class="mkfit-lbl gap">Add if they apply</div><div class="mkchips"><span class="mkchip gap">Unreal Engine</span><span class="mkchip gap">Jira</span></div></div>
-      <h3>Tailor to any job</h3>
-      <p>Paste a posting and see your fit in game-industry terms, what matches and what to add, then download a version reordered for that role. Nothing invented.</p>
-    </div>
-  </div>
-</div></section>
-
-<!-- SHOWCASE -->
-<section class="blk showcase"><div class="container">
-  <div class="eyebrow">One profile, every view</div>
-  <h2 class="sec">Everything you've shipped, in one place</h2>
-  <div class="fcar" id="fcar">
-    <div class="fcar-row">
-      <div class="fcar-stage">
-        <video class="fcar-video" autoplay loop muted playsinline preload="auto" poster="/portfolio/demo/views-poster.jpg"><source src="/portfolio/demo/views.mp4" type="video/mp4"><source src="/portfolio/demo/views.webm" type="video/webm"></video>
-      </div>
-      <div class="fcar-nav">
-        <button class="fcar-item on" type="button"><span class="fcar-kick">Everything you've shipped</span><span class="fcar-iname">The wall</span><span class="fcar-idesc">Every game you've shipped, as cover art. Drag your best into the three Featured slots up top, and each title earns a <span class="acc">&#10003;</span> the moment a teammate who shipped it confirms your role.</span></button>
-        <button class="fcar-item" type="button"><span class="fcar-kick">The story behind the work</span><span class="fcar-iname">The one-sheet</span><span class="fcar-idesc">The real story behind each title: the stats that matter, what you led, the <span class="acc">key challenges</span> you solved, and an <span class="acc">OpenCritic score</span> pulled in automatically. Recruiter-ready, one click away.</span></button>
-        <button class="fcar-item" type="button"><span class="fcar-kick">Your career progression</span><span class="fcar-iname">The timeline</span><span class="fcar-idesc">Flip the wall onto your career spine and watch your games fall into place by studio and year. The same games, a whole new read.</span></button>
-        <button class="fcar-item" type="button"><span class="fcar-kick">What recruiters see</span><span class="fcar-iname">The 30-second hiring view</span><span class="fcar-idesc">Role, scope, impact, and confirmations for every title, in the same order every time, and filterable by studio. Built for the person deciding whether to hire you.</span></button>
-      </div>
-    </div>
-  </div>
-
-  <p style="text-align:center;color:var(--text);font-size:16px;max-width:660px;margin:28px auto 0;line-height:1.62">Every one of these views is built to land in a recruiter's hands, so your profile is the one that's easy to say yes to.</p>
-
-  <div class="scfoot">
-    <a class="scdemo" href="/portfolio/destin-bales/">See a full live example →</a>
-  </div>
-</div></section>
+<script src="/credits/api.js"></script>
 <script>
+  // Consistent account chip in the top bar (mirrors app.js's injector).
   (function(){
-    var car=document.getElementById('fcar'); if(!car) return;
-    var video=car.querySelector('.fcar-video');
-    var items=car.querySelectorAll('.fcar-item');
-    var n=items.length;
-    function seg(){ var d=video&&video.duration; return ((d&&isFinite(d)&&d>0)?d:8.96)/n; }
-    function setActive(i){ for(var j=0;j<n;j++) items[j].classList.toggle('on', j===i); }
-    if(video){
-      video.addEventListener('timeupdate',function(){
-        var s=seg(); var i=Math.floor((video.currentTime%(s*n))/s);
-        if(i<0)i=0; if(i>=n)i=n-1;
-        if(!items[i].classList.contains('on')) setActive(i);
+    var nav=document.querySelector(".navlinks"); if(!nav||!window.DQAPI) return;
+    var a=document.createElement("a"); a.className="back"; a.style.cursor="pointer";
+    a.textContent=DQAPI.isSignedIn()?"Account":"Sign in"; a.href="/credits/signin.html";
+    nav.insertBefore(a, nav.firstChild);
+    if(DQAPI.isSignedIn()){ DQAPI.me().then(function(r){
+      if(r&&r.ok&&r.data&&r.data.authenticated){ a.textContent=r.data.person?("✓ "+r.data.person.name):"Account"; }
+      else { if(DQAPI.clearToken)DQAPI.clearToken(); a.textContent="Sign in"; }
+    }).catch(function(){}); }
+  })();
+</script>
+<script>
+(function(){
+  var app = document.getElementById("app");
+  var STUDIOS = [];        // [{name, from, to}]
+  var CATALOG = null;      // [[slug,title,year,studio], ...]
+  var PICKED = {};         // slug -> {slug,title,year,studio}
+  var UNMATCHED = [];      // game titles the paste listed that aren't in our catalogue yet
+  var REVEALED = false;    // step 1 shows only the paste box until you autofill or choose "build from scratch"
+  var DISCIPLINE = "production";   // chosen up front; shapes the portfolio (art/audio lead with visuals)
+  var DISCIPLINES = [{k:"production",label:"Production"},{k:"engineering",label:"Engineering"},{k:"art",label:"Art"},{k:"audio",label:"Audio"},{k:"design",label:"Design"},{k:"qa",label:"QA"},{k:"other",label:"Other"}];
+  var STEP = 1;
+
+  function esc(s){ return String(s==null?"":s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];}); }
+  function nrm(s){ return String(s==null?"":s).toLowerCase().replace(/[^a-z0-9]+/g," ").trim(); }
+  function setStep(n){ STEP=n; ["d1","d2","d3"].forEach(function(id,i){ document.getElementById(id).classList.toggle("on", i < n); });
+    document.getElementById("steplabel").textContent = "Step "+n+" of 3 · "+(n===1?"Your studios":n===2?"Your games":"Your name");
+    if(n===1) renderStudios(); else if(n===2) renderGames(); else renderBasics();
+    window.scrollTo(0,0);
+  }
+
+  // ---------- catalogue ----------
+  function loadCatalog(){
+    if(CATALOG) return Promise.resolve(CATALOG);
+    return fetch("/credits/data/site/index.json").then(function(r){ return r.ok?r.json():[]; })
+      .then(function(rows){ CATALOG = Array.isArray(rows)?rows:[]; return CATALOG; })
+      .catch(function(){ CATALOG=[]; return CATALOG; });
+  }
+  // games for a studio (fuzzy name match). We do NOT hard-exclude by release year — a dev works on
+  // live-service titles that shipped years before they joined (LoL, Rainbow Six, City of Heroes) —
+  // instead we score by how close the release is to the tenure, and let a search box find the rest.
+  function gamesForStudio(st){
+    if(!CATALOG) return [];
+    var key = nrm(st.name); if(key.length < 2) return [];
+    var from = parseInt(st.from,10), to = parseInt(st.to,10);
+    var hasFrom = !isNaN(from), hasTo = !isNaN(to);
+    var out = [];
+    for(var i=0;i<CATALOG.length;i++){
+      var r = CATALOG[i]; if(!r) continue;
+      var gStudio = nrm(r[3]); if(!gStudio) continue;
+      if(gStudio.indexOf(key) === -1 && key.indexOf(gStudio) === -1) continue;   // fuzzy contains either way
+      var y = parseInt(r[2],10), score;
+      if(isNaN(y)) score=400;                                                    // no year → low priority
+      else if(hasFrom && hasTo) score=(y>=from && y<=to)?0:Math.min(Math.abs(y-from),Math.abs(y-to));  // in tenure → 0; else years away
+      else if(hasFrom) score=(y>=from)?0:(from-y);
+      else if(hasTo) score=(y<=to)?0:(y-to);
+      else score=0;
+      out.push({ slug:r[0], title:r[1], year:r[2], studio:r[3], _score:score, _y:(isNaN(y)?0:y) });
+    }
+    out.sort(function(a,b){ return a._score-b._score || b._y-a._y || String(a.title).localeCompare(String(b.title)); });   // most relevant first
+    return out;
+  }
+  // The DEFAULT per-studio list is narrowed to titles that launched from 5 years before you started
+  // through the end of your time there — game dev cycles are long, so a title shipping shortly after
+  // you joined, or in the few years before, is plausibly yours. Anything outside this window stays
+  // reachable through the studio's search box; picked games always show regardless.
+  function inWindow(g, st){
+    var y=parseInt(g.year,10); if(isNaN(y)) return false;
+    var from=parseInt(st.from,10), to=parseInt(st.to,10);
+    var lo=isNaN(from)?null:from-5, hi=isNaN(to)?null:to;
+    if(lo==null && hi==null) return true;   // no years given → can't narrow, so show all
+    if(lo!=null && y<lo) return false;
+    if(hi!=null && y>hi) return false;
+    return true;
+  }
+
+  // ---------- paste importer: LinkedIn / résumé text → studios + name + headline ----------
+  var _MONRE="jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec";
+  var _DRRE=new RegExp("(?:(?:"+_MONRE+")[a-z]*\\.?\\s+)?(\\d{4})\\s*(?:\\u2013|\\u2014|-|to|through)\\s*((?:(?:"+_MONRE+")[a-z]*\\.?\\s+)?\\d{4}|present|current|now|today|ongoing)","i");
+  var _TITLERE=/\b(producer|engineer|programmer|developer|designer|artist|director|manager|lead|president|animator|writer|analyst|architect|founder|owner|head|specialist|coordinator|technical|creative|executive|principal|qa|tester|scrum|product|vp|professor|adjunct|instructor|lecturer|teacher|consultant|advisor|deputy|assistant|administrator|facilitator|associate|representative|receptionist|clerk|cashier|officer|supervisor|nurse|ambassador|strategist|communications?|marketing|sales|customer|service|retail|intern|apprentice|steward|porter|operator|acquisition|talent|business|rigger|rigging|cfx|modell?er|sculptor|compositor|previs)\b/i;
+  var _SUFFIXRE=/\b(games?|studios?|entertainment|interactive|software|inc|llc|ltd|corp|corporation|media|digital|works|worldwide|productions?|technologies|labs?)\b/i;
+  function _pnorm(s){ return String(s==null?"":s).toLowerCase().replace(/[^a-z0-9]+/g," ").trim(); }
+  function _year4(s){ var m=String(s==null?"":s).match(/\d{4}/); return m?parseInt(m[0],10):null; }
+  function _looksLikeName(l){ if(!l||l.length>44||/\d/.test(l)||/[@|·:/]/.test(l)) return false; if(_TITLERE.test(l)||_SUFFIXRE.test(l)) return false; var w=l.split(/\s+/); if(w.length<2||w.length>4) return false; for(var i=0;i<w.length;i++){ if(!/^[A-Z][A-Za-z'’.\-]*$/.test(w[i])) return false; } return true; }
+  function _stripJunk(s){ return String(s==null?"":s).replace(/·.*$/,"").replace(/\|.*$/,"").replace(/\b(full[\s-]?time|part[\s-]?time|contract|freelance|internship|permanent|remote|hybrid|on-?site)\b/ig,"").replace(/\s{2,}/g," ").replace(/^[\s,·|–—-]+|[\s,·|–—-]+$/g,"").trim(); }
+  function _segs(l){ return String(l==null?"":l).split(/[·|]|\s[–—-]\s|,/).map(function(s){return s.trim();}).filter(Boolean); }
+  function _studioIndex(rows){ var seen={}, arr=[]; for(var i=0;i<rows.length;i++){ var s=rows[i]&&rows[i][3]; if(!s) continue; var k=_pnorm(s); if(k.length<3||seen[k]) continue; seen[k]=1; arr.push({k:k,name:String(s)}); } return arr; }
+  function _md(l){ return String(l==null?"":l).replace(/\[([^\]]*)\]\([^)]*\)/g,"$1").replace(/^\s*[\*\-•▪○]\s*/,"").replace(/\s+/g," ").trim(); }   // [text](url) → text, drop bullets
+  function _hasType(l){ return /\b(full[\s-]?time|part[\s-]?time|contract|freelance|internship|permanent|self[\s-]?employed|apprenticeship|seasonal)\b/i.test(l); }
+  function _isImgAlt(l){ l=String(l==null?"":l); return /^(thumbnail|image|photo|picture|icon|logo|banner|screenshot|avatar|graphic)\b/i.test(l) || /\b(logo|icon|banner|thumbnail|screenshot|avatar)$/i.test(l) || /\.(jpe?g|png|gif|webp|svg|bmp|pdf|mp4|mov)$/i.test(l) || /https?:\/\//i.test(l) || /\b[a-z0-9-]{2,}\.(com|net|org|io|gg|co|tv|dev|xyz|app)\b/i.test(l); }   // image alt-text ("Thumbnail for X", "Ubisoft logo"), image filenames ("CoH.jpg"), and URLs ("GuildWars2.com")
+  // Résumé/description prose vs a game title. A candidate under a role that reads like a job-description
+  // bullet — starts with a past-tense action verb ("Designed…", "Coordinated…"), starts lowercase (a
+  // wrapped continuation like "the Missions strike team"), starts with "#"/symbols (hashtags), or ends in
+  // "…Program/Training/Course" — is NOT a game and must never be surfaced.
+  var _DESCVERB=/^(designed|developed|created|built|managed|coordinated|collaborated|worked|scripted|implemented|oversaw|pitched|identified|restructured|revised|maintained|established|delivered|contributed|supported|assisted|authored|produced|prototyped|balanced|integrated|optimi[sz]ed|reviewed|mentored|planned|scoped|documented|analy[sz]ed|researched|tested|debugged|refactored|architected|spearheaded|facilitated|organi[sz]ed|presented|consulted|configured|deployed|migrated|automated|redesigned|executed|performed|handled|generated|compiled|crafted|enhanced|improved|expanded|launched|placed|brought|conceived|streamlined|owned|drove|wrote|coded|shipped|helped|led|assembled|reimagined|programmed|modell?ed|textured|rigged|animated|sculpted|painted|composed|mixed|mastered|recorded|selected|responsible|conduct|develop|help|manage|simulate|identify|provide|design|outline|support|coordinate|supervise|mentor|implement|maintain|oversee|draft|facilitate|define|ensure)\b/i;
+  var _NONGAME=/\b(program|programme|training|bootcamp|certification|certificate|course|workshop|initiative|fellowship|internship|scholarship|committee|council)\s*$/i;
+  function _isDesc(l){ l=String(l==null?"":l).trim();
+    if(!/^[A-Z0-9"'“‘]/.test(l)) return true;   // lowercase continuation / hashtag / symbol → not a title
+    if(_DESCVERB.test(l)) return true;           // a résumé action-verb bullet
+    if(_NONGAME.test(l)) return true;            // "…Program"/"…Training" etc.
+    if(/^(a|an|the)\b.*\b(still|screenshot|screen shot|cinematic|trailer|teaser|poster|render|artwork|concept art|key art|footage|wallpaper|promo|mock-?up|cover art)\b/i.test(l)) return true;   // "A still from the … cinematic" → a media caption, not a game
+    return false; }
+  // LinkedIn "treasury" media clusters attach a game as a domain + a generic caption + an image:
+  // "GuildWars2.com" / "Home" / "GW2.jpg". The image & caption are noise, but the DOMAIN often IS the
+  // game — de-camel-case it ("GuildWars2" → "Guild Wars 2") and we can match it to the catalogue.
+  function _deCamel(s){ return String(s==null?"":s).replace(/([a-z0-9])([A-Z])/g,"$1 $2").replace(/([A-Za-z])(\d)/g,"$1 $2").replace(/(\d)([A-Za-z])/g,"$1 $2").replace(/[-_]+/g," ").replace(/\s+/g," ").trim(); }
+  function _domainGame(l){ l=String(l==null?"":l).trim();
+    var m=l.match(/^(?:https?:\/\/)?(?:www\.)?([A-Za-z0-9][A-Za-z0-9-]{1,40})\.(?:com|net|org|io|gg|co|tv|game|games)$/i);
+    if(!m) return ""; var name=_deCamel(m[1]);
+    if(name.split(" ").length<2) return "";           // needs a de-camel split to be a plausible multi-word title (skips "home.com" etc.)
+    return name; }
+  // LinkedIn location & alias lines that sit under a role — never a game or a studio.
+  // "Los Angeles Metropolitan Area", "New York, NY", "Melbourne, Australia", "Remote", "aka Overture Services".
+  function _isLoc(l){ l=String(l==null?"":l).trim();
+    if(/^aka\b/i.test(l)) return true;                                                  // "aka Overture Services" — a company alias note
+    if(/\b(metropolitan area|bay area|greater\s+[a-z].*\barea|\bremote\b|\bhybrid\b|on-?site)\b/i.test(l)) return true;
+    if(/,\s*([A-Z]{2}|[A-Z][a-z]+)$/.test(l)) return true;                              // "City, NY" / "City, Australia"
+    if(/\barea$/i.test(l) && /^[A-Z]/.test(l) && l.split(/\s+/).length>=3) return true; // "… Metropolitan Area"
+    return false; }
+  // Producers often name their game in the job title: "Producer - Dark Age of Camelot",
+  // "Development Director - Fortune Online, Jumpgate Evolution". Split off the part after a " - "/" | "/" : "
+  // separator as game candidate(s) (comma / and / & separated) and return the cleaned title.
+  function _titleGames(t){
+    t=String(t==null?"":t);
+    var parts=t.split(/\s[–—-]\s|\s[|:]\s/);
+    if(parts.length<2) return { clean:t, games:[] };
+    var rest=parts.slice(1).join(" — ").trim();
+    var games=rest.split(/\s*,\s*|\s+(?:and|&|\/)\s+/i).map(function(x){ return _stripJunk(x); }).filter(function(x){ return x && x.length>=2 && x.split(" ").length<=8 && !_hasType(x) && !_isImgAlt(x); });
+    return { clean:parts[0].trim()||t, games:games };
+  }
+  function _isDur(l){ return !/\d{4}/.test(l) && /\d+\s*(yrs?|years?|mos?|months?)\b/i.test(l); }   // "2 yrs 9 mos" — a grouped-company total, not a role date
+  function _isTitleLine(l){ return _TITLERE.test(l) && !/·/.test(l) && !/\d{4}/.test(l); }
+  function _isDate(l){ return _DRRE.test(l); }
+  function _prevNE(L,i){ for(var k=i-1;k>=0;k--){ if(L[k]) return {line:L[k],idx:k}; } return {line:"",idx:-1}; }
+  function _nextNE(L,i){ for(var k=i+1;k<L.length;k++){ if(L[k]) return {line:L[k],idx:k}; } return {line:"",idx:-1}; }
+  function _seg1(l){ var s=_segs(l); return s.length?s[0]:l; }
+  function _cleanCo(s){ return _stripJunk(String(s==null?"":s).replace(/\s*\([^)]*\)\s*/g," ")); }   // drop "(An EA Company)" etc.
+  function _matchStudioStrict(seg, studioArr){
+    var sn=_pnorm(seg); if(sn.length<3) return "";
+    var padded=" "+sn+" ", best="", bestLen=0;
+    for(var i=0;i<studioArr.length;i++){ var st=studioArr[i];
+      if(st.k===sn) return st.name;                                                                        // exact catalogue hit
+      if(st.k.length>=5 && st.k.indexOf(" ")>=0 && padded.indexOf(" "+st.k+" ")>=0){ if(st.k.length>bestLen){ best=st.name; bestLen=st.k.length; } }  // multi-word studio as whole words
+    }
+    return best;
+  }
+  // LinkedIn / résumé parser. Handles markdown-link export, flat "Title / Company·Type / Dates"
+  // entries, AND grouped entries where one company heads several nested roles (Bend, Paragon, Mythic).
+  // LinkedIn "Education" section → [{school,degree,field,start_year,end_year}]. Entries are
+  // school / (degree, field) / date-range, interleaved with logo alt-text and "Grade:" lines.
+  var _DEGRE=/\b(bachelor|master|doctor|doctorate|ph\.?d|b\.?sc|b\.?a\b|b\.?eng|m\.?sc|m\.?a\b|m\.?eng|m\.?f\.?a|mba|associate('s)?|diploma|certificate|certification|degree|foundation|hnd|higher national|gcse|a-?levels?|btec|bootcamp|nanodegree|apprenticeship)\b/i;
+  function _eduClean(s){ return String(s==null?"":s).replace(/\s{2,}/g," ").replace(/^[\s,·|–—-]+|[\s,·|–—-]+$/g,"").trim(); }
+  function _parseEducation(L){
+    var start=-1;
+    for(var i=0;i<L.length;i++){ if(/^education(\s*\(\d+\))?$/i.test(L[i])){ start=i+1; break; } }
+    if(start<0) return [];
+    var out=[], cur=null;
+    function flush(){ if(cur && cur.school) out.push(cur); cur=null; }
+    for(var i=start;i<L.length;i++){ var line=L[i]; if(!line) continue;
+      if(/^(licen[sc]es?|volunteering|volunteer|skills|recommendations|interests|courses|honors|test scores|languages|organi[sz]ations|causes|projects|experience|publications|patents|about$|people you|people also viewed|more profiles|you might like|pages for you|activity)\b/i.test(line)){ flush(); break; }   // next section
+      if(/^(show all|show \d)/i.test(line)) continue;
+      if(_isImgAlt(line)) continue;                                          // school logo alt-text
+      if(/^(grade|activities and societies|activities)\b/i.test(line)){ continue; }
+      if(_isDur(line)) continue;
+      if(_isDate(line)){ if(cur){ var dr=line.match(_DRRE); if(dr){ cur.start=_year4(dr[1]); cur.end=(/present|current|now|today|ongoing/i.test(dr[2])?null:_year4(dr[2])); } flush(); } continue; }
+      var ys=line.match(/^(\d{4})$/); if(ys){ if(cur){ if(cur.start==null) cur.start=parseInt(ys[1],10); else if(cur.end==null) cur.end=parseInt(ys[1],10); } continue; }
+      // a text line: school (start of entry), then degree/field, then a new school ⇒ next entry
+      if(!cur){ cur={school:line, degreeRaw:"", start:null, end:null}; }
+      else if(!cur.degreeRaw){ cur.degreeRaw=line; }
+      else { flush(); cur={school:line, degreeRaw:"", start:null, end:null}; }
+    }
+    flush();
+    return out.map(function(e){ var d=e.degreeRaw||"", deg="", fld="";
+      if(d){ var parts=d.split(/\s*[,·]\s*/).map(_eduClean).filter(Boolean);
+        if(parts.length>=2){ deg=parts[0]; fld=parts.slice(1).join(", "); }
+        else if(_DEGRE.test(d)){ deg=d; } else { fld=d; } }   // a lone line: a degree if it names one, else a field of study
+      return { school:_eduClean(e.school), degree:_eduClean(deg), field:_eduClean(fld), start_year:e.start||null, end_year:e.end||null };
+    }).filter(function(e){ return e.school && e.school.length<=140; }).slice(0,20);
+  }
+  function parseProfile(text, studioArr){
+    var _RAW=String(text==null?"":text).split(/\r?\n/);
+    var BULLET={}; for(var _bi=0;_bi<_RAW.length;_bi++){ if(/^\s*[•▪◦‣▸○*]\s+/.test(_RAW[_bi]) || /^\s*[-–]\s+\S/.test(_RAW[_bi])) BULLET[_bi]=1; }   // a description bullet ("• Manage contractor riggers") is never a game, even without a trailing period
+    var L=_RAW.map(_md);
+    var ne=L.filter(Boolean);
+    var name="", headline="";
+    for(var i=0;i<Math.min(ne.length,40) && !name;i++){ if(!_looksLikeName(ne[i])) continue; var nx=ne[i+1]||"";
+      if(nx && !/\d{4}/.test(nx) && (/ at /i.test(nx) || _TITLERE.test(nx)) && nx.length<=120){ name=ne[i]; headline=nx; } }
+    var start=0; for(var i=0;i<L.length;i++){ if(/^experience$/i.test(L[i])){ start=i+1; break; } }
+    var jobs=[], currentCompany="", pendingTitle="", pgames=[], activeStudio="";
+    for(var i=start;i<L.length;i++){ var line=L[i]; if(!line) continue;
+      if(/^(profile language|who your viewers|about$|privacy|linkedin corporation|help center|select language|messaging|status is online|connected apps|add connected|projects|skills|recommendations|interests|education|licenses|volunteering|volunteer|courses|honors|test scores|languages|organizations|causes|people you|people also viewed|more profiles|you might like|pages for you|show more|load more)\b/i.test(line)) break;   // footer / next profile section (incl. "More profiles for you" people block)
+      if(_isDate(line)){
+        var dr=line.match(_DRRE); var from=_year4(dr[1]); var to=/present|current|now|today|ongoing/i.test(dr[2])?"":(_year4(dr[2])||"");
+        var pv=_prevNE(L,i), prev=pv.line, company="";
+        if(prev && /·/.test(prev) && _hasType(prev)) company=_seg1(prev);                                                             // flat: "Company · Full-time"
+        else if(prev && !_isTitleLine(prev) && !_hasType(prev) && !_isDur(prev) && !_isDate(prev) && prev.indexOf(",")<0) company=prev;  // flat: plain company line above
+        if(!company) company=currentCompany;                                                                                          // grouped: use the company heading the block
+        if(!company && prev) company=_seg1(prev);
+        var title=pendingTitle;
+        if(!title){ var t=_prevNE(L,pv.idx); if(t.line && _isTitleLine(t.line)) title=t.line; else if(prev && _isTitleLine(prev)) title=prev; }
+        company=_cleanCo(company); var canon=_matchStudioStrict(company, studioArr); if(canon) company=canon;
+        if(company){ var _tg=_titleGames(title); jobs.push({company:company, title:_stripJunk(_tg.clean), from:from, to:to}); activeStudio=company; _tg.games.forEach(function(gn){ pgames.push({title:gn, studio:company, fromTitle:true}); }); }
+        pendingTitle="";
+      } else if(_isDur(line)){                                                                                                         // a grouped-company total → the line above is the company
+        var pv2=_prevNE(L,i);
+        if(pv2.line && !_isTitleLine(pv2.line) && !_isDate(pv2.line) && !_hasType(pv2.line) && pv2.line.indexOf(",")<0){ currentCompany=pv2.line; }
+        else if(pv2.line && _hasType(pv2.line)){ var p3=_prevNE(L,pv2.idx); if(p3.line && !_isTitleLine(p3.line)) currentCompany=p3.line; }
+      } else if(_isTitleLine(line)){ pendingTitle=line; }
+      else if(activeStudio){
+        var _dg=_domainGame(line);
+        if(_dg){ pgames.push({title:_dg, studio:activeStudio, fromDomain:true}); }        // "GuildWars2.com" → "Guild Wars 2" (matched to catalogue later)
+        else if(!_isDesc(line) && !BULLET[i]){                                            // skip job-description prose, bullets, wrapped fragments, hashtags entirely
+          var _pm=_prevNE(L,i), _nm=_nextNE(L,i);
+          // A caption/location wedged inside a media cluster — its neighbour above or below is a URL/domain/image.
+          // Catches "Home" under "GuildWars2.com" and "Mountain View" above "CoH.jpg".
+          var _adjMedia=((_pm.line && (_isImgAlt(_pm.line) || _domainGame(_pm.line))) || (_nm.line && (_isImgAlt(_nm.line) || _domainGame(_nm.line))));
+          if(line.length<=70 && line.split(" ").length<=10 && line.indexOf(",")<0 && !/[.]$/.test(line) && !_hasType(line) && !/^\d/.test(line) && !_isImgAlt(line) && !_isLoc(line) && !_adjMedia){
+            // A treasury media-link caption pairs a game with a descriptor — either side can be the game:
+            // "Home - The Elder Scrolls Online" (tail) or "New World - Official Trailer" (head). Try both.
+            var _cg=_titleGames(line);
+            if(_cg.games && _cg.games.length){ _cg.games.forEach(function(gn){ pgames.push({title:gn, studio:activeStudio, fromCaption:true}); }); if(_cg.clean && _cg.clean!==line) pgames.push({title:_cg.clean, studio:activeStudio, fromCaption:true}); }   // catalogue-match-only (like domains) — never surfaced as unmatched
+            else { pgames.push({title:line, studio:activeStudio}); }                                                                                     // candidate game name under a role → matched to the catalogue later
+          }
+        }
+      }
+    }
+    var byC={}, order=[];
+    jobs.forEach(function(j){ var k=_pnorm(j.company); if(!k) return; if(!byC[k]){ byC[k]={company:j.company,title:j.title||"",from:j.from||"",to:j.to}; order.push(k); }
+      else { var e=byC[k]; if(j.from && (!e.from || j.from<e.from)) e.from=j.from; if(e.to===""){} else if(j.to===""){ e.to=""; } else if(j.to && (!e.to || j.to>e.to)) e.to=j.to; if(!e.title && j.title) e.title=j.title; } });
+    var merged=order.map(function(k){ return byC[k]; });
+    merged.sort(function(a,b){ var at=(a.to===""?9999:(a.to||0)), bt=(b.to===""?9999:(b.to||0)); return bt-at || (b.from||0)-(a.from||0); });
+    var role=""; if(headline){ var ai=headline.toLowerCase().indexOf(" at "); role=ai>0?headline.slice(0,ai).trim():""; }
+    if(!role && merged[0]) role=merged[0].title||"";
+    // LinkedIn's "Projects" section is a clean list of titles, each often tagged "Associated with <studio>".
+    // Parse it directly — it's the most reliable place your shipped games appear.
+    var projStart=-1; for(var pi=0;pi<L.length;pi++){ if(/^projects(\s*\(\d+\))?$/i.test(L[pi])){ projStart=pi+1; break; } }
+    if(projStart>=0){ var lastG=null;
+      for(var pj=projStart;pj<L.length;pj++){ var pl=L[pj]; if(!pl) continue;
+        if(/^(show all|recommendations|interests|skills|education|licenses|volunteering|volunteer|courses|honors|languages|organizations|causes|people you|you might like|pages for you)\b/i.test(pl)) break;   // next section
+        if(_isDate(pl)||_isDur(pl)||/^show project/i.test(pl)||_isImgAlt(pl)) continue;                     // a project's date / link / image-alt line
+        if(/^associated with /i.test(pl)){ if(lastG) lastG.studio=_stripJunk(pl.replace(/^associated with\s+/i,"")); continue; }
+        lastG={title:pl, studio:""}; pgames.push(lastG);                                                   // a project title → a game candidate
+      }
+    }
+    var education=_parseEducation(L);
+    return { name:name, headline:headline, jobs:merged, role:role, games:pgames, education:education };
+  }
+  function _catTitleIndex(rows){ var m={}; for(var i=0;i<rows.length;i++){ var r=rows[i]; if(!r) continue; var k=nrm(r[1]); if(k && !m[k]) m[k]={slug:r[0],title:r[1],year:r[2],studio:r[3]}; } return m; }
+  function autofillFromPaste(){
+    var ta=document.getElementById("pt-text"); var st=document.getElementById("pt-status");
+    var text=ta?ta.value:""; if(!text.trim()){ if(st){ st.textContent="Paste your LinkedIn or résumé text first."; st.style.color="var(--pink)"; } return; }
+    if(st){ st.textContent="Reading…"; st.style.color="var(--muted)"; }
+    loadCatalog().then(function(rows){
+      var res=parseProfile(text, _studioIndex(rows));
+      if(res.name) window._qsName=res.name;
+      if(res.headline) window._qsHead=res.headline;
+      if(res.role) window._qsRole=res.role;
+      if(res.education && res.education.length) window._qsEdu=res.education;
+      var tIdx=_catTitleIndex(rows), sIdx={}; _studioIndex(rows).forEach(function(s){ sIdx[s.k]=1; });
+      // Subtitle index: base name (before a ": "/" - " subtitle) → catalogue entries. Lets us auto-link a
+      // base title from a paste ("Warhammer Online") to its catalogued full title ("Warhammer Online: Age of Reckoning").
+      var subIdx={};
+      for(var _si=0;_si<rows.length;_si++){ var _r=rows[_si]; if(!_r||!_r[1]) continue; var _parts=String(_r[1]).split(/\s*[:–—-]\s+/); if(_parts.length<2) continue; var _bk=nrm(_parts[0]); if(_bk.length<3) continue; (subIdx[_bk]=subIdx[_bk]||[]).push({slug:_r[0],title:_r[1],year:_r[2],studio:_r[3]}); }
+      var jobs=res.jobs||[];
+      // A "studio" from the paste that is really a catalogue GAME (e.g. "League of Legends") — one that
+      // isn't a known studio, but IS a game whose real studio is among your other studios — gets moved
+      // out of the studio list and into your games instead.
+      var studioKeys={}; jobs.forEach(function(j){ studioKeys[nrm(j.company)]=1; });
+      var keptJobs=[];
+      jobs.forEach(function(j){ var k=nrm(j.company), asGame=tIdx[k];
+        if(!sIdx[k] && asGame && asGame.studio && studioKeys[nrm(asGame.studio)]) res.games.push({title:asGame.title, studio:asGame.studio});
+        else keptJobs.push(j);
       });
-      for(var t=0;t<items.length;t++){ (function(k){ items[k].onclick=function(){ try{ video.currentTime=k*seg()+0.12; }catch(e){} setActive(k); var pr=video.play&&video.play(); if(pr&&pr.catch)pr.catch(function(){}); }; })(t); }
-      var pr0=video.play&&video.play(); if(pr0&&pr0.catch)pr0.catch(function(){});
-    }
-    setActive(0);
-  })();
-</script>
-
-<!-- HOW IT WORKS -->
-
-<!-- MANIFESTO -->
-
-<!-- COMPARISON (removed from the lean flow; kept here commented for easy restore)
-     Was: "Everything a résumé can't show" table. Re-add if the page needs the résumé contrast back. -->
-
-<!-- VERIFIED CREDITS (a nice added benefit), sits below the showcase -->
-<section class="blk"><div class="container">
-  <div class="vqwrap">
-    <div class="vqcopy">
-      <div class="eyebrow">Backed by your team</div>
-      <h2 class="sec">The people you shipped with, vouching for you</h2>
-      <p class="lead">When a teammate confirms the role you played on a title you shipped together, a green check appears on that credit. It's a small nod from the people who were actually there, and it means a lot to the recruiter reading your profile.</p>
-      <ul class="vqbullets">
-        <li>Teammates who shipped the same title confirm your role</li>
-        <li>A green check appears the moment your role is confirmed</li>
-        <li>Recruiters see recognition from the people you worked alongside</li>
-      </ul>
-    </div>
-    <div class="vqcard">
-      <div class="vqtop"><div class="vqcover">HI</div><div><div class="vqtitle">Halo Infinite</div><div class="vqrole">Senior Multiplayer Designer &middot; 2021</div></div></div>
-      <div class="vqverify"><span class="vqck">&#10003;</span><div><b>Confirmed by 3 teammates who shipped Halo Infinite</b><div class="vqsub">A nod from the people who were in the credits with you.</div></div></div>
-      <div class="vqavs"><span class="vqav">AR</span><span class="vqav">MG</span><span class="vqav">JL</span><span class="vqavmore">who hold their own credits on it</span></div>
-    </div>
-  </div>
-</div></section>
-
-<!-- ENGINE (removed from the lean flow; "why it's effortless" band. Easy to restore if wanted) -->
-
-<!-- CLOSE (repeats the hero's primary action: the guided Quick Start) -->
-<section class="blk"><div class="container">
-  <div class="cta"><div class="glow"></div>
-    <h2>Build the portfolio your games deserve.</h2>
-    <p>Paste your LinkedIn or name your studios, and watch your portfolio build itself.</p>
-    <a class="btn primary big" href="/portfolio/start/" style="font-size:15px;padding:12px 22px">Build your portfolio in minutes →</a>
-  </div>
-</div></section>
-
-<footer><div class="container">
-  <div><b style="color:var(--text)">DevQuest.gg / Portfolio</b> · a companion to the game-industry job board</div>
-  <div><a href="/">← Back to jobs</a> &nbsp;·&nbsp; <a href="mailto:studios@devquest.gg?subject=DevQuest%20Portfolio%20feedback&body=Bug%2C%20idea%2C%20or%20just%20a%20thought%3A%0A%0A">Feedback</a></div>
-</div></footer>
-
-<script src="/credits/api.js?v=20260716"></script>
-<script src="/credits/app.js?v=20260716"></script>
-<script>
-  // Cover wall (m1/m2) is populated below from the real data/site/home.json (well-known games).
-  // The old hardcoded COVERS/GAMES placeholder blocks were removed: the games grid was cut, and
-  // its leftover render threw on the missing #gcards element, halting the whole script.
-
-  // ---- Featured profile: one REAL claimed profile, rendered the way its live page looks
-  //      (a cover-art hero row + a career timeline), reshuffled to a new developer per refresh.
-  //      Covers come free from Steam capsules and admin covers, same pipeline as the person page.
-  function dEsc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
-  function dShuffle(a){ a=a.slice(); for(var i=a.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)),t=a[i];a[i]=a[j];a[j]=t; } return a; }
-  function fHash(s){ s=String(s||''); var h=0; for(var i=0;i<s.length;i++){ h=(h*31+s.charCodeAt(i))|0; } return h; }
-  var FEATEL=document.getElementById('featwrap');
-  var FCOLORS=['#58a6ff','#a371f7','#3fb950','#e0b23a','#f778ba'];
-  var STEAMCAP='https://cdn.cloudflare.steamstatic.com/steam/apps/';
-  function coverSrc(c){ return c.cover ? DQ.safeUrl(c.cover) : (c.steam ? STEAMCAP+encodeURIComponent(c.steam)+'/library_600x900.jpg' : ''); }
-  function hasCover(c){ return !!coverSrc(c); }
-  function fHeroTile(c){
-    var src=coverSrc(c);
-    var art='<span class="fph">'+dEsc(c.game_title)+'</span>'+(src?'<img loading="lazy" referrerpolicy="no-referrer" src="'+dEsc(src)+'" onerror="this.remove()" alt="">':'');
-    var vb=c.vouch_count?'<span class="fvb '+(c.vouch_count>=2?'team':'peer')+'" title="'+(c.vouch_count>=2?'Team-confirmed':'Peer-confirmed')+' by teammates who shipped this game">✓</span>':'';
-    var meta=(c.studio?dEsc(c.studio)+'  ·  ':'')+(c.year?c.year:'');
-    return '<a class="ftile" href="/credits/game/'+encodeURIComponent(c.game_slug)+'"><div class="fcov">'+art+vb+
-      '<div class="fscrim"><b class="ftt">'+dEsc(c.game_title)+'</b><span class="fmt">'+dEsc(c.role||'Role not recorded')+'</span><span class="fsub">'+meta+'</span></div></div></a>';
+      if(keptJobs.length) STUDIOS=keptJobs.map(function(j){ return { name:j.company, from:(j.from||""), to:(j.to||""), title:(j.title||"") }; });
+      var finalStudioKeys={}; STUDIOS.forEach(function(s){ finalStudioKeys[nrm(s.name)]=1; });   // your ACTUAL companies (post-reclassification): a candidate matching one is a company (e.g. "Argos"/"Tesco"), not a game
+      // Match the games your paste listed to the catalogue and add them (shown as chips below).
+      // Titles we read but can't find in the catalogue are surfaced separately so nothing drops silently.
+      var gmatched=0; UNMATCHED=[]; var seenU={};
+      if(res.games && res.games.length){
+        res.games.forEach(function(pg){ var key=nrm(pg.title); if(!key) return;
+          if(finalStudioKeys[key]) return;                              // a company you worked at (retailer, employer) — never a game
+          if(_isImgAlt(pg.title)) return;                                // filename / URL / image alt-text → never a real title
+          if(_isLoc(pg.title)) return;                                   // location line ("Los Angeles Metropolitan Area") / "aka …" alias → never a game
+          var g=tIdx[key];
+          if(g){
+            // Guard generic single-word false positives (e.g. "Home", "Connect" from a treasury link or a
+            // "Connect" button): a one-word matched title only counts if the game's studio is one of yours.
+            // Distinctive multi-word titles are trusted without that check.
+            var gs=nrm(g.studio||"");
+            if(key.split(" ").length<=1 && gs && !Object.keys(studioKeys).some(function(k){ return k && (k.indexOf(gs)>=0 || gs.indexOf(k)>=0); })) return;
+            if(!PICKED[g.slug]){ PICKED[g.slug]={slug:g.slug,title:g.title,year:g.year,studio:g.studio}; gmatched++; } return;
+          }
+          // no exact match → subtitle match: a distinctive multi-word base name from the paste vs a catalogued
+          // "Base: Subtitle" title ("Warhammer Online" → "Warhammer Online: Age of Reckoning"). Multi-word only,
+          // so a lone common word can't mis-link; several variants → the base game (shortest title).
+          var subs=subIdx[key];
+          if(subs && subs.length && key.split(" ").length>=2){
+            var pick = subs.length===1 ? subs[0] : subs.slice().sort(function(a,b){ return String(a.title).length-String(b.title).length; })[0];
+            if(pick){ if(!PICKED[pick.slug]){ PICKED[pick.slug]={slug:pick.slug,title:pick.title,year:pick.year,studio:pick.studio}; gmatched++; } return; }
+          }
+          // no catalogue match → keep only plausible game titles (drop studio names & role/section noise)
+          if(pg.fromDomain || pg.fromCaption || pg.fromTitle) return;    // recovered from a URL, media-link caption, or split out of a job title, and unmatched — too speculative to surface as "unmatched"
+          if(_isDesc(pg.title)) return;                                  // backstop: description prose / fragment / hashtag → never surface
+          if(seenU[key]||studioKeys[key]||sIdx[key]) return;
+          if(_SUFFIXRE.test(pg.title)||_TITLERE.test(pg.title)) return;   // "…Studios/Games/Entertainment" or a role
+          if(pg.title.split(/\s+/).length<2) return;                     // single word → noise
+          seenU[key]=1; UNMATCHED.push(pg.title);
+        });
+      }
+      // Classify each studio: a GAME studio if it's in our game-studio catalogue, or it shipped one of
+      // your matched games. Non-game employers (a bank, a TV network, MLB) stay on your work history but
+      // won't be counted as studios. gameStudio is carried through to the draft as is_game_studio.
+      var gameStudioKeys={}; Object.keys(PICKED).forEach(function(slug){ var st=nrm(PICKED[slug].studio||""); if(st) gameStudioKeys[st]=1; });
+      STUDIOS.forEach(function(s){ var k=nrm(s.name); s.gameStudio = !!(sIdx[k] || gameStudioKeys[k]); });
+      REVEALED=true; renderStudios();
+      var st2=document.getElementById("pt-status"); var n=STUDIOS.length;
+      if(st2){ st2.textContent = n ? ("Found "+n+" studio"+(n===1?"":"s")+(res.name?" and your name":"")+(gmatched?(" and "+gmatched+" game"+(gmatched===1?"":"s")):"")+" — review below, remove anything wrong, then continue.") : "Couldn’t spot studios in that text — add them manually below."; st2.style.color = n?"var(--green)":"var(--muted)"; }
+      if(n){ var le=document.getElementById(gmatched?"found-games-card":"st-list"); if(le){ try{ le.scrollIntoView({behavior:"smooth",block:"center"}); }catch(e){} } }
+    }).catch(function(){ var s3=document.getElementById("pt-status"); if(s3){ s3.textContent="Something went wrong reading that."; s3.style.color="var(--pink)"; } });
   }
-  function fTlRow(c){
-    var src=coverSrc(c);
-    var thumb='<span class="ftlph">'+dEsc(c.game_title)+'</span>'+(src?'<img loading="lazy" referrerpolicy="no-referrer" src="'+dEsc(src)+'" onerror="this.remove()" alt="">':'');
-    var seal=c.vouch_count?' <span class="dseal '+(c.vouch_count>=2?'team':'peer')+'" title="'+(c.vouch_count>=2?'Team-confirmed':'Peer-confirmed')+' by a teammate">✓</span>':'';
-    return '<div class="ftlrow"><div class="ftlyear">'+(c.year||'')+'</div><div class="ftlrail"><span class="ftldot"></span></div>'+
-      '<div class="ftlcard"><a class="ftlthumb" href="/credits/game/'+encodeURIComponent(c.game_slug)+'">'+thumb+'</a>'+
-      '<div class="ftlbody"><div class="ftlname">'+dEsc(c.game_title)+seal+'</div><div class="ftlrole">'+dEsc(c.role||'Role not recorded')+'</div></div></div></div>';
+
+  // ---------- Step 1: paste → (revealed) studios + games ----------
+  function renderDisciplineRow(){
+    var row=document.getElementById("disc-row"); if(!row) return;
+    row.querySelectorAll(".dchip").forEach(function(chip){ chip.onclick=function(){ DISCIPLINE=chip.getAttribute("data-k"); row.querySelectorAll(".dchip").forEach(function(c){ c.classList.toggle("on", c===chip); }); var h=document.getElementById("disc-hint"); if(h) h.style.display=(["art","audio"].indexOf(DISCIPLINE)>=0)?"block":"none"; }; });
   }
-  function fTlMoreRow(n, slug){
-    return '<div class="ftlrow ftlmorerow"><div class="ftlyear"></div><div class="ftlrail"><span class="ftldot ftldotmore"></span></div>'+
-      '<a class="ftlmore" href="/portfolio/'+encodeURIComponent(slug)+'">··· and '+n+' more '+(n===1?'title':'titles')+' →</a></div>';
-  }
-  function fRender(p, credits){
-    if(!FEATEL) return;
-    var initials=String(p.name||'?').trim().split(/\s+/).slice(0,2).map(function(w){return w[0]||'';}).join('').toUpperCase();
-    var color=FCOLORS[Math.abs(fHash(p.slug||p.name))%FCOLORS.length];
-    var h=String(p.headline||'').trim(), ai=h.toLowerCase().lastIndexOf(' at ');
-    var title=ai>0?h.slice(0,ai):(h||'Developer'), studio=ai>0?h.slice(ai+4):'';
-    var total=credits.length, verified=credits.filter(function(c){return c.vouch_count;}).length;
-    // Collapse expansions the person also holds under their base game (don't show them as separate
-    // rows in this preview), and order by when they WORKED on each title, not by release year.
-    var _ownBySlug={}; credits.forEach(function(c){ if(c.game_slug) _ownBySlug[c.game_slug]=1; });
-    var baseCredits=credits.filter(function(c){ return !(c.parent_slug && _ownBySlug[c.parent_slug]); });
-    var hero=baseCredits.filter(hasCover).concat(baseCredits.filter(function(c){return !hasCover(c);})).slice(0,3);
-    var tlSorted=baseCredits.slice().sort(function(a,b){ return ((a.work_start||a.year||9999)-(b.work_start||b.year||9999)) || String(a.game_title).localeCompare(String(b.game_title)); });
-    var tl=tlSorted.slice(0,6), tlMore=tlSorted.length-tl.length;
-    var vchip=verified?'<span class="fchip vf">✓ '+verified+' of '+total+' confirmed</span>':'';
-    FEATEL.innerHTML=
-      '<div class="ftint" style="background:radial-gradient(closest-side,'+color+',transparent)"></div>'+
-      '<div class="fhead"><div class="fav" style="background:'+color+'">'+dEsc(initials)+'</div>'+
-        '<div class="fident"><div class="fname">'+dEsc(p.name)+'</div>'+
-          '<div class="fhl"><b>'+dEsc(title)+'</b>'+(studio?' · '+dEsc(studio):'')+'</div>'+
-          '<div class="fmeta"><span class="fchip">'+total+' shipped '+(total===1?'title':'titles')+'</span>'+vchip+'</div></div>'+
-        '<a class="fview" href="/portfolio/'+encodeURIComponent(p.slug)+'">View full profile →</a></div>'+
-      '<div class="fbody"><div class="feyebrow">Proudest work</div>'+
-        '<div class="feathero">'+hero.map(fHeroTile).join('')+'</div>'+
-        (tl.length>1?'<div class="feyebrow" style="margin-top:22px">Career timeline</div><div class="ftl">'+tl.map(fTlRow).join('')+(tlMore>0?fTlMoreRow(tlMore,p.slug):'')+'</div>':'')+
+  function renderStudios(){
+    app.innerHTML =
+      // Discipline first — it shapes the whole portfolio (Art/Audio lead with a gallery + reel).
+      '<div class="blk"><h2>First — what do you do?</h2><div class="desc">This shapes your portfolio. <b>Art</b> &amp; <b>Audio</b> lead with a gallery and showreel; <b>Production</b>, <b>Engineering</b>, <b>Design</b> &amp; <b>QA</b> lead with the games you shipped. You can change it anytime.</div>'+
+        '<div class="chiprow" id="disc-row">'+DISCIPLINES.map(function(d){ return '<button type="button" class="dchip'+(DISCIPLINE===d.k?" on":"")+'" data-k="'+d.k+'">'+esc(d.label)+'</button>'; }).join("")+'</div>'+
+        '<div class="desc" id="disc-hint" style="color:var(--gold);font-size:12.5px;margin-top:10px;display:'+(["art","audio"].indexOf(DISCIPLINE)>=0?"block":"none")+'">Nice — after the basics you’ll add a <b>showreel</b> and an <b>image gallery</b>, and they’ll lead your page.</div>'+
+      '</div>'+
+      '<div class="blk"><h2>Have a LinkedIn or résumé? Paste it. <span style="font-size:12px;font-weight:700;color:var(--gold);vertical-align:middle;border:1px solid rgba(224,178,58,.4);border-radius:6px;padding:1px 7px">FASTEST</span></h2><div class="desc">We’ll read your name, headline, the studios you worked at, and the games you listed — then you just confirm. Nothing is uploaded; it’s parsed right here in your browser.</div>'+
+        '<div class="desc" style="color:var(--gold);font-size:12.5px;margin:-6px 0 12px">Tip: on LinkedIn, click <b>“Show all experiences”</b> and <b>“Show all projects”</b> before you copy — older studios and games are hidden behind those links, and we can only read what’s in the text.</div>'+
+        '<textarea id="pt-text" placeholder="Paste your LinkedIn profile text or your résumé here…"></textarea>'+
+        '<div class="actions"><button class="btn primary" id="pt-go">Autofill from this →</button><span class="status" id="pt-status"></span></div>'+
+        '<div class="desc" style="margin-top:12px">No LinkedIn or résumé handy? <a id="scratch" style="color:var(--accent);font-weight:700;cursor:pointer">Build from scratch instead →</a></div>'+
+      '</div>'+
+      '<div id="reveal" class="'+(REVEALED?"":"hide")+'">'+
+        '<div class="blk"><h2>Where have you worked?</h2><div class="desc">Add each studio and roughly when you were there — or edit what the paste found. Years are optional but help us show the right games.</div>'+
+          '<div class="sdrop"><label>Studio / developer</label><input id="st-name" placeholder="e.g. Insomniac Games" autocomplete="off"><div id="st-sug"></div></div>'+
+          '<div class="row" style="margin-top:10px"><div><label>From (year)</label><input id="st-from" inputmode="numeric" placeholder="2019"></div><div><label>To (year, or blank if current)</label><input id="st-to" inputmode="numeric" placeholder="2022"></div><div style="flex:0 0 auto"><button class="btn sm" id="st-add">+ Add studio</button></div></div>'+
+          '<div id="st-list" style="margin-top:14px"></div>'+
+        '</div>'+
+        '<div class="blk" id="found-games-card"></div>'+
+        '<div class="actions"><button class="btn primary" id="to-games" disabled>Continue →</button></div>'+
       '</div>';
+    renderDisciplineRow();
+    var ptg=document.getElementById("pt-go"); if(ptg) ptg.onclick=autofillFromPaste;
+    var scr=document.getElementById("scratch"); if(scr) scr.onclick=function(){ REVEALED=true; var rv=document.getElementById("reveal"); if(rv){ rv.classList.remove("hide"); try{ rv.scrollIntoView({behavior:"smooth",block:"start"}); }catch(e){} } var sn=document.getElementById("st-name"); if(sn) sn.focus(); };
+    renderStudioList();
+    renderFoundGames();
+    var nameEl=document.getElementById("st-name");
+    document.getElementById("st-add").onclick=addStudio;
+    nameEl.addEventListener("keydown", function(e){ if(e.key==="Enter"){ e.preventDefault(); addStudio(); } });
+    nameEl.addEventListener("input", studioSuggest);
+    document.getElementById("to-games").onclick=function(){ loadCatalog().then(function(){ setStep(2); }); };
   }
-  // Enrich a person's credits with cover art + release year from the static shards and admin
-  // covers (the exact pipeline the live person page uses). Mutates and resolves the array.
-  function fEnrich(cr){
-    var slugs=cr.map(function(c){return c.game_slug;});
-    var pc=(slugs.length&&window.DQAPI&&DQAPI.gameCovers)?DQAPI.gameCovers(slugs).then(function(rr){return (rr.data&&rr.data.covers)||{};}).catch(function(){return {};}):Promise.resolve({});
-    var ps=Promise.all(cr.map(function(c){ return DQ.loadEntity('games',c.game_slug).then(function(gg){ if(gg){ if(c.year==null&&gg.year!=null)c.year=gg.year; if(gg.steam)c.steam=gg.steam; if(gg.cover)c.cover=gg.cover; } }).catch(function(){}); }));
-    return Promise.all([pc,ps]).then(function(rz){ var cov=rz[0]||{}; cr.forEach(function(c){ if(cov[c.game_slug]) c.cover=cov[c.game_slug]; }); return cr; });
+  function updateCTALabel(){ var go=document.getElementById("to-games"); if(!go) return; go.disabled=(STUDIOS.length===0 && Object.keys(PICKED).length===0); go.textContent="Continue →"; }
+  // Games found from the paste, plus an inline add box — same interaction as the studio card:
+  // type a title to add a game right here (no need to go to the next step), tap × to remove.
+  function renderFoundGames(){
+    var card=document.getElementById("found-games-card"); if(!card) return;
+    var slugs=Object.keys(PICKED);
+    var games=slugs.map(function(s){ return PICKED[s]; });
+    games.sort(function(a,b){ return String(a.studio||"").localeCompare(String(b.studio||"")) || (parseInt(b.year,10)||0)-(parseInt(a.year,10)||0) || String(a.title).localeCompare(String(b.title)); });
+    var head = '<h2>'+(games.length?'Games we found <span style="font-size:13px;font-weight:700;color:var(--muted)">— '+games.length+'</span>':'Your games')+'</h2>'+
+      '<div class="desc">'+(games.length?'Pulled from your paste. Tap × to remove any that weren’t yours, or type below to add more.':'Type a game title below to add the games you shipped.')+'</div>';
+    var addbox = '<div class="sdrop"><input id="fg-q" placeholder="Add a game you shipped… (type a title)" autocomplete="off"><div id="fg-sug"></div></div>';
+    var chips = games.length ? '<div style="margin-top:10px">'+games.map(function(g){ var meta=(g.studio?esc(g.studio):"")+(g.year?' · '+esc(g.year):""); return '<span class="studio-chip"><b>'+esc(g.title)+'</b>'+(meta?' <span class="yr">'+esc(meta)+'</span>':'')+'<button class="x" data-slug="'+esc(g.slug)+'" aria-label="Remove">×</button></span>'; }).join("")+'</div>' : '';
+    var unm = UNMATCHED.length ?
+      ('<div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border)">'+
+       '<div class="desc" style="color:var(--gold);margin-bottom:6px">Listed on your profile but not in our catalogue yet — we couldn’t link '+(UNMATCHED.length===1?'this title':'these titles')+':</div>'+
+       '<div>'+UNMATCHED.map(function(t){ return '<span class="studio-chip" style="border-style:dashed;opacity:.9"><b>'+esc(t)+'</b></span>'; }).join("")+'</div>'+
+       '<div class="desc" style="font-size:12px;margin-top:7px">These aren’t in our game catalogue yet, so we can’t add them automatically.</div></div>')
+      : '';
+    card.innerHTML = head + addbox + chips + unm;
+    card.querySelectorAll(".x").forEach(function(el){ el.onclick=function(){ delete PICKED[el.getAttribute("data-slug")]; renderFoundGames(); }; });
+    var fq=document.getElementById("fg-q"); if(fq) fq.addEventListener("input", gameSuggest);
+    updateCTALabel();
   }
-  // Sample shown instantly (real games with cover art) so the section never flashes empty;
-  // upgraded to a live random profile the moment the spotlight pool resolves.
-  var SAMPLE={ p:{name:'Destin Bales', slug:'destin-bales', headline:'Director of Development Management at Insomniac Games'},
-    cr:[ {game_slug:'tom-clancys-rainbow-six-siege', game_title:"Tom Clancy's Rainbow Six Siege", role:'Vice President of Production', studio:'Ubisoft Montreal', year:2015, steam:'359550', vouch_count:0},
-         {game_slug:'dark-age-of-camelot', game_title:'Dark Age of Camelot', role:'Producer', studio:'Mythic Entertainment', year:2001, cover:'https://devquest-credits-api.balesdestin.workers.dev/img?u=https%3A%2F%2Fassets-prd.ignimgs.com%2F2023%2F06%2F27%2Fcamelot-1687898259037.jpg%3Fcrop%3D1%253A1%252Csmart%26format%3Djpg%26auto%3Dwebp%26quality%3D80&s=zf5mP6NFpFvcCmT6ReM2kudlzwakjllICfzywGZdOWE', vouch_count:2},
-         {game_slug:'league-of-legends', game_title:'League of Legends', role:'Senior Producer', studio:'Riot Games', year:2009, cover:'https://devquest-credits-api.balesdestin.workers.dev/img?u=https%3A%2F%2Fi.pinimg.com%2F736x%2F20%2F54%2Fb6%2F2054b617ac11f24e23d62e05f85303d4.jpg&s=ehROCXB2JywmVlzEJ8NNIFRYaBt3UyFvFJaPKQkaSa8', vouch_count:1} ] };
-  fRender(SAMPLE.p, SAMPLE.cr);
-  // Prefer a profile whose every title has cover art (no placeholder tiles). But NEVER get stuck
-  // on the sample: if no fully-covered profile turns up in the pool, fall back to the best real
-  // profile we saw (the one with the most covers), so the card always shows a live developer.
-  function fBaseOf(cr){ var own={}; cr.forEach(function(c){ if(c.game_slug) own[c.game_slug]=1; }); return cr.filter(function(c){ return !(c.parent_slug && own[c.parent_slug]); }); }
-  function fAllCovered(cr){ var b=fBaseOf(cr); return b.length>=2 && b.every(hasCover); }
-  function fCoverScore(cr){ return fBaseOf(cr).filter(hasCover).length; }
-  if(window.DQAPI && DQAPI.spotlight && FEATEL){
-    DQAPI.spotlight().then(function(r){
-      var pool=dShuffle((r&&r.ok&&r.data&&r.data.people)||[]);
-      if(!pool.length) return; // keep the sample
-      var tried=0, MAXTRY=8, best=null, bestScore=0;
-      function attempt(i){
-        if(i>=pool.length || tried>=MAXTRY){ if(best) fRender(best.p, best.cr); return; } // fall back to the most-covered real profile
-        tried++;
-        DQAPI.personCredits(pool[i].slug).then(function(pr){
-          var d=(pr&&pr.data)||{}, per=d.person, cr=(d.credits||[]);
-          if(!per||per.hidden||!cr.length){ return attempt(i+1); }
-          fEnrich(cr).then(function(){
-            var pp={name:per.name, slug:per.slug, headline:per.headline||pool[i].headline||''};
-            if(fAllCovered(cr)){ fRender(pp, cr); return; }              // ideal: every tile has art
-            var sc=fCoverScore(cr);
-            if(fBaseOf(cr).length>=2 && sc>bestScore){ best={p:pp, cr:cr}; bestScore=sc; } // remember best fallback
-            attempt(i+1);
-          });
-        }).catch(function(){ attempt(i+1); });
-      }
-      attempt(0);
-    }).catch(function(){});
+  // Inline game typeahead (searches the whole catalogue by title) — mirrors studioSuggest.
+  var _gsugT=null;
+  function gameSuggest(){
+    var el=document.getElementById("fg-q"), box=document.getElementById("fg-sug"); if(!el||!box) return;
+    var q=(el.value||"").trim();
+    if(_gsugT) clearTimeout(_gsugT);
+    if(q.length<2){ box.innerHTML=""; return; }
+    _gsugT=setTimeout(function(){
+      loadCatalog().then(function(rows){
+        if((((document.getElementById("fg-q")||{}).value)||"").trim()!==q) return;
+        var ql=nrm(q), out=[], seen={};
+        for(var i=0;i<rows.length && out.length<10;i++){ var r=rows[i]; if(!r) continue; if(nrm(r[1]).indexOf(ql)<0) continue; if(seen[r[0]]||PICKED[r[0]]) continue; seen[r[0]]=1; out.push({slug:r[0],title:r[1],year:r[2],studio:r[3]}); }
+        if(!out.length){ box.innerHTML='<div class="sdrop-list"><div style="color:var(--muted);cursor:default">No catalogue match for “'+esc(q)+'”.</div></div>'; return; }
+        box.innerHTML='<div class="sdrop-list">'+out.map(function(g){ var meta=(g.studio?esc(g.studio):"")+(g.year?' · '+esc(g.year):""); return '<div data-slug="'+esc(g.slug)+'" data-title="'+esc(g.title)+'" data-year="'+esc(g.year||"")+'" data-studio="'+esc(g.studio||"")+'">'+esc(g.title)+(meta?' <span style="color:var(--muted);font-size:12px">'+esc(meta)+'</span>':'')+'</div>'; }).join("")+'</div>';
+        box.querySelectorAll("div[data-slug]").forEach(function(d){ d.onclick=function(){ var slug=d.getAttribute("data-slug"); if(slug) PICKED[slug]={slug:slug,title:d.getAttribute("data-title"),year:d.getAttribute("data-year"),studio:d.getAttribute("data-studio")}; renderFoundGames(); var f=document.getElementById("fg-q"); if(f) f.focus(); }; });
+      });
+    }, 180);
+  }
+  var _sugT=null;
+  function studioSuggest(){
+    var el=document.getElementById("st-name"); var box=document.getElementById("st-sug");
+    var q=(el.value||"").trim();
+    if(_sugT) clearTimeout(_sugT);
+    if(q.length<2){ box.innerHTML=""; return; }
+    _sugT=setTimeout(function(){
+      var ql=q.toLowerCase();
+      // Primary: distinct studio names from the catalogue index (same data step 2 matches against).
+      var staticP=loadCatalog().then(function(rows){
+        var seen={}, out=[];
+        for(var i=0;i<rows.length && out.length<40;i++){ var s=rows[i]&&rows[i][3]; if(!s) continue; var sl=String(s).toLowerCase(); if(sl.indexOf(ql)!==-1 && !seen[sl]){ seen[sl]=1; out.push(String(s)); } }
+        return out;
+      }).catch(function(){ return []; });
+      // Secondary: the live studios API (adds studios not present in the static catalogue).
+      var liveP=(window.DQAPI&&DQAPI.searchStudios)?DQAPI.searchStudios(q).then(function(r){ return ((r&&r.data&&r.data.studios)||[]).map(function(s){ return s.name; }); }).catch(function(){ return []; }):Promise.resolve([]);
+      Promise.all([staticP,liveP]).then(function(a){
+        if(((document.getElementById("st-name")||{}).value||"").trim().toLowerCase()!==ql) return;   // input moved on
+        var seen={}, names=[];
+        a[0].concat(a[1]).forEach(function(n){ if(!n) return; var k=String(n).toLowerCase(); if(seen[k]) return; seen[k]=1; names.push(String(n)); });
+        names.sort(function(x,y){ var xs=x.toLowerCase().indexOf(ql)===0?0:1, ys=y.toLowerCase().indexOf(ql)===0?0:1; return xs-ys || x.localeCompare(y); });
+        names=names.slice(0,10);
+        if(!names.length){ box.innerHTML=""; return; }
+        box.innerHTML='<div class="sdrop-list">'+names.map(function(n){ return '<div data-n="'+esc(n)+'">'+esc(n)+'</div>'; }).join("")+'</div>';
+        box.querySelectorAll("div[data-n]").forEach(function(d){ d.onclick=function(){ document.getElementById("st-name").value=d.getAttribute("data-n"); box.innerHTML=""; document.getElementById("st-from").focus(); }; });
+      });
+    }, 200);
+  }
+  function addStudio(){
+    var name=document.getElementById("st-name").value.trim(); if(!name) return;
+    var from=document.getElementById("st-from").value.trim(), to=document.getElementById("st-to").value.trim();
+    STUDIOS.push({ name:name, from:from, to:to, title:"", gameStudio:true });
+    document.getElementById("st-name").value=""; document.getElementById("st-from").value=""; document.getElementById("st-to").value="";
+    document.getElementById("st-sug").innerHTML="";
+    renderStudioList(); document.getElementById("st-name").focus();
+  }
+  function renderStudioList(){
+    var box=document.getElementById("st-list"); if(!box) return;
+    if(!STUDIOS.length){ box.innerHTML='<div class="empty">No studios yet — add your first above.</div>'; }
+    else {
+      var nonGame=STUDIOS.filter(function(s){ return s.gameStudio===false; }).length;
+      box.innerHTML = '<div style="font-size:12.5px;font-weight:800;color:var(--gold);margin:0 0 9px">✓ Your studios ('+STUDIOS.length+') — tap a chip to toggle game studio ↔ work history · tap × to remove:</div>' + STUDIOS.map(function(s,i){ var yr=(s.from||s.to)?((s.from||"?")+" – "+(s.to||"now")):""; var ng=(s.gameStudio===false); return '<span class="studio-chip sc-toggle" data-i="'+i+'" role="button" tabindex="0" title="'+(ng?'Not counted — click to count this as a game studio':'Counts as a game studio — click to mark as work history only')+'"'+(ng?' style="opacity:.72"':'')+'><b>'+esc(s.name)+'</b>'+(yr?' <span class="yr">'+esc(yr)+'</span>':'')+(ng?' <span class="yr" style="color:var(--dim);font-style:italic">· work history</span>':'')+'<button class="x" data-i="'+i+'" aria-label="Remove">×</button></span>'; }).join("")+
+        '<div class="desc" style="font-size:12px;margin-top:9px;color:var(--dim)">'+(nonGame?'Roles marked <i>work history</i> aren’t counted as game studios, but still appear on your résumé timeline. ':'')+'Studio guessed wrong? <b>Tap the chip</b> to flip it between game studio and work history.</div>';
+      box.querySelectorAll(".sc-toggle").forEach(function(chip){
+        function toggle(){ var i=+chip.getAttribute("data-i"); var s=STUDIOS[i]; if(!s) return; s.gameStudio=(s.gameStudio===false); renderStudioList(); }
+        chip.addEventListener("click", function(e){ if(e.target.closest(".x")) return; toggle(); });   // × handled separately below
+        chip.addEventListener("keydown", function(e){ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); toggle(); } });
+      });
+      box.querySelectorAll(".x").forEach(function(el){ el.onclick=function(e){ e.stopPropagation(); STUDIOS.splice(+el.getAttribute("data-i"),1); renderStudioList(); }; }); }
+    updateCTALabel();
   }
 
-  // ---- animated counters ----
-  // Only ever animate a stat once it has a real (>0) target AND is in view, so a
-  // slow/failed data load can never leave it counting up to a fake zero.
-  var statsInView=false;
-  function countUp(el,to){
-    var start=null,dur=1200;
-    function step(ts){if(!start)start=ts;var p=Math.min((ts-start)/dur,1);
-      el.textContent=Math.floor((1-Math.pow(1-p,3))*to).toLocaleString();
-      if(p<1)requestAnimationFrame(step); else el.textContent=to.toLocaleString();}
-    requestAnimationFrame(step);
+  // ---------- Step 2: games ----------
+  function _gameRow(g){ var ck=PICKED[g.slug]?"checked":""; return '<label class="grow"><input type="checkbox" data-slug="'+esc(g.slug)+'" '+ck+'><span class="gt">'+esc(g.title)+'</span><span class="gy">'+esc(g.studio||"")+(g.year?' · '+esc(g.year):'')+'</span></label>'; }
+  function renderStudioGames(si, full, win, q){
+    var box=document.getElementById("glist-"+si); if(!box) return;
+    var ql=nrm(q||"");
+    var list, coDev=false;
+    if(ql){
+      // Search this studio's titles first, then fall through to the WHOLE catalogue — so co-dev / support-studio
+      // work (e.g. Hogwarts Legacy, credited to another studio) is findable under the studio you did it at.
+      var studioMatches = full.filter(function(g){ return nrm(g.title).indexOf(ql)>=0; });
+      var haveSlug={}; studioMatches.forEach(function(g){ haveSlug[g.slug]=1; });
+      var others=[];
+      for(var i=0;i<CATALOG.length && (studioMatches.length+others.length)<60;i++){ var r=CATALOG[i]; if(!r||haveSlug[r[0]]) continue; if(nrm(r[1]).indexOf(ql)<0) continue; haveSlug[r[0]]=1; others.push({slug:r[0],title:r[1],year:r[2],studio:r[3]}); }
+      others.sort(function(a,b){ return (PICKED[a.slug]?0:1)-(PICKED[b.slug]?0:1) || String(a.title).length-String(b.title).length; });
+      coDev = others.length>0;
+      list = studioMatches.concat(others);
+    } else { list = win; }
+    var picked = list.filter(function(g){ return PICKED[g.slug]; });         // your picks float to the top
+    var rest = list.filter(function(g){ return !PICKED[g.slug]; });
+    var CAP = ql ? 60 : 18;
+    var shown = picked.concat(rest.slice(0, Math.max(0, CAP - picked.length)));
+    var rows = shown.map(_gameRow).join("");
+    var more;
+    if(list.length>shown.length) more='<div class="gmore">+ '+(list.length-shown.length)+' more — keep typing to narrow it down.</div>';
+    else if(!ql && full.length>win.length) more='<div class="gmore">+ '+(full.length-win.length)+' more from this studio — search above to find any title.</div>';
+    else more='';
+    var note = (ql && coDev) ? '<div class="gmore" style="color:var(--muted)">Searching the whole catalogue — pick a title from another studio too if you co-developed it here.</div>' : '';
+    box.innerHTML = rows ? (note+rows+more) : '<div class="empty">No'+(ql?' game in the catalogue matches “'+esc(q)+'”':' titles around your time')+' — try a different spelling, or add games by hand later.</div>';
   }
-  function runCounters(){
-    if(!statsInView) return;
-    document.querySelectorAll('.stat b[data-to]').forEach(function(el){
-      var to=+el.dataset.to||0;
-      if(to>0 && !el._done){ el._done=true; countUp(el,to); }
-    });
-  }
-  var io=new IntersectionObserver(function(es){es.forEach(function(e){
-    if(e.isIntersecting){ statsInView=true; io.unobserve(e.target); runCounters(); }});},{threshold:.3});
-  document.querySelectorAll('.stat b[data-to]').forEach(function(el){io.observe(el);});
-
-  // ---- search: live combined dropdown + see-all button ----
-  var hsIn=document.getElementById('hs');
-  var suggest=(hsIn && window.DQ&&DQ.attachSuggest)?DQ.attachSuggest(hsIn):null;
-  // Build-a-portfolio intent: clicking a GAME in the hero search starts a local draft
-  // (role only, no email) and drops you into the draft wall. People/studio rows behave normally.
-  (function(){
-    if(!hsIn) return;
-    var wrap = hsIn.closest('.search') || hsIn.parentNode; if(!wrap) return;
-    wrap.addEventListener('click', function(e){
-      var a = e.target.closest && e.target.closest('a.dq-row[href*="/credits/game/"]');
-      if(!a || !wrap.contains(a)) return;
-      e.preventDefault(); e.stopPropagation();
-      var m = a.getAttribute('href').match(/\/credits\/game\/([^\/?#]+)/);
-      var slug = m ? decodeURIComponent(m[1]) : '';
-      var nmEl = a.querySelector('.nm'), sbEl = a.querySelector('.sb');
-      var title = nmEl ? (nmEl.textContent||'').trim() : (a.textContent||'').trim();
-      var studio = sbEl ? (sbEl.textContent||'').trim().split('·')[0].trim() : '';
-      if(slug && window.DQ && DQ.openDraftGame) DQ.openDraftGame({game_slug:slug, game_title:title, studio:studio});
-    }, true);
-  })();
-  function goSearch(){ if(suggest){suggest.seeAll();return;} var q=hsIn?hsIn.value.trim():'';location.href='/credits/search.html'+(q?'?q='+encodeURIComponent(q):''); }
-  var _hb=document.getElementById('hsbtn'); if(_hb) _hb.addEventListener('click',goSearch);
-  if(hsIn && !suggest){ hsIn.addEventListener('keydown',function(e){if(e.key==='Enter')goSearch();}); }
-  // "Claim your credits" buttons → jump to the search box (finding your name is step one).
-  document.querySelectorAll('.claimcta').forEach(function(b){ b.style.cursor='pointer'; b.addEventListener('click',function(){ window.scrollTo({top:0,behavior:'smooth'}); if(hsIn){ setTimeout(function(){ hsIn.focus(); },350); } }); });
-  // Identity-first entry: open the add-a-game/claim flow (which materializes the profile).
-  var _sp=document.getElementById('startprofile');
-  if(_sp) _sp.addEventListener('click',function(){ if(window.DQ&&DQ.openClaim) DQ.openClaim({mode:'addGame'}); });
-
-  // ---- real data overlay (stats + fresh games) when the built site data exists ----
-  function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
-  var PAL=[["#b23a48","#3a1720"],["#e0662a","#3a1a10"],["#7b3fb0","#1c1030"],["#4aa5e0","#10233a"],["#c8a23a","#2a2210"],["#4caf50","#12331a"],["#2a6fb0","#0f1c30"],["#3a8fb0","#10283a"],["#5a5fb0","#161a30"],["#c02a5a","#300f1c"]];
-  function grad(str){var h=0;for(var i=0;i<str.length;i++)h=(h*31+str.charCodeAt(i))>>>0;var p=PAL[h%PAL.length];return 'linear-gradient(160deg,'+p[0]+','+p[1]+')';}
-  function setStat(id,val){var el=document.getElementById(id);if(el){el.dataset.to=val;runCounters();}}
-
-  // Catalogue counts (games, studios) come from the static build; the developer
-  // credit count is live from the API (the static file only ever saw seed data).
-  fetch('/credits/data/site/stats.json?t='+Date.now()).then(function(r){return r.ok?r.json():null;}).then(function(s){
-    if(!s)return; setStat('st-games',s.games); setStat('st-studios',s.studios);
-    var a=document.getElementById('allgames'); if(a)a.textContent='Browse all '+Number(s.games).toLocaleString()+' games →';
-  }).catch(function(){});
-  if(window.DQAPI&&DQAPI.stats){ DQAPI.stats().then(function(r){ if(r&&r.ok&&r.data){ setStat('st-credits', r.data.credits||0); setStat('st-vouches', r.data.vouches||0); setStat('st-portfolios', r.data.people||0); } }).catch(function(){}); }
-
-  fetch('/credits/data/site/home.json?t='+Date.now()).then(function(r){return r.ok?r.json():null;}).then(function(h){
-    if(!h)return;
-    if(h.covers&&h.covers.length){
-      // [slug,title,year,studio,genre,art]: real box art when we have it (Steam capsule or an
-      // admin cover); the gradient stays as the card background so a missing/failed image just
-      // shows the typographic card instead of a blank.
-      function coverCard(c){
-        // Art sits on top (z-index) so the box art, which already has the title baked in, is all
-        // you see. The genre/title/studio overlays stay in the DOM only as a fallback: if the image
-        // ever fails, onerror removes it and the text shows over the gradient instead of a blank card.
-        var art=c[5]?'<img loading="lazy" referrerpolicy="no-referrer" src="'+esc(c[5])+'" onerror="this.remove()" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1">':'';
-        return '<a class="cover" href="/credits/game/'+encodeURIComponent(c[0])+'" style="background:'+grad(c[1])+'">'+
-          '<span class="cgenre">'+esc(c[4]||'Game')+'</span><div class="ct">'+esc(c[1])+
-          '<span class="cc">'+esc(c[3]|| (c[2]?('· '+c[2]):''))+'</span></div>'+art+'</a>';
-      }
-      var cov=h.covers.map(coverCard).join('');
-      var _e1=document.getElementById('m1'); if(_e1)_e1.innerHTML=cov+cov;
-      var rc=h.covers.slice().reverse().map(coverCard).join('');
-      var _e2=document.getElementById('m2'); if(_e2)_e2.innerHTML=rc+rc;
-      // Start the animation only AFTER the strips have content, so it measures the real width.
-      // Starting it while a strip was still empty is what left the top row "frozen" on mobile.
-      requestAnimationFrame(function(){ var a=document.getElementById('m1'), b=document.getElementById('m2'); if(a)a.classList.add('play'); if(b)b.classList.add('play'); });
+  // Catalogue-wide search over the WHOLE index — the escape hatch for games not tied to any of your
+  // studios (studio-less catalogue entries, or a game you shipped at a studio you didn't list).
+  function renderGlobalSearch(q){
+    var box=document.getElementById("g-global-list"); if(!box) return;
+    var ql=nrm(q||"");
+    if(ql.length<2){ box.innerHTML=""; return; }
+    var out=[], seen={};
+    for(var i=0;i<CATALOG.length && out.length<40;i++){
+      var r=CATALOG[i]; if(!r) continue;
+      if(nrm(r[1]).indexOf(ql)<0) continue;
+      if(seen[r[0]]) continue; seen[r[0]]=1;
+      out.push({ slug:r[0], title:r[1], year:r[2], studio:r[3] });
     }
-  }).catch(function(){});
-</script>
-<div id="lightbox" aria-hidden="true"><button id="lbclose" type="button" aria-label="Close">&#10005;</button><img alt="Enlarged preview"></div>
-<script>
-  (function(){
-    var lb=document.getElementById('lightbox'); if(!lb) return;
-    var lbimg=lb.querySelector('img'), lbx=document.getElementById('lbclose');
-    function open(src,alt){ lbimg.src=src; lbimg.alt=alt||'Enlarged preview'; lb.classList.add('open'); lb.setAttribute('aria-hidden','false'); }
-    function close(){ lb.classList.remove('open'); lb.setAttribute('aria-hidden','true'); lbimg.src=''; }
-    var shots=document.querySelectorAll('.fcar-slide img, .herovisual img');
-    for(var i=0;i<shots.length;i++){ shots[i].addEventListener('click',function(e){ e.preventDefault(); open(this.src,this.alt); }); }
-    lb.addEventListener('click',function(e){ if(e.target===lb) close(); });
-    lbx.addEventListener('click',close);
-    document.addEventListener('keydown',function(e){ if(e.key==='Escape' && lb.classList.contains('open')) close(); });
-  })();
+    out.sort(function(a,b){ return (PICKED[a.slug]?0:1)-(PICKED[b.slug]?0:1) || String(a.title).length-String(b.title).length; });
+    box.innerHTML = out.length ? out.map(_gameRow).join("") : '<div class="empty">No game in the catalogue matches “'+esc(q)+'”.</div>';
+  }
+  function renderGames(){
+    var SEC = STUDIOS.map(function(s){ var all=gamesForStudio(s); var win=all.filter(function(g){ return PICKED[g.slug]||inWindow(g,s); }); return { s:s, all:all, win:win }; });
+    var anyPicked = Object.keys(PICKED).length>0;
+    var sections = SEC.map(function(o,si){
+      var more = o.all.length - o.win.length;
+      // Always show the search box — even for studios with no catalogued titles (co-dev / support studios like
+      // Certain Affinity), so you can pull up a game you shipped there that's credited to another studio.
+      var searchBox = '<input class="gsearch" data-si="'+si+'" placeholder="Search '+esc(o.s.name)+' or any catalogue title (incl. co-dev)…">';
+      return '<div class="gstudio">'+esc(o.s.name)+' <span class="n">'+o.win.length+' around your time'+(more>0?' · '+more+' more via search':'')+'</span></div>'+searchBox+'<div class="glist" id="glist-'+si+'"></div>';
+    }).join("");
+    app.innerHTML =
+      '<div class="blk"><h2>'+(anyPicked?'Add any more games you shipped':'Check the games you shipped')+'</h2><div class="desc">'+(anyPicked?'The games from your paste are already added. Below are other titles from your studios around the time you were there — tick any we missed. Use a studio’s search box to find a specific title, including live-service games that launched before you joined.':'These are the titles each studio shipped around the time you were there. Tick the ones you worked on — and use a studio’s search box to find anything else, including live-service games that launched before you joined.')+'</div>'+
+        '<label>Your main role <span style="font-weight:400;color:var(--muted)">— applied to all; you can change any of them later</span></label><input id="g-role" placeholder="e.g. Senior Producer" value="'+esc(window._qsRole||"")+'">'+
+        '<div style="margin-top:14px" id="g-sections">'+ (sections || '<div class="empty">No studios to search.</div>') +'</div>'+
+        '<div style="margin-top:18px;padding-top:16px;border-top:1px solid var(--border)" id="g-global-wrap">'+
+          '<label>Can’t find a game above? Search the whole catalogue <span style="font-weight:400;color:var(--muted)">— for a title that isn’t tied to one of your studios</span></label>'+
+          '<input id="g-global-q" placeholder="Search every game by title… (e.g. XDefiant, Rainbow Six)">'+
+          '<div class="glist" id="g-global-list" style="margin-top:8px"></div>'+
+        '</div>'+
+        '<div class="actions"><button class="btn" id="back-1">← Studios</button><button class="btn primary" id="to-basics">Next · <span class="gcount" id="g-count">'+Object.keys(PICKED).length+'</span> selected →</button></div>'+
+      '</div>';
+    SEC.forEach(function(o,si){ renderStudioGames(si, o.all, o.win, ""); });
+    document.querySelectorAll(".gsearch").forEach(function(inp){ inp.addEventListener("input", function(){ var si=+inp.getAttribute("data-si"); renderStudioGames(si, SEC[si].all, SEC[si].win, inp.value); }); });
+    // Checking a game (in a studio list OR the catalogue-wide search) toggles it in PICKED.
+    function onGameToggle(e){
+      var cb=e.target; if(!cb || cb.type!=="checkbox") return;
+      var slug=cb.getAttribute("data-slug"); if(!slug) return;
+      if(cb.checked){ var g=findGame(slug); if(g) PICKED[slug]=g; } else { delete PICKED[slug]; }
+      document.getElementById("g-count").textContent=Object.keys(PICKED).length;
+    }
+    document.getElementById("g-sections").addEventListener("change", onGameToggle);
+    var gq=document.getElementById("g-global-q");
+    if(gq){ gq.addEventListener("input", function(){ renderGlobalSearch(gq.value); }); }
+    document.getElementById("g-global-list").addEventListener("change", onGameToggle);
+    document.getElementById("g-role").addEventListener("input", function(e){ window._qsRole=e.target.value; });
+    document.getElementById("back-1").onclick=function(){ setStep(1); };
+    document.getElementById("to-basics").onclick=function(){ window._qsRole=document.getElementById("g-role").value.trim(); setStep(3); };
+  }
+  function findGame(slug){ for(var i=0;i<CATALOG.length;i++){ if(CATALOG[i] && CATALOG[i][0]===slug) return {slug:CATALOG[i][0],title:CATALOG[i][1],year:CATALOG[i][2],studio:CATALOG[i][3]}; } return null; }
+
+  // ---------- Step 3: basics + build ----------
+  function renderBasics(){
+    var n=Object.keys(PICKED).length;
+    app.innerHTML =
+      '<div class="blk"><h2>Last thing — your name</h2><div class="desc">'+(n?('We’ll start your portfolio with the <b>'+n+' game'+(n===1?'':'s')+'</b> you picked. Add a photo, bio, and work-history details after — your portfolio is publishable right away.'):'You didn’t pick any games yet — you can add them by hand after, or go back and check some.')+'</div>'+
+        '<label>Your name</label><input id="b-name" placeholder="Jane Dev" value="'+esc(window._qsName||"")+'">'+
+        '<label>Headline <span style="font-weight:400;color:var(--muted)">— optional; your current role &amp; studio</span></label><input id="b-head" placeholder="Senior Producer at Studio X" value="'+esc(window._qsHead||"")+'">'+
+        '<div class="actions"><button class="btn" id="back-2">← Games</button><button class="btn primary" id="build">Build my portfolio →</button><span class="status" id="b-status"></span></div>'+
+      '</div>';
+    document.getElementById("back-2").onclick=function(){ window._qsName=document.getElementById("b-name").value; window._qsHead=document.getElementById("b-head").value; setStep(2); };
+    document.getElementById("build").onclick=buildDraft;
+    document.getElementById("b-name").addEventListener("input", function(e){ window._qsName=e.target.value; });
+    document.getElementById("b-head").addEventListener("input", function(e){ window._qsHead=e.target.value; });
+  }
+  function buildDraft(){
+    var st=document.getElementById("b-status");
+    var name=document.getElementById("b-name").value.trim();
+    if(!name){ st.textContent="Add your name to continue."; st.style.color="var(--pink)"; document.getElementById("b-name").focus(); return; }
+    var head=document.getElementById("b-head").value.trim();
+    var role=(window._qsRole||"").trim();
+    var credits=Object.keys(PICKED).map(function(slug){ var g=PICKED[slug]; var y=parseInt(g.year,10);
+      return { game_slug:g.slug, game_title:g.title, studio:g.studio||"", year:(isNaN(y)?null:y), work_start:(isNaN(y)?null:y), work_end:null, role:role, sheet:null, cover_url:"" };
+    });
+    // Every studio becomes a work-history position — including gameless roles (e.g. Possibility Space) that
+    // no game would anchor. addPosition needs a title, so fall back to the main role, then a generic label.
+    var positions=STUDIOS.map(function(s){ var sf=parseInt(s.from,10), sto=parseInt(s.to,10); var cur=(s.to===""||s.to==null);
+      return { studio:s.name, title:(s.title||role||"Team member"), start_year:(isNaN(sf)?null:sf), end_year:(cur||isNaN(sto)?null:sto), is_current:cur?1:0, is_game_studio:(s.gameStudio===false?0:1) };
+    });
+    var draft={ name:name, profile:{ headline:head, location:"", bio:"", open_to_work:0, avatar_url:"", links:[], portfolio_style:DISCIPLINE, gallery:[], reel_url:"" }, credits:credits, positions:positions, education:(Array.isArray(window._qsEdu)?window._qsEdu:[]) };
+    try{ localStorage.setItem("dq_draft", JSON.stringify(draft)); }catch(e){ st.textContent="Could not save locally — check browser storage settings."; st.style.color="var(--pink)"; return; }
+    st.textContent="Building your wall…"; st.style.color="var(--muted)";
+    location.href="/portfolio/view.html?draft=1";
+  }
+
+  // boot
+  if(window.DQAPI && DQAPI.isSignedIn && DQAPI.isSignedIn()){
+    // already have an account — send them to the real editor instead of the draft flow
+    app.innerHTML='<div class="blk"><h2>You’re already signed in</h2><div class="desc">Quick start builds a brand-new draft. Since you already have a portfolio, edit it directly instead.</div><div class="actions"><a class="btn primary" href="/portfolio/edit/">Edit my portfolio →</a><a class="btn" href="/portfolio/">View my portfolio</a></div></div>';
+    document.getElementById("steplabel").textContent="";
+    ["d1","d2","d3"].forEach(function(id){ document.getElementById(id).classList.remove("on"); });
+  } else {
+    setStep(1);
+  }
+})();
 </script>
 </body>
 </html>
