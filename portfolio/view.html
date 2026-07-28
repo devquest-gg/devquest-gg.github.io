@@ -118,6 +118,16 @@
   .skgroup h4{margin:0 0 10px;font-size:12.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
   .pills{display:flex;gap:7px;flex-wrap:wrap}
   .pill{font-size:12.5px;font-weight:650;color:#d3dcea;border:1px solid var(--border);background:var(--panel2);border-radius:8px;padding:5px 11px}
+  /* Systems & tech (engineering-led) */
+  .sysgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-top:18px}
+  @media(max-width:760px){.sysgrid{grid-template-columns:1fr}}
+  .syscard{border:1px solid var(--border);border-radius:16px;background:var(--panel);padding:18px 19px;display:flex;flex-direction:column;gap:9px;transition:border-color .15s,transform .15s}
+  .syscard:hover{border-color:var(--accent);transform:translateY(-2px)}
+  .systitle{font-weight:800;font-size:17px;letter-spacing:-.2px;color:var(--text)}
+  .systags{display:flex;gap:7px;flex-wrap:wrap}
+  .systag{font-size:11.5px;font-weight:700;color:#9ecbff;border:1px solid rgba(88,166,255,.32);background:rgba(88,166,255,.1);border-radius:7px;padding:3px 9px}
+  .sysblurb{margin:0;font-size:14px;color:#c6d0de;line-height:1.55}
+  .sysfoot{font-size:12.5px;color:var(--muted);font-weight:650;margin-top:auto;padding-top:2px}
   .edu{display:flex;flex-direction:column;gap:12px}
   .edurow{display:flex;justify-content:space-between;gap:16px;align-items:baseline;border:1px solid var(--border);border-radius:14px;background:var(--panel);padding:15px 18px}
   .edurow .es{font-weight:750;font-size:15px}
@@ -594,7 +604,7 @@
     IS_OWNER=true; document.body.classList.add("is-owner");   // draft acts like owner; writes go to localStorage, never the API
     var d=dGet(); var credits=(d.credits||[]).map(draftCredit);
     var pf=d.profile||{};
-    var person={ name:d.name||"Your name", slug:null, headline:pf.headline||"", location:pf.location||"", bio:pf.bio||"", links:pf.links||[], skills:{groups:[]}, portfolio_style:pf.portfolio_style||"production", open_to_work:pf.open_to_work?1:0, avatar_url:pf.avatar_url||"", unshipped:pf.unshipped||0, education:(Array.isArray(d.education)?d.education:(Array.isArray(pf.education)?pf.education:[])), gallery:(Array.isArray(d.gallery)?d.gallery:(Array.isArray(pf.gallery)?pf.gallery:[])), reel_url:pf.reel_url||d.reel_url||"", gallery_groups:(Array.isArray(pf.gallery_groups)?pf.gallery_groups:[]), contact_email:pf.contact_email||"" };
+    var person={ name:d.name||"Your name", slug:null, headline:pf.headline||"", location:pf.location||"", bio:pf.bio||"", links:pf.links||[], skills:{groups:[]}, portfolio_style:pf.portfolio_style||"production", open_to_work:pf.open_to_work?1:0, avatar_url:pf.avatar_url||"", unshipped:pf.unshipped||0, education:(Array.isArray(d.education)?d.education:(Array.isArray(pf.education)?pf.education:[])), gallery:(Array.isArray(d.gallery)?d.gallery:(Array.isArray(pf.gallery)?pf.gallery:[])), reel_url:pf.reel_url||d.reel_url||"", gallery_groups:(Array.isArray(pf.gallery_groups)?pf.gallery_groups:[]), contact_email:pf.contact_email||"", systems:(Array.isArray(d.systems)?d.systems:(Array.isArray(pf.systems)?pf.systems:[])) };
     // Work history carried from the wizard — so gameless studios (e.g. Possibility Space) show on the timeline.
     var positions=(d.positions||[]).map(function(pp){ var cur=(pp.is_current?true:false); return { studio:pp.studio||pp.studio_name||"", studio_slug:"", title:pp.title||"", start_year:pp.start_year||null, start_month:null, end_year:(cur?null:(pp.end_year||null)), end_month:null, is_current:cur, description:pp.description||"", location:pp.location||"", is_game_studio:(pp.is_game_studio===0?0:1) }; });
     resolveCovers(credits).then(function(cm){ cm=cm||{}; (d.credits||[]).forEach(function(c){ if(c.cover_url) cm[c.game_slug]=c.cover_url; }); render(person,positions,credits,cm); mountDraftBar(credits.length); }).catch(function(){ render(person,positions,credits,{}); mountDraftBar(credits.length); });
@@ -755,9 +765,13 @@
     // to each game); visitors and other disciplines get the normal wall.
     var _artBuilder = IS_DRAFT && IS_OWNER && !PREVIEW && (["art","audio"].indexOf(p.portfolio_style||"")>=0) && credits.length>0;
     var _workSection = _artBuilder ? artBuilderHTML(credits, covMap) : stageSection;
+    var _eng = (p.portfolio_style||"")==="engineering";
+    var _systems = '<div id="sys-slot">'+systemsSectionHTML(p)+'</div>';   // slot lets the draft editor live-update the Systems & tech section
     document.body.classList.toggle("art-led", _artLed);
-    if(_artLed) app.innerHTML = hero + _media + _workSection + skills + edu + contact;   // gallery + reel front and centre; games below
-    else        app.innerHTML = hero + _workSection + skills + _media + edu + contact;   // media still shows for other disciplines, just secondary
+    document.body.classList.toggle("eng-led", _eng);
+    if(_artLed)      app.innerHTML = hero + _media + _workSection + skills + edu + contact;   // gallery + reel front and centre; games below
+    else if(_eng)    app.innerHTML = hero + _systems + _workSection + skills + _media + edu + contact;   // systems & tech lead for engineers, games below
+    else             app.innerHTML = hero + _workSection + skills + _media + edu + contact;   // media still shows for other disciplines, just secondary
     wireHeroEdit();
     if(credits.length && !_artBuilder) buildStage(credits, positions, covMap);
     if(_artBuilder) wireArtBuilder(credits);
@@ -798,9 +812,13 @@
       '<h3 class="dh">Visual work &amp; showreel</h3>'+
       '<p class="sub" style="margin:-4px 0 10px">'+(["art","audio"].indexOf((_person&&_person.portfolio_style)||"")>=0?'Because your style is <b>'+esc(_person.portfolio_style)+'</b>, this leads your page, add a reel and images and they jump to the top.':'Add a reel or images here. <b>Tip:</b> set your style to Art or Audio (Edit header) to make these lead your page.')+'</p>'+
       '<div id="de-media"></div>'+
+      '<h3 class="dh">Systems &amp; tech</h3>'+
+      '<p class="sub" style="margin:-4px 0 10px">'+((((_person&&_person.portfolio_style)||"")==="engineering")?'Because your style is <b>Engineering</b>, these lead your page. List the technical systems you built.':'List technical systems you built. <b>Tip:</b> set your style to Engineering (Edit header) to make these lead your page.')+'</p>'+
+      '<div id="de-syslist"></div><button type="button" class="btn ghost" id="de-addsys">+ Add a system</button>'+
     '</section>';
     app.appendChild(wrap);
-    renderDePos(); renderDeEdu(); renderDeMedia();
+    renderDePos(); renderDeEdu(); renderDeMedia(); renderDeSystems();
+    document.getElementById("de-addsys").onclick=function(){ var arr=_deSysGet(); arr.push({title:"",tech:"",blurb:"",game_slug:""}); _deSysSave(arr); renderDeSystems(); _deReRenderSystems(); var c=document.querySelector('#de-syslist .decard:last-child'); if(c){ try{ c.scrollIntoView({behavior:"smooth",block:"center"}); }catch(e){} var inp=c.querySelector("input"); if(inp) inp.focus(); } };
     document.getElementById("de-addpos").onclick=function(){ var d=dGet(); d.positions=d.positions||[]; d.positions.push({studio:"",title:"",start_year:null,end_year:null,is_current:0,description:"",is_game_studio:1}); dSet(d); renderDePos(); _deRefreshHero(); var c=document.querySelector('#de-poslist .decard:last-child'); if(c){ try{ c.scrollIntoView({behavior:"smooth",block:"center"}); }catch(e){} var inp=c.querySelector("input"); if(inp) inp.focus(); } };
     document.getElementById("de-addedu").onclick=function(){ var d=dGet(); d.education=d.education||[]; d.education.push({school:"",degree:"",field:"",start_year:null,end_year:null}); dSet(d); if(_person) _person.education=(d.education||[]); renderDeEdu(); renderEduSlot(); var c=document.querySelector('#de-edulist .decard:last-child'); if(c){ try{ c.scrollIntoView({behavior:"smooth",block:"center"}); }catch(e){} var inp=c.querySelector("input"); if(inp) inp.focus(); } };
   }
@@ -958,7 +976,9 @@
           // way to art-relevant ones: how many pieces are in the gallery, and peer confirmations (the unique proof).
           (["art","audio"].indexOf(p.portfolio_style||"")>=0
             ? stat((Array.isArray(p.gallery)?p.gallery.length:0),"Pieces")+stat(credits.reduce(function(n,c){return n+(c.vouch_count||0);},0),"Peer confirmations")
-            : stat(liveCount,"Live-service")+stat(p.unshipped||0,"Cancelled / unshipped"))+
+            : (p.portfolio_style||"")==="engineering"
+              ? stat((Array.isArray(p.systems)?p.systems.length:0),"Systems")+stat(liveCount,"Live-service")
+              : stat(liveCount,"Live-service")+stat(p.unshipped||0,"Cancelled / unshipped"))+
         '</div>'+
       '</div></div>';
   }
@@ -974,6 +994,48 @@
       '</div></section>';
   }
   function renderEduSlot(){ var s=document.getElementById("edu-slot"); if(s) s.innerHTML=eduSlotHTML(_person||{}); }
+  // ---- Systems & tech (engineering-led): the technical systems/domains the person built ----
+  function _sysTech(s){ return String((s&&s.tech)||"").split(",").map(function(x){ return x.trim(); }).filter(Boolean); }
+  function systemsSectionHTML(p){
+    var sys = Array.isArray(p.systems) ? p.systems.filter(function(s){ return s && (s.title||s.blurb); }) : [];
+    if(!sys.length) return "";
+    var gt={}; (_credits||[]).forEach(function(c){ if(c.game_slug) gt[c.game_slug]=c.game_title; });
+    var cards = sys.map(function(s){
+      var tags=_sysTech(s).map(function(t){ return '<span class="systag">'+esc(t)+'</span>'; }).join("");
+      var g = s.game_slug ? '<div class="sysfoot">on '+esc(gt[s.game_slug]||s.game_slug)+'</div>' : '';
+      return '<div class="syscard"><div class="systitle">'+esc(s.title||"Untitled system")+'</div>'+
+        (tags?'<div class="systags">'+tags+'</div>':'')+
+        (s.blurb?'<p class="sysblurb">'+esc(s.blurb)+'</p>':'')+g+'</div>';
+    }).join("");
+    return '<div class="wrap"><section class="syssec"><div class="eyebrow">Systems &amp; tech</div><h2 class="sec">What I built</h2>'+
+      '<p class="sub">The technical systems and domains I owned, and the tech behind them.</p>'+
+      '<div class="sysgrid">'+cards+'</div></section></div>';
+  }
+  function renderSysSlot(){ var s=document.getElementById("sys-slot"); if(s) s.innerHTML=systemsSectionHTML(_person||{}); }
+  function _deSysGet(){ var d=dGet(); return Array.isArray(d.systems)?d.systems:[]; }
+  function _deSysSave(arr){ var d=dGet(); d.systems=arr; dSet(d); if(_person) _person.systems=arr; }
+  function _deReRenderSystems(){ renderSysSlot(); if(typeof _deRefreshHero==="function") _deRefreshHero(); }
+  function renderDeSystems(){
+    var box=document.getElementById("de-syslist"); if(!box) return;
+    var sys=_deSysGet(), games=(_credits||[]).filter(function(c){ return c.game_slug; });
+    if(!sys.length){ box.innerHTML='<div class="de-empty">No systems yet. Add the technical systems you built (netcode, rendering, tools, AI, engine, backend) and the tech behind them.</div>'; return; }
+    box.innerHTML=sys.map(function(s,i){ s=s||{};
+      var gopts='<option value="">Not tied to a game</option>'+games.map(function(c){ return '<option value="'+esc(c.game_slug)+'"'+((s.game_slug===c.game_slug)?" selected":"")+'>'+esc(c.game_title)+'</option>'; }).join("");
+      return '<div class="decard" data-si="'+i+'">'+
+        '<div class="derow"><div style="flex:2;min-width:150px"><label>System</label><input data-sk="title" value="'+esc(s.title||"")+'" placeholder="e.g. Rollback netcode"></div><div style="flex:1;min-width:150px"><label>On which game <span style="color:var(--muted);font-weight:400">(optional)</span></label><select data-sk="game_slug">'+gopts+'</select></div></div>'+
+        '<label>Tech <span style="color:var(--muted);font-weight:400">(comma-separated, optional)</span></label><input data-sk="tech" value="'+esc(s.tech||"")+'" placeholder="C++, ECS, UDP">'+
+        '<label>What it did <span style="color:var(--muted);font-weight:400">(optional)</span></label><textarea data-sk="blurb" placeholder="A sentence or two: what you built and why it mattered.">'+esc(s.blurb||"")+'</textarea>'+
+        '<div class="deact"><button type="button" class="de-del">Remove</button></div>'+
+      '</div>';
+    }).join("");
+    box.querySelectorAll(".decard").forEach(function(card){
+      var i=+card.getAttribute("data-si");
+      card.querySelectorAll("[data-sk]").forEach(function(el){
+        el.addEventListener(el.tagName==="SELECT"?"change":"input", function(){ var arr=_deSysGet(); if(!arr[i]) return; arr[i][el.getAttribute("data-sk")]=el.value; _deSysSave(arr); _deReRenderSystems(); });
+      });
+      card.querySelector(".de-del").onclick=function(){ var arr=_deSysGet(); arr.splice(i,1); _deSysSave(arr); renderDeSystems(); _deReRenderSystems(); };
+    });
+  }
   // ---- visual work (gallery + showreel), discipline-led ----
   function reelEmbed(url){ url=String(url||""); var m;
     if((m=url.match(/(?:youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{6,})/i))) return "https://www.youtube.com/embed/"+m[1];
