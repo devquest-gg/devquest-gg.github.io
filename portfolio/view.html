@@ -128,6 +128,8 @@
   .systag{font-size:11.5px;font-weight:700;color:#9ecbff;border:1px solid rgba(88,166,255,.32);background:rgba(88,166,255,.1);border-radius:7px;padding:3px 9px}
   .sysblurb{margin:0;font-size:14px;color:#c6d0de;line-height:1.55}
   .sysfoot{font-size:12.5px;color:var(--muted);font-weight:650;margin-top:auto;padding-top:2px}
+  .sysempty{border:1px dashed var(--border);border-radius:16px;background:var(--panel);padding:26px 24px;text-align:center}
+  .sysempty .sub{max-width:560px;margin:6px auto 16px}
   .edu{display:flex;flex-direction:column;gap:12px}
   .edurow{display:flex;justify-content:space-between;gap:16px;align-items:baseline;border:1px solid var(--border);border-radius:14px;background:var(--panel);padding:15px 18px}
   .edurow .es{font-weight:750;font-size:15px}
@@ -809,12 +811,12 @@
       '<p class="sub">Add or fix your roles and education here, they show on your timeline and résumé right away, and save to your account when you publish.</p>'+
       '<h3 class="dh">Work history</h3><div id="de-poslist"></div><button type="button" class="btn ghost" id="de-addpos">+ Add a position</button>'+
       '<h3 class="dh">Education</h3><div id="de-edulist"></div><button type="button" class="btn ghost" id="de-addedu">+ Add education</button>'+
-      '<h3 class="dh">Visual work &amp; showreel</h3>'+
-      '<p class="sub" style="margin:-4px 0 10px">'+(["art","audio"].indexOf((_person&&_person.portfolio_style)||"")>=0?'Because your style is <b>'+esc(_person.portfolio_style)+'</b>, this leads your page, add a reel and images and they jump to the top.':'Add a reel or images here. <b>Tip:</b> set your style to Art or Audio (Edit header) to make these lead your page.')+'</p>'+
-      '<div id="de-media"></div>'+
       '<h3 class="dh">Systems &amp; tech</h3>'+
       '<p class="sub" style="margin:-4px 0 10px">'+((((_person&&_person.portfolio_style)||"")==="engineering")?'Because your style is <b>Engineering</b>, these lead your page. List the technical systems you built.':'List technical systems you built. <b>Tip:</b> set your style to Engineering (Edit header) to make these lead your page.')+'</p>'+
       '<div id="de-syslist"></div><button type="button" class="btn ghost" id="de-addsys">+ Add a system</button>'+
+      '<h3 class="dh">Visual work &amp; showreel</h3>'+
+      '<p class="sub" style="margin:-4px 0 10px">'+(["art","audio"].indexOf((_person&&_person.portfolio_style)||"")>=0?'Because your style is <b>'+esc(_person.portfolio_style)+'</b>, this leads your page, add a reel and images and they jump to the top.':'Add a reel or images here. <b>Tip:</b> set your style to Art or Audio (Edit header) to make these lead your page.')+'</p>'+
+      '<div id="de-media"></div>'+
     '</section>';
     app.appendChild(wrap);
     renderDePos(); renderDeEdu(); renderDeMedia(); renderDeSystems();
@@ -998,7 +1000,17 @@
   function _sysTech(s){ return String((s&&s.tech)||"").split(",").map(function(x){ return x.trim(); }).filter(Boolean); }
   function systemsSectionHTML(p){
     var sys = Array.isArray(p.systems) ? p.systems.filter(function(s){ return s && (s.title||s.blurb); }) : [];
-    if(!sys.length) return "";
+    if(!sys.length){
+      if(IS_OWNER && (p.portfolio_style||"")==="engineering"){
+        return '<div class="wrap"><section class="syssec"><div class="sysempty">'+
+          '<div class="eyebrow">Systems &amp; tech</div>'+
+          '<h2 class="sec" style="margin-top:2px">Show what you built</h2>'+
+          '<p class="sub">Your style is Engineering, so this section leads your page. Add the technical systems you owned, netcode, rendering, tools, AI, engine, or backend, and the tech behind them.</p>'+
+          '<button type="button" class="btn primary" onclick="window._sysAddJump&&window._sysAddJump()">+ Add your first system</button>'+
+        '</section></div>';
+      }
+      return "";
+    }
     var gt={}; (_credits||[]).forEach(function(c){ if(c.game_slug) gt[c.game_slug]=c.game_title; });
     var cards = sys.map(function(s){
       var tags=_sysTech(s).map(function(t){ return '<span class="systag">'+esc(t)+'</span>'; }).join("");
@@ -1012,6 +1024,7 @@
       '<div class="sysgrid">'+cards+'</div></section></div>';
   }
   function renderSysSlot(){ var s=document.getElementById("sys-slot"); if(s) s.innerHTML=systemsSectionHTML(_person||{}); }
+  window._sysAddJump=function(){ var b=document.getElementById("de-addsys"); if(b){ try{ b.scrollIntoView({behavior:"smooth",block:"center"}); }catch(e){} b.click(); } };
   function _deSysGet(){ var d=dGet(); return Array.isArray(d.systems)?d.systems:[]; }
   function _deSysSave(arr){ var d=dGet(); d.systems=arr; dSet(d); if(_person) _person.systems=arr; }
   function _deReRenderSystems(){ renderSysSlot(); if(typeof _deRefreshHero==="function") _deRefreshHero(); }
