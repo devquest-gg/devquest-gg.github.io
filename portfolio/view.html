@@ -130,6 +130,10 @@
   .gcell img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .35s ease}
   .gcell:hover img{transform:scale(1.06)}
   .gcap{position:absolute;left:0;right:0;bottom:0;padding:16px 11px 8px;font-size:12px;color:#fff;background:linear-gradient(180deg,transparent,rgba(0,0,0,.72));text-align:left;pointer-events:none}
+  .gvid .gvidbg{position:absolute;inset:0;background:radial-gradient(120% 120% at 50% 40%,#1b2740,#0a0d14)}
+  .gplay{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:44px;height:44px;border-radius:50%;background:rgba(0,0,0,.55);color:#fff;font-size:16px;display:flex;align-items:center;justify-content:center;pointer-events:none;border:2px solid rgba(255,255,255,.85)}
+  .lvid{position:relative;width:min(92vw,1100px);aspect-ratio:16/9;background:#000;border-radius:8px;overflow:hidden}
+  .lvid iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
   @media(max-width:700px){.gallery{grid-template-columns:repeat(2,1fr)}}
   .galgroup{margin:0 0 22px}
   .gghead{display:flex;align-items:center;gap:10px;margin:0 0 4px}
@@ -143,6 +147,22 @@
   .lbox .lx{position:absolute;top:16px;right:22px;font-size:30px;color:#fff;cursor:pointer;background:none;border:0;line-height:1}
   .lbox .lnav{position:absolute;top:50%;transform:translateY(-50%);font-size:42px;color:#fff;cursor:pointer;background:none;border:0;padding:10px 16px;opacity:.85}
   .lbox .lnav:hover{opacity:1}.lbox .lprev{left:6px}.lbox .lnext{right:6px}
+  .artbuild{display:flex;flex-direction:column;gap:12px}
+  .abrow{display:flex;gap:16px;border:1px solid var(--border);border-radius:14px;background:var(--panel);padding:14px 16px}
+  .abcover{flex:0 0 auto;width:76px;height:100px;border-radius:9px;overflow:hidden;background:var(--panel2);display:flex;align-items:center;justify-content:center}
+  .abcover img{width:100%;height:100%;object-fit:cover;display:block}
+  .abini{font-weight:800;font-size:20px;color:var(--muted)}
+  .abmain{flex:1;min-width:0}
+  .abtitle{font-weight:750;font-size:15px;margin-bottom:8px}
+  .abmedia{display:flex;flex-wrap:wrap;gap:8px;min-height:20px;margin-bottom:10px}
+  .abthumb{position:relative;width:62px;height:46px;border-radius:7px;overflow:hidden;border:1px solid var(--border);background:var(--panel2);display:inline-flex}
+  .abthumb img{width:100%;height:100%;object-fit:cover}
+  .abplay{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:11px;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.8);pointer-events:none}
+  .abrm{position:absolute;top:1px;right:1px;width:17px;height:17px;border-radius:50%;border:0;background:rgba(0,0,0,.6);color:#fff;font-size:12px;line-height:1;cursor:pointer;padding:0}
+  .abact{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .ab-inline{display:inline-flex;gap:6px;align-items:center;flex-wrap:wrap}
+  .ab-inline input{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:7px 10px;color:var(--text);font-size:13px;font-family:inherit;outline:none;min-width:230px}
+  @media(max-width:560px){.ab-inline input{min-width:150px}}
   body.art-led .stagehead .sec{font-size:19px}
   body.art-led #vhint,body.art-led .stagehead .sub{opacity:.85}
   .draftedit{border:1px dashed var(--border);border-radius:18px;background:linear-gradient(180deg,rgba(163,113,247,.06),transparent);padding:22px 24px;margin-top:22px}
@@ -697,11 +717,16 @@
       '</div></div>';
 
     // ---- discipline-adaptive ordering: Art & Audio lead with the visual/audio work ----
+    // For an Art/Audio draft owner, the "work" section becomes a per-game art builder (attach art/video
+    // to each game); visitors and other disciplines get the normal wall.
+    var _artBuilder = IS_DRAFT && IS_OWNER && !PREVIEW && (["art","audio"].indexOf(p.portfolio_style||"")>=0) && credits.length>0;
+    var _workSection = _artBuilder ? artBuilderHTML(credits, covMap) : stageSection;
     document.body.classList.toggle("art-led", _artLed);
-    if(_artLed) app.innerHTML = hero + _media + stageSection + skills + edu + contact;   // gallery + reel front and centre; games below
-    else        app.innerHTML = hero + stageSection + skills + _media + edu + contact;   // media still shows for other disciplines, just secondary
+    if(_artLed) app.innerHTML = hero + _media + _workSection + skills + edu + contact;   // gallery + reel front and centre; games below
+    else        app.innerHTML = hero + _workSection + skills + _media + edu + contact;   // media still shows for other disciplines, just secondary
     wireHeroEdit();
-    if(credits.length) buildStage(credits, positions, covMap);
+    if(credits.length && !_artBuilder) buildStage(credits, positions, covMap);
+    if(_artBuilder) wireArtBuilder(credits);
     wireGallery();
     if(IS_DRAFT && !PREVIEW) mountDraftEditor();
   }
@@ -917,7 +942,15 @@
     if((m=url.match(/(?:player\.)?vimeo\.com\/(?:video\/)?(\d+)/i))) return "https://player.vimeo.com/video/"+m[1];
     return ""; }
   var _galFlat=[];   // display-order flattened images, so lightbox indices line up across groups
-  function _galCell(g){ var idx=_galFlat.length; _galFlat.push(g); return '<button class="gcell" data-gi="'+idx+'"><img src="'+esc(g.url)+'" alt="'+esc(g.caption||"")+'" loading="lazy" onerror="var c=this.closest(\'.gcell\'); if(c) c.style.display=\'none\'">'+(g.caption?'<span class="gcap">'+esc(g.caption)+'</span>':'')+'</button>'; }
+  // A gallery entry can be an image OR a video (YouTube / Vimeo / mp4). Returns embed + thumbnail info.
+  function _galVideo(u){ u=String(u||""); var m;
+    if((m=u.match(/(?:youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{6,})/i))) return {embed:"https://www.youtube.com/embed/"+m[1]+"?autoplay=1", thumb:"https://img.youtube.com/vi/"+m[1]+"/hqdefault.jpg", kind:"iframe"};
+    if((m=u.match(/(?:player\.)?vimeo\.com\/(?:video\/)?(\d+)/i))) return {embed:"https://player.vimeo.com/video/"+m[1]+"?autoplay=1", thumb:"", kind:"iframe"};
+    if(/\.(mp4|webm|mov)(\?|$)/i.test(u)) return {embed:u, thumb:"", kind:"file"};
+    return null; }
+  function _galCell(g){ var idx=_galFlat.length; _galFlat.push(g); var v=_galVideo(g.url);
+    if(v){ return '<button class="gcell gvid" data-gi="'+idx+'">'+(v.thumb?'<img src="'+esc(v.thumb)+'" alt="'+esc(g.caption||"")+'" loading="lazy" onerror="this.style.opacity=.2">':'<div class="gvidbg"></div>')+'<span class="gplay">▶</span>'+(g.caption?'<span class="gcap">'+esc(g.caption)+'</span>':'')+'</button>'; }
+    return '<button class="gcell" data-gi="'+idx+'"><img src="'+esc(g.url)+'" alt="'+esc(g.caption||"")+'" loading="lazy" onerror="var c=this.closest(\'.gcell\'); if(c) c.style.display=\'none\'">'+(g.caption?'<span class="gcap">'+esc(g.caption)+'</span>':'')+'</button>'; }
   function _galGrid(imgs){ return '<div class="gallery">'+imgs.map(_galCell).join("")+'</div>'; }
   function mediaSlotHTML(p){
     var gal=Array.isArray(p.gallery)?p.gallery:[]; var reel=reelEmbed(p.reel_url);
@@ -952,7 +985,9 @@
   function openLightbox(gal, idx){
     if(!gal||!gal.length) return; var cur=idx||0;
     var ov=document.createElement("div"); ov.className="lbox";
-    function draw(){ var g=gal[cur]||{}; ov.innerHTML='<button class="lx" aria-label="Close">×</button>'+(gal.length>1?'<button class="lnav lprev" aria-label="Previous">‹</button><button class="lnav lnext" aria-label="Next">›</button>':'')+'<img src="'+esc(g.url)+'" alt="">'+(g.caption?'<div class="lcap">'+esc(g.caption)+'</div>':'');
+    function draw(){ var g=gal[cur]||{}; var v=_galVideo(g.url);
+      var media = v ? (v.kind==="file" ? '<video src="'+esc(v.embed)+'" controls autoplay style="max-width:92vw;max-height:82vh;border-radius:8px;background:#000"></video>' : '<div class="lvid"><iframe src="'+esc(v.embed)+'" title="Video" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe></div>') : '<img src="'+esc(g.url)+'" alt="">';
+      ov.innerHTML='<button class="lx" aria-label="Close">×</button>'+(gal.length>1?'<button class="lnav lprev" aria-label="Previous">‹</button><button class="lnav lnext" aria-label="Next">›</button>':'')+media+(g.caption?'<div class="lcap">'+esc(g.caption)+'</div>':'');
       ov.querySelector(".lx").onclick=close; var pv=ov.querySelector(".lprev"), nx=ov.querySelector(".lnext");
       if(pv) pv.onclick=function(e){ e.stopPropagation(); cur=(cur-1+gal.length)%gal.length; draw(); };
       if(nx) nx.onclick=function(e){ e.stopPropagation(); cur=(cur+1)%gal.length; draw(); }; }
@@ -961,6 +996,66 @@
     ov.addEventListener("click", function(e){ if(e.target===ov) close(); });
     document.addEventListener("keydown", key);
     document.body.appendChild(ov); draw();
+  }
+  // ---- per-game art builder (Art/Audio draft owner): attach art & video to each game ----
+  var _abCtr=0;
+  function _gameGroupId(slug){ var gs=(_person&&Array.isArray(_person.gallery_groups))?_person.gallery_groups:[]; var g=gs.filter(function(x){ return x.game_slug===slug; })[0]; return g?g.id:null; }
+  function _abThumb(im, idx){ var v=_galVideo(im.url);
+    return '<span class="abthumb"'+(v&&!v.thumb?' style="background:radial-gradient(120% 120% at 50% 40%,#1b2740,#0a0d14)"':'')+'>'+(v?(v.thumb?'<img src="'+esc(v.thumb)+'" alt="" onerror="this.style.opacity=.2">':'')+'<span class="abplay">▶</span>':'<img src="'+esc(im.url)+'" alt="" onerror="this.style.opacity=.2">')+'<button class="abrm" data-idx="'+idx+'" title="Remove">×</button></span>'; }
+  function abRowHTML(c, covMap){
+    var slug=c.game_slug, gid=_gameGroupId(slug), cover=(covMap||{})[slug];
+    var gal=(_person&&Array.isArray(_person.gallery))?_person.gallery:[];
+    var media=gal.map(function(im,i){ return {im:im,i:i}; }).filter(function(o){ return gid && (o.im.group||"")===gid; });
+    var thumbs = media.length ? media.map(function(o){ return _abThumb(o.im, o.i); }).join("") : '<span class="mut" style="font-size:12.5px;align-self:center">No art or video yet — add your first →</span>';
+    return '<div class="abrow" data-slug="'+esc(slug)+'">'+
+      '<div class="abcover">'+(cover?'<img src="'+esc(cover)+'" alt="" onerror="this.remove()">':'<span class="abini">'+esc(initials(c.game_title))+'</span>')+'</div>'+
+      '<div class="abmain"><div class="abtitle">'+esc(c.game_title)+'</div>'+
+        '<div class="abmedia">'+thumbs+'</div>'+
+        '<div class="abact"><button class="btn ghost sm ab-art">＋ Add art</button><button class="btn ghost sm ab-vid">＋ Add video</button><span class="ab-inline"></span></div>'+
+      '</div></div>';
+  }
+  function artBuilderHTML(credits, covMap){
+    return '<div class="wrap"><section><div class="eyebrow">Your visual work · only you see this</div><h2 class="sec">Add art &amp; video to each game</h2><p class="sub">Attach the work you did on each title — images and video (a trailer, in-game footage, or your own reel). It groups under that game in your gallery up top. Visitors see the gallery, not this builder.</p><div class="artbuild">'+
+      credits.map(function(c){ return abRowHTML(c, covMap); }).join("")+
+    '</div></section></div>';
+  }
+  function _abEnsureGroup(slug, title){
+    var d=dGet(); var pf=d.profile=d.profile||{}; pf.gallery_groups=Array.isArray(pf.gallery_groups)?pf.gallery_groups:[];
+    var g=pf.gallery_groups.filter(function(x){ return x.game_slug===slug; })[0];
+    if(!g){ g={id:"g"+Date.now().toString(36)+"_"+(++_abCtr), label:title||slug, blurb:"", game_slug:slug}; pf.gallery_groups.push(g); }
+    dSet(d); return g.id;
+  }
+  function _abAdd(slug, title, url){
+    var gid=_abEnsureGroup(slug, title);
+    var d=dGet(); var pf=d.profile=d.profile||{}; pf.gallery=Array.isArray(pf.gallery)?pf.gallery:[];
+    pf.gallery.push({url:url, caption:"", group:gid}); dSet(d);
+    if(_person){ _person.gallery=pf.gallery; _person.gallery_groups=pf.gallery_groups; }
+  }
+  function _abRemove(idx){
+    var d=dGet(); var pf=d.profile=d.profile||{}; if(!Array.isArray(pf.gallery)) return; pf.gallery.splice(idx,1); dSet(d);
+    if(_person) _person.gallery=pf.gallery;
+  }
+  function wireArtBuilder(credits){
+    document.querySelectorAll(".artbuild .abrow").forEach(function(row){
+      var slug=row.getAttribute("data-slug");
+      var c=(credits||[]).filter(function(x){ return x.game_slug===slug; })[0]; if(!c) return;
+      var inline=row.querySelector(".ab-inline");
+      function opener(isVid){ return function(){
+        inline.innerHTML='<input class="ab-url" placeholder="'+(isVid?"YouTube / Vimeo / mp4 link":"Image URL — https://…")+'"><button class="btn primary sm ab-ok">Add</button><button class="btn sm ab-x">Cancel</button>';
+        var url=inline.querySelector(".ab-url"); url.focus();
+        inline.querySelector(".ab-x").onclick=function(){ inline.innerHTML=""; };
+        function ok(){ var u=(url.value||"").trim(); if(!u) return;
+          if(isVid){ if(!_galVideo(u)){ url.style.borderColor="var(--pink)"; url.placeholder="Needs a YouTube, Vimeo, or .mp4 link"; url.value=""; return; } }
+          else if(!/^https?:\/\//i.test(u)){ url.style.borderColor="var(--pink)"; return; }
+          _abAdd(slug, c.game_title, u); render(_person,_positions,_credits,_covMap);
+        }
+        inline.querySelector(".ab-ok").onclick=ok;
+        url.addEventListener("keydown", function(e){ if(e.key==="Enter"){ e.preventDefault(); ok(); } });
+      }; }
+      row.querySelector(".ab-art").onclick=opener(false);
+      row.querySelector(".ab-vid").onclick=opener(true);
+      row.querySelectorAll(".abrm").forEach(function(bn){ bn.onclick=function(){ _abRemove(+bn.getAttribute("data-idx")); render(_person,_positions,_credits,_covMap); }; });
+    });
   }
   function renderHero(){ var hb=document.getElementById("herobox"); if(hb){ hb.innerHTML=heroHTML(_person,_positions,_credits); wireHeroEdit(); } if(_person) document.title=_person.name+" · DevQuest Portfolio"; }
   function wireHeroEdit(){ var b=document.getElementById("editProfile"); if(b) b.onclick=openProfileEdit; }
