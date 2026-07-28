@@ -155,8 +155,14 @@
   .abmain{flex:1;min-width:0}
   .abtitle{font-weight:750;font-size:15px;margin-bottom:8px}
   .abmedia{display:flex;flex-wrap:wrap;gap:8px;min-height:20px;margin-bottom:10px}
-  .abthumb{position:relative;width:62px;height:46px;border-radius:7px;overflow:hidden;border:1px solid var(--border);background:var(--panel2);display:inline-flex}
+  .abthumb{position:relative;width:62px;height:46px;border-radius:7px;overflow:hidden;border:1px solid var(--border);background:var(--panel2);display:inline-flex;cursor:pointer}
+  .abthumb.hascap{border-color:var(--accent)}
   .abthumb img{width:100%;height:100%;object-fit:cover}
+  .abcapdot{position:absolute;bottom:1px;left:2px;font-size:9px;pointer-events:none}
+  .ab-blurb{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px 11px;color:var(--text);font-size:13px;font-family:inherit;min-height:44px;line-height:1.5;outline:none;margin-bottom:10px;resize:vertical}
+  .ab-blurb:focus{border-color:var(--accent)}
+  .abcap-edit{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:8px}
+  .abcap-edit .ab-capin{flex:1;min-width:200px;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:7px 10px;color:var(--text);font-size:13px;font-family:inherit;outline:none}
   .abplay{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:11px;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.8);pointer-events:none}
   .abrm{position:absolute;top:1px;right:1px;width:17px;height:17px;border-radius:50%;border:0;background:rgba(0,0,0,.6);color:#fff;font-size:12px;line-height:1;cursor:pointer;padding:0}
   .abact{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
@@ -999,11 +1005,12 @@
   }
   // ---- per-game art builder (Art/Audio draft owner): attach art & video to each game ----
   var _abCtr=0;
-  function _gameGroupId(slug){ var gs=(_person&&Array.isArray(_person.gallery_groups))?_person.gallery_groups:[]; var g=gs.filter(function(x){ return x.game_slug===slug; })[0]; return g?g.id:null; }
+  function _gameGroup(slug){ var gs=(_person&&Array.isArray(_person.gallery_groups))?_person.gallery_groups:[]; return gs.filter(function(x){ return x.game_slug===slug; })[0]||null; }
+  function _gameGroupId(slug){ var g=_gameGroup(slug); return g?g.id:null; }
   function _abThumb(im, idx){ var v=_galVideo(im.url);
-    return '<span class="abthumb"'+(v&&!v.thumb?' style="background:radial-gradient(120% 120% at 50% 40%,#1b2740,#0a0d14)"':'')+'>'+(v?(v.thumb?'<img src="'+esc(v.thumb)+'" alt="" onerror="this.style.opacity=.2">':'')+'<span class="abplay">▶</span>':'<img src="'+esc(im.url)+'" alt="" onerror="this.style.opacity=.2">')+'<button class="abrm" data-idx="'+idx+'" title="Remove">×</button></span>'; }
+    return '<span class="abthumb'+(im.caption?' hascap':'')+'" data-idx="'+idx+'" title="'+(im.caption?esc(im.caption)+' · ':'')+'Click to add a caption"'+(v&&!v.thumb?' style="background:radial-gradient(120% 120% at 50% 40%,#1b2740,#0a0d14)"':'')+'>'+(v?(v.thumb?'<img src="'+esc(v.thumb)+'" alt="" onerror="this.style.opacity=.2">':'')+'<span class="abplay">▶</span>':'<img src="'+esc(im.url)+'" alt="" onerror="this.style.opacity=.2">')+(im.caption?'<span class="abcapdot">💬</span>':'')+'<button class="abrm" data-idx="'+idx+'" title="Remove">×</button></span>'; }
   function abRowHTML(c, covMap){
-    var slug=c.game_slug, gid=_gameGroupId(slug), cover=(covMap||{})[slug];
+    var slug=c.game_slug, grp=_gameGroup(slug), gid=grp?grp.id:null, cover=(covMap||{})[slug];
     var gal=(_person&&Array.isArray(_person.gallery))?_person.gallery:[];
     var media=gal.map(function(im,i){ return {im:im,i:i}; }).filter(function(o){ return gid && (o.im.group||"")===gid; });
     var thumbs = media.length ? media.map(function(o){ return _abThumb(o.im, o.i); }).join("") : '<span class="mut" style="font-size:12.5px;align-self:center">No art or video yet — add your first →</span>';
@@ -1011,6 +1018,8 @@
       '<div class="abcover">'+(cover?'<img src="'+esc(cover)+'" alt="" onerror="this.remove()">':'<span class="abini">'+esc(initials(c.game_title))+'</span>')+'</div>'+
       '<div class="abmain"><div class="abtitle">'+esc(c.game_title)+'</div>'+
         '<div class="abmedia">'+thumbs+'</div>'+
+        '<textarea class="ab-blurb" placeholder="Commentary for your '+esc(c.game_title)+' work — your role, the brief, the techniques… (optional, shown above the images)">'+esc(grp?grp.blurb||"":"")+'</textarea>'+
+        '<div class="abcap-edit"></div>'+
         '<div class="abact"><button class="btn ghost sm ab-art">＋ Add art</button><button class="btn ghost sm ab-vid">＋ Add video</button><span class="ab-inline"></span></div>'+
       '</div></div>';
   }
@@ -1035,6 +1044,14 @@
     var d=dGet(); var pf=d.profile=d.profile||{}; if(!Array.isArray(pf.gallery)) return; pf.gallery.splice(idx,1); dSet(d);
     if(_person) _person.gallery=pf.gallery;
   }
+  function _abSetBlurb(slug, title, blurb){
+    var gid=_abEnsureGroup(slug, title);   // a commentary-only game still gets a group (renders once art is added)
+    var d=dGet(); var pf=d.profile=d.profile||{}; var g=(pf.gallery_groups||[]).filter(function(x){ return x.id===gid; })[0];
+    if(g){ g.blurb=blurb; dSet(d); if(_person) _person.gallery_groups=pf.gallery_groups; }
+  }
+  function _abSetCaption(idx, cap){
+    var d=dGet(); var pf=d.profile=d.profile||{}; if(pf.gallery&&pf.gallery[idx]){ pf.gallery[idx].caption=cap; dSet(d); if(_person) _person.gallery=pf.gallery; }
+  }
   function wireArtBuilder(credits){
     document.querySelectorAll(".artbuild .abrow").forEach(function(row){
       var slug=row.getAttribute("data-slug");
@@ -1054,7 +1071,23 @@
       }; }
       row.querySelector(".ab-art").onclick=opener(false);
       row.querySelector(".ab-vid").onclick=opener(true);
-      row.querySelectorAll(".abrm").forEach(function(bn){ bn.onclick=function(){ _abRemove(+bn.getAttribute("data-idx")); render(_person,_positions,_credits,_covMap); }; });
+      row.querySelectorAll(".abrm").forEach(function(bn){ bn.onclick=function(e){ e.stopPropagation(); _abRemove(+bn.getAttribute("data-idx")); render(_person,_positions,_credits,_covMap); }; });
+      // section commentary (group blurb): save as they type, reflect on the page when they finish
+      var bl=row.querySelector(".ab-blurb");
+      if(bl){ bl.addEventListener("input", function(){ _abSetBlurb(slug, c.game_title, bl.value); }); bl.addEventListener("change", function(){ render(_person,_positions,_credits,_covMap); }); }
+      // per-image caption: click a thumbnail to caption it
+      var capEdit=row.querySelector(".abcap-edit");
+      row.querySelectorAll(".abthumb").forEach(function(th){
+        th.onclick=function(e){ if(e.target.closest(".abrm")) return; var idx=+th.getAttribute("data-idx");
+          var cur=(_person.gallery[idx]||{}).caption||"";
+          capEdit.innerHTML='<input class="ab-capin" placeholder="Caption for this image / video" value="'+esc(cur)+'"><button class="btn primary sm ab-capok">Save caption</button><button class="btn sm ab-capx">Cancel</button>';
+          var inp=capEdit.querySelector(".ab-capin"); inp.focus();
+          capEdit.querySelector(".ab-capx").onclick=function(){ capEdit.innerHTML=""; };
+          function save(){ _abSetCaption(idx, inp.value.trim()); render(_person,_positions,_credits,_covMap); }
+          capEdit.querySelector(".ab-capok").onclick=save;
+          inp.addEventListener("keydown", function(ev){ if(ev.key==="Enter"){ ev.preventDefault(); save(); } });
+        };
+      });
     });
   }
   function renderHero(){ var hb=document.getElementById("herobox"); if(hb){ hb.innerHTML=heroHTML(_person,_positions,_credits); wireHeroEdit(); } if(_person) document.title=_person.name+" · DevQuest Portfolio"; }
