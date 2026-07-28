@@ -514,6 +514,9 @@
   var app = document.getElementById("app");
   var STEAM = {}, IS_OWNER = false, _covMap = {}, _credits = [], _person = null, _positions = [], _curCi = -1;
   function esc(s){ return String(s==null?"":s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];}); }
+  // light obfuscation for a public contact email so it isn't sitting in the DOM as a plain mailto for scrapers
+  function _b64(s){ try{ return btoa(unescape(encodeURIComponent(String(s||"")))); }catch(e){ return ""; } }
+  function _unb64(s){ try{ return decodeURIComponent(escape(atob(String(s||"")))); }catch(e){ return ""; } }
   // slug from ?slug= (router / view.html) or the last path segment (/portfolio/<slug>/)
   var qslug = new URLSearchParams(location.search).get("slug");
   var parts = location.pathname.replace(/\/+$/,"").split("/");
@@ -571,7 +574,7 @@
     IS_OWNER=true; document.body.classList.add("is-owner");   // draft acts like owner; writes go to localStorage, never the API
     var d=dGet(); var credits=(d.credits||[]).map(draftCredit);
     var pf=d.profile||{};
-    var person={ name:d.name||"Your name", slug:null, headline:pf.headline||"", location:pf.location||"", bio:pf.bio||"", links:pf.links||[], skills:{groups:[]}, portfolio_style:pf.portfolio_style||"production", open_to_work:pf.open_to_work?1:0, avatar_url:pf.avatar_url||"", unshipped:pf.unshipped||0, education:(Array.isArray(d.education)?d.education:(Array.isArray(pf.education)?pf.education:[])), gallery:(Array.isArray(d.gallery)?d.gallery:(Array.isArray(pf.gallery)?pf.gallery:[])), reel_url:pf.reel_url||d.reel_url||"", gallery_groups:(Array.isArray(pf.gallery_groups)?pf.gallery_groups:[]) };
+    var person={ name:d.name||"Your name", slug:null, headline:pf.headline||"", location:pf.location||"", bio:pf.bio||"", links:pf.links||[], skills:{groups:[]}, portfolio_style:pf.portfolio_style||"production", open_to_work:pf.open_to_work?1:0, avatar_url:pf.avatar_url||"", unshipped:pf.unshipped||0, education:(Array.isArray(d.education)?d.education:(Array.isArray(pf.education)?pf.education:[])), gallery:(Array.isArray(d.gallery)?d.gallery:(Array.isArray(pf.gallery)?pf.gallery:[])), reel_url:pf.reel_url||d.reel_url||"", gallery_groups:(Array.isArray(pf.gallery_groups)?pf.gallery_groups:[]), contact_email:pf.contact_email||"" };
     // Work history carried from the wizard — so gameless studios (e.g. Possibility Space) show on the timeline.
     var positions=(d.positions||[]).map(function(pp){ var cur=(pp.is_current?true:false); return { studio:pp.studio||pp.studio_name||"", studio_slug:"", title:pp.title||"", start_year:pp.start_year||null, start_month:null, end_year:(cur?null:(pp.end_year||null)), end_month:null, is_current:cur, description:pp.description||"", location:pp.location||"", is_game_studio:(pp.is_game_studio===0?0:1) }; });
     resolveCovers(credits).then(function(cm){ cm=cm||{}; (d.credits||[]).forEach(function(c){ if(c.cover_url) cm[c.game_slug]=c.cover_url; }); render(person,positions,credits,cm); mountDraftBar(credits.length); }).catch(function(){ render(person,positions,credits,{}); mountDraftBar(credits.length); });
@@ -721,7 +724,9 @@
 
     // ---- confirm count ----
     var confirmed = credits.filter(function(c){ return (c.vouch_count||0)>0; }).length;
-    var contact = '<div class="wrap"><div class="contact"><h3>'+esc(p.name.split(" ")[0])+' is '+(p.open_to_work?'open to new roles':'on DevQuest')+'</h3><p>Résumé tailors to your posting in one click.</p><div class="clinks"><a class="btn primary dq-rpdf" style="cursor:pointer">⬇ Résumé (PDF)</a><a class="btn ghost dq-rdocx" style="cursor:pointer">⬇ Word (.docx)</a><a class="btn ghost dq-tailor" style="cursor:pointer">🎯 Tailor to a job</a>'+linkBtns+'</div>'+
+    var _showContact = !IS_OWNER && p.open_to_work && p.contact_email;
+    var _contactBtn = _showContact ? '<a class="btn primary dq-contact" data-ce="'+esc(_b64(p.contact_email))+'" style="cursor:pointer">✉ Get in touch</a>' : '';
+    var contact = '<div class="wrap"><div class="contact"><h3>'+esc(p.name.split(" ")[0])+' is '+(p.open_to_work?'open to new roles':'on DevQuest')+'</h3><p>'+(IS_OWNER?'Résumé tailors to your posting in one click.':'Download '+esc(p.name.split(" ")[0])+'&rsquo;s résumé'+(_showContact?', or get in touch.':'.'))+'</p><div class="clinks">'+_contactBtn+'<a class="btn '+(_showContact?'ghost':'primary')+' dq-rpdf" style="cursor:pointer">⬇ Résumé (PDF)</a><a class="btn ghost dq-rdocx" style="cursor:pointer">⬇ Word (.docx)</a><a class="btn ghost dq-tailor owner-only" style="cursor:pointer">🎯 Tailor to a job</a>'+linkBtns+'</div>'+
       (confirmed?'<div class="vfoot"><span class="v2">✓</span> '+confirmed+' of '+credits.length+' credits confirmed by teammates who shipped the same game · <a href="/credits/how-evidence-works.html" style="color:var(--accent)">how evidence works →</a></div>':'')+
       '</div></div>';
 
@@ -924,7 +929,7 @@
         (p.headline ? '<div class="role">'+esc(p.headline)+'</div>' : '')+
         (p.bio ? '<p class="bio">'+esc(p.bio)+'</p>' : '')+
         '<div class="tags">'+tags.map(function(t){return '<span class="tag spec">'+esc(t)+'</span>';}).join("")+'</div>'+
-        '<div class="cta"><a class="btn primary dq-rpdf" style="cursor:pointer">⬇ Résumé (PDF)</a><a class="btn ghost dq-rdocx" style="cursor:pointer">⬇ Word (.docx)</a><a class="btn ghost dq-tailor" style="cursor:pointer">🎯 Tailor to a job</a>'+lb+'</div>'+
+        '<div class="cta">'+((!IS_OWNER && p.open_to_work && p.contact_email)?'<a class="btn primary dq-contact" data-ce="'+esc(_b64(p.contact_email))+'" style="cursor:pointer">✉ Get in touch</a>':'')+'<a class="btn '+((!IS_OWNER && p.open_to_work && p.contact_email)?'ghost':'primary')+' dq-rpdf" style="cursor:pointer">⬇ Résumé (PDF)</a><a class="btn ghost dq-rdocx" style="cursor:pointer">⬇ Word (.docx)</a><a class="btn ghost dq-tailor owner-only" style="cursor:pointer">🎯 Tailor to a job</a>'+lb+'</div>'+
         '</div></div>'+
         '<div class="stats">'+
           stat((CUR-minY)+" yrs","In the industry")+stat(nStudios,"Studios")+stat(credits.length,"Credits")+
@@ -1408,6 +1413,7 @@
     if(e.target.closest(".dq-rpdf")){ e.preventDefault(); downloadResumePDF(); }
     else if(e.target.closest(".dq-rdocx")){ e.preventDefault(); downloadResumeDOCX(); }
     else if(e.target.closest(".dq-tailor")){ e.preventDefault(); openTailor(); }
+    else { var cb=e.target.closest(".dq-contact"); if(cb){ e.preventDefault(); var em=_unb64(cb.getAttribute("data-ce")||""); if(em){ var subj=encodeURIComponent("Reaching out via your DevQuest portfolio"); location.href="mailto:"+em+"?subject="+subj; } } }
   });
 
   /* ================= Deterministic job-tailoring (no LLM) =================
@@ -1711,6 +1717,7 @@
       '<label class="eflabel">Location</label><input id="ef-loc" value="'+esc(p.location||"")+'">'+
       '<label class="eflabel">About / bio</label><textarea id="ef-bio">'+esc(p.bio||"")+'</textarea>'+
       '<div class="efchk"><input type="checkbox" id="ef-otw" '+(p.open_to_work?"checked":"")+'><label for="ef-otw">Show &ldquo;Open to opportunities&rdquo;</label></div>'+
+      '<label class="eflabel">Public contact email <span class="mut">— optional; shown as a &ldquo;Get in touch&rdquo; button while you&rsquo;re open to opportunities. Not your login email.</span></label><input id="ef-contact" type="email" placeholder="you@studio.com" value="'+esc(p.contact_email||"")+'">'+
       '<label class="eflabel">Portfolio style</label><select id="ef-style">'+['production','engineering','art','audio','design','qa','other'].map(function(s){ return '<option value="'+s+'" '+((p.portfolio_style||"production")===s?"selected":"")+'>'+s.charAt(0).toUpperCase()+s.slice(1)+'</option>'; }).join("")+'</select>'+
       '<label class="eflabel">Cancelled / unshipped titles <span class="mut">— a count of projects that were cancelled or never shipped (often NDA, so you can’t name them); shown as a stat tile</span></label><input id="ef-unshipped" type="number" min="0" max="999" placeholder="0" value="'+esc(p.unshipped!=null?p.unshipped:"")+'">'+
       '<label class="eflabel">Profile portrait <span class="mut">&mdash; optional headshot; shown instead of your initials</span></label>'+
@@ -1726,21 +1733,21 @@
     var links=[];
     [["linkedin","ef-linkedin"],["portfolio","ef-portfolio"],["artstation","ef-artstation"],["github","ef-github"]].forEach(function(x){ var u=g(x[1]); if(u) links.push({type:x[0],url:u}); });
     var _un=document.getElementById("ef-unshipped"); var unc=_un?parseInt(_un.value,10):NaN; if(isNaN(unc)||unc<0) unc=0; if(unc>999) unc=999;
-    var payload={ name:g("ef-name"), headline:g("ef-head"), location:g("ef-loc"), bio:g("ef-bio"), open_to_work: document.getElementById("ef-otw").checked?1:0, portfolio_style:g("ef-style"), avatar_url:g("ef-avatar"), links:links, unshipped_count:unc };
+    var payload={ name:g("ef-name"), headline:g("ef-head"), location:g("ef-loc"), bio:g("ef-bio"), open_to_work: document.getElementById("ef-otw").checked?1:0, portfolio_style:g("ef-style"), avatar_url:g("ef-avatar"), links:links, unshipped_count:unc, contact_email:g("ef-contact") };
     var st=document.getElementById("ef-status"); st.textContent="Saving…"; st.className="efstatus";
     if(IS_DRAFT){
       var d=dGet(); var prev=d.profile||{};
       if(payload.name) d.name=payload.name;
-      // Preserve draft-only media (gallery/reel) and persist the chosen discipline so the art/audio layout applies.
-      d.profile={ headline:payload.headline, location:payload.location, bio:payload.bio, open_to_work:payload.open_to_work, avatar_url:payload.avatar_url, links:links, unshipped:unc, portfolio_style:payload.portfolio_style, gallery:(prev.gallery||[]), reel_url:(prev.reel_url||"") };
+      // Preserve draft-only media (gallery/reel/groups) and persist discipline + contact so nothing is dropped.
+      d.profile={ headline:payload.headline, location:payload.location, bio:payload.bio, open_to_work:payload.open_to_work, avatar_url:payload.avatar_url, links:links, unshipped:unc, portfolio_style:payload.portfolio_style, gallery:(prev.gallery||[]), reel_url:(prev.reel_url||""), gallery_groups:(prev.gallery_groups||[]), contact_email:payload.contact_email };
       dSet(d);
-      _person.name=payload.name; _person.headline=payload.headline; _person.location=payload.location; _person.bio=payload.bio; _person.open_to_work=payload.open_to_work; _person.avatar_url=payload.avatar_url; _person.links=links; _person.unshipped=unc; _person.portfolio_style=payload.portfolio_style;
+      _person.name=payload.name; _person.headline=payload.headline; _person.location=payload.location; _person.bio=payload.bio; _person.open_to_work=payload.open_to_work; _person.avatar_url=payload.avatar_url; _person.links=links; _person.unshipped=unc; _person.portfolio_style=payload.portfolio_style; _person.contact_email=payload.contact_email;
       render(_person,_positions,_credits,_covMap);   // discipline can reorder the whole page, so re-render (not just the hero)
       st.textContent="Saved ✓"; st.className="efstatus ok"; setTimeout(closeSheet,400);
       return;
     }
     DQAPI.updateProfile(payload).then(function(r){
-      if(r&&r.ok){ _person.name=payload.name; _person.headline=payload.headline; _person.location=payload.location; _person.bio=payload.bio; _person.open_to_work=payload.open_to_work; _person.portfolio_style=payload.portfolio_style; _person.avatar_url=payload.avatar_url; _person.links=links; _person.unshipped=payload.unshipped_count; renderHero(); st.textContent="Saved ✓"; st.className="efstatus ok"; setTimeout(closeSheet,450); }
+      if(r&&r.ok){ _person.name=payload.name; _person.headline=payload.headline; _person.location=payload.location; _person.bio=payload.bio; _person.open_to_work=payload.open_to_work; _person.portfolio_style=payload.portfolio_style; _person.avatar_url=payload.avatar_url; _person.links=links; _person.unshipped=payload.unshipped_count; _person.contact_email=payload.contact_email; renderHero(); st.textContent="Saved ✓"; st.className="efstatus ok"; setTimeout(closeSheet,450); }
       else { st.textContent=(r&&r.data&&r.data.error)||"Could not save."; st.className="efstatus err"; }
     }).catch(function(){ st.textContent="Network error."; st.className="efstatus err"; });
   }
