@@ -303,6 +303,8 @@
         else if(pv2.line && _hasType(pv2.line)){ var p3=_prevNE(L,pv2.idx); if(p3.line && !_isTitleLine(p3.line)) currentCompany=p3.line; }
       } else if(_isTitleLine(line)){ pendingTitle=line; }
       else if(activeStudio){
+        var _thumb=line.match(/^thumbnail for\s+(.+?)\s*$/i);                             // LinkedIn treasury card alt-text: "Thumbnail for <game>" — reads the game name straight from the media label
+        if(_thumb && _thumb[1] && _thumb[1].split(/\s+/).length>=2 && !_hasType(_thumb[1]) && !_isLoc(_thumb[1])){ pgames.push({title:_stripJunk(_thumb[1]), studio:activeStudio, fromMedia:true}); }
         var _dg=_domainGame(line);
         if(_dg){ pgames.push({title:_dg, studio:activeStudio, fromDomain:true}); }        // "GuildWars2.com" → "Guild Wars 2" (matched to catalogue later)
         else if(!_isDesc(line) && !BULLET[i]){                                            // skip job-description prose, bullets, wrapped fragments, hashtags entirely
@@ -314,11 +316,11 @@
             // A treasury media-link caption pairs a game with a descriptor — either side can be the game:
             // "Home - The Elder Scrolls Online" (tail) or "New World - Official Trailer" (head). Try both.
             // A media-adjacent title (a thumbnail copied as an image/URL line sits beside it — the usual shape
-            // of a LinkedIn treasury game card) is kept but treated catalogue-match-only, so a real game like
-            // "League of Legends" still matches and is picked, while junk that matches nothing never surfaces.
+            // of a LinkedIn treasury game card) is a likely real game. Match it to the catalogue if we can, but
+            // if not, still SURFACE it (fromMedia) so the person sees it and can confirm — never silently drop it.
             var _cg=_titleGames(line);
             if(_cg.games && _cg.games.length){ _cg.games.forEach(function(gn){ pgames.push({title:gn, studio:activeStudio, fromCaption:true}); }); if(_cg.clean && _cg.clean!==line) pgames.push({title:_cg.clean, studio:activeStudio, fromCaption:true}); }   // catalogue-match-only (like domains) — never surfaced as unmatched
-            else { pgames.push({title:line, studio:activeStudio, fromCaption:_adjMedia?true:undefined}); }                                               // candidate game name under a role → matched to the catalogue later (media-adjacent → match-only)
+            else { pgames.push({title:line, studio:activeStudio, fromMedia:_adjMedia?true:undefined}); }                                                 // candidate game name under a role → matched to the catalogue; if media-adjacent and unmatched, still surfaced
           }
         }
       }
