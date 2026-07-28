@@ -89,7 +89,7 @@
   var UNMATCHED = [];      // game titles the paste listed that aren't in our catalogue yet
   var REVEALED = false;    // step 1 shows only the paste box until you autofill or choose "build from scratch"
   var DISCIPLINE = "production";   // chosen up front; shapes the portfolio (art/audio lead with visuals)
-  var DISCIPLINES = [{k:"production",label:"Production"},{k:"engineering",label:"Engineering"},{k:"art",label:"Art"},{k:"audio",label:"Audio"},{k:"design",label:"Design"},{k:"qa",label:"QA"}];
+  var DISCIPLINES = [{k:"production",label:"Production"},{k:"engineering",label:"Engineering"},{k:"art",label:"Art"},{k:"audio",label:"Audio"},{k:"design",label:"Design"},{k:"qa",label:"QA"},{k:"other",label:"Other"}];
   var STEP = 1;
 
   function esc(s){ return String(s==null?"":s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];}); }

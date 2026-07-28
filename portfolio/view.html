@@ -131,6 +131,12 @@
   .gcell:hover img{transform:scale(1.06)}
   .gcap{position:absolute;left:0;right:0;bottom:0;padding:16px 11px 8px;font-size:12px;color:#fff;background:linear-gradient(180deg,transparent,rgba(0,0,0,.72));text-align:left;pointer-events:none}
   @media(max-width:700px){.gallery{grid-template-columns:repeat(2,1fr)}}
+  .galgroup{margin:0 0 22px}
+  .gghead{display:flex;align-items:center;gap:10px;margin:0 0 4px}
+  .ggtitle{font-size:16px;font-weight:800;margin:0}
+  .ggbadge{font-size:11px;font-weight:800;letter-spacing:.03em;color:var(--muted);border:1px solid var(--border);border-radius:6px;padding:2px 8px}
+  .ggbadge.ok{color:var(--green);border-color:rgba(63,185,80,.4)}
+  .ggblurb{color:var(--muted);font-size:13.5px;margin:0 0 10px;max-width:66ch;line-height:1.55}
   .lbox{position:fixed;inset:0;z-index:300;background:rgba(4,7,12,.93);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;padding:34px}
   .lbox img{max-width:92vw;max-height:82vh;object-fit:contain;border-radius:8px;box-shadow:0 30px 90px rgba(0,0,0,.6)}
   .lbox .lcap{position:absolute;bottom:20px;left:0;right:0;text-align:center;color:#dbe5f1;font-size:14px;padding:0 24px}
@@ -536,7 +542,7 @@
     IS_OWNER=true; document.body.classList.add("is-owner");   // draft acts like owner; writes go to localStorage, never the API
     var d=dGet(); var credits=(d.credits||[]).map(draftCredit);
     var pf=d.profile||{};
-    var person={ name:d.name||"Your name", slug:null, headline:pf.headline||"", location:pf.location||"", bio:pf.bio||"", links:pf.links||[], skills:{groups:[]}, portfolio_style:pf.portfolio_style||"production", open_to_work:pf.open_to_work?1:0, avatar_url:pf.avatar_url||"", unshipped:pf.unshipped||0, education:(Array.isArray(d.education)?d.education:(Array.isArray(pf.education)?pf.education:[])), gallery:(Array.isArray(d.gallery)?d.gallery:(Array.isArray(pf.gallery)?pf.gallery:[])), reel_url:pf.reel_url||d.reel_url||"" };
+    var person={ name:d.name||"Your name", slug:null, headline:pf.headline||"", location:pf.location||"", bio:pf.bio||"", links:pf.links||[], skills:{groups:[]}, portfolio_style:pf.portfolio_style||"production", open_to_work:pf.open_to_work?1:0, avatar_url:pf.avatar_url||"", unshipped:pf.unshipped||0, education:(Array.isArray(d.education)?d.education:(Array.isArray(pf.education)?pf.education:[])), gallery:(Array.isArray(d.gallery)?d.gallery:(Array.isArray(pf.gallery)?pf.gallery:[])), reel_url:pf.reel_url||d.reel_url||"", gallery_groups:(Array.isArray(pf.gallery_groups)?pf.gallery_groups:[]) };
     // Work history carried from the wizard — so gameless studios (e.g. Possibility Space) show on the timeline.
     var positions=(d.positions||[]).map(function(pp){ var cur=(pp.is_current?true:false); return { studio:pp.studio||pp.studio_name||"", studio_slug:"", title:pp.title||"", start_year:pp.start_year||null, start_month:null, end_year:(cur?null:(pp.end_year||null)), end_month:null, is_current:cur, description:pp.description||"", location:pp.location||"", is_game_studio:(pp.is_game_studio===0?0:1) }; });
     resolveCovers(credits).then(function(cm){ cm=cm||{}; (d.credits||[]).forEach(function(c){ if(c.cover_url) cm[c.game_slug]=c.cover_url; }); render(person,positions,credits,cm); mountDraftBar(credits.length); }).catch(function(){ render(person,positions,credits,{}); mountDraftBar(credits.length); });
@@ -797,47 +803,59 @@
       card.querySelector(".de-del").onclick=function(){ var d=dGet(); (d.education||[]).splice(i,1); dSet(d); if(_person) _person.education=(d.education||[]); renderDeEdu(); renderEduSlot(); };
     });
   }
-  // draft Visual work: reel + gallery, written to d.profile; re-renders the page so art/audio can lead live
-  function _deMediaGet(){ var pf=(dGet().profile||{}); return { reel:pf.reel_url||"", gallery:(Array.isArray(pf.gallery)?pf.gallery:[]) }; }
-  function _deMediaSave(reel, gallery){ var d=dGet(); d.profile=d.profile||{}; d.profile.reel_url=reel; d.profile.gallery=gallery; dSet(d); if(_person){ _person.reel_url=reel; _person.gallery=gallery; } }
+  // draft Visual work: reel + grouped gallery, written to d.profile; re-renders so art/audio can lead live
+  function _deMediaGet(){ var pf=(dGet().profile||{}); return { reel:pf.reel_url||"", gallery:(Array.isArray(pf.gallery)?pf.gallery:[]), groups:(Array.isArray(pf.gallery_groups)?pf.gallery_groups:[]) }; }
+  function _deMediaSave(reel, gallery, groups){ var d=dGet(); d.profile=d.profile||{}; d.profile.reel_url=reel; d.profile.gallery=gallery; if(groups!=null) d.profile.gallery_groups=groups; dSet(d); if(_person){ _person.reel_url=reel; _person.gallery=gallery; if(groups!=null) _person.gallery_groups=groups; } }
+  var _deGrpCtr=0; function _deGid(){ return "g"+(Date.now().toString(36))+"_"+(++_deGrpCtr); }
+  function _deInp(cls,val,ph){ return '<input class="'+cls+'" value="'+esc(val||"")+'" placeholder="'+esc(ph||"")+'" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px 11px;color:var(--text);font-size:13.5px;font-family:inherit;outline:none">'; }
+  function _deGroupCard(gr, isBucket, m){
+    var imgs=m.gallery.filter(function(im){ return (im.group||"")===gr.id; });
+    var thumbs = imgs.length ? imgs.map(function(im){ var gi=m.gallery.indexOf(im);
+      return '<div class="derow" data-dgmi="'+gi+'" style="align-items:center;margin-top:6px"><div style="flex:0 0 auto"><img src="'+esc(im.url)+'" alt="" style="width:56px;height:40px;object-fit:cover;border-radius:6px;border:1px solid var(--border);background:var(--bg)" onerror="this.style.opacity=.25"></div><div style="min-width:100px">'+_deInp("dgm-cap",im.caption,"Caption (optional)")+'</div><div style="flex:0 0 auto"><button type="button" class="de-del dgm-del">Remove</button></div></div>';
+    }).join("") : '<div class="de-empty">No images yet.</div>';
+    var head = isBucket
+      ? '<div style="font-weight:750;font-size:13px">Selected work <span style="color:var(--muted);font-weight:400">— images not in a group</span></div>'
+      : '<div class="derow" style="align-items:center"><div style="flex:1">'+(gr.game_slug?'🎮 ':'')+_deInp("dgm-title",gr.label,gr.game_slug?"Group title":"Category name (e.g. Concept Art)")+'</div>'+(gr.game_slug?'<span style="color:var(--green);font-size:11px;white-space:nowrap">Shipped ✓</span>':'')+'<div style="flex:0 0 auto"><button type="button" class="de-del dgm-grpdel">Remove group</button></div></div><textarea class="dgm-blurb" placeholder="A sentence or two — your role, tools, what this is." style="width:100%;margin-top:6px;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px 11px;color:var(--text);font-size:13px;font-family:inherit;min-height:46px;outline:none">'+esc(gr.blurb||"")+'</textarea>';
+    return '<div class="decard" data-dgrp="'+esc(gr.id)+'">'+head+'<div style="margin-top:4px">'+thumbs+'</div><div class="derow" style="margin-top:8px"><div>'+_deInp("dgm-newurl","","https://…  image URL")+'</div><div style="flex:0 0 auto;align-self:center"><button type="button" class="btn ghost dgm-addimg">Add image</button></div></div></div>';
+  }
   function renderDeMedia(){
     var box=document.getElementById("de-media"); if(!box) return;
     var m=_deMediaGet();
-    var gh = m.gallery.length ? m.gallery.map(function(g,i){
-      return '<div class="decard" data-gmi="'+i+'" style="padding:10px 12px"><div class="derow" style="align-items:center">'+
-        '<div style="flex:0 0 auto"><img src="'+esc(g.url)+'" alt="" style="width:60px;height:44px;object-fit:cover;border-radius:6px;border:1px solid var(--border);background:var(--bg)" onerror="this.style.opacity=.25"></div>'+
-        '<div style="min-width:110px"><input class="dgm-cap" value="'+esc(g.caption||"")+'" placeholder="Caption (optional)"></div>'+
-        '<div style="flex:0 0 auto;display:flex;gap:6px"><button type="button" class="de-del dgm-up"'+(i===0?' style="opacity:.4;pointer-events:none"':'')+'>↑</button><button type="button" class="de-del dgm-down"'+(i===m.gallery.length-1?' style="opacity:.4;pointer-events:none"':'')+'>↓</button><button type="button" class="de-del dgm-del">Remove</button></div>'+
-      '</div></div>';
-    }).join("") : '<div class="de-empty">No images yet.</div>';
+    var gamesLeft=(dGet().credits||[]).filter(function(c){ return c.game_slug && !m.groups.some(function(g){ return g.game_slug===c.game_slug; }); });
     box.innerHTML =
-      '<div class="decard"><label style="display:block;font-size:11.5px;font-weight:700;color:#cdd8e6;margin:0 0 4px">Showreel <span style="color:var(--muted);font-weight:400">— YouTube or Vimeo link</span></label>'+
-      '<input id="dgm-reel" value="'+esc(m.reel)+'" placeholder="https://youtube.com/watch?v=…  or  https://vimeo.com/…" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px 11px;color:var(--text);font-size:13.5px;font-family:inherit;outline:none">'+
-      '<div id="dgm-reelerr" class="de-empty" style="color:var(--pink);display:none"></div></div>'+
-      '<div style="margin-top:2px">'+gh+'</div>'+
-      '<div class="derow" style="margin-top:8px"><div><input id="dgm-url" placeholder="https://…  image URL" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px 11px;color:var(--text);font-size:13.5px;font-family:inherit;outline:none"></div><div style="flex:0 0 auto;align-self:center"><button type="button" class="btn ghost" id="dgm-add">Add image</button></div></div>';
-    // reel wiring
-    var reelEl=document.getElementById("dgm-reel");
+      '<div class="decard"><label style="display:block;font-size:11.5px;font-weight:700;color:#cdd8e6;margin:0 0 4px">Showreel <span style="color:var(--muted);font-weight:400">— YouTube or Vimeo link</span></label><input id="dgm-reel" value="'+esc(m.reel)+'" placeholder="https://youtube.com/watch?v=…  or  https://vimeo.com/…" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px 11px;color:var(--text);font-size:13.5px;font-family:inherit;outline:none"><div id="dgm-reelerr" class="de-empty" style="color:var(--pink);display:none"></div></div>'+
+      _deGroupCard({id:"",label:"Selected work",blurb:"",game_slug:""}, true, m)+
+      m.groups.map(function(gr){ return _deGroupCard(gr, false, m); }).join("")+
+      '<div class="derow" style="margin-top:2px;gap:8px;flex-wrap:wrap"><button type="button" class="btn ghost" id="dgm-addgame"'+(gamesLeft.length?'':' style="opacity:.5;pointer-events:none"')+'>+ Group by a game</button><button type="button" class="btn ghost" id="dgm-addcat">+ Custom category</button><span id="dgm-gamepick"></span></div>';
+    // reel
+    var reelEl=document.getElementById("dgm-reel"); reelEl.value=m.reel;
     function reelPersist(){ var v=reelEl.value.trim(), err=document.getElementById("dgm-reelerr");
       if(v && !/^https?:\/\/([\w-]+\.)*(youtube\.com|youtu\.be|vimeo\.com|player\.vimeo\.com)\//i.test(v)){ err.textContent="Reel must be a YouTube or Vimeo link."; err.style.display="block"; return false; }
-      err.style.display="none"; var mm=_deMediaGet(); _deMediaSave(v, mm.gallery); return true; }
-    reelEl.addEventListener("input", reelPersist);                                  // save as they type, no disruptive re-render
-    reelEl.addEventListener("change", function(){ if(reelPersist()) _deReRender(); });  // reflect on the page when they finish (blur)
-    // add image
-    document.getElementById("dgm-add").onclick=function(){
-      var u=(document.getElementById("dgm-url").value||"").trim(); if(!u) return;
-      if(!/^https?:\/\//i.test(u)){ return; }
-      var mm=_deMediaGet(); mm.gallery.push({url:u, caption:""}); _deMediaSave(_deMediaGet().reel, mm.gallery); renderDeMedia(); _deReRender();
-    };
-    document.getElementById("dgm-url").addEventListener("keydown", function(e){ if(e.key==="Enter"){ e.preventDefault(); document.getElementById("dgm-add").click(); } });
-    // per-image wiring
-    box.querySelectorAll(".decard[data-gmi]").forEach(function(card){
-      var i=+card.getAttribute("data-gmi");
-      card.querySelector(".dgm-cap").addEventListener("input", function(){ var mm=_deMediaGet(); if(mm.gallery[i]){ mm.gallery[i].caption=this.value; _deMediaSave(mm.reel, mm.gallery); } });   // caption saves silently; no re-render (would steal focus)
-      card.querySelector(".dgm-del").onclick=function(){ var mm=_deMediaGet(); mm.gallery.splice(i,1); _deMediaSave(mm.reel, mm.gallery); renderDeMedia(); _deReRender(); };
-      card.querySelector(".dgm-up").onclick=function(){ var mm=_deMediaGet(); if(i>0){ var t=mm.gallery[i-1]; mm.gallery[i-1]=mm.gallery[i]; mm.gallery[i]=t; _deMediaSave(mm.reel, mm.gallery); renderDeMedia(); _deReRender(); } };
-      card.querySelector(".dgm-down").onclick=function(){ var mm=_deMediaGet(); if(i<mm.gallery.length-1){ var t=mm.gallery[i+1]; mm.gallery[i+1]=mm.gallery[i]; mm.gallery[i]=t; _deMediaSave(mm.reel, mm.gallery); renderDeMedia(); _deReRender(); } };
+      err.style.display="none"; var mm=_deMediaGet(); _deMediaSave(v, mm.gallery, mm.groups); return true; }
+    reelEl.addEventListener("input", reelPersist);
+    reelEl.addEventListener("change", function(){ if(reelPersist()) _deReRender(); });
+    // groups + images
+    box.querySelectorAll(".decard[data-dgrp]").forEach(function(card){
+      var gid=card.getAttribute("data-dgrp");
+      var ti=card.querySelector(".dgm-title"); if(ti) ti.addEventListener("input", function(){ var mm=_deMediaGet(); var g=mm.groups.filter(function(x){return x.id===gid;})[0]; if(g){ g.label=this.value; _deMediaSave(mm.reel, mm.gallery, mm.groups); } });
+      var bl=card.querySelector(".dgm-blurb"); if(bl) bl.addEventListener("input", function(){ var mm=_deMediaGet(); var g=mm.groups.filter(function(x){return x.id===gid;})[0]; if(g){ g.blurb=this.value; _deMediaSave(mm.reel, mm.gallery, mm.groups); } });
+      var gd=card.querySelector(".dgm-grpdel"); if(gd) gd.onclick=function(){ var mm=_deMediaGet(); mm.gallery.forEach(function(im){ if((im.group||"")===gid) im.group=""; }); mm.groups=mm.groups.filter(function(x){ return x.id!==gid; }); _deMediaSave(mm.reel, mm.gallery, mm.groups); renderDeMedia(); _deReRender(); };
+      card.querySelectorAll(".derow[data-dgmi]").forEach(function(row){
+        var i=+row.getAttribute("data-dgmi");
+        row.querySelector(".dgm-cap").addEventListener("input", function(){ var mm=_deMediaGet(); if(mm.gallery[i]){ mm.gallery[i].caption=this.value; _deMediaSave(mm.reel, mm.gallery, mm.groups); } });
+        row.querySelector(".dgm-del").onclick=function(){ var mm=_deMediaGet(); mm.gallery.splice(i,1); _deMediaSave(mm.reel, mm.gallery, mm.groups); renderDeMedia(); _deReRender(); };
+      });
+      var add=card.querySelector(".dgm-addimg"); if(add) add.onclick=function(){ var uEl=card.querySelector(".dgm-newurl"); var u=(uEl.value||"").trim(); if(!u||!/^https?:\/\//i.test(u)) return; var mm=_deMediaGet(); mm.gallery.push({url:u, caption:"", group:gid}); _deMediaSave(mm.reel, mm.gallery, mm.groups); renderDeMedia(); _deReRender(); };
+      var nu=card.querySelector(".dgm-newurl"); if(nu) nu.addEventListener("keydown", function(e){ if(e.key==="Enter"){ e.preventDefault(); add.click(); } });
     });
+    document.getElementById("dgm-addcat").onclick=function(){ var mm=_deMediaGet(); mm.groups.push({id:_deGid(), label:"", blurb:"", game_slug:""}); _deMediaSave(mm.reel, mm.gallery, mm.groups); renderDeMedia(); var cards=document.querySelectorAll("#de-media .decard[data-dgrp]"); var t=cards.length?cards[cards.length-1].querySelector(".dgm-title"):null; if(t) t.focus(); };
+    document.getElementById("dgm-addgame").onclick=function(){
+      var pick=document.getElementById("dgm-gamepick"); var mm=_deMediaGet();
+      var left=(dGet().credits||[]).filter(function(c){ return c.game_slug && !mm.groups.some(function(g){ return g.game_slug===c.game_slug; }); });
+      if(!left.length){ pick.innerHTML='<span class="de-empty">All games grouped.</span>'; return; }
+      pick.innerHTML='<select id="dgm-gsel" style="max-width:220px;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:6px 9px;color:var(--text);font-family:inherit"><option value="">Choose a game…</option>'+left.map(function(c){ return '<option value="'+esc(c.game_slug)+'" data-t="'+esc(c.game_title)+'">'+esc(c.game_title)+'</option>'; }).join("")+'</select>';
+      document.getElementById("dgm-gsel").onchange=function(){ if(!this.value) return; var o=this.options[this.selectedIndex]; var m2=_deMediaGet(); m2.groups.push({id:_deGid(), label:o.getAttribute("data-t")||this.value, blurb:"", game_slug:this.value}); _deMediaSave(m2.reel, m2.gallery, m2.groups); renderDeMedia(); _deReRender(); };
+    };
   }
   // re-render the public part of the page (media can reorder it), keeping the draft editor intact
   var _deReRenderT=null;
@@ -856,7 +874,7 @@
     var liveCount=credits.filter(isLive).length;
     var ac=avgCritic(credits);
     var av=(p.name||"?").split(/\s+/).map(function(x){return x[0];}).slice(0,2).join("").toUpperCase();
-    var tags=[]; tags.push(cap(p.portfolio_style||"production")); if(liveCount) tags.push("Live Service"); if(positions.length>=3 || /director|vp|head|lead/i.test(p.headline||"")) tags.push("Studio Leadership");
+    var tags=[]; if((p.portfolio_style||"production")!=="other") tags.push(cap(p.portfolio_style||"production")); if(liveCount) tags.push("Live Service"); if(positions.length>=3 || /director|vp|head|lead/i.test(p.headline||"")) tags.push("Studio Leadership");
     var links={}; (p.links||[]).forEach(function(l){ links[l.type]=l.url; });
     var lb="";
     if(links.linkedin) lb+='<a class="btn ghost" href="'+esc(links.linkedin)+'" target="_blank">in · LinkedIn</a>';
@@ -898,19 +916,38 @@
     if((m=url.match(/(?:youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{6,})/i))) return "https://www.youtube.com/embed/"+m[1];
     if((m=url.match(/(?:player\.)?vimeo\.com\/(?:video\/)?(\d+)/i))) return "https://player.vimeo.com/video/"+m[1];
     return ""; }
+  var _galFlat=[];   // display-order flattened images, so lightbox indices line up across groups
+  function _galCell(g){ var idx=_galFlat.length; _galFlat.push(g); return '<button class="gcell" data-gi="'+idx+'"><img src="'+esc(g.url)+'" alt="'+esc(g.caption||"")+'" loading="lazy" onerror="var c=this.closest(\'.gcell\'); if(c) c.style.display=\'none\'">'+(g.caption?'<span class="gcap">'+esc(g.caption)+'</span>':'')+'</button>'; }
+  function _galGrid(imgs){ return '<div class="gallery">'+imgs.map(_galCell).join("")+'</div>'; }
   function mediaSlotHTML(p){
     var gal=Array.isArray(p.gallery)?p.gallery:[]; var reel=reelEmbed(p.reel_url);
+    var groups=Array.isArray(p.gallery_groups)?p.gallery_groups:[];
+    _galFlat=[];
     if(!gal.length && !reel) return "";
     var h='<div class="wrap"><section class="mediasec"><div class="eyebrow">Selected work</div>';
     if(reel) h+='<div class="reelwrap"><iframe src="'+esc(reel)+'" title="Showreel" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen loading="lazy"></iframe></div>';
-    if(gal.length) h+='<div class="gallery" id="gallery">'+gal.map(function(g,i){ return '<button class="gcell" data-gi="'+i+'"><img src="'+esc(g.url)+'" alt="'+esc(g.caption||"")+'" loading="lazy" onerror="var c=this.closest(\'.gcell\'); if(c) c.style.display=\'none\'">'+(g.caption?'<span class="gcap">'+esc(g.caption)+'</span>':'')+'</button>'; }).join("")+'</div>';
+    if(gal.length){
+      var gids={}; groups.forEach(function(gr){ if(gr&&gr.id) gids[gr.id]=gr; });
+      if(groups.length){
+        groups.forEach(function(gr){                                                   // defined groups, in order
+          var imgs=gal.filter(function(im){ return (im.group||"")===gr.id; });
+          if(!imgs.length) return;
+          var verified = gr.game_slug && (_credits||[]).some(function(c){ return c.game_slug===gr.game_slug && (c.vouch_count||0)>0; });
+          var badge = gr.game_slug ? '<span class="ggbadge'+(verified?' ok':'')+'">'+(verified?'✓ ':'')+'Shipped title</span>' : '';
+          h+='<div class="galgroup"><div class="gghead"><h3 class="ggtitle">'+esc(gr.label)+'</h3>'+badge+'</div>'+(gr.blurb?'<p class="ggblurb">'+esc(gr.blurb)+'</p>':'')+_galGrid(imgs)+'</div>';
+        });
+        var ungrouped=gal.filter(function(im){ return !gids[im.group||""]; });          // no group / unknown group
+        if(ungrouped.length) h+='<div class="galgroup"><div class="gghead"><h3 class="ggtitle">More work</h3></div>'+_galGrid(ungrouped)+'</div>';
+      } else {
+        h+='<div id="gallery">'+_galGrid(gal)+'</div>';                                 // flat (no groups defined)
+      }
+    }
     h+='</section></div>';
     return h;
   }
   function wireGallery(){
-    var box=document.getElementById("gallery"); if(!box) return;
-    var gal=Array.isArray(_person&&_person.gallery)?_person.gallery:[];
-    box.querySelectorAll(".gcell").forEach(function(cell){ cell.onclick=function(){ openLightbox(gal, +cell.getAttribute("data-gi")); }; });
+    var cells=document.querySelectorAll(".mediasec .gcell"); if(!cells.length) return;
+    cells.forEach(function(cell){ cell.onclick=function(){ openLightbox(_galFlat, +cell.getAttribute("data-gi")); }; });
   }
   function openLightbox(gal, idx){
     if(!gal||!gal.length) return; var cur=idx||0;
@@ -1523,7 +1560,7 @@
       '<label class="eflabel">Location</label><input id="ef-loc" value="'+esc(p.location||"")+'">'+
       '<label class="eflabel">About / bio</label><textarea id="ef-bio">'+esc(p.bio||"")+'</textarea>'+
       '<div class="efchk"><input type="checkbox" id="ef-otw" '+(p.open_to_work?"checked":"")+'><label for="ef-otw">Show &ldquo;Open to opportunities&rdquo;</label></div>'+
-      '<label class="eflabel">Portfolio style</label><select id="ef-style">'+['production','engineering','art','audio','design','qa'].map(function(s){ return '<option value="'+s+'" '+((p.portfolio_style||"production")===s?"selected":"")+'>'+s.charAt(0).toUpperCase()+s.slice(1)+'</option>'; }).join("")+'</select>'+
+      '<label class="eflabel">Portfolio style</label><select id="ef-style">'+['production','engineering','art','audio','design','qa','other'].map(function(s){ return '<option value="'+s+'" '+((p.portfolio_style||"production")===s?"selected":"")+'>'+s.charAt(0).toUpperCase()+s.slice(1)+'</option>'; }).join("")+'</select>'+
       '<label class="eflabel">Cancelled / unshipped titles <span class="mut">— a count of projects that were cancelled or never shipped (often NDA, so you can’t name them); shown as a stat tile</span></label><input id="ef-unshipped" type="number" min="0" max="999" placeholder="0" value="'+esc(p.unshipped!=null?p.unshipped:"")+'">'+
       '<label class="eflabel">Profile portrait <span class="mut">&mdash; optional headshot; shown instead of your initials</span></label>'+
       '<div class="uprow"><div class="upprev port" id="ef-avatar-prev">Photo</div><div style="flex:1"><input id="ef-avatar" placeholder="https://… or upload a photo" value="'+esc(p.avatar_url||"")+'"><div class="upbtns"><button type="button" class="upbtn" data-upload-for="ef-avatar">⬆ Upload photo</button><button type="button" class="upbtn ghost" id="ef-avatar-clear">Remove</button></div></div></div>'+
