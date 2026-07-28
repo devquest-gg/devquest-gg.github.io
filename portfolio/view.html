@@ -381,6 +381,11 @@
   #stage.grid .tile.hero .hf{display:inline-flex}
   #stage.grid .tile.hero{box-shadow:0 14px 34px rgba(0,0,0,.6),inset 0 0 0 2px rgba(224,178,58,.55)}
   #stage .tile .cs{position:absolute;left:0;right:0;top:0;z-index:4;background:linear-gradient(90deg,rgba(163,113,247,.96),rgba(88,166,255,.96));color:#fff;font-size:10px;font-weight:800;letter-spacing:.11em;text-align:center;padding:4px 0;box-shadow:0 2px 8px rgba(0,0,0,.4)}
+  /* owner-only hover cue: the wall tile opens an editable one-sheet */
+  #stage .tile .edb{position:absolute;top:50%;left:50%;z-index:5;display:none;align-items:center;gap:6px;font-size:12px;font-weight:800;color:#04121f;background:var(--gold);border-radius:999px;padding:7px 14px;box-shadow:0 4px 16px rgba(0,0,0,.6);opacity:0;transform:translate(-50%,-50%) scale(.92);transition:opacity .16s,transform .16s;pointer-events:none;white-space:nowrap}
+  body.is-owner #stage.grid .tile .edb{display:inline-flex}
+  body.is-owner #stage.grid .tile:hover .edb{opacity:1;transform:translate(-50%,-50%) scale(1)}
+  body.is-owner #stage.grid .tile:hover .art,body.is-owner #stage.grid .tile:hover .fb{filter:brightness(.7)}
   #chrome{position:absolute;inset:0;z-index:0;opacity:0;transition:opacity .4s ease;pointer-events:none}
   #stage.timeline #chrome{opacity:1}
   #spine{position:absolute;top:6px;bottom:6px;width:2px;background:var(--border)}
@@ -605,12 +610,12 @@
     // Persistent publish banner pinned to the very top for the whole draft session.
     var oldp=document.getElementById("draftpub"); if(oldp) oldp.remove();
     var pub=document.createElement("div"); pub.id="draftpub";
-    pub.innerHTML='<div class="dp-inner"><span class="dp-msg">'+(count?('You’re building a draft · <b>'+count+' game'+(count===1?'':'s')+'</b> saved on this device. No email needed to build or preview — <b>publishing</b> saves it to your account and gives you a shareable link.'):'You’re building a draft portfolio — saved on this device. No email needed to build or preview; publish when you’re ready.')+'</span><button type="button" id="dp-save" class="db-btn primary">Save &amp; publish →</button></div>';
+    pub.innerHTML='<div class="dp-inner"><span class="dp-msg">'+(count?('You’re building a draft · <b>'+count+' game'+(count===1?'':'s')+'</b> saved on this device. No email needed to build or preview, <b>publishing</b> saves it to your account and gives you a shareable link.'):'You’re building a draft portfolio, saved on this device. No email needed to build or preview; publish when you’re ready.')+'</span><button type="button" id="dp-save" class="db-btn primary">Save &amp; publish →</button></div>';
     document.body.appendChild(pub);
     document.getElementById("dp-save").onclick=draftSave;
     var old=document.getElementById("draftbar"); if(old) old.remove();
     var bar=document.createElement("div"); bar.id="draftbar";
-    bar.innerHTML='<div class="db-inner"><div class="db-note">'+(count?('<b>'+count+'</b> game'+(count===1?'':'s')+' on your wall · saved on this device'):'Your wall is empty — add a game you shipped to start')+'</div><div class="db-actions"><button type="button" id="db-add" class="db-btn ghost">+ Add a game</button><button type="button" id="db-preview" class="db-btn ghost">👁 Preview as visitor</button><button type="button" id="db-save" class="db-btn primary">Publish →</button></div></div>';
+    bar.innerHTML='<div class="db-inner"><div class="db-note">'+(count?('<b>'+count+'</b> game'+(count===1?'':'s')+' on your wall · saved on this device'):'Your wall is empty, add a game you shipped to start')+'</div><div class="db-actions"><button type="button" id="db-add" class="db-btn ghost">+ Add a game</button><button type="button" id="db-preview" class="db-btn ghost">👁 Preview as visitor</button><button type="button" id="db-save" class="db-btn primary">Publish →</button></div></div>';
     document.body.appendChild(bar);
     document.getElementById("db-add").onclick=draftAddSearch;
     document.getElementById("db-preview").onclick=function(){ setPreview(true); };
@@ -654,7 +659,7 @@
   function showWelcomeBanner(){
     if(document.getElementById("welcomebar")) return;
     var b=document.createElement("div"); b.id="welcomebar";
-    b.innerHTML='<div class="wb-inner"><div class="wb-txt"><b>Your portfolio is live.</b> Add your work history and skills to finish it — and use “Edit header” up top for your photo and bio.</div><a class="wb-btn" href="/portfolio/edit/">Add work history →</a><button type="button" class="wb-x" aria-label="Dismiss">×</button></div>';
+    b.innerHTML='<div class="wb-inner"><div class="wb-txt"><b>Your portfolio is live.</b> Add your work history and skills to finish it, and use “Edit header” up top for your photo and bio.</div><a class="wb-btn" href="/portfolio/edit/">Add work history →</a><button type="button" class="wb-x" aria-label="Dismiss">×</button></div>';
     document.body.appendChild(b);
     b.querySelector(".wb-x").onclick=function(){ b.remove(); };
   }
@@ -725,8 +730,8 @@
     var _artLed = (["art","audio"].indexOf(p.portfolio_style||"")>=0) && !!_media;
     var _workEyebrow = _artLed ? "Also shipped" : "The Work";
     var _workHead = _artLed ? "Games I\'ve shipped" : (credits.length?credits.length+' shipped titles':'Selected work');
-    var _workSub = _artLed ? "The titles I contributed to — peer-confirmed by teammates who shipped them. Click any cover for my role and scope." : "Every game I\'ve shipped. Click any cover for the one-sheet: my role, the scope, and the impact.";
-    var stageSection = credits.length ? '<div class="wrap"><section><div class="stagehead"><div class="headtext pub-head"><div class="eyebrow">'+_workEyebrow+'</div><h2 class="sec">'+_workHead+'</h2><p class="sub">'+_workSub+'</p></div><div class="headtext own-head"><div class="eyebrow">The Work</div><h2 class="sec">Every game, your way</h2><p class="sub">Arrange the wall however you like — then flip to the timeline and watch them fall into place. <span class="mut">Only you see this editing view — visitors get the public work view above.</span></p></div><div class="vtoggle" id="vtoggle"><button data-m="grid" class="on">▦ Wall</button><button data-m="timeline">↳ Timeline</button><button data-m="recruiter">▤ Recruiter</button></div></div><div class="vhint" id="vhint"></div><div id="stage" class="grid"><div id="chrome"><div id="spine"></div></div></div><div id="recruiter" style="display:none"></div></section></div>' : '';
+    var _workSub = _artLed ? "The titles I contributed to, peer-confirmed by teammates who shipped them. Click any cover for my role and scope." : "Every game I\'ve shipped. Click any cover for the one-sheet: my role, the scope, and the impact.";
+    var stageSection = credits.length ? '<div class="wrap"><section><div class="stagehead"><div class="headtext pub-head"><div class="eyebrow">'+_workEyebrow+'</div><h2 class="sec">'+_workHead+'</h2><p class="sub">'+_workSub+'</p></div><div class="headtext own-head"><div class="eyebrow">The Work</div><h2 class="sec">Every game, your way</h2><p class="sub">Arrange the wall however you like, then flip to the timeline and watch them fall into place. <span class="mut">Only you see this editing view, visitors get the public work view above.</span></p></div><div class="vtoggle" id="vtoggle"><button data-m="grid" class="on">▦ Wall</button><button data-m="timeline">↳ Timeline</button><button data-m="recruiter">▤ Recruiter</button></div></div><div class="vhint" id="vhint"></div><div id="stage" class="grid"><div id="chrome"><div id="spine"></div></div></div><div id="recruiter" style="display:none"></div></section></div>' : '';
 
     // ---- skills ----
     var groups = (p.skills && p.skills.groups) ? p.skills.groups : [];
@@ -771,7 +776,7 @@
     var back=document.getElementById("previewback");
     if(PREVIEW){
       if(!back){ back=document.createElement("div"); back.id="previewback";
-        back.innerHTML='<div class="pb-inner"><span class="pb-msg">👁 <b>Preview</b> — exactly what a visitor sees. Nothing is published; your draft stays on this device.</span><button type="button" id="pb-btn" class="db-btn primary">✎ Back to editing</button></div>';
+        back.innerHTML='<div class="pb-inner"><span class="pb-msg">👁 <b>Preview</b>, exactly what a visitor sees. Nothing is published; your draft stays on this device.</span><button type="button" id="pb-btn" class="db-btn primary">✎ Back to editing</button></div>';
         document.body.appendChild(back); document.getElementById("pb-btn").onclick=function(){ setPreview(false); }; }
       back.style.display="";
     } else if(back){ back.style.display="none"; }
@@ -787,11 +792,11 @@
     var wrap=document.createElement("div"); wrap.className="wrap";
     wrap.innerHTML='<section id="draftedit" class="draftedit">'+
       '<div class="eyebrow">Draft tools · only you see this</div><h2 class="sec">Work history &amp; education</h2>'+
-      '<p class="sub">Add or fix your roles and education here — they show on your timeline and résumé right away, and save to your account when you publish.</p>'+
+      '<p class="sub">Add or fix your roles and education here, they show on your timeline and résumé right away, and save to your account when you publish.</p>'+
       '<h3 class="dh">Work history</h3><div id="de-poslist"></div><button type="button" class="btn ghost" id="de-addpos">+ Add a position</button>'+
       '<h3 class="dh">Education</h3><div id="de-edulist"></div><button type="button" class="btn ghost" id="de-addedu">+ Add education</button>'+
       '<h3 class="dh">Visual work &amp; showreel</h3>'+
-      '<p class="sub" style="margin:-4px 0 10px">'+(["art","audio"].indexOf((_person&&_person.portfolio_style)||"")>=0?'Because your style is <b>'+esc(_person.portfolio_style)+'</b>, this leads your page — add a reel and images and they jump to the top.':'Add a reel or images here. <b>Tip:</b> set your style to Art or Audio (Edit header) to make these lead your page.')+'</p>'+
+      '<p class="sub" style="margin:-4px 0 10px">'+(["art","audio"].indexOf((_person&&_person.portfolio_style)||"")>=0?'Because your style is <b>'+esc(_person.portfolio_style)+'</b>, this leads your page, add a reel and images and they jump to the top.':'Add a reel or images here. <b>Tip:</b> set your style to Art or Audio (Edit header) to make these lead your page.')+'</p>'+
       '<div id="de-media"></div>'+
     '</section>';
     app.appendChild(wrap);
@@ -802,14 +807,14 @@
   function renderDePos(){
     var box=document.getElementById("de-poslist"); if(!box) return;
     var pos=(dGet().positions||[]);
-    if(!pos.length){ box.innerHTML='<div class="de-empty">No positions yet. Add the studios and companies you’ve worked at — game studios count toward your Studios total; other jobs still show on your timeline.</div>'; return; }
+    if(!pos.length){ box.innerHTML='<div class="de-empty">No positions yet. Add the studios and companies you’ve worked at, game studios count toward your Studios total; other jobs still show on your timeline.</div>'; return; }
     box.innerHTML=pos.map(function(p,i){
       return '<div class="decard" data-i="'+i+'">'+
         '<div class="derow"><div><label>Studio / company</label><input data-k="studio" value="'+esc(p.studio||"")+'" placeholder="e.g. Insomniac Games"></div><div><label>Title</label><input data-k="title" value="'+esc(p.title||"")+'" placeholder="e.g. Senior Producer"></div></div>'+
         '<div class="derow"><div><label>From (year)</label><input data-k="start_year" inputmode="numeric" value="'+esc(p.start_year||"")+'" placeholder="2019"></div><div><label>To (year)</label><input data-k="end_year" inputmode="numeric" value="'+esc(p.is_current?"":(p.end_year||""))+'" placeholder="2022"'+(p.is_current?" disabled":"")+'></div></div>'+
         '<label class="dechk"><input type="checkbox" data-k="is_current" '+(p.is_current?"checked":"")+'> I currently work here</label>'+
-        '<label class="dechk"><input type="checkbox" data-k="is_game_studio" '+((p.is_game_studio===0)?"":"checked")+'> This is a game studio <span style="color:var(--muted);font-weight:400">— counts toward your Studios total</span></label>'+
-        '<label>What you did <span style="color:var(--muted);font-weight:400">— optional</span></label><textarea data-k="description" placeholder="One scope line, or a bullet per line.">'+esc(p.description||"")+'</textarea>'+
+        '<label class="dechk"><input type="checkbox" data-k="is_game_studio" '+((p.is_game_studio===0)?"":"checked")+'> This is a game studio <span style="color:var(--muted);font-weight:400">(counts toward your Studios total)</span></label>'+
+        '<label>What you did <span style="color:var(--muted);font-weight:400">(optional)</span></label><textarea data-k="description" placeholder="One scope line, or a bullet per line.">'+esc(p.description||"")+'</textarea>'+
         '<div class="deact"><button type="button" class="de-del">Remove</button></div>'+
       '</div>';
     }).join("");
@@ -834,11 +839,11 @@
   function renderDeEdu(){
     var box=document.getElementById("de-edulist"); if(!box) return;
     var edu=(dGet().education||[]);
-    if(!edu.length){ box.innerHTML='<div class="de-empty">No education added — optional. Add a degree, diploma, or bootcamp if you want it on your résumé.</div>'; return; }
+    if(!edu.length){ box.innerHTML='<div class="de-empty">No education added, optional. Add a degree, diploma, or bootcamp if you want it on your résumé.</div>'; return; }
     box.innerHTML=edu.map(function(e,i){
       return '<div class="decard" data-i="'+i+'">'+
         '<div class="derow"><div><label>School / institution</label><input data-k="school" value="'+esc(e.school||"")+'" placeholder="e.g. DigiPen Institute of Technology"></div></div>'+
-        '<div class="derow"><div><label>Degree <span style="color:var(--muted);font-weight:400">— optional</span></label><input data-k="degree" value="'+esc(e.degree||"")+'" placeholder="e.g. BS"></div><div><label>Field <span style="color:var(--muted);font-weight:400">— optional</span></label><input data-k="field" value="'+esc(e.field||"")+'" placeholder="e.g. Computer Science"></div></div>'+
+        '<div class="derow"><div><label>Degree <span style="color:var(--muted);font-weight:400">(optional)</span></label><input data-k="degree" value="'+esc(e.degree||"")+'" placeholder="e.g. BS"></div><div><label>Field <span style="color:var(--muted);font-weight:400">(optional)</span></label><input data-k="field" value="'+esc(e.field||"")+'" placeholder="e.g. Computer Science"></div></div>'+
         '<div class="derow"><div><label>Start year</label><input data-k="start_year" inputmode="numeric" value="'+esc(e.start_year||"")+'" placeholder="2008"></div><div><label>End year</label><input data-k="end_year" inputmode="numeric" value="'+esc(e.end_year||"")+'" placeholder="2012"></div></div>'+
         '<div class="deact"><button type="button" class="de-del">Remove</button></div>'+
       '</div>';
@@ -868,8 +873,8 @@
       return '<div class="derow" data-dgmi="'+gi+'" style="align-items:center;margin-top:6px"><div style="flex:0 0 auto"><img src="'+esc(im.url)+'" alt="" style="width:56px;height:40px;object-fit:cover;border-radius:6px;border:1px solid var(--border);background:var(--bg)" onerror="this.style.opacity=.25"></div><div style="min-width:100px">'+_deInp("dgm-cap",im.caption,"Caption (optional)")+'</div><div style="flex:0 0 auto"><button type="button" class="de-del dgm-del">Remove</button></div></div>';
     }).join("") : '<div class="de-empty">No images yet.</div>';
     var head = isBucket
-      ? '<div style="font-weight:750;font-size:13px">Selected work <span style="color:var(--muted);font-weight:400">— images not in a group</span></div>'
-      : '<div class="derow" style="align-items:center"><div style="flex:1">'+(gr.game_slug?'🎮 ':'')+_deInp("dgm-title",gr.label,gr.game_slug?"Group title":"Category name (e.g. Concept Art)")+'</div>'+(gr.game_slug?'<span style="color:var(--green);font-size:11px;white-space:nowrap">Shipped ✓</span>':'')+'<div style="flex:0 0 auto"><button type="button" class="de-del dgm-grpdel">Remove group</button></div></div><textarea class="dgm-blurb" placeholder="A sentence or two — your role, tools, what this is." style="width:100%;margin-top:6px;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px 11px;color:var(--text);font-size:13px;font-family:inherit;min-height:46px;outline:none">'+esc(gr.blurb||"")+'</textarea>';
+      ? '<div style="font-weight:750;font-size:13px">Selected work <span style="color:var(--muted);font-weight:400">(images not in a group)</span></div>'
+      : '<div class="derow" style="align-items:center"><div style="flex:1">'+(gr.game_slug?'🎮 ':'')+_deInp("dgm-title",gr.label,gr.game_slug?"Group title":"Category name (e.g. Concept Art)")+'</div>'+(gr.game_slug?'<span style="color:var(--green);font-size:11px;white-space:nowrap">Shipped ✓</span>':'')+'<div style="flex:0 0 auto"><button type="button" class="de-del dgm-grpdel">Remove group</button></div></div><textarea class="dgm-blurb" placeholder="A sentence or two, your role, tools, what this is." style="width:100%;margin-top:6px;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px 11px;color:var(--text);font-size:13px;font-family:inherit;min-height:46px;outline:none">'+esc(gr.blurb||"")+'</textarea>';
     return '<div class="decard" data-dgrp="'+esc(gr.id)+'">'+head+'<div style="margin-top:4px">'+thumbs+'</div><div class="derow" style="margin-top:8px"><div>'+_deInp("dgm-newurl","","https://…  image URL")+'</div><div style="flex:0 0 auto;align-self:center"><button type="button" class="btn ghost dgm-addimg">Add image</button></div></div></div>';
   }
   function renderDeMedia(){
@@ -877,7 +882,7 @@
     var m=_deMediaGet();
     var gamesLeft=(dGet().credits||[]).filter(function(c){ return c.game_slug && !m.groups.some(function(g){ return g.game_slug===c.game_slug; }); });
     box.innerHTML =
-      '<div class="decard"><label style="display:block;font-size:11.5px;font-weight:700;color:#cdd8e6;margin:0 0 4px">Showreel <span style="color:var(--muted);font-weight:400">— YouTube or Vimeo link</span></label><input id="dgm-reel" value="'+esc(m.reel)+'" placeholder="https://youtube.com/watch?v=…  or  https://vimeo.com/…" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px 11px;color:var(--text);font-size:13.5px;font-family:inherit;outline:none"><div id="dgm-reelerr" class="de-empty" style="color:var(--pink);display:none"></div></div>'+
+      '<div class="decard"><label style="display:block;font-size:11.5px;font-weight:700;color:#cdd8e6;margin:0 0 4px">Showreel <span style="color:var(--muted);font-weight:400">(YouTube or Vimeo link)</span></label><input id="dgm-reel" value="'+esc(m.reel)+'" placeholder="https://youtube.com/watch?v=…  or  https://vimeo.com/…" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px 11px;color:var(--text);font-size:13.5px;font-family:inherit;outline:none"><div id="dgm-reelerr" class="de-empty" style="color:var(--pink);display:none"></div></div>'+
       _deGroupCard({id:"",label:"Selected work",blurb:"",game_slug:""}, true, m)+
       m.groups.map(function(gr){ return _deGroupCard(gr, false, m); }).join("")+
       '<div class="derow" style="margin-top:2px;gap:8px;flex-wrap:wrap"><button type="button" class="btn ghost" id="dgm-addgame"'+(gamesLeft.length?'':' style="opacity:.5;pointer-events:none"')+'>+ Group by a game</button><button type="button" class="btn ghost" id="dgm-addcat">+ Custom category</button><span id="dgm-gamepick"></span></div>';
@@ -1055,18 +1060,18 @@
     var slug=c.game_slug, grp=_gameGroup(slug), gid=grp?grp.id:null, cover=(covMap||{})[slug];
     var gal=(_person&&Array.isArray(_person.gallery))?_person.gallery:[];
     var media=gal.map(function(im,i){ return {im:im,i:i}; }).filter(function(o){ return gid && (o.im.group||"")===gid; });
-    var thumbs = media.length ? media.map(function(o){ return _abThumb(o.im, o.i); }).join("") : '<span class="mut" style="font-size:12.5px;align-self:center">No art or video yet — add your first →</span>';
+    var thumbs = media.length ? media.map(function(o){ return _abThumb(o.im, o.i); }).join("") : '<span class="mut" style="font-size:12.5px;align-self:center">No art or video yet, add your first →</span>';
     return '<div class="abrow" data-slug="'+esc(slug)+'">'+
       '<div class="abcover">'+(cover?'<img src="'+esc(cover)+'" alt="" onerror="this.remove()">':'<span class="abini">'+esc(initials(c.game_title))+'</span>')+'</div>'+
       '<div class="abmain"><div class="abtitle">'+esc(c.game_title)+'</div>'+
         '<div class="abmedia">'+thumbs+'</div>'+
-        '<textarea class="ab-blurb" placeholder="Commentary for your '+esc(c.game_title)+' work — your role, the brief, the techniques… (optional, shown above the images)">'+esc(grp?grp.blurb||"":"")+'</textarea>'+
+        '<textarea class="ab-blurb" placeholder="Commentary for your '+esc(c.game_title)+' work, your role, the brief, the techniques… (optional, shown above the images)">'+esc(grp?grp.blurb||"":"")+'</textarea>'+
         '<div class="abcap-edit"></div>'+
         '<div class="abact"><button class="btn ghost sm ab-art">＋ Add art</button><button class="btn ghost sm ab-vid">＋ Add video</button><button class="btn ghost sm ab-sheet">✎ One-sheet</button><span class="ab-inline"></span></div>'+
       '</div></div>';
   }
   function artBuilderHTML(credits, covMap){
-    return '<div class="wrap"><section><div class="eyebrow">Your visual work · only you see this</div><h2 class="sec">Add art &amp; video to each game</h2><p class="sub">Attach the work you did on each title — images and video (a trailer, in-game footage, or your own reel). It groups under that game in your gallery up top. Visitors see the gallery, not this builder.</p><div class="artbuild">'+
+    return '<div class="wrap"><section><div class="eyebrow">Your visual work · only you see this</div><h2 class="sec">Add art &amp; video to each game</h2><p class="sub">Attach the work you did on each title, images and video (a trailer, in-game footage, or your own reel). It groups under that game in your gallery up top. Visitors see the gallery, not this builder.</p><div class="artbuild">'+
       credits.map(function(c){ return abRowHTML(c, covMap); }).join("")+
     '</div></section></div>';
   }
@@ -1100,7 +1105,7 @@
       var c=(credits||[]).filter(function(x){ return x.game_slug===slug; })[0]; if(!c) return;
       var inline=row.querySelector(".ab-inline");
       function opener(isVid){ return function(){
-        inline.innerHTML='<input class="ab-url" placeholder="'+(isVid?"YouTube / Vimeo / mp4 link":"Image URL — https://…")+'"><button class="btn primary sm ab-ok">Add</button><button class="btn sm ab-x">Cancel</button>';
+        inline.innerHTML='<input class="ab-url" placeholder="'+(isVid?"YouTube / Vimeo / mp4 link":"Image URL, https://…")+'"><button class="btn primary sm ab-ok">Add</button><button class="btn sm ab-x">Cancel</button>';
         var url=inline.querySelector(".ab-url"); url.focus();
         inline.querySelector(".ab-x").onclick=function(){ inline.innerHTML=""; };
         function ok(){ var u=(url.value||"").trim(); if(!u) return;
@@ -1578,18 +1583,18 @@
   }
   function _renderTailorResult(){
     var out=document.getElementById("tout"); if(!out) return; var r=_tState.res; if(!r) return;
-    if(!r.total){ out.innerHTML='<div class="tnote">We couldn\'t spot specific requirements in that text — paste the full posting (responsibilities and qualifications) for a useful read.</div>'; return; }
+    if(!r.total){ out.innerHTML='<div class="tnote">We couldn\'t spot specific requirements in that text, paste the full posting (responsibilities and qualifications) for a useful read.</div>'; return; }
     var ring=r.score>=70?"g":(r.score>=45?"a":"r");
     // Lead with a qualitative label + the count; the raw % reads like a school grade (69% ≈ C+) when
     // 11/16 may be a strong fit. Percentage is kept as a small secondary detail.
     var fitLabel=r.score>=70?"Strong fit":(r.score>=45?"Solid fit":(r.score>=25?"Partial fit":"Light match"));
-    var fitLine=r.score>=70?"Your profile covers most of what this role is looking for.":(r.score>=45?"You cover a good share of this role’s asks — close a gap or two below.":"There’s room to strengthen your fit — see what to add below.");
+    var fitLine=r.score>=70?"Your profile covers most of what this role is looking for.":(r.score>=45?"You cover a good share of this role’s asks, close a gap or two below.":"There’s room to strengthen your fit, see what to add below.");
     var chips=function(arr,cls){ return arr.map(function(L){ return '<span class="tchip '+cls+'">'+_tEsc(L.label)+'</span>'; }).join(""); };
-    var extra=r.extra&&r.extra.length?('<div class="tblk"><div class="tbh">Also mentioned in the posting</div><div class="tchips">'+r.extra.map(function(w){ return '<span class="tchip x">'+_tEsc(w)+'</span>'; }).join("")+'</div><div class="thint">Not scored — check these are reflected somewhere in your profile if they matter to you.</div></div>'):'';
+    var extra=r.extra&&r.extra.length?('<div class="tblk"><div class="tbh">Also mentioned in the posting</div><div class="tchips">'+r.extra.map(function(w){ return '<span class="tchip x">'+_tEsc(w)+'</span>'; }).join("")+'</div><div class="thint">Not scored, check these are reflected somewhere in your profile if they matter to you.</div></div>'):'';
     out.innerHTML=
       '<div class="tscore"><div class="tfit '+ring+'">'+fitLabel+'</div><div class="tsx"><div class="tsxn">You match <b>'+r.matched.length+' of '+r.total+'</b> things this posting asks for. <span class="tpct">('+r.score+'%)</span></div><div class="tsxs">'+fitLine+' Your relevant bullets move to the top in the downloads below.</div></div></div>'+
-      '<div class="tblk"><div class="tbh ok">Matched — surface these</div><div class="tchips">'+(r.matched.length?chips(r.matched,"ok"):'<span class="tnone">None yet.</span>')+'</div></div>'+
-      '<div class="tblk"><div class="tbh gap">Add these if they apply</div><div class="tchips">'+(r.missing.length?chips(r.missing,"gap"):'<span class="tnone">Nothing missing — strong match.</span>')+'</div>'+(r.missing.length?'<div class="thint">These are in the posting but not yet on your profile. If you genuinely have any, add them to a game one-sheet or your bio and your fit climbs — don\'t claim ones you can\'t back up.</div>':'')+'</div>'+
+      '<div class="tblk"><div class="tbh ok">Matched, surface these</div><div class="tchips">'+(r.matched.length?chips(r.matched,"ok"):'<span class="tnone">None yet.</span>')+'</div></div>'+
+      '<div class="tblk"><div class="tbh gap">Add these if they apply</div><div class="tchips">'+(r.missing.length?chips(r.missing,"gap"):'<span class="tnone">Nothing missing, strong match.</span>')+'</div>'+(r.missing.length?'<div class="thint">These are in the posting but not yet on your profile. If you genuinely have any, add them to a game one-sheet or your bio and your fit climbs, don\'t claim ones you can\'t back up.</div>':'')+'</div>'+
       extra+
       '<div class="trow tdl"><button class="btn primary" id="tdpdf">⬇ Tailored résumé (PDF)</button><button class="btn ghost" id="tddocx">⬇ Tailored Word (.docx)</button><button class="btn ghost" id="tsave">Save this version</button></div>'+
       '<div id="tsavemsg" class="tsavemsg"></div>';
@@ -1599,7 +1604,7 @@
     q("tsave").addEventListener("click",function(){
       var def="Tailored "+((_tVarsGet().length+1)); var label=(window.prompt&&window.prompt("Name this tailored version (e.g. company or role):",def))||def;
       var vars=_tVarsGet(); vars.unshift({label:label.slice(0,40),jd:_tState.jd}); _tVarsSet(vars);
-      var mm=q("tsavemsg"); if(mm){ mm.textContent="Saved \""+label+"\" — it'll be here next time you open this."; }
+      var mm=q("tsavemsg"); if(mm){ mm.textContent="Saved \""+label+"\", it'll be here next time you open this."; }
     });
   }
   function _injectTailorCSS(){
@@ -1748,13 +1753,13 @@
     return '<div class="efwrap"><button class="osclose" aria-label="Close">✕</button>'+
       '<h3>Edit profile header</h3><div class="efdesc">The top of your portfolio: name, headline, bio, photo, and links. (Your work history &amp; skills are edited from the “Edit work history &amp; skills” button.)</div>'+
       '<label class="eflabel">Display name</label><input id="ef-name" value="'+esc(p.name||"")+'">'+
-      '<label class="eflabel">Headline <span class="mut">— current role &amp; studio</span></label><input id="ef-head" value="'+esc(p.headline||"")+'">'+
+      '<label class="eflabel">Headline <span class="mut">(current role &amp; studio)</span></label><input id="ef-head" value="'+esc(p.headline||"")+'">'+
       '<label class="eflabel">Location</label><input id="ef-loc" value="'+esc(p.location||"")+'">'+
       '<label class="eflabel">About / bio</label><textarea id="ef-bio">'+esc(p.bio||"")+'</textarea>'+
       '<div class="efchk"><input type="checkbox" id="ef-otw" '+(p.open_to_work?"checked":"")+'><label for="ef-otw">Show &ldquo;Open to opportunities&rdquo;</label></div>'+
-      '<label class="eflabel">Public contact email <span class="mut">— optional; shown as a &ldquo;Get in touch&rdquo; button while you&rsquo;re open to opportunities. Not your login email.</span></label><input id="ef-contact" type="email" placeholder="you@studio.com" value="'+esc(p.contact_email||"")+'">'+
+      '<label class="eflabel">Public contact email <span class="mut">(optional; shown as a &ldquo;Get in touch&rdquo; button while you&rsquo;re open to opportunities. Not your login email.)</span></label><input id="ef-contact" type="email" placeholder="you@studio.com" value="'+esc(p.contact_email||"")+'">'+
       '<label class="eflabel">Portfolio style</label><select id="ef-style">'+['production','engineering','art','audio','design','qa','other'].map(function(s){ return '<option value="'+s+'" '+((p.portfolio_style||"production")===s?"selected":"")+'>'+s.charAt(0).toUpperCase()+s.slice(1)+'</option>'; }).join("")+'</select>'+
-      '<label class="eflabel">Cancelled / unshipped titles <span class="mut">— a count of projects that were cancelled or never shipped (often NDA, so you can’t name them); shown as a stat tile</span></label><input id="ef-unshipped" type="number" min="0" max="999" placeholder="0" value="'+esc(p.unshipped!=null?p.unshipped:"")+'">'+
+      '<label class="eflabel">Cancelled / unshipped titles <span class="mut">(a count of projects that were cancelled or never shipped, often NDA so you can’t name them; shown as a stat tile)</span></label><input id="ef-unshipped" type="number" min="0" max="999" placeholder="0" value="'+esc(p.unshipped!=null?p.unshipped:"")+'">'+
       '<label class="eflabel">Profile portrait <span class="mut">&mdash; optional headshot; shown instead of your initials</span></label>'+
       '<div class="uprow"><div class="upprev port" id="ef-avatar-prev">Photo</div><div style="flex:1"><input id="ef-avatar" placeholder="https://… or upload a photo" value="'+esc(p.avatar_url||"")+'"><div class="upbtns"><button type="button" class="upbtn" data-upload-for="ef-avatar">⬆ Upload photo</button><button type="button" class="upbtn ghost" id="ef-avatar-clear">Remove</button></div></div></div>'+
       '<label class="eflabel">Links</label>'+
@@ -1810,31 +1815,31 @@
     return '<div class="efwrap"><button class="osclose" aria-label="Close">✕</button>'+
       '<h3>Edit one-sheet</h3><div class="efdesc">'+esc(c.game_title)+' · '+esc(c.role||"")+'</div>'+
       '<label class="eflabel">Your role</label><input id="ef-role" placeholder="e.g. Senior Producer" value="'+esc(c.role||"")+'">'+
-      '<label class="eflabel">Years on it <span class="mut">— optional; the span shown under the title</span></label><div class="efrow"><input id="ef-wstart" type="number" min="1970" max="2100" style="flex:1;min-width:140px" placeholder="From (e.g. 2012)" value="'+esc(c.work_start!=null?c.work_start:"")+'"><input id="ef-wend" type="number" min="1970" max="2100" style="flex:1;min-width:140px" placeholder="To (e.g. 2015)" value="'+esc(c.work_end!=null?c.work_end:"")+'"></div>'+
-      '<label class="eflabel">Status <span class="mut">— optional; shows a Live-service badge &amp; feeds the stat tile</span></label>'+
+      '<label class="eflabel">Years on it <span class="mut">(optional; the span shown under the title)</span></label><div class="efrow"><input id="ef-wstart" type="number" min="1970" max="2100" style="flex:1;min-width:140px" placeholder="From (e.g. 2012)" value="'+esc(c.work_start!=null?c.work_start:"")+'"><input id="ef-wend" type="number" min="1970" max="2100" style="flex:1;min-width:140px" placeholder="To (e.g. 2015)" value="'+esc(c.work_end!=null?c.work_end:"")+'"></div>'+
+      '<label class="eflabel">Status <span class="mut">(optional; shows a Live-service badge &amp; feeds the stat tile)</span></label>'+
       '<div style="margin:2px 0 6px">'+
-        '<label style="display:flex;align-items:center;gap:9px;font-size:14px;cursor:pointer"><input type="checkbox" id="ef-live" style="width:16px;height:16px;flex:none;accent-color:var(--accent)" '+(isLiveNow?"checked":"")+'>Live-service game <span class="mut">— ongoing / games-as-a-service</span></label>'+
+        '<label style="display:flex;align-items:center;gap:9px;font-size:14px;cursor:pointer"><input type="checkbox" id="ef-live" style="width:16px;height:16px;flex:none;accent-color:var(--accent)" '+(isLiveNow?"checked":"")+'>Live-service game <span class="mut">(ongoing / games-as-a-service)</span></label>'+
       '</div>'+
       '<label class="eflabel">One-line summary</label><textarea id="ef-summary" placeholder="What was this game, and your part in it?">'+esc(s.summary||"")+'</textarea>'+
-      '<label class="eflabel">What I led <span class="mut">— one per line; paste a link or use [label](url)</span></label><textarea id="ef-did" placeholder="One achievement per line">'+esc(contribs)+'</textarea>'+
-      '<label class="eflabel">Key challenges <span class="mut">— problems you solved; one per line; links work here too</span></label><textarea id="ef-challenges" placeholder="One challenge per line">'+esc(chals)+'</textarea>'+
-      '<label class="eflabel">Focus / keywords <span class="mut">— comma-separated</span></label><input id="ef-kw" value="'+esc(kw)+'">'+
-      '<label class="eflabel">Critic score <span class="mut">— optional; OpenCritic or Metacritic, links out to the score page</span></label>'+
+      '<label class="eflabel">What I led <span class="mut">(one per line; paste a link, or use [label](url) format)</span></label><textarea id="ef-did" placeholder="One achievement per line">'+esc(contribs)+'</textarea>'+
+      '<label class="eflabel">Key challenges <span class="mut">(problems you solved; one per line; links work here too)</span></label><textarea id="ef-challenges" placeholder="One challenge per line">'+esc(chals)+'</textarea>'+
+      '<label class="eflabel">Focus / keywords <span class="mut">(comma-separated)</span></label><input id="ef-kw" value="'+esc(kw)+'">'+
+      '<label class="eflabel">Critic score <span class="mut">(optional; OpenCritic or Metacritic, links out to the score page)</span></label>'+
       '<div class="efrow">'+
-        '<div><select id="ef-rsrc"><option value="">— none —</option><option value="opencritic"'+(rv.source==="opencritic"?" selected":"")+'>OpenCritic</option><option value="metacritic"'+(rv.source==="metacritic"?" selected":"")+'>Metacritic</option></select></div>'+
+        '<div><select id="ef-rsrc"><option value="">(none)</option><option value="opencritic"'+(rv.source==="opencritic"?" selected":"")+'>OpenCritic</option><option value="metacritic"'+(rv.source==="metacritic"?" selected":"")+'>Metacritic</option></select></div>'+
         '<div><input id="ef-rscore" type="number" min="0" max="100" placeholder="Score (0–100)" value="'+esc(rv.score!=null?rv.score:"")+'"></div>'+
-        '<div><select id="ef-rtier"><option value="">Tier — OpenCritic only</option>'+["Mighty","Strong","Fair","Weak"].map(function(t){ return '<option'+(rv.tier===t?" selected":"")+'>'+t+'</option>'; }).join("")+'</select></div>'+
+        '<div><select id="ef-rtier"><option value="">Tier, OpenCritic only</option>'+["Mighty","Strong","Fair","Weak"].map(function(t){ return '<option'+(rv.tier===t?" selected":"")+'>'+t+'</option>'; }).join("")+'</select></div>'+
       '</div>'+
       '<input id="ef-rurl" placeholder="Link to the score page (https://…)" value="'+esc(rv.url||"")+'" style="margin-top:8px">'+
-      '<label class="eflabel">Stats <span class="mut">— label + value tiles; shown as Game Context</span></label><div id="ef-stats">'+
+      '<label class="eflabel">Stats <span class="mut">(label + value tiles; shown as Game Context)</span></label><div id="ef-stats">'+
         stats.map(function(st){ return '<div class="efstat-row"><input class="ef-slabel" placeholder="Label (e.g. Players)" value="'+esc(st.label||"")+'"><input class="ef-svalue" placeholder="Value (e.g. 85M+)" value="'+esc(st.value||"")+'"></div>'; }).join("")+
       '</div>'+
-      '<label class="eflabel">Screenshots &amp; videos <span class="mut">— one URL per line; images or videos (YouTube, Vimeo, .mp4)</span></label><textarea id="ef-shots" placeholder="One image or video URL per line">'+esc(shots)+'</textarea>'+
+      '<label class="eflabel">Screenshots &amp; videos <span class="mut">(one URL per line; images or videos: YouTube, Vimeo, or .mp4)</span></label><textarea id="ef-shots" placeholder="One image or video URL per line">'+esc(shots)+'</textarea>'+
       '<div class="upbtns"><button type="button" class="upbtn" data-upload-for="ef-shots">⬆ Upload image</button></div>'+
-      '<label class="eflabel">Cover image <span class="mut">— the box art on your wall &amp; timeline</span></label>'+
+      '<label class="eflabel">Cover image <span class="mut">(the box art on your wall &amp; timeline)</span></label>'+
       '<div class="uprow"><div class="upprev" id="ef-cover-prev">Cover</div><div style="flex:1"><input id="ef-cover" placeholder="Upload or paste https://… to change the cover"><div class="upbtns"><button type="button" class="upbtn" data-upload-for="ef-cover">⬆ Upload cover</button><button type="button" class="upbtn ghost" id="ef-cover-clear">Remove cover</button></div></div></div>'+
-      '<label class="eflabel">Banner image <span class="mut">— optional wide art (blank uses box art)</span></label><input id="ef-banner" placeholder="https://… or upload" value="'+esc(s.banner_url||"")+'"><div class="upbtns"><button type="button" class="upbtn" data-upload-for="ef-banner">⬆ Upload banner</button></div>'+
-      '<label class="eflabel">Release date <span class="mut">— set only if unreleased; shows &ldquo;Coming Soon&rdquo; until then</span></label><input type="date" id="ef-release" value="'+esc(s.release_date||"")+'">'+
+      '<label class="eflabel">Banner image <span class="mut">(optional wide art; blank uses box art)</span></label><input id="ef-banner" placeholder="https://… or upload" value="'+esc(s.banner_url||"")+'"><div class="upbtns"><button type="button" class="upbtn" data-upload-for="ef-banner">⬆ Upload banner</button></div>'+
+      '<label class="eflabel">Release date <span class="mut">(set only if unreleased; shows &ldquo;Coming Soon&rdquo; until then)</span></label><input type="date" id="ef-release" value="'+esc(s.release_date||"")+'">'+
       '<div class="efactions"><span class="efbtn primary" id="ef-ssave">Save</span><span class="efbtn" id="ef-scancel">Cancel</span><span class="efstatus" id="ef-sstatus"></span></div>'+
       '</div>';
   }
@@ -1911,10 +1916,10 @@
   function gameEditFormHTML(c){
     var yr = (c.year!=null && c.year!=="") ? c.year : (creditYear(c)||"");
     return '<div class="efwrap"><button class="osclose" aria-label="Close">✕</button>'+
-      '<h3>Edit game info</h3><div class="efdesc">Corrects this game across DevQuest — thanks for improving the catalogue. Your edit is attributed and can be reviewed by moderators.</div>'+
+      '<h3>Edit game info</h3><div class="efdesc">Corrects this game across DevQuest, thanks for improving the catalogue. Your edit is attributed and can be reviewed by moderators.</div>'+
       '<label class="eflabel">Game title</label><input id="gf-title" value="'+esc(c.game_title||"")+'">'+
-      '<label class="eflabel">Studio / developer <span class="mut">— pick a known studio or type a new one</span></label><input id="gf-studio" placeholder="Start typing a studio…" autocomplete="off" value="'+esc(c.studio||"")+'"><div id="gf-sresults" class="sdrop"></div>'+
-      '<label class="eflabel">Release year <span class="mut">— optional</span></label><input id="gf-year" type="number" min="1950" max="2100" placeholder="e.g. 2009" value="'+esc(yr)+'">'+
+      '<label class="eflabel">Studio / developer <span class="mut">(pick a known studio or type a new one)</span></label><input id="gf-studio" placeholder="Start typing a studio…" autocomplete="off" value="'+esc(c.studio||"")+'"><div id="gf-sresults" class="sdrop"></div>'+
+      '<label class="eflabel">Release year <span class="mut">(optional)</span></label><input id="gf-year" type="number" min="1950" max="2100" placeholder="e.g. 2009" value="'+esc(yr)+'">'+
       '<div class="efactions"><span class="efbtn primary" id="gf-save">Save</span><span class="efbtn" id="gf-cancel">Cancel</span><span class="efstatus" id="gf-status"></span></div>'+
       '</div>';
   }
@@ -1951,9 +1956,9 @@
       '<label class="eflabel">Game</label><input id="ag-q" placeholder="Start typing a game title…" autocomplete="off">'+
       '<div id="ag-results" style="margin-top:8px"></div>'+
       '<div id="ag-picked"></div>'+
-      '<div id="ag-studio-wrap" style="display:none"><label class="eflabel">Studio / developer <span class="mut">— pick a known studio or type a new one</span></label><input id="ag-studio" placeholder="Start typing a studio…" autocomplete="off"><div id="ag-sresults" class="sdrop"></div></div>'+
+      '<div id="ag-studio-wrap" style="display:none"><label class="eflabel">Studio / developer <span class="mut">(pick a known studio or type a new one)</span></label><input id="ag-studio" placeholder="Start typing a studio…" autocomplete="off"><div id="ag-sresults" class="sdrop"></div></div>'+
       '<label class="eflabel">Your role on it</label><input id="ag-role" placeholder="e.g. Senior Producer">'+
-      '<label class="eflabel">Box art URL <span class="mut">— optional; leave blank to keep the catalogue art</span></label><input id="ag-cover" placeholder="https://…  link to a cover image, or upload" autocomplete="off">'+
+      '<label class="eflabel">Box art URL <span class="mut">(optional; leave blank to keep the catalogue art)</span></label><input id="ag-cover" placeholder="https://…  link to a cover image, or upload" autocomplete="off">'+
       '<div class="upbtns"><button type="button" class="upbtn" data-upload-for="ag-cover">⬆ Upload cover</button></div>'+
       '<div id="ag-preview"></div>'+
       '<div class="efactions"><span class="efbtn primary" id="ag-add">Add to my portfolio</span><span class="efbtn" id="ag-cancel">Cancel</span><span class="efstatus" id="ag-status"></span></div>'+
@@ -2031,9 +2036,9 @@
     // ---- verification (elevated) or coming-soon ----
     var vblock;
     if(cs){
-      vblock='<div class="oscs">➤ In development'+(rdate?' — expected '+esc(rdate):'')+'. Peer confirmations open once it ships.</div>';
+      vblock='<div class="oscs">➤ In development'+(rdate?', expected '+esc(rdate):'')+'. Peer confirmations open once it ships.</div>';
     } else if(conf>0){
-      vblock='<div class="osverify"><span class="ovck">✓</span><div class="ovtx"><b>Verified by '+conf+' teammate'+(conf>1?"s":"")+' who shipped '+esc(c.game_title)+'</b><div class="ovsub">Peer-confirmed — the proof no résumé, LinkedIn, or database can show.</div></div><button class="ovbtn osseewho">See who →</button></div>';
+      vblock='<div class="osverify"><span class="ovck">✓</span><div class="ovtx"><b>Verified by '+conf+' teammate'+(conf>1?"s":"")+' who shipped '+esc(c.game_title)+'</b><div class="ovsub">Peer-confirmed, the proof no résumé, LinkedIn, or database can show.</div></div><button class="ovbtn osseewho">See who →</button></div>';
     } else {
       vblock='<div class="osverify dim"><span class="ovck dim">•</span><div class="ovtx"><b>Not yet peer-confirmed</b><div class="ovsub"><a href="/credits/'+esc(slug)+'" style="color:var(--accent)">Ask a teammate who shipped it to confirm →</a></div></div></div>';
     }
@@ -2162,7 +2167,7 @@
     credits.forEach(function(c,i){
       var el=document.createElement("div"); el.className="tile"; el.dataset.i=i;
       var conf=(c.vouch_count||0)>0;
-      el.innerHTML='<div class="fb" style="background:'+gameGrad(c.game_slug)+'"><span>'+esc(c.game_title)+'</span></div>'+art(c.game_slug,covMap)+'<div class="gloss"></div>'+(conf?'<span class="vb">✓</span>':'')+(comingSoon(c)?'<span class="cs">COMING SOON</span>':'')+'<span class="grip">⠿</span><span class="hf">★ Featured</span>';
+      el.innerHTML='<div class="fb" style="background:'+gameGrad(c.game_slug)+'"><span>'+esc(c.game_title)+'</span></div>'+art(c.game_slug,covMap)+'<div class="gloss"></div>'+(conf?'<span class="vb">✓</span>':'')+(comingSoon(c)?'<span class="cs">COMING SOON</span>':'')+'<span class="grip">⠿</span><span class="hf">★ Featured</span><span class="edb">✎ Edit one-sheet</span>';
       stage.appendChild(el); tiles.push(el);
     });
     var addEl=document.createElement("div"); addEl.className="addtile"; addEl.innerHTML='<div class="plus">+</div><div class="lbl">Add game</div>'; addEl.onclick=openAddGame; stage.appendChild(addEl);
@@ -2227,7 +2232,7 @@
     }
 
     var vt=document.getElementById("vtoggle"), vh=document.getElementById("vhint"), rec=document.getElementById("recruiter");
-    function setHint(){ vh.textContent = mode==="grid" ? (IS_OWNER?"Drag your best games into the three big Featured slots up top. Click a game for its one-sheet.":"Click any game for its one-sheet.") : (mode==="timeline" ? "Same games — now on your career spine, newest first." : "A recruiter-first read: role, scope, impact, and proof — in the same order, every title."); }
+    function setHint(){ vh.textContent = mode==="grid" ? (IS_OWNER?"Drag your best games into the three big Featured slots up top. Click a game for its one-sheet.":"Click any game for its one-sheet.") : (mode==="timeline" ? "Same games, now on your career spine, newest first." : "A recruiter-first read: role, scope, impact, and proof, in the same order, every title."); }
     function filterStudio(rec, chip){
       var key=chip.dataset.studio||"", name=chip.textContent;
       [].forEach.call(rec.querySelectorAll(".rcstudios .rcsx"),function(c){ c.classList.toggle("on",(c.dataset.studio||"")===key); });
@@ -2344,13 +2349,13 @@
     var othersBlock = "";
     if(orphans.length){
       orphans.sort(function(a,c){ return (creditYear(c)||0)-(creditYear(a)||0); });
-      othersBlock = '<div class="eyebrow" style="margin-top:26px">Also credited</div><p class="sub">Titles not yet matched to a role above — add the studio &amp; dates in your editor and they will nest into the right studio.</p><div class="others">'+
+      othersBlock = '<div class="eyebrow" style="margin-top:26px">Also credited</div><p class="sub">Titles not yet matched to a role above, add the studio &amp; dates in your editor and they will nest into the right studio.</p><div class="others">'+
         orphans.map(function(c){ return '<div class="ocard"><span class="oc" style="background:'+gameGrad(c.game_slug)+'">'+art(c.game_slug,covMap)+'</span><div><div style="font-weight:700;font-size:13px">'+esc(c.game_title)+'</div><div style="color:var(--muted);font-size:11.5px">'+esc(c.role)+(creditYear(c)?' · '+creditYear(c):'')+'</div></div></div>'; }).join("")+
         '</div>';
     }
 
     var legend='<div class="legend"><span class="lg"><span class="lgdot"></span> <b>Studio</b> (newest first)</span><span class="lg"><span class="lgdot" style="background:var(--accent)"></span> <b>Peer-confirmed title</b></span></div>';
-    var html = '<div class="wrap"><section><div class="eyebrow">Career &amp; gameography</div><h2 class="sec">Studios &amp; the games they shipped</h2><p class="sub">Every role you\'ve held, newest first, with the titles that came out of each — verified by the people you shipped with.</p>'+legend+tlBlock+othersBlock+'</section></div>';
+    var html = '<div class="wrap"><section><div class="eyebrow">Career &amp; gameography</div><h2 class="sec">Studios &amp; the games they shipped</h2><p class="sub">Every role you\'ve held, newest first, with the titles that came out of each, verified by the people you shipped with.</p>'+legend+tlBlock+othersBlock+'</section></div>';
     return {html:html};
   }
 })();
