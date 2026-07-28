@@ -173,7 +173,7 @@
   // ---------- paste importer: LinkedIn / résumé text → studios + name + headline ----------
   var _MONRE="jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec";
   var _DRRE=new RegExp("(?:(?:"+_MONRE+")[a-z]*\\.?\\s+)?(\\d{4})\\s*(?:\\u2013|\\u2014|-|to|through)\\s*((?:(?:"+_MONRE+")[a-z]*\\.?\\s+)?\\d{4}|present|current|now|today|ongoing)","i");
-  var _TITLERE=/\b(producer|engineer|programmer|developer|designer|artist|director|manager|lead|president|animator|writer|analyst|architect|founder|owner|head|specialist|coordinator|technical|creative|executive|principal|qa|tester|scrum|product|vp|professor|adjunct|instructor|lecturer|teacher|consultant|advisor|deputy|assistant|administrator|facilitator|associate|representative|receptionist|clerk|cashier|officer|supervisor|nurse|ambassador|strategist|communications?|marketing|sales|customer|service|retail|intern|apprentice|steward|porter|operator|acquisition|talent|business)\b/i;
+  var _TITLERE=/\b(producer|engineer|programmer|developer|designer|artist|director|manager|lead|president|animator|writer|analyst|architect|founder|owner|head|specialist|coordinator|technical|creative|executive|principal|qa|tester|scrum|product|vp|professor|adjunct|instructor|lecturer|teacher|consultant|advisor|deputy|assistant|administrator|facilitator|associate|representative|receptionist|clerk|cashier|officer|supervisor|nurse|ambassador|strategist|communications?|marketing|sales|customer|service|retail|intern|apprentice|steward|porter|operator|acquisition|talent|business|rigger|rigging|cfx|modell?er|sculptor|compositor|previs)\b/i;
   var _SUFFIXRE=/\b(games?|studios?|entertainment|interactive|software|inc|llc|ltd|corp|corporation|media|digital|works|worldwide|productions?|technologies|labs?)\b/i;
   function _pnorm(s){ return String(s==null?"":s).toLowerCase().replace(/[^a-z0-9]+/g," ").trim(); }
   function _year4(s){ var m=String(s==null?"":s).match(/\d{4}/); return m?parseInt(m[0],10):null; }
@@ -188,12 +188,13 @@
   // bullet — starts with a past-tense action verb ("Designed…", "Coordinated…"), starts lowercase (a
   // wrapped continuation like "the Missions strike team"), starts with "#"/symbols (hashtags), or ends in
   // "…Program/Training/Course" — is NOT a game and must never be surfaced.
-  var _DESCVERB=/^(designed|developed|created|built|managed|coordinated|collaborated|worked|scripted|implemented|oversaw|pitched|identified|restructured|revised|maintained|established|delivered|contributed|supported|assisted|authored|produced|prototyped|balanced|integrated|optimi[sz]ed|reviewed|mentored|planned|scoped|documented|analy[sz]ed|researched|tested|debugged|refactored|architected|spearheaded|facilitated|organi[sz]ed|presented|consulted|configured|deployed|migrated|automated|redesigned|executed|performed|handled|generated|compiled|crafted|enhanced|improved|expanded|launched|placed|brought|conceived|streamlined|owned|drove|wrote|coded|shipped|helped|led|assembled|reimagined|programmed|modell?ed|textured|rigged|animated|sculpted|painted|composed|mixed|mastered|recorded|selected|responsible)\b/i;
+  var _DESCVERB=/^(designed|developed|created|built|managed|coordinated|collaborated|worked|scripted|implemented|oversaw|pitched|identified|restructured|revised|maintained|established|delivered|contributed|supported|assisted|authored|produced|prototyped|balanced|integrated|optimi[sz]ed|reviewed|mentored|planned|scoped|documented|analy[sz]ed|researched|tested|debugged|refactored|architected|spearheaded|facilitated|organi[sz]ed|presented|consulted|configured|deployed|migrated|automated|redesigned|executed|performed|handled|generated|compiled|crafted|enhanced|improved|expanded|launched|placed|brought|conceived|streamlined|owned|drove|wrote|coded|shipped|helped|led|assembled|reimagined|programmed|modell?ed|textured|rigged|animated|sculpted|painted|composed|mixed|mastered|recorded|selected|responsible|conduct|develop|help|manage|simulate|identify|provide|design|outline|support|coordinate|supervise|mentor|implement|maintain|oversee|draft|facilitate|define|ensure)\b/i;
   var _NONGAME=/\b(program|programme|training|bootcamp|certification|certificate|course|workshop|initiative|fellowship|internship|scholarship|committee|council)\s*$/i;
   function _isDesc(l){ l=String(l==null?"":l).trim();
     if(!/^[A-Z0-9"'“‘]/.test(l)) return true;   // lowercase continuation / hashtag / symbol → not a title
     if(_DESCVERB.test(l)) return true;           // a résumé action-verb bullet
     if(_NONGAME.test(l)) return true;            // "…Program"/"…Training" etc.
+    if(/^(a|an|the)\b.*\b(still|screenshot|screen shot|cinematic|trailer|teaser|poster|render|artwork|concept art|key art|footage|wallpaper|promo|mock-?up|cover art)\b/i.test(l)) return true;   // "A still from the … cinematic" → a media caption, not a game
     return false; }
   // LinkedIn "treasury" media clusters attach a game as a domain + a generic caption + an image:
   // "GuildWars2.com" / "Home" / "GW2.jpg". The image & caption are noise, but the DOMAIN often IS the
@@ -273,7 +274,9 @@
     }).filter(function(e){ return e.school && e.school.length<=140; }).slice(0,20);
   }
   function parseProfile(text, studioArr){
-    var L=String(text==null?"":text).split(/\r?\n/).map(_md);
+    var _RAW=String(text==null?"":text).split(/\r?\n/);
+    var BULLET={}; for(var _bi=0;_bi<_RAW.length;_bi++){ if(/^\s*[•▪◦‣▸○*]\s+/.test(_RAW[_bi]) || /^\s*[-–]\s+\S/.test(_RAW[_bi])) BULLET[_bi]=1; }   // a description bullet ("• Manage contractor riggers") is never a game, even without a trailing period
+    var L=_RAW.map(_md);
     var ne=L.filter(Boolean);
     var name="", headline="";
     for(var i=0;i<Math.min(ne.length,40) && !name;i++){ if(!_looksLikeName(ne[i])) continue; var nx=ne[i+1]||"";
@@ -302,17 +305,20 @@
       else if(activeStudio){
         var _dg=_domainGame(line);
         if(_dg){ pgames.push({title:_dg, studio:activeStudio, fromDomain:true}); }        // "GuildWars2.com" → "Guild Wars 2" (matched to catalogue later)
-        else if(!_isDesc(line)){                                                          // skip job-description prose, wrapped fragments, hashtags entirely
+        else if(!_isDesc(line) && !BULLET[i]){                                            // skip job-description prose, bullets, wrapped fragments, hashtags entirely
           var _pm=_prevNE(L,i), _nm=_nextNE(L,i);
           // A caption/location wedged inside a media cluster — its neighbour above or below is a URL/domain/image.
           // Catches "Home" under "GuildWars2.com" and "Mountain View" above "CoH.jpg".
           var _adjMedia=((_pm.line && (_isImgAlt(_pm.line) || _domainGame(_pm.line))) || (_nm.line && (_isImgAlt(_nm.line) || _domainGame(_nm.line))));
-          if(line.length<=70 && line.split(" ").length<=10 && line.indexOf(",")<0 && !/[.]$/.test(line) && !_hasType(line) && !/^\d/.test(line) && !_isImgAlt(line) && !_isLoc(line) && !_adjMedia){
+          if(line.length<=70 && line.split(" ").length<=10 && line.indexOf(",")<0 && !/[.]$/.test(line) && !_hasType(line) && !/^\d/.test(line) && !_isImgAlt(line) && !_isLoc(line)){
             // A treasury media-link caption pairs a game with a descriptor — either side can be the game:
             // "Home - The Elder Scrolls Online" (tail) or "New World - Official Trailer" (head). Try both.
+            // A media-adjacent title (a thumbnail copied as an image/URL line sits beside it — the usual shape
+            // of a LinkedIn treasury game card) is kept but treated catalogue-match-only, so a real game like
+            // "League of Legends" still matches and is picked, while junk that matches nothing never surfaces.
             var _cg=_titleGames(line);
             if(_cg.games && _cg.games.length){ _cg.games.forEach(function(gn){ pgames.push({title:gn, studio:activeStudio, fromCaption:true}); }); if(_cg.clean && _cg.clean!==line) pgames.push({title:_cg.clean, studio:activeStudio, fromCaption:true}); }   // catalogue-match-only (like domains) — never surfaced as unmatched
-            else { pgames.push({title:line, studio:activeStudio}); }                                                                                     // candidate game name under a role → matched to the catalogue later
+            else { pgames.push({title:line, studio:activeStudio, fromCaption:_adjMedia?true:undefined}); }                                               // candidate game name under a role → matched to the catalogue later (media-adjacent → match-only)
           }
         }
       }
@@ -392,7 +398,7 @@
             if(pick){ if(!PICKED[pick.slug]){ PICKED[pick.slug]={slug:pick.slug,title:pick.title,year:pick.year,studio:pick.studio}; gmatched++; } return; }
           }
           // no catalogue match → keep only plausible game titles (drop studio names & role/section noise)
-          if(pg.fromDomain || pg.fromCaption) return;                    // recovered from a URL or a media-link caption and unmatched — too speculative to surface as "unmatched"
+          if(pg.fromDomain || pg.fromCaption || pg.fromTitle) return;    // recovered from a URL, media-link caption, or split out of a job title, and unmatched — too speculative to surface as "unmatched"
           if(_isDesc(pg.title)) return;                                  // backstop: description prose / fragment / hashtag → never surface
           if(seenU[key]||studioKeys[key]||sIdx[key]) return;
           if(_SUFFIXRE.test(pg.title)||_TITLERE.test(pg.title)) return;   // "…Studios/Games/Entertainment" or a role
