@@ -929,7 +929,11 @@
         '<div class="stats">'+
           stat((CUR-minY)+" yrs","In the industry")+stat(nStudios,"Studios")+stat(credits.length,"Credits")+
           (ac?stat(ac.avg,"Avg. critic score"):"")+
-          stat(liveCount,"Live-service")+stat(p.unshipped||0,"Cancelled / unshipped")+
+          // Art/Audio portfolios lead with visuals, so the two production tiles (live-service, cancelled) give
+          // way to art-relevant ones: how many pieces are in the gallery, and peer confirmations (the unique proof).
+          (["art","audio"].indexOf(p.portfolio_style||"")>=0
+            ? stat((Array.isArray(p.gallery)?p.gallery.length:0),"Pieces")+stat(credits.reduce(function(n,c){return n+(c.vouch_count||0);},0),"Peer confirmations")
+            : stat(liveCount,"Live-service")+stat(p.unshipped||0,"Cancelled / unshipped"))+
         '</div>'+
       '</div></div>';
   }
@@ -1038,7 +1042,7 @@
         '<div class="abmedia">'+thumbs+'</div>'+
         '<textarea class="ab-blurb" placeholder="Commentary for your '+esc(c.game_title)+' work — your role, the brief, the techniques… (optional, shown above the images)">'+esc(grp?grp.blurb||"":"")+'</textarea>'+
         '<div class="abcap-edit"></div>'+
-        '<div class="abact"><button class="btn ghost sm ab-art">＋ Add art</button><button class="btn ghost sm ab-vid">＋ Add video</button><span class="ab-inline"></span></div>'+
+        '<div class="abact"><button class="btn ghost sm ab-art">＋ Add art</button><button class="btn ghost sm ab-vid">＋ Add video</button><button class="btn ghost sm ab-sheet">✎ One-sheet</button><span class="ab-inline"></span></div>'+
       '</div></div>';
   }
   function artBuilderHTML(credits, covMap){
@@ -1089,6 +1093,7 @@
       }; }
       row.querySelector(".ab-art").onclick=opener(false);
       row.querySelector(".ab-vid").onclick=opener(true);
+      var shBtn=row.querySelector(".ab-sheet"); if(shBtn) shBtn.onclick=function(){ var ci=credits.indexOf(c); if(ci>=0) openSheet(ci); };   // the one-sheet has the owner "Edit one-sheet" button (role, scope, stats, screenshots)
       row.querySelectorAll(".abrm").forEach(function(bn){ bn.onclick=function(e){ e.stopPropagation(); _abRemove(+bn.getAttribute("data-idx")); render(_person,_positions,_credits,_covMap); }; });
       // section commentary (group blurb): save as they type, reflect on the page when they finish
       var bl=row.querySelector(".ab-blurb");
