@@ -25,7 +25,9 @@
   .brand .cr{font-size:12px;font-weight:700;color:var(--accent);border:1px solid rgba(88,166,255,.4);border-radius:999px;padding:2px 9px;background:rgba(88,166,255,.08);letter-spacing:.03em;position:relative;top:1px}
   .brand .beta{font-size:10px;font-weight:800;letter-spacing:.09em;color:#0b0e14;background:var(--gold);border-radius:999px;padding:2px 7px;position:relative;top:1px}
   @media(max-width:560px){.brand .cr,.brand .beta{display:none}.brand .wm{font-size:17px}}
-  .navlinks{display:flex;gap:18px;font-size:14px;color:var(--muted)}.navlinks a:hover{color:var(--text)}
+  .navlinks{display:flex;align-items:center;gap:18px;font-size:14px;color:var(--muted)}.navlinks a:hover{color:var(--text)}
+  .navlinks .back{color:var(--muted);border:1px solid var(--border);border-radius:7px;padding:6px 12px;white-space:nowrap}
+  .navlinks .back:hover{background:var(--panel);color:var(--text)}
 
   .hero{position:relative;overflow:hidden;border-bottom:1px solid var(--border)}
   .banner{position:absolute;inset:0;background:radial-gradient(60% 120% at 15% 0%, #6d3bd6 0%, transparent 55%),radial-gradient(50% 130% at 88% 10%, #1f6feb 0%, transparent 55%),radial-gradient(45% 120% at 60% 120%, #c99a2a 0%, transparent 55%),conic-gradient(from 210deg at 78% 30%, #10203a, #241033 40%, #0c1626 75%, #10203a);filter:saturate(1.05)}
@@ -502,12 +504,25 @@
 </head>
 <body>
 <div class="bar"></div>
-<div class="nav"><div class="wrap"><div class="brand"><a class="brandhome" href="/portfolio/" aria-label="DevQuest Portfolio home"><svg class="mark" viewBox="0 0 32 32" aria-hidden="true"><rect x="1" y="1" width="8" height="8" rx="2" fill="var(--gold)"/><rect x="12" y="1" width="8" height="8" rx="2" fill="#2d333b"/><rect x="23" y="1" width="8" height="8" rx="2" fill="#2d333b"/><rect x="1" y="12" width="8" height="8" rx="2" fill="#2d333b"/><rect x="12" y="12" width="8" height="8" rx="2" fill="var(--gold)"/><rect x="23" y="12" width="8" height="8" rx="2" fill="#2d333b"/><rect x="1" y="23" width="8" height="8" rx="2" fill="#2d333b"/><rect x="12" y="23" width="8" height="8" rx="2" fill="#2d333b"/><rect x="23" y="23" width="8" height="8" rx="2" fill="var(--gold)"/></svg><span class="wm">Dev<span class="q">Quest</span><span class="tld">.gg</span></span></a> <span class="cr">PORTFOLIO</span> <span class="beta">BETA</span></div><div class="navlinks"><a id="creditslink">Credits</a><a href="/">Jobs board →</a></div></div></div></div>
+<div class="nav"><div class="wrap"><div class="brand"><a class="brandhome" href="/portfolio/" aria-label="DevQuest Portfolio home"><svg class="mark" viewBox="0 0 32 32" aria-hidden="true"><rect x="1" y="1" width="8" height="8" rx="2" fill="var(--gold)"/><rect x="12" y="1" width="8" height="8" rx="2" fill="#2d333b"/><rect x="23" y="1" width="8" height="8" rx="2" fill="#2d333b"/><rect x="1" y="12" width="8" height="8" rx="2" fill="#2d333b"/><rect x="12" y="12" width="8" height="8" rx="2" fill="var(--gold)"/><rect x="23" y="12" width="8" height="8" rx="2" fill="#2d333b"/><rect x="1" y="23" width="8" height="8" rx="2" fill="#2d333b"/><rect x="12" y="23" width="8" height="8" rx="2" fill="#2d333b"/><rect x="23" y="23" width="8" height="8" rx="2" fill="var(--gold)"/></svg><span class="wm">Dev<span class="q">Quest</span><span class="tld">.gg</span></span></a> <span class="cr">PORTFOLIO</span> <span class="beta">BETA</span></div><div class="navlinks"><a href="/credits/search.html?tab=games">Games</a><a href="/credits/search.html?tab=studios">Studios</a><a href="/credits/search.html?tab=people">People</a><a class="back" href="/">← Jobs board</a></div></div></div></div>
 <a class="editlink" id="editlink" href="/portfolio/edit/">✎ Edit work history &amp; skills</a>
 <div id="app"><div class="wrap" style="padding:60px 22px;color:var(--muted)">Loading portfolio…</div></div>
 <footer><div class="wrap"><div><b style="color:var(--text)">DevQuest.gg</b> · portfolio</div><div>Verified by the people you shipped with.</div></div></footer>
 
 <script src="/credits/api.js"></script>
+<script>
+  // Consistent account chip in the top bar (view.html doesn't load app.js, so mirror its injector).
+  (function(){
+    var nav=document.querySelector(".navlinks"); if(!nav||!window.DQAPI) return;
+    var a=document.createElement("a"); a.className="back"; a.style.cursor="pointer";
+    a.textContent=DQAPI.isSignedIn()?"Account":"Sign in"; a.href="/credits/signin.html";
+    nav.insertBefore(a, nav.firstChild);
+    if(DQAPI.isSignedIn()){ DQAPI.me().then(function(r){
+      if(r&&r.ok&&r.data&&r.data.authenticated){ a.textContent=r.data.person?("✓ "+r.data.person.name):"Account"; }
+      else { if(DQAPI.clearToken)DQAPI.clearToken(); a.textContent="Sign in"; }
+    }).catch(function(){}); }
+  })();
+</script>
 <script>
 (function(){
   var CUR = 2026;
@@ -526,7 +541,7 @@
   var IS_DRAFT = new URLSearchParams(location.search).get("draft")==="1";
   var PREVIEW = false;   // draft "preview as visitor" mode: temporarily render the public view, no publish
   if(!IS_DRAFT && (slug==="portfolio" || slug==="view.html" || !slug)){ app.innerHTML='<div class="wrap" style="padding:60px 22px;color:var(--muted)">No profile specified.</div>'; return; }
-  if(!IS_DRAFT){ document.getElementById("creditslink").href="/credits/"+slug; }
+  // (Top-bar "Credits" link removed in favor of the unified Games/Studios/People nav.)
 
   // --- box art: resolve Steam capsules + admin covers, same as the credits person page ---
   function bkt(s){ var h=2166136261>>>0; for(var i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=Math.imul(h,16777619)>>>0; } return h%256; }
