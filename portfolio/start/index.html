@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- build: media-games-fix r2 (forces a fresh GitHub Pages publish + cache flush) -->
+<!-- build: r3 view-my-portfolio-fix (search this to confirm the new version is live) -->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -674,9 +674,11 @@
   // boot
   if(window.DQAPI && DQAPI.isSignedIn && DQAPI.isSignedIn()){
     // already have an account — send them to the real editor instead of the draft flow
-    app.innerHTML='<div class="blk"><h2>You’re already signed in</h2><div class="desc">Quick start builds a brand-new draft. Since you already have a portfolio, edit it directly instead.</div><div class="actions"><a class="btn primary" href="/portfolio/edit/">Edit my portfolio →</a><a class="btn" href="/portfolio/">View my portfolio</a></div></div>';
+    app.innerHTML='<div class="blk"><h2>You’re already signed in</h2><div class="desc">Quick start builds a brand-new draft. Since you already have a portfolio, edit it directly instead.</div><div class="actions"><a class="btn primary" href="/portfolio/edit/">Edit my portfolio →</a><a class="btn" id="qs-viewmine" href="/portfolio/edit/">View my portfolio →</a></div></div>';
     document.getElementById("steplabel").textContent="";
     ["d1","d2","d3"].forEach(function(id){ document.getElementById(id).classList.remove("on"); });
+    // "View my portfolio" needs the person's real slug (the old link went to /portfolio/, i.e. back to this page).
+    if(DQAPI.me){ DQAPI.me().then(function(r){ var me=r&&r.data&&r.data.person, v=document.getElementById("qs-viewmine"); if(v){ if(me&&me.slug){ v.href="/portfolio/"+encodeURIComponent(me.slug)+"/"; } else { v.style.display="none"; } } }).catch(function(){}); }
   } else {
     setStep(1);
   }
