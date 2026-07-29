@@ -60,6 +60,20 @@
   .btn{display:inline-flex;align-items:center;gap:8px;font-size:14px;font-weight:750;border-radius:11px;padding:11px 18px;cursor:pointer;border:1px solid rgba(255,255,255,.16)}
   .btn.primary{color:#04121f;background:linear-gradient(135deg,#7cc0ff,#58a6ff);border:0}
   .btn.ghost{color:#fff;background:rgba(0,0,0,.3)}
+  .btn.dq-share{color:#d6c6f9;border-color:rgba(163,113,247,.55);background:rgba(163,113,247,.12)}
+  .btn.dq-share:hover{background:rgba(163,113,247,.2);color:#efe8ff}
+  .shov{position:fixed;inset:0;z-index:200;background:rgba(4,7,12,.72);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;padding:20px}
+  .shmodal{width:min(560px,100%);max-height:92vh;overflow:auto;background:var(--panel,#11161f);border:1px solid var(--border,#242c38);border-radius:18px;padding:24px 24px 22px;position:relative}
+  .shmodal h3{margin:0 0 4px;font-size:20px;font-weight:800}
+  .shmodal .shsub{color:var(--muted,#8b98ab);font-size:13.5px;line-height:1.5;margin:0 0 16px}
+  .shmodal .shx{position:absolute;top:14px;right:16px;background:none;border:0;color:var(--muted,#8b98ab);font-size:24px;line-height:1;cursor:pointer}
+  .shcard{width:100%;border-radius:12px;border:1px solid var(--border,#242c38);display:block;margin-bottom:16px}
+  .shmodal textarea{width:100%;min-height:120px;background:var(--bg,#0a0d14);border:1px solid var(--border,#242c38);border-radius:11px;padding:12px 13px;color:var(--text,#eaf0f8);font-size:13.5px;font-family:inherit;line-height:1.55;resize:vertical}
+  .shrow{display:flex;gap:9px;flex-wrap:wrap;margin-top:12px}
+  .shrow .btn{flex:0 0 auto}
+  .shbtn-li{color:#fff;background:#0a66c2;border:0}
+  .shbtn-li:hover{background:#0e76dc}
+  .shmsg{font-size:12.5px;color:#4ad38b;font-weight:650;margin-top:10px;min-height:15px}
   .stats{display:flex;flex-wrap:wrap;margin-top:26px;border:1px solid var(--border);border-radius:14px;overflow:hidden;background:rgba(17,22,31,.85)}
   .stat{flex:1;min-width:110px;padding:15px 18px;border-right:1px solid var(--border)}.stat:last-child{border-right:0}
   .stat .n{font-size:23px;font-weight:850;letter-spacing:-.5px;background:linear-gradient(120deg,#9ecbff,#c9a6ff);-webkit-background-clip:text;background-clip:text;color:transparent}
@@ -1065,7 +1079,7 @@
         (p.headline ? '<div class="role">'+esc(p.headline)+'</div>' : '')+
         (p.bio ? '<p class="bio">'+esc(p.bio)+'</p>' : '')+
         '<div class="tags">'+tags.map(function(t){return '<span class="tag spec">'+esc(t)+'</span>';}).join("")+'</div>'+
-        '<div class="cta">'+((!IS_OWNER && p.open_to_work && p.contact_email)?'<a class="btn primary dq-contact" data-ce="'+esc(_b64(p.contact_email))+'" style="cursor:pointer">✉ Get in touch</a>':'')+'<a class="btn '+((!IS_OWNER && p.open_to_work && p.contact_email)?'ghost':'primary')+' dq-rpdf" style="cursor:pointer">⬇ Résumé (PDF)</a><a class="btn ghost dq-rdocx" style="cursor:pointer">⬇ Word (.docx)</a><a class="btn ghost dq-tailor owner-only" style="cursor:pointer">🎯 Tailor to a job</a>'+lb+'</div>'+
+        '<div class="cta">'+((!IS_OWNER && p.open_to_work && p.contact_email)?'<a class="btn primary dq-contact" data-ce="'+esc(_b64(p.contact_email))+'" style="cursor:pointer">✉ Get in touch</a>':'')+'<a class="btn '+((!IS_OWNER && p.open_to_work && p.contact_email)?'ghost':'primary')+' dq-rpdf" style="cursor:pointer">⬇ Résumé (PDF)</a><a class="btn ghost dq-rdocx" style="cursor:pointer">⬇ Word (.docx)</a><a class="btn ghost dq-tailor owner-only" style="cursor:pointer">🎯 Tailor to a job</a>'+lb+(p.slug?'<a class="btn dq-share owner-only" style="cursor:pointer">↗ Share</a>':'')+'</div>'+
         '</div></div>'+
         '<div class="stats">'+
           stat((CUR-minY)+" yrs","In the industry")+stat(nStudios,"Studios")+stat(credits.length,"Credits")+
@@ -1823,11 +1837,58 @@
     var blob=_zipStore([ {name:"[Content_Types].xml",data:_CT}, {name:"_rels/.rels",data:_RELS}, {name:"word/document.xml",data:resumeDocXml(m)} ]);
     _rTrigger(blob, resumeDocName(m)+".docx");
   }
+  // ===== Share your portfolio: rich-card link + ready-to-paste caption (LinkedIn / X / copy) =====
+  function openShareModal(){
+    if(document.querySelector(".shov")) return;
+    var p=_person||{}; if(!p.slug) return;
+    var url="https://devquest.gg/portfolio/"+encodeURIComponent(p.slug)+"/";
+    var first=(p.name||"").split(" ")[0]||"my";
+    var caption="I just built my portfolio on DevQuest 🎮\n\n"+
+      "Every game I’ve shipped, with credits confirmed by the teammates who were in the credits with me. "+
+      "If you’re hiring in games — or just want to see what I’ve worked on — take a look:\n\n"+url;
+    var ov=document.createElement("div"); ov.className="shov";
+    ov.innerHTML='<div class="shmodal" role="dialog" aria-label="Share your portfolio">'+
+      '<button class="shx" aria-label="Close">×</button>'+
+      '<h3>Share your portfolio</h3>'+
+      '<p class="shsub">Post it to LinkedIn and it shows up as a rich card with the image below — just paste the caption. On X the caption comes prefilled.</p>'+
+      '<img class="shcard" src="/portfolio/share-card.png" alt="DevQuest portfolio card" onerror="this.style.display=\'none\'">'+
+      '<textarea id="sh-cap" spellcheck="false">'+esc(caption)+'</textarea>'+
+      '<div class="shrow">'+
+        '<button type="button" class="btn" id="sh-copycap">📋 Copy caption</button>'+
+        '<button type="button" class="btn" id="sh-copylink">🔗 Copy link</button>'+
+      '</div>'+
+      '<div class="shrow">'+
+        '<a class="btn shbtn-li" id="sh-li" target="_blank" rel="noopener">in · Share on LinkedIn</a>'+
+        '<a class="btn ghost" id="sh-x" target="_blank" rel="noopener">𝕏 · Share on X</a>'+
+      '</div>'+
+      '<div class="shmsg" id="sh-msg"></div>'+
+    '</div>';
+    document.body.appendChild(ov);
+    var close=function(){ ov.remove(); };
+    ov.addEventListener("click",function(e){ if(e.target===ov) close(); });
+    ov.querySelector(".shx").onclick=close;
+    var cap=function(){ return (document.getElementById("sh-cap")||{}).value||caption; };
+    var setLinks=function(){
+      document.getElementById("sh-li").href="https://www.linkedin.com/sharing/share-offsite/?url="+encodeURIComponent(url);
+      document.getElementById("sh-x").href="https://twitter.com/intent/tweet?text="+encodeURIComponent(cap());
+    };
+    setLinks();
+    document.getElementById("sh-cap").addEventListener("input",setLinks);
+    var flash=function(t){ var m=document.getElementById("sh-msg"); if(m){ m.textContent=t; setTimeout(function(){ if(m) m.textContent=""; },2200); } };
+    var copy=function(text,label){ try{ if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(text).then(function(){ flash(label); }).catch(function(){ _fallbackCopy(text); flash(label); }); } else { _fallbackCopy(text); flash(label); } }catch(e){ _fallbackCopy(text); flash(label); } };
+    document.getElementById("sh-copycap").onclick=function(){ copy(cap(),"✓ Caption copied — paste it into your post"); };
+    document.getElementById("sh-copylink").onclick=function(){ copy(url,"✓ Link copied"); };
+    // Opening LinkedIn: nudge them to paste the caption they may have just copied.
+    document.getElementById("sh-li").addEventListener("click",function(){ flash("LinkedIn opened — paste your caption above the card."); });
+  }
+  function _fallbackCopy(text){ try{ var ta=document.createElement("textarea"); ta.value=text; ta.style.position="fixed"; ta.style.opacity="0"; document.body.appendChild(ta); ta.select(); document.execCommand("copy"); ta.remove(); }catch(e){} }
+
   document.addEventListener("click",function(e){
     if(!e.target||!e.target.closest) return;
     if(e.target.closest(".dq-rpdf")){ e.preventDefault(); downloadResumePDF(); }
     else if(e.target.closest(".dq-rdocx")){ e.preventDefault(); downloadResumeDOCX(); }
     else if(e.target.closest(".dq-tailor")){ e.preventDefault(); openTailor(); }
+    else if(e.target.closest(".dq-share")){ e.preventDefault(); openShareModal(); }
     else { var cb=e.target.closest(".dq-contact"); if(cb){ e.preventDefault(); var em=_unb64(cb.getAttribute("data-ce")||""); if(em){ var subj=encodeURIComponent("Reaching out via your DevQuest portfolio"); location.href="mailto:"+em+"?subject="+subj; } } }
   });
 
