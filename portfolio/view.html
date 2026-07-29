@@ -501,15 +501,16 @@
   #previewback #pb-btn{white-space:nowrap;flex:none;padding:7px 14px}
   @media(max-width:520px){#previewback .pb-msg{font-size:12px}}
   #draftpub{position:fixed;top:0;left:0;right:0;z-index:100;background:linear-gradient(135deg,#182238,#211838);border-bottom:1px solid var(--border,#242c38)}
-  #draftpub .dp-inner{max-width:1100px;margin:0 auto;padding:0 20px;display:flex;align-items:center;gap:14px;height:46px;flex-wrap:nowrap}
-  #draftpub .dp-msg{flex:1;min-width:0;font-size:13px;color:#dbe5f1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  #draftpub .dp-inner{max-width:1100px;margin:0 auto;padding:9px 20px;display:flex;align-items:center;gap:14px;min-height:46px;flex-wrap:nowrap}
+  #draftpub .dp-msg{flex:1;min-width:0;font-size:13px;color:#dbe5f1;line-height:1.45}
   #draftpub .dp-msg b{color:#fff}
-  #draftpub #dp-save{white-space:nowrap;flex:none;padding:7px 14px}
+  #draftpub .dp-ck{color:#4ad38b;font-weight:800}
   @media(max-width:520px){#draftpub .dp-msg{font-size:12px}}
   #draftbar{position:fixed;left:0;right:0;bottom:0;z-index:70;background:rgba(11,14,20,.93);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);border-top:1px solid var(--border,#242c38)}
   #draftbar .db-inner{max-width:1100px;margin:0 auto;padding:12px 20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
   #draftbar .db-note{flex:1;min-width:180px;font-size:13.5px;color:var(--muted,#8b98a9)}
   #draftbar .db-note b{color:var(--text,#eef3fa)}
+  #draftbar .db-ck{color:#4ad38b;font-weight:800}
   #draftbar .db-actions{display:flex;gap:10px}
   .db-btn{border-radius:10px;padding:10px 16px;font-size:14px;font-weight:800;cursor:pointer;border:1px solid transparent;font-family:inherit}
   .db-btn.ghost{background:transparent;border-color:var(--border,#242c38);color:var(--text,#eef3fa)}
@@ -642,12 +643,11 @@
     // Persistent publish banner pinned to the very top for the whole draft session.
     var oldp=document.getElementById("draftpub"); if(oldp) oldp.remove();
     var pub=document.createElement("div"); pub.id="draftpub";
-    pub.innerHTML='<div class="dp-inner"><span class="dp-msg">'+(count?('You’re building a draft · <b>'+count+' game'+(count===1?'':'s')+'</b> saved on this device. No email needed to build or preview, <b>publishing</b> saves it to your account and gives you a shareable link.'):'You’re building a draft portfolio, saved on this device. No email needed to build or preview; publish when you’re ready.')+'</span><button type="button" id="dp-save" class="db-btn primary">Save &amp; publish →</button></div>';
+    pub.innerHTML='<div class="dp-inner"><span class="dp-msg"><span class="dp-ck">✓</span> <b>Draft saved on this device</b> — you can close this tab and come back anytime. Publishing gives you a shareable link and lets you edit from any device.</span></div>';
     document.body.appendChild(pub);
-    document.getElementById("dp-save").onclick=draftSave;
     var old=document.getElementById("draftbar"); if(old) old.remove();
     var bar=document.createElement("div"); bar.id="draftbar";
-    bar.innerHTML='<div class="db-inner"><div class="db-note">'+(count?('<b>'+count+'</b> game'+(count===1?'':'s')+' on your wall · saved on this device'):'Your wall is empty, add a game you shipped to start')+'</div><div class="db-actions"><button type="button" id="db-add" class="db-btn ghost">+ Add a game</button><button type="button" id="db-preview" class="db-btn ghost">👁 Preview as visitor</button><button type="button" id="db-save" class="db-btn primary">Publish →</button></div></div>';
+    bar.innerHTML='<div class="db-inner"><div class="db-note">'+(count?('<span class="db-ck">✓</span> Saved on this device · <b>'+count+'</b> game'+(count===1?'':'s')+' on your wall'):'Your wall is empty, add a game you shipped to start')+'</div><div class="db-actions"><button type="button" id="db-add" class="db-btn ghost">+ Add a game</button><button type="button" id="db-preview" class="db-btn ghost">👁 Preview as visitor</button><button type="button" id="db-save" class="db-btn primary">Publish — get your link →</button></div></div>';
     document.body.appendChild(bar);
     document.getElementById("db-add").onclick=draftAddSearch;
     document.getElementById("db-preview").onclick=function(){ setPreview(true); };
@@ -683,7 +683,7 @@
   }
   function draftSave(){
     var d=dGet(); if(!(d.credits&&d.credits.length)){ alert("Add at least one game to your wall first."); return; }
-    var ov=draftModal('<h3>Save &amp; publish your portfolio</h3><div class="dsub">You have <b>'+d.credits.length+'</b> game'+(d.credits.length===1?'':'s')+' on your wall. Confirm your name, then we\'ll email you a one-tap link to save it. This is the first time we ask for an email.</div><label>Your name (as it should be credited)</label><input id="ds-name" value="'+esc(d.name||"")+'" placeholder="Jane Doe"><div class="dact"><button class="db-btn ghost" data-x>Not yet</button><button class="db-btn primary" id="ds-go">Continue to save →</button></div><div class="dfoot">Your games stay saved on this device until then.</div>');
+    var ov=draftModal('<h3>Publish your portfolio</h3><div class="dsub">You have <b>'+d.credits.length+'</b> game'+(d.credits.length===1?'':'s')+' on your wall. Publishing creates your free account, so your portfolio gets a <b>shareable link</b> and you can edit it from any device. We\'ll email you a one-tap sign-in link, this is the first time we ask for an email.</div><label>Your name (as it should be credited)</label><input id="ds-name" value="'+esc(d.name||"")+'" placeholder="Jane Doe"><div class="dact"><button class="db-btn ghost" data-x>Not yet</button><button class="db-btn primary" id="ds-go">Continue →</button></div><div class="dfoot">Your draft stays saved on this device until you do.</div>');
     ov.querySelector("[data-x]").onclick=function(){ ov.remove(); };
     ov.querySelector("#ds-go").onclick=function(){ var name=((ov.querySelector("#ds-name")||{}).value||"").trim(); if(!name){ alert("Add your name first."); return; } var dd=dGet(); dd.name=name; dSet(dd); location.href="/credits/signin.html?publish=1"; };
     setTimeout(function(){ var n=ov.querySelector("#ds-name"); if(n) n.focus(); },40);
