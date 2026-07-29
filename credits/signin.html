@@ -242,8 +242,15 @@
     try{ var _cgRaw = localStorage.getItem("dq_claim_game"); if(_cgRaw){ var _cg = JSON.parse(_cgRaw); if(_cg && _cg.title){
       claimCtx = '<div style="margin:0 0 16px;padding:11px 13px;border:1px solid rgba(88,166,255,.35);background:rgba(88,166,255,.08);border-radius:10px;color:var(--text);font-size:13.5px;line-height:1.5">You’re adding <b>your own</b> credit for working on <b>'+esc(_cg.title)+'</b>. Signing in starts <b>your</b> profile — it doesn’t claim anyone else’s.</div>';
     } } }catch(e){}
+    // Arriving from the draft "Publish" button: say why we're asking for an email now (the payoff), and
+    // reassure that the draft is still safe on their device until the link is confirmed.
+    var publishCtx = "";
+    try{ if(new URLSearchParams(location.search).get("publish")==="1"){
+      var _gc = 0; try{ var _dr = JSON.parse(localStorage.getItem("dq_draft")||"{}"); _gc = (_dr && Array.isArray(_dr.credits)) ? _dr.credits.length : 0; }catch(e){}
+      publishCtx = '<div style="margin:0 0 16px;padding:12px 14px;border:1px solid rgba(74,211,139,.35);background:rgba(74,211,139,.08);border-radius:10px;color:var(--text);font-size:13.5px;line-height:1.55"><b>Last step to publish'+(_gc?' your '+_gc+'-game portfolio':'')+'.</b> Your email is how we save it to your account, give you a <b>shareable link</b>, and let you edit from any device. Your draft stays safe on this device until you confirm the link.</div>';
+    } }catch(e){}
     card.innerHTML =
-      claimCtx +
+      claimCtx + publishCtx +
       '<h1>Sign in to DevQuest Credits</h1>' +
       '<p>Enter your email and we’ll send a one-time sign-in link. No password.<br><span style="color:var(--text);font-weight:600">Returning?</span> Use the same email you claimed with and your profile comes right back.</p>' +
       '<input id="email" type="email" placeholder="you@example.com" autocomplete="email">' +
