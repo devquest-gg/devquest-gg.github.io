@@ -1845,13 +1845,13 @@
     var first=(p.name||"").split(" ")[0]||"my";
     var caption="I just built my portfolio on DevQuest 🎮\n\n"+
       "Every game I’ve shipped, with credits confirmed by the teammates who were in the credits with me. "+
-      "If you’re hiring in games — or just want to see what I’ve worked on — take a look:\n\n"+url;
+      "If you’re hiring in games, or just want to see what I’ve worked on, take a look:\n\n"+url;
     var ov=document.createElement("div"); ov.className="shov";
     ov.innerHTML='<div class="shmodal" role="dialog" aria-label="Share your portfolio">'+
       '<button class="shx" aria-label="Close">×</button>'+
       '<h3>Share your portfolio</h3>'+
-      '<p class="shsub">Post it to LinkedIn and it shows up as a rich card with the image below — just paste the caption. On X the caption comes prefilled.</p>'+
-      '<img class="shcard" src="/portfolio/share-card.png" alt="DevQuest portfolio card" onerror="this.style.display=\'none\'">'+
+      '<p class="shsub">Post it to LinkedIn and it shows up as a rich card with the image below, so just paste the caption. On X the caption comes prefilled.</p>'+
+      '<img class="shcard" src="/portfolio/'+encodeURIComponent(p.slug)+'/card.png" alt="DevQuest portfolio card" onerror="this.onerror=null;this.src=\'/portfolio/share-card.png\'">'+
       '<textarea id="sh-cap" spellcheck="false">'+esc(caption)+'</textarea>'+
       '<div class="shrow">'+
         '<button type="button" class="btn" id="sh-copycap">📋 Copy caption</button>'+
@@ -1876,10 +1876,10 @@
     document.getElementById("sh-cap").addEventListener("input",setLinks);
     var flash=function(t){ var m=document.getElementById("sh-msg"); if(m){ m.textContent=t; setTimeout(function(){ if(m) m.textContent=""; },2200); } };
     var copy=function(text,label){ try{ if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(text).then(function(){ flash(label); }).catch(function(){ _fallbackCopy(text); flash(label); }); } else { _fallbackCopy(text); flash(label); } }catch(e){ _fallbackCopy(text); flash(label); } };
-    document.getElementById("sh-copycap").onclick=function(){ copy(cap(),"✓ Caption copied — paste it into your post"); };
+    document.getElementById("sh-copycap").onclick=function(){ copy(cap(),"✓ Caption copied, paste it into your post"); };
     document.getElementById("sh-copylink").onclick=function(){ copy(url,"✓ Link copied"); };
     // Opening LinkedIn: nudge them to paste the caption they may have just copied.
-    document.getElementById("sh-li").addEventListener("click",function(){ flash("LinkedIn opened — paste your caption above the card."); });
+    document.getElementById("sh-li").addEventListener("click",function(){ flash("LinkedIn opened. Paste your caption above the card."); });
   }
   function _fallbackCopy(text){ try{ var ta=document.createElement("textarea"); ta.value=text; ta.style.position="fixed"; ta.style.opacity="0"; document.body.appendChild(ta); ta.select(); document.execCommand("copy"); ta.remove(); }catch(e){} }
 
