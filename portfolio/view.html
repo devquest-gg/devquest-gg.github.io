@@ -169,6 +169,25 @@
   .audnote .audnlab{font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--accent);display:inline-block;margin-right:6px}
   .audempty{border:1px dashed var(--border);border-radius:16px;background:var(--panel);padding:26px 24px;text-align:center}
   .audempty .sub{max-width:560px;margin:6px auto 16px}
+  .qaband{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin:18px 0 6px}
+  .qanum{border:1px solid var(--border);border-radius:14px;background:linear-gradient(160deg,rgba(120,170,255,.09),var(--panel));padding:16px 18px}
+  .qanumv{font-size:26px;font-weight:800;letter-spacing:-.01em;color:#eaf1fb;line-height:1.1}
+  .qanuml{font-size:12.5px;color:var(--muted);margin-top:4px;line-height:1.35}
+  .qagrid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-top:16px}
+  @media(max-width:760px){.qagrid{grid-template-columns:1fr}}
+  .qacard{border:1px solid var(--border);border-radius:16px;background:var(--panel);padding:18px 19px;display:flex;flex-direction:column;gap:9px;transition:border-color .15s,transform .15s}
+  .qacard:hover{border-color:var(--accent);transform:translateY(-2px)}
+  .qatop{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .qakind{font-size:11.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--accent);background:rgba(120,170,255,.11);border:1px solid rgba(120,170,255,.28);border-radius:999px;padding:3px 10px}
+  .qafoot{font-size:12.5px;color:var(--muted);font-weight:650}
+  .qatitle{font-size:16.5px;font-weight:700;line-height:1.3}
+  .qablurb{margin:0;font-size:14px;color:#c6d0de;line-height:1.55}
+  .qaresult{margin-top:auto;padding:11px 13px;border-radius:12px;background:rgba(120,170,255,.09);border:1px solid rgba(120,170,255,.22);display:flex;flex-direction:column;gap:2px}
+  .qaresult .qarlab{font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--accent)}
+  .qaresult .qarval{font-size:14.5px;color:#eaf1fb;font-weight:600;line-height:1.45}
+  .qaempty{border:1px dashed var(--border);border-radius:16px;background:var(--panel);padding:26px 24px;text-align:center}
+  .qaempty .sub{max-width:560px;margin:6px auto 16px}
+  .desublab{font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin:2px 0 8px}
   .edu{display:flex;flex-direction:column;gap:12px}
   .edurow{display:flex;justify-content:space-between;gap:16px;align-items:baseline;border:1px solid var(--border);border-radius:14px;background:var(--panel);padding:15px 18px}
   .edurow .es{font-weight:750;font-size:15px}
@@ -646,7 +665,7 @@
     IS_OWNER=true; document.body.classList.add("is-owner");   // draft acts like owner; writes go to localStorage, never the API
     var d=dGet(); var credits=(d.credits||[]).map(draftCredit);
     var pf=d.profile||{};
-    var person={ name:d.name||"Your name", slug:null, headline:pf.headline||"", location:pf.location||"", bio:pf.bio||"", links:pf.links||[], skills:{groups:[]}, portfolio_style:pf.portfolio_style||"production", open_to_work:pf.open_to_work?1:0, avatar_url:pf.avatar_url||"", unshipped:pf.unshipped||0, education:(Array.isArray(d.education)?d.education:(Array.isArray(pf.education)?pf.education:[])), gallery:(Array.isArray(d.gallery)?d.gallery:(Array.isArray(pf.gallery)?pf.gallery:[])), reel_url:pf.reel_url||d.reel_url||"", gallery_groups:(Array.isArray(pf.gallery_groups)?pf.gallery_groups:[]), contact_email:pf.contact_email||"", systems:(Array.isArray(d.systems)?d.systems:(Array.isArray(pf.systems)?pf.systems:[])), designs:(Array.isArray(d.designs)?d.designs:(Array.isArray(pf.designs)?pf.designs:[])), audio:(Array.isArray(d.audio)?d.audio:(Array.isArray(pf.audio)?pf.audio:[])) };
+    var person={ name:d.name||"Your name", slug:null, headline:pf.headline||"", location:pf.location||"", bio:pf.bio||"", links:pf.links||[], skills:{groups:[]}, portfolio_style:pf.portfolio_style||"production", open_to_work:pf.open_to_work?1:0, avatar_url:pf.avatar_url||"", unshipped:pf.unshipped||0, education:(Array.isArray(d.education)?d.education:(Array.isArray(pf.education)?pf.education:[])), gallery:(Array.isArray(d.gallery)?d.gallery:(Array.isArray(pf.gallery)?pf.gallery:[])), reel_url:pf.reel_url||d.reel_url||"", gallery_groups:(Array.isArray(pf.gallery_groups)?pf.gallery_groups:[]), contact_email:pf.contact_email||"", systems:(Array.isArray(d.systems)?d.systems:(Array.isArray(pf.systems)?pf.systems:[])), designs:(Array.isArray(d.designs)?d.designs:(Array.isArray(pf.designs)?pf.designs:[])), audio:(Array.isArray(d.audio)?d.audio:(Array.isArray(pf.audio)?pf.audio:[])), qa:((d.qa&&typeof d.qa==="object")?d.qa:((pf.qa&&typeof pf.qa==="object")?pf.qa:{metrics:[],areas:[]})) };
     // Work history carried from the wizard — so gameless studios (e.g. Possibility Space) show on the timeline.
     var positions=(d.positions||[]).map(function(pp){ var cur=(pp.is_current?true:false); return { studio:pp.studio||pp.studio_name||"", studio_slug:"", title:pp.title||"", start_year:pp.start_year||null, start_month:null, end_year:(cur?null:(pp.end_year||null)), end_month:null, is_current:cur, description:pp.description||"", location:pp.location||"", is_game_studio:(pp.is_game_studio===0?0:1) }; });
     resolveCovers(credits).then(function(cm){ cm=cm||{}; (d.credits||[]).forEach(function(c){ if(c.cover_url) cm[c.game_slug]=c.cover_url; }); render(person,positions,credits,cm); mountDraftBar(credits.length); }).catch(function(){ render(person,positions,credits,{}); mountDraftBar(credits.length); });
@@ -810,17 +829,21 @@
     var _workSection = _artBuilder ? artBuilderHTML(credits, covMap) : stageSection;
     var _eng = (p.portfolio_style||"")==="engineering";
     var _dsn = (p.portfolio_style||"")==="design";
+    var _qa = (p.portfolio_style||"")==="qa";
     var _systems = '<div id="sys-slot">'+systemsSectionHTML(p)+'</div>';   // slot lets the draft editor live-update the Systems & tech section
     var _designs = '<div id="dsn-slot">'+designsSectionHTML(p)+'</div>';   // slot lets the draft editor live-update the Design breakdowns section
     var _audio = '<div id="aud-slot">'+audioSectionHTML(p)+'</div>';       // slot lets the draft editor live-update the Listen (audio) section
+    var _quality = '<div id="qa-slot">'+qaSectionHTML(p)+'</div>';         // slot lets the draft editor live-update the Quality & coverage section
     document.body.classList.toggle("art-led", _artLed);
     document.body.classList.toggle("aud-led", _aud);
     document.body.classList.toggle("eng-led", _eng);
     document.body.classList.toggle("dsn-led", _dsn);
+    document.body.classList.toggle("qa-led", _qa);
     if(_artLed)      app.innerHTML = hero + _media + _workSection + skills + edu + contact;   // gallery + reel front and centre; games below
     else if(_aud)    app.innerHTML = hero + _audio + _media + _workSection + skills + edu + contact;   // playable audio leads for audio, reel/gallery below, games under that
     else if(_eng)    app.innerHTML = hero + _systems + _workSection + skills + _media + edu + contact;   // systems & tech lead for engineers, games below
     else if(_dsn)    app.innerHTML = hero + _designs + _workSection + skills + _media + edu + contact;   // design breakdowns lead for designers, games below
+    else if(_qa)     app.innerHTML = hero + _quality + _workSection + skills + _media + edu + contact;   // quality & coverage lead for QA, games below
     else             app.innerHTML = hero + _workSection + skills + _media + edu + contact;   // media still shows for other disciplines, just secondary
     wireHeroEdit();
     if(credits.length && !_artBuilder) buildStage(credits, positions, covMap);
@@ -868,15 +891,21 @@
       '<h3 class="dh">Listen &mdash; audio</h3>'+
       '<p class="sub" style="margin:-4px 0 10px">'+((((_person&&_person.portfolio_style)||"")==="audio")?'Because your style is <b>Audio</b>, these lead your page. Add playable tracks and say how each works in the game.':'Add playable tracks (music, SFX, implementation) and say how each works in the game. <b>Tip:</b> set your style to Audio (Edit header) to make these lead your page.')+'</p>'+
       '<div id="de-audlist"></div><button type="button" class="btn ghost" id="de-addaud">+ Add a track</button>'+
+      '<h3 class="dh">Quality &amp; coverage</h3>'+
+      '<p class="sub" style="margin:-4px 0 10px">'+((((_person&&_person.portfolio_style)||"")==="qa")?'Because your style is <b>QA</b>, this leads your page. Add the test areas you owned and the numbers that prove your impact.':'Add the test areas you owned and the numbers behind them. <b>Tip:</b> set your style to QA (Edit header) to make these lead your page.')+'</p>'+
+      '<div class="desublab">By the numbers</div><div id="de-qanumlist"></div><button type="button" class="btn ghost" id="de-addqanum">+ Add a number</button>'+
+      '<div class="desublab" style="margin-top:14px">Test areas</div><div id="de-qalist"></div><button type="button" class="btn ghost" id="de-addqa">+ Add a test area</button>'+
       '<h3 class="dh">Visual work &amp; showreel</h3>'+
       '<p class="sub" style="margin:-4px 0 10px">'+(["art","audio"].indexOf((_person&&_person.portfolio_style)||"")>=0?'Because your style is <b>'+esc(_person.portfolio_style)+'</b>, this leads your page, add a reel and images and they jump to the top.':'Add a reel or images here. <b>Tip:</b> set your style to Art or Audio (Edit header) to make these lead your page.')+'</p>'+
       '<div id="de-media"></div>'+
     '</section>';
     app.appendChild(wrap);
-    renderDePos(); renderDeEdu(); renderDeMedia(); renderDeSystems(); renderDeDesigns(); renderDeAudio();
+    renderDePos(); renderDeEdu(); renderDeMedia(); renderDeSystems(); renderDeDesigns(); renderDeAudio(); renderDeQaNums(); renderDeQaAreas();
     document.getElementById("de-addsys").onclick=function(){ var arr=_deSysGet(); arr.push({title:"",tech:"",blurb:"",game_slug:""}); _deSysSave(arr); renderDeSystems(); _deReRenderSystems(); var c=document.querySelector('#de-syslist .decard:last-child'); if(c){ try{ c.scrollIntoView({behavior:"smooth",block:"center"}); }catch(e){} var inp=c.querySelector("input"); if(inp) inp.focus(); } };
     document.getElementById("de-adddsn").onclick=function(){ var arr=_deDsnGet(); arr.push({title:"",discipline:"",goal:"",blurb:"",result:"",game_slug:"",image_url:""}); _deDsnSave(arr); renderDeDesigns(); _deReRenderDesigns(); var c=document.querySelector('#de-dsnlist .decard:last-child'); if(c){ try{ c.scrollIntoView({behavior:"smooth",block:"center"}); }catch(e){} var inp=c.querySelector("input"); if(inp) inp.focus(); } };
     document.getElementById("de-addaud").onclick=function(){ var arr=_deAudGet(); arr.push({title:"",kind:"",url:"",note:"",game_slug:""}); _deAudSave(arr); renderDeAudio(); _deReRenderAudio(); var c=document.querySelector('#de-audlist .decard:last-child'); if(c){ try{ c.scrollIntoView({behavior:"smooth",block:"center"}); }catch(e){} var inp=c.querySelector("input"); if(inp) inp.focus(); } };
+    document.getElementById("de-addqanum").onclick=function(){ var q=_deQaGet(); q.metrics.push({value:"",label:""}); _deQaSave(q); renderDeQaNums(); _deReRenderQa(); var c=document.querySelector('#de-qanumlist .decard:last-child'); if(c){ try{ c.scrollIntoView({behavior:"smooth",block:"center"}); }catch(e){} var inp=c.querySelector("input"); if(inp) inp.focus(); } };
+    document.getElementById("de-addqa").onclick=function(){ var q=_deQaGet(); q.areas.push({title:"",kind:"",blurb:"",result:"",game_slug:""}); _deQaSave(q); renderDeQaAreas(); _deReRenderQa(); var c=document.querySelector('#de-qalist .decard:last-child'); if(c){ try{ c.scrollIntoView({behavior:"smooth",block:"center"}); }catch(e){} var inp=c.querySelector("input"); if(inp) inp.focus(); } };
     document.getElementById("de-addpos").onclick=function(){ var d=dGet(); d.positions=d.positions||[]; d.positions.push({studio:"",title:"",start_year:null,end_year:null,is_current:0,description:"",is_game_studio:1}); dSet(d); renderDePos(); _deRefreshHero(); var c=document.querySelector('#de-poslist .decard:last-child'); if(c){ try{ c.scrollIntoView({behavior:"smooth",block:"center"}); }catch(e){} var inp=c.querySelector("input"); if(inp) inp.focus(); } };
     document.getElementById("de-addedu").onclick=function(){ var d=dGet(); d.education=d.education||[]; d.education.push({school:"",degree:"",field:"",start_year:null,end_year:null}); dSet(d); if(_person) _person.education=(d.education||[]); renderDeEdu(); renderEduSlot(); var c=document.querySelector('#de-edulist .decard:last-child'); if(c){ try{ c.scrollIntoView({behavior:"smooth",block:"center"}); }catch(e){} var inp=c.querySelector("input"); if(inp) inp.focus(); } };
   }
@@ -1040,7 +1069,9 @@
                 ? stat((Array.isArray(p.systems)?p.systems.length:0),"Systems")+stat(liveCount,"Live-service")
                 : (p.portfolio_style||"")==="design"
                   ? stat((Array.isArray(p.designs)?p.designs.length:0),"Features designed")+stat(liveCount,"Live-service")
-                  : stat(liveCount,"Live-service")+stat(p.unshipped||0,"Cancelled / unshipped"))+
+                  : (p.portfolio_style||"")==="qa"
+                    ? stat(((p.qa&&Array.isArray(p.qa.areas))?p.qa.areas.length:0),"Areas owned")+stat(liveCount,"Live-service")
+                    : stat(liveCount,"Live-service")+stat(p.unshipped||0,"Cancelled / unshipped"))+
         '</div>'+
       '</div></div>';
   }
@@ -1250,6 +1281,81 @@
         el.addEventListener("change", function(){ var arr=_deAudGet(); if(!arr[i]) return; arr[i][el.getAttribute("data-ak")]=el.value; _deAudSave(arr); _deReRenderAudio(); });
       });
       card.querySelector(".de-del").onclick=function(){ var arr=_deAudGet(); arr.splice(i,1); _deAudSave(arr); renderDeAudio(); _deReRenderAudio(); };
+    });
+  }
+  // ---- Quality & coverage (QA-led): a "by the numbers" scoreboard + owned test areas with metric-forward results ----
+  var _QA_KIND = ["Functional","Automation","Certification","Localization","Compatibility","Performance","Other"];
+  function _qaObj(p){ var q=(p&&p.qa&&typeof p.qa==="object"&&!Array.isArray(p.qa))?p.qa:{}; return { metrics:(Array.isArray(q.metrics)?q.metrics:[]), areas:(Array.isArray(q.areas)?q.areas:[]) }; }
+  function qaSectionHTML(p){
+    var q=_qaObj(p);
+    var metrics=q.metrics.filter(function(m){ return m && (m.value||m.label); });
+    var areas=q.areas.filter(function(a){ return a && (a.title||a.result||a.blurb); });
+    if(!metrics.length && !areas.length){
+      if(IS_OWNER && (p.portfolio_style||"")==="qa"){
+        return '<div class="wrap"><section class="qasec"><div class="qaempty">'+
+          '<div class="eyebrow">Quality &amp; coverage</div>'+
+          '<h2 class="sec" style="margin-top:2px">Put your quality record on the board</h2>'+
+          '<p class="sub">Your style is QA, so this section leads your page. Add the test areas you owned and the numbers that prove your impact, bugs caught, coverage built, crashes cut, certs passed.</p>'+
+          '<button type="button" class="btn primary" onclick="window._qaAddJump&&window._qaAddJump()">+ Add your first test area</button>'+
+        '</section></div>';
+      }
+      return "";
+    }
+    var gt={}; (_credits||[]).forEach(function(c){ if(c.game_slug) gt[c.game_slug]=c.game_title; });
+    var band = metrics.length ? '<div class="qaband">'+metrics.map(function(m){
+      return '<div class="qanum"><div class="qanumv">'+esc(m.value||"")+'</div><div class="qanuml">'+esc(m.label||"")+'</div></div>';
+    }).join("")+'</div>' : '';
+    var cards = areas.length ? '<div class="qagrid">'+areas.map(function(a){
+      var kind=a.kind?'<span class="qakind">'+esc(a.kind)+'</span>':'';
+      var g=a.game_slug?'<span class="qafoot">on '+esc(gt[a.game_slug]||a.game_slug)+'</span>':'';
+      var blurb=a.blurb?'<p class="qablurb">'+esc(a.blurb)+'</p>':'';
+      var result=a.result?'<div class="qaresult"><span class="qarlab">Impact</span><span class="qarval">'+esc(a.result)+'</span></div>':'';
+      return '<div class="qacard"><div class="qatop">'+kind+g+'</div><div class="qatitle">'+esc(a.title||"Untitled area")+'</div>'+blurb+result+'</div>';
+    }).join("")+'</div>' : '';
+    return '<div class="wrap"><section class="qasec"><div class="eyebrow">Quality &amp; coverage</div><h2 class="sec">The quality I held the line on</h2>'+
+      '<p class="sub">The test areas I owned and the numbers behind them.</p>'+band+cards+'</section></div>';
+  }
+  function renderQaSlot(){ var s=document.getElementById("qa-slot"); if(s) s.innerHTML=qaSectionHTML(_person||{}); }
+  window._qaAddJump=function(){ var b=document.getElementById("de-addqa"); if(b){ try{ b.scrollIntoView({behavior:"smooth",block:"center"}); }catch(e){} b.click(); } };
+  function _deQaGet(){ var d=dGet(); var q=(d.qa&&typeof d.qa==="object"&&!Array.isArray(d.qa))?d.qa:{}; return { metrics:(Array.isArray(q.metrics)?q.metrics:[]), areas:(Array.isArray(q.areas)?q.areas:[]) }; }
+  function _deQaSave(obj){ var d=dGet(); d.qa=obj; dSet(d); if(_person) _person.qa=obj; }
+  function _deReRenderQa(){ renderQaSlot(); if(typeof _deRefreshHero==="function") _deRefreshHero(); }
+  function renderDeQaNums(){
+    var box=document.getElementById("de-qanumlist"); if(!box) return;
+    var q=_deQaGet(), nums=q.metrics;
+    if(!nums.length){ box.innerHTML='<div class="de-empty">No numbers yet. Add a few headline figures, e.g. <b>1,200+</b> bugs triaged, <b>6</b> titles shipped, <b>40%</b> faster regression.</div>'; return; }
+    box.innerHTML=nums.map(function(m,i){ m=m||{};
+      return '<div class="decard" data-qi="'+i+'"><div class="derow"><div style="flex:1;min-width:110px"><label>Number</label><input data-qn="value" value="'+esc(m.value||"")+'" placeholder="1,200+"></div><div style="flex:2;min-width:150px"><label>Label</label><input data-qn="label" value="'+esc(m.label||"")+'" placeholder="bugs triaged"></div></div><div class="deact"><button type="button" class="de-del">Remove</button></div></div>';
+    }).join("");
+    box.querySelectorAll(".decard").forEach(function(card){
+      var i=+card.getAttribute("data-qi");
+      card.querySelectorAll("[data-qn]").forEach(function(el){
+        el.addEventListener("input", function(){ var q=_deQaGet(); if(!q.metrics[i]) return; q.metrics[i][el.getAttribute("data-qn")]=el.value; _deQaSave(q); _deReRenderQa(); });
+      });
+      card.querySelector(".de-del").onclick=function(){ var q=_deQaGet(); q.metrics.splice(i,1); _deQaSave(q); renderDeQaNums(); _deReRenderQa(); };
+    });
+  }
+  function renderDeQaAreas(){
+    var box=document.getElementById("de-qalist"); if(!box) return;
+    var q=_deQaGet(), areas=q.areas, games=(_credits||[]).filter(function(c){ return c.game_slug; });
+    if(!areas.length){ box.innerHTML='<div class="de-empty">No test areas yet. Add an area you owned (a suite, a plan, a cert submission, a pipeline), what you did, and the quality outcome.</div>'; return; }
+    box.innerHTML=areas.map(function(a,i){ a=a||{};
+      var gopts='<option value="">Not tied to a game</option>'+games.map(function(c){ return '<option value="'+esc(c.game_slug)+'"'+((a.game_slug===c.game_slug)?" selected":"")+'>'+esc(c.game_title)+'</option>'; }).join("");
+      var kopts='<option value="">Type…</option>'+_QA_KIND.map(function(x){ return '<option value="'+esc(x)+'"'+((a.kind===x)?" selected":"")+'>'+esc(x)+'</option>'; }).join("");
+      return '<div class="decard" data-qa="'+i+'">'+
+        '<div class="derow"><div style="flex:2;min-width:150px"><label>Test area</label><input data-qk="title" value="'+esc(a.title||"")+'" placeholder="e.g. Automated smoke suite"></div><div style="flex:1;min-width:130px"><label>Type</label><select data-qk="kind">'+kopts+'</select></div></div>'+
+        '<label>What you owned <span style="color:var(--muted);font-weight:400">(optional)</span></label><textarea data-qk="blurb" placeholder="A sentence or two: the tests, plan, or harness you built.">'+esc(a.blurb||"")+'</textarea>'+
+        '<label>Impact <span style="color:var(--muted);font-weight:400">(the number, this is what recruiters read)</span></label><input data-qk="result" value="'+esc(a.result||"")+'" placeholder="e.g. Caught 30+ ship-blockers; cut regression from 2 days to 4 hours">'+
+        '<label>On which game <span style="color:var(--muted);font-weight:400">(optional)</span></label><select data-qk="game_slug">'+gopts+'</select>'+
+        '<div class="deact"><button type="button" class="de-del">Remove</button></div>'+
+      '</div>';
+    }).join("");
+    box.querySelectorAll(".decard").forEach(function(card){
+      var i=+card.getAttribute("data-qa");
+      card.querySelectorAll("[data-qk]").forEach(function(el){
+        el.addEventListener(el.tagName==="SELECT"?"change":"input", function(){ var q=_deQaGet(); if(!q.areas[i]) return; q.areas[i][el.getAttribute("data-qk")]=el.value; _deQaSave(q); _deReRenderQa(); });
+      });
+      card.querySelector(".de-del").onclick=function(){ var q=_deQaGet(); q.areas.splice(i,1); _deQaSave(q); renderDeQaAreas(); _deReRenderQa(); };
     });
   }
   // ---- visual work (gallery + showreel), discipline-led ----
