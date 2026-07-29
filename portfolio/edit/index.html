@@ -100,6 +100,13 @@
   var app = document.getElementById("app");
   var topcta = document.getElementById("topcta");
   var ME = null, SLUG = null, POS = [], NEWCTR = 0, P = null, CREDITS = [], EDU = [], ENEWCTR = 0, GAL = [], GRP = [];
+  var SYS = [], DSN = [], AUD = [], QAO = { metrics: [], areas: [] };
+  var STYLES = [["production","Production"],["engineering","Engineering"],["design","Design"],["art","Art"],["audio","Audio"],["qa","QA"],["other","Other"]];
+  var DSN_DISC = ["Systems","Level","Combat","Economy","Narrative","UX / UI","Other"];
+  var AUD_KIND = ["Music","SFX","Implementation","Dialogue","Mix","Other"];
+  var QA_KIND = ["Functional","Automation","Certification","Localization","Compatibility","Performance","Other"];
+  function gameOpts(sel){ return '<option value="">Not tied to a game</option>'+(CREDITS||[]).filter(function(c){return c.game_slug;}).map(function(c){ return '<option value="'+esc(c.game_slug)+'"'+((sel===c.game_slug)?" selected":"")+'>'+esc(c.game_title)+'</option>'; }).join(""); }
+  function selOpts(list, sel, ph){ return '<option value="">'+esc(ph||"Choose…")+'</option>'+list.map(function(x){ return '<option value="'+esc(x)+'"'+((sel===x)?" selected":"")+'>'+esc(x)+'</option>'; }).join(""); }
 
   function esc(s){ return String(s==null?"":s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];}); }
   function val(id){ var e=document.getElementById(id); return e?e.value.trim():""; }
@@ -129,11 +136,23 @@
     CREDITS = credits || [];
     POS = positions.slice();
     EDU = (Array.isArray(p.education) ? p.education : []).map(function(e){ e=e||{}; return {id:"edu"+(++ENEWCTR), school:e.school||"", degree:e.degree||"", field:e.field||"", start_year:e.start_year||null, end_year:e.end_year||null}; });
+    SYS = (Array.isArray(p.systems)?p.systems:[]).map(function(s){ s=s||{}; return {title:s.title||"",tech:s.tech||"",blurb:s.blurb||"",game_slug:s.game_slug||""}; });
+    DSN = (Array.isArray(p.designs)?p.designs:[]).map(function(d){ d=d||{}; return {title:d.title||"",discipline:d.discipline||"",goal:d.goal||"",blurb:d.blurb||"",result:d.result||"",game_slug:d.game_slug||"",image_url:d.image_url||""}; });
+    AUD = (Array.isArray(p.audio)?p.audio:[]).map(function(a){ a=a||{}; return {title:a.title||"",kind:a.kind||"",url:a.url||"",note:a.note||"",game_slug:a.game_slug||""}; });
+    var _q=(p.qa&&typeof p.qa==="object"&&!Array.isArray(p.qa))?p.qa:{};
+    QAO = { metrics:(Array.isArray(_q.metrics)?_q.metrics:[]).map(function(m){ m=m||{}; return {label:m.label||"",value:m.value||""}; }), areas:(Array.isArray(_q.areas)?_q.areas:[]).map(function(a){ a=a||{}; return {title:a.title||"",kind:a.kind||"",blurb:a.blurb||"",result:a.result||"",game_slug:a.game_slug||""}; }) };
     var gtN = skGameTags().length;
+    var _dstyle=(p.portfolio_style||"production");
 
     app.innerHTML =
       // HEADER POINTER (basics live in the portfolio's "Edit header" modal — no duplication here)
       '<div class="blk" style="padding:13px 18px"><div class="desc" style="margin:0">Your <b>profile header</b> — name, headline, bio, photo, and links — is edited from the <b>&ldquo;Edit header&rdquo;</b> button on your portfolio. <a href="/portfolio/'+esc(SLUG)+'/" target="_blank">Open my portfolio →</a></div></div>'+
+
+      // PORTFOLIO STYLE (discipline) — sets which section leads the page; non-destructive
+      '<div class="blk"><h2>Portfolio style</h2><div class="desc">This sets which section leads your page — Engineering leads with Systems, Design with breakdowns, Audio with a Listen section, QA with Quality &amp; coverage, Art with your gallery. Changing it <b>never deletes anything</b>: content for your other disciplines stays saved, it just won&rsquo;t lead your page while you&rsquo;re set to something else.</div>'+
+        '<div class="row"><div style="flex:0 0 auto;min-width:220px"><select id="disc-sel">'+STYLES.map(function(s){ return '<option value="'+s[0]+'"'+(_dstyle===s[0]?" selected":"")+'>'+s[1]+'</option>'; }).join("")+'</select></div><div style="flex:0 0 auto;align-self:flex-end"><span class="btn primary" id="save-disc">Save style</span></div></div>'+
+        '<div class="status" id="st-disc"></div>'+
+      '</div>'+
 
       // SKILLS
       '<div class="blk"><h2>Skills &amp; tools</h2><div class="desc">Pick what fits — grouped for your discipline. These power your résumé and how job postings match you, so the wording is standardized. Toggle a chip to add or remove it; add your own for anything not listed.</div>'+
@@ -156,6 +175,31 @@
         '<div class="actions"><span class="btn" id="add-edu">+ Add education</span><span class="status" id="st-edu"></span></div>'+
       '</div>'+
 
+      // SYSTEMS & TECH (Engineering-led)
+      '<div class="blk"><h2>Systems &amp; tech</h2><div class="desc">For <b>Engineering</b> portfolios this leads your page — the technical systems and domains you built.'+(_dstyle==="engineering"?'':' <span style="color:var(--gold)">Your style is <b>'+esc(_dstyle)+'</b> — switch to Engineering above for this to lead.</span>')+'</div>'+
+        '<div id="syslist"></div>'+
+        '<div class="actions"><span class="btn" id="add-sys">+ Add a system</span><span class="btn primary" id="save-sys">Save systems</span><span class="status" id="st-sys"></span></div>'+
+      '</div>'+
+
+      // DESIGN BREAKDOWNS (Design-led)
+      '<div class="blk"><h2>Design breakdowns</h2><div class="desc">For <b>Design</b> portfolios this leads your page — the features you designed, the goal, and how players responded.'+(_dstyle==="design"?'':' <span style="color:var(--gold)">Your style is <b>'+esc(_dstyle)+'</b> — switch to Design above for this to lead.</span>')+'</div>'+
+        '<div id="dsnlist"></div>'+
+        '<div class="actions"><span class="btn" id="add-dsn">+ Add a breakdown</span><span class="btn primary" id="save-dsn">Save breakdowns</span><span class="status" id="st-dsn"></span></div>'+
+      '</div>'+
+
+      // LISTEN / AUDIO (Audio-led)
+      '<div class="blk"><h2>Listen — audio</h2><div class="desc">For <b>Audio</b> portfolios this leads your page — playable tracks (SoundCloud, Spotify, YouTube, or a direct file link) and how each works in the game.'+(_dstyle==="audio"?'':' <span style="color:var(--gold)">Your style is <b>'+esc(_dstyle)+'</b> — switch to Audio above for this to lead.</span>')+'</div>'+
+        '<div id="audlist"></div>'+
+        '<div class="actions"><span class="btn" id="add-aud">+ Add a track</span><span class="btn primary" id="save-aud">Save tracks</span><span class="status" id="st-aud"></span></div>'+
+      '</div>'+
+
+      // QUALITY & COVERAGE (QA-led)
+      '<div class="blk"><h2>Quality &amp; coverage</h2><div class="desc">For <b>QA</b> portfolios this leads your page — a scoreboard of headline numbers plus the test areas you owned.'+(_dstyle==="qa"?'':' <span style="color:var(--gold)">Your style is <b>'+esc(_dstyle)+'</b> — switch to QA above for this to lead.</span>')+'</div>'+
+        '<div class="skcat">By the numbers</div><div id="qanumlist"></div><div class="actions" style="margin-top:8px"><span class="btn sm" id="add-qanum">+ Add a number</span></div>'+
+        '<div class="skcat" style="margin-top:14px">Test areas</div><div id="qalist"></div>'+
+        '<div class="actions"><span class="btn sm" id="add-qa">+ Add a test area</span><span class="btn primary" id="save-qa">Save quality</span><span class="status" id="st-qa"></span></div>'+
+      '</div>'+
+
       // VISUAL WORK (gallery + showreel) — leads the page on Art & Audio portfolios; hidden when empty
       '<div class="blk"><h2>Visual work &amp; showreel</h2><div class="desc">For <b>Art</b> and <b>Audio</b> portfolios this leads your page — a reel and gallery front and center, your games below. Organize images into <b>groups</b>: tie a group to a game you shipped (it links to your verified credit) or make a custom category like “Concept Art.” Each group gets a title and an optional line or two of context. Paste image links (ArtStation, an image host, etc.).'+(P&&P.portfolio_style&&["art","audio"].indexOf(P.portfolio_style)<0?' <span style="color:var(--gold)">Your portfolio style is <b>'+esc(P.portfolio_style)+'</b> — set it to Art or Audio (from “Edit header”) for this to lead the page.</span>':'')+'</div>'+
         '<label>Showreel <span class="mut" style="font-weight:400">— a YouTube or Vimeo link; optional</span></label><div class="row"><div><input id="reel-url" placeholder="https://youtube.com/watch?v=…  or  https://vimeo.com/…"></div></div>'+
@@ -163,6 +207,18 @@
         '<div class="actions" style="gap:8px;flex-wrap:wrap"><span class="btn sm" id="grp-add-game">+ Group by a game</span><span class="btn sm" id="grp-add-cat">+ Custom category</span><span id="grp-gamepick"></span></div>'+
         '<div class="actions"><span class="btn primary" id="save-media">Save visual work</span><span class="status" id="st-media"></span></div>'+
       '</div>'+
+      // DANGER ZONE — unpublish (reversible) + permanent delete (guarded)
+      '<div class="blk" style="border-color:rgba(247,120,186,.28)"><h2 style="color:var(--pink)">Danger zone</h2>'+
+        '<div class="desc" id="dz-visdesc">'+(P.hidden?'Your portfolio is <b>private</b> right now — only you can see it. Visitors get a &ldquo;this portfolio is private&rdquo; message and it won&rsquo;t appear in search.':'Your portfolio is <b>public</b> — anyone with the link can see it, and it can appear in search and browse.')+'</div>'+
+        '<div class="actions"><span class="btn" id="dz-vis">'+(P.hidden?'🌐 Make public again':'🔒 Unpublish — make private')+'</span><span class="status" id="dz-visst"></span></div>'+
+        '<hr style="border:0;border-top:1px solid var(--border);margin:18px 0 14px">'+
+        '<div class="desc">Permanently delete your portfolio and account. This also <b>withdraws your confirmations</b> of teammates&rsquo; credits and removes your profile everywhere. It&rsquo;s scheduled with a short grace period in case you change your mind — email <a href="mailto:studios@devquest.gg">studios@devquest.gg</a> within 30 days to undo it.</div>'+
+        '<div class="actions"><span class="btn danger" id="dz-del">Delete my portfolio…</span></div>'+
+        '<div id="dz-delconfirm" style="display:none;margin-top:12px">'+
+          '<label>Type <b>DELETE</b> to confirm</label><div class="row"><div style="max-width:220px"><input id="dz-delword" placeholder="DELETE" autocomplete="off"></div><div style="flex:0 0 auto;align-self:flex-end"><span class="btn danger" id="dz-delgo">Permanently delete</span></div></div><div class="status" id="dz-delst"></div>'+
+        '</div>'+
+      '</div>'+
+
       // DONE
       '<div style="text-align:center;margin:10px 0 4px"><a class="btn primary" href="/portfolio/'+esc(SLUG)+'/">✓ Done — back to my portfolio</a><div class="mut" style="font-size:12px;margin-top:9px">Each section saves on its own — make sure you’ve clicked <b>Save</b> in the ones you changed before leaving.</div></div>';
 
@@ -172,6 +228,147 @@
     GRP = (Array.isArray(p.gallery_groups) ? p.gallery_groups : []).map(function(g){ g=g||{}; return {id:String(g.id||""), label:String(g.label||""), blurb:String(g.blurb||""), game_slug:String(g.game_slug||"")}; }).filter(function(g){ return g.id; });
     renderGroups(); wireMedia(p);
     skInitSelected(p); renderSkillsPicker(p, false); wireSkills();
+    renderSys(); renderDsn(); renderAud(); renderQaNums(); renderQaAreas();
+    wireDiscipline(); wireSectionSaves(); wireDanger();
+  }
+
+  // ---------- PORTFOLIO STYLE (discipline switcher) ----------
+  function wireDiscipline(){
+    var btn=document.getElementById("save-disc"), sel=document.getElementById("disc-sel"), st=document.getElementById("st-disc"); if(!btn||!sel) return;
+    btn.onclick=function(){
+      var v=sel.value; st.textContent="Saving…"; st.className="status mut";
+      DQAPI.updateProfile({ portfolio_style:v }).then(function(r){
+        if(r&&r.ok){ P.portfolio_style=v; st.innerHTML='✓ Saved — <b>'+esc((STYLES.filter(function(s){return s[0]===v;})[0]||[,v])[1])+'</b> now leads your page. Your other sections stay saved. <a href="/portfolio/'+esc(SLUG)+'/" target="_blank">See it →</a>'; st.className="status ok"; renderSkillsPicker(P,false); }
+        else { st.textContent=(r&&r.data&&r.data.error)||"Could not save."; st.className="status err"; }
+      }).catch(function(){ st.textContent="Network error."; st.className="status err"; });
+    };
+  }
+
+  // ---------- DISCIPLINE SECTIONS: Systems / Design / Audio / QA ----------
+  function _secCard(inner, delAttr){ return '<div class="pos" '+delAttr+'>'+inner+'<div class="actions" style="margin-top:10px"><span class="btn danger sm sec-del">Remove</span></div></div>'; }
+  function renderSys(){
+    var box=document.getElementById("syslist"); if(!box) return;
+    if(!SYS.length){ box.innerHTML='<div class="empty">No systems yet. Add the technical systems you built (netcode, rendering, tools, AI, engine, backend).</div>'; return; }
+    box.innerHTML=SYS.map(function(s,i){ return _secCard(
+      '<div class="row"><div><label>System</label><input class="s-title" value="'+esc(s.title)+'" placeholder="e.g. Rollback netcode"></div><div><label>On which game <span class="mut" style="font-weight:400">— optional</span></label><select class="s-game">'+gameOpts(s.game_slug)+'</select></div></div>'+
+      '<label>Tech <span class="mut" style="font-weight:400">— comma-separated, optional</span></label><input class="s-tech" value="'+esc(s.tech)+'" placeholder="C++, ECS, UDP">'+
+      '<label>What it did <span class="mut" style="font-weight:400">— optional</span></label><textarea class="s-blurb" placeholder="A sentence or two: what you built and why it mattered.">'+esc(s.blurb)+'</textarea>',
+      'data-si="'+i+'"'); }).join("");
+    box.querySelectorAll(".pos[data-si]").forEach(function(card){ var i=+card.getAttribute("data-si");
+      card.querySelector(".s-title").addEventListener("input",function(){ SYS[i].title=this.value; });
+      card.querySelector(".s-tech").addEventListener("input",function(){ SYS[i].tech=this.value; });
+      card.querySelector(".s-blurb").addEventListener("input",function(){ SYS[i].blurb=this.value; });
+      card.querySelector(".s-game").addEventListener("change",function(){ SYS[i].game_slug=this.value; });
+      card.querySelector(".sec-del").onclick=function(){ SYS.splice(i,1); renderSys(); };
+    });
+  }
+  function renderDsn(){
+    var box=document.getElementById("dsnlist"); if(!box) return;
+    if(!DSN.length){ box.innerHTML='<div class="empty">No breakdowns yet. Add a feature you designed, the goal, and how players responded.</div>'; return; }
+    box.innerHTML=DSN.map(function(d,i){ return _secCard(
+      '<div class="row"><div><label>Feature</label><input class="d-title" value="'+esc(d.title)+'" placeholder="e.g. Weapon durability loop"></div><div style="flex:0 0 40%"><label>Discipline</label><select class="d-disc">'+selOpts(DSN_DISC,d.discipline,"Discipline…")+'</select></div></div>'+
+      '<label>Goal <span class="mut" style="font-weight:400">— the player experience you were after</span></label><input class="d-goal" value="'+esc(d.goal)+'" placeholder="e.g. Make looting tense without punishing new players">'+
+      '<label>What you designed <span class="mut" style="font-weight:400">— optional</span></label><textarea class="d-blurb" placeholder="A sentence or two: the mechanic or rules you built.">'+esc(d.blurb)+'</textarea>'+
+      '<label>Result <span class="mut" style="font-weight:400">— playtest finding, metric, or player response</span></label><input class="d-result" value="'+esc(d.result)+'" placeholder="e.g. +12% D7 retention; playtesters stopped hoarding">'+
+      '<div class="row"><div><label>On which game <span class="mut" style="font-weight:400">— optional</span></label><select class="d-game">'+gameOpts(d.game_slug)+'</select></div><div><label>Image URL <span class="mut" style="font-weight:400">— optional</span></label><input class="d-img" value="'+esc(d.image_url)+'" placeholder="https://…"></div></div>',
+      'data-di="'+i+'"'); }).join("");
+    box.querySelectorAll(".pos[data-di]").forEach(function(card){ var i=+card.getAttribute("data-di");
+      card.querySelector(".d-title").addEventListener("input",function(){ DSN[i].title=this.value; });
+      card.querySelector(".d-goal").addEventListener("input",function(){ DSN[i].goal=this.value; });
+      card.querySelector(".d-blurb").addEventListener("input",function(){ DSN[i].blurb=this.value; });
+      card.querySelector(".d-result").addEventListener("input",function(){ DSN[i].result=this.value; });
+      card.querySelector(".d-img").addEventListener("input",function(){ DSN[i].image_url=this.value; });
+      card.querySelector(".d-disc").addEventListener("change",function(){ DSN[i].discipline=this.value; });
+      card.querySelector(".d-game").addEventListener("change",function(){ DSN[i].game_slug=this.value; });
+      card.querySelector(".sec-del").onclick=function(){ DSN.splice(i,1); renderDsn(); };
+    });
+  }
+  function renderAud(){
+    var box=document.getElementById("audlist"); if(!box) return;
+    if(!AUD.length){ box.innerHTML='<div class="empty">No tracks yet. Paste a SoundCloud, Spotify, YouTube, or direct audio-file link and say how it works in the game.</div>'; return; }
+    box.innerHTML=AUD.map(function(a,i){ return _secCard(
+      '<div class="row"><div><label>Title</label><input class="a-title" value="'+esc(a.title)+'" placeholder="e.g. Combat theme (adaptive)"></div><div style="flex:0 0 34%"><label>Type</label><select class="a-kind">'+selOpts(AUD_KIND,a.kind,"Type…")+'</select></div></div>'+
+      '<label>Audio link <span class="mut" style="font-weight:400">— SoundCloud, Spotify, YouTube, or a direct .mp3 / .wav</span></label><input class="a-url" value="'+esc(a.url)+'" placeholder="https://soundcloud.com/…">'+
+      '<label>How it works in-game <span class="mut" style="font-weight:400">— optional, the adaptive / implementation detail</span></label><input class="a-note" value="'+esc(a.note)+'" placeholder="e.g. 8-layer vertical remix that swells with combat intensity in Wwise">'+
+      '<label>On which game <span class="mut" style="font-weight:400">— optional</span></label><select class="a-game">'+gameOpts(a.game_slug)+'</select>',
+      'data-ai="'+i+'"'); }).join("");
+    box.querySelectorAll(".pos[data-ai]").forEach(function(card){ var i=+card.getAttribute("data-ai");
+      card.querySelector(".a-title").addEventListener("input",function(){ AUD[i].title=this.value; });
+      card.querySelector(".a-url").addEventListener("input",function(){ AUD[i].url=this.value; });
+      card.querySelector(".a-note").addEventListener("input",function(){ AUD[i].note=this.value; });
+      card.querySelector(".a-kind").addEventListener("change",function(){ AUD[i].kind=this.value; });
+      card.querySelector(".a-game").addEventListener("change",function(){ AUD[i].game_slug=this.value; });
+      card.querySelector(".sec-del").onclick=function(){ AUD.splice(i,1); renderAud(); };
+    });
+  }
+  function renderQaNums(){
+    var box=document.getElementById("qanumlist"); if(!box) return;
+    if(!QAO.metrics.length){ box.innerHTML='<div class="empty" style="padding:2px 0">No numbers yet — e.g. 1,200+ bugs triaged, 6 titles shipped, 40% faster regression.</div>'; return; }
+    box.innerHTML=QAO.metrics.map(function(m,i){ return '<div class="pos" data-qi="'+i+'" style="padding:12px 14px"><div class="row" style="align-items:flex-end"><div style="flex:0 0 30%"><label>Number</label><input class="q-val" value="'+esc(m.value)+'" placeholder="1,200+"></div><div><label>Label</label><input class="q-lab" value="'+esc(m.label)+'" placeholder="bugs triaged"></div><div style="flex:0 0 auto"><span class="btn danger sm q-numdel">Remove</span></div></div></div>'; }).join("");
+    box.querySelectorAll(".pos[data-qi]").forEach(function(card){ var i=+card.getAttribute("data-qi");
+      card.querySelector(".q-val").addEventListener("input",function(){ QAO.metrics[i].value=this.value; });
+      card.querySelector(".q-lab").addEventListener("input",function(){ QAO.metrics[i].label=this.value; });
+      card.querySelector(".q-numdel").onclick=function(){ QAO.metrics.splice(i,1); renderQaNums(); };
+    });
+  }
+  function renderQaAreas(){
+    var box=document.getElementById("qalist"); if(!box) return;
+    if(!QAO.areas.length){ box.innerHTML='<div class="empty">No test areas yet. Add an area you owned (a suite, a plan, a cert submission), what you did, and the outcome.</div>'; return; }
+    box.innerHTML=QAO.areas.map(function(a,i){ return _secCard(
+      '<div class="row"><div><label>Test area</label><input class="q-title" value="'+esc(a.title)+'" placeholder="e.g. Automated smoke suite"></div><div style="flex:0 0 40%"><label>Type</label><select class="q-kind">'+selOpts(QA_KIND,a.kind,"Type…")+'</select></div></div>'+
+      '<label>What you owned <span class="mut" style="font-weight:400">— optional</span></label><textarea class="q-blurb" placeholder="A sentence or two: the tests, plan, or harness you built.">'+esc(a.blurb)+'</textarea>'+
+      '<label>Impact <span class="mut" style="font-weight:400">— the number recruiters read</span></label><input class="q-result" value="'+esc(a.result)+'" placeholder="e.g. Caught 30+ ship-blockers; cut regression from 2 days to 4 hours">'+
+      '<label>On which game <span class="mut" style="font-weight:400">— optional</span></label><select class="q-game">'+gameOpts(a.game_slug)+'</select>',
+      'data-qa="'+i+'"'); }).join("");
+    box.querySelectorAll(".pos[data-qa]").forEach(function(card){ var i=+card.getAttribute("data-qa");
+      card.querySelector(".q-title").addEventListener("input",function(){ QAO.areas[i].title=this.value; });
+      card.querySelector(".q-blurb").addEventListener("input",function(){ QAO.areas[i].blurb=this.value; });
+      card.querySelector(".q-result").addEventListener("input",function(){ QAO.areas[i].result=this.value; });
+      card.querySelector(".q-kind").addEventListener("change",function(){ QAO.areas[i].kind=this.value; });
+      card.querySelector(".q-game").addEventListener("change",function(){ QAO.areas[i].game_slug=this.value; });
+      card.querySelector(".sec-del").onclick=function(){ QAO.areas.splice(i,1); renderQaAreas(); };
+    });
+  }
+  function _secSave(field, payload, stId){ var st=document.getElementById(stId); st.textContent="Saving…"; st.className="status mut";
+    DQAPI.updateProfile(payload).then(function(r){ if(r&&r.ok){ st.textContent="✓ Saved"; st.className="status ok"; } else { st.textContent=(r&&r.data&&r.data.error)||"Could not save."; st.className="status err"; } }).catch(function(){ st.textContent="Network error."; st.className="status err"; }); }
+  function wireSectionSaves(){
+    var f;
+    if((f=document.getElementById("add-sys"))) f.onclick=function(){ SYS.push({title:"",tech:"",blurb:"",game_slug:""}); renderSys(); var l=document.querySelector("#syslist .pos:last-child input"); if(l) l.focus(); };
+    if((f=document.getElementById("save-sys"))) f.onclick=function(){ _secSave("systems",{systems:SYS.filter(function(s){return (s.title||"").trim();})},"st-sys"); };
+    if((f=document.getElementById("add-dsn"))) f.onclick=function(){ DSN.push({title:"",discipline:"",goal:"",blurb:"",result:"",game_slug:"",image_url:""}); renderDsn(); var l=document.querySelector("#dsnlist .pos:last-child input"); if(l) l.focus(); };
+    if((f=document.getElementById("save-dsn"))) f.onclick=function(){ _secSave("designs",{designs:DSN.filter(function(d){return (d.title||"").trim();})},"st-dsn"); };
+    if((f=document.getElementById("add-aud"))) f.onclick=function(){ AUD.push({title:"",kind:"",url:"",note:"",game_slug:""}); renderAud(); var l=document.querySelector("#audlist .pos:last-child input"); if(l) l.focus(); };
+    if((f=document.getElementById("save-aud"))) f.onclick=function(){ _secSave("audio",{audio:AUD.filter(function(a){return (a.title||"").trim();})},"st-aud"); };
+    if((f=document.getElementById("add-qanum"))) f.onclick=function(){ QAO.metrics.push({label:"",value:""}); renderQaNums(); var l=document.querySelector("#qanumlist .pos:last-child input"); if(l) l.focus(); };
+    if((f=document.getElementById("add-qa"))) f.onclick=function(){ QAO.areas.push({title:"",kind:"",blurb:"",result:"",game_slug:""}); renderQaAreas(); var l=document.querySelector("#qalist .pos:last-child input"); if(l) l.focus(); };
+    if((f=document.getElementById("save-qa"))) f.onclick=function(){ _secSave("qa",{qa:{ metrics:QAO.metrics.filter(function(m){return (m.label||"").trim()||(m.value||"").trim();}), areas:QAO.areas.filter(function(a){return (a.title||"").trim();}) }},"st-qa"); };
+  }
+
+  // ---------- DANGER ZONE: unpublish (reversible) + permanent delete (guarded) ----------
+  function wireDanger(){
+    var vb=document.getElementById("dz-vis");
+    if(vb) vb.onclick=function(){
+      var makingPrivate=!P.hidden; var st=document.getElementById("dz-visst"); st.textContent="Saving…"; st.className="status mut";
+      DQAPI.updateProfile({ hidden: makingPrivate?1:0 }).then(function(r){
+        if(r&&r.ok){ P.hidden=makingPrivate;
+          document.getElementById("dz-visdesc").innerHTML = makingPrivate?'Your portfolio is <b>private</b> right now — only you can see it. Visitors get a &ldquo;this portfolio is private&rdquo; message and it won&rsquo;t appear in search.':'Your portfolio is <b>public</b> — anyone with the link can see it, and it can appear in search and browse.';
+          vb.textContent = makingPrivate?'🌐 Make public again':'🔒 Unpublish — make private';
+          st.textContent = makingPrivate?'✓ Now private':'✓ Now public'; st.className="status ok";
+        } else { st.textContent=(r&&r.data&&r.data.error)||"Could not save."; st.className="status err"; }
+      }).catch(function(){ st.textContent="Network error."; st.className="status err"; });
+    };
+    var db=document.getElementById("dz-del");
+    if(db) db.onclick=function(){ var c=document.getElementById("dz-delconfirm"); if(c){ c.style.display=""; var w=document.getElementById("dz-delword"); if(w) w.focus(); } };
+    var dg=document.getElementById("dz-delgo");
+    if(dg) dg.onclick=function(){
+      var w=document.getElementById("dz-delword"), st=document.getElementById("dz-delst");
+      if(!w || w.value.trim().toUpperCase()!=="DELETE"){ st.textContent='Type DELETE (in capitals) to confirm.'; st.className="status err"; return; }
+      st.textContent="Deleting…"; st.className="status mut";
+      DQAPI.deleteAccount().then(function(r){
+        if(r&&r.ok){ document.body.innerHTML='<div class="bar"></div><div class="wrap" style="padding:70px 20px;text-align:center;max-width:620px"><h1>Your portfolio has been deleted</h1><p class="lede" style="font-size:15px">It&rsquo;s no longer public and has been removed from search. If this was a mistake, email <a href="mailto:studios@devquest.gg">studios@devquest.gg</a> within 30 days and we can restore it.</p><a class="btn primary" href="/">Back to DevQuest</a></div>'; window.scrollTo(0,0); }
+        else { st.textContent=(r&&r.data&&r.data.error)||"Could not delete."; st.className="status err"; }
+      }).catch(function(){ st.textContent="Network error."; st.className="status err"; });
+    };
   }
 
   // ---------- VISUAL WORK (grouped gallery + reel) ----------
