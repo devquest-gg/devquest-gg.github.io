@@ -128,7 +128,13 @@
           return;
         }
         var c = dcreds[di];
-        DQAPI.createCredit({ name: draft.name||"", role: c.role||"", game_slug: c.game_slug, game_title: c.game_title, studio: c.studio||null, scope: "base", roles_other: [], verification: [], links: [], releases: [] })
+        // A game the person added by hand carries a synthetic "new:" slug that means nothing to the API.
+        // Send it as new_game{} instead — createCredit mints a real games_added row and credits them on it.
+        var isNew = !!c.custom || String(c.game_slug||"").indexOf("new:")===0;
+        var payload = { name: draft.name||"", role: c.role||"", game_title: c.game_title, studio: c.studio||null, scope: "base", roles_other: [], verification: [], links: [], releases: [] };
+        if(isNew) payload.new_game = { title: c.game_title || String(c.game_slug||"").replace(/^new:/,"").replace(/-/g," "), studio: c.studio||"", year: (c.year||null) };
+        else payload.game_slug = c.game_slug;
+        DQAPI.createCredit(payload)
           .then(function(r){
             if(r && r.data && r.data.person_slug) dslug = r.data.person_slug;
             var cid = r && r.data && r.data.credit_id;
