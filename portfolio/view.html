@@ -1212,7 +1212,7 @@
     return '<div class="hero"><div class="banner"></div><div class="scrim"></div>'+
       '<button class="pedit owner-only" id="editProfile">✎ Edit header</button>'+
       '<div class="wrap"><div class="htop">'+
-        '<div class="avatar'+(p.avatar_url?' has-photo':'')+'">'+(p.avatar_url?'<img src="'+esc(p.avatar_url)+'" alt="" onerror="this.remove();this.parentNode.classList.remove(\'has-photo\')">':'')+'<span class="ini">'+esc(av)+'</span></div><div class="hmeta">'+
+        '<div class="avatar'+(p.avatar_url?' has-photo':'')+'">'+(p.avatar_url?'<img src="'+esc(p.avatar_url)+'" alt="" onerror="var _p=this.parentNode;this.remove();if(_p)_p.classList.remove(\'has-photo\')">':'')+'<span class="ini">'+esc(av)+'</span></div><div class="hmeta">'+
         (p.open_to_work ? '<div class="oa"><span class="d"></span> Open to opportunities</div>' : '')+
         '<h1>'+esc(p.name)+'</h1>'+
         (p.headline ? '<div class="role">'+esc(p.headline)+'</div>' : '')+
@@ -2376,8 +2376,24 @@
     });
   }
   function wireUploads(container){
+    // Feature-detect the upload endpoint. DQAPI.uploadImage only exists once the Worker exposes POST /upload
+    // (R2-backed) and credits/api.js wraps it. Until then these buttons would throw on click, so hide them
+    // and leave the paste-a-URL field, which works today. Ship the endpoint and they light up again with no
+    // further change here — do NOT delete them.
+    var canUpload = !!(window.DQAPI && typeof DQAPI.uploadImage === "function");
     container.querySelectorAll(".upbtn[data-upload-for]").forEach(function(btn){
       if(btn._wired) return; btn._wired=true;
+      if(!canUpload){
+        btn.style.display="none";
+        var t0=document.getElementById(btn.getAttribute("data-upload-for"));
+        if(t0 && t0.placeholder) t0.placeholder=t0.placeholder.replace(/\s*,?\s*or upload(\s+(a\s+)?(photo|image|cover|banner))?/i,"").replace(/^Upload or paste\s*/i,"Paste ");
+        var row=btn.parentNode;                                  // drop an empty .upbtns row so nothing floats
+        if(row && row.classList && row.classList.contains("upbtns")){
+          var live=row.querySelectorAll(".upbtn:not([data-upload-for])").length;
+          if(!live) row.style.display="none";
+        }
+        return;
+      }
       var file=document.createElement("input"); file.type="file"; file.accept="image/png,image/jpeg,image/webp,image/gif"; file.style.display="none";
       btn.parentNode.appendChild(file);
       btn.onclick=function(){ file.click(); };
