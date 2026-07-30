@@ -850,7 +850,7 @@
     // ---- discipline-adaptive ordering: Art & Audio lead with the visual/audio work ----
     // For an Art/Audio draft owner, the "work" section becomes a per-game art builder (attach art/video
     // to each game); visitors and other disciplines get the normal wall.
-    var _artBuilder = IS_DRAFT && IS_OWNER && !PREVIEW && (p.portfolio_style||"")==="art" && credits.length>0;
+    var _artBuilder = IS_DRAFT && IS_OWNER && !PREVIEW && (p.portfolio_style||"")==="art";   // shows even with 0 credits so artists can add personal/independent work
     var _workSection = _artBuilder ? artBuilderHTML(credits, covMap) : stageSection;
     var _eng = (p.portfolio_style||"")==="engineering";
     var _dsn = (p.portfolio_style||"")==="design";
@@ -1480,8 +1480,13 @@
       '</div></div>';
   }
   function artBuilderHTML(credits, covMap){
-    return '<div class="wrap"><section><div class="eyebrow">Your visual work · only you see this</div><h2 class="sec">Add art &amp; video to each game</h2><p class="sub">Attach the work you did on each title, images and video (a trailer, in-game footage, or your own reel). It groups under that game in your gallery up top. Visitors see the gallery, not this builder.</p><div class="artbuild">'+
-      credits.map(function(c){ return abRowHTML(c, covMap); }).join("")+
+    var gameRows = credits.map(function(c){ return abRowHTML(c, covMap); }).join("");
+    var sub = credits.length
+      ? 'Attach the work you did on each title, images and video (a trailer, in-game footage, or your own reel). It groups under that game in your gallery up top. Add work that isn’t tied to a game in the last row. Visitors see the gallery, not this builder.'
+      : 'Add your visual work, images and video. Tie pieces to a game once you’ve added your shipped titles, or add personal and independent work right here. Visitors see the gallery, not this builder.';
+    return '<div class="wrap"><section><div class="eyebrow">Your visual work · only you see this</div><h2 class="sec">Add art &amp; video</h2><p class="sub">'+sub+'</p><div class="artbuild">'+
+      gameRows+
+      personalRowHTML()+
     '</div></section></div>';
   }
   function _abEnsureGroup(slug, title){
@@ -1507,6 +1512,77 @@
   }
   function _abSetCaption(idx, cap){
     var d=dGet(); var pf=d.profile=d.profile||{}; if(pf.gallery&&pf.gallery[idx]){ pf.gallery[idx].caption=cap; dSet(d); if(_person) _person.gallery=pf.gallery; }
+  }
+  // ---- personal / independent work: a gallery group NOT tied to any shipped game ----
+  // Keyed by a reserved label + empty game_slug (the backend only persists {id,label,blurb,game_slug},
+  // so we can't rely on a custom flag surviving publish). Reuses the same gallery model as the game rows,
+  // so the public gallery renders it under its own heading with no "Shipped title" badge.
+  var _PERSONAL_LABEL="Personal & independent work";
+  function _personalGroup(){ var gs=(_person&&Array.isArray(_person.gallery_groups))?_person.gallery_groups:[]; return gs.filter(function(x){ return !x.game_slug && x.label===_PERSONAL_LABEL; })[0]||null; }
+  function _personalEnsureGroup(){
+    var d=dGet(); var pf=d.profile=d.profile||{}; pf.gallery_groups=Array.isArray(pf.gallery_groups)?pf.gallery_groups:[];
+    var g=pf.gallery_groups.filter(function(x){ return !x.game_slug && x.label===_PERSONAL_LABEL; })[0];
+    if(!g){ g={id:"g"+Date.now().toString(36)+"_p"+(++_abCtr), label:_PERSONAL_LABEL, blurb:"", game_slug:""}; pf.gallery_groups.push(g); }
+    dSet(d); return g.id;
+  }
+  function _personalAdd(url){
+    var gid=_personalEnsureGroup();
+    var d=dGet(); var pf=d.profile=d.profile||{}; pf.gallery=Array.isArray(pf.gallery)?pf.gallery:[];
+    pf.gallery.push({url:url, caption:"", group:gid}); dSet(d);
+    if(_person){ _person.gallery=pf.gallery; _person.gallery_groups=pf.gallery_groups; }
+  }
+  function _personalSetBlurb(blurb){
+    var gid=_personalEnsureGroup();
+    var d=dGet(); var pf=d.profile=d.profile||{}; var g=(pf.gallery_groups||[]).filter(function(x){ return x.id===gid; })[0];
+    if(g){ g.blurb=blurb; dSet(d); if(_person) _person.gallery_groups=pf.gallery_groups; }
+  }
+  function personalRowHTML(){
+    var grp=_personalGroup(), gid=grp?grp.id:null;
+    var gal=(_person&&Array.isArray(_person.gallery))?_person.gallery:[];
+    var media=gal.map(function(im,i){ return {im:im,i:i}; }).filter(function(o){ return gid && (o.im.group||"")===gid; });
+    var thumbs = media.length ? media.map(function(o){ return _abThumb(o.im, o.i); }).join("") : '<span class="mut" style="font-size:12.5px;align-self:center">No personal work yet, add your first →</span>';
+    return '<div class="abrow abrow-personal" data-slug="">'+
+      '<div class="abcover"><span class="abini">★</span></div>'+
+      '<div class="abmain"><div class="abtitle">Personal &amp; independent work</div>'+
+        '<div class="mut" style="font-size:12px;margin:-2px 0 6px">Art that isn’t tied to a shipped game — personal projects, studies, freelance, fan art. Shows in your gallery under its own heading.</div>'+
+        '<div class="abmedia">'+thumbs+'</div>'+
+        '<textarea class="ab-blurb" placeholder="About this work — what it is, the brief, tools, why it matters to you (optional, shown above the images)">'+esc(grp?grp.blurb||"":"")+'</textarea>'+
+        '<div class="abcap-edit"></div>'+
+        '<div class="abact"><button class="btn ghost sm ab-art">＋ Add art</button><button class="btn ghost sm ab-vid">＋ Add video</button><span class="ab-inline"></span></div>'+
+      '</div></div>';
+  }
+  function wirePersonalRow(){
+    var row=document.querySelector(".artbuild .abrow-personal"); if(!row) return;
+    var inline=row.querySelector(".ab-inline");
+    function opener(isVid){ return function(){
+      inline.innerHTML='<input class="ab-url" placeholder="'+(isVid?"YouTube / Vimeo / mp4 link":"Image URL, https://…")+'"><button class="btn primary sm ab-ok">Add</button><button class="btn sm ab-x">Cancel</button>';
+      var url=inline.querySelector(".ab-url"); url.focus();
+      inline.querySelector(".ab-x").onclick=function(){ inline.innerHTML=""; };
+      function ok(){ var u=(url.value||"").trim(); if(!u) return;
+        if(isVid){ if(!_galVideo(u)){ url.style.borderColor="var(--pink)"; url.placeholder="Needs a YouTube, Vimeo, or .mp4 link"; url.value=""; return; } }
+        else if(!/^https?:\/\//i.test(u)){ url.style.borderColor="var(--pink)"; return; }
+        _personalAdd(u); render(_person,_positions,_credits,_covMap);
+      }
+      inline.querySelector(".ab-ok").onclick=ok;
+      url.addEventListener("keydown", function(e){ if(e.key==="Enter"){ e.preventDefault(); ok(); } });
+    }; }
+    row.querySelector(".ab-art").onclick=opener(false);
+    row.querySelector(".ab-vid").onclick=opener(true);
+    row.querySelectorAll(".abrm").forEach(function(bn){ bn.onclick=function(e){ e.stopPropagation(); _abRemove(+bn.getAttribute("data-idx")); render(_person,_positions,_credits,_covMap); }; });
+    var bl=row.querySelector(".ab-blurb");
+    if(bl){ bl.addEventListener("input", function(){ _personalSetBlurb(bl.value); }); bl.addEventListener("change", function(){ render(_person,_positions,_credits,_covMap); }); }
+    var capEdit=row.querySelector(".abcap-edit");
+    row.querySelectorAll(".abthumb").forEach(function(th){
+      th.onclick=function(e){ if(e.target.closest(".abrm")) return; var idx=+th.getAttribute("data-idx");
+        var cur=(_person.gallery[idx]||{}).caption||"";
+        capEdit.innerHTML='<input class="ab-capin" placeholder="Caption for this image / video" value="'+esc(cur)+'"><button class="btn primary sm ab-capok">Save caption</button><button class="btn sm ab-capx">Cancel</button>';
+        var inp=capEdit.querySelector(".ab-capin"); inp.focus();
+        capEdit.querySelector(".ab-capx").onclick=function(){ capEdit.innerHTML=""; };
+        function save(){ _abSetCaption(idx, inp.value.trim()); render(_person,_positions,_credits,_covMap); }
+        capEdit.querySelector(".ab-capok").onclick=save;
+        inp.addEventListener("keydown", function(ev){ if(ev.key==="Enter"){ ev.preventDefault(); save(); } });
+      };
+    });
   }
   function wireArtBuilder(credits){
     document.querySelectorAll(".artbuild .abrow").forEach(function(row){
@@ -1546,6 +1622,7 @@
         };
       });
     });
+    wirePersonalRow();   // the personal/independent-work row (data-slug="") is skipped by the loop above
   }
   function renderHero(){ var hb=document.getElementById("herobox"); if(hb){ hb.innerHTML=heroHTML(_person,_positions,_credits); wireHeroEdit(); } if(_person) document.title=_person.name+" · DevQuest Portfolio"; }
   function wireHeroEdit(){ var b=document.getElementById("editProfile"); if(b) b.onclick=openProfileEdit; }
