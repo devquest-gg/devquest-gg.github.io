@@ -277,6 +277,15 @@
   .draftedit{border:1px dashed var(--border);border-radius:18px;background:linear-gradient(180deg,rgba(163,113,247,.06),transparent);padding:22px 24px;margin-top:22px}
   .draftedit .dh{font-size:14px;font-weight:800;letter-spacing:.02em;color:#cdd8e6;margin:22px 0 10px;text-transform:uppercase}
   .draftedit .dh:first-of-type{margin-top:6px}
+  .decatintro{margin:22px 0 2px;font-size:12.5px;color:var(--muted)}
+  .decat{border-top:1px solid var(--border)}
+  .dcatsum{list-style:none;cursor:pointer;display:flex;align-items:center;gap:10px;padding:14px 2px;font-size:14px;font-weight:800;letter-spacing:.02em;color:#cdd8e6;text-transform:uppercase}
+  .dcatsum::-webkit-details-marker{display:none}
+  .dcatsum::after{content:"\25B8";margin-left:auto;color:var(--muted);font-size:14px;transition:transform .15s ease}
+  .decat[open] .dcatsum::after{transform:rotate(90deg)}
+  .dcatsum:hover{color:#fff}
+  .dcathint{font-size:10px;font-weight:700;letter-spacing:.04em;text-transform:none;color:var(--muted);border:1px solid var(--border);border-radius:999px;padding:2px 9px}
+  .decat[open] .dcathint{color:var(--accent);border-color:rgba(88,166,255,.4)}
   .decard{border:1px solid var(--border);border-radius:13px;background:var(--panel2);padding:14px 15px;margin-bottom:11px}
   .decard label{display:block;font-size:11.5px;font-weight:700;color:#cdd8e6;margin:10px 0 4px}
   .decard input,.decard textarea{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:8px 11px;color:var(--text);font-size:13.5px;font-family:inherit;outline:none}
@@ -918,27 +927,45 @@
   function mountDraftEditor(){
     if(document.getElementById("draftedit")) return;
     var wrap=document.createElement("div"); wrap.className="wrap";
+    // Discipline-specific sections collapse by default (most people use one discipline — the rest are noise).
+    // A section starts EXPANDED only if it matches the user's discipline or already has content in it.
+    var _ps=(_person&&_person.portfolio_style)||"";
+    var _dd=dGet(), _pf=(_dd.profile||{}), _qaD=(_dd.qa||{});
+    function _hasArr(a){ return Array.isArray(a)&&a.length>0; }
+    function _catOpen(match, hasContent){ return (match||hasContent)?' open':''; }
+    function _catSum(title, hint){ return '<summary class="dcatsum"><span class="dcatt">'+title+'</span><span class="dcathint">'+hint+'</span></summary>'; }
+    var _oSys=_catOpen(_ps==="engineering", _hasArr(_dd.systems));
+    var _oDsn=_catOpen(_ps==="design", _hasArr(_dd.designs));
+    var _oAud=_catOpen(_ps==="audio", _hasArr(_dd.audio));
+    var _oQa=_catOpen(_ps==="qa", _hasArr(_qaD.metrics)||_hasArr(_qaD.areas));
+    var _oMedia=_catOpen(_ps==="art"||_ps==="audio", _hasArr(_pf.gallery)||!!_pf.reel_url);
     wrap.innerHTML='<section id="draftedit" class="draftedit">'+
       '<div class="eyebrow">Draft tools · only you see this</div><h2 class="sec">Work history &amp; education</h2>'+
       '<p class="sub">Add or fix your roles and education here, they show on your timeline and résumé right away, and save to your account when you publish.</p>'+
       '<h3 class="dh">Work history</h3><div id="de-poslist"></div><button type="button" class="btn ghost" id="de-addpos">+ Add a position</button>'+
       '<h3 class="dh">Education</h3><div id="de-edulist"></div><button type="button" class="btn ghost" id="de-addedu">+ Add education</button>'+
-      '<h3 class="dh">Systems &amp; tech</h3>'+
-      '<p class="sub" style="margin:-4px 0 10px">'+((((_person&&_person.portfolio_style)||"")==="engineering")?'Because your style is <b>Engineering</b>, these lead your page. List the technical systems you built.':'List technical systems you built. <b>Tip:</b> set your style to Engineering (Edit header) to make these lead your page.')+'</p>'+
-      '<div id="de-syslist"></div><button type="button" class="btn ghost" id="de-addsys">+ Add a system</button>'+
-      '<h3 class="dh">Design breakdowns</h3>'+
-      '<p class="sub" style="margin:-4px 0 10px">'+((((_person&&_person.portfolio_style)||"")==="design")?'Because your style is <b>Design</b>, these lead your page. Add the features you designed, the goal, and the player response.':'Add the features you designed, the goal, and the player response. <b>Tip:</b> set your style to Design (Edit header) to make these lead your page.')+'</p>'+
-      '<div id="de-dsnlist"></div><button type="button" class="btn ghost" id="de-adddsn">+ Add a breakdown</button>'+
-      '<h3 class="dh">Listen &mdash; audio</h3>'+
-      '<p class="sub" style="margin:-4px 0 10px">'+((((_person&&_person.portfolio_style)||"")==="audio")?'Because your style is <b>Audio</b>, these lead your page. Add playable tracks and say how each works in the game.':'Add playable tracks (music, SFX, implementation) and say how each works in the game. <b>Tip:</b> set your style to Audio (Edit header) to make these lead your page.')+'</p>'+
-      '<div id="de-audlist"></div><button type="button" class="btn ghost" id="de-addaud">+ Add a track</button>'+
-      '<h3 class="dh">Quality &amp; coverage</h3>'+
-      '<p class="sub" style="margin:-4px 0 10px">'+((((_person&&_person.portfolio_style)||"")==="qa")?'Because your style is <b>QA</b>, this leads your page. Add the test areas you owned and the numbers that prove your impact.':'Add the test areas you owned and the numbers behind them. <b>Tip:</b> set your style to QA (Edit header) to make these lead your page.')+'</p>'+
-      '<div class="desublab">By the numbers</div><div id="de-qanumlist"></div><button type="button" class="btn ghost" id="de-addqanum">+ Add a number</button>'+
-      '<div class="desublab" style="margin-top:14px">Test areas</div><div id="de-qalist"></div><button type="button" class="btn ghost" id="de-addqa">+ Add a test area</button>'+
-      '<h3 class="dh">Visual work &amp; showreel</h3>'+
-      '<p class="sub" style="margin:-4px 0 10px">'+(["art","audio"].indexOf((_person&&_person.portfolio_style)||"")>=0?'Because your style is <b>'+esc(_person.portfolio_style)+'</b>, this leads your page, add a reel and images and they jump to the top.':'Add a reel or images here. <b>Tip:</b> set your style to Art or Audio (Edit header) to make these lead your page.')+'</p>'+
-      '<div id="de-media"></div>'+
+      '<div class="decatintro">Discipline sections — expand the one(s) you need. Most people only use one.</div>'+
+      '<details class="decat"'+_oSys+'>'+_catSum('Systems &amp; tech','Engineering')+
+        '<p class="sub" style="margin:-4px 0 10px">'+((((_person&&_person.portfolio_style)||"")==="engineering")?'Because your style is <b>Engineering</b>, these lead your page. List the technical systems you built.':'List technical systems you built. <b>Tip:</b> set your style to Engineering (Edit header) to make these lead your page.')+'</p>'+
+        '<div id="de-syslist"></div><button type="button" class="btn ghost" id="de-addsys">+ Add a system</button>'+
+      '</details>'+
+      '<details class="decat"'+_oDsn+'>'+_catSum('Design breakdowns','Design')+
+        '<p class="sub" style="margin:-4px 0 10px">'+((((_person&&_person.portfolio_style)||"")==="design")?'Because your style is <b>Design</b>, these lead your page. Add the features you designed, the goal, and the player response.':'Add the features you designed, the goal, and the player response. <b>Tip:</b> set your style to Design (Edit header) to make these lead your page.')+'</p>'+
+        '<div id="de-dsnlist"></div><button type="button" class="btn ghost" id="de-adddsn">+ Add a breakdown</button>'+
+      '</details>'+
+      '<details class="decat"'+_oAud+'>'+_catSum('Listen &mdash; audio','Audio')+
+        '<p class="sub" style="margin:-4px 0 10px">'+((((_person&&_person.portfolio_style)||"")==="audio")?'Because your style is <b>Audio</b>, these lead your page. Add playable tracks and say how each works in the game.':'Add playable tracks (music, SFX, implementation) and say how each works in the game. <b>Tip:</b> set your style to Audio (Edit header) to make these lead your page.')+'</p>'+
+        '<div id="de-audlist"></div><button type="button" class="btn ghost" id="de-addaud">+ Add a track</button>'+
+      '</details>'+
+      '<details class="decat"'+_oQa+'>'+_catSum('Quality &amp; coverage','QA')+
+        '<p class="sub" style="margin:-4px 0 10px">'+((((_person&&_person.portfolio_style)||"")==="qa")?'Because your style is <b>QA</b>, this leads your page. Add the test areas you owned and the numbers that prove your impact.':'Add the test areas you owned and the numbers behind them. <b>Tip:</b> set your style to QA (Edit header) to make these lead your page.')+'</p>'+
+        '<div class="desublab">By the numbers</div><div id="de-qanumlist"></div><button type="button" class="btn ghost" id="de-addqanum">+ Add a number</button>'+
+        '<div class="desublab" style="margin-top:14px">Test areas</div><div id="de-qalist"></div><button type="button" class="btn ghost" id="de-addqa">+ Add a test area</button>'+
+      '</details>'+
+      '<details class="decat"'+_oMedia+'>'+_catSum('Visual work &amp; showreel','Art / Audio')+
+        '<p class="sub" style="margin:-4px 0 10px">'+(["art","audio"].indexOf((_person&&_person.portfolio_style)||"")>=0?'Because your style is <b>'+esc(_person.portfolio_style)+'</b>, this leads your page, add a reel and images and they jump to the top.':'Add a reel or images here. <b>Tip:</b> set your style to Art or Audio (Edit header) to make these lead your page.')+'</p>'+
+        '<div id="de-media"></div>'+
+      '</details>'+
     '</section>';
     app.appendChild(wrap);
     renderDePos(); renderDeEdu(); renderDeMedia(); renderDeSystems(); renderDeDesigns(); renderDeAudio(); renderDeQaNums(); renderDeQaAreas();
