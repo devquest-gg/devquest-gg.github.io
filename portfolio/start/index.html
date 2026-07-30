@@ -237,7 +237,10 @@
     return { clean:parts[0].trim()||t, games:games };
   }
   function _isDur(l){ return !/\d{4}/.test(l) && /\d+\s*(yrs?|years?|mos?|months?)\b/i.test(l); }   // "2 yrs 9 mos" — a grouped-company total, not a role date
-  function _isTitleLine(l){ return _TITLERE.test(l) && !/·/.test(l) && !/\d{4}/.test(l); }
+  function _isTitleLine(l){ l=String(l==null?"":l).trim();
+    if(l.length>70 || l.split(/\s+/).length>9) return false;      // a job title is short; a résumé bullet or summary paragraph is not
+    if(/[.!?]$/.test(l)) return false;                            // ends like a sentence
+    return _TITLERE.test(l) && !/·/.test(l) && !/\d{4}/.test(l); }
   function _isDate(l){ return _DRRE.test(l); }
   // ---- résumé-shape guards (a LinkedIn paste is line-per-field; a résumé is headings + prose bullets) ----
   // A résumé section heading ("PROFESSIONAL EXPERIENCE", "Education", "Skills:"). Never a company — but it
@@ -249,11 +252,21 @@
   // bullet — look like a company. That is exactly the "bullet points read as company names" bug.
   function _dateIsProse(l){
     l=String(l==null?"":l).trim();
-    var w=l.split(/\s+/).length; if(w<=6) return false;            // "Jan 2019 - Present" / "2019 - 2022, Remote"
     var m=l.match(_DRRE); if(!m) return false;
     var at=l.indexOf(m[0]);
     var head=(at<=2), tail=((at+m[0].length)>=l.length-2);
-    return (head||tail) ? (w>12) : true;                           // a date at either end of a short-ish line is still a date line
+    if(!head && !tail) return true;                                // buried mid-sentence → a bullet that mentions years
+    // The range sits at one end. Judge by what is LEFT of it, not by length: a real résumé row can be long
+    // ("PlayStation – Bend Studio – Director of Studio Production | 2019 – Apr 2022" is 14 words), while a
+    // sentence like "grew the team from 2018 – 2021" is short. Shape, not size.
+    var rest=_stripJunk(String(l).replace(m[0]," "));
+    if(!rest) return false;                                        // the line is only a date range
+    if(_DESCVERB.test(rest)) return true;
+    if(/[.!?]$/.test(rest)) return true;
+    if(/^[a-z]/.test(rest)) return true;                           // lowercase start → a wrapped prose line
+    var _sg=rest.split(/\s[–—-]\s|\s[|·]\s|,/).map(function(x){ return _stripJunk(x); }).filter(Boolean);
+    for(var _i=0;_i<_sg.length;_i++){ if(_canBeCompany(_sg[_i])) return false; }   // a plausible employer segment → a real role row
+    return true;
   }
   // Can this line plausibly BE a company name? Rejects bullets, headings, and sentence-shaped prose.
   function _canBeCompany(l){
@@ -324,10 +337,24 @@
     // Anchor on the experience heading. LinkedIn emits a bare "Experience"; a résumé uses "PROFESSIONAL
     // EXPERIENCE" / "Work History" / "Employment". Anchoring on either skips the summary/objective block,
     // which is pure prose and the single richest source of false-positive company names.
+    // LinkedIn follows the name with a headline; a RÉSUMÉ follows it with a phone number / email line.
+    // Without this a résumé's name is never detected, so the person has to retype it at the last step.
+    if(!name){
+      for(var ni=0;ni<Math.min(ne.length,12) && !name;ni++){
+        if(!_looksLikeName(ne[ni])) continue;
+        var nx2=ne[ni+1]||"";
+        if(/@[\w.-]+\.\w{2,}/.test(nx2) || /\(?\d{3}\)?[\s.\-]?\d{3}[\s.\-]?\d{4}/.test(nx2)){
+          name=ne[ni];
+          for(var hh=ni+1;hh<Math.min(ne.length,ni+5);hh++){ var cand=ne[hh];
+            if(cand && !/@|\d{3}/.test(cand) && cand.length<=140 && !_isSectionHead(cand) && (/ at /i.test(cand)||_TITLERE.test(cand))){ headline=cand; break; } }
+        }
+      }
+    }
     var start=0; for(var i=0;i<L.length;i++){ if(/^(professional\s+|work\s+|relevant\s+|previous\s+|prior\s+)?(experience|employment(\s+history)?|work\s+history|career(\s+history)?)\s*[:：]?$/i.test(L[i])){ start=i+1; break; } }
     var jobs=[], currentCompany="", pendingTitle="", pgames=[], activeStudio="";
     for(var i=start;i<L.length;i++){ var line=L[i]; if(!line) continue;
       if(/^(profile language|who your viewers|about$|privacy|linkedin corporation|help center|select language|messaging|status is online|connected apps|add connected|projects|skills|recommendations|interests|education|licenses|volunteering|volunteer|courses|honors|test scores|languages|organizations|causes|people you|people also viewed|more profiles|you might like|pages for you|show more|load more)\b/i.test(line)) break;   // footer / next profile section (incl. "More profiles for you" people block)
+      if(_isSectionHead(line)) break;   // a résumé heading ("Selected Titles", "Core Competencies") ends the experience block — otherwise its contents get read as games
       if(_isDate(line) && !BULLET[i] && !_dateIsProse(line)){
         var dr=line.match(_DRRE); var from=_year4(dr[1]); var to=/present|current|now|today|ongoing/i.test(dr[2])?"":(_year4(dr[2])||"");
         var pv=_prevNE(L,i), prev=pv.line, company="";
@@ -342,10 +369,15 @@
         var _rest=_stripJunk(String(line).replace(dr[0]," "));
         var _rs=_rest ? _rest.split(/\s[–—-]\s|\s[|·]\s|,/).map(function(x){ return _stripJunk(x); }).filter(Boolean) : [];
         if(!company){
-          for(var _ri=0;_ri<_rs.length;_ri++){ if(_canBeCompany(_rs[_ri]) && !_isTitleLine(_rs[_ri]) && !_isLoc(_rs[_ri]) && !_hasType(_rs[_ri])){ company=_rs[_ri]; break; } }
+          // Prefer a segment we recognise as a real studio: "PlayStation – Bend Studio – Director…" should
+          // credit Bend Studio, not PlayStation. Fall back to the first plausible segment otherwise.
+          for(var _ri=0;_ri<_rs.length;_ri++){ var _cn=_matchStudioStrict(_cleanCo(_rs[_ri]), studioArr); if(_cn){ company=_cn; break; } }
+          if(!company) for(var _r2=0;_r2<_rs.length;_r2++){ if(_canBeCompany(_rs[_r2]) && !_isTitleLine(_rs[_r2]) && !_isLoc(_rs[_r2]) && !_hasType(_rs[_r2])){ company=_rs[_r2]; break; } }
         }
         var title=pendingTitle;
-        if(!title){ var t=_prevNE(L,pv.idx); if(t.line && _isTitleLine(t.line)) title=t.line; else if(prev && _isTitleLine(prev)) title=prev; }
+        if(!title){ var t=_prevNE(L,pv.idx);
+          if(t.line && !BULLET[t.idx] && !_isSectionHead(t.line) && _isTitleLine(t.line)) title=t.line;
+          else if(prev && !BULLET[pv.idx] && !_isSectionHead(prev) && _isTitleLine(prev)) title=prev; }
         if(!title){ for(var _ti=0;_ti<_rs.length;_ti++){ if(_isTitleLine(_rs[_ti])){ title=_rs[_ti]; break; } } }   // "Producer   2018 – 2021"
         company=_cleanCo(company); var canon=_matchStudioStrict(company, studioArr); if(canon) company=canon;
         if(company){ var _tg=_titleGames(title); jobs.push({company:company, title:_stripJunk(_tg.clean), from:from, to:to}); activeStudio=company; _tg.games.forEach(function(gn){ pgames.push({title:gn, studio:company, fromTitle:true}); }); }
@@ -394,6 +426,31 @@
         if(_isDate(pl)||_isDur(pl)||/^show project/i.test(pl)||_isImgAlt(pl)) continue;                     // a project's date / link / image-alt line
         if(/^associated with /i.test(pl)){ if(lastG) lastG.studio=_stripJunk(pl.replace(/^associated with\s+/i,"")); continue; }
         lastG={title:pl, studio:""}; pgames.push(lastG);                                                   // a project title → a game candidate
+      }
+    }
+    // A résumé lists its games in a "Selected Titles" / "Shipped Titles" / "Credits" block — usually ONE
+    // line of separator-delimited names. LinkedIn has no equivalent (it uses Projects), so this is
+    // résumé-only, and without it a résumé yields zero games no matter how many titles it names.
+    var _TITLESEC=/^(selected\s+|shipped\s+|notable\s+|key\s+|published\s+|featured\s+|game\s+)?(titles?|games?|credits?|gameography|ship\s*list)\s*[:：]?$/i;
+    var tStart=-1; for(var ti=0;ti<L.length;ti++){ if(_TITLESEC.test(L[ti])){ tStart=ti+1; break; } }
+    if(tStart>=0){
+      for(var tj=tStart;tj<L.length;tj++){
+        var tl=L[tj]; if(!tl) continue;
+        if(_isSectionHead(tl)) break;                                   // next heading ends the block
+        if(_isDate(tl)||_isDur(tl)||_isImgAlt(tl)) continue;
+        // Use the explicit separator when there is one; only fall back to commas when there isn't,
+        // so "Multiple unreleased AAA titles across PC, next-gen consoles…" stays one (rejectable) item.
+        var parts = /[•·▪‣|;]/.test(tl) ? tl.split(/\s*[•·▪‣|;]\s*/) : tl.split(/\s*,\s*/);
+        for(var pk=0;pk<parts.length;pk++){
+          var t=_stripJunk(String(parts[pk]).replace(/\s*\([^)]*\)\s*/g," "));      // drop "(unannounced)"
+          t=t.replace(/\s+(franchise|series|trilogy|saga)$/i,"").trim();
+          if(!t || t.length<2 || t.length>80) continue;
+          if(!/[A-Za-z]/.test(t)) continue;
+          if(_isSectionHead(t)||_isDesc(t)||_isImgAlt(t)||_isLoc(t)) continue;
+          if(/^(multiple|various|several|numerous|many|other|additional|plus|etc)\b/i.test(t)) continue;   // "Multiple unreleased AAA titles…"
+          if(_SUFFIXRE.test(t) && t.split(/\s+/).length<=3) continue;                                     // "…Studios"/"…Games" alone is a studio
+          pgames.push({title:t, studio:"", fromTitleSec:true});
+        }
       }
     }
     var education=_parseEducation(L);
