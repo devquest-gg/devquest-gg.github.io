@@ -706,7 +706,10 @@
   // ===== games-only DRAFT mode: build a wall from localStorage, no account yet =====
   function dGet(){ try{ return JSON.parse(localStorage.getItem("dq_draft")||"null")||{name:"",credits:[]}; }catch(e){ return {name:"",credits:[]}; } }
   function dSet(d){ try{ localStorage.setItem("dq_draft", JSON.stringify(d||{name:"",credits:[]})); }catch(e){} }
-  function draftCredit(c,i){ return { id:"draft-"+i, game_slug:c.game_slug, game_title:c.game_title||c.game_slug, studio:c.studio||"", year:c.year||null, work_start:(c.work_start!=null?c.work_start:(c.year||null)), work_end:(c.work_end!=null?c.work_end:null), role:c.role||"", roles_other:[], releases:[], links:[], source_url:"", verification:[], vouch_count:0, sheet:c.sheet||null, scope:"base" }; }
+  // A game the catalogue does not have. The synthetic "new:" slug is local to the draft; signin.html
+  // converts it to the API's new_game{} on publish (POST /credits -> createGame in handlers.js).
+  function draftCustomSlug(t){ var k=String(t==null?"":t).toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,""); return "new:"+(k||"game"); }
+  function draftCredit(c,i){ return { id:"draft-"+i, custom:(c.custom?true:false), game_slug:c.game_slug, game_title:c.game_title||c.game_slug, studio:c.studio||"", year:c.year||null, work_start:(c.work_start!=null?c.work_start:(c.year||null)), work_end:(c.work_end!=null?c.work_end:null), role:c.role||"", roles_other:[], releases:[], links:[], source_url:"", verification:[], vouch_count:0, sheet:c.sheet||null, scope:"base" }; }
   function loadDraft(){
     document.body.classList.add("is-draft");
     PREVIEW=false; document.body.classList.remove("previewing");   // a fresh load always returns to editing mode
@@ -721,7 +724,7 @@
   // Mirror the rendered _credits back into the localStorage draft (role, work years, one-sheet, cover, order).
   function draftSyncFromCredits(){
     var d=dGet();
-    d.credits=(_credits||[]).map(function(c){ return { game_slug:c.game_slug, game_title:c.game_title, studio:c.studio||"", year:c.year||"", role:c.role||"", work_start:(c.work_start!=null?c.work_start:null), work_end:(c.work_end!=null?c.work_end:null), sheet:c.sheet||null, cover_url:(_covMap[c.game_slug]||"") }; });
+    d.credits=(_credits||[]).map(function(c){ return { custom:(c.custom?true:false), game_slug:c.game_slug, game_title:c.game_title, studio:c.studio||"", year:c.year||"", role:c.role||"", work_start:(c.work_start!=null?c.work_start:null), work_end:(c.work_end!=null?c.work_end:null), sheet:c.sheet||null, cover_url:(_covMap[c.game_slug]||"") }; });
     dSet(d);
   }
   function reloadDraft(){ loadDraft(); }
@@ -747,24 +750,32 @@
     ov.querySelector("#dr-add").onclick=function(){
       var role=((ov.querySelector("#dr-role")||{}).value||"").trim(); if(!role){ alert("Add your role first."); return; }
       var dd=dGet(); var nmEl=ov.querySelector("#dr-name"); if(nmEl && nmEl.value.trim()) dd.name=nmEl.value.trim();
-      if(!dd.credits.some(function(c){return c.game_slug===game.game_slug;})) dd.credits.push({game_slug:game.game_slug,game_title:game.game_title,studio:game.studio||"",year:game.year||"",role:role});
+      if(!dd.credits.some(function(c){return c.game_slug===game.game_slug;})) dd.credits.push({game_slug:game.game_slug,game_title:game.game_title,studio:game.studio||"",year:game.year||"",role:role,custom:(game.custom?true:false)});
       dSet(dd); ov.remove(); if(onDone) onDone();
     };
     setTimeout(function(){ var r=ov.querySelector("#dr-role"); if(r) r.focus(); },40);
   }
   function draftAddSearch(){
     var have={}; (dGet().credits||[]).forEach(function(c){ have[c.game_slug]=1; });
-    var ov=draftModal('<h3>Add a game you shipped</h3><div class="dsub">Search the catalogue and pick a title you worked on.</div><input id="da-q" placeholder="Start typing a game title…" autocomplete="off"><div id="da-res" style="margin-top:10px;max-height:320px;overflow:auto"></div><div class="dfoot">Not in the catalogue? You can add a missing game once you save.</div>');
+    var ov=draftModal('<h3>Add a game you shipped</h3><div class="dsub">Search the catalogue and pick a title you worked on — or add one we don’t have.</div><input id="da-q" placeholder="Start typing a game title…" autocomplete="off"><div id="da-res" style="margin-top:10px;max-height:320px;overflow:auto"></div><div class="dfoot">Our catalogue comes from public data, so it misses unannounced, cancelled, indie and co-dev titles. Type any title and add it by hand — it gets created under your credit when you publish.</div>');
     var qi=ov.querySelector("#da-q"), res=ov.querySelector("#da-res"), t;
-    function paint(gs){ if(!gs.length){ res.innerHTML='<div style="color:var(--muted,#8b98a9);font-size:13px;padding:8px 2px">No matches yet.</div>'; return; } res.innerHTML=gs.map(function(g){ var added=have[g.slug]; return '<button class="da-row" data-slug="'+esc(g.slug)+'" data-title="'+esc(g.title)+'" data-studio="'+esc(g.studio||"")+'" data-year="'+esc(g.year||"")+'" '+(added?"disabled":"")+' style="display:flex;width:100%;text-align:left;align-items:center;gap:10px;background:transparent;border:0;border-top:1px solid var(--border,#242c38);padding:10px 4px;cursor:'+(added?"default":"pointer")+';color:inherit"><span style="flex:1;min-width:0"><span style="display:block;font-weight:700;font-size:14px">'+esc(g.title)+'</span>'+((g.studio||g.year)?'<span style="display:block;color:var(--muted,#8b98a9);font-size:12px">'+esc((g.studio||"")+(g.studio&&g.year?" · ":"")+(g.year||""))+'</span>':'')+'</span><span style="font-size:12px;font-weight:800;color:'+(added?"var(--muted,#8b98a9)":"var(--accent,#58a6ff)")+';white-space:nowrap">'+(added?"Added ✓":"Add →")+'</span></button>'; }).join(""); }
+    // Every search offers "+ Add <what you typed> as a new game" at the top, so no title is unaddable.
+    function paint(gs, q){
+      var addRow='<button class="da-new" data-title="'+esc(q)+'" style="display:block;width:100%;text-align:left;background:rgba(224,178,58,.08);border:1px solid rgba(224,178,58,.5);border-radius:8px;padding:10px 12px;cursor:pointer;color:var(--gold,#e0b23a);font-weight:800;font-size:13.5px;font-family:inherit">+ Add “'+esc(q)+'” as a new game</button>';
+      var list=gs.map(function(g){ var added=have[g.slug]; return '<button class="da-row" data-slug="'+esc(g.slug)+'" data-title="'+esc(g.title)+'" data-studio="'+esc(g.studio||"")+'" data-year="'+esc(g.year||"")+'" '+(added?"disabled":"")+' style="display:flex;width:100%;text-align:left;align-items:center;gap:10px;background:transparent;border:0;border-top:1px solid var(--border,#242c38);padding:10px 4px;cursor:'+(added?"default":"pointer")+';color:inherit"><span style="flex:1;min-width:0"><span style="display:block;font-weight:700;font-size:14px">'+esc(g.title)+'</span>'+((g.studio||g.year)?'<span style="display:block;color:var(--muted,#8b98a9);font-size:12px">'+esc((g.studio||"")+(g.studio&&g.year?" · ":"")+(g.year||""))+'</span>':'')+'</span><span style="font-size:12px;font-weight:800;color:'+(added?"var(--muted,#8b98a9)":"var(--accent,#58a6ff)")+';white-space:nowrap">'+(added?"Added ✓":"Add →")+'</span></button>'; }).join("");
+      res.innerHTML=addRow+'<div style="color:var(--muted,#8b98a9);font-size:12px;padding:8px 2px 0">'+(gs.length?'…or pick it from the catalogue:':'Nothing in the catalogue matches that.')+'</div>'+list;
+    }
     qi.addEventListener("input",function(){ clearTimeout(t); var q=qi.value.trim(); if(q.length<2){ res.innerHTML=""; return; } t=setTimeout(function(){
       var ql=q.toLowerCase();
       // Full catalogue (static index.json) + live user-added games, merged — same as the signed-in add-game search.
       var staticP=getJSON("/credits/data/site/index.json").then(function(rows){ if(!Array.isArray(rows)) return []; var out=[]; for(var i=0;i<rows.length && out.length<60;i++){ var r=rows[i]; if(r && String(r[1]||"").toLowerCase().indexOf(ql)!==-1) out.push({slug:r[0],title:r[1],year:r[2],studio:r[3]}); } return out; }).catch(function(){ return []; });
       var liveP=(DQAPI.searchGames?DQAPI.searchGames(q).then(function(r){ return ((r&&r.data&&r.data.games)||[]).map(function(g){ return {slug:g.slug,title:g.title,year:g.year,studio:g.studio}; }); }).catch(function(){ return []; }):Promise.resolve([]));
-      Promise.all([staticP,liveP]).then(function(a){ if(((qi.value||"").trim().toLowerCase())!==ql) return; var seen={}, games=[]; a[0].concat(a[1]).forEach(function(g){ if(g && g.slug && !seen[g.slug]){ seen[g.slug]=1; games.push(g); } }); games.sort(function(x,y){ var xs=String(x.title||"").toLowerCase().indexOf(ql)===0?0:1, ys=String(y.title||"").toLowerCase().indexOf(ql)===0?0:1; return xs-ys || String(x.title||"").localeCompare(String(y.title||"")); }); paint(games.slice(0,14)); });
+      Promise.all([staticP,liveP]).then(function(a){ if(((qi.value||"").trim().toLowerCase())!==ql) return; var seen={}, games=[]; a[0].concat(a[1]).forEach(function(g){ if(g && g.slug && !seen[g.slug]){ seen[g.slug]=1; games.push(g); } }); games.sort(function(x,y){ var xs=String(x.title||"").toLowerCase().indexOf(ql)===0?0:1, ys=String(y.title||"").toLowerCase().indexOf(ql)===0?0:1; return xs-ys || String(x.title||"").localeCompare(String(y.title||"")); }); paint(games.slice(0,14), q); });
     },160); });
-    res.addEventListener("click",function(e){ var b=e.target.closest&&e.target.closest(".da-row"); if(!b||b.disabled) return; var g={game_slug:b.getAttribute("data-slug"),game_title:b.getAttribute("data-title"),studio:b.getAttribute("data-studio"),year:b.getAttribute("data-year")}; ov.remove(); draftRole(g, reloadDraft); });
+    res.addEventListener("click",function(e){
+      var nb=e.target.closest&&e.target.closest(".da-new");
+      if(nb){ var nt=String(nb.getAttribute("data-title")||"").trim(); if(!nt) return; ov.remove(); draftRole({ game_slug:draftCustomSlug(nt), game_title:nt, studio:"", year:"", custom:true }, reloadDraft); return; }
+      var b=e.target.closest&&e.target.closest(".da-row"); if(!b||b.disabled) return; var g={game_slug:b.getAttribute("data-slug"),game_title:b.getAttribute("data-title"),studio:b.getAttribute("data-studio"),year:b.getAttribute("data-year")}; ov.remove(); draftRole(g, reloadDraft); });
     setTimeout(function(){ qi.focus(); },40);
   }
   function draftSave(){
@@ -829,6 +840,19 @@
     return '<div class="reviewbadge'+(isOC?' oc':'')+'">'+inner+'</div>';
   }
 
+  // Résumé buttons for the header. If the person linked their own designed PDF (links.resume), that link
+  // IS the "Résumé (PDF)" button — a recruiter clicking it gets the document the person actually wants to
+  // hand out. The generated Word export stays alongside, so nothing is lost, and owners keep Tailor.
+  function resumeBtns(links, primaryCls){
+    var own=(links&&links.resume)||"";
+    var main = own
+      ? '<a class="btn '+primaryCls+'" href="'+esc(own)+'" target="_blank" rel="noopener">⬇ Résumé (PDF)</a>'
+      : '<a class="btn '+primaryCls+' dq-rpdf" style="cursor:pointer">⬇ Résumé (PDF)</a>';
+    return main+
+      (own?'<a class="btn ghost dq-rpdf owner-only" style="cursor:pointer">⬇ DevQuest version</a>':'')+
+      '<a class="btn ghost dq-rdocx" style="cursor:pointer">⬇ Word (.docx)</a>'+
+      '<a class="btn ghost dq-tailor owner-only" style="cursor:pointer">🎯 Tailor to a job</a>';
+  }
   function render(p, positions, credits, covMap){
     covMap = covMap || {};
     document.title = p.name + " · DevQuest Portfolio";
@@ -867,7 +891,7 @@
     var confirmed = credits.filter(function(c){ return (c.vouch_count||0)>0; }).length;
     var _showContact = !IS_OWNER && p.open_to_work && p.contact_email;
     var _contactBtn = _showContact ? '<a class="btn primary dq-contact" data-ce="'+esc(_b64(p.contact_email))+'" style="cursor:pointer">✉ Get in touch</a>' : '';
-    var contact = '<div class="wrap"><div class="contact"><h3>'+esc(p.name.split(" ")[0])+' is '+(p.open_to_work?'open to new roles':'on DevQuest')+'</h3><p>'+(IS_OWNER?'Résumé tailors to your posting in one click.':'Download '+esc(p.name.split(" ")[0])+'&rsquo;s résumé'+(_showContact?', or get in touch.':'.'))+'</p><div class="clinks">'+_contactBtn+'<a class="btn '+(_showContact?'ghost':'primary')+' dq-rpdf" style="cursor:pointer">⬇ Résumé (PDF)</a><a class="btn ghost dq-rdocx" style="cursor:pointer">⬇ Word (.docx)</a><a class="btn ghost dq-tailor owner-only" style="cursor:pointer">🎯 Tailor to a job</a>'+linkBtns+'</div>'+
+    var contact = '<div class="wrap"><div class="contact"><h3>'+esc(p.name.split(" ")[0])+' is '+(p.open_to_work?'open to new roles':'on DevQuest')+'</h3><p>'+(IS_OWNER?'Résumé tailors to your posting in one click.':'Download '+esc(p.name.split(" ")[0])+'&rsquo;s résumé'+(_showContact?', or get in touch.':'.'))+'</p><div class="clinks">'+_contactBtn+resumeBtns(links,(_showContact?'ghost':'primary'))+linkBtns+'</div>'+
       (confirmed?'<div class="vfoot"><span class="v2">✓</span> '+confirmed+' of '+credits.length+' credits confirmed by teammates who shipped the same game · <a href="/credits/how-evidence-works.html" style="color:var(--accent)">how evidence works →</a></div>':'')+
       '</div></div>';
 
@@ -1194,7 +1218,7 @@
         (p.headline ? '<div class="role">'+esc(p.headline)+'</div>' : '')+
         (p.bio ? '<p class="bio">'+esc(p.bio)+'</p>' : '')+
         '<div class="tags">'+tags.map(function(t){return '<span class="tag spec">'+esc(t)+'</span>';}).join("")+'</div>'+
-        '<div class="cta">'+((!IS_OWNER && p.open_to_work && p.contact_email)?'<a class="btn primary dq-contact" data-ce="'+esc(_b64(p.contact_email))+'" style="cursor:pointer">✉ Get in touch</a>':'')+'<a class="btn '+((!IS_OWNER && p.open_to_work && p.contact_email)?'ghost':'primary')+' dq-rpdf" style="cursor:pointer">⬇ Résumé (PDF)</a><a class="btn ghost dq-rdocx" style="cursor:pointer">⬇ Word (.docx)</a><a class="btn ghost dq-tailor owner-only" style="cursor:pointer">🎯 Tailor to a job</a>'+lb+(p.slug?'<a class="btn dq-share owner-only" style="cursor:pointer">↗ Share</a>':'')+'</div>'+
+        '<div class="cta">'+((!IS_OWNER && p.open_to_work && p.contact_email)?'<a class="btn primary dq-contact" data-ce="'+esc(_b64(p.contact_email))+'" style="cursor:pointer">✉ Get in touch</a>':'')+resumeBtns(links,((!IS_OWNER && p.open_to_work && p.contact_email)?'ghost':'primary'))+lb+(p.slug?'<a class="btn dq-share owner-only" style="cursor:pointer">↗ Share</a>':'')+'</div>'+
         '</div></div>'+
         '<div class="stats">'+
           stat((CUR-minY)+" yrs","In the industry")+stat(nStudios,"Studios")+stat(credits.length,"Credits")+
@@ -1773,7 +1797,8 @@
     if(!email && IS_OWNER && window.DQAPI && DQAPI.isSignedIn && DQAPI.isSignedIn() && DQAPI.me){
       try{ var mr=await DQAPI.me(); var pe=mr&&mr.data&&mr.data.person; if(pe) email=pe.email||pe.primary_email||(pe.emails&&pe.emails[0]&&(pe.emails[0].email||pe.emails[0]))||""; }catch(e){}
     }
-    var links=(p.links||[]).map(function(l){ return l.url; }).filter(Boolean);
+    // Skip type "resume": that's a link TO a résumé, so printing it ON the résumé is a self-reference.
+    var links=(p.links||[]).filter(function(l){ return l && l.type!=="resume"; }).map(function(l){ return l.url; }).filter(Boolean);
     var RN=function(x){ return String(x||"").trim().toLowerCase().replace(/[^a-z0-9]+/g," ").trim(); };
     var NOWY=(new Date()).getFullYear();
     // Positions become the primary unit. Each carries a numeric span so games can be matched into it.
@@ -2419,13 +2444,18 @@
       '<label class="eflabel">Links</label>'+
       '<div class="efrow"><div><input id="ef-linkedin" placeholder="LinkedIn URL" value="'+esc(links.linkedin||"")+'"></div><div><input id="ef-portfolio" placeholder="Website URL" value="'+esc(links.portfolio||"")+'"></div></div>'+
       '<div class="efrow" style="margin-top:8px"><div><input id="ef-artstation" placeholder="ArtStation URL" value="'+esc(links.artstation||"")+'"></div><div><input id="ef-github" placeholder="GitHub URL" value="'+esc(links.github||"")+'"></div></div>'+
+      // Your own résumé. Plenty of people have a designed PDF they would rather hand a recruiter than the
+      // one we generate — so if this is set it becomes the primary "Résumé (PDF)" button in your header,
+      // and the generated one stays alongside it as a secondary download.
+      '<label class="eflabel">Your own résumé <span class="mut">&mdash; optional; paste a public link to your designed PDF (Drive, Dropbox, your site). If set, this becomes the &ldquo;Résumé (PDF)&rdquo; button visitors see.</span></label>'+
+      '<input id="ef-resume" placeholder="https://…  link to your résumé PDF" value="'+esc(links.resume||"")+'">'+
       '<div class="efactions"><span class="efbtn primary" id="ef-save">Save</span><span class="efbtn" id="ef-cancel">Cancel</span><span class="efstatus" id="ef-status"></span></div>'+
       '</div>';
   }
   function saveProfile(){
     var g=function(id){ var e=document.getElementById(id); return e?e.value.trim():""; };
     var links=[];
-    [["linkedin","ef-linkedin"],["portfolio","ef-portfolio"],["artstation","ef-artstation"],["github","ef-github"]].forEach(function(x){ var u=g(x[1]); if(u) links.push({type:x[0],url:u}); });
+    [["linkedin","ef-linkedin"],["portfolio","ef-portfolio"],["artstation","ef-artstation"],["github","ef-github"],["resume","ef-resume"]].forEach(function(x){ var u=g(x[1]); if(u) links.push({type:x[0],url:u}); });
     var _un=document.getElementById("ef-unshipped"); var unc=_un?parseInt(_un.value,10):NaN; if(isNaN(unc)||unc<0) unc=0; if(unc>999) unc=999;
     var payload={ name:g("ef-name"), headline:g("ef-head"), location:g("ef-loc"), bio:g("ef-bio"), open_to_work: document.getElementById("ef-otw").checked?1:0, portfolio_style:g("ef-style"), avatar_url:g("ef-avatar"), links:links, unshipped_count:unc, contact_email:g("ef-contact") };
     var st=document.getElementById("ef-status"); st.textContent="Saving…"; st.className="efstatus";
@@ -2606,7 +2636,7 @@
   // ---- add a game (owner) ----
   function addGameHTML(){
     return '<div class="efwrap"><button class="osclose" aria-label="Close">✕</button>'+
-      '<h3>Add a game</h3><div class="efdesc">Search the catalogue for a game you shipped, then add your role.</div>'+
+      '<h3>Add a game</h3><div class="efdesc">Search the catalogue for a game you shipped, then add your role. <b>Not in the list?</b> Our catalogue comes from public data, so it misses unannounced, cancelled, indie and co-dev titles — type the title and take the <span style="color:var(--gold);font-weight:800">+ Add “…” as a new game</span> option at the top of the results.</div>'+
       '<label class="eflabel">Game</label><input id="ag-q" placeholder="Start typing a game title…" autocomplete="off">'+
       '<div id="ag-results" style="margin-top:8px"></div>'+
       '<div id="ag-picked"></div>'+
@@ -2646,8 +2676,11 @@
         a[0].concat(a[1]).forEach(function(g){ if(g.slug && !seen[g.slug]){ seen[g.slug]=1; games.push(g); } });
         games.sort(function(x,y){ var xs=String(x.title||"").toLowerCase().indexOf(ql)===0?0:1, ys=String(y.title||"").toLowerCase().indexOf(ql)===0?0:1; return xs-ys || String(x.title||"").localeCompare(String(y.title||"")); });
         games=games.slice(0,20);
-        res.innerHTML=games.map(function(g,i){ return '<div class="agresult" data-i="'+i+'"><span class="agt">'+esc(g.title)+'</span>'+((g.studio||g.year)?'<span class="ags">'+esc(g.studio||"")+(g.year?(g.studio?' · ':'')+g.year:'')+'</span>':'')+'</div>'; }).join("")+
-          '<div class="agnew" id="ag-new">+ Add “'+esc(v)+'” as a new game</div>';
+        // The add-by-hand row goes FIRST. It used to sit under up to 20 results, where testers reported
+        // they knew it existed but could not find it — which made a missing game feel unaddable.
+        res.innerHTML='<div class="agnew" id="ag-new" style="border:1px solid rgba(224,178,58,.5);background:rgba(224,178,58,.08);border-radius:8px;margin-bottom:8px">+ Add “'+esc(v)+'” as a new game</div>'+
+          (games.length?'<div class="ags" style="margin:2px 2px 4px">…or pick it from the catalogue:</div>':'<div class="ags" style="margin:2px 2px 4px">Nothing in the catalogue matches “'+esc(v)+'”.</div>')+
+          games.map(function(g,i){ return '<div class="agresult" data-i="'+i+'"><span class="agt">'+esc(g.title)+'</span>'+((g.studio||g.year)?'<span class="ags">'+esc(g.studio||"")+(g.year?(g.studio?' · ':'')+g.year:'')+'</span>':'')+'</div>'; }).join("");
         res.querySelectorAll(".agresult").forEach(function(el){ el.onclick=function(){ pick(games[+el.dataset.i]); }; });
         var nb=res.querySelector("#ag-new"); if(nb) nb.onclick=function(){ pick({title:v, studio:"", isNew:true}); };
       });

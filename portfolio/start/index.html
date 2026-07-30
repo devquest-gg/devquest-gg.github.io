@@ -239,6 +239,34 @@
   function _isDur(l){ return !/\d{4}/.test(l) && /\d+\s*(yrs?|years?|mos?|months?)\b/i.test(l); }   // "2 yrs 9 mos" — a grouped-company total, not a role date
   function _isTitleLine(l){ return _TITLERE.test(l) && !/·/.test(l) && !/\d{4}/.test(l); }
   function _isDate(l){ return _DRRE.test(l); }
+  // ---- résumé-shape guards (a LinkedIn paste is line-per-field; a résumé is headings + prose bullets) ----
+  // A résumé section heading ("PROFESSIONAL EXPERIENCE", "Education", "Skills:"). Never a company — but it
+  // sits directly above the first date range, which is exactly where we go looking for one.
+  var _SECTHEAD=/^(professional\s+|work\s+|relevant\s+|other\s+|additional\s+|selected\s+|previous\s+|prior\s+|recent\s+)?(experiences?|employment(\s+history)?|career(\s+(history|summary))?|work\s+history|education(al\s+background)?|academic\s+background|skills?|technical\s+skills|tools?(\s+(&|and)\s+technologies)?|core\s+competenc(y|ies)|competenc(y|ies)|summary|professional\s+summary|profile|objective|projects?|shipped\s+(titles?|games?)|selected\s+(titles?|games?|projects?)|credits?|gameography|titles?|awards?(\s+(&|and)\s+honou?rs)?|honou?rs|achievements?|references?|certifications?|licen[sc]es?|publications?|patents?|talks?|speaking|volunteering|volunteer(\s+experience)?|interests?|activities|languages?|contact(\s+(info|information|details))?|about(\s+me)?)\s*[:：]?\s*$/i;
+  function _isSectionHead(l){ l=String(l==null?"":l).trim().replace(/^[•▪◦‣▸○*–-]\s*/,"").replace(/[:：]\s*$/,""); return !!l && _SECTHEAD.test(l); }
+  // A year range buried in a sentence ("grew the team between 2018 - 2021 while shipping two titles") is a
+  // description bullet, NOT a role's date line. Treating it as one makes the line ABOVE it — usually another
+  // bullet — look like a company. That is exactly the "bullet points read as company names" bug.
+  function _dateIsProse(l){
+    l=String(l==null?"":l).trim();
+    var w=l.split(/\s+/).length; if(w<=6) return false;            // "Jan 2019 - Present" / "2019 - 2022, Remote"
+    var m=l.match(_DRRE); if(!m) return false;
+    var at=l.indexOf(m[0]);
+    var head=(at<=2), tail=((at+m[0].length)>=l.length-2);
+    return (head||tail) ? (w>12) : true;                           // a date at either end of a short-ish line is still a date line
+  }
+  // Can this line plausibly BE a company name? Rejects bullets, headings, and sentence-shaped prose.
+  function _canBeCompany(l){
+    l=String(l==null?"":l).trim(); if(!l) return false;
+    if(l.length>72) return false;
+    if(_isSectionHead(l)) return false;
+    if(_DESCVERB.test(l)) return false;                            // "Managed a team of…" — a bullet, not an employer
+    if(/[.!?]$/.test(l) && !/\b[A-Z][a-z]{0,3}\.$/.test(l)) return false;   // ends like a sentence (still allows "Games Inc.")
+    if(l.split(/\s+/).length>9) return false;                      // employers are short; bullets are not
+    if(!/[A-Za-z]/.test(l)) return false;
+    if(/^[a-z]/.test(l)) return false;                             // a wrapped continuation line
+    return true;
+  }
   function _prevNE(L,i){ for(var k=i-1;k>=0;k--){ if(L[k]) return {line:L[k],idx:k}; } return {line:"",idx:-1}; }
   function _nextNE(L,i){ for(var k=i+1;k<L.length;k++){ if(L[k]) return {line:L[k],idx:k}; } return {line:"",idx:-1}; }
   function _seg1(l){ var s=_segs(l); return s.length?s[0]:l; }
@@ -293,27 +321,40 @@
     var name="", headline="";
     for(var i=0;i<Math.min(ne.length,40) && !name;i++){ if(!_looksLikeName(ne[i])) continue; var nx=ne[i+1]||"";
       if(nx && !/\d{4}/.test(nx) && (/ at /i.test(nx) || _TITLERE.test(nx)) && nx.length<=120){ name=ne[i]; headline=nx; } }
-    var start=0; for(var i=0;i<L.length;i++){ if(/^experience$/i.test(L[i])){ start=i+1; break; } }
+    // Anchor on the experience heading. LinkedIn emits a bare "Experience"; a résumé uses "PROFESSIONAL
+    // EXPERIENCE" / "Work History" / "Employment". Anchoring on either skips the summary/objective block,
+    // which is pure prose and the single richest source of false-positive company names.
+    var start=0; for(var i=0;i<L.length;i++){ if(/^(professional\s+|work\s+|relevant\s+|previous\s+|prior\s+)?(experience|employment(\s+history)?|work\s+history|career(\s+history)?)\s*[:：]?$/i.test(L[i])){ start=i+1; break; } }
     var jobs=[], currentCompany="", pendingTitle="", pgames=[], activeStudio="";
     for(var i=start;i<L.length;i++){ var line=L[i]; if(!line) continue;
       if(/^(profile language|who your viewers|about$|privacy|linkedin corporation|help center|select language|messaging|status is online|connected apps|add connected|projects|skills|recommendations|interests|education|licenses|volunteering|volunteer|courses|honors|test scores|languages|organizations|causes|people you|people also viewed|more profiles|you might like|pages for you|show more|load more)\b/i.test(line)) break;   // footer / next profile section (incl. "More profiles for you" people block)
-      if(_isDate(line)){
+      if(_isDate(line) && !BULLET[i] && !_dateIsProse(line)){
         var dr=line.match(_DRRE); var from=_year4(dr[1]); var to=/present|current|now|today|ongoing/i.test(dr[2])?"":(_year4(dr[2])||"");
         var pv=_prevNE(L,i), prev=pv.line, company="";
+        var prevOK=(prev && !BULLET[pv.idx] && _canBeCompany(prev));                                                                  // a bullet / heading / sentence above is never the employer
         if(prev && /·/.test(prev) && _hasType(prev)) company=_seg1(prev);                                                             // flat: "Company · Full-time"
-        else if(prev && !_isTitleLine(prev) && !_hasType(prev) && !_isDur(prev) && !_isDate(prev) && prev.indexOf(",")<0) company=prev;  // flat: plain company line above
+        else if(prevOK && !_isTitleLine(prev) && !_hasType(prev) && !_isDur(prev) && !_isDate(prev) && prev.indexOf(",")<0) company=prev;  // flat: plain company line above
         if(!company) company=currentCompany;                                                                                          // grouped: use the company heading the block
-        if(!company && prev) company=_seg1(prev);
+        if(!company && prevOK) company=_seg1(prev);
+        // Résumé one-liners put the employer and/or the title on the SAME line as the dates:
+        // "Insomniac Games — Senior Producer      2021 – Present" or just "Producer      2018 – 2021".
+        // Strip the range and read the segments that are left.
+        var _rest=_stripJunk(String(line).replace(dr[0]," "));
+        var _rs=_rest ? _rest.split(/\s[–—-]\s|\s[|·]\s|,/).map(function(x){ return _stripJunk(x); }).filter(Boolean) : [];
+        if(!company){
+          for(var _ri=0;_ri<_rs.length;_ri++){ if(_canBeCompany(_rs[_ri]) && !_isTitleLine(_rs[_ri]) && !_isLoc(_rs[_ri]) && !_hasType(_rs[_ri])){ company=_rs[_ri]; break; } }
+        }
         var title=pendingTitle;
         if(!title){ var t=_prevNE(L,pv.idx); if(t.line && _isTitleLine(t.line)) title=t.line; else if(prev && _isTitleLine(prev)) title=prev; }
+        if(!title){ for(var _ti=0;_ti<_rs.length;_ti++){ if(_isTitleLine(_rs[_ti])){ title=_rs[_ti]; break; } } }   // "Producer   2018 – 2021"
         company=_cleanCo(company); var canon=_matchStudioStrict(company, studioArr); if(canon) company=canon;
         if(company){ var _tg=_titleGames(title); jobs.push({company:company, title:_stripJunk(_tg.clean), from:from, to:to}); activeStudio=company; _tg.games.forEach(function(gn){ pgames.push({title:gn, studio:company, fromTitle:true}); }); }
         pendingTitle="";
-      } else if(_isDur(line)){                                                                                                         // a grouped-company total → the line above is the company
+      } else if(_isDur(line) && !BULLET[i]){                                                                                          // a grouped-company total → the line above is the company
         var pv2=_prevNE(L,i);
-        if(pv2.line && !_isTitleLine(pv2.line) && !_isDate(pv2.line) && !_hasType(pv2.line) && pv2.line.indexOf(",")<0){ currentCompany=pv2.line; }
-        else if(pv2.line && _hasType(pv2.line)){ var p3=_prevNE(L,pv2.idx); if(p3.line && !_isTitleLine(p3.line)) currentCompany=p3.line; }
-      } else if(_isTitleLine(line)){ pendingTitle=line; }
+        if(pv2.line && !BULLET[pv2.idx] && _canBeCompany(pv2.line) && !_isTitleLine(pv2.line) && !_isDate(pv2.line) && !_hasType(pv2.line) && pv2.line.indexOf(",")<0){ currentCompany=pv2.line; }
+        else if(pv2.line && _hasType(pv2.line)){ var p3=_prevNE(L,pv2.idx); if(p3.line && !BULLET[p3.idx] && _canBeCompany(p3.line) && !_isTitleLine(p3.line)) currentCompany=p3.line; }
+      } else if(_isTitleLine(line) && !BULLET[i] && !_isSectionHead(line)){ pendingTitle=line; }
       else if(activeStudio){
         var _thumb=line.match(/^thumbnail for\s+(.+?)\s*$/i);                             // LinkedIn treasury card alt-text: "Thumbnail for <game>" — reads the game name straight from the media label
         if(_thumb && _thumb[1] && _thumb[1].split(/\s+/).length>=2 && !_hasType(_thumb[1]) && !_isLoc(_thumb[1])){ pgames.push({title:_stripJunk(_thumb[1]), studio:activeStudio, fromMedia:true}); }
@@ -374,7 +415,9 @@
       // base title from a paste ("Warhammer Online") to its catalogued full title ("Warhammer Online: Age of Reckoning").
       var subIdx={};
       for(var _si=0;_si<rows.length;_si++){ var _r=rows[_si]; if(!_r||!_r[1]) continue; var _parts=String(_r[1]).split(/\s*[:–—-]\s+/); if(_parts.length<2) continue; var _bk=nrm(_parts[0]); if(_bk.length<3) continue; (subIdx[_bk]=subIdx[_bk]||[]).push({slug:_r[0],title:_r[1],year:_r[2],studio:_r[3]}); }
-      var jobs=res.jobs||[];
+      // Final backstop: a "company" that still reads like a bullet, a heading or a sentence never makes it
+      // onto the studio list. Cheaper to drop it than to make someone delete it by hand.
+      var jobs=(res.jobs||[]).filter(function(j){ return j && _canBeCompany(j.company); });
       // A "studio" from the paste that is really a catalogue GAME (e.g. "League of Legends") — one that
       // isn't a known studio, but IS a game whose real studio is among your other studios — gets moved
       // out of the studio list and into your games instead.
@@ -432,6 +475,17 @@
         if(sIdx[k] || gameStudioKeys[k]) s.gameStudio=true;         // positive proof → always a game studio
         else s.gameStudio = !_looksNonGameEmployer(s.name);         // otherwise count unless it's clearly non-game
       });
+      // ---- truncation nudge -------------------------------------------------------------------
+      // LinkedIn only renders your most recent handful of roles; the rest sit behind "Show all N
+      // experiences". People copy the page, get four years of history, and assume that's all we could read.
+      // If the paste still carries that marker — or the history we found is suspiciously short — say so
+      // loudly, right where they'd otherwise move on.
+      var _truncMark = /show all\s+\d+\s+(experiences?|positions?|projects?)/i.test(text) || /\bshow all (experiences?|positions?|projects?)\b/i.test(text);
+      var _yrs = STUDIOS.map(function(s){ return parseInt(s.from,10); }).filter(function(y){ return !isNaN(y) && y>1970; });
+      var _earliest = _yrs.length ? Math.min.apply(null, _yrs) : null;
+      var _span = _earliest ? ((new Date()).getFullYear() - _earliest) : 0;
+      var _shortHistory = STUDIOS.length>0 && _earliest && _span<=6;
+      window._qsTrunc = (_truncMark || _shortHistory) ? { mark:_truncMark, earliest:_earliest, span:_span } : null;
       REVEALED=true; renderStudios();
       var st2=document.getElementById("pt-status"); var n=STUDIOS.length;
       if(st2){ st2.textContent = n ? ("Found "+n+" studio"+(n===1?"":"s")+(res.name?" and your name":"")+(gmatched?(" and "+gmatched+" game"+(gmatched===1?"":"s")):"")+" — review below, remove anything wrong, then continue.") : "Couldn’t spot studios in that text — add them manually below."; st2.style.color = n?"var(--green)":"var(--muted)"; }
@@ -455,6 +509,7 @@
         '<div class="desc" style="color:var(--gold);font-size:12.5px;margin:-6px 0 12px">Tip: on LinkedIn, click <b>“Show all experiences”</b> and <b>“Show all projects”</b> before you copy — older studios and games are hidden behind those links, and we can only read what’s in the text.</div>'+
         '<textarea id="pt-text" placeholder="Paste your LinkedIn profile text or your résumé here…"></textarea>'+
         '<div class="actions"><button class="btn primary" id="pt-go">Autofill from this →</button><span class="status" id="pt-status"></span></div>'+
+        '<div id="pt-warn"></div>'+
         '<div class="desc" style="margin-top:12px">No LinkedIn or résumé handy? <a id="scratch" style="color:var(--accent);font-weight:700;cursor:pointer">Build from scratch instead →</a></div>'+
       '</div>'+
       '<div id="reveal" class="'+(REVEALED?"":"hide")+'">'+
@@ -467,6 +522,7 @@
         '<div class="actions"><button class="btn primary" id="to-games" disabled>Continue →</button></div>'+
       '</div>';
     renderDisciplineRow();
+    renderTruncWarning();
     var ptg=document.getElementById("pt-go"); if(ptg) ptg.onclick=autofillFromPaste;
     var scr=document.getElementById("scratch"); if(scr) scr.onclick=function(){ REVEALED=true; var rv=document.getElementById("reveal"); if(rv){ rv.classList.remove("hide"); try{ rv.scrollIntoView({behavior:"smooth",block:"start"}); }catch(e){} } var sn=document.getElementById("st-name"); if(sn) sn.focus(); };
     renderStudioList();
@@ -478,6 +534,46 @@
     document.getElementById("to-games").onclick=function(){ loadCatalog().then(function(){ setStep(2); }); };
   }
   function updateCTALabel(){ var go=document.getElementById("to-games"); if(!go) return; go.disabled=(STUDIOS.length===0 && Object.keys(PICKED).length===0); go.textContent="Continue →"; }
+  // "We only read four years of your career" — said out loud, at the moment it happens, with the fix.
+  function renderTruncWarning(){
+    var box=document.getElementById("pt-warn"); if(!box) return;
+    var t=window._qsTrunc;
+    if(!t){ box.innerHTML=""; return; }
+    var head = t.mark
+      ? "That paste is still truncated — LinkedIn was hiding some of your history."
+      : ("We only found history back to "+t.earliest+". If you have been in games longer than that, LinkedIn hid the rest.");
+    box.innerHTML =
+      '<div style="margin-top:12px;padding:12px 14px;border:1px solid rgba(224,178,58,.45);background:rgba(224,178,58,.09);border-radius:10px;font-size:13px;line-height:1.6">'+
+        '<div style="font-weight:800;color:var(--gold);margin-bottom:5px">⚠ '+esc(head)+'</div>'+
+        '<div style="color:var(--text)">On your LinkedIn profile, click <b>“Show all experiences”</b> (and <b>“Show all projects”</b>), <b>then</b> select-all and copy. Paste again here and we will pick up the older studios too — re-pasting replaces the studio list below, so nothing gets duplicated.</div>'+
+        '<div style="margin-top:8px"><a id="pt-dismiss" style="color:var(--muted);font-weight:700;cursor:pointer;font-size:12.5px">That is my whole history — dismiss</a></div>'+
+      '</div>';
+    var d=document.getElementById("pt-dismiss"); if(d) d.onclick=function(){ window._qsTrunc=null; renderTruncWarning(); };
+  }
+  // ---------- games we don't have in the catalogue ----------
+  // The catalogue is Wikidata-derived, so it misses unannounced titles, cancelled projects, co-dev work,
+  // mobile/live-ops SKUs and anything indie. Before this, a title we couldn't match was a dead end. Now it
+  // becomes a game you add by hand: a synthetic "new:" slug that signin.html converts to the API's
+  // new_game{} on publish (POST /credits already supports it — see createGame in handlers.js).
+  function customSlug(t){ var k=nrm(t).replace(/\s+/g,"-"); return "new:"+(k||String(t||"").toLowerCase()); }
+  function isCustom(slug){ return String(slug||"").indexOf("new:")===0; }
+  function addCustomGame(title, studio, year){
+    title=String(title==null?"":title).trim().replace(/\s+/g," ");
+    if(!title || title.length>140) return null;
+    var slug=customSlug(title);
+    if(!PICKED[slug]) PICKED[slug]={ slug:slug, title:title, year:(year||""), studio:(studio||""), custom:true };
+    return slug;
+  }
+  // The "+ Add …" row that ends every game search, so no search can dead-end.
+  function addNewRow(q, studio){
+    return '<div class="sdrop-add" data-newtitle="'+esc(q)+'" data-newstudio="'+esc(studio||"")+'" style="padding:9px 12px;cursor:pointer;font-size:13.5px;font-weight:700;color:var(--gold);border-top:1px solid var(--border)">+ Add “'+esc(q)+'” as a game we don’t have yet</div>';
+  }
+  function wireAddNew(scope, after){
+    if(!scope) return;
+    scope.querySelectorAll(".sdrop-add").forEach(function(el){
+      el.onclick=function(){ addCustomGame(el.getAttribute("data-newtitle"), el.getAttribute("data-newstudio")); if(after) after(); };
+    });
+  }
   // Games found from the paste, plus an inline add box — same interaction as the studio card:
   // type a title to add a game right here (no need to go to the next step), tap × to remove.
   function renderFoundGames(){
@@ -488,15 +584,23 @@
     var head = '<h2>'+(games.length?'Games we found <span style="font-size:13px;font-weight:700;color:var(--muted)">— '+games.length+'</span>':'Your games')+'</h2>'+
       '<div class="desc">'+(games.length?'Pulled from your paste. Tap × to remove any that weren’t yours, or type below to add more.':'Type a game title below to add the games you shipped.')+'</div>';
     var addbox = '<div class="sdrop"><input id="fg-q" placeholder="Add a game you shipped… (type a title)" autocomplete="off"><div id="fg-sug"></div></div>';
-    var chips = games.length ? '<div style="margin-top:10px">'+games.map(function(g){ var meta=(g.studio?esc(g.studio):"")+(g.year?' · '+esc(g.year):""); return '<span class="studio-chip"><b>'+esc(g.title)+'</b>'+(meta?' <span class="yr">'+esc(meta)+'</span>':'')+'<button class="x" data-slug="'+esc(g.slug)+'" aria-label="Remove">×</button></span>'; }).join("")+'</div>' : '';
-    var unm = UNMATCHED.length ?
+    var chips = games.length ? '<div style="margin-top:10px">'+games.map(function(g){ var meta=(g.studio?esc(g.studio):"")+(g.year?' · '+esc(g.year):""); return '<span class="studio-chip"'+(g.custom?' style="border-color:rgba(224,178,58,.55)"':'')+'><b>'+esc(g.title)+'</b>'+(meta?' <span class="yr">'+esc(meta)+'</span>':'')+(g.custom?' <span class="yr" style="color:var(--gold)">· added by you</span>':'')+'<button class="x" data-slug="'+esc(g.slug)+'" aria-label="Remove">×</button></span>'; }).join("")+'</div>' : '';
+    // Titles we read off the profile but couldn't match. These are the person's OWN games — the one place
+    // we know for certain something is missing — so each is one tap from being added by hand.
+    var pend = UNMATCHED.filter(function(t){ return !PICKED[customSlug(t)]; });
+    var unm = pend.length ?
       ('<div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border)">'+
-       '<div class="desc" style="color:var(--gold);margin-bottom:6px">Listed on your profile but not in our catalogue yet — we couldn’t link '+(UNMATCHED.length===1?'this title':'these titles')+':</div>'+
-       '<div>'+UNMATCHED.map(function(t){ return '<span class="studio-chip" style="border-style:dashed;opacity:.9"><b>'+esc(t)+'</b></span>'; }).join("")+'</div>'+
-       '<div class="desc" style="font-size:12px;margin-top:7px">These aren’t in our game catalogue yet, so we can’t add them automatically.</div></div>')
+       '<div class="desc" style="color:var(--gold);margin-bottom:6px">Listed on your profile but not in our catalogue — tap to add '+(pend.length===1?'it':'them')+' anyway:</div>'+
+       '<div>'+pend.map(function(t){ return '<span class="studio-chip u-add" data-t="'+esc(t)+'" role="button" tabindex="0" style="border-style:dashed;cursor:pointer" title="Add this game by hand"><b>'+esc(t)+'</b> <span class="yr" style="color:var(--gold)">+ add</span></span>'; }).join("")+'</div>'+
+       '<div class="desc" style="font-size:12px;margin-top:7px">Adding one creates the game on DevQuest under your credit — you can set its studio, year and box art once your portfolio is up.</div></div>')
       : '';
     card.innerHTML = head + addbox + chips + unm;
     card.querySelectorAll(".x").forEach(function(el){ el.onclick=function(){ delete PICKED[el.getAttribute("data-slug")]; renderFoundGames(); }; });
+    card.querySelectorAll(".u-add").forEach(function(el){
+      function go(){ addCustomGame(el.getAttribute("data-t"), ""); renderFoundGames(); }
+      el.addEventListener("click", go);
+      el.addEventListener("keydown", function(e){ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); go(); } });
+    });
     var fq=document.getElementById("fg-q"); if(fq) fq.addEventListener("input", gameSuggest);
     updateCTALabel();
   }
@@ -512,9 +616,12 @@
         if((((document.getElementById("fg-q")||{}).value)||"").trim()!==q) return;
         var ql=nrm(q), out=[], seen={};
         for(var i=0;i<rows.length && out.length<10;i++){ var r=rows[i]; if(!r) continue; if(nrm(r[1]).indexOf(ql)<0) continue; if(seen[r[0]]||PICKED[r[0]]) continue; seen[r[0]]=1; out.push({slug:r[0],title:r[1],year:r[2],studio:r[3]}); }
-        if(!out.length){ box.innerHTML='<div class="sdrop-list"><div style="color:var(--muted);cursor:default">No catalogue match for “'+esc(q)+'”.</div></div>'; return; }
-        box.innerHTML='<div class="sdrop-list">'+out.map(function(g){ var meta=(g.studio?esc(g.studio):"")+(g.year?' · '+esc(g.year):""); return '<div data-slug="'+esc(g.slug)+'" data-title="'+esc(g.title)+'" data-year="'+esc(g.year||"")+'" data-studio="'+esc(g.studio||"")+'">'+esc(g.title)+(meta?' <span style="color:var(--muted);font-size:12px">'+esc(meta)+'</span>':'')+'</div>'; }).join("")+'</div>';
+        // Every result set ends with "+ Add …" — the catalogue is incomplete, so no search may dead-end.
+        var rows2=out.map(function(g){ var meta=(g.studio?esc(g.studio):"")+(g.year?' · '+esc(g.year):""); return '<div data-slug="'+esc(g.slug)+'" data-title="'+esc(g.title)+'" data-year="'+esc(g.year||"")+'" data-studio="'+esc(g.studio||"")+'">'+esc(g.title)+(meta?' <span style="color:var(--muted);font-size:12px">'+esc(meta)+'</span>':'')+'</div>'; }).join("");
+        if(!out.length) rows2='<div style="color:var(--muted);cursor:default">No catalogue match for “'+esc(q)+'” — add it yourself:</div>';
+        box.innerHTML='<div class="sdrop-list">'+rows2+addNewRow(q,"")+'</div>';
         box.querySelectorAll("div[data-slug]").forEach(function(d){ d.onclick=function(){ var slug=d.getAttribute("data-slug"); if(slug) PICKED[slug]={slug:slug,title:d.getAttribute("data-title"),year:d.getAttribute("data-year"),studio:d.getAttribute("data-studio")}; renderFoundGames(); var f=document.getElementById("fg-q"); if(f) f.focus(); }; });
+        wireAddNew(box, function(){ var f=document.getElementById("fg-q"); if(f){ f.value=""; } box.innerHTML=""; renderFoundGames(); if(f) f.focus(); });
       });
     }, 180);
   }
@@ -597,7 +704,24 @@
     else if(!ql && full.length>win.length) more='<div class="gmore">+ '+(full.length-win.length)+' more from this studio — search above to find any title.</div>';
     else more='';
     var note = (ql && coDev) ? '<div class="gmore" style="color:var(--muted)">Searching the whole catalogue — pick a title from another studio too if you co-developed it here.</div>' : '';
-    box.innerHTML = rows ? (note+rows+more) : '<div class="empty">No'+(ql?' game in the catalogue matches “'+esc(q)+'”':' titles around your time')+' — try a different spelling, or add games by hand later.</div>';
+    // Searching for a title we don't have used to end here. Now it ends with an add button, pre-filled
+    // with this studio, so unannounced / cancelled / co-dev / indie titles are one tap away.
+    var sname=(STUDIOS[si]&&STUDIOS[si].name)||"";
+    var addRow = (q && String(q).trim().length>=2) ? addNewRow(String(q).trim(), sname) : "";
+    box.innerHTML = rows ? (note+rows+more+addRow)
+      : ('<div class="empty">No'+(ql?' game in the catalogue matches “'+esc(q)+'”':' titles around your time')+(ql?' — add it by hand below.':' — search above, or add a title by hand.')+'</div>'+addRow);
+    wireAddNew(box, function(){ renderCustomGames(); var el=document.getElementById("g-count"); if(el) el.textContent=Object.keys(PICKED).length; });
+  }
+  // Everything you added by hand in step 2, in one block you can see and undo. Custom games have no
+  // catalogue row, so they can't ride the studio checkboxes above — they live here instead.
+  function renderCustomGames(){
+    var box=document.getElementById("g-custom"); if(!box) return;
+    var mine=Object.keys(PICKED).filter(isCustom).map(function(s){ return PICKED[s]; });
+    if(!mine.length){ box.innerHTML=""; return; }
+    box.innerHTML='<div style="margin-top:18px;padding-top:16px;border-top:1px solid var(--border)">'+
+      '<label style="color:var(--gold)">Added by you '+'<span style="font-weight:400;color:var(--muted)">— titles we don’t have in the catalogue; they’ll be created under your credit when you publish</span></label>'+
+      '<div style="margin-top:8px">'+mine.map(function(g){ return '<span class="studio-chip" style="border-color:rgba(224,178,58,.55)"><b>'+esc(g.title)+'</b>'+(g.studio?' <span class="yr">'+esc(g.studio)+'</span>':'')+'<button class="x" data-slug="'+esc(g.slug)+'" aria-label="Remove">×</button></span>'; }).join("")+'</div></div>';
+    box.querySelectorAll(".x").forEach(function(el){ el.onclick=function(){ delete PICKED[el.getAttribute("data-slug")]; renderCustomGames(); var c=document.getElementById("g-count"); if(c) c.textContent=Object.keys(PICKED).length; }; });
   }
   // Catalogue-wide search over the WHOLE index — the escape hatch for games not tied to any of your
   // studios (studio-less catalogue entries, or a game you shipped at a studio you didn't list).
@@ -613,7 +737,9 @@
       out.push({ slug:r[0], title:r[1], year:r[2], studio:r[3] });
     }
     out.sort(function(a,b){ return (PICKED[a.slug]?0:1)-(PICKED[b.slug]?0:1) || String(a.title).length-String(b.title).length; });
-    box.innerHTML = out.length ? out.map(_gameRow).join("") : '<div class="empty">No game in the catalogue matches “'+esc(q)+'”.</div>';
+    var addRow=addNewRow(String(q).trim(), "");
+    box.innerHTML = (out.length ? out.map(_gameRow).join("") : '<div class="empty">No game in the catalogue matches “'+esc(q)+'” — add it by hand below.</div>')+addRow;
+    wireAddNew(box, function(){ var gq=document.getElementById("g-global-q"); if(gq) gq.value=""; box.innerHTML=""; renderCustomGames(); var c=document.getElementById("g-count"); if(c) c.textContent=Object.keys(PICKED).length; });
   }
   function renderGames(){
     var SEC = STUDIOS.map(function(s){ var all=gamesForStudio(s); var win=all.filter(function(g){ return PICKED[g.slug]||inWindow(g,s); }); return { s:s, all:all, win:win }; });
@@ -630,13 +756,16 @@
         '<label>Your main role <span style="font-weight:400;color:var(--muted)">— applied to all; you can change any of them later</span></label><input id="g-role" placeholder="e.g. Senior Producer" value="'+esc(window._qsRole||"")+'">'+
         '<div style="margin-top:14px" id="g-sections">'+ (sections || '<div class="empty">No studios to search.</div>') +'</div>'+
         '<div style="margin-top:18px;padding-top:16px;border-top:1px solid var(--border)" id="g-global-wrap">'+
-          '<label>Can’t find a game above? Search the whole catalogue <span style="font-weight:400;color:var(--muted)">— for a title that isn’t tied to one of your studios</span></label>'+
+          '<label>Can’t find a game above? Search the whole catalogue <span style="font-weight:400;color:var(--muted)">— or add a title we don’t have</span></label>'+
           '<input id="g-global-q" placeholder="Search every game by title… (e.g. XDefiant, Rainbow Six)">'+
           '<div class="glist" id="g-global-list" style="margin-top:8px"></div>'+
+          '<div class="desc" style="font-size:12px;margin-top:8px;color:var(--dim)">Our catalogue comes from public data, so it misses unannounced, cancelled, indie and co-dev titles. Type any title and you can add it by hand.</div>'+
         '</div>'+
+        '<div id="g-custom"></div>'+
         '<div class="actions"><button class="btn" id="back-1">← Studios</button><button class="btn primary" id="to-basics">Next · <span class="gcount" id="g-count">'+Object.keys(PICKED).length+'</span> selected →</button></div>'+
       '</div>';
     SEC.forEach(function(o,si){ renderStudioGames(si, o.all, o.win, ""); });
+    renderCustomGames();
     document.querySelectorAll(".gsearch").forEach(function(inp){ inp.addEventListener("input", function(){ var si=+inp.getAttribute("data-si"); renderStudioGames(si, SEC[si].all, SEC[si].win, inp.value); }); });
     // Checking a game (in a studio list OR the catalogue-wide search) toggles it in PICKED.
     function onGameToggle(e){
@@ -676,7 +805,8 @@
     var head=document.getElementById("b-head").value.trim();
     var role=(window._qsRole||"").trim();
     var credits=Object.keys(PICKED).map(function(slug){ var g=PICKED[slug]; var y=parseInt(g.year,10);
-      return { game_slug:g.slug, game_title:g.title, studio:g.studio||"", year:(isNaN(y)?null:y), work_start:(isNaN(y)?null:y), work_end:null, role:role, sheet:null, cover_url:"" };
+      // custom:true survives into the draft so signin.html posts new_game{} instead of a catalogue slug.
+      return { game_slug:g.slug, game_title:g.title, studio:g.studio||"", custom:(g.custom?true:false), year:(isNaN(y)?null:y), work_start:(isNaN(y)?null:y), work_end:null, role:role, sheet:null, cover_url:"" };
     });
     // Every studio becomes a work-history position — including gameless roles (e.g. Possibility Space) that
     // no game would anchor. addPosition needs a title, so fall back to the main role, then a generic label.
