@@ -253,6 +253,8 @@
   .abcover{flex:0 0 auto;width:76px;height:100px;border-radius:9px;overflow:hidden;background:var(--panel2);display:flex;align-items:center;justify-content:center}
   .abcover img{width:100%;height:100%;object-fit:cover;display:block}
   .abini{font-weight:800;font-size:20px;color:var(--muted)}
+  .abrow-asbuilder .abcover{background:#13aff0;color:#fff}
+  .abrow-asbuilder .abcover svg{width:34px;height:34px}
   .abmain{flex:1;min-width:0}
   .abtitle{font-weight:750;font-size:15px;margin-bottom:8px}
   .abmedia{display:flex;flex-wrap:wrap;gap:8px;min-height:20px;margin-bottom:10px}
@@ -1101,6 +1103,41 @@
       if(b && b.getAttribute("data-asurl")===url){ if(_asCache[url]==="fail"){ b.style.display="none"; b.innerHTML=""; } else _asRenderSpot(b, d); }
     }).catch(function(){ _asCache[url]="fail"; var b=document.getElementById("as-spot"); if(b){ b.style.display="none"; b.innerHTML=""; } });
   }
+  // Normalize what an artist types into the builder: a bare "username" or "artstation.com/name" → a full URL.
+  function _normAsUrl(v){ v=String(v||"").trim(); if(!v) return ""; if(!/[\/.\s]/.test(v)) return "https://www.artstation.com/"+v.replace(/^@/,""); if(!/^https?:\/\//i.test(v)) v="https://"+v; return v; }
+  // Set/replace the artstation link on the DRAFT profile (the art builder is draft-only), then callers re-render.
+  function _setArtstationLink(url){
+    var d=dGet(); var pf=d.profile=d.profile||{}; var links=Array.isArray(pf.links)?pf.links.slice():[];
+    links=links.filter(function(l){ return l && l.type!=="artstation"; });
+    if(url) links.push({type:"artstation", url:url});
+    pf.links=links; dSet(d); if(_person) _person.links=links;
+  }
+  // A card in the art builder so an artist can paste their ArtStation URL right where they add their work,
+  // instead of hunting for it under "Edit header". Saving it lights up the chip + the "From my ArtStation" grid.
+  function artStationBuilderCardHTML(){
+    var links={}; ((_person&&_person.links)||[]).forEach(function(l){ links[l.type]=l.url; });
+    var cur=links.artstation||"";
+    return '<div class="abrow abrow-asbuilder">'+
+      '<div class="abcover">'+_AS_SVG+'</div>'+
+      '<div class="abmain"><div class="abtitle">Spotlight your ArtStation</div>'+
+        '<div class="mut" style="font-size:12px;margin:-2px 0 8px">Paste your ArtStation link and your latest pieces show up on your page as a live grid — plus a branded ArtStation button in your links up top. It refreshes itself as you post new work.</div>'+
+        '<div class="derow" style="align-items:center;gap:8px"><div style="flex:1"><input class="asb-url" value="'+esc(cur)+'" placeholder="https://www.artstation.com/yourname  (or just your username)" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:9px 11px;color:var(--text);font-size:13.5px;font-family:inherit;outline:none"></div><div style="flex:0 0 auto"><button type="button" class="btn ghost sm asb-save">Save</button></div></div>'+
+        '<div class="asb-status mut" style="font-size:12px;margin-top:6px">'+(cur?'Spotlight is on — your grid shows below and updates from ArtStation.':'')+'</div>'+
+      '</div></div>';
+  }
+  function wireArtStationBuilder(){
+    var row=document.querySelector(".artbuild .abrow-asbuilder"); if(!row) return;
+    var inp=row.querySelector(".asb-url"), btn=row.querySelector(".asb-save"), stt=row.querySelector(".asb-status");
+    function save(){
+      var raw=(inp.value||"").trim();
+      if(!raw){ _setArtstationLink(""); render(_person,_positions,_credits,_covMap); return; }
+      var v=_normAsUrl(raw);
+      if(!/artstation\.com/i.test(v)){ stt.textContent="That doesn’t look like an ArtStation link — paste your artstation.com URL or just your username."; stt.style.color="var(--pink)"; return; }
+      _setArtstationLink(v); render(_person,_positions,_credits,_covMap);
+    }
+    btn.onclick=save;
+    inp.addEventListener("keydown", function(e){ if(e.key==="Enter"){ e.preventDefault(); save(); } });
+  }
   function heroHTML(p, positions, credits){
     var startYears=[];
     positions.forEach(function(x){ if(x.start_year) startYears.push(x.start_year); });
@@ -1536,6 +1573,7 @@
       ? 'Attach the work you did on each title, images and video (a trailer, in-game footage, or your own reel). It groups under that game in your gallery up top. Add work that isn’t tied to a game in the last row. Visitors see the gallery, not this builder.'
       : 'Add your visual work, images and video. Tie pieces to a game once you’ve added your shipped titles, or add personal and independent work right here. Visitors see the gallery, not this builder.';
     return '<div class="wrap"><section><div class="eyebrow">Your visual work · only you see this</div><h2 class="sec">Add art &amp; video</h2><p class="sub">'+sub+'</p><div class="artbuild">'+
+      artStationBuilderCardHTML()+
       gameRows+
       personalRowHTML()+
     '</div></section></div>';
@@ -1674,6 +1712,7 @@
       });
     });
     wirePersonalRow();   // the personal/independent-work row (data-slug="") is skipped by the loop above
+    wireArtStationBuilder();   // the "Spotlight your ArtStation" card
   }
   function renderHero(){ var hb=document.getElementById("herobox"); if(hb){ hb.innerHTML=heroHTML(_person,_positions,_credits); wireHeroEdit(); } if(_person) document.title=_person.name+" · DevQuest Portfolio"; }
   function wireHeroEdit(){ var b=document.getElementById("editProfile"); if(b) b.onclick=openProfileEdit; }
