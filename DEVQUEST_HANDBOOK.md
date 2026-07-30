@@ -202,8 +202,11 @@ a quick fix on our end).
 
 ## 11. Taking it live (hosting) — the big picture
 
-Right now the collector only runs when *you* double-click it, and the site only exists on
-your computer. To make it a real, always-updating website, two things happen:
+> ✅ **DONE — completed on launch day.** DevQuest is live at **https://devquest.gg** (and
+> devquest-gg.github.io), hosted free on GitHub Pages, with the scraper auto-running every
+> hour. This section is kept as a record of how it was set up.
+
+To make it a real, always-updating website, two things happened:
 
 1. **Hosting** puts `index.html` on the internet at a real address.
 2. **Automation** runs the collector hourly on GitHub's computers (not yours), so the data
@@ -232,7 +235,47 @@ these hourly runs before they show meaningful movement. Both fill in automatical
 
 ---
 
-## 12. Still on the to-do list (when you're ready)
+## 12. Making changes after launch — the golden rule
+
+Now that the site is live and updates itself, this is the one rule that keeps everything safe.
+
+Your repository has **two kinds of files**:
+
+- **Files you (or I) edit** — `index.html`, `scrape.js`, `moon.json`, the docs. Push these
+  whenever they change.
+- **Files the cloud scraper owns** — `jobs.js`, `jobs.json`, `seen.json`, `trends.json`.
+  The hourly robot regenerates and commits these up on GitHub. Your *local* copies of them
+  will fall out of date, and that is completely fine.
+
+**The golden rule: only upload the files you actually changed. Never re-upload the four
+data files.** `seen.json` and `trends.json` are quietly accumulating your ghost-job ages
+and Pulse history in the cloud — overwriting them with your older local copies would erase
+that history.
+
+Examples:
+- Added or changed studios → upload `scrape.js` (and `moon.json` if you edited it).
+- Tweaked the design or wording → upload `index.html`.
+- Added one indie studio → edit `moon.json`.
+
+Where changes show up: the live site redeploys about a minute after you push.
+
+**You no longer run `run-scraper.bat` for the live site** — the cloud does that every hour
+on its own. That batch file is now only for previewing changes on your own computer.
+
+Easiest ways to make a change, smallest to biggest:
+- **Tiny edits** (a line of text, one Moon studio): edit the file directly on GitHub's
+  website — open the file, click the pencil icon, edit, Commit. No local round-trip.
+- **Bigger changes** (anything I build): I edit your local files, then you upload the
+  changed file(s).
+- **Smoothest long-term:** GitHub Desktop (free app) pulls the robot's data commits and
+  pushes your changes in one click, auto-merging them since they touch different files.
+
+And the safety net you've chosen: **when in doubt, don't upload anything solo — ask me and
+I'll tell you exactly which file(s) to push and which to leave alone.**
+
+---
+
+## 13. Still on the to-do list (when you're ready)
 
 - **Buy the domain** (devquest.gg) and create a real inbox like `studios@devquest.gg`
   (the "Submit your studio" button points there).
@@ -243,7 +286,7 @@ these hourly runs before they show meaningful movement. Both fill in automatical
 
 ---
 
-## 13. If something breaks or you're unsure
+## 14. If something breaks or you're unsure
 
 You don't have to debug anything. Tell me what you saw (or send a screenshot) and I'll
 diagnose and fix it. The most common things — a studio's feed failing, adding studios,

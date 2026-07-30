@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DevQuest — Post-apply prompt demo</title>
+<style>
+  :root{
+    --bg:#0d1117; --panel:#161b22; --card:#1a212b; --border:#30363d; --text:#e6edf3;
+    --muted:#8b949e; --faint:#6e7681; --accent:#58a6ff; --blue-deep:#1f6feb;
+    --green:#3fb950; --gold:#d29922;
+    --mono:ui-monospace,'Cascadia Mono',Consolas,monospace;
+  }
+  *{box-sizing:border-box; margin:0;}
+  body{background:#080b10; color:var(--text); font:15px/1.55 -apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif; padding:32px 18px 70px;}
+  .wrap{max-width:1040px; margin:0 auto;}
+  h1{font-size:24px; font-weight:800; letter-spacing:-.01em;}
+  h1 .gg{color:var(--accent);}
+  .sub{color:var(--muted); margin-top:6px; max-width:70ch; font-size:14px;}
+  .tag{font:600 11px var(--mono); letter-spacing:.14em; text-transform:uppercase; color:var(--gold); border:1px solid #4a3a18; background:#d2992214; border-radius:4px; padding:5px 9px; display:inline-block; margin-bottom:14px;}
+  .layout{display:flex; gap:26px; flex-wrap:wrap; align-items:flex-start; margin-top:26px;}
+  .phonecol{flex:0 0 auto;}
+  .notecol{flex:1 1 300px; min-width:280px; display:flex; flex-direction:column; gap:11px;}
+
+  /* phone */
+  .phone{width:352px; background:#04070c; border:1px solid #2a3340; border-radius:34px; padding:11px;}
+  .screen{background:var(--bg); border-radius:26px; overflow:hidden; border:1px solid #161d26; height:620px; display:flex; flex-direction:column; position:relative;}
+  .notch{height:24px; display:flex; justify-content:center; align-items:center; flex:0 0 auto;}
+  .notch i{width:82px; height:6px; border-radius:99px; background:#1b2330;}
+  .apphead{padding:9px 15px; border-bottom:1px solid #1c2430; flex:0 0 auto; display:flex; justify-content:space-between; align-items:center;}
+  .apphead .brand{font-weight:800; font-size:15px;} .apphead .brand .gg{color:var(--accent);}
+  .apphead .cnt{font-size:11.5px; color:var(--muted);}
+  .scroll{flex:1 1 auto; overflow-y:auto; padding:12px 13px 20px;}
+
+  /* inline email card (the star of the demo) */
+  .askslot{overflow:hidden; transition:max-height .34s ease, opacity .28s ease, margin .3s ease; max-height:0; opacity:0; margin:0;}
+  .askslot.show{max-height:340px; opacity:1; margin:0 0 12px;}
+  .askcard{background:#111a29; border:1px solid var(--blue-deep); border-radius:12px; padding:14px 15px 13px; box-shadow:0 10px 30px rgba(0,0,0,.5);}
+  .askcard .top{display:flex; justify-content:space-between; gap:10px; align-items:flex-start;}
+  .askcard h3{font-size:14.5px; font-weight:750;}
+  .askcard .lede{color:#c9d1d9; font-size:13px; margin-top:3px; line-height:1.5;}
+  .askcard .x{background:none; border:none; color:var(--muted); font-size:15px; cursor:pointer; padding:2px 5px; line-height:1;}
+  .pills{display:flex; gap:6px; flex-wrap:wrap; margin-top:12px;}
+  .pill{background:#1f6feb1c; border:1px solid var(--blue-deep); color:#79b8ff; font-size:12px; padding:5px 10px; border-radius:999px; cursor:default; display:inline-flex; gap:6px; align-items:center;}
+  .pill button{background:none; border:none; color:#79b8ff; cursor:pointer; font-size:12px; padding:0; opacity:.7;}
+  .pill button:hover{opacity:1;}
+  .pill.ghost{background:none; border:1px dashed #3a4450; color:var(--muted); cursor:pointer;}
+  .subrow{display:flex; gap:7px; margin-top:12px;}
+  .subrow input{flex:1; min-width:0; background:#0b0f16; border:1px solid #313a47; border-radius:8px; padding:9px 11px; color:var(--text); font-size:16px;}
+  .subrow input::placeholder{color:var(--faint);}
+  .subrow button{background:var(--blue-deep); border:none; border-radius:8px; padding:9px 15px; color:#fff; font-weight:700; font-size:13px; cursor:pointer; white-space:nowrap;}
+  .fine{color:var(--muted); font-size:11px; margin-top:9px;}
+  .fine b{color:var(--gold); font-weight:650;}
+  .done{background:#0f2417; border:1px solid #2ea04366; border-radius:12px; padding:14px 15px; color:var(--green); font-size:13.5px; margin:0 0 12px;}
+
+  /* job cards */
+  .job{background:var(--card); border:1px solid #232c38; border-radius:11px; padding:13px 14px; margin-bottom:10px;}
+  .job .r1{display:flex; justify-content:space-between; gap:10px; align-items:baseline;}
+  .job .ttl{font-weight:700; font-size:14px;}
+  .job .std{color:var(--accent); font-size:12.5px; margin-top:2px;}
+  .job .age{color:var(--muted); font-size:11.5px; white-space:nowrap;}
+  .job .chips{display:flex; gap:6px; flex-wrap:wrap; margin-top:9px;}
+  .job .c{border:1px solid #313a47; color:#c9d1d9; font-size:11px; padding:3px 8px; border-radius:999px;}
+  .job .c.pay{border-color:#2ea04366; color:var(--green);}
+  .job .applybar{display:flex; justify-content:space-between; align-items:center; margin-top:11px; gap:10px;}
+  .job .applied{font-size:11.5px; color:var(--accent);}
+  .apply{background:var(--blue-deep); border:none; border-radius:7px; padding:7px 15px; color:#fff; font-weight:700; font-size:12.5px; cursor:pointer;}
+  .apply.dis{background:#1b2330; color:var(--muted); cursor:default;}
+
+  /* fake ATS overlay */
+  .ats{position:absolute; inset:0; background:#0b0d10; z-index:20; display:flex; flex-direction:column; transform:translateX(100%); transition:transform .3s ease;}
+  .ats.show{transform:translateX(0);}
+  .ats .bar{display:flex; align-items:center; gap:9px; padding:11px 13px; border-bottom:1px solid #222; background:#12161c;}
+  .ats .bar .back{background:none; border:1px solid #2a3340; color:var(--text); border-radius:7px; padding:6px 11px; font-size:12px; cursor:pointer;}
+  .ats .bar .u{font:11.5px var(--mono); color:var(--faint);}
+  .ats .body{flex:1; overflow-y:auto; padding:22px 20px; color:#c9d1d9;}
+  .ats .body h4{font-size:16px; margin-bottom:4px; color:#fff;}
+  .ats .body p{font-size:13px; color:var(--muted); margin-bottom:16px;}
+  .ats .fld{height:38px; background:#12161c; border:1px solid #262d38; border-radius:7px; margin-bottom:11px;}
+  .ats .fld.lg{height:80px;}
+  .ats .hint{position:absolute; left:0; right:0; bottom:0; background:#111a29; border-top:1px solid var(--blue-deep); padding:10px 14px; font-size:12px; color:#9fb8dd; text-align:center;}
+
+  /* toast */
+  .toast{position:absolute; left:14px; right:14px; bottom:16px; background:var(--panel); border:1px solid var(--gold); border-radius:11px; padding:11px 13px; font-size:12.5px; color:var(--text); z-index:30; box-shadow:0 8px 26px rgba(0,0,0,.5); opacity:0; transform:translateY(10px); transition:opacity .22s, transform .22s;}
+  .toast.show{opacity:1; transform:translateY(0);}
+
+  /* controls */
+  .ctl{margin-top:16px; display:flex; gap:9px; flex-wrap:wrap;}
+  .ctl button{background:var(--panel); border:1px solid var(--border); color:var(--text); border-radius:8px; padding:8px 13px; font-size:12.5px; cursor:pointer;}
+  .ctl button:hover{border-color:var(--muted);}
+  .statebar{margin-top:11px; font:12px var(--mono); color:var(--faint);}
+  .statebar b{color:var(--accent);}
+
+  .note{background:var(--panel); border:1px solid #1c2430; border-radius:10px; padding:12px 14px; border-left:3px solid var(--blue-deep);}
+  .note.g{border-left-color:var(--green);} .note.o{border-left-color:var(--gold);} .note.m{border-left-color:#3a4450;}
+  .note b.h{display:block; font:700 11px var(--mono); letter-spacing:.1em; margin-bottom:5px; color:var(--accent);}
+  .note.g b.h{color:var(--green);} .note.o b.h{color:var(--gold);} .note.m b.h{color:var(--muted);}
+  .note p{color:#c9d1d9; font-size:13px; line-height:1.55;}
+  .foot{margin-top:34px; border-top:1px solid #1c2430; padding-top:15px; color:var(--muted); font-size:13px; max-width:74ch;}
+  .foot b{color:var(--text);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="tag">Interactive demo · Jul 2 2026</div>
+  <h1>DevQuest<span class="gg">.gg</span> — the post-apply prompt, live</h1>
+  <p class="sub">Tap <b>Apply</b> on a job → it opens the studio's application page (nothing interrupts you) → tap <b>← Back to DevQuest</b> to simulate returning to the tab. <b>That's</b> the only moment the email card appears — pre-filled from the job you just applied to, non-modal, one tap to dismiss. Try dismissing it, then applying to another job: it won't ask again (the shared one-ask budget is spent).</p>
+
+  <div class="layout">
+    <div class="phonecol">
+      <div class="phone"><div class="screen" id="screen">
+        <div class="notch"><i></i></div>
+        <div class="apphead"><span class="brand">DevQuest<span class="gg">.gg</span></span><span class="cnt" id="cnt">51 roles · Production · Director+</span></div>
+        <div class="scroll" id="scroll">
+          <div class="askslot" id="askslot"></div>
+          <div id="list"></div>
+        </div>
+        <!-- fake ATS -->
+        <div class="ats" id="ats">
+          <div class="bar"><button class="back" id="atsBack">← Back to DevQuest</button><span class="u" id="atsUrl">careers.studio.com</span></div>
+          <div class="body">
+            <h4 id="atsTitle">Application</h4>
+            <p id="atsSub">Studio careers portal · new tab</p>
+            <div class="fld"></div><div class="fld"></div><div class="fld lg"></div><div class="fld"></div>
+          </div>
+          <div class="hint">👆 This is the studio's own site. DevQuest never gets between you and it.<br>Tap "Back to DevQuest" as if you finished applying.</div>
+        </div>
+        <div class="toast" id="toast"></div>
+      </div></div>
+      <div class="ctl">
+        <button id="reset">↻ Reset demo</button>
+        <button id="markSub">Simulate: already subscribed</button>
+      </div>
+      <div class="statebar" id="statebar"></div>
+    </div>
+
+    <div class="notecol">
+      <div class="note"><b class="h">WHEN IT FIRES</b><p>Only on return to the DevQuest tab after an apply click (or a fallback if the user never actually leaves). It is never between the user and a job posting — access to postings is completely untouched.</p></div>
+      <div class="note o"><b class="h">SAME CARD YOU ALREADY HAVE</b><p>This is your existing "Email me these roles" inline card and the same <span style="font-family:var(--mono)">/subscribe</span> backend — just triggered at a higher-intent moment and pre-filled from the job, so the only typing is the email.</p></div>
+      <div class="note g"><b class="h">NOT AN EXTRA NAG</b><p>It draws from the <b>same one-ask budget</b> as today (<span style="font-family:var(--mono)">canAskEmail</span> / <span style="font-family:var(--mono)">luj-subscribed</span>). If the user was already asked, dismissed, or subscribed, it stays silent. At most once per session; two dismissals snoozes it 30 days.</p></div>
+      <div class="note m"><b class="h">GENTLER FALLBACK</b><p>If even this feels like too much, the zero-result and Following prompts only appear when a user is already stuck or has opted in — zero risk to a happy browser. Reasonable to start there and compare conversion.</p></div>
+    </div>
+  </div>
+
+  <div class="foot"><b>What to judge:</b> does the card, appearing only after you've applied and returned, feel offered or naggy? Because it's inline (the jobs stay visible and scrollable behind it) and shares your existing quiet-window budget, it should read as "offered." If it crosses your line, we ship the Following + zero-result prompts instead and leave the apply flow completely alone.</div>
+</div>
+
+<script>
+  var JOBS = [
+    {t:"Director, Partner Success", s:"Blizzard Entertainment", d:"Production", sen:"Director+", loc:"Irvine, US", age:"4d", pay:"$157K–$291K", url:"careers.blizzard.com"},
+    {t:"Executive Producer", s:"Zynga", d:"Production", sen:"Director+", loc:"Austin, US", age:"7d", pay:null, url:"zynga.wd1.myworkdayjobs.com"},
+    {t:"Senior Producer, Live Ops", s:"Riot Games", d:"Production", sen:"Senior", loc:"Los Angeles, US", age:"2d", pay:"$134K–$188K", url:"riotgames.com/careers"},
+    {t:"Group Product Manager", s:"Electronic Arts", d:"Production", sen:"Director+", loc:"Remote, US", age:"11d", pay:null, url:"ea.gr8people.com"}
+  ];
+  var applied = {}, budgetSpent = false, subscribed = false, dismissCount = 0, activeJob = null;
+
+  var scroll=document.getElementById("scroll"), list=document.getElementById("list"),
+      askslot=document.getElementById("askslot"), ats=document.getElementById("ats"),
+      toast=document.getElementById("toast"), statebar=document.getElementById("statebar");
+
+  function esc(x){return String(x).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+
+  function renderList(){
+    list.innerHTML = JOBS.map(function(j,i){
+      var chips = '<span class="c">'+esc(j.loc)+'</span><span class="c">'+esc(j.sen)+'</span>'+(j.pay?'<span class="c pay">'+esc(j.pay)+'</span>':'');
+      var btn = applied[i] ? '<span class="applied">✓ Applied</span><button class="apply dis">Apply</button>'
+                          : '<span></span><button class="apply" data-i="'+i+'">Apply →</button>';
+      return '<div class="job"><div class="r1"><div><div class="ttl">'+esc(j.t)+'</div><div class="std">'+esc(j.s)+'</div></div><span class="age">'+esc(j.age)+'</span></div>'
+           + '<div class="chips">'+chips+'</div><div class="applybar">'+btn+'</div></div>';
+    }).join("");
+    Array.prototype.forEach.call(list.querySelectorAll(".apply:not(.dis)"), function(b){
+      b.onclick=function(){ openAts(+b.getAttribute("data-i")); };
+    });
+  }
+
+  function openAts(i){
+    activeJob=i;
+    document.getElementById("atsTitle").textContent = JOBS[i].t;
+    document.getElementById("atsSub").textContent = JOBS[i].s + " careers · new tab";
+    document.getElementById("atsUrl").textContent = JOBS[i].url;
+    ats.classList.add("show");
+  }
+
+  document.getElementById("atsBack").onclick=function(){
+    ats.classList.remove("show");
+    var i=activeJob; applied[i]=true; renderList();
+    // The prompt only fires here — on return — and only if the shared budget allows.
+    setTimeout(function(){ maybeAsk(i); }, 260);
+  };
+
+  function maybeAsk(i){
+    updateState();
+    if (subscribed){ flash("Already subscribed → card stays silent. No nag."); return; }
+    if (budgetSpent){ flash("One-ask budget already spent → card stays silent this session."); return; }
+    showAsk(i);
+  }
+
+  function showAsk(i){
+    var j=JOBS[i];
+    askslot.innerHTML =
+      '<div class="askcard"><div class="top"><div>'
+      + '<h3>Application started 🎉</h3>'
+      + '<div class="lede">Want an email when <b style="color:var(--accent)">'+esc(j.s)+'</b> posts more <b style="color:var(--gold)">'+esc(j.sen)+' '+esc(j.d)+'</b> roles?</div>'
+      + '</div><button class="x" id="askX">✕</button></div>'
+      + '<div class="pills" id="pills">'
+      +   '<span class="pill">'+esc(j.s)+' <button data-p="studio">✕</button></span>'
+      +   '<span class="pill">'+esc(j.sen)+' <button data-p="sen">✕</button></span>'
+      +   '<span class="pill">'+esc(j.d)+' <button data-p="disc">✕</button></span>'
+      +   '<span class="pill ghost" id="wideAll">+ All studios</span>'
+      + '</div>'
+      + '<div class="subrow"><input type="email" placeholder="you@email.com" id="askEmail"><button id="askGo">Email me</button></div>'
+      + '<div class="fine"><b>Instant alerts</b> for thin matches like this (19 live roles) · weekly digest otherwise · unsubscribe anytime</div>'
+      + '</div>';
+    askslot.classList.add("show");
+    scroll.scrollTop=0;
+    document.getElementById("askX").onclick=function(){ dismissAsk(); };
+    document.getElementById("askGo").onclick=function(){ submitAsk(); };
+    Array.prototype.forEach.call(askslot.querySelectorAll(".pill button"), function(b){
+      b.onclick=function(){ b.parentElement.remove(); };
+    });
+    document.getElementById("wideAll").onclick=function(){
+      var sp=askslot.querySelector('.pill button[data-p="studio"]'); if(sp) sp.parentElement.remove();
+      document.getElementById("wideAll").textContent="✓ All studios";
+    };
+  }
+
+  function submitAsk(){
+    var em=document.getElementById("askEmail");
+    if(!em.value || em.value.indexOf("@")<0){ em.style.borderColor="#f85149"; em.focus(); return; }
+    subscribed=true; budgetSpent=true;
+    askslot.innerHTML='<div class="done">✓ Almost there — check your inbox and click the confirmation link. That's your saved search, pre-filled from this job.</div>';
+    setTimeout(function(){ askslot.classList.remove("show"); askslot.innerHTML=""; }, 2600);
+    updateState();
+  }
+
+  function dismissAsk(){
+    askslot.classList.remove("show");
+    setTimeout(function(){ askslot.innerHTML=""; }, 340);
+    dismissCount++;
+    budgetSpent=true; // one ask spent — won't re-fire this session
+    flash(dismissCount>=2 ? "Dismissed twice → snoozed for 30 days." : "Dismissed → won't ask again this session.");
+    updateState();
+  }
+
+  function flash(msg){
+    toast.textContent=msg; toast.classList.add("show");
+    clearTimeout(toast._t); toast._t=setTimeout(function(){ toast.classList.remove("show"); }, 2600);
+  }
+
+  function updateState(){
+    statebar.innerHTML = "state · subscribed: <b>"+subscribed+"</b> · one-ask budget spent: <b>"+budgetSpent+"</b> · dismissals: <b>"+dismissCount+"</b>";
+  }
+
+  document.getElementById("reset").onclick=function(){
+    applied={}; budgetSpent=false; subscribed=false; dismissCount=0; activeJob=null;
+    askslot.classList.remove("show"); askslot.innerHTML=""; ats.classList.remove("show");
+    renderList(); updateState(); flash("Demo reset.");
+  };
+  document.getElementById("markSub").onclick=function(){
+    subscribed=true; updateState(); flash("Now 'already subscribed' → the prompt will stay silent on apply.");
+  };
+
+  renderList(); updateState();
+</script>
+</body>
+</html>
