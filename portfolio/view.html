@@ -61,6 +61,9 @@
   .btn.primary{color:#04121f;background:linear-gradient(135deg,#7cc0ff,#58a6ff);border:0}
   .btn.ghost{color:#fff;background:rgba(0,0,0,.3)}
   .btn.dq-share{color:#d6c6f9;border-color:rgba(163,113,247,.55);background:rgba(163,113,247,.12)}
+  .btn.artstation{color:#fff;background:#13aff0;border:0;box-shadow:0 4px 14px rgba(19,175,240,.30)}
+  .btn.artstation:hover{background:#0f9bd6}
+  .btn.artstation svg{width:15px;height:15px;flex:none}
   .btn.dq-share:hover{background:rgba(163,113,247,.2);color:#efe8ff}
   .shov{position:fixed;inset:0;z-index:200;background:rgba(4,7,12,.72);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;padding:20px}
   .shmodal{width:min(560px,100%);max-height:92vh;overflow:auto;background:var(--panel,#11161f);border:1px solid var(--border,#242c38);border-radius:18px;padding:24px 24px 22px;position:relative}
@@ -223,6 +226,15 @@
   .gplay{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:44px;height:44px;border-radius:50%;background:rgba(0,0,0,.55);color:#fff;font-size:16px;display:flex;align-items:center;justify-content:center;pointer-events:none;border:2px solid rgba(255,255,255,.85)}
   .lvid{position:relative;width:min(92vw,1100px);aspect-ratio:16/9;background:#000;border-radius:8px;overflow:hidden}
   .lvid iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+  .assec{margin:6px 0 4px}
+  .ashead{display:flex;align-items:flex-end;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:14px}
+  .asgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+  @media(max-width:700px){.asgrid{grid-template-columns:repeat(2,1fr)}}
+  .ascell{position:relative;display:block;border-radius:12px;overflow:hidden;border:1px solid var(--border);background:#0d121b;aspect-ratio:1/1}
+  .ascell img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .25s ease}
+  .ascell:hover img{transform:scale(1.05)}
+  .ascap{position:absolute;left:0;right:0;bottom:0;padding:16px 10px 7px;font-size:11.5px;color:#fff;background:linear-gradient(180deg,transparent,rgba(0,0,0,.8));white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .asfoot{margin-top:10px;font-size:11.5px;color:var(--muted)}
   @media(max-width:700px){.gallery{grid-template-columns:repeat(2,1fr)}}
   .galgroup{margin:0 0 22px}
   .gghead{display:flex;align-items:center;gap:10px;margin:0 0 4px}
@@ -813,7 +825,7 @@
     var linkBtns = "";
     if(links.linkedin) linkBtns += '<a class="btn ghost" href="'+esc(links.linkedin)+'" target="_blank">in · LinkedIn</a>';
     if(links.portfolio) linkBtns += '<a class="btn ghost" href="'+esc(links.portfolio)+'" target="_blank">Website</a>';
-    if(links.artstation) linkBtns += '<a class="btn ghost" href="'+esc(links.artstation)+'" target="_blank">ArtStation</a>';
+    if(links.artstation) linkBtns += _artstationBtn(links.artstation);
     if(links.github) linkBtns += '<a class="btn ghost" href="'+esc(links.github)+'" target="_blank">GitHub</a>';
 
     var hero = '<div id="herobox">'+heroHTML(p, positions, credits)+'</div>';
@@ -822,6 +834,7 @@
     _covMap = covMap; _credits = credits; _person = p; _positions = positions;
     // When Art/Audio leads with their own work (visuals / audio), the games wall becomes a supporting "Also shipped" strip.
     var _media = mediaSlotHTML(p);
+    var _asSpot = artStationSlotHTML(p);   // "From my ArtStation" spotlight (art discipline + an ArtStation link)
     var _aud = (p.portfolio_style||"")==="audio";
     var _artLed = (p.portfolio_style||"")==="art" && !!_media;
     var _ledMedia = _artLed || _aud;   // media/listen-led disciplines frame games as secondary
@@ -864,16 +877,17 @@
     document.body.classList.toggle("eng-led", _eng);
     document.body.classList.toggle("dsn-led", _dsn);
     document.body.classList.toggle("qa-led", _qa);
-    if(_artLed)      app.innerHTML = hero + _media + _workSection + skills + edu + contact;   // gallery + reel front and centre; games below
+    if(_artLed)      app.innerHTML = hero + _media + _asSpot + _workSection + skills + edu + contact;   // their DevQuest gallery, then the ArtStation spotlight, then games
     else if(_aud)    app.innerHTML = hero + _audio + _media + _workSection + skills + edu + contact;   // playable audio leads for audio, reel/gallery below, games under that
     else if(_eng)    app.innerHTML = hero + _systems + _workSection + skills + _media + edu + contact;   // systems & tech lead for engineers, games below
     else if(_dsn)    app.innerHTML = hero + _designs + _workSection + skills + _media + edu + contact;   // design breakdowns lead for designers, games below
     else if(_qa)     app.innerHTML = hero + _quality + _workSection + skills + _media + edu + contact;   // quality & coverage lead for QA, games below
-    else             app.innerHTML = hero + _workSection + skills + _media + edu + contact;   // media still shows for other disciplines, just secondary
+    else             app.innerHTML = hero + _asSpot + _workSection + skills + _media + edu + contact;   // art with no uploads yet → ArtStation spotlight leads; _asSpot is "" for non-art
     wireHeroEdit();
     if(credits.length && !_artBuilder) buildStage(credits, positions, covMap);
     if(_artBuilder) wireArtBuilder(credits);
     wireGallery();
+    wireArtStationSpot();
     if(IS_DRAFT && !PREVIEW) mountDraftEditor();
   }
 
@@ -1050,6 +1064,43 @@
   var _deReRenderT=null;
   function _deReRender(){ if(_deReRenderT) clearTimeout(_deReRenderT); _deReRenderT=setTimeout(function(){ render(_person,_positions,_credits,_covMap); var el=document.getElementById("de-media"); if(el){ try{ el.scrollIntoView({behavior:"auto",block:"nearest"}); }catch(e){} } }, 350); }
 
+  // ArtStation link rendered as a uniquely branded chip (brand blue + logo) rather than a plain ghost button,
+  // so an artist's ArtStation portfolio is called out among the top links next to the résumé download.
+  var _AS_SVG='<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M0 17.723l2.027 3.505h.001a2.424 2.424 0 0 0 2.164 1.333h13.457l-3.994-6.838H0zm24 .684L15.149 3.156a2.42 2.42 0 0 0-2.164-1.333H9.997l14.151 24.487v-.005A2.436 2.436 0 0 0 24 18.407zM11.541 8.684L7.61 15.617h7.863z"/></svg>';
+  function _artstationBtn(url){ return '<a class="btn artstation" href="'+esc(url)+'" target="_blank" rel="noopener">'+_AS_SVG+'ArtStation</a>'; }
+  // ---- ArtStation spotlight: latest work pulled live via the Worker proxy, shown as a grid on art portfolios ----
+  var _asCache={};   // url -> resolved payload | "pending" | "fail" (keeps re-renders during editing from refetching)
+  function artStationSlotHTML(p){
+    var links={}; (p.links||[]).forEach(function(l){ links[l.type]=l.url; });
+    if((p.portfolio_style||"")!=="art" || !links.artstation) return "";
+    return '<div class="wrap"><div id="as-spot" data-asurl="'+esc(links.artstation)+'"></div></div>';
+  }
+  function _asRenderSpot(box, d){
+    if(!d || !d.ok || !Array.isArray(d.projects) || !d.projects.length){ box.style.display="none"; box.innerHTML=""; return; }
+    var url=d.url||box.getAttribute("data-asurl");
+    var items=d.projects.slice(0,8);
+    box.style.display="";
+    box.innerHTML='<section class="assec"><div class="ashead"><div><div class="eyebrow" style="color:#13aff0">ArtStation</div><h2 class="sec" style="margin:0">From my ArtStation</h2></div><a class="btn artstation" href="'+esc(url)+'" target="_blank" rel="noopener">'+_AS_SVG+'View full portfolio'+((d.count&&d.count>items.length)?' · '+d.count+' pieces':'')+'</a></div>'+
+      '<div class="asgrid">'+items.map(function(it){ return '<a class="ascell" href="'+esc(it.url||url)+'" target="_blank" rel="noopener"'+(it.title?' title="'+esc(it.title)+'"':'')+'><img src="'+esc(it.thumb)+'" alt="'+esc(it.title||"")+'" loading="lazy" onerror="var c=this.closest(\'.ascell\'); if(c) c.style.display=\'none\'">'+(it.title?'<span class="ascap">'+esc(it.title)+'</span>':'')+'</a>'; }).join("")+'</div>'+
+      '<div class="asfoot">Pulled live from ArtStation.</div></section>';
+  }
+  function wireArtStationSpot(){
+    var box=document.getElementById("as-spot"); if(!box) return;
+    var url=box.getAttribute("data-asurl"); if(!url){ box.style.display="none"; return; }
+    var c=_asCache[url];
+    if(c==="pending") return;
+    if(c==="fail"){ box.style.display="none"; box.innerHTML=""; return; }
+    if(c && typeof c==="object"){ _asRenderSpot(box, c); return; }
+    if(!(window.DQAPI && DQAPI.artstation)){ box.style.display="none"; return; }
+    box.innerHTML='<section class="assec"><div class="eyebrow" style="color:#13aff0">ArtStation</div><div class="asfoot" style="margin-top:6px">Loading latest work from ArtStation…</div></section>';
+    _asCache[url]="pending";
+    DQAPI.artstation(url).then(function(res){
+      var d=(res&&res.data)?res.data:res;
+      _asCache[url]=(d&&d.ok)?d:"fail";
+      var b=document.getElementById("as-spot");
+      if(b && b.getAttribute("data-asurl")===url){ if(_asCache[url]==="fail"){ b.style.display="none"; b.innerHTML=""; } else _asRenderSpot(b, d); }
+    }).catch(function(){ _asCache[url]="fail"; var b=document.getElementById("as-spot"); if(b){ b.style.display="none"; b.innerHTML=""; } });
+  }
   function heroHTML(p, positions, credits){
     var startYears=[];
     positions.forEach(function(x){ if(x.start_year) startYears.push(x.start_year); });
@@ -1068,7 +1119,7 @@
     var lb="";
     if(links.linkedin) lb+='<a class="btn ghost" href="'+esc(links.linkedin)+'" target="_blank">in · LinkedIn</a>';
     if(links.portfolio) lb+='<a class="btn ghost" href="'+esc(links.portfolio)+'" target="_blank">Website</a>';
-    if(links.artstation) lb+='<a class="btn ghost" href="'+esc(links.artstation)+'" target="_blank">ArtStation</a>';
+    if(links.artstation) lb+=_artstationBtn(links.artstation);
     if(links.github) lb+='<a class="btn ghost" href="'+esc(links.github)+'" target="_blank">GitHub</a>';
     return '<div class="hero"><div class="banner"></div><div class="scrim"></div>'+
       '<button class="pedit owner-only" id="editProfile">✎ Edit header</button>'+
