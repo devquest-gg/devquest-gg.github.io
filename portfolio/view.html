@@ -1765,8 +1765,12 @@
     if(!IS_DRAFT && window.DQAPI && DQAPI.portfolio && slug){
       try{ var fr=await DQAPI.portfolio(slug); if(fr && fr.data && fr.data.person){ p=fr.data.person; RPOS=fr.data.positions||RPOS; RCRE=fr.data.credits||RCRE; } }catch(e){}
     }
-    var email=p.email||"";
-    if(!email && window.DQAPI && DQAPI.isSignedIn && DQAPI.isSignedIn() && DQAPI.me){
+    // The résumé email must be the PROFILE's own public contact — NEVER the signed-in viewer's account
+    // email. The public portfolio API doesn't expose anyone's login email, so for someone else's résumé
+    // p.email is empty; the account-email fallback is therefore gated to IS_OWNER (your OWN résumé only),
+    // otherwise a signed-in visitor's address gets stamped onto the résumé they download.
+    var email=p.email||p.contact_email||"";
+    if(!email && IS_OWNER && window.DQAPI && DQAPI.isSignedIn && DQAPI.isSignedIn() && DQAPI.me){
       try{ var mr=await DQAPI.me(); var pe=mr&&mr.data&&mr.data.person; if(pe) email=pe.email||pe.primary_email||(pe.emails&&pe.emails[0]&&(pe.emails[0].email||pe.emails[0]))||""; }catch(e){}
     }
     var links=(p.links||[]).map(function(l){ return l.url; }).filter(Boolean);
