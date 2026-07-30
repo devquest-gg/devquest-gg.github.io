@@ -184,6 +184,17 @@
   function _studioIndex(rows){ var seen={}, arr=[]; for(var i=0;i<rows.length;i++){ var s=rows[i]&&rows[i][3]; if(!s) continue; var k=_pnorm(s); if(k.length<3||seen[k]) continue; seen[k]=1; arr.push({k:k,name:String(s)}); } return arr; }
   function _md(l){ return String(l==null?"":l).replace(/\[([^\]]*)\]\([^)]*\)/g,"$1").replace(/^\s*[\*\-•▪○]\s*/,"").replace(/\s+/g," ").trim(); }   // [text](url) → text, drop bullets
   function _hasType(l){ return /\b(full[\s-]?time|part[\s-]?time|contract|freelance|internship|permanent|self[\s-]?employed|apprenticeship|seasonal)\b/i.test(l); }
+  // A company we should NOT auto-count as a game studio: self-employment/freelance (the games belong to the
+  // clients, not to "Self Employed"), or an obviously non-game employer (a bank, a hospital, a university).
+  // Everything else counts by default — undercounting a real-but-uncatalogued studio reads as a bug, whereas
+  // these false positives are visible on the studio step and one tap flips them back.
+  function _looksNonGameEmployer(name){
+    var n=" "+String(name==null?"":name).toLowerCase().replace(/[^a-z0-9]+/g," ").trim()+" ";
+    if(/\b(self employed|self employment|freelanc\w*|independent|sole proprietor|sole trader|contractor|owner operator|personal work|personal projects?)\b/.test(n)) return true;
+    if(/^\s*(self|me|myself|n a|none|personal|unemployed|various|misc|other)\s*$/.test(n)) return true;
+    if(/\b(bank|banking|insurance|hospital|clinic|healthcare|medical center|university|college|school district|restaurant|cafe|coffee|retail|grocery|supermarket|airline|airlines|logistics|realty|real estate|law firm|attorney|dental|dentistry|pharmacy|hotel|resort|construction|manufacturing|automotive|dealership)\b/.test(n)) return true;
+    return false;
+  }
   function _isImgAlt(l){ l=String(l==null?"":l); return /^(thumbnail|image|photo|picture|icon|logo|banner|screenshot|avatar|graphic)\b/i.test(l) || /\b(logo|icon|banner|thumbnail|screenshot|avatar)$/i.test(l) || /\.(jpe?g|png|gif|webp|svg|bmp|pdf|mp4|mov)$/i.test(l) || /https?:\/\//i.test(l) || /\b[a-z0-9-]{2,}\.(com|net|org|io|gg|co|tv|dev|xyz|app)\b/i.test(l); }   // image alt-text ("Thumbnail for X", "Ubisoft logo"), image filenames ("CoH.jpg"), and URLs ("GuildWars2.com")
   // Résumé/description prose vs a game title. A candidate under a role that reads like a job-description
   // bullet — starts with a past-tense action verb ("Designed…", "Coordinated…"), starts lowercase (a
@@ -409,11 +420,18 @@
           seenU[key]=1; UNMATCHED.push(pg.title);
         });
       }
-      // Classify each studio: a GAME studio if it's in our game-studio catalogue, or it shipped one of
-      // your matched games. Non-game employers (a bank, a TV network, MLB) stay on your work history but
-      // won't be counted as studios. gameStudio is carried through to the draft as is_game_studio.
+      // Classify each studio. A company COUNTS as a game studio by default — this is a game-industry
+      // portfolio, so almost every role someone imports is a game studio. We force it on when we have positive
+      // proof (it's in our game-studio catalogue, or it shipped one of your matched games), and only DEMOTE it
+      // to work-history when it clearly reads as self-employment/freelance or a non-game employer (bank, MLB, a
+      // TV network). This stops us silently undercounting a real studio we just don't have in the catalogue yet
+      // (a brand-new studio, or one whose game was cancelled). The studio step lets you flip any guess.
+      // gameStudio is carried through to the draft as is_game_studio.
       var gameStudioKeys={}; Object.keys(PICKED).forEach(function(slug){ var st=nrm(PICKED[slug].studio||""); if(st) gameStudioKeys[st]=1; });
-      STUDIOS.forEach(function(s){ var k=nrm(s.name); s.gameStudio = !!(sIdx[k] || gameStudioKeys[k]); });
+      STUDIOS.forEach(function(s){ var k=nrm(s.name);
+        if(sIdx[k] || gameStudioKeys[k]) s.gameStudio=true;         // positive proof → always a game studio
+        else s.gameStudio = !_looksNonGameEmployer(s.name);         // otherwise count unless it's clearly non-game
+      });
       REVEALED=true; renderStudios();
       var st2=document.getElementById("pt-status"); var n=STUDIOS.length;
       if(st2){ st2.textContent = n ? ("Found "+n+" studio"+(n===1?"":"s")+(res.name?" and your name":"")+(gmatched?(" and "+gmatched+" game"+(gmatched===1?"":"s")):"")+" — review below, remove anything wrong, then continue.") : "Couldn’t spot studios in that text — add them manually below."; st2.style.color = n?"var(--green)":"var(--muted)"; }
