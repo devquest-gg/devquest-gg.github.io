@@ -529,6 +529,8 @@
   .mjc-studio[data-tip] { cursor: help; }
   #quickbar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
   #quickbar .qlabel, #subbar .qlabel, #hubbar .qlabel { color: var(--muted); font-size: 13px; margin-right: 2px; }
+  #hubbar .qchip.hubmore { color: var(--muted); border-style: dashed; }
+  #hubbar .qchip.hubmore:hover { color: var(--text); }
   .qchip { cursor: pointer; border: 1px solid var(--border); background: var(--panel); color: var(--muted); border-radius: 999px; padding: 6px 13px; font-size: 13px; font-weight: 600; }
   .qchip:hover { border-color: var(--accent); color: var(--text); }
   .qchip .qx { opacity: .8; font-size: 11px; margin-left: 1px; }
@@ -2014,6 +2016,7 @@ const selSubs = new Set();         // sub-discipline chips (Art/Eng/Design speci
 const selRegionsQuick = new Set(); // quick region chips
 const selHubs = new Set();         // gaming-hub chips (drill-down under a selected region)
 let hubPlusRemote = true;          // with a hub picked, also keep fully-remote roles ("Austin or remote")
+let hubsExpanded = false;          // hub chips are collapsed to the busiest few until asked to expand
 let quickRemote = false, quickNew = false;
 
 // ---- Search normalization + synonyms -----------------------------------------
@@ -2610,14 +2613,28 @@ function renderSubbar(availSubs){
     keys.map(s=>`<button class="qchip sub ${selSubs.has(s)?'on':''}" onclick="toggleSub('${s.replace(/'/g,"\\'")}')">${s} <span class="subn">${availSubs[s]}</span></button>`).join("");
 }
 
-// gaming-hub chips: only rendered when a region quick-filter is active
+// Gaming-hub chips. Showing all ~30 at once cost four rows of vertical space and pushed the job list
+// below the fold, so we show the busiest few and hide the tail behind a "+N more" toggle. Anything
+// currently SELECTED is always rendered, even when it's outside the top slice — a filter you can't
+// see is a filter you can't turn off.
+const HUBS_COLLAPSED = 8;
 function renderHubbar(availHubs){
   const el = document.getElementById("hubbar");
   const keys = Object.keys(availHubs).sort((a,b)=>availHubs[b]-availHubs[a]);
   if (!keys.length) { el.innerHTML = ""; el.style.display = "none"; return; }
   el.style.display = "";
-  el.innerHTML = `<span class="qlabel">📍 Hubs:</span>` +
-    keys.map(h=>`<button class="qchip hub ${selHubs.has(h)?'on':''}" onclick="toggleHub('${h.replace(/'/g,"\\'")}')">${h} <span class="subn">${availHubs[h]}</span></button>`).join("")
+  const chip = h => `<button class="qchip hub ${selHubs.has(h)?'on':''}" onclick="toggleHub('${h.replace(/'/g,"\\'")}')">${h} <span class="subn">${availHubs[h]}</span></button>`;
+  let shown = keys, hidden = 0;
+  if (!hubsExpanded && keys.length > HUBS_COLLAPSED + 1){
+    const top = keys.slice(0, HUBS_COLLAPSED);
+    const picked = keys.filter(h => selHubs.has(h) && !top.includes(h));   // never hide an active filter
+    shown = top.concat(picked);
+    hidden = keys.length - shown.length;
+  }
+  el.innerHTML = `<span class="qlabel">📍 Hubs:</span>`
+    + shown.map(chip).join("")
+    + (hidden > 0 ? `<button class="qchip hubmore" onclick="toggleHubsExpanded()" data-tip="Show the remaining ${hidden} hubs">+${hidden} more ▾</button>` : "")
+    + (hubsExpanded && keys.length > HUBS_COLLAPSED + 1 ? `<button class="qchip hubmore" onclick="toggleHubsExpanded()">Show fewer ▴</button>` : "")
     // Only meaningful once a hub is picked, so it appears alongside the selection rather than always.
     + (selHubs.size ? `<button class="qchip ${hubPlusRemote?'on':''}" onclick="toggleHubPlusRemote()" data-tip="Also show fully-remote roles from anywhere, not just ones based in your hub">➕ or remote${hubPlusRemote?' ✓':''}</button>` : "");
 }
@@ -2625,6 +2642,7 @@ function renderHubbar(availHubs){
 function toggleCell(dn, sn){ const k = dn+"|"+sn; const adding = !selCells.has(k); adding ? selCells.add(k) : selCells.delete(k); try{ window.dqTrack && window.dqTrack("grid_cell", { d: dn, s: sn }); }catch(e){} try{ if (typeof obEligible==="function" && obEligible()) obTrack("onboard_grid", {}); }catch(e){}  /* new-visitor conversion: first grid tap while the hint is still up */ if (adding) try{ affRecordCell(dn, sn); }catch(e){} saveCells(); try{ profFromMatrix(); }catch(e){} render(); }
 function toggleSub(s){ selSubs.has(s) ? selSubs.delete(s) : selSubs.add(s); render(); }
 function toggleHub(h){ selHubs.has(h) ? selHubs.delete(h) : selHubs.add(h); try{ window.dqTrack && window.dqTrack("hub_filter", { h: h }); }catch(e){} render(); }
+function toggleHubsExpanded(){ hubsExpanded = !hubsExpanded; try{ window.dqTrack && window.dqTrack("hubs_expand", { on: hubsExpanded }); }catch(e){} render(); }
 function toggleHubPlusRemote(){ hubPlusRemote = !hubPlusRemote; try{ window.dqTrack && window.dqTrack("hub_plus_remote", { on: hubPlusRemote }); }catch(e){} render(); }
 function toggleQuickRemote(){ quickRemote = !quickRemote; render(); }
 function toggleQuickNew(){ quickNew = !quickNew; render(); }
