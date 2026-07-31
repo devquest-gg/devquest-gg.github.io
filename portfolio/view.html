@@ -489,6 +489,7 @@
   #stage.grid .tile.hero{box-shadow:0 14px 34px rgba(0,0,0,.6),inset 0 0 0 2px rgba(224,178,58,.55)}
   #stage .tile .cs{position:absolute;left:0;right:0;top:0;z-index:4;background:linear-gradient(90deg,rgba(163,113,247,.96),rgba(88,166,255,.96));color:#fff;font-size:10px;font-weight:800;letter-spacing:.11em;text-align:center;padding:4px 0;box-shadow:0 2px 8px rgba(0,0,0,.4)}
   /* owner-only hover cue: the wall tile opens an editable one-sheet */
+  #stage .tile:focus-visible{outline:3px solid var(--gold);outline-offset:3px;z-index:6}
   #stage .tile .edb{position:absolute;top:50%;left:50%;z-index:5;display:none;align-items:center;gap:6px;font-size:12px;font-weight:800;color:#04121f;background:var(--gold);border-radius:999px;padding:7px 14px;box-shadow:0 4px 16px rgba(0,0,0,.6);opacity:0;transform:translate(-50%,-50%) scale(.92);transition:opacity .16s,transform .16s;pointer-events:none;white-space:nowrap}
   body.is-owner #stage.grid .tile .edb{display:inline-flex}
   body.is-owner #stage.grid .tile:hover .edb{opacity:1;transform:translate(-50%,-50%) scale(1)}
@@ -671,7 +672,13 @@
     var entP=Promise.all(list.map(function(s){ return getJSON("/credits/data/site/games/"+bkt(s)+".json").then(function(m){ return {s:s,e:(m&&m[s])||null}; }); }));
     return Promise.all([adminP,entP]).then(function(res){
       var admin=res[0], map={};
-      res[1].forEach(function(x){ var e=x.e; if(e&&e.steam) STEAM[x.s]=e.steam; var url=admin[x.s]||(e&&e.cover)||(e&&e.steam?steamArt(e.steam):null); if(url) map[x.s]=url; });
+      res[1].forEach(function(x){ var e=x.e; if(e&&e.steam) STEAM[x.s]=e.steam; var url=admin[x.s]||(e&&e.cover)||(e&&e.steam?steamArt(e.steam):null); if(url) map[x.s]=url;
+        // Backfill the release year from the static catalogue. getPortfolio only looks years up in
+        // games_added, so a CATALOGUE credit arrives with year:null — which made creditYear() null,
+        // dropped it out of startYears, and rendered "0 yrs In the industry" on a full portfolio.
+        // This runs before render(), so every view (wall, timeline, recruiter) sees the real year.
+        if(e && e.year!=null){ credits.forEach(function(c){ if(c.game_slug===x.s && c.year==null) c.year=e.year; }); }
+      });
       return map;
     }).catch(function(){ return {}; });
   }
@@ -1789,7 +1796,12 @@
     // Build from the FRESHEST saved data (not the page's load-time snapshot), so edits made in the
     // editor — skills, work history — appear on the résumé without needing a portfolio-page refresh.
     if(!IS_DRAFT && window.DQAPI && DQAPI.portfolio && slug){
-      try{ var fr=await DQAPI.portfolio(slug); if(fr && fr.data && fr.data.person){ p=fr.data.person; RPOS=fr.data.positions||RPOS; RCRE=fr.data.credits||RCRE; } }catch(e){}
+      try{ var fr=await DQAPI.portfolio(slug); if(fr && fr.data && fr.data.person){ p=fr.data.person; RPOS=fr.data.positions||RPOS; RCRE=fr.data.credits||RCRE;
+        // The refetch is raw API data, so catalogue years are null again. Reapply the years already
+        // resolved on the page, or the exported résumé silently loses every date.
+        var _yr={}; (_credits||[]).forEach(function(c){ if(c.game_slug && c.year!=null) _yr[c.game_slug]=c.year; });
+        RCRE.forEach(function(c){ if(c.year==null && _yr[c.game_slug]!=null) c.year=_yr[c.game_slug]; });
+      } }catch(e){}
     }
     // The résumé email must be the PROFILE's own public contact — NEVER the signed-in viewer's account
     // email. The public portfolio API doesn't expose anyone's login email, so for someone else's résumé
@@ -2740,10 +2752,18 @@
       if(!role){ st.textContent="Add your role."; st.className="efstatus err"; return; }
       var coverUrl=cov.value.trim();
       var payload = sel.isNew ? { role:role, new_game:{ title:sel.title, studio:studioIn.value.trim() } } : { role:role, game_slug:sel.slug, game_title:sel.title, studio:sel.studio||null };
+      // Seed the work year from the catalogue so the credit carries a date server-side too. createCredit
+      // does not accept work_start (its INSERT omits the column), so it goes in a follow-up PATCH — the
+      // same two-step signin.html already uses when replaying a draft.
+      var _sy=parseInt(sel.year,10); var _seedYear=(!isNaN(_sy) && _sy>1900)?_sy:null;
       if(coverUrl) payload.cover_url=coverUrl;
       st.textContent="Adding…"; st.className="efstatus";
       DQAPI.createCredit(payload).then(function(r){
-        if(r&&r.ok){ st.textContent="Added ✓"; st.className="efstatus ok"; setTimeout(function(){ closeSheet(); loadPortfolio(); },500); }
+        if(r&&r.ok){
+          var _cid=r.data&&r.data.credit_id;
+          var _after=(_cid && _seedYear!=null && DQAPI.updateCredit) ? DQAPI.updateCredit(_cid,{work_start:_seedYear}).catch(function(){}) : Promise.resolve();
+          _after.then(function(){ st.textContent="Added ✓"; st.className="efstatus ok"; setTimeout(function(){ closeSheet(); loadPortfolio(); },400); });
+        }
         else { st.textContent=(r&&r.data&&r.data.error)||"Could not add."; st.className="efstatus err"; }
       }).catch(function(){ st.textContent="Network error."; st.className="efstatus err"; });
     };
@@ -2899,6 +2919,11 @@
 
     credits.forEach(function(c,i){
       var el=document.createElement("div"); el.className="tile"; el.dataset.i=i;
+      // Keyboard + screen-reader access. Owners open a one-sheet on pointerup (click-vs-drag), and
+      // visitors on click — neither is reachable without a mouse, so the wall's main interaction was
+      // unusable via keyboard. Make each tile a real focusable button.
+      el.setAttribute("tabindex","0"); el.setAttribute("role","button");
+      el.setAttribute("aria-label", (c.game_title||"Game")+((c.role)?(" — "+c.role):"")+". Open one-sheet.");
       var conf=(c.vouch_count||0)>0;
       el.innerHTML='<div class="fb" style="background:'+gameGrad(c.game_slug)+'"><span>'+esc(c.game_title)+'</span></div>'+art(c.game_slug,covMap)+'<div class="gloss"></div>'+(conf?'<span class="vb">✓</span>':'')+(comingSoon(c)?'<span class="cs">COMING SOON</span>':'')+'<span class="grip">⠿</span><span class="hf">★ Featured</span><span class="edb">✎ Edit one-sheet</span>';
       stage.appendChild(el); tiles.push(el);
@@ -3037,6 +3062,12 @@
     });
     function relayoutExcept(skip){ placeGrid(skip); }
     stage.addEventListener("click",function(e){ if(IS_OWNER) return; var el=e.target.closest(".tile"); if(el) openSheet(+el.dataset.i); });
+    // Enter / Space opens the focused tile, for owners and visitors alike.
+    stage.addEventListener("keydown",function(e){
+      if(e.key!=="Enter" && e.key!==" " && e.key!=="Spacebar") return;
+      var el=e.target && e.target.closest && e.target.closest(".tile"); if(!el) return;
+      e.preventDefault(); openSheet(+el.dataset.i);
+    });
 
     var rt; window.addEventListener("resize",function(){ clearTimeout(rt); rt=setTimeout(function(){ computeBase(); layout(); },120); });
     _relayout=function(){ computeBase(); layout(); };
