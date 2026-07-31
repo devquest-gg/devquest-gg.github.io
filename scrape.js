@@ -786,6 +786,122 @@ function landingRoleRow(j){
     </a>`;
 }
 
+// ---- per-page market data --------------------------------------------------
+// These pages used to be one template with a swapped noun and a swapped list: ~400 words of prose
+// byte-identical across all ~340 of them. That is the doorway/thin-content pattern Google demotes,
+// and it is why they were indexed but earning almost no search traffic. Everything below is computed
+// from THIS page's own slice of the board, so each page carries facts no other page (and no
+// competitor) has. No new scraping — it is all already in the job records.
+function _pct(n, d){ return d ? Math.round((n / d) * 100) : 0; }
+function _tally(rows, key){
+  const m = new Map();
+  for (const r of rows){ const v = r && r[key]; if (!v || v === "Unknown") continue; m.set(v, (m.get(v) || 0) + 1); }
+  return [...m.entries()].sort((a, b) => b[1] - a[1]);
+}
+// "$146K–$210K" / "$80,000 - $90,000" → [min, max] in whole dollars.
+function _parseSalary(s){
+  if (!s) return null;
+  const nums = String(s).replace(/,/g, "").match(/\$?\s*(\d+(?:\.\d+)?)\s*([kK])?/g);
+  if (!nums || nums.length < 1) return null;
+  const vals = nums.map(t => {
+    const m = t.match(/(\d+(?:\.\d+)?)\s*([kK])?/); if (!m) return null;
+    let n = parseFloat(m[1]); if (m[2]) n *= 1000;
+    return n >= 1000 ? n : null;                       // ignore stray small numbers
+  }).filter(Boolean);
+  if (!vals.length) return null;
+  return [Math.min(...vals), Math.max(...vals)];
+}
+function _median(a){ if (!a.length) return null; const b = a.slice().sort((x, y) => x - y); const i = b.length >> 1;
+  return b.length % 2 ? b[i] : Math.round((b[i - 1] + b[i]) / 2); }
+function _usd(n){ return "$" + Math.round(n / 1000) + "K"; }
+
+function sliceStats(rows){
+  const total = rows.length;
+  const sal = rows.map(r => _parseSalary(r.salary)).filter(Boolean);
+  const days = rows.map(r => Number(r.daysListed)).filter(n => Number.isFinite(n));
+  const fresh = rows.filter(r => Number(r.daysListed) <= 7).length;
+  const work = _tally(rows, "workType");
+  const workKnown = work.reduce((a, b) => a + b[1], 0);
+  const tech = new Map();
+  for (const r of rows) if (Array.isArray(r.tech)) for (const t of r.tech) tech.set(t, (tech.get(t) || 0) + 1);
+  const SEN = ["Entry", "Mid", "Senior", "Lead", "Director+"];
+  const senTally = _tally(rows, "seniority");
+  const senMap = new Map(senTally);
+  return {
+    total,
+    studios:   _tally(rows, "studio").slice(0, 8),
+    disciplines: _tally(rows, "discipline").slice(0, 8),
+    locations: _tally(rows, "location").slice(0, 6),
+    regions:   _tally(rows, "region").slice(0, 5),
+    seniority: SEN.map(k => [k, senMap.get(k) || 0]).filter(x => x[1]),
+    topSeniority: senTally[0] || null,
+    payCount: sal.length,
+    payPct: _pct(sal.length, total),
+    payLow:  sal.length >= 5 ? _median(sal.map(x => x[0])) : null,
+    payHigh: sal.length >= 5 ? _median(sal.map(x => x[1])) : null,
+    fresh, freshPct: _pct(fresh, total),
+    medianDays: _median(days),
+    remotePct: workKnown ? _pct((work.find(w => w[0] === "Remote") || [0, 0])[1], workKnown) : null,
+    workKnown,
+    tech: [...tech.entries()].sort((a, b) => b[1] - a[1]).slice(0, 8),
+  };
+}
+
+// A sentence of real analysis, different on every page, built from that page's own numbers.
+function sliceLede(cfg, st){
+  if (!st.total) return "";
+  const bits = [];
+  if (st.topSeniority) bits.push(`hiring skews <strong>${escHtml(st.topSeniority[0])}</strong> (${_pct(st.topSeniority[1], st.total)}% of open ${escHtml(cfg.noun)} roles)`);
+  if (cfg.kind === "studio"){
+    if (st.disciplines.length) bits.push(`the biggest team they're growing is <strong>${escHtml(st.disciplines[0][0])}</strong> (${st.disciplines[0][1]} open)`);
+  } else if (st.studios.length) bits.push(`<strong>${escHtml(st.studios[0][0])}</strong> has the most live openings (${st.studios[0][1]})`);
+  if (st.payPct) bits.push(`${st.payPct}% publish a salary range`);
+  else bits.push(`almost none publish a salary range`);
+  if (st.freshPct) bits.push(`${st.freshPct}% were posted in the last week`);
+  return bits.length ? `<p class="analysis">Right now, ${bits.join(", ")}.</p>` : "";
+}
+
+function renderMarketBlock(cfg, st){
+  if (!st.total) return "";
+  const bar = st.seniority.map(([k, n]) =>
+    `<div class="mrow"><span class="mk">${escHtml(k)}</span><span class="mbar"><i style="width:${Math.max(2, _pct(n, st.total))}%"></i></span><span class="mv">${n} · ${_pct(n, st.total)}%</span></div>`).join("");
+  const studioList = st.studios.map(([k, n]) =>
+    `<li><a href="/${slugify(k)}-jobs">${escHtml(k)}</a> <span class="mv">${n}</span></li>`).join("");
+  const locList = st.locations.map(([k, n]) => `<li>${escHtml(k)} <span class="mv">${n}</span></li>`).join("");
+  const techList = st.tech.length
+    ? `<div class="mcard"><h3>Tools &amp; engines asked for</h3><ul class="mlist">${st.tech.map(([k, n]) => `<li>${escHtml(k)} <span class="mv">${n}</span></li>`).join("")}</ul></div>` : "";
+  const pay = st.payLow
+    ? `<p><strong>${st.payCount}</strong> of these roles publish a range (${st.payPct}%). Median advertised band: <strong>${_usd(st.payLow)}–${_usd(st.payHigh)}</strong>.</p>`
+    : `<p>Only <strong>${st.payCount}</strong> of these ${st.total} roles publish a salary range (${st.payPct}%). We never invent one — if a studio doesn't say, we leave it blank.</p>`;
+  const remote = st.remotePct != null && st.workKnown >= 10
+    ? `<p><strong>${st.remotePct}%</strong> of the roles that state a work model are fully remote${st.remotePct < 15 ? " — this is a mostly on-site corner of the industry." : "."}</p>` : "";
+  return `
+  <section class="market">
+    <h2>${cfg.kind === "studio" ? `Hiring at ${escHtml(cfg.breadcrumb || cfg.noun)} right now` : `The ${escHtml(cfg.noun)} market right now`}</h2>
+    <p class="msub">Computed from the ${st.total} live role${st.total === 1 ? "" : "s"} on this page, refreshed hourly.</p>
+    <div class="mgrid">
+      <div class="mcard">
+        <h3>Seniority mix</h3>
+        ${bar}
+      </div>
+      ${cfg.kind === "studio"
+        ? `<div class="mcard"><h3>Teams they're hiring for</h3><ul class="mlist">${st.disciplines.map(([k,n])=>`<li>${escHtml(k)} <span class="mv">${n}</span></li>`).join("")}</ul></div>`
+        : `<div class="mcard"><h3>Who's hiring most</h3><ul class="mlist">${studioList}</ul></div>`}
+      <div class="mcard">
+        <h3>Where the roles are</h3>
+        <ul class="mlist">${locList}</ul>
+      </div>
+      ${techList}
+      <div class="mcard wide">
+        <h3>Pay &amp; freshness</h3>
+        ${pay}
+        <p><strong>${st.fresh}</strong> posted in the last 7 days${st.medianDays != null ? `; the median role here has been live <strong>${st.medianDays} day${st.medianDays === 1 ? "" : "s"}</strong>` : ""}.</p>
+        ${remote}
+      </div>
+    </div>
+  </section>`;
+}
+
 function renderLandingPage(cfg, all, allSpecs){
   const matches = landingMatches(cfg, all);
   const total = matches.length;
@@ -798,6 +914,9 @@ function renderLandingPage(cfg, all, allSpecs){
   const desc = `${cfg.h1}, updated hourly. ${total} open ${cfg.noun} role${total===1?"":"s"} across ${studios} studios, pulled from studio career pages with salary shown when published and ghost-job filters. No ads.`;
   // Optional studio/skill intro blurb (unique per page — keeps these from being thin doorway pages).
   const blurbHtml = cfg.blurb ? `<p class="blurb">${escHtml(cfg.blurb)}</p>` : "";
+  const stats = sliceStats(matches);
+  const analysisHtml = sliceLede(cfg, stats);
+  const marketHtml = renderMarketBlock(cfg, stats);
   // Internal "related searches" mesh + an FAQ block (with FAQPage structured data) for richer pages.
   const relatedHtml = (typeof relatedLinksHtml === "function" && allSpecs) ? relatedLinksHtml(cfg, allSpecs) : "";
   const faqPairs = faqFor(cfg, total, studios);
@@ -877,6 +996,24 @@ ${faqLd}
   .faq{margin-top:12px;border:1px solid var(--border);border-radius:12px;overflow:hidden}
   .faq details{border-bottom:1px solid var(--border)}.faq details:last-child{border-bottom:none}
   .faq summary{cursor:pointer;padding:13px 16px;font-weight:600;font-size:14.5px;list-style:none}
+  .analysis{color:#c9d1d9;font-size:15px;line-height:1.65;margin:10px 0 0;max-width:70ch}
+  .market{margin:34px 0 10px}
+  .market h2{margin:0 0 4px}
+  .msub{color:#8b949e;font-size:13.5px;margin:0 0 16px}
+  .mgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
+  .mcard{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:14px 16px}
+  .mcard.wide{grid-column:1/-1}
+  .mcard h3{font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:#8b949e;margin:0 0 10px}
+  .mcard p{color:#c9d1d9;font-size:14px;line-height:1.6;margin:0 0 8px}
+  .mlist{list-style:none;margin:0;padding:0}
+  .mlist li{display:flex;justify-content:space-between;gap:10px;font-size:14px;color:#c9d1d9;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.05)}
+  .mlist li:last-child{border-bottom:0}
+  .mlist a{color:var(--accent)}
+  .mv{color:#8b949e;font-variant-numeric:tabular-nums;font-size:13px}
+  .mrow{display:flex;align-items:center;gap:9px;padding:3px 0;font-size:13.5px}
+  .mk{flex:0 0 66px;color:#c9d1d9}
+  .mbar{flex:1;height:8px;background:rgba(255,255,255,.06);border-radius:5px;overflow:hidden}
+  .mbar i{display:block;height:100%;background:linear-gradient(90deg,var(--accent),#7cc0ff)}
   .faq summary::-webkit-details-marker{display:none}
   .faq summary:hover{background:var(--panel)}
   .faq details[open] summary{color:var(--accent)}
@@ -896,6 +1033,7 @@ ${faqLd}
     <h1>${escHtml(cfg.h1)}</h1>
     <p class="sub">Every open <strong>${escHtml(cfg.noun)}</strong> role in the games industry, pulled straight from studios' own career pages and refreshed every hour. Salary shown when the studio publishes it, ghost-job listings flagged, and you apply on the studio's own site. No ads, no recruiters in the middle.</p>
     ${blurbHtml}
+    ${analysisHtml}
     <div class="meta">
       <span class="chip"><b>${total}</b> open role${total===1?"":"s"}</span>
       <span class="chip"><b>${studios}</b> studio${studios===1?"":"s"}</span>
@@ -911,11 +1049,12 @@ ${faqLd}
 ${rows}
   </div>
   <p style="margin-top:14px"><a href="/" class="btn primary">Browse all ${total} role${total===1?"":"s"} →</a></p>
+  ${marketHtml}
   <div class="prose">
     <h2>How DevQuest keeps this list honest</h2>
     <p>Game-dev hiring is full of stale and "ghost" postings. DevQuest shows <strong>how long each role has been live</strong> and flags listings that keep getting re-posted, so you don't waste an afternoon applying into the void. We show <strong>real salary only when the studio publishes it</strong>, never an invented "competitive" range, and we link you straight to the studio's own application page. No recruiters, no ads, and we never sell your data.</p>
     <h2>Don't see your fit yet?</h2>
-    <p>New ${escHtml(cfg.noun)} roles land every hour. Filter the full board by seniority, region, studio, and tech stack (search a skill like <em>C++</em> or <em>Unreal</em>), or set a free weekly email alert and let the new ones come to you.</p>
+    <p>${stats.fresh} new ${escHtml(cfg.noun)} role${stats.fresh===1?"":"s"} landed in the last seven days${stats.studios.length?`, most recently across studios like ${stats.studios.slice(0,3).map(x=>escHtml(x[0])).join(", ")}`:""}. Filter the full board by seniority, region, studio, and tech stack (search a skill like <em>C++</em> or <em>Unreal</em>), or set a free weekly email alert and let the new ones come to you.</p>
   </div>
   ${relatedHtml}
   ${faqHtml}
