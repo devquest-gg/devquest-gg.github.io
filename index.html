@@ -164,9 +164,9 @@
     .pulse-full { display: none; }
     .pulse-mini { display: inline-flex; align-items: center; gap: 5px; }
     .bico-m { display: inline; }
-    .wnbtn .btxt, .aboutbtn .btxt, .catbtn .btxt, .feedbackbtn .btxt { display: none; }
+    .wnbtn .btxt, .aboutbtn .btxt, .feedbackbtn .btxt { display: none; }
     header .headeractions { gap: 8px !important; justify-content: flex-end; }
-    header .wnbtn, header .aboutbtn, header .catbtn, header .feedbackbtn { padding: 6px 10px !important; font-size: 15px !important; }
+    header .wnbtn, header .aboutbtn, header .feedbackbtn { padding: 6px 10px !important; font-size: 15px !important; }
     #pulseStrip, #quickbar { display: none !important; }
     /* job cards: title takes its own line, then meta + action icons wrap to a second line so
        nothing (notebook / ✓💬⊘ status / hide) falls off the right edge on phones */
@@ -889,11 +889,6 @@
     <!-- SHARE:END -->
     <button id="installBtn" class="wnbtn" style="display:none" onclick="dqInstall()" data-tip="Install DevQuest as an app on your device"><span class="bico-m" aria-hidden="true">📲</span><span class="btxt">📲 Install app</span></button>
     <button class="wnbtn" onclick="openWhatsNew()" data-tip="What's new on DevQuest"><span class="bico-m" aria-hidden="true">✨</span><span class="btxt">✨ What's new</span><span class="wndot" id="wnDot"></span></button>
-    <!-- Entry point into the ~340 category/studio pages (/jobs hub). These pages were orphaned:
-         nothing on the board linked into them, so none of the homepage's authority reached the
-         cluster and Google treated it as unimportant. One real link fixes that, and it doubles
-         as a genuine "browse by discipline/studio" affordance for visitors. -->
-    <a class="catbtn" href="/jobs" data-tip="Browse jobs by discipline, engine, or studio" onclick="try{window.dqTrack&&window.dqTrack('categories_click',{})}catch(e){}" style="color:var(--muted);font-size:13px;font-weight:600;text-decoration:none;border:1px solid var(--border);padding:7px 13px;border-radius:7px;white-space:nowrap"><span class="bico-m" aria-hidden="true">🗂</span><span class="btxt">Categories</span></a>
     <a class="aboutbtn" href="/about" data-tip="Our mission: what DevQuest is, and what it isn't" onclick="try{window.dqTrack&&window.dqTrack('about_click',{})}catch(e){}" style="color:var(--muted);font-size:13px;font-weight:600;text-decoration:none;border:1px solid var(--border);padding:7px 13px;border-radius:7px;white-space:nowrap"><span class="bico-m" aria-hidden="true">📖</span><span class="btxt">Our mission</span></a>
     <a class="feedbackbtn" href="mailto:studios@devquest.gg?subject=DevQuest%20feedback&body=Bug%2C%20idea%2C%20or%20just%20a%20thought%3A%0A%0A%0AWhat%20page%20or%20filter%20were%20you%20on%20(optional)%3A%0A" data-tip="Report a bug or share an idea (opens your email)" onclick="try{window.dqTrack&&window.dqTrack('feedback_click',{})}catch(e){}" style="color:var(--accent);font-size:13px;font-weight:600;text-decoration:none;border:1px solid var(--border);padding:7px 13px;border-radius:7px;white-space:nowrap"><span class="bico-m" aria-hidden="true">💬</span><span class="btxt">💬 Feedback</span></a>
   </div>
@@ -1086,11 +1081,71 @@ function toggleFollow(s, ev){
   on ? FOLLOWS.add(s) : FOLLOWS.delete(s);
   try { store.set("dq-follows", Array.from(FOLLOWS)); } catch(e){}
   try { window.dqTrack && window.dqTrack("studio_follow", { st: s, on: on }); } catch(e){}
-  if (on) try { dqToast("Following " + s + " · in My Jobs", dqSrcEl(ev)); } catch(e){}
+  if (on) try {
+    // 255 studio follows had produced exactly ONE email alert, because the only path to the alert was
+    // finding the form buried on the Following tab. Following a studio IS the moment of intent — so
+    // offer it here. First follow gets the panel; after that it's just an action on the toast, so it
+    // never becomes nagging.
+    var _offered = store.get("dq-follow-alert-offered", 0) || 0;
+    var _done = store.get("dq-follow-alert-done", 0);
+    if (!_done && _offered < 1){
+      store.set("dq-follow-alert-offered", _offered + 1);
+      dqToast("Following " + s, dqSrcEl(ev));
+      setTimeout(function(){ try { offerFollowAlert(s); } catch(e){} }, 450);
+    } else if (!_done){
+      dqToast("Following " + s, dqSrcEl(ev), { label: "Email me", icon: "✉", fn: function(){
+        try { window.dqTrack && window.dqTrack("follow_alert_toast_click", { st: s }); } catch(e){}
+        offerFollowAlert(s);
+      } });
+    } else {
+      dqToast("Following " + s + " · in My Jobs", dqSrcEl(ev));
+    }
+  } catch(e){}
   try { renderSearchGroup("studioFilters","studioSearch",STUDIO_COUNTS,selStudios,STUDIO_LABELS,DIR_STUDIOS); } catch(e){}
   updateFollowTab();
   refreshFollowStars();
   if (typeof view !== "undefined" && view === "follow"){ renderFollowView(); render(); }
+}
+// Lightweight "want an email when they post?" panel, shown right after a follow. Deliberately reuses
+// window.dqStudioAlertForm (the Following-tab form) rather than duplicating the signup logic.
+function offerFollowAlert(studio){
+  if (document.getElementById("dqFollowAlert")) return;
+  try { window.dqTrack && window.dqTrack("follow_alert_shown", { st: studio }); } catch(e){}
+  var ov = document.createElement("div");
+  ov.id = "dqFollowAlert";
+  ov.style.cssText = "position:fixed;inset:0;z-index:9000;background:rgba(3,6,12,.72);display:flex;align-items:center;justify-content:center;padding:20px";
+  ov.innerHTML =
+    '<div style="background:var(--panel);border:1px solid var(--border);border-radius:14px;max-width:460px;width:100%;padding:22px 22px 18px;position:relative">'
+    + '<button type="button" id="faX" aria-label="Close" style="position:absolute;top:10px;right:12px;background:none;border:0;color:var(--muted);font-size:22px;cursor:pointer;line-height:1">×</button>'
+    + '<div style="font-size:17px;font-weight:800;margin:0 0 6px">Want an email when ' + (window.escapeHtml ? escapeHtml(studio) : studio) + ' posts?</div>'
+    + '<div style="color:var(--muted);font-size:13.5px;line-height:1.55;margin:0 0 14px">We\u2019ll send one email a week, only when they have something new. No spam, unsubscribe in one click.</div>'
+    + '<div id="faForm"></div>'
+    + '<div style="margin-top:12px"><a id="faSkip" style="color:var(--muted);font-size:12.5px;cursor:pointer">No thanks \u2014 just save it to My Jobs</a></div>'
+    + '</div>';
+  document.body.appendChild(ov);
+  function close(){ try { ov.remove(); } catch(e){} }
+  ov.addEventListener("click", function(e){ if (e.target === ov) close(); });
+  var x = document.getElementById("faX"); if (x) x.onclick = close;
+  var sk = document.getElementById("faSkip"); if (sk) sk.onclick = function(){
+    try { window.dqTrack && window.dqTrack("follow_alert_dismiss", { st: studio }); } catch(e){}
+    close();
+  };
+  // Mark done on success so we never ask again — the form swaps its own contents to a ✓ message.
+  var form = document.getElementById("faForm");
+  if (window.dqStudioAlertForm) {
+    window.dqStudioAlertForm("faForm", [studio]);
+    var obs = new MutationObserver(function(){
+      if (form && /Almost there/.test(form.textContent || "")) {
+        try { store.set("dq-follow-alert-done", 1); } catch(e){}
+        try { window.dqTrack && window.dqTrack("follow_alert_converted", { st: studio }); } catch(e){}
+        obs.disconnect();
+        setTimeout(close, 2600);
+      }
+    });
+    try { obs.observe(form, { childList: true, subtree: true, characterData: true }); } catch(e){}
+  } else if (form) {
+    form.innerHTML = '<a class="btn" href="#" onclick="setView(\'follow\');return false">Set up an alert on the Following tab \u2192</a>';
+  }
 }
 function refreshFollowStars(){
   document.querySelectorAll(".cardstar").forEach(function(el){
