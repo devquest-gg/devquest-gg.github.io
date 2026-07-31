@@ -108,11 +108,29 @@
   if(pendingDraft && DQAPI.isSignedIn()){
     var draft = null; try{ draft = JSON.parse(pendingDraft); }catch(e){ draft = null; }
     if(draft && draft.credits && draft.credits.length){
-      try{ localStorage.removeItem("dq_draft"); }catch(e){}
-      var dcreds = draft.credits, di = 0, dslug = null;
+      // The draft is NOT cleared here any more. It used to be removed before the replay loop ran, so any
+      // credit the API rejected was gone for good — and the loop swallowed every error, so the person was
+      // never told. We now keep it until we know what succeeded, then clear it only if everything landed.
+      var dcreds = draft.credits, di = 0, dslug = null, dfailed = [];
       (function nextDraft(){
         if(di >= dcreds.length){
-          var _fin = function(){ location.href = dslug ? ("/portfolio/view.html?slug=" + encodeURIComponent(dslug) + "&welcome=1") : "/credits/"; };
+          var _go = function(){ location.href = dslug ? ("/portfolio/view.html?slug=" + encodeURIComponent(dslug) + "&welcome=1") : "/credits/"; };
+          var _fin = function(){
+            if(!dfailed.length){ try{ localStorage.removeItem("dq_draft"); }catch(e){}  return _go(); }
+            // Something did not make it. Keep ONLY the unsaved games in the draft so a retry can't
+            // duplicate what already published, and show the person exactly what happened.
+            try{ var keep=JSON.parse(JSON.stringify(draft)); keep.credits=dfailed.map(function(f){ return f.c; }); localStorage.setItem("dq_draft", JSON.stringify(keep)); }catch(e){}
+            var n=dfailed.length, ok=dcreds.length-n;
+            var rows=dfailed.map(function(f){ return '<li style="margin:0 0 6px"><b>'+_esc(f.c.game_title||"Untitled")+'</b> — <span style="color:var(--muted)">'+_esc(f.why)+'</span></li>'; }).join("");
+            document.body.innerHTML='<div style="max-width:620px;margin:0 auto;padding:56px 22px;font-family:inherit;color:var(--text)">'+
+              '<h1 style="font-size:24px;margin:0 0 10px">Your portfolio is published'+(ok?(' with '+ok+' game'+(ok===1?'':'s')):'')+'</h1>'+
+              '<p style="color:var(--muted);font-size:15px;line-height:1.6;margin:0 0 16px">But '+n+' game'+(n===1?'':'s')+' couldn\u2019t be saved:</p>'+
+              '<ul style="font-size:14.5px;line-height:1.6;margin:0 0 18px;padding-left:20px">'+rows+'</ul>'+
+              '<p style="color:var(--muted);font-size:14px;line-height:1.6;margin:0 0 20px">'+(n===1?'It is':'They are')+' still saved on this device, so nothing is lost \u2014 you can add '+(n===1?'it':'them')+' by hand from your portfolio.</p>'+
+              '<a href="'+(dslug?("/portfolio/view.html?slug="+encodeURIComponent(dslug)+"&welcome=1"):"/credits/")+'" style="display:inline-block;font-weight:750;border-radius:10px;padding:11px 20px;background:linear-gradient(135deg,#7cc0ff,#58a6ff);color:#04121f;text-decoration:none">Go to my portfolio \u2192</a>'+
+            '</div>';
+          };
+          function _esc(x){ return String(x==null?"":x).replace(/[&<>"]/g,function(ch){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[ch]; }); }
           var prof = draft.profile || {};
           var tasks = [];
           if(dslug && DQAPI.updateProfile && (draft.name || draft.profile)){
@@ -142,9 +160,12 @@
             if(cid && (c.work_start!=null || c.work_end!=null) && DQAPI.updateCredit) after.push(DQAPI.updateCredit(cid, { work_start:(c.work_start!=null?c.work_start:null), work_end:(c.work_end!=null?c.work_end:null) }));
             var sh = c.sheet ? JSON.parse(JSON.stringify(c.sheet)) : null;
             if(cid && (sh || c.cover_url) && DQAPI.saveSheet){ sh = sh || {}; if(c.cover_url) sh.cover_url = c.cover_url; after.push(DQAPI.saveSheet(cid, sh)); }
+            if(!(r && r.ok) && !(r && r.status===409)){          // 409 = already claimed, which is fine
+              dfailed.push({ c:c, why:(r && r.data && r.data.error) || ("HTTP " + ((r&&r.status)||"?")) });
+            }
             (after.length ? Promise.all(after) : Promise.resolve()).then(function(){ di++; nextDraft(); }).catch(function(){ di++; nextDraft(); });
           })
-          .catch(function(){ di++; nextDraft(); });
+          .catch(function(err){ dfailed.push({ c:c, why:"Network error" }); di++; nextDraft(); });
       })();
       return;
     } else { try{ localStorage.removeItem("dq_draft"); }catch(e){} }
