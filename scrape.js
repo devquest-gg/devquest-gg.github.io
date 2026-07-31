@@ -114,6 +114,7 @@ const DIRECTORY = [
   { name: "Critical Path Games", url: "https://critpath.com/careers", note: "Unannounced multiplayer, cross-platform game (Vancouver indie). Custom Astro site, no scrapeable ATS feed. Requested by studio 2026-07-14", city: "Vancouver, BC" }, // COO Jeanne-Marie Owens emailed studios@; ~1 real role (Senior Animator) plus a General Applications catch-all, hardcoded static pages, nothing to scrape, so Island
   { name: "Webcore Games", url: "https://www.webcoregames.com/careers/", note: "Co-dev, porting & LiveOps studio (São Paulo, since 2004). Applies via a ClickUp form, no scrapeable ATS feed. Requested 2026-07-15", city: "São Paulo, Brazil" }, // apply link goes to forms.clickup.com; ~1 role (Game Engineer) + talent-bank form. No ATS feed to scrape, so Island. Same co-dev pattern as Room 8 / Enduring.
   { name: "Arcanaut Studios", url: "https://www.arcanautstudios.com/careers", note: "Star Wars: Fate of the Old Republic (Casey Hudson / ex-BioWare, with Lucasfilm Games). applytojobs.ca board, no fetcher yet; no open roles as of 2026-07-15", city: "Edmonton, Canada" }, // Webflow careers page embeds arcanautstudios.applytojobs.ca (/v1/embedded). Notable studio, promotable to mainland once they post roles + a fetcher exists. Requested 2026-07-15
+  { name: "Rezzil", url: "https://rezzil.com/careers/", note: "VR sports-performance training (Rezzil Player on Quest) — Unity/XR roles. Charlie HR Recruit ATS, no fetcher yet", city: "Manchester, UK" }, // vacancies are an iframe of rezzil.recruit.charliehr.com/job-openings; unsupported ATS and only a handful of roles, so Island. Promotable if a Charlie HR fetcher ever earns its keep. Added 2026-07-31
   // (Torpor Games promoted to mainland 2026-07-05 — HiBob (Bob) ATS, /api/job-ad JSON; see fetchHibob.)
   // (Flix Interactive promoted to mainland 2026-07-05 — self-hosted WP careers page (.vacancy-card list); see fetchFlix.)
   // (Anshar Studios promoted to mainland 2026-07-05 — WP careers page → Traffit board; see fetchTraffit.)
@@ -144,9 +145,18 @@ const STUDIOS = [
   // job to its actual studio (Naughty Dog, Santa Monica...) instead of "SIE";
   // jobs with no studio department show as the fallback name below (= HQ roles).
   { name: "Sony Interactive (HQ)", type: "greenhouse", token: "sonyinteractiveentertainmentglobal", deptAsStudio: true, parentCompany: "Sony Interactive" },
+  // Firesprite (The Persistence, Horizon Call of the Mountain) runs its OWN Greenhouse board
+  // rather than posting to SIE's master board above, so deptAsStudio never sees these roles.
+  // Small board (~1 open as of 2026-07-31) — added 2026-07-31, spot-check first scrape.
+  { name: "Firesprite", type: "greenhouse", token: "firesprite", city: "Liverpool, UK", parentCompany: "Sony Interactive" },
   { name: "Epic Games", type: "greenhouse", token: "epicgames" },
   { name: "Zynga", type: "greenhouse", token: "zyngacareers" },
   { name: "Zynga", type: "greenhouse", token: "zyngaearlycareers" },
+  // NaturalMotion (CSR Racing, Clumsy Ninja) — Zynga/Take-Two subsidiary with its own Greenhouse
+  // board, separate from zyngacareers above. ~4 London roles as of 2026-07-31 (UI/UX, systems +
+  // meta design, licensing). NB the public HTML board renders "no current openings" while the
+  // API returns 4 — trust ?content=true, not the page. Added 2026-07-31.
+  { name: "NaturalMotion", type: "greenhouse", token: "nmcareers", city: "London, UK", parentCompany: "Zynga" },
   // EA runs Avature (jobs.ea.com): server-rendered HTML parsed page by page.
   // Listings carry no posted dates -> the site shows "date n/a" for these.
   { name: "Electronic Arts (HQ)", type: "avature", token: "ea",
@@ -321,6 +331,15 @@ const STUDIOS = [
   { name: "Climax Studios", type: "workable", token: "climax-studios" },
   { name: "Rebellion", type: "workable", token: "rebellion" },
   { name: "Keywords Studios", type: "smartrecruiters", token: "KeywordsStudios" },
+  // d3t (Daresbury co-dev, 150+ devs) is a Keywords subsidiary with no board of its own — its own
+  // careers page just says "email us a CV". Its roles live on Keywords' *international* Workable
+  // account (keywords-intl1, ~220 roles across 26 countries) tagged in the title, e.g.
+  // "Principal Level Designer - d3t". titleInclude carves those out and titleStrip drops the tag
+  // so the card reads "Principal Level Designer" under studio "d3t". The rest of keywords-intl1
+  // (Volta, Lakshya, localisation/QA) is deliberately NOT ingested — see note in the review.
+  // Added 2026-07-31 — spot-check first scrape.
+  { name: "d3t", type: "workable", token: "keywords-intl1", titleInclude: "\\bd3t\\b",
+    titleStrip: "\\s*[-–—]?\\s*\\bd3t\\b\\s*", city: "Daresbury, UK", parentCompany: "Keywords Studios" },
   { name: "IO Interactive", type: "teamtailor", token: "ioi", host: "apply.ioi.dk" },
   { name: "OtherSide Entertainment", type: "teamtailor", token: "otherside", host: "careers.otherside-e.com" },
   { name: "Sega", type: "workday", token: "sega", host: "sega.wd3.myworkdayjobs.com", tenant: "sega", site: "SEGA_Careers" },
@@ -610,6 +629,7 @@ const STUDIO_KIND = {
   "Epic Games": ["tech", "dev"],
   // Co-development / porting / outsourcing services
   "Keywords Studios": ["codev"],
+  "d3t": ["codev"],
   "Aspyr Media": ["codev", "dev"],
   "Behaviour Interactive": ["codev", "dev"],
   "Snowed In Studios": ["codev"],
@@ -2424,12 +2444,22 @@ async function fetchWorkable(studio) {
     const data = await fetchJson(`https://apply.workable.com/api/v1/widget/accounts/${studio.token}`);
     jobs = data.jobs || [];
   }
+  // Optional per-studio title filters — same contract as fetchGreenhouse. One Workable account
+  // can host several sub-studios tagged in the title (e.g. Keywords Studios' international board
+  // carries "Principal Level Designer - d3t"). titleInclude carves out one sub-studio's roles;
+  // titleExclude drops them from the parent board so they aren't listed twice; titleStrip removes
+  // the now-redundant tag from the displayed title.
+  if (studio.titleInclude) { const re = new RegExp(studio.titleInclude, "i"); jobs = jobs.filter(j => re.test(j.title || "")); }
+  if (studio.titleExclude) { const re = new RegExp(studio.titleExclude, "i"); jobs = jobs.filter(j => !re.test(j.title || "")); }
   return jobs.map(j => {
     const location = [j.city, j.state, j.country].filter(Boolean).join(", ") || "Unlisted";
     const remote = j.remote || j.telecommuting;
+    const title = studio.titleStrip
+      ? String(j.title || "").replace(new RegExp(studio.titleStrip, "ig"), " ").replace(/\s+/g, " ").replace(/[\s\-–—|,]+$/, "").trim()
+      : j.title;
     return {
       id: `wk-${studio.token}-${j.shortcode || j.id}`,
-      title: j.title,
+      title,
       studio: studio.name,
       discipline: mapDiscipline(j.department || j.function, j.title || ""),
       workType: remote ? "Remote" : inferWorkType(j.title || "", location, []),
