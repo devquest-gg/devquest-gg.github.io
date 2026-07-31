@@ -727,6 +727,248 @@ function extractTech(text) {
   return out;
 }
 
+// ---- per-job pages (Google for Jobs) ---------------------------------------
+// One crawlable leaf page per job carrying JobPosting JSON-LD. Google is explicit that the markup
+// must sit on the detail page ("don't add structured data to pages intended to present a list of
+// jobs"), which is why the ~340 category pages can never qualify no matter how good they get.
+//
+// Everything here is GATED: a job is only published if we can supply every property Google requires
+// AND show it on the page. Publishing a job with a missing/incomplete description or an unknown
+// country is worse than not publishing it — "failure to take timely action on expired jobs may
+// result in a manual action", and thin/incomplete postings are a stated policy violation. About half
+// the board currently has a description, so expect roughly half of it to qualify; every future
+// improvement to description coverage automatically publishes more pages with no change here.
+const JOB_DIR = "job";                                    // /job/<id> — NOT /jobs, which is the category hub
+const JOB_MIN_DESC = 220;                                 // below this a description isn't a description
+let JOB_PAGE_IDS = new Set();                             // consulted by landingRoleRow for internal links
+let JOB_PAGE_URLS = [];                                   // handed to the sitemap builder
+
+// Country is required for any non-remote posting and our location strings are free text
+// ("Ireland, Dublin", "El Segundo, CA", "ES - Barcelona, Spain"). Resolve conservatively; if we
+// can't be sure, the job simply doesn't publish.
+const CTRY = {
+  "united states":"US","united states of america":"US","usa":"US","u.s.":"US","us":"US",
+  "canada":"CA","united kingdom":"GB","uk":"GB","england":"GB","scotland":"GB","wales":"GB","northern ireland":"GB",
+  "ireland":"IE","france":"FR","germany":"DE","spain":"ES","portugal":"PT","italy":"IT","netherlands":"NL",
+  "belgium":"BE","sweden":"SE","norway":"NO","denmark":"DK","finland":"FI","iceland":"IS","poland":"PL",
+  "czechia":"CZ","czech republic":"CZ","slovakia":"SK","austria":"AT","switzerland":"CH","romania":"RO",
+  "bulgaria":"BG","hungary":"HU","ukraine":"UA","serbia":"RS","croatia":"HR","greece":"GR","turkey":"TR",
+  "china":"CN","japan":"JP","south korea":"KR","korea":"KR","singapore":"SG","india":"IN","vietnam":"VN",
+  "malaysia":"MY","philippines":"PH","thailand":"TH","indonesia":"ID","taiwan":"TW","hong kong":"HK",
+  "australia":"AU","new zealand":"NZ","brazil":"BR","mexico":"MX","argentina":"AR","chile":"CL","colombia":"CO",
+  "israel":"IL","united arab emirates":"AE","uae":"AE","saudi arabia":"SA","south africa":"ZA","egypt":"EG",
+  "ghana":"GH","nigeria":"NG","kenya":"KE","morocco":"MA","tunisia":"TN",
+};
+// ISO-3166 alpha-2 for feeds that abbreviate. Anything colliding with a US state abbreviation is
+// already caught above, so this only fires on unambiguous codes.
+const ISO2 = new Set(("GH GB FR ES PT IT NL BE SE NO DK FI PL CZ SK AT CH RO BG HU UA RS HR GR TR CN JP KR SG "
+  + "VN MY PH TH TW HK AU NZ BR MX CL IL AE ZA EG NG KE MA IE IS SA").split(" "));
+const US_ST = new Set(("al ak az ar ca co ct de fl ga hi id il in ia ks ky la me md ma mi mn ms mo mt ne nv nh nj nm ny "
+  + "nc nd oh ok or pa ri sc sd tn tx ut vt va wa wv wi wy dc").split(" "));
+// Big game-dev hubs, for strings that name only a city.
+const HUB_CTRY = { london:"GB", brighton:"GB", guildford:"GB", leamington:"GB", manchester:"GB", edinburgh:"GB",
+  dublin:"IE", stockholm:"SE", malmo:"SE", "malmö":"SE", helsinki:"FI", oslo:"NO", copenhagen:"DK",
+  warsaw:"PL", krakow:"PL", "kraków":"PL", barcelona:"ES", madrid:"ES", lisbon:"PT", paris:"FR", lyon:"FR",
+  montpellier:"FR", annecy:"FR", bordeaux:"FR", berlin:"DE", munich:"DE", hamburg:"DE", cologne:"DE",
+  amsterdam:"NL", utrecht:"NL", brussels:"BE", zurich:"CH", vienna:"AT", prague:"CZ", budapest:"HU",
+  bucharest:"RO", sofia:"BG", belgrade:"RS", montreal:"CA", "montréal":"CA", toronto:"CA", vancouver:"CA",
+  // US hubs — feeds often give a metro with no state or country ("San Francisco Bay Area").
+  "san francisco":"US", "san francisco bay area":"US", "los angeles":"US", seattle:"US", austin:"US",
+  "new york":"US", "new york city":"US", "san diego":"US", boston:"US", chicago:"US", orlando:"US",
+  raleigh:"US", irvine:"US", redmond:"US", bellevue:"US", "santa monica":"US", "culver city":"US",
+  sunnyvale:"US", "san jose":"US", kirkland:"US", "salt lake city":"US", atlanta:"US", dallas:"US",
+  quebec:"CA", ottawa:"CA", edmonton:"CA", tokyo:"JP", osaka:"JP", kyoto:"JP", seoul:"KR", shanghai:"CN",
+  beijing:"CN", shenzhen:"CN", guangzhou:"CN", chengdu:"CN", singapore:"SG", bangalore:"IN", bengaluru:"IN",
+  hyderabad:"IN", pune:"IN", gurugram:"IN", hanoi:"VN", "ho chi minh city":"VN", sydney:"AU", melbourne:"AU",
+  brisbane:"AU", auckland:"NZ", "tel aviv":"IL", dubai:"AE", "sao paulo":"BR", "são paulo":"BR" };
+function resolveCountry(loc){
+  const t = String(loc || "").toLowerCase();
+  if (!t || /unlisted|multiple locations|remote/.test(t) && !/,/.test(t)) return "";
+  const parts = t.split(/[,;\/]|\s-\s/).map(x => x.trim()).filter(Boolean);
+  for (const p of parts) if (CTRY[p]) return CTRY[p];              // an exact segment is the strongest signal
+  for (const p of parts) if (US_ST.has(p)) return "US";            // "El Segundo, CA"
+  for (const p of parts) if (p.length === 2 && ISO2.has(p.toUpperCase())) return p.toUpperCase();
+  for (const k in CTRY) if (new RegExp("\\b" + k.replace(/[.]/g, "\\.") + "\\b").test(t)) return CTRY[k];
+  for (const p of parts) if (HUB_CTRY[p]) return HUB_CTRY[p];
+  for (const k in HUB_CTRY) if (new RegExp("\\b" + k + "\\b").test(t)) return HUB_CTRY[k];
+  return "";
+}
+function jobCity(loc){
+  const parts = String(loc || "").split(/[,;]/).map(x => x.trim()).filter(Boolean);
+  for (const p of parts){
+    const low = p.toLowerCase();
+    if (CTRY[low] || US_ST.has(low) || /^[a-z]{2}$/i.test(p)) continue;
+    return p.replace(/^[A-Z]{2}\s*-\s*/, "").trim();               // "ES - Barcelona" -> "Barcelona"
+  }
+  return "";
+}
+// baseSalary from our pretty "$146K–$210K" form. Only emitted when unambiguous.
+function jobSalaryLd(sal){
+  if (!sal) return null;
+  const cur = /£/.test(sal) ? "GBP" : /€/.test(sal) ? "EUR" : /\$/.test(sal) ? "USD" : null;
+  if (!cur) return null;
+  const nums = String(sal).replace(/,/g, "").match(/(\d+(?:\.\d+)?)\s*[kK]?/g) || [];
+  const vals = nums.map(t => { const m = t.match(/(\d+(?:\.\d+)?)\s*([kK])?/); if (!m) return null;
+    let n = parseFloat(m[1]); if (m[2]) n *= 1000; return n >= 1000 ? n : null; }).filter(Boolean);
+  if (!vals.length) return null;
+  const lo = Math.min(...vals), hi = Math.max(...vals);
+  return { "@type":"MonetaryAmount", currency: cur,
+    value: { "@type":"QuantitativeValue", minValue: lo, maxValue: hi, unitText: "YEAR" } };
+}
+// Every gate, in one place, so the reasons can be counted and reported.
+function jobPageCheck(j){
+  if (!j.id || !j.title || !j.studio) return "missing core fields";
+  const d = typeof j.desc === "string" ? j.desc.trim() : "";
+  if (d.length < JOB_MIN_DESC) return "no description";
+  if (isPool(j.title)) return "talent pool / speculative";
+  const posted = j.postedAt || j.firstSeen;                        // datePosted is REQUIRED; firstSeen is our own honest fallback
+  if (!posted || isNaN(Date.parse(posted))) return "no datePosted";
+  const remote = j.workType === "Remote";
+  if (!remote && !resolveCountry(j.location)) return "country not resolvable";
+  // A remote job needs no jobLocation at all — jobLocationType TELECOMMUTE covers it.
+  return "";
+}
+function renderJobPage(j){
+  const posted = new Date(j.postedAt || j.firstSeen).toISOString();
+  const cc = resolveCountry(j.location);
+  const city = jobCity(j.location);
+  const remote = j.workType === "Remote";
+  const desc = j.desc.trim();
+  const descHtml = desc.split(/(?:\r?\n){1,}|(?<=\.)\s{2,}/).map(p => p.trim()).filter(Boolean)
+    .map(p => `<p>${escHtml(p)}</p>`).join("\n");
+  const url = `https://devquest.gg/${JOB_DIR}/${encodeURIComponent(j.id)}`;
+  const ld = { "@context":"https://schema.org/", "@type":"JobPosting",
+    title: String(j.title).split("|")[0].trim(),
+    description: descHtml,                                          // Google wants HTML; this is what's on the page
+    datePosted: posted,
+    identifier: { "@type":"PropertyValue", name: String(j.studio), value: String(j.id) },
+    hiringOrganization: { "@type":"Organization", name: String(j.studio) },
+    directApply: false,                                             // we hand off to the studio's own ATS
+  };
+  if (remote){
+    ld.jobLocationType = "TELECOMMUTE";
+    // Only when we have a real country. j.region is "Europe" / "North America", which is NOT a valid
+    // Country name — emitting it would be worse than omitting an optional property.
+    if (cc) ld.applicantLocationRequirements = { "@type":"Country", name: cc };
+  }
+  if (cc) ld.jobLocation = { "@type":"Place",
+    address: Object.assign({ "@type":"PostalAddress", addressCountry: cc }, city ? { addressLocality: city } : {}) };
+  const sal = jobSalaryLd(j.salary); if (sal) ld.baseSalary = sal;
+  const cat = (j.discipline && j.discipline !== "Other") ? `<a href="/${slugify("game " + j.discipline)}-jobs">${escHtml(j.discipline)} jobs</a>` : "";
+  const studioPage = `/${slugify(j.parent || j.studio)}-jobs`;
+  const metaDesc = `${String(j.title).split("|")[0].trim()} at ${j.studio}${city ? " in " + city : ""}. ${desc.slice(0, 150).replace(/\s+\S*$/, "")}…`;
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${escHtml(String(j.title).split("|")[0].trim())} · ${escHtml(j.studio)} · DevQuest</title>
+<meta name="description" content="${escHtml(metaDesc)}">
+<link rel="canonical" href="${url}">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<meta property="og:title" content="${escHtml(String(j.title).split("|")[0].trim())} · ${escHtml(j.studio)}">
+<meta property="og:description" content="${escHtml(metaDesc)}">
+<meta property="og:type" content="article">
+<meta property="og:url" content="${url}">
+<script type="application/ld+json">
+${JSON.stringify(ld)}
+</script>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"DevQuest","item":"https://devquest.gg/"},{"@type":"ListItem","position":2,"name":"Jobs","item":"https://devquest.gg/jobs"},{"@type":"ListItem","position":3,"name":${JSON.stringify(String(j.studio))},"item":"https://devquest.gg${studioPage}"}]}
+</script>
+<style>
+  :root{--bg:#0a0d14;--panel:#11161f;--border:#232a35;--text:#e6edf3;--muted:#8b949e;--accent:#58a6ff;--gold:#e0b23a}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;line-height:1.6}
+  header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 22px;border-bottom:1px solid var(--border)}
+  .logo{display:flex;align-items:center;gap:8px;color:var(--text);text-decoration:none;font-weight:800}
+  .logo span span{color:var(--accent)} .logo .tld{color:var(--gold)}
+  .wrap{max-width:820px;margin:0 auto;padding:26px 22px 60px}
+  .crumbs{font-size:13px;color:var(--muted);margin-bottom:14px}
+  .crumbs a{color:var(--muted)}
+  h1{font-size:27px;line-height:1.25;margin:0 0 8px}
+  .sub{color:var(--muted);font-size:15px;margin:0 0 14px}
+  .tags{display:flex;flex-wrap:wrap;gap:7px;margin:0 0 20px}
+  .tag{font-size:12px;font-weight:700;color:var(--muted);border:1px solid var(--border);border-radius:999px;padding:4px 11px}
+  .tag.sal{color:var(--gold);border-color:rgba(224,178,58,.4)}
+  .tag.remote{color:#4ad38b;border-color:rgba(74,211,139,.4)}
+  .apply{display:inline-block;font-weight:800;border-radius:10px;padding:12px 22px;background:linear-gradient(135deg,#7cc0ff,#58a6ff);color:#04121f;text-decoration:none}
+  .desc{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:18px 20px;margin:22px 0}
+  .desc p{margin:0 0 12px;color:#c9d1d9;font-size:15px}
+  .note{color:var(--muted);font-size:13px;margin-top:18px}
+  .more{margin-top:26px;padding-top:18px;border-top:1px solid var(--border)}
+  .more a{color:var(--accent)}
+  footer{border-top:1px solid var(--border);padding:20px 22px;text-align:center;color:var(--muted);font-size:13px}
+  footer a{color:var(--muted)}
+</style>
+</head>
+<body>
+<header>
+  <a class="logo" href="/"><span>Dev<span>Quest</span></span><span class="tld">.gg</span></a>
+  <a class="apply" href="${escHtml(j.url || "/")}" target="_blank" rel="noopener nofollow">Apply on ${escHtml(j.studio)}&rsquo;s site →</a>
+</header>
+<div class="wrap">
+  <nav class="crumbs"><a href="/">DevQuest</a> › <a href="/jobs">Jobs</a> › <a href="${studioPage}">${escHtml(j.studio)}</a></nav>
+  <h1>${escHtml(String(j.title).split("|")[0].trim())}</h1>
+  <p class="sub">${escHtml(j.studio)}${city ? " · " + escHtml(city) : ""}${remote ? " · Remote" : ""}</p>
+  <div class="tags">
+    ${j.seniority ? `<span class="tag">${escHtml(j.seniority)}</span>` : ""}
+    ${j.discipline ? `<span class="tag">${escHtml(j.discipline)}</span>` : ""}
+    ${remote ? `<span class="tag remote">Remote</span>` : (j.workType && j.workType !== "Unknown" ? `<span class="tag">${escHtml(j.workType)}</span>` : "")}
+    ${j.salary ? `<span class="tag sal">${escHtml(j.salary)}</span>` : ""}
+    <span class="tag">Posted ${escHtml(posted.slice(0, 10))}</span>
+  </div>
+  <a class="apply" href="${escHtml(j.url || "/")}" target="_blank" rel="noopener nofollow">Apply on ${escHtml(j.studio)}&rsquo;s site →</a>
+  <div class="desc">
+${descHtml}
+  </div>
+  <p class="note">Posted by ${escHtml(j.studio)} and synced from their own careers page. DevQuest doesn&rsquo;t take a fee, doesn&rsquo;t sit between you and the studio, and doesn&rsquo;t sell your data — you apply directly with them.</p>
+  <div class="more">
+    <p>More like this: ${cat ? cat + " · " : ""}<a href="${studioPage}">All ${escHtml(j.studio)} openings</a> · <a href="/jobs">Browse every category</a></p>
+  </div>
+</div>
+<footer>DevQuest.gg · <a href="/">Browse all jobs</a> · <a href="/jobs">All categories</a> · <a href="/about">Our mission</a></footer>
+</body>
+</html>
+`;
+}
+function writeJobPages(all, root){
+  const dir = path.join(root, JOB_DIR);
+  try { fs.mkdirSync(dir, { recursive: true }); } catch (e) {}
+  const reasons = {};
+  const wanted = new Map();
+  for (const j of all){
+    const why = jobPageCheck(j);
+    if (why){ reasons[why] = (reasons[why] || 0) + 1; continue; }
+    wanted.set(String(j.id), j);
+  }
+  let written = 0, unchanged = 0;
+  for (const [id, j] of wanted){
+    const file = path.join(dir, id + ".html");
+    const body = renderJobPage(j);
+    let prev = null; try { prev = fs.readFileSync(file, "utf8"); } catch (e) {}
+    if (prev === body){ unchanged++; continue; }
+    try { fs.writeFileSync(file, body); written++; } catch (e){ console.error(`job page ${id}: ${e.message}`); }
+  }
+  // Expiry. Google: "Jobs that are no longer open for applications must be expired… failure to take
+  // timely action on expired jobs may result in a manual action." Deleting the file makes it 404,
+  // which is one of the three remedies Google accepts, and it happens the same hour the job vanishes.
+  let removed = 0;
+  try {
+    for (const f of fs.readdirSync(dir)){
+      if (!f.endsWith(".html")) continue;
+      if (wanted.has(f.slice(0, -5))) continue;
+      try { fs.unlinkSync(path.join(dir, f)); removed++; } catch (e) {}
+    }
+  } catch (e) {}
+  JOB_PAGE_IDS = new Set(wanted.keys());
+  JOB_PAGE_URLS = [...wanted.keys()].map(id => `https://devquest.gg/${JOB_DIR}/${encodeURIComponent(id)}`);
+  const skipped = Object.entries(reasons).sort((a, b) => b[1] - a[1]).map(([k, v]) => `${k}: ${v}`).join(", ");
+  console.log(`Job pages: ${wanted.size}/${all.length} eligible -> ${written} written, ${unchanged} unchanged, ${removed} expired`);
+  if (skipped) console.log(`  skipped — ${skipped}`);
+  return JOB_PAGE_URLS;
+}
+
 // ---- job descriptions ------------------------------------------------------
 // Descriptions are by far the biggest thing we scrape (~3-4 KB each, ~20 MB across the board) and
 // they must NEVER reach jobs.js — that file loads on every page view and mobile is already half our
@@ -862,7 +1104,13 @@ function landingRoleRow(j){
   const days = j.firstSeen ? Math.max(0, Math.round((Date.now() - Date.parse(j.firstSeen)) / 864e5)) : null;
   const age = days == null ? "" : `<span class="tag age">${days<=0?"new today":days===1?"1 day ago":days+" days ago"}</span>`;
   const loc = j.workType === "Remote" ? "Remote" : escHtml((j.location || "").split(",")[0]);
-  return `    <a class="role" href="${escHtml(j.url||"https://devquest.gg")}" target="_blank" rel="noopener">
+  // Link to our own job page when we published one: it gives every job page an internal link from
+  // a category page (otherwise they'd be discoverable only via the sitemap, which is how the whole
+  // category cluster ended up orphaned in the first place). Otherwise link straight out, as before.
+  const own = JOB_PAGE_IDS.has(String(j.id));
+  const href = own ? `/${JOB_DIR}/${encodeURIComponent(j.id)}` : (j.url || "https://devquest.gg");
+  const tgt = own ? "" : ` target="_blank" rel="noopener"`;
+  return `    <a class="role" href="${escHtml(href)}"${tgt}>
       <div class="rt">${escHtml((j.title||"").split("|")[0].trim())}</div>
       <div class="rs">${escHtml(j.studio)}${loc?" · "+loc:""}</div>
       <div class="tags">${rem}${sen}${sal}${age}</div>
@@ -1336,7 +1584,9 @@ function writeLandingPages(all, dir){
 
   // Regenerate sitemap.xml with <lastmod> (Google uses lastmod; it now ignores changefreq/priority).
   const today = new Date().toISOString().slice(0, 10);
-  const urls = ["https://devquest.gg/", "https://devquest.gg/about"].concat(slugs.map(s => "https://devquest.gg/" + s));
+  const urls = ["https://devquest.gg/", "https://devquest.gg/about"]
+    .concat(slugs.map(s => "https://devquest.gg/" + s))
+    .concat(JOB_PAGE_URLS);          // per-job pages (populated by writeJobPages, which runs first)
   const sm = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`
     + urls.map(u => `  <url><loc>${u}</loc><lastmod>${today}</lastmod></url>`).join("\n")
     + `\n</urlset>\n`;
@@ -5291,7 +5541,9 @@ module.exports = { mapDiscipline, strongTitleDiscipline, normDisc };
     trends,
   };
   const dir = __dirname;
-  // Must run BEFORE the two serialisations below — it strips j.desc off every record.
+  // Order matters: writeJobPages needs the FULL description, and writeDescriptionShards deletes
+  // j.desc off every record. Job pages first, always.
+  writeJobPages(all, dir);
   writeDescriptionShards(all, path.join(dir, "data", "jobs"));
   fs.writeFileSync(path.join(dir, "jobs.json"), JSON.stringify(out, null, 2));
   fs.writeFileSync(path.join(dir, "jobs.js"), "window.JOBS_DATA = " + JSON.stringify(out) + ";");
