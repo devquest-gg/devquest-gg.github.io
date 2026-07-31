@@ -1841,7 +1841,9 @@ const HUBS = [
   { name:"Los Angeles", region:"North America", re:/los angeles|santa monica|burbank|culver city|el segundo|\birvine\b|aliso viejo|carlsbad|san diego|orange county|playa vista|sherman oaks/ },
   { name:"SF Bay Area", region:"North America", re:/san francisco|bay area|redwood|san mateo|sunnyvale|mountain view|palo alto|oakland|emeryville|novato|petaluma|san jose|cupertino|foster city/ },
   { name:"Seattle", region:"North America", re:/seattle|bellevue|redmond|kirkland|bothell/ },
-  { name:"Austin", region:"North America", re:/austin/ },
+  // \b so it can't match inside another word, and an explicit guard for Austin Road in Kowloon —
+  // an unanchored /austin/ was pulling in other Austins, which is what users reported.
+  { name:"Austin", region:"North America", re:/\baustin\b(?!\s*road)/ },
   { name:"Dallas", region:"North America", re:/dallas|plano|frisco|richardson|\btexas\b/ },
   { name:"New York", region:"North America", re:/new york|\bnyc\b|brooklyn|manhattan/ },
   { name:"Raleigh-Durham", region:"North America", re:/raleigh|durham|\bcary\b|north carolina/ },
@@ -2011,6 +2013,7 @@ const selCells = new Set();        // keys "discipline|seniority"
 const selSubs = new Set();         // sub-discipline chips (Art/Eng/Design specializations)
 const selRegionsQuick = new Set(); // quick region chips
 const selHubs = new Set();         // gaming-hub chips (drill-down under a selected region)
+let hubPlusRemote = true;          // with a hub picked, also keep fully-remote roles ("Austin or remote")
 let quickRemote = false, quickNew = false;
 
 // ---- Search normalization + synonyms -----------------------------------------
@@ -2140,7 +2143,11 @@ function render(){
   const qToks = q ? q.split(" ").filter(Boolean) : [];
   const qMatch = j => {
     if (!q && !qExc.length) return true;
-    const hay = normS(j.t + " " + j.s + " " + j.locs.join(" ") + " " + (j.d || "") + " " + (j.tech || []).join(" "));
+    // j.hubs is the NORMALISED city ("Austin"), j.locs the raw studio strings. A user searching
+    // "austin" was matching raw text only, so they hit "Austin, TX" but missed "Austin, Texas" and
+    // "Austin, United States of America" — 33 different spellings in the data, and a literal search
+    // finds a third of them. Including the hub makes one search term match every spelling.
+    const hay = normS(j.t + " " + j.s + " " + j.locs.join(" ") + " " + (j.hubs || []).join(" ") + " " + (j.d || "") + " " + (j.tech || []).join(" "));
     if (qExc.some(x => hay.includes(x))) return false;
     if (!q) return true;
     // Hit if the whole query (or any synonym phrase) appears, OR every word — each
@@ -2190,15 +2197,23 @@ function render(){
 
   // gaming-hub chips appear only when a region quick-filter is active. Counts respect
   // the selected square(s) + specialize chips, scoped to the selected region(s).
+  // Hubs used to appear only after a region quick-filter was picked, so most people never found them
+  // and fell back to keyword search (which is exactly how the Austin spelling problem got reported).
+  // Show them whenever they're relevant; scope by region only when a region is actually selected.
   const availHubs = {};
-  if (selRegionsQuick.size)
-    for (const j of preHub) if (passCells(j) && passSubs(j))
-      for (const hb of j.hubs)
-        if (selRegionsQuick.has(HUB_REGION[hb])) availHubs[hb] = (availHubs[hb]||0)+1;
+  for (const j of preHub) if (passCells(j) && passSubs(j))
+    for (const hb of j.hubs)
+      if (!selRegionsQuick.size || selRegionsQuick.has(HUB_REGION[hb])) availHubs[hb] = (availHubs[hb]||0)+1;
   for (const hb of [...selHubs]) if (!availHubs[hb]) selHubs.delete(hb); // prune stale picks
 
   // "base" = preHub narrowed by the hub selection (feeds the matrix + cell list).
-  const base = selHubs.size ? preHub.filter(j => j.hubs.some(h=>selHubs.has(h))) : preHub;
+  // "Onsite in my city OR remote anywhere" is the single most common job-seeker query and a plain
+  // AND can't express it: hub + Remote work-type intersects to "remote roles tagged Austin", which is
+  // almost nothing. hubPlusRemote widens the hub selection to also keep fully-remote roles, mirroring
+  // what regionScopeOK already does for regions ("out-of-region jobs are hidden; remote roles stay").
+  const base = selHubs.size
+    ? preHub.filter(j => j.hubs.some(h=>selHubs.has(h)) || (hubPlusRemote && j.w === "Remote"))
+    : preHub;
   // apply the matrix squares; the result feeds both the sub-discipline chips and the list
   const cellList = selCells.size ? base.filter(j=>selCells.has(j.d+"|"+j.sen)) : base;
 
@@ -2602,12 +2617,15 @@ function renderHubbar(availHubs){
   if (!keys.length) { el.innerHTML = ""; el.style.display = "none"; return; }
   el.style.display = "";
   el.innerHTML = `<span class="qlabel">📍 Hubs:</span>` +
-    keys.map(h=>`<button class="qchip hub ${selHubs.has(h)?'on':''}" onclick="toggleHub('${h.replace(/'/g,"\\'")}')">${h} <span class="subn">${availHubs[h]}</span></button>`).join("");
+    keys.map(h=>`<button class="qchip hub ${selHubs.has(h)?'on':''}" onclick="toggleHub('${h.replace(/'/g,"\\'")}')">${h} <span class="subn">${availHubs[h]}</span></button>`).join("")
+    // Only meaningful once a hub is picked, so it appears alongside the selection rather than always.
+    + (selHubs.size ? `<button class="qchip ${hubPlusRemote?'on':''}" onclick="toggleHubPlusRemote()" data-tip="Also show fully-remote roles from anywhere, not just ones based in your hub">➕ or remote${hubPlusRemote?' ✓':''}</button>` : "");
 }
 
 function toggleCell(dn, sn){ const k = dn+"|"+sn; const adding = !selCells.has(k); adding ? selCells.add(k) : selCells.delete(k); try{ window.dqTrack && window.dqTrack("grid_cell", { d: dn, s: sn }); }catch(e){} try{ if (typeof obEligible==="function" && obEligible()) obTrack("onboard_grid", {}); }catch(e){}  /* new-visitor conversion: first grid tap while the hint is still up */ if (adding) try{ affRecordCell(dn, sn); }catch(e){} saveCells(); try{ profFromMatrix(); }catch(e){} render(); }
 function toggleSub(s){ selSubs.has(s) ? selSubs.delete(s) : selSubs.add(s); render(); }
-function toggleHub(h){ selHubs.has(h) ? selHubs.delete(h) : selHubs.add(h); render(); }
+function toggleHub(h){ selHubs.has(h) ? selHubs.delete(h) : selHubs.add(h); try{ window.dqTrack && window.dqTrack("hub_filter", { h: h }); }catch(e){} render(); }
+function toggleHubPlusRemote(){ hubPlusRemote = !hubPlusRemote; try{ window.dqTrack && window.dqTrack("hub_plus_remote", { on: hubPlusRemote }); }catch(e){} render(); }
 function toggleQuickRemote(){ quickRemote = !quickRemote; render(); }
 function toggleQuickNew(){ quickNew = !quickNew; render(); }
 function toggleQuickRegion(rg){ selRegionsQuick.has(rg) ? selRegionsQuick.delete(rg) : selRegionsQuick.add(rg); render(); }
