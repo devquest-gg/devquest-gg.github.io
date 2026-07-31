@@ -3696,6 +3696,15 @@ const STUDIO_TITLES = {
   "Take-Two Interactive":"Grand Theft Auto, NBA 2K"
 };
 function bfEsc(s){ return String(s==null?"":s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];}); }
+// Studio names can contain an apostrophe ("That's No Moon"). These are passed through inline
+// onclick="fn('NAME')" attributes, so the value has to survive TWO parsers: the HTML attribute
+// parser, then the JS string literal. bfEsc alone doesn't touch ' , so the old code simply
+// DELETED apostrophes to stop the literal breaking — which silently changed the name, so
+// bfOpenStudio never equalled the real studio name and that card could never expand.
+// Escape for both layers instead of mangling: JS first (backslash), then HTML.
+function bfJs(s){ return String(s==null?"":s)
+  .replace(/\\/g,"\\\\").replace(/'/g,"\\'")
+  .replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
 function bfFreshLabel(d){ return d==null?"":d<=10?"fresh":d<=21?"recent":d<=45?"aging":"stale"; }
 function bfContChip(l){
   var m = { "less crowded":["#3fb950","rgba(63,185,80,.14)"], "contested":["#d6a531","rgba(210,153,34,.14)"], "very contested":["#e06c5e","rgba(224,108,94,.14)"] };
@@ -4179,7 +4188,7 @@ function bfRenderDiscSw(){
   var d=document.getElementById("bfDiscSw"); if(!d) return; var roles=profGet("roles").v;
   if (roles.length<2){ d.innerHTML=""; return; }
   if (!bfActiveDisc || roles.indexOf(bfActiveDisc)<0) bfActiveDisc=roles[0];
-  d.innerHTML='<span class="bfswlbl">Show best fits for:</span>'+roles.map(function(r){ return '<button class="dbtn'+(r===bfActiveDisc?" on":"")+'" onclick="bfSetDisc(\''+bfEsc(r).replace(/'/g,"")+'\')">'+bfEsc(r)+'</button>'; }).join("");
+  d.innerHTML='<span class="bfswlbl">Show best fits for:</span>'+roles.map(function(r){ return '<button class="dbtn'+(r===bfActiveDisc?" on":"")+'" onclick="bfSetDisc(\''+bfJs(r)+'\')">'+bfEsc(r)+'</button>'; }).join("");
 }
 function bfSetDisc(d){ bfActiveDisc=d; bfRenderDiscSw(); bfCompute(); }
 let _bfBuilt = false;
@@ -4311,7 +4320,7 @@ function bfCard(r,i,disc){
   const best = i===0, titles = STUDIO_TITLES[r.n] || "", fl = bfFreshLabel(r.medAge);
   const flColor = r.medAge==null ? "var(--muted)" : r.medAge<=21 ? "#3fb950" : r.medAge<=45 ? "#d6a531" : "#e06c5e";
   const isOpen = bfOpenStudio === r.n;
-  const nameJs = bfEsc(r.n).replace(/'/g,""), discJs = bfEsc(disc).replace(/'/g,"");
+  const nameJs = bfJs(r.n), discJs = bfJs(disc);
   // explainable signals (all from data already on the row): seniority matches, fresh count, score band
   const senE = profSenEffective(); const senPref = (senE.v && senE.v !== "__any") ? senE.v : null;
   const senN = senPref ? (r.jobs||[]).filter(j => j.sen === senPref).length : 0;
@@ -4346,7 +4355,7 @@ function bfStudioJobsHtml(r, disc){
   const jobs = (r.jobs||[]).slice().sort((a,b)=>(b.ts||b.fseen||0)-(a.ts||a.fseen||0));
   const shown = jobs.slice(0,12);
   ROW_COL = true; const rows = shown.map(j=>rowHtml(j)).join(""); ROW_COL = false;
-  const nameJs = bfEsc(r.n).replace(/'/g,""), discJs = bfEsc(disc).replace(/'/g,"");
+  const nameJs = bfJs(r.n), discJs = bfJs(disc);
   const more = jobs.length>shown.length ? `<div style="padding:6px 15px;font-size:12px;color:var(--muted)">+${jobs.length-shown.length} more not shown here</div>` : "";
   const link = `<div style="padding:9px 15px;border-top:1px solid var(--border)"><a onclick="event.stopPropagation(); bestfitPick('${nameJs}','${discJs}')" style="color:var(--accent);cursor:pointer;font-size:13px;font-weight:600">Open all ${bfEsc(disc)} roles at ${bfEsc(r.n)} in List ↗</a></div>`;
   return rows + more + link;
@@ -4363,7 +4372,7 @@ function bfOverlook(g,disc){
   const newN = (g.jobs||[]).filter(j => (j.fseen || j.ts || 0) >= Date.now() - 7*864e5).length;
   const mom = bfMomentum(g.n);
   const isOpen = bfOpenStudio === g.n;
-  const nameJs = bfEsc(g.n).replace(/'/g,""), discJs = bfEsc(disc).replace(/'/g,"");
+  const nameJs = bfJs(g.n), discJs = bfJs(disc);
   const why = `<div class="bfwhy">`
     + `<span class="bfwchip"><span class="ck">✓</span>${g.roles} ${bfEsc(disc)} role${g.roles===1?'':'s'}</span>`
     + (senN > 0 ? `<span class="bfwchip"><span class="ck">✓</span>${senN} at ${bfEsc(senPref)}</span>` : "")
