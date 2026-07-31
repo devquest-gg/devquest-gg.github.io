@@ -742,6 +742,7 @@ const JOB_DIR = "job";                                    // /job/<id> — NOT /
 const JOB_MIN_DESC = 220;                                 // below this a description isn't a description
 let JOB_PAGE_IDS = new Set();                             // consulted by landingRoleRow for internal links
 let JOB_PAGE_URLS = [];                                   // handed to the sitemap builder
+const JOB_PAGE_URLS_EXTRA = [];                           // live jobs whose existing page we kept this run
 
 // Country is required for any non-remote posting and our location strings are free text
 // ("Ireland, Dublin", "El Segundo, CA", "ES - Barcelona, Spain"). Resolve conservatively; if we
@@ -815,6 +816,31 @@ function jobSalaryLd(sal){
   return { "@type":"MonetaryAmount", currency: cur,
     value: { "@type":"QuantitativeValue", minValue: lo, maxValue: hi, unitText: "YEAR" } };
 }
+// employmentType: only when we actually know. Guessing FULL_TIME for everything would mislabel every
+// contract and internship on the board, and wrong markup is worse than an omitted optional property.
+const EMP_MAP = { "full-time":"FULL_TIME", "full time":"FULL_TIME", "fulltime":"FULL_TIME",
+  "part-time":"PART_TIME", "part time":"PART_TIME", "contract":"CONTRACTOR", "contractor":"CONTRACTOR",
+  "freelance":"CONTRACTOR", "temporary":"TEMPORARY", "temp":"TEMPORARY", "intern":"INTERN",
+  "internship":"INTERN", "apprenticeship":"INTERN", "volunteer":"VOLUNTEER", "per diem":"PER_DIEM" };
+function jobEmploymentType(j){
+  const ex = String(j.empType || "").trim().toLowerCase();
+  if (ex && EMP_MAP[ex]) return EMP_MAP[ex];                       // the source told us plainly
+  const t = String(j.title || "");
+  if (/\bintern(ship)?\b/i.test(t) && !/\binternal\b/i.test(t)) return "INTERN";
+  if (/\bapprentice(ship)?\b/i.test(t)) return "INTERN";
+  if (/\bcontract(or)?\b|\bfixed[- ]term\b|\b\d+[- ]month(s)?\b|\bftc\b/i.test(t)) return "CONTRACTOR";
+  if (/\bpart[- ]time\b/i.test(t)) return "PART_TIME";
+  if (/\btemp(orary)?\b/i.test(t)) return "TEMPORARY";
+  return "";                                                       // unknown -> omit the property
+}
+// validThrough: only a real, future date. A past one tells Google the job is already expired, so a
+// bad value here is actively harmful — worse than leaving it out and relying on the page 404ing.
+function jobValidThrough(j){
+  if (!j.deadline) return "";
+  const t = Date.parse(j.deadline);
+  if (isNaN(t) || t <= Date.now()) return "";
+  return new Date(t).toISOString();
+}
 // Every gate, in one place, so the reasons can be counted and reported.
 function jobPageCheck(j){
   if (!j.id || !j.title || !j.studio) return "missing core fields";
@@ -854,6 +880,8 @@ function renderJobPage(j){
   if (cc) ld.jobLocation = { "@type":"Place",
     address: Object.assign({ "@type":"PostalAddress", addressCountry: cc }, city ? { addressLocality: city } : {}) };
   const sal = jobSalaryLd(j.salary); if (sal) ld.baseSalary = sal;
+  const emp = jobEmploymentType(j); if (emp) ld.employmentType = emp;
+  const vt = jobValidThrough(j); if (vt) ld.validThrough = vt;
   const cat = (j.discipline && j.discipline !== "Other") ? `<a href="/${slugify("game " + j.discipline)}-jobs">${escHtml(j.discipline)} jobs</a>` : "";
   const studioPage = `/${slugify(j.parent || j.studio)}-jobs`;
   const metaDesc = `${String(j.title).split("|")[0].trim()} at ${j.studio}${city ? " in " + city : ""}. ${desc.slice(0, 150).replace(/\s+\S*$/, "")}…`;
@@ -917,6 +945,8 @@ ${JSON.stringify(ld)}
     ${remote ? `<span class="tag remote">Remote</span>` : (j.workType && j.workType !== "Unknown" ? `<span class="tag">${escHtml(j.workType)}</span>` : "")}
     ${j.salary ? `<span class="tag sal">${escHtml(j.salary)}</span>` : ""}
     <span class="tag">Posted ${escHtml(posted.slice(0, 10))}</span>
+    ${emp ? `<span class="tag">${escHtml(emp.replace("_", " ").toLowerCase().replace(/^./, c => c.toUpperCase()))}</span>` : ""}
+    ${vt ? `<span class="tag">Apply by ${escHtml(vt.slice(0, 10))}</span>` : ""}
   </div>
   <a class="apply" href="${escHtml(j.url || "/")}" target="_blank" rel="noopener nofollow">Apply on ${escHtml(j.studio)}&rsquo;s site →</a>
   <div class="desc">
@@ -937,6 +967,7 @@ function writeJobPages(all, root){
   try { fs.mkdirSync(dir, { recursive: true }); } catch (e) {}
   const reasons = {};
   const wanted = new Map();
+  JOB_PAGE_URLS_EXTRA.length = 0;
   for (const j of all){
     const why = jobPageCheck(j);
     if (why){ reasons[why] = (reasons[why] || 0) + 1; continue; }
@@ -953,16 +984,23 @@ function writeJobPages(all, root){
   // Expiry. Google: "Jobs that are no longer open for applications must be expired… failure to take
   // timely action on expired jobs may result in a manual action." Deleting the file makes it 404,
   // which is one of the three remedies Google accepts, and it happens the same hour the job vanishes.
-  let removed = 0;
+  let removed = 0, kept = 0;
+  const liveIds = new Set(all.map(j => String(j.id)));
   try {
     for (const f of fs.readdirSync(dir)){
       if (!f.endsWith(".html")) continue;
-      if (wanted.has(f.slice(0, -5))) continue;
+      const id = f.slice(0, -5);
+      if (wanted.has(id)) continue;
+      // Expire ONLY when the job has actually left the board. A live job that merely failed a gate
+      // this run (usually: its description wasn't re-fetched, since detail fetches are budgeted and
+      // cached) keeps the page it already has — otherwise pages would flap in and out every hour.
+      if (liveIds.has(id)){ kept++; JOB_PAGE_URLS_EXTRA.push(`https://devquest.gg/${JOB_DIR}/${encodeURIComponent(id)}`); continue; }
       try { fs.unlinkSync(path.join(dir, f)); removed++; } catch (e) {}
     }
   } catch (e) {}
   JOB_PAGE_IDS = new Set(wanted.keys());
-  JOB_PAGE_URLS = [...wanted.keys()].map(id => `https://devquest.gg/${JOB_DIR}/${encodeURIComponent(id)}`);
+  JOB_PAGE_URLS = [...wanted.keys()].map(id => `https://devquest.gg/${JOB_DIR}/${encodeURIComponent(id)}`).concat(JOB_PAGE_URLS_EXTRA);
+  JOB_PAGE_URLS_EXTRA.forEach(u => JOB_PAGE_IDS.add(decodeURIComponent(u.split("/").pop())));
   const skipped = Object.entries(reasons).sort((a, b) => b[1] - a[1]).map(([k, v]) => `${k}: ${v}`).join(", ");
   console.log(`Job pages: ${wanted.size}/${all.length} eligible -> ${written} written, ${unchanged} unchanged, ${removed} expired`);
   if (skipped) console.log(`  skipped — ${skipped}`);
@@ -1996,6 +2034,7 @@ async function fetchGreenhouse(studio) {
       salary: extractSalary(desc),
       yoe: extractYoe(desc),
       postedAt: j.first_published || j.updated_at,
+      deadline: j.application_deadline || null,          // -> validThrough on the job page, when the studio sets one
       // Some studios route applicants through their own careers site using the Greenhouse job id
       // (e.g. Unity: unity.com/careers/positions?gh_jid=<id>) and let the old boards.greenhouse.io
       // URL 404. An optional per-studio applyTemplate ("...{id}...") rebuilds a working apply link.
@@ -2113,6 +2152,7 @@ async function fetchLever(studio) {
     return {
       id: `lever-${studio.token}-${j.id}`,
       title: j.text,
+      empType: j.categories?.commitment || null,          // Lever states this outright ("Full-time", "Contract")
       tech: extractTech(j.text + " " + desc),
       desc,
       studio: studio.name,
@@ -5227,12 +5267,20 @@ async function backfillSalaries(jobs) {
   toFetch.sort((a, b) =>
     ((hist[a.id]?.salaryAt ? 1 : 0) - (hist[b.id]?.salaryAt ? 1 : 0)) || (naFirst(a) - naFirst(b)));
 
-  let fetched = 0, found = 0;
+  let fetched = 0, found = 0, descBackfilled = 0;
   for (const j of toFetch) {
     if (fetched >= SALARY_MAX_FETCH) break;
     fetched++;
     try {
       const desc = await jobDescriptionText(j);
+      // We already paid for this page — keep the description instead of discarding it. This is the
+      // whole fix for the sources whose LISTING carries no description (SmartRecruiters, EA/Avature
+      // and the HTML-scraped boards); it costs no extra requests, and it feeds both the job pages
+      // and the description shards further down the run.
+      if (desc && desc.trim().length >= JOB_MIN_DESC && !(typeof j.desc === "string" && j.desc.trim().length >= JOB_MIN_DESC)) {
+        j.desc = desc.trim();
+        descBackfilled++;
+      }
       const sal = extractSalary(desc);
       const yoe = extractYoe(desc);
       if (sal) { j.salary = sal; found++; }
@@ -5246,6 +5294,7 @@ async function backfillSalaries(jobs) {
     await new Promise(r => setTimeout(r, 250)); // be polite between detail fetches
   }
 
+  if (descBackfilled) console.log(`Descriptions recovered from detail fetches: ${descBackfilled}`);
   try { fs.writeFileSync(HISTORY_FILE, JSON.stringify(hist)); }
   catch (e) { console.error("Could not write seen.json (salary cache):", e.message); }
   console.log(`Salary backfill: ${fetched} detail fetches, ${found} new salaries (cap ${SALARY_MAX_FETCH}, ${toFetch.length} eligible).`);
