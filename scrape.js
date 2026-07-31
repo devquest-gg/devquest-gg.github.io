@@ -694,12 +694,95 @@ const TECH_VOCAB = [
   ["Wwise", /\bwwise\b/i],
   ["FMOD", /\bfmod\b/i],
   ["Havok", /\bhavok\b/i],
+  // --- Specialisms people search for that we were returning ZERO results for. The board had the
+  //     roles; nothing tagged them, so "xr" and "vr" were our two biggest empty searches (26 in the
+  //     July export). Matched against the full description, so a role only needs to mention it. ---
+  ["XR", /\bxr\b|\bextended reality\b|\bmixed reality\b|\bmr\/vr\b/i],
+  ["VR", /\bvr\b|\bvirtual reality\b|\boculus\b|\bquest\s?[23]\b|\bopenxr\b/i],
+  ["AR", /\bar\b(?=\s*(?:\/|,|\)|develop|experien|applicat))|\baugmented reality\b|\barkit\b|\barcore\b/i],
+  ["Destruction", /\bdestruction\b|\bchaos (physics|destruction)\b|\bdestructib\w+/i],
+  ["Netcode", /\bnetcode\b|\bnetworked? (gameplay|multiplayer)\b|\breplication\b|\blag compensation\b|\brollback\b/i],
+  ["Multiplayer", /\bmultiplayer\b|\bmatchmaking\b|\bdedicated server\b/i],
+  ["Procedural", /\bprocedural\b|\bpcg\b|\bproc-?gen\b/i],
+  ["Live Ops", /\blive ?ops\b|\blive service\b|\bgames? as a service\b|\bgaas\b/i],
+  ["Monetization", /\bmonetization\b|\bmonetisation\b|\bin-?app purchase\b|\biap\b/i],
+  ["Accessibility", /\baccessibility\b|\ba11y\b|\bwcag\b/i],
+  ["Localization", /\blocalization\b|\blocalisation\b|\bl10n\b|\bloc kit\b/i],
+  ["Physics", /\bphysics (engine|simulation|programmer)\b|\brigid ?body\b|\bragdoll\b/i],
+  ["Machine Learning", /\bmachine learning\b|\bdeep learning\b|\bpytorch\b|\btensorflow\b/i],
+  ["Rigging", /\brigging\b|\brigger\b|\bskinning\b|\bcontrol rig\b/i],
+  ["Lighting", /\blighting artist\b|\blightmap\b|\bglobal illumination\b|\blumen\b/i],
+  ["Motion Capture", /\bmotion ?capture\b|\bmocap\b|\bperformance capture\b/i],
+  ["Photogrammetry", /\bphotogrammetry\b|\bscan data\b/i],
+  ["Technical Art", /\btechnical artist\b|\btech art\b|\bta\s*\/\s*td\b|\btechnical director\b/i],
+  ["Outsourcing", /\boutsourc\w+\b|\bexternal development\b|\bexterna(l|is)ation\b|\bvendor management\b/i],
+  ["UX Research", /\buser research\b|\bux research\b|\bplaytest\w*\b|\bgames? user research\b/i],
+  ["Anti-Cheat", /\banti-?cheat\b|\bcheat detection\b/i],
+  ["Console Cert", /\bcertification\b|\btrc\b|\btcr\b|\blotcheck\b|\bfirst ?party (submission|cert)\b/i],
 ];
 function extractTech(text) {
   if (!text) return [];
   const out = [];
   for (const [tag, re] of TECH_VOCAB) if (re.test(text)) out.push(tag);
   return out;
+}
+
+// ---- job descriptions ------------------------------------------------------
+// Descriptions are by far the biggest thing we scrape (~3-4 KB each, ~20 MB across the board) and
+// they must NEVER reach jobs.js — that file loads on every page view and mobile is already half our
+// traffic. So they are split off here into 256 content-addressed shards under data/jobs/:
+//   * the board payload is completely unchanged,
+//   * a job detail view can lazy-load one ~80 KB shard instead of everything,
+//   * the hourly commit only touches shards whose contents actually changed, so git stays sane,
+//   * and they are the source a per-job page (Google for Jobs) would be generated from later.
+// Rewriting each shard in full from the current run also prunes descriptions of dead jobs for free.
+const DESC_SHARDS = 256;
+// We commit an EXCERPT, not the whole posting. Full descriptions are ~3-4 KB each (~21 MB across the
+// board); committing that hourly would add hundreds of MB to the repo per month even after git's own
+// compression. An excerpt is all the board needs to show a real preview instead of bouncing someone
+// to the ATS — and anything that needs the FULL text (per-job pages for Google for Jobs) can be
+// generated during the same scrape run, while the complete description is still in memory. So the
+// full text never has to be stored at all.
+const DESC_MAX = 1500;
+function descBucket(id){                                  // FNV-1a, same scheme the credits site uses
+  let h = 2166136261 >>> 0;
+  const s = String(id);
+  for (let i = 0; i < s.length; i++){ h ^= s.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; }
+  return h % DESC_SHARDS;
+}
+// Trim to DESC_MAX, then back off to the last sentence end so a preview never stops mid-word.
+function descExcerpt(d){
+  if (d.length <= DESC_MAX) return d;
+  const cut = d.slice(0, DESC_MAX);
+  const stop = Math.max(cut.lastIndexOf(". "), cut.lastIndexOf("! "), cut.lastIndexOf("? "));
+  return (stop > DESC_MAX * 0.6 ? cut.slice(0, stop + 1) : cut.replace(/\s+\S*$/, "")) + " …";
+}
+function writeDescriptionShards(all, dir){
+  const shards = new Map();
+  let kept = 0;
+  for (const j of all){
+    const d = typeof j.desc === "string" ? j.desc.replace(/\s+/g, " ").trim() : "";
+    delete j.desc;                                        // off the record before jobs.js is serialised
+    if (!d || !j.id) continue;
+    const b = descBucket(j.id);
+    if (!shards.has(b)) shards.set(b, {});
+    shards.get(b)[j.id] = descExcerpt(d);
+    kept++;
+  }
+  try { fs.mkdirSync(dir, { recursive: true }); } catch (e) {}
+  let written = 0, unchanged = 0;
+  for (let b = 0; b < DESC_SHARDS; b++){
+    const file = path.join(dir, b + ".json");
+    const body = JSON.stringify(shards.get(b) || {});
+    let prev = null;
+    try { prev = fs.readFileSync(file, "utf8"); } catch (e) {}
+    if (prev === body){ unchanged++; continue; }           // don't churn git for an unchanged shard
+    try { fs.writeFileSync(file, body); written++; }
+    catch (e){ console.error(`desc shard ${b}: ${e.message}`); }
+  }
+  const bytes = [...shards.values()].reduce((n, o) => n + JSON.stringify(o).length, 0);
+  console.log(`Descriptions: ${kept}/${all.length} jobs (${(bytes / 1048576).toFixed(1)} MB) -> ${written} shard(s) rewritten, ${unchanged} unchanged`);
+  return kept;
 }
 
 // ---- SEO landing pages -----------------------------------------------------
@@ -1653,6 +1736,7 @@ async function fetchGreenhouse(studio) {
       id: `gh-${studio.token}-${j.id}`,
       title,
       tech: extractTech(j.title + " " + desc),
+      desc,
       studio: isStudioDept ? dept : studio.name,
       discipline: mapDiscipline(craft, j.title),
       workType: inferWorkType(j.title, location, j.metadata, desc.slice(0, 1200)),
@@ -1684,6 +1768,7 @@ async function fetchRecruitee(studio) {
       id: `rec-${studio.token}-${o.id}`,
       title: o.title,
       tech: extractTech(o.title + " " + desc),
+      desc,
       studio: studio.name,
       discipline: mapDiscipline(o.department || o.category_code || "", o.title || ""),
       workType: inferWorkType(o.title || "", location, [], desc.slice(0, 1200)),
@@ -1716,6 +1801,7 @@ async function fetchPersonio(studio) {
         id: `personio-${studio.token}-${o.id}`,
         title: o.name,
         tech: extractTech(o.name + " " + desc),
+      desc,
         studio: studio.name,
         discipline: mapDiscipline(o.department || o.category || "", o.name || ""),
         workType: inferWorkType(o.name || "", location, [], desc.slice(0, 1200)),
@@ -1778,6 +1864,7 @@ async function fetchLever(studio) {
       id: `lever-${studio.token}-${j.id}`,
       title: j.text,
       tech: extractTech(j.text + " " + desc),
+      desc,
       studio: studio.name,
       discipline: mapDiscipline(dept, j.text),
       workType: wt === "remote" ? "Remote" : wt === "hybrid" ? "Hybrid" : wt === "onsite" ? "Onsite"
@@ -2145,6 +2232,7 @@ async function fetchPhenom(studio) {
       id: `ph-${studio.token}-${j.reqId || j.jobId}`,
       title: j.title,
       tech: extractTech((j.title || "") + " " + stripHtml(j.description || j.descriptionTeaser || "")),
+      desc: stripHtml(j.description || j.descriptionTeaser || ""),
       studio: studioName,
       discipline: mapDiscipline(j.category, j.title || ""),
       workType: inferWorkType(j.title || "", location, [], stripHtml(j.description || j.descriptionTeaser || "").slice(0, 1200)),
@@ -2383,6 +2471,7 @@ async function fetchEightfold(studio) {
       id: `ef-${studio.token}-${j.id || j.display_job_id}`,
       title: j.name,
       tech: extractTech((j.name || "") + " " + stripHtml(j.job_description || "")),
+      desc: stripHtml(j.job_description || ""),
       studio: studio.name,
       discipline: mapDiscipline(j.department, j.name || ""),
       workType: efWt,
@@ -2432,6 +2521,7 @@ async function fetchAmazonJobs(studio) {
       id: `az-${studio.token}-${j.id_icims || j.id}`,
       title: j.title,
       tech: extractTech((j.title || "") + " " + stripHtml((j.description_short || "") + " " + (j.basic_qualifications || ""))),
+      desc: stripHtml((j.description_short || "") + " " + (j.basic_qualifications || "")),
       studio: studio.name,
       discipline: mapDiscipline(null, j.title || ""),
       workType: inferWorkType(j.title || "", location, [], stripHtml((j.description_short || "") + " " + (j.basic_qualifications || "")).slice(0, 1200)),
@@ -2478,6 +2568,7 @@ async function fetchAshby(studio) {
       id: `ashby-${studio.token}-${j.id}`,
       title: j.title,
       tech: extractTech(j.title + " " + desc),
+      desc,
       studio: studio.name,
       discipline: mapDiscipline(dept, j.title || ""),
       workType: wt.includes("remote") || j.isRemote ? "Remote" : wt.includes("hybrid") ? "Hybrid"
@@ -2766,6 +2857,7 @@ async function fetchManatal(studio) {
       id: `manatal-${studio.token}-${j.hash || j.id}`,
       title: j.position_name || "",
       tech: extractTech((j.position_name || "") + " " + text),
+      desc: text,
       studio: studio.name,
       discipline: mapDiscipline(null, j.position_name || ""),
       workType: inferWorkType(j.position_name || "", loc, [], text.slice(0, 1500)),
@@ -2964,6 +3056,7 @@ async function fetchCritpath(studio) {
       id: `critpath-${slug}`,
       title,
       tech: extractTech(title + " " + desc),
+      desc,
       studio: studio.name,
       discipline: mapDiscipline(null, title),
       workType: inferWorkType(title, location, [], desc.slice(0, 1200)),
@@ -5198,6 +5291,8 @@ module.exports = { mapDiscipline, strongTitleDiscipline, normDisc };
     trends,
   };
   const dir = __dirname;
+  // Must run BEFORE the two serialisations below — it strips j.desc off every record.
+  writeDescriptionShards(all, path.join(dir, "data", "jobs"));
   fs.writeFileSync(path.join(dir, "jobs.json"), JSON.stringify(out, null, 2));
   fs.writeFileSync(path.join(dir, "jobs.js"), "window.JOBS_DATA = " + JSON.stringify(out) + ";");
   console.log(`\nWrote ${all.length} jobs -> jobs.json + jobs.js`);
