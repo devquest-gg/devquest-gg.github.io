@@ -214,6 +214,14 @@
     /* And drop the seniority chip when the list is already filtered to a level — on a filtered
        board every single card was repeating the same word back at you. */
     body.senfiltered .row .tag.tsen { display: none; }
+    /* "🤝 Who do I know?" carries margin-left:auto, so on a narrow card it wraps to a line of its
+       own and claims that line in EVERY card — a whole row of vertical space per job, paid on every
+       scroll. At 314 clicks it is real but minor use, and it opens LinkedIn search, which is a
+       desk task anyway. Desktop keeps it exactly as-is.
+       !important is load-bearing: the base `.tag.knowbtn { display: inline-flex }` is the same
+       specificity (0,2,0) and sits ~100 lines LATER in this file, so it would quietly win. Same trap
+       that silently swallowed the .mtx-lensbar rule earlier. */
+    .row .tag.knowbtn { display: none !important; }
   }
   aside { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 18px; height: fit-content; position: sticky; top: 80px; max-height: calc(100vh - 100px); overflow-y: auto; }
   /* Drop the Filters box so its top lines up with the "Where are the jobs" card (below the tabs +
@@ -281,6 +289,10 @@
   .row.st-offer { border-left: 3px solid var(--green); }
   .rmain { flex: 1; min-width: 200px; }
   .rmain .title { font-weight: 800; font-size: 16px; color: var(--text); }
+  /* The title is a real anchor now, so it has to be told not to look like one. Underline on hover
+     only, which also gives the card a bit of affordance it didn't have before. */
+  .rmain a.title { text-decoration: none; color: var(--text); }
+  .rmain a.title:hover, .rmain a.title:focus-visible { text-decoration: underline; }
   .rmain .studio { color: var(--accent); font-size: 13px; font-weight: 400; margin-left: 8px; }
   .nfy { position: relative; overflow: hidden; background: linear-gradient(100deg, #2ea043 0%, #56d364 48%, #2ea043 100%); color: #06210d; font-size: 10px; font-weight: 800; letter-spacing: .03em; padding: 2px 9px; border-radius: 999px; margin-left: 8px; vertical-align: middle; box-shadow: 0 0 0 1px rgba(86,211,100,.35), 0 2px 9px rgba(46,160,67,.45); }
   .nfy::after { content: ""; position: absolute; inset: 0; background: linear-gradient(100deg, transparent 25%, rgba(255,255,255,.9) 50%, transparent 75%); transform: translateX(-130%); animation: nfyShine 2.8s ease-in-out infinite; pointer-events: none; }
@@ -589,6 +601,8 @@
   .matrixbody.mtx-recolor { animation: mtxRecolor .24s ease; }
   @media (prefers-reduced-motion: reduce) { .matrixbody.mtx-recolor { animation: none; } }
   #matrixWrap.mtx-dash table.xtab td.mcell-empty { background: #0e131a; }
+  /* Dim enough that a real count never gets lost among the zeros, present enough to read as an answer. */
+  table.xtab td.mcell-empty { color: var(--muted); opacity: .4; font-weight: 500; }
   /* grid tooltips: hover a discipline label or seniority header to see what's in it */
   .tipname { border-bottom: 1px dotted var(--muted); cursor: help; }
   .xtab th.senh { cursor: help; }
@@ -1759,10 +1773,23 @@ function dismissEmailAsk(){
 const _ageDays = j => j.ts ? Math.floor((Date.now()-j.ts)/864e5) : (j.fseen ? Math.floor((Date.now()-j.fseen)/864e5) : null);
 const _ageBucket = j => { const d=_ageDays(j); return d==null?'n/a':d<=3?'0-3d':d<=7?'4-7d':d<=14?'8-14d':d<=30?'15-30d':'30+d'; };
 const _applyProps = j => ({ st: j.s, d: j.d, sn: j.sen||'', age: _ageBucket(j), sal: j.salary?1:0 });
-function openApply(id, url){
+// Everything an apply-click records, WITHOUT opening the window. Split out so that a real <a> can do
+// its own navigating — which is the whole point of the title being a link: cmd-click, middle-click,
+// "Open in new tab" and keyboard Enter all work natively, and a job seeker can fan out six roles into
+// tabs the way they actually browse. window.open() can't do any of that.
+function trackApply(id){
   var j = JOB_BY_ID[id];
   try { window.dqTrack && window.dqTrack('apply_click', j ? _applyProps(j) : {}); } catch(e){}
   try { if (j) affRecordJob(j, 1.5); } catch(e){}   // bank as an interest signal for "hot for you"
+  return j;
+}
+// Called by the title anchor. The browser handles opening; we only record and nudge.
+function dqTitleApply(id){
+  var j = trackApply(id);
+  try { if (j) showApplyNudge(j.s, j.d); } catch(e){}
+}
+function openApply(id, url){
+  var j = trackApply(id);
   if (url) window.open(url, '_blank');
   try { if (j) showApplyNudge(j.s, j.d); } catch(e){}
 }
@@ -2127,7 +2154,10 @@ function toggleSel(boxId, name, on){
 }
 renderSearchGroup("studioFilters","studioSearch",STUDIO_COUNTS,selStudios,STUDIO_LABELS,DIR_STUDIOS);
 renderSearchGroup("countryFilters","countrySearch",COUNTRY_COUNTS,selCountries,null);
-function ago(h){ return h<1 ? "just now" : h===1 ? "1 hr ago" : h<24 ? h+" hrs ago" : Math.round(h/24)+" d ago"; }
+// "3d ago", not "3 d ago" — the space made a unit read as a separate word, and it sat next to the
+// "listed 3d" form on the same list, so the two looked like different fields rather than the same
+// field measured two ways. Both now end in "d ago".
+function ago(h){ return h<1 ? "just now" : h===1 ? "1 hr ago" : h<24 ? h+" hrs ago" : Math.round(h/24)+"d ago"; }
 
 // ---- render --------------------------------------------------------------------
 let GROUPS = [];
@@ -2724,7 +2754,10 @@ function renderMatrixDash(base){
     const dCell = dInfo ? `<span class="tipname" data-tip="${escTip(dInfo)}">${dn}</span>` : dn;
     h += `<tr><td class="xname" style="color:${discColor(dn)};overflow:hidden;text-overflow:ellipsis">${dCell}</td>` + seniorities.map(sn=>{
       const key = dn+"|"+sn, d = der[key], sel = selCells.has(key);
-      if (!d) return `<td class="mcell mcell-empty"></td>`;
+      // A blank cell reads as a rendering fault — as though the number failed to load. A dim zero
+      // answers the question the grid is being asked. Deliberately not clickable: filtering to a
+      // combination with nothing in it would just produce an empty board.
+      if (!d) return `<td class="mcell mcell-empty" data-tip="${escTip(`<b>${dn} · ${sn}</b><br><span style="color:var(--muted)">No open roles right now.</span>`)}">0</td>`;
       const payTxt = d.pay ? `$${d.pay}K median` : (d.paysN ? `~$${d.payAny}K · ${d.paysN} role${d.paysN===1?'':'s'} list${d.paysN===1?'s':''} pay` : `no salary data`);
       const tip = `<b>${dn} · ${sn}</b><br>`
         + `<span style="color:var(--gold)">${payTxt}</span> · `
@@ -3653,12 +3686,14 @@ function rowHtml(j, mjStage){
     ${mj?mjBarHtml(j, mj):''}
     <div class="rtop">
       <div class="rmain">
-        <span class="title">${j.t}</span><span class="studio" data-tip="${escTip(studioTipHtml(j.s))}">${j.s}</span><span class="cardstar${isFollowed(j.s)?' on':''}" data-st="${j.s.replace(/"/g,'')}" role="button" tabindex="0" data-tip="${isFollowed(j.s)?'Following · click to unfollow':'Follow this studio'}" aria-label="${isFollowed(j.s)?'Unfollow':'Follow'} ${j.s.replace(/"/g,'')}" onclick="toggleFollow(this.getAttribute('data-st'), event)">${isFollowed(j.s)?'★':'☆'}</span>
+        ${j.url
+          ? `<a class="title" href="${escAttr(j.url)}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation(); dqTitleApply('${bfJs(j.id)}')">${j.t}</a>`
+          : `<span class="title">${j.t}</span>`}<span class="studio" data-tip="${escTip(studioTipHtml(j.s))}">${j.s}</span><span class="cardstar${isFollowed(j.s)?' on':''}" data-st="${j.s.replace(/"/g,'')}" role="button" tabindex="0" data-tip="${isFollowed(j.s)?'Following · click to unfollow':'Follow this studio'}" aria-label="${isFollowed(j.s)?'Unfollow':'Follow'} ${j.s.replace(/"/g,'')}" onclick="toggleFollow(this.getAttribute('data-st'), event)">${isFollowed(j.s)?'★':'☆'}</span>
         ${isDismissed?'<span class="dismissedbadge">hidden</span>':''}
         ${poolBadge}
         ${isNew?'<span class="nfy" data-tip="New since your last visit">✨ NEW!</span>':''}
       </div>
-      <div class="posted ${postedClass}"${noDate && _seenDays != null ? _seenTip : postedTip}>${noDate ? (_seenDays != null ? `listed ${_seenDays}d` : 'date n/a') : `${isFreshToday?'🔥 ':''}${ago(h)}`}</div>
+      <div class="posted ${postedClass}"${noDate && _seenDays != null ? _seenTip : postedTip}>${noDate ? (_seenDays != null ? (_seenDays === 0 ? 'listed today' : `listed ${_seenDays}d ago`) : 'date n/a') : `${isFreshToday?'🔥 ':''}${ago(h)}`}</div>
       <button class="save ${isSaved?'on':''}" onclick="event.stopPropagation(); toggleSave('${j.id}')" data-tip="${isSaved?'Saved · click to remove':'Save for later'}" aria-label="${isSaved?'Remove from saved':'Save for later'}">${isSaved?'<svg width="13" height="15" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle" aria-hidden="true"><path d="M6 2a2 2 0 0 0-2 2v18l8-5 8 5V4a2 2 0 0 0-2-2H6z"/></svg>':'<svg width="13" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle" aria-hidden="true"><path d="M6 2a2 2 0 0 0-2 2v18l8-5 8 5V4a2 2 0 0 0-2-2H6z"/></svg>'}</button>
       ${MINE_VIEW?`<button class="nbicon ${nbHas(j.id)?'hasnotes':''} ${nbOpen.has(j.id)?'open':''}" data-nb-btn="${j.id}" onclick="event.stopPropagation(); nbToggle('${j.id}', this)" data-tip="Notebook — notes, key dates, contacts &amp; questions" aria-label="Open notebook">📝</button>`:``}
       <span class="trackwrap" onclick="event.stopPropagation()"><button class="trackchip ${_trk[0]}" onclick="event.stopPropagation(); dqToggleTrackMenu(this, '${j.id}')" data-tip="Track your application status" aria-haspopup="true" aria-label="Track application status">${_trk[1]}</button></span>

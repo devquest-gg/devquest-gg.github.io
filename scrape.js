@@ -5715,19 +5715,56 @@ module.exports = { mapDiscipline, strongTitleDiscipline, normDisc };
   const errors = [];
   const runCounts = {};      // studio name -> open roles this run (successful fetches only)
   const okSet = new Set();   // studios that fetched without error
+  // ---- Carry-forward -----------------------------------------------------------------------
+  // A source that fails used to take all of its roles off the board for that cycle. One rate-limited
+  // run on 2026-08-01 dropped 37 Workable studios at once: the live count fell 6,006 -> 5,717, ~290
+  // job pages were deleted, and the next run recreated them an hour later. That churn is invisible
+  // to us, useless to visitors, and actively bad for Google, which had just crawled those URLs.
+  // A transient 429 is not evidence that a studio stopped hiring, so keep the last known-good roles.
+  //
+  // Bounded two ways, because carrying forever would let a genuinely dead source haunt the board:
+  // the previous file has to be recent, and any single role can only be carried CARRY_MAX_RUNS times
+  // (tracked on the role itself via _carry, which persists in jobs.json between runs).
+  const CARRY_MAX_RUNS = 6;                 // ~6 hourly runs, then a persistently dead source drops
+  const CARRY_MAX_AGE  = 12 * 60 * 60e3;    // and never from a file older than half a day
+  const prevBySrc = new Map();
+  try {
+    const prev = JSON.parse(fs.readFileSync(path.join(__dirname, "jobs.json"), "utf8"));
+    const at = Date.parse(prev.scrapedAt || 0);
+    if (isFinite(at) && Date.now() - at < CARRY_MAX_AGE) {
+      for (const j of (prev.jobs || [])) {
+        if (!j || !j._src) continue;        // absent on the first run after this shipped — fine, no carry
+        if (!prevBySrc.has(j._src)) prevBySrc.set(j._src, []);
+        prevBySrc.get(j._src).push(j);
+      }
+    }
+  } catch (e) { /* no previous run, or unreadable — carry-forward simply doesn't apply */ }
   for (const studio of STUDIOS) {
     try {
       const jobs = await FETCHERS[studio.type](studio);
       // parent company tag: a studio's umbrella (e.g. Massive Entertainment -> Ubisoft);
       // for independent studios the parent is just itself.
-      jobs.forEach(j => { j.parent = studio.parentCompany || j.studio; });
+      // _src records WHICH configured source produced the role, which studio/parent can't: one
+      // source can emit many studio names (KRAFTON's sub-studios, deptAsStudio boards), so it is
+      // the only key that can restore exactly the set a failed fetch would have returned.
+      jobs.forEach(j => { j.parent = studio.parentCompany || j.studio; j._src = studio.name; });
       console.log(`OK ${studio.name}: ${jobs.length} jobs`);
       all.push(...jobs);
       runCounts[studio.name] = (runCounts[studio.name] || 0) + jobs.length;
       okSet.add(studio.name);
     } catch (e) {
-      errors.push(`${studio.name}: ${e.message}`);
-      console.error(`FAIL ${studio.name}: ${e.message}`);
+      const carried = (prevBySrc.get(studio.name) || []).filter(j => (j._carry || 0) < CARRY_MAX_RUNS);
+      if (carried.length) {
+        for (const j of carried) j._carry = (j._carry || 0) + 1;
+        all.push(...carried);
+        // Deliberately NOT added to okSet or runCounts: the fetch did fail, and the health view and
+        // the trend history should both say so. Only the visitor-facing list is protected.
+        errors.push(`${studio.name}: ${e.message} — keeping ${carried.length} role${carried.length === 1 ? "" : "s"} from the last good run`);
+        console.error(`FAIL ${studio.name}: ${e.message} — carried ${carried.length} forward`);
+      } else {
+        errors.push(`${studio.name}: ${e.message}`);
+        console.error(`FAIL ${studio.name}: ${e.message}`);
+      }
     }
   }
   // Drop clearly non-game-industry roles that some studios post on the same board — facility /
@@ -5842,7 +5879,11 @@ module.exports = { mapDiscipline, strongTitleDiscipline, normDisc };
   // j.desc off every record. Job pages first, always.
   writeJobPages(all, dir);
   writeDescriptionShards(all, path.join(dir, "data", "jobs"));
+  // jobs.json keeps _src / _carry: it is this run's memory, read back by the next run to decide what
+  // can be carried forward. jobs.js is the visitor's bundle and has no use for either, so strip them
+  // before writing it — the browser should not download ~5,700 copies of a source name.
   fs.writeFileSync(path.join(dir, "jobs.json"), JSON.stringify(out, null, 2));
+  for (const j of all) { delete j._src; delete j._carry; }
   fs.writeFileSync(path.join(dir, "jobs.js"), "window.JOBS_DATA = " + JSON.stringify(out) + ";");
   console.log(`\nWrote ${all.length} jobs -> jobs.json + jobs.js`);
   writeLandingPages(all, dir); // SEO category pages + sitemap.xml, regenerated from the live data
