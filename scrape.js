@@ -1746,7 +1746,12 @@ function mapDiscipline(raw, title) {
   if (/\blive ?ops\b|liveops/.test(t)) return "Production"; // live operations — a Production discipline in games
   if (/\bprogram manager\b/.test(t) && !/developer|marketing|\bbrand\b|communit|trust|compliance/.test(t)) return "Production"; // technical/dev program management (not DevRel/marketing/T&S/compliance PMs)
   if (/artist|concept|\bvfx\b|lighting|illustrat|sculpt/.test(t)) return "Art";
-  if (/animator|animation|rigging|animateur|animatrice/.test(t)) return "Animation"; // incl. FR animateur/animatrice
+  // "rigging" was already here but "rigger" was not, so every "Senior Character Rigger" fell past
+  // every rule below, hit the department fallback and landed in Business & Ops. Those riggers are
+  // the bulk of the genuinely misfiled craft roles on the board (Ubisoft Montreal, Ubisoft
+  // Reflections, Asobo). "animable" catches the French posting of the same job
+  // ("Créateur.rice de systèmes animables (Rigger Sénior)").
+  if (/animator|animation|rigger|rigging|riggeur|animable|animateur|animatrice/.test(t)) return "Animation"; // incl. FR animateur/animatrice/animable
   if (/\bux\b|\bui\b|user experience|user research/.test(t)) return "Design";
   if (/designer|design/.test(t)) return "Design";
   if (/producer|production/.test(t)) return "Production";
