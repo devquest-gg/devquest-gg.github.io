@@ -2782,12 +2782,17 @@ function mobileReorder(){
     var narrow = window.innerWidth <= 560;
     var hot = document.getElementById("hotWrap"), jobs = document.getElementById("jobs");
     if (!hot || !jobs || !hot.parentNode) return;
-    var ids = ["regionBar", "quickbar", "hubbar", "subbar"];
+    // cityStrip joins the moved set: it's a ~133px prompt sitting between the grid and the jobs.
+    // Worth showing, not worth showing FIRST.
+    var ids = ["cityStrip", "regionBar", "quickbar", "hubbar", "subbar"];
     if (narrow && !_mobReordered){
       ids.forEach(function(id){ var el = document.getElementById(id); if (el) hot.parentNode.insertBefore(el, jobs); });
       _mobReordered = true;
     } else if (!narrow && _mobReordered){
-      var anchor = document.getElementById("cityStrip") || hot;      // restore the desktop order
+      // Anchor on fyStrip, NOT cityStrip — cityStrip is now one of the elements being moved, so
+      // using it as the anchor would mean restoring relative to a node that had itself relocated.
+      var anchor = document.getElementById("fyStrip") || document.getElementById("matrixWrap");
+      if (!anchor) return;
       var after = anchor.nextSibling;
       ids.forEach(function(id){ var el = document.getElementById(id); if (el) anchor.parentNode.insertBefore(el, after); });
       _mobReordered = false;
