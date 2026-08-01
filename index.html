@@ -79,10 +79,18 @@
      rent for a consistency nobody can see yet. Restore by setting height back to 6px. */
   /* Foot-of-page home for the header's meta buttons on phones (see metaFooterSync). Hidden and
      empty on desktop, where those buttons stay in the header. */
-  #metaFooter { display: none; }
-  #metaFooter.on { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 8px;
+  /* NB: this sits inside .layout, which is a CSS GRID. Without min-width:0 the footer's
+     min-content (four buttons on one line) becomes the grid track's minimum, which widened the
+     single mobile column to 489px and pushed the whole page sideways. grid-column keeps it
+     spanning the full width rather than landing in an implicit column. */
+  #metaFooter { display: none; min-width: 0; grid-column: 1 / -1; }
+  #metaFooter.on { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 8px; min-width: 0;
                    padding: 18px 14px calc(22px + env(safe-area-inset-bottom, 0px));
                    margin-top: 22px; border-top: 1px solid var(--border); }
+  /* .headeractions keeps the header's own non-wrapping flex rules when it is moved down here, so
+     its four buttons sat on one 461px line and pushed the page sideways. Let it wrap. */
+  #metaFooter.on .headeractions { display: flex; flex-wrap: wrap; justify-content: center; align-items: center;
+                                  gap: 8px; min-width: 0; max-width: 100%; }
   #metaFooter.on .btxt { display: inline; }        /* room down here for real labels on every button */
   /* .btxt already carries the emoji for some of these buttons ("✨ What's new", "💬 Feedback"),
      so showing the icon span too printed it twice. Labels only down here, same as desktop. */
@@ -669,8 +677,11 @@
      "swipe →" hint that's easy to miss — and those columns carry real demand (Design Director+ is
      45 grid clicks a week, Production Lead 57). A fade on the right edge is the conventional signal
      that content continues; JS clears it once you've scrolled to the end so it isn't a permanent smudge. */
-  .mxscroll { position: relative; }
-  .mxfade { position: relative; }
+  /* Both need min-width:0 / max-width:100%. As a flex-or-grid child the default min-width:auto
+     makes the wrapper expand to the 540px table instead of letting the scroller clip it, which
+     pushes the whole page sideways — the same trap #metaFooter fell into. */
+  .mxscroll { position: relative; min-width: 0; max-width: 100%; }
+  .mxfade { position: relative; min-width: 0; max-width: 100%; overflow: hidden; }
   .mxfade::after { content: ""; position: absolute; top: 0; right: 0; bottom: 0; width: 44px; pointer-events: none;
                    background: linear-gradient(to right, rgba(22,27,34,0), var(--panel, #161b22) 82%);
                    opacity: 0; transition: opacity .18s ease; }
