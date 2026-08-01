@@ -77,6 +77,18 @@
   body { background: var(--bg); color: var(--text); font-family: -apple-system, "Segoe UI", Roboto, sans-serif; }
   /* Was a 6px gradient rule echoing the portfolio pages. Those aren't shipped, so it was paying
      rent for a consistency nobody can see yet. Restore by setting height back to 6px. */
+  /* Foot-of-page home for the header's meta buttons on phones (see metaFooterSync). Hidden and
+     empty on desktop, where those buttons stay in the header. */
+  #metaFooter { display: none; }
+  #metaFooter.on { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 8px;
+                   padding: 18px 14px calc(22px + env(safe-area-inset-bottom, 0px));
+                   margin-top: 22px; border-top: 1px solid var(--border); }
+  #metaFooter.on .btxt { display: inline; }        /* room down here for real labels on every button */
+  /* .btxt already carries the emoji for some of these buttons ("✨ What's new", "💬 Feedback"),
+     so showing the icon span too printed it twice. Labels only down here, same as desktop. */
+  #metaFooter.on .bico-m { display: none; }
+  #metaFooter.on .wnbtn, #metaFooter.on .aboutbtn, #metaFooter.on .catbtn, #metaFooter.on .feedbackbtn {
+    padding: 8px 12px !important; font-size: 13px !important; }
   .dqbar { height: 0; background: linear-gradient(90deg, var(--gold), var(--purple) 55%, var(--accent)); }
   header { padding: 16px 24px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; background: var(--bg); z-index: 10; }
   .logo { font-size: 20px; font-weight: 800; letter-spacing: -0.3px; display: flex; align-items: center; gap: 8px; }
@@ -1117,6 +1129,11 @@
     <div id="pulseWrap"></div>
     <div id="bestfitWrap"></div>
   </main>
+  <!-- On phones the header's meta buttons (install / what's new / categories / mission /
+       feedback) are relocated here by metaFooterSync(). They are all "about the site" links,
+       which is where footers live on most sites anyway, and it buys back a whole row at the top
+       of every screen. Empty (and hidden) on desktop. -->
+  <div id="metaFooter"></div>
 </div>
 
 <script>
@@ -2436,6 +2453,7 @@ function render(){
   { const _hw = document.getElementById("hotWrap");
     if (_hw) _hw.innerHTML = list.length ? hotHtml : ""; }
   try{ mobileReorder(); }catch(e){}   // phones: region banner + hubs sit below Hot jobs
+  try{ metaFooterSync(); }catch(e){}  // phones: header meta buttons live at the foot of the page
   document.getElementById("jobs").innerHTML = list.length ? GROUPS.map((dn,gi)=>{
     const jobs = hotShownIds.size ? groups[dn].filter(j=>!hotShownIds.has(j.id)) : groups[dn];
     if (!jobs.length) return "";   // every role in this group is already up in "Hot jobs for you"
@@ -2725,6 +2743,28 @@ function renderQuickbar(newCount){
 // Done as a DOM move rather than CSS `order`, because ordering would mean turning <main> into a
 // flex column, which changes margin collapsing for every child. render() looks all of these up by
 // getElementById, so relocating the containers is invisible to it.
+// Phones only: relocate the header's meta buttons to the foot of the page. Install / What's new /
+// Categories / Our mission / Feedback are all "about this site" links rather than tools you use
+// while browsing jobs, and on mobile they were costing a full row above every screen of results.
+// The header keeps the logo and the live-sync line, which are the trust signals worth the space.
+// Reversible on resize, and dqSyncStick() is re-run afterwards so the sticky tab-bar offset tracks
+// the header's new, shorter height instead of leaving a gap.
+var _metaMoved = false;
+function metaFooterSync(){
+  try {
+    var acts = document.querySelector(".headeractions");
+    var foot = document.getElementById("metaFooter");
+    var head = document.querySelector("header");
+    if (!acts || !foot || !head) return;
+    var narrow = window.innerWidth <= 560;
+    if (narrow && !_metaMoved){ foot.appendChild(acts); foot.classList.add("on"); _metaMoved = true; }
+    else if (!narrow && _metaMoved){ head.appendChild(acts); foot.classList.remove("on"); _metaMoved = false; }
+    else return;
+    try { dqSyncStick(); } catch(e){}
+  } catch(e){}
+}
+try { window.addEventListener("resize", function(){ try { metaFooterSync(); } catch(e){} }); } catch(e){}
+
 var _mobReordered = false;
 function mobileReorder(){
   try {
