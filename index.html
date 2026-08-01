@@ -498,6 +498,10 @@
     /* 10 discipline rows at desktop padding is ~400px of vertical space on a 390px phone.
        Tightening the cells keeps every discipline visible (so the onboarding grid still offers
        every craft) while giving back roughly a third of the grid's height. */
+    /* The discipline column was 156px while the longest label ("Marketing & Comms") needs ~110px
+       at this size. That slack pushed the data columns right and left a dead gap between the labels
+       and the first number. Tightening it hands ~36px back to the seniority columns. */
+    #matrixWrap table.xtab td.xname, #matrixWrap table.xtab tr > th:first-child { width: 120px !important; max-width: 120px; }
     table.xtab td { padding: 4px 6px; }
     table.xtab th { padding: 3px 6px; }
     table.xtab { font-size: 12.5px; }
@@ -661,7 +665,10 @@
   .mxfade.canscroll::after { opacity: 1; }
   /* Matching fade on the LEFT, because on phones the grid now starts one column in (see mxStartCol)
      and Entry sits off-screen to the left. Without this, a column would be hidden with no cue. */
-  .mxfade::before { content: ""; position: absolute; top: 0; left: 0; bottom: 0; width: 34px; pointer-events: none; z-index: 1;
+  /* The discipline column is position:sticky on phones, so a fade anchored at left:0 would sit on
+     top of the labels. --mxlab is set by mxFadeSync to that column's measured width, so the fade
+     starts exactly where the scrolling data starts. */
+  .mxfade::before { content: ""; position: absolute; top: 0; left: var(--mxlab, 0px); bottom: 0; width: 34px; pointer-events: none; z-index: 1;
                     background: linear-gradient(to left, rgba(22,27,34,0), var(--panel, #161b22) 82%);
                     opacity: 0; transition: opacity .18s ease; }
   .mxfade.canscrollback::before { opacity: 1; }
@@ -1092,6 +1099,10 @@
     <div id="subbar"></div>
     <div class="count" id="count"></div>
     <div id="activeFilters"></div>
+    <!-- Hot jobs lives in its own container so that, on phones, the region banner and hub chips
+         can sit BETWEEN it and the rest of the list (see mobileReorder). Desktop keeps the
+         original order. -->
+    <div id="hotWrap"></div>
     <div id="jobs"></div>
     <div id="directory"></div>
     <div id="moon"></div>
@@ -2422,7 +2433,10 @@ function render(){
     }
   } catch(e){}
 
-  document.getElementById("jobs").innerHTML = list.length ? hotHtml + GROUPS.map((dn,gi)=>{
+  { const _hw = document.getElementById("hotWrap");
+    if (_hw) _hw.innerHTML = list.length ? hotHtml : ""; }
+  try{ mobileReorder(); }catch(e){}   // phones: region banner + hubs sit below Hot jobs
+  document.getElementById("jobs").innerHTML = list.length ? GROUPS.map((dn,gi)=>{
     const jobs = hotShownIds.size ? groups[dn].filter(j=>!hotShownIds.has(j.id)) : groups[dn];
     if (!jobs.length) return "";   // every role in this group is already up in "Hot jobs for you"
     const open = !collapsed.has(dn);
@@ -2705,6 +2719,32 @@ function renderQuickbar(newCount){
   document.getElementById("quickbar").innerHTML = `<span class="qlabel">${funnel}Quick filters:</span>${chips}`;
 }
 
+// Phones only: put the region banner and hub chips AFTER "Hot jobs for you", so the first thing
+// below the grid is matched roles rather than two more rows of filter chrome. Desktop keeps the
+// original order, where the horizontal space makes that stack cheap.
+// Done as a DOM move rather than CSS `order`, because ordering would mean turning <main> into a
+// flex column, which changes margin collapsing for every child. render() looks all of these up by
+// getElementById, so relocating the containers is invisible to it.
+var _mobReordered = false;
+function mobileReorder(){
+  try {
+    var narrow = window.innerWidth <= 560;
+    var hot = document.getElementById("hotWrap"), jobs = document.getElementById("jobs");
+    if (!hot || !jobs || !hot.parentNode) return;
+    var ids = ["regionBar", "quickbar", "hubbar", "subbar"];
+    if (narrow && !_mobReordered){
+      ids.forEach(function(id){ var el = document.getElementById(id); if (el) hot.parentNode.insertBefore(el, jobs); });
+      _mobReordered = true;
+    } else if (!narrow && _mobReordered){
+      var anchor = document.getElementById("cityStrip") || hot;      // restore the desktop order
+      var after = anchor.nextSibling;
+      ids.forEach(function(id){ var el = document.getElementById(id); if (el) anchor.parentNode.insertBefore(el, after); });
+      _mobReordered = false;
+    }
+  } catch(e){}
+}
+try { window.addEventListener("resize", function(){ try { mobileReorder(); } catch(e){} }); } catch(e){}
+
 // Right-edge fade on the grid's horizontal scroller, so it's visible that Lead / Director+ exist
 // off-screen. Wraps each .mxscroll once, then keeps the fade in sync with scroll position and
 // resize. Cheap and idempotent: re-running after a grid re-render just re-binds.
@@ -2728,14 +2768,19 @@ function mxFadeSync(){
       // Only ever applied to a fresh, unscrolled grid, so it never fights someone who has scrolled.
       try {
         if (window.innerWidth <= 560 && !sc._mxStarted && sc.scrollLeft === 0){
-          var firstCell = sc.querySelector("tbody tr td, tr td");
-          var w = firstCell ? 0 : 0;
           var cells = sc.querySelectorAll("tr:first-child th");
-          if (cells && cells.length > 1) w = Math.round(cells[1].getBoundingClientRect().width);
-          if (w > 20 && sc.scrollWidth - sc.clientWidth >= w){ sc.scrollLeft = w; sc._mxStarted = true; }
+          var w = (cells && cells.length > 1) ? Math.round(cells[1].getBoundingClientRect().width) : 0;
+          // Land flush on the Mid column. Overshooting clipped Mid's numbers under the left fade,
+          // which is worse than the gap it was trying to close — that gap is really the label column
+          // being wider than the labels need, and it's fixed in CSS instead (see xname width below).
+          var start = w;
+          if (w > 20 && sc.scrollWidth - sc.clientWidth >= start){ sc.scrollLeft = start; sc._mxStarted = true; }
         }
       } catch(e){}
       if (!sc._mxBound){ sc._mxBound = true; sc.addEventListener("scroll", upd, { passive: true }); }
+      // Measure the sticky label column so the left fade begins where the data does.
+      try { var lab = sc.querySelector("tr:first-child th:first-child");
+            if (lab) wrap.style.setProperty("--mxlab", Math.round(lab.getBoundingClientRect().width) + "px"); } catch(e){}
       upd();
     });
   } catch(e){}
