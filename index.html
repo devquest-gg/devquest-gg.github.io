@@ -3416,6 +3416,13 @@ function rowHtml(j, mjStage){
   const isFreshToday = !noDate && h<=24 && !isNew;   // posted within ~a day → flame + orange "fresh right now" cue
   const _stale = _staleDays==null ? "" : _staleDays>=90 ? "pdbad" : _staleDays>=STALE_DAYS ? "pdwarn" : "";
   const postedClass = isFreshToday ? "pdtoday" : _stale;
+  // ~26% of the board carries no posting date, because some feeds (Avature/EA above all) never
+  // publish one — EA 0/190 roles, EA Sports 0/105, Garena 0/102. Those cards read "date n/a", which
+  // looks like a broken field on a board whose whole promise is that every role is dated. We do know
+  // when we first saw the listing, so say that instead: "listed 12d" is honest, useful, and clearly
+  // distinct from a studio-published posted date. Falls back to "date n/a" only if we have neither.
+  const _seenDays = (!j.ts && j.fseen) ? Math.max(0, Math.floor((Date.now() - j.fseen) / 864e5)) : null;
+  const _seenTip = ` data-tip="${escTip("This studio's careers feed doesn't publish a posting date. We first saw this role " + (_seenDays === 0 ? "today" : _seenDays + " day" + (_seenDays === 1 ? "" : "s") + " ago") + ".")}"`;
   const postedTip = _stale ? ` data-tip="${escTip("Live ~"+_staleDays+" days"+(relistedNow(j)?" · posted date refreshed":"")+" — long-running posts are more likely stale or 'ghost' listings.")}"` : "";
   const relistChip = relistedNow(j) ? `<span class="tag relist" data-tip="This role has been live far longer than its shown posted date${j.relistCount>1?` (date refreshed ${j.relistCount}×)`:''} — re-posted/refreshed rather than newly open.">↻ re-listed${j.relistCount>1?` ${j.relistCount}×`:''}</span>` : "";
   const poolBadge = j.pool ? `<span class="poolbadge" data-tip="A talent pool / general application — not a specific open role.">talent pool</span>` : "";
@@ -3431,7 +3438,7 @@ function rowHtml(j, mjStage){
         ${poolBadge}
         ${isNew?'<span class="nfy" data-tip="New since your last visit">✨ NEW!</span>':''}
       </div>
-      <div class="posted ${postedClass}"${postedTip}>${noDate?'date n/a':`${isFreshToday?'🔥 ':''}${ago(h)}`}</div>
+      <div class="posted ${postedClass}"${noDate && _seenDays != null ? _seenTip : postedTip}>${noDate ? (_seenDays != null ? `listed ${_seenDays}d` : 'date n/a') : `${isFreshToday?'🔥 ':''}${ago(h)}`}</div>
       <button class="save ${isSaved?'on':''}" onclick="event.stopPropagation(); toggleSave('${j.id}')" data-tip="${isSaved?'Saved · click to remove':'Save for later'}" aria-label="${isSaved?'Remove from saved':'Save for later'}">${isSaved?'<svg width="13" height="15" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle" aria-hidden="true"><path d="M6 2a2 2 0 0 0-2 2v18l8-5 8 5V4a2 2 0 0 0-2-2H6z"/></svg>':'<svg width="13" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle" aria-hidden="true"><path d="M6 2a2 2 0 0 0-2 2v18l8-5 8 5V4a2 2 0 0 0-2-2H6z"/></svg>'}</button>
       ${MINE_VIEW?`<button class="nbicon ${nbHas(j.id)?'hasnotes':''} ${nbOpen.has(j.id)?'open':''}" data-nb-btn="${j.id}" onclick="event.stopPropagation(); nbToggle('${j.id}', this)" data-tip="Notebook — notes, key dates, contacts &amp; questions" aria-label="Open notebook">📝</button>`:``}
       <span class="trackwrap" onclick="event.stopPropagation()"><button class="trackchip ${_trk[0]}" onclick="event.stopPropagation(); dqToggleTrackMenu(this, '${j.id}')" data-tip="Track your application status" aria-haspopup="true" aria-label="Track application status">${_trk[1]}</button></span>
