@@ -2900,7 +2900,12 @@ function renderFyStrip(){
     + '<span class="fyschev" aria-hidden="true">›</span>'
     + '<button class="fysx" onclick="event.stopPropagation();fyStripDismiss()" data-tip="Hide this" aria-label="Hide">✕</button>';
   el.onclick = fyStripGo;   // whole row is the tap target on phones, where the button is hidden
-  try { window.dqTrack && window.dqTrack("fystrip_show", { d: disc || "", s: sen || "" }); } catch(e){}
+  // Fire ONCE per page load. renderFyStrip() runs on every render, so this was emitting an
+  // impression beacon on every filter change — five grid taps sent five identical events. That
+  // both inflates the metric and turns a quiet analytics endpoint into a chatty one, which is
+  // exactly the behaviour mobile browsers' tracking heuristics look for.
+  if (!renderFyStrip._logged){ renderFyStrip._logged = true;
+    try { window.dqTrack && window.dqTrack("fystrip_show", { d: disc || "", s: sen || "" }); } catch(e){} }
 }
 
 // sub-discipline chips: only rendered when a sub-bearing square is selected
