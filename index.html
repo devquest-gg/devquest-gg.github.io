@@ -413,6 +413,16 @@
   .viewtabs button:hover:not(.active) { background: rgba(139,148,158,.14); color: var(--text); }   /* same mouse-over reaction the rest of the chips have */
   .viewtabs button.active { background: var(--accent); color: #0d1117; }
   .viewtabs button.active:hover { filter: brightness(1.07); }
+  /* "More" dropdown holding the low-traffic views (Map, Hiring Trends). Anchored to the tab bar. */
+  .viewtabsbar { position: relative; }
+  .moremenu { display: none; position: absolute; z-index: 40; top: 100%; left: 0; margin-top: 4px; min-width: 190px;
+              background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 4px;
+              box-shadow: 0 10px 28px rgba(0,0,0,.45); }
+  .moremenu.open { display: block; }
+  .moremenu button { display: block; width: 100%; text-align: left; background: transparent; border: none;
+                     color: var(--text); font-weight: 600; font-size: 13px; padding: 9px 12px; border-radius: 7px; cursor: pointer; }
+  .moremenu button:hover { background: rgba(139,148,158,.14); }
+  .moremenu button.active { background: var(--accent); color: #0d1117; }
   /* Sticky tab bar: stays pinned just under the (also-sticky) header so the tabs —
      including the My Jobs badge that lights up — are always on screen. --headerH is
      measured in JS (header height differs desktop vs mobile and can wrap). */
@@ -881,14 +891,6 @@
   </div>
   <div class="herotag">Game dev jobs. <em>Fresh, honest, trackable.</em></div>
   <div class="headeractions" style="display:flex;gap:10px;align-items:center">
-    <!-- SHARE:START (header share buttons — delete this group + the SHARE block after </header> to remove) -->
-    <div class="dqshare" aria-label="Share DevQuest">
-      <a class="dqsh dqsh-li" href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fdevquest.gg" target="_blank" rel="noopener" data-tip="Share on LinkedIn" aria-label="Share on LinkedIn" onclick="try{window.dqTrack&&window.dqTrack('share_click',{p:'linkedin'})}catch(e){}"><svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path fill="currentColor" d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.225 0z"/></svg></a>
-      <a class="dqsh dqsh-x" href="https://twitter.com/intent/tweet?text=DevQuest%20%E2%80%94%20real%2C%20current%20game-dev%20jobs%2C%20fresh%20and%20honest.&url=https%3A%2F%2Fdevquest.gg" target="_blank" rel="noopener" data-tip="Share on X" aria-label="Share on X" onclick="try{window.dqTrack&&window.dqTrack('share_click',{p:'x'})}catch(e){}"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path fill="currentColor" d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg></a>
-      <a class="dqsh dqsh-bs" href="https://bsky.app/intent/compose?text=DevQuest%20%E2%80%94%20real%2C%20current%20game-dev%20jobs%2C%20fresh%20and%20honest.%20https%3A%2F%2Fdevquest.gg" target="_blank" rel="noopener" data-tip="Share on Bluesky" aria-label="Share on Bluesky" onclick="try{window.dqTrack&&window.dqTrack('share_click',{p:'bluesky'})}catch(e){}"><svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path fill="currentColor" d="M12 10.8c-1.087-2.114-4.046-6.053-6.798-7.995C2.566.944 1.561 1.266.902 1.565.139 1.908 0 3.08 0 3.768c0 .69.378 5.65.624 6.479.815 2.736 3.713 3.66 6.383 3.364.136-.02.275-.039.415-.056-.138.022-.276.04-.415.056-3.912.58-7.387 2.005-2.83 7.078 5.013 5.19 6.87-1.113 7.823-4.308.953 3.195 2.05 9.271 7.733 4.308 4.267-4.308 1.172-6.498-2.74-7.078a8.741 8.741 0 01-.415-.056c.14.017.279.036.415.056 2.67.296 5.568-.628 6.383-3.364.246-.829.624-5.79.624-6.479 0-.688-.139-1.86-.902-2.203-.659-.299-1.664-.621-4.3 1.24C16.046 4.748 13.087 8.687 12 10.8z"/></svg></a>
-      <button type="button" class="dqsh dqsh-cp" data-tip="Copy link" aria-label="Copy link" onclick="dqCopyLink(this)"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H7c-2.76 0-5 2.24-5 5s2.24 5 5 5h4v-1.9H7c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm9-6h-4v1.9h4c1.71 0 3.1 1.39 3.1 3.1s-1.39 3.1-3.1 3.1h-4V17h4c2.76 0 5-2.24 5-5s-2.24-5-5-5z"/></svg></button>
-    </div>
-    <!-- SHARE:END -->
     <button id="installBtn" class="wnbtn" style="display:none" onclick="dqInstall()" data-tip="Install DevQuest as an app on your device"><span class="bico-m" aria-hidden="true">📲</span><span class="btxt">📲 Install app</span></button>
     <button class="wnbtn" onclick="openWhatsNew()" data-tip="What's new on DevQuest"><span class="bico-m" aria-hidden="true">✨</span><span class="btxt">✨ What's new</span><span class="wndot" id="wnDot"></span></button>
     <!-- Entry point into the ~340 category/studio pages (/jobs hub). These pages were orphaned:
@@ -901,27 +903,6 @@
   </div>
 </header>
 
-<!-- SHARE:START (styles + copy-link behavior; remove this block and the .dqshare group in <header> to undo) -->
-<style>
-.dqshare{display:flex;gap:5px;align-items:center}
-.dqshare .dqsh{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;padding:0;border:1px solid var(--border);border-radius:7px;background:transparent;color:var(--muted);cursor:pointer;text-decoration:none;transition:color .15s,border-color .15s,background .15s}
-.dqshare .dqsh:hover{background:var(--panel,#161b22)}
-.dqshare .dqsh-li:hover{color:#0a66c2;border-color:#0a66c2}
-.dqshare .dqsh-x:hover{color:var(--text,#e6edf3);border-color:var(--text,#e6edf3)}
-.dqshare .dqsh-bs:hover{color:#1185fe;border-color:#1185fe}
-.dqshare .dqsh-cp:hover{color:var(--accent,#58a6ff);border-color:var(--accent,#58a6ff)}
-.dqshare .dqsh.copied{color:#3fb950;border-color:#3fb950}
-@media(max-width:560px){.dqshare{display:none}}
-</style>
-<script>
-function dqCopyLink(btn){
-  var url = (typeof currentShareUrl === "function") ? currentShareUrl() : "https://devquest.gg";
-  function done(){ btn.classList.add("copied"); var t=btn.getAttribute("title"); btn.setAttribute("title","Copied!"); setTimeout(function(){ btn.classList.remove("copied"); btn.setAttribute("title", t||"Copy link"); },1500); try{window.dqTrack&&window.dqTrack("share_click",{p:"copy"});}catch(e){} try{ if(typeof dqToast==="function") dqToast("Link copied", null, { icon:"🔗", label:"", ms:2600 }); }catch(e){} }
-  function fb(){ try{ var ta=document.createElement("textarea"); ta.value=url; ta.style.position="fixed"; ta.style.opacity="0"; document.body.appendChild(ta); ta.focus(); ta.select(); document.execCommand("copy"); document.body.removeChild(ta); }catch(e){} done(); }
-  try{ if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(url).then(done, fb); } else { fb(); } }catch(e){ fb(); }
-}
-</script>
-<!-- SHARE:END -->
 
 <div class="layout">
   <div id="filterBackdrop" onclick="toggleFilters()"></div>
@@ -1008,11 +989,18 @@ function dqCopyLink(btn){
     <button id="filterToggle" onclick="toggleFilters()">⚙ Filters</button>
     <div class="viewtabsbar">
     <div class="viewtabs">
-      <button id="tabList" class="active" onclick="setView('list')">☰ List</button>
-      <button id="tabFollow" onclick="setView('follow')">★ My Jobs</button>
-      <button id="tabBest" onclick="setView('bestfit')">🎯 For You</button>
-      <button id="tabMap" onclick="setView('map')">🗺️ Map</button>
-      <button id="tabStats" onclick="setView('stats')">📈 <span class="tabwide">Hiring </span>Trends</button>
+      <button id="tabList" class="active" data-view="list" onclick="setView('list')">☰ List</button>
+      <button id="tabFollow" data-view="myjobs" onclick="setView('follow')">★ My Jobs</button>
+      <button id="tabBest" data-view="foryou" onclick="setView('bestfit')">🎯 For You</button>
+      <!-- Map (717 views) and Hiring Trends (~200-540) together are ~4% of tab views against List's
+           24k, but they were costing two permanent slots on a bar that has to survive a 360px phone.
+           Moved behind "More": still one tap away, no longer taxing every visitor's screen. The
+           button shows the active view's name when you're inside one, so you always know where you are. -->
+      <button id="tabMore" class="tabmore" data-view="more" aria-haspopup="true" aria-expanded="false" onclick="toggleMoreTabs(event)">⋯ <span id="tabMoreLabel">More</span></button>
+    </div>
+    <div id="moreTabs" class="moremenu" role="menu" aria-label="More views">
+      <button role="menuitem" data-view="map" onclick="setView('map');closeMoreTabs()">🗺️ Map</button>
+      <button role="menuitem" data-view="hiringtrends" onclick="setView('stats');closeMoreTabs()">📈 Hiring Trends</button>
     </div>
     </div>
     <div id="pulseStrip"></div>
@@ -2253,7 +2241,6 @@ function render(){
   renderHubbar(availHubs);
   renderSubbar(availSubs);
   renderActiveFilters();
-  try { updateShareLinks(); } catch(e){}   // keep header share buttons aimed at the current filtered view
 
   const groups = {};
   for (const j of list) (groups[j.d] = groups[j.d] || []).push(j);
@@ -2739,16 +2726,6 @@ function copyShareLink(btn){
   const url = currentShareUrl(), label = btn.textContent;
   _dqCopy(url, function(){ btn.textContent = '✓ Link copied'; setTimeout(function(){ btn.textContent = label; }, 1600); try{ if(typeof dqToast==="function") dqToast("Filter link copied", null, { icon:"🔗", label:"", ms:2600 }); }catch(e){} });
   try{ window.dqTrack && window.dqTrack('share_filter', { n:(LAST_LIST||[]).length }); }catch(e){}
-}
-// Keep the header LinkedIn/X/Bluesky buttons pointed at the CURRENT filtered view (plain homepage when no filters).
-function updateShareLinks(){
-  try {
-    const u = currentShareUrl(), enc = encodeURIComponent(u);
-    const txt = encodeURIComponent('DevQuest — real, current game-dev jobs, fresh and honest.');
-    const li = document.querySelector('.dqsh-li'); if (li) li.href = 'https://www.linkedin.com/sharing/share-offsite/?url='+enc;
-    const x  = document.querySelector('.dqsh-x');  if (x)  x.href  = 'https://twitter.com/intent/tweet?text='+txt+'&url='+enc;
-    const bs = document.querySelector('.dqsh-bs'); if (bs) bs.href = 'https://bsky.app/intent/compose?text='+encodeURIComponent('DevQuest — real, current game-dev jobs, fresh and honest. '+u);
-  } catch(e){}
 }
 // Apply filters carried in the URL (?studios=…&cells=…&region=…) so a shared link reopens the same view.
 function applyFilterQuery(){
@@ -3618,10 +3595,35 @@ function dirCoords(d){
 }
 
 let map = null, markerLayer = null, view = "list";
+function closeMoreTabs(){ const m=document.getElementById("moreTabs"), b=document.getElementById("tabMore");
+  if(m) m.classList.remove("open"); if(b) b.setAttribute("aria-expanded","false"); }
+function toggleMoreTabs(ev){ if(ev) ev.stopPropagation();
+  const m=document.getElementById("moreTabs"), b=document.getElementById("tabMore"); if(!m) return;
+  const open = !m.classList.contains("open");
+  m.classList.toggle("open", open); if(b) b.setAttribute("aria-expanded", open ? "true" : "false"); }
+document.addEventListener("click", function(e){
+  const m=document.getElementById("moreTabs"); if(!m || !m.classList.contains("open")) return;
+  if(!m.contains(e.target) && !(e.target.closest && e.target.closest("#tabMore"))) closeMoreTabs();
+});
+document.addEventListener("keydown", function(e){ if(e.key==="Escape") closeMoreTabs(); });
 function setView(v){
   view = v;
-  for (const [tab, name] of [["tabList","list"],["tabFollow","follow"],["tabMap","map"],["tabStats","stats"],["tabBest","bestfit"]])
-    document.getElementById(tab).classList.toggle("active", v===name);
+  // tabMap/tabStats now live inside the "More" menu rather than the bar, so guard the lookup —
+  // getElementById returns null for anything that isn't rendered and would throw on .classList.
+  for (const [tab, name] of [["tabList","list"],["tabFollow","follow"],["tabMap","map"],["tabStats","stats"],["tabBest","bestfit"]]) {
+    const el = document.getElementById(tab); if (el) el.classList.toggle("active", v===name);
+  }
+  // Reflect a More-menu view on the More button itself, so the bar never shows "nothing selected".
+  try {
+    const inMore = (v==="map" || v==="stats");
+    const mb = document.getElementById("tabMore"), ml = document.getElementById("tabMoreLabel");
+    if (mb) mb.classList.toggle("active", inMore);
+    if (ml) ml.textContent = inMore ? (v==="map" ? "Map" : "Hiring Trends") : "More";
+    const mm = document.getElementById("moreTabs");
+    if (mm) mm.querySelectorAll("button").forEach(function(b){
+      b.classList.toggle("active", (b.getAttribute("data-view")==="map" && v==="map") || (b.getAttribute("data-view")==="hiringtrends" && v==="stats"));
+    });
+  } catch(e){}
   const listish = (v==="list" || v==="follow");   // run render() in both (keeps sidebar counts fresh)
   // The My Jobs dashboard renders its own cards, so the main job list shows only in List view.
   document.getElementById("jobs").style.display = (v==="list") ? "" : "none";
@@ -5640,7 +5642,14 @@ try {
     try{
       var t = e.target;
       var tabBtn = t.closest && t.closest(".viewtabs button");
-      if(tabBtn){ track("view", {tab:(tabBtn.textContent||"").replace(/[^a-z]/gi,"").toLowerCase()}); return; }
+      // Was keyed on the button's VISIBLE TEXT, so every label edit silently forked the metric into
+      // a new bucket ("Hiring Trends" -> hiringtrends, an older "Trends" -> trends, and so on) and
+      // made the history un-comparable. data-view is a stable key; the values deliberately match the
+      // biggest existing buckets (list/myjobs/foryou/map/hiringtrends) so the series continues
+      // rather than starting over. Text is only a fallback for anything not yet tagged.
+      if(tabBtn){ track("view", {tab: tabBtn.getAttribute("data-view") || (tabBtn.textContent||"").replace(/[^a-z]/gi,"").toLowerCase()}); return; }
+      var moreBtn = t.closest && t.closest("#moreTabs button");
+      if(moreBtn){ track("view", {tab: moreBtn.getAttribute("data-view")||"more"}); return; }
       var a = t.closest && t.closest("a");
       if(!a) return;
       if(a.classList.contains("knowbtn")) track("who_do_i_know",{});
