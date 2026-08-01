@@ -792,11 +792,23 @@ const CTRY = {
   "australia":"AU","new zealand":"NZ","brazil":"BR","mexico":"MX","argentina":"AR","chile":"CL","colombia":"CO",
   "israel":"IL","united arab emirates":"AE","uae":"AE","saudi arabia":"SA","south africa":"ZA","egypt":"EG",
   "ghana":"GH","nigeria":"NG","kenya":"KE","morocco":"MA","tunisia":"TN",
+  // Added after auditing every location string the board could not resolve. Cyprus alone accounted
+  // for ~90 roles (Limassol/Nicosia are a real games hub now), and "viet nam"/"deutschland" are just
+  // the same countries spelled the way those feeds spell them.
+  // NB: no "georgia" key on purpose — it is ambiguous with the US state, and US_ST would claim it
+  // first anyway. Tbilisi in HUB_CTRY is the unambiguous signal for the country.
+  "cyprus":"CY","armenia":"AM","azerbaijan":"AZ","belarus":"BY","slovenia":"SI",
+  "lithuania":"LT","latvia":"LV","estonia":"EE","malta":"MT","jordan":"JO","pakistan":"PK","bangladesh":"BD",
+  "kazakhstan":"KZ","uzbekistan":"UZ","sri lanka":"LK","peru":"PE","uruguay":"UY","costa rica":"CR",
+  "viet nam":"VN","deutschland":"DE","españa":"ES","brasil":"BR","méxico":"MX","polska":"PL","suomi":"FI",
 };
 // ISO-3166 alpha-2 for feeds that abbreviate. Anything colliding with a US state abbreviation is
 // already caught above, so this only fires on unambiguous codes.
 const ISO2 = new Set(("GH GB FR ES PT IT NL BE SE NO DK FI PL CZ SK AT CH RO BG HU UA RS HR GR TR CN JP KR SG "
-  + "VN MY PH TH TW HK AU NZ BR MX CL IL AE ZA EG NG KE MA IE IS SA").split(" "));
+  + "VN MY PH TH TW HK AU NZ BR MX CL IL AE ZA EG NG KE MA IE IS SA "
+  // Matching the country additions above. AZ and MT are deliberately absent: they are Arizona and
+  // Montana to US_ST, which is checked first, so listing them here would be dead code at best.
+  + "CY AM BY GE SI LT LV EE JO PK BD KZ UZ LK PE UY CR").split(" "));
 const US_ST = new Set(("al ak az ar ca co ct de fl ga hi id il in ia ks ky la me md ma mi mn ms mo mt ne nv nh nj nm ny "
   + "nc nd oh ok or pa ri sc sd tn tx ut vt va wa wv wi wy dc").split(" "));
 // Big game-dev hubs, for strings that name only a city.
@@ -814,11 +826,46 @@ const HUB_CTRY = { london:"GB", brighton:"GB", guildford:"GB", leamington:"GB", 
   quebec:"CA", ottawa:"CA", edmonton:"CA", tokyo:"JP", osaka:"JP", kyoto:"JP", seoul:"KR", shanghai:"CN",
   beijing:"CN", shenzhen:"CN", guangzhou:"CN", chengdu:"CN", singapore:"SG", bangalore:"IN", bengaluru:"IN",
   hyderabad:"IN", pune:"IN", gurugram:"IN", hanoi:"VN", "ho chi minh city":"VN", sydney:"AU", melbourne:"AU",
-  brisbane:"AU", auckland:"NZ", "tel aviv":"IL", dubai:"AE", "sao paulo":"BR", "são paulo":"BR" };
+  brisbane:"AU", auckland:"NZ", "tel aviv":"IL", dubai:"AE", "sao paulo":"BR", "são paulo":"BR",
+  // Cities the board was already listing roles in but could not place on a map. Each of these was
+  // pulled from the actual unresolved-location audit, not guessed at: they are where the jobs are.
+  limassol:"CY", nicosia:"CY", istanbul:"TR", "sarıyer":"TR", ankara:"TR", jakarta:"ID",
+  "kuala lumpur":"MY", manila:"PH", bangkok:"TH", "ho chi minh":"VN", "da nang":"VN",
+  "köln":"DE", koln:"DE", frankfurt:"DE", regensburg:"DE", aachen:"DE", stuttgart:"DE", dusseldorf:"DE",
+  "düsseldorf":"DE", leipzig:"DE", dresden:"DE", mainz:"DE",
+  herzliya:"IL", raanana:"IL", "ra'anana":"IL", jerusalem:"IL", haifa:"IL",
+  minsk:"BY", baku:"AZ", yerevan:"AM", tbilisi:"GE", tblisi:"GE", ljubljana:"SI", amman:"JO",
+  lahore:"PK", karachi:"PK", islamabad:"PK", vilnius:"LT", riga:"LV", tallinn:"EE",
+  kyiv:"UA", kiev:"UA", kharkiv:"UA", lviv:"UA", odesa:"UA", wroclaw:"PL", "wrocław":"PL",
+  poznan:"PL", "poznań":"PL", gdansk:"PL", "gdańsk":"PL", katowice:"PL", brno:"CZ",
+  valencia:"ES", seville:"ES", malaga:"ES", "málaga":"ES", porto:"PT", braga:"PT",
+  milan:"IT", rome:"IT", turin:"IT", bologna:"IT", cambridge:"GB", oxford:"GB", bristol:"GB",
+  leeds:"GB", liverpool:"GB", birmingham:"GB", glasgow:"GB", newcastle:"GB", sheffield:"GB",
+  nottingham:"GB", southampton:"GB", horsham:"GB", "royal leamington spa":"GB",
+  gothenburg:"SE", "göteborg":"SE", uppsala:"SE", aarhus:"DK", tampere:"FI", espoo:"FI",
+  reykjavik:"IS", "reykjavík":"IS", calgary:"CA", winnipeg:"CA", halifax:"CA",
+  fukuoka:"JP", yokohama:"JP", sapporo:"JP", busan:"KR", "pangyo":"KR", taipei:"TW",
+  hangzhou:"CN", "xi'an":"CN", wuhan:"CN", "hong kong":"HK", macau:"MO",
+  "mexico city":"MX", "ciudad de mexico":"MX", guadalajara:"MX", monterrey:"MX",
+  "buenos aires":"AR", bogota:"CO", "bogotá":"CO", santiago:"CL", lima:"PE", montevideo:"UY",
+  "san jose, costa rica":"CR", cairo:"EG", "cape town":"ZA", johannesburg:"ZA", nairobi:"KE",
+  lagos:"NG", accra:"GH", casablanca:"MA", tunis:"TN", perth:"AU", adelaide:"AU", wellington:"NZ",
+  "abu dhabi":"AE", riyadh:"SA", almaty:"KZ", tashkent:"UZ", colombo:"LK", dhaka:"BD" };
+// Words that describe HOW you work, not WHERE — they carry no geography and must not stop us reading
+// the geography sitting next to them.
+const LOC_NOISE = /\b(fully\s+)?remote(ly)?\b|\bwork from home\b|\bwfh\b|\banywhere\b|\bunlisted\b|\bmultiple locations\b|\b\d+\s+locations?\b|\bworldwide\b|\bhybrid\b|\bon[- ]?site\b|\bin[- ]?office\b|\bfull[- ]time\b|\bpart[- ]time\b|\bany\b/gi;
 function resolveCountry(loc){
-  const t = String(loc || "").toLowerCase();
-  if (!t || /unlisted|multiple locations|remote/.test(t) && !/,/.test(t)) return "";
-  const parts = t.split(/[,;\/]|\s-\s/).map(x => x.trim()).filter(Boolean);
+  const raw = String(loc || "").toLowerCase();
+  // The old guard was `!t || /unlisted|multiple locations|remote/.test(t) && !/,/.test(t)`, which by
+  // precedence means "contains a noise word AND has no comma -> give up". That threw away the country
+  // in "Remote - US", "USA - Remote" and "United Kingdom-Remote" while "Remote, US" resolved fine —
+  // the only difference being a comma. Strip the noise words instead, and give up only if what's left
+  // has no geography in it at all.
+  const t = raw.replace(LOC_NOISE, " ").replace(/\s+/g, " ").trim();
+  if (!t.replace(/[(),;\/\-–—.]+/g, "").trim()) return "";
+  const parts = t.split(/[,;\/]|\s-\s/)
+    .map(x => x.replace(/^[\s\-–—(),;\/]+|[\s\-–—(),;\/]+$/g, "").trim())   // "- us" -> "us", "(remote)" leftovers -> ""
+    .filter(Boolean);
   for (const p of parts) if (CTRY[p]) return CTRY[p];              // an exact segment is the strongest signal
   for (const p of parts) if (US_ST.has(p)) return "US";            // "El Segundo, CA"
   for (const p of parts) if (p.length === 2 && ISO2.has(p.toUpperCase())) return p.toUpperCase();
@@ -874,6 +921,46 @@ function jobValidThrough(j){
   if (isNaN(t) || t <= Date.now()) return "";
   return new Date(t).toISOString();
 }
+// ---- Where may the applicant actually be? ------------------------------------------------------
+// Google treats a TELECOMMUTE posting with no applicantLocationRequirements as a CRITICAL error, and
+// critical means the page does not appear in Search at all. ~250 of our pages were in that state:
+// roles whose location string is just "Remote" or "Anywhere", which names no geography to inherit.
+// Rather than invent one, fall back to where that studio's OTHER roles actually are — evidence from
+// the same feed. Only used when one country holds a clear majority of the studio's located roles;
+// below that bar we would be guessing, and a wrong country is worse than no page.
+const STUDIO_CC = new Map();
+function buildStudioCountries(all){
+  STUDIO_CC.clear();
+  const tally = new Map();
+  for (const j of all){
+    const nm = j.studio || j.parent; if (!nm) continue;
+    const cc = resolveCountry(j.location); if (!cc) continue;
+    if (!tally.has(nm)) tally.set(nm, new Map());
+    const t = tally.get(nm); t.set(cc, (t.get(cc) || 0) + 1);
+  }
+  for (const [nm, t] of tally){
+    let total = 0, best = "", bestN = 0;
+    for (const [cc, n] of t){ total += n; if (n > bestN){ bestN = n; best = cc; } }
+    if (total >= 2 && bestN / total >= 0.6) STUDIO_CC.set(nm, best);
+  }
+}
+// The country we are willing to publish for a job: what its own location says, else its studio's.
+function jobApplicantCountry(j){
+  return resolveCountry(j.location) || STUDIO_CC.get(j.studio || j.parent) || "";
+}
+// addressRegion — the state/province half of a US or Canadian address. We never get streetAddress or
+// postalCode from an ATS feed, so those two stay absent by necessity, but the region is sitting right
+// there in "Los Angeles, CA" and Google asks for it.
+const CA_PROV = new Set("ab bc mb nb nl ns nt nu on pe qc sk yt".split(" "));
+function jobAddressRegion(loc, cc){
+  if (cc !== "US" && cc !== "CA") return "";
+  for (const p of String(loc || "").split(/[,;]/).map(x => x.trim())){
+    const low = p.toLowerCase();
+    if (cc === "US" && US_ST.has(low)) return p.toUpperCase();
+    if (cc === "CA" && CA_PROV.has(low)) return p.toUpperCase();
+  }
+  return "";
+}
 // Every gate, in one place, so the reasons can be counted and reported.
 function jobPageCheck(j){
   if (!j.id || !j.title || !j.studio) return "missing core fields";
@@ -884,7 +971,10 @@ function jobPageCheck(j){
   if (!posted || isNaN(Date.parse(posted))) return "no datePosted";
   const remote = j.workType === "Remote";
   if (!remote && !resolveCountry(j.location)) return "country not resolvable";
-  // A remote job needs no jobLocation at all — jobLocationType TELECOMMUTE covers it.
+  // A remote job needs no jobLocation — jobLocationType TELECOMMUTE covers it — but it DOES need
+  // applicantLocationRequirements, without which Google drops the page from Search entirely. If
+  // neither the job nor its studio can tell us a country, publishing the page buys nothing.
+  if (remote && !jobApplicantCountry(j)) return "remote, applicant country unknown";
   return "";
 }
 function renderJobPage(j){
@@ -906,14 +996,26 @@ function renderJobPage(j){
   };
   if (remote){
     ld.jobLocationType = "TELECOMMUTE";
-    // Only when we have a real country. j.region is "Europe" / "North America", which is NOT a valid
-    // Country name — emitting it would be worse than omitting an optional property.
-    if (cc) ld.applicantLocationRequirements = { "@type":"Country", name: cc };
+    // Falls back to the studio's country when the role's own string is a bare "Remote". jobPageCheck
+    // guarantees this is non-empty, so the critical missing-field error cannot recur.
+    // (j.region is "Europe" / "North America", which is NOT a valid Country name — never use it.)
+    ld.applicantLocationRequirements = { "@type":"Country", name: jobApplicantCountry(j) };
   }
-  if (cc) ld.jobLocation = { "@type":"Place",
-    address: Object.assign({ "@type":"PostalAddress", addressCountry: cc }, city ? { addressLocality: city } : {}) };
+  if (cc) {
+    const region = jobAddressRegion(j.location, cc);
+    ld.jobLocation = { "@type":"Place", address: Object.assign(
+      { "@type":"PostalAddress", addressCountry: cc },
+      city ? { addressLocality: city } : {},
+      region ? { addressRegion: region } : {}) };
+    // streetAddress and postalCode are intentionally absent: no ATS feed we read publishes them, and
+    // Google would rather have three accurate address fields than five with two invented.
+  }
   const sal = jobSalaryLd(j.salary); if (sal) ld.baseSalary = sal;
-  const emp = jobEmploymentType(j); if (emp) ld.employmentType = emp;
+  // Google flags a missing employmentType. Our inference already picks out intern / contract /
+  // part-time / temporary from the title and the feed; anything with none of those markers is a
+  // standard permanent role, which is what FULL_TIME means. That is a read of the data, not a guess.
+  const emp = jobEmploymentType(j) || "FULL_TIME";     // NB: also rendered as a tag in the page body below
+  ld.employmentType = emp;
   const vt = jobValidThrough(j); if (vt) ld.validThrough = vt;
   const cat = (j.discipline && j.discipline !== "Other") ? `<a href="/${slugify("game " + j.discipline)}-jobs">${escHtml(j.discipline)} jobs</a>` : "";
   const studioPage = `/${slugify(j.parent || j.studio)}-jobs`;
@@ -1000,6 +1102,7 @@ function writeJobPages(all, root){
   try { fs.mkdirSync(dir, { recursive: true }); } catch (e) {}
   const reasons = {};
   const wanted = new Map();
+  buildStudioCountries(all);        // must precede jobPageCheck — the remote gate consults it
   JOB_PAGE_URLS_EXTRA.length = 0;
   for (const j of all){
     const why = jobPageCheck(j);
