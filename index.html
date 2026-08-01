@@ -75,7 +75,9 @@
   ::-webkit-scrollbar-thumb:hover { background: #58a6ff; }
   ::-webkit-scrollbar-corner { background: transparent; }
   body { background: var(--bg); color: var(--text); font-family: -apple-system, "Segoe UI", Roboto, sans-serif; }
-  .dqbar { height: 6px; background: linear-gradient(90deg, var(--gold), var(--purple) 55%, var(--accent)); }
+  /* Was a 6px gradient rule echoing the portfolio pages. Those aren't shipped, so it was paying
+     rent for a consistency nobody can see yet. Restore by setting height back to 6px. */
+  .dqbar { height: 0; background: linear-gradient(90deg, var(--gold), var(--purple) 55%, var(--accent)); }
   header { padding: 16px 24px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; background: var(--bg); z-index: 10; }
   .logo { font-size: 20px; font-weight: 800; letter-spacing: -0.3px; display: flex; align-items: center; gap: 8px; }
   .logohome { display: inline-flex; align-items: center; gap: 8px; text-decoration: none; color: inherit; cursor: pointer; transition: opacity .15s; }
@@ -438,10 +440,14 @@
   @media (max-width: 820px) { .viewtabsbar { padding: 8px 0; } }
   @media (max-width: 560px) {
     /* use the full width: Filters spans the row; the 5 tabs share one even row instead of wrapping */
-    /* Sits inline at the right end of the tab row now, so it no longer owns a whole row. */
+    /* Sits inline at the right end of the tab row now, so it no longer owns a whole row.
+       It kept margin-bottom:12px from its standalone-row days, which is what pushed it above the
+       tab bar's baseline. Zero that and match the tab bar's own box (3px frame + 7px button pad)
+       so the two controls are the same height and share one centre line. */
     .viewtabsbar { display: flex; align-items: center; gap: 8px; }
     .viewtabsbar .viewtabs { flex: 1; min-width: 0; }
-    #filterToggle { width: auto; margin-left: auto; flex: none; }
+    #filterToggle { width: auto; margin: 0; flex: none; padding: 10px 14px; border-radius: 10px;
+                    font-size: 13px; align-self: stretch; }
     .viewtabsbar .viewtabs { display: flex; width: 100%; gap: 3px; }
     .viewtabsbar .viewtabs button { flex: 1; min-width: 0; padding: 8px 2px; font-size: 11px; letter-spacing: -.2px; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   }
@@ -489,6 +495,12 @@
   .matrixbody { display: block; }
   @media (max-width: 560px) {
     .matrixhead { cursor: pointer; position: relative; }
+    /* 10 discipline rows at desktop padding is ~400px of vertical space on a 390px phone.
+       Tightening the cells keeps every discipline visible (so the onboarding grid still offers
+       every craft) while giving back roughly a third of the grid's height. */
+    table.xtab td { padding: 4px 6px; }
+    table.xtab th { padding: 3px 6px; }
+    table.xtab { font-size: 12.5px; }
     /* phones: title takes the full first row (so it doesn't get squeezed into a tall narrow column
        by the lens), the lens drops to its own row below, and the collapse caret pins top-right. */
     .matrixhead .mh-text { flex-basis: 100%; padding-right: 26px; }
@@ -497,6 +509,11 @@
        Jobs / Pay / Remote / Fresh explain themselves. Dropping the label lets the pills sit
        tighter under the title instead of claiming their own full row. */
     .mtx-lensbar { margin-left: 0; margin-top: 2px; gap: 5px; }
+    /* !important because the base `.mtx-lensbar { display: inline-flex }` rule sits LATER in this
+       file at equal specificity, so without it the media query silently loses. */
+    .mtx-lensbar { display: none !important; }   /* Jobs/Pay/Remote/Fresh: desktop only — a whole row on a
+       phone for a lens most people never touch. Still tracked on desktop (matrix_lens), so the
+       keep-or-cut call can be made on numbers rather than a hunch. */
     .mtx-lens-label { display: none; }
     .mtx-lens { padding: 4px 9px !important; font-size: 12px !important; }
     .hoverhint { display: none; }   /* no hover on touch — drop that part of the hint on phones */
@@ -642,6 +659,12 @@
                    background: linear-gradient(to right, rgba(22,27,34,0), var(--panel, #161b22) 82%);
                    opacity: 0; transition: opacity .18s ease; }
   .mxfade.canscroll::after { opacity: 1; }
+  /* Matching fade on the LEFT, because on phones the grid now starts one column in (see mxStartCol)
+     and Entry sits off-screen to the left. Without this, a column would be hidden with no cue. */
+  .mxfade::before { content: ""; position: absolute; top: 0; left: 0; bottom: 0; width: 34px; pointer-events: none; z-index: 1;
+                    background: linear-gradient(to left, rgba(22,27,34,0), var(--panel, #161b22) 82%);
+                    opacity: 0; transition: opacity .18s ease; }
+  .mxfade.canscrollback::before { opacity: 1; }
   /* One-line For You entry point, occupying part of the space the collapsed grid gives back. */
   #fyStrip { display: none; align-items: center; gap: 10px; margin-bottom: 14px; padding: 9px 13px;
              background: rgba(224,178,58,.08); border: 1px solid rgba(224,178,58,.35); border-radius: 10px; }
@@ -2696,7 +2719,22 @@ function mxFadeSync(){
       var upd = function(){
         var more = sc.scrollWidth - sc.clientWidth - sc.scrollLeft > 8;
         wrap.classList.toggle("canscroll", more);
+        wrap.classList.toggle("canscrollback", sc.scrollLeft > 8);
       };
+      // On a phone the grid can only show three columns. Entry is the thinnest column on the board
+      // (roughly 50 open roles across every discipline — mostly single digits), while Lead carries
+      // real numbers and outranks Entry on filter events (8,235 vs 7,284). So start one column in:
+      // Mid / Senior / Lead are what you see, Entry is one swipe left and flagged by the left fade.
+      // Only ever applied to a fresh, unscrolled grid, so it never fights someone who has scrolled.
+      try {
+        if (window.innerWidth <= 560 && !sc._mxStarted && sc.scrollLeft === 0){
+          var firstCell = sc.querySelector("tbody tr td, tr td");
+          var w = firstCell ? 0 : 0;
+          var cells = sc.querySelectorAll("tr:first-child th");
+          if (cells && cells.length > 1) w = Math.round(cells[1].getBoundingClientRect().width);
+          if (w > 20 && sc.scrollWidth - sc.clientWidth >= w){ sc.scrollLeft = w; sc._mxStarted = true; }
+        }
+      } catch(e){}
       if (!sc._mxBound){ sc._mxBound = true; sc.addEventListener("scroll", upd, { passive: true }); }
       upd();
     });
