@@ -2428,7 +2428,26 @@ function discColor(d){ return DISC_COLOR[d] || "var(--muted)"; }
 // Default to EXPANDED on mobile: the role×seniority matrix is the signature, fast way to find
 // relevant roles — far more useful to a first-timer than a generic top-of-list discipline. Once a
 // visitor explicitly collapses it, that choice is remembered (stored value wins over the default).
-function matrixCollapsed(){ try { var v = store.get("dq-mtx-collapsed", null); return v===null ? false : !!v; } catch(e){ return false; } }
+// The grid is 295px of the 905px stacked above the first job card on a 390px phone, so a returning
+// visitor had to scroll past a control they'd already used before seeing a single job — and mobile
+// is 47% of visitors, returning at 8% against desktop's 18%. But the grid is also the onboarding:
+// 61% of new visitors tap a square, and it's the only thing that sets their profile. So: expanded
+// by default for anyone who hasn't told us what they do, collapsed once a profile exists. An
+// explicit toggle by the user always wins over both defaults.
+function matrixCollapsed(){
+  try {
+    var v = store.get("dq-mtx-collapsed", null);
+    if (v !== null) return !!v;
+    // Must test .pinned, not .v — profGet("roles").v falls back to profInferRoles(), which returns
+    // guesses from browsing behaviour and is non-empty even for a first-time visitor. Keying on .v
+    // collapsed the grid for brand-new visitors, i.e. hid the onboarding from exactly the people it
+    // converts. .pinned is only true once someone has actually told us their craft or level.
+    var pinnedRoles = false, pinnedSen = false;
+    try { pinnedRoles = !!profGet("roles").pinned && ((profGet("roles").v) || []).length > 0; } catch(e){}
+    try { pinnedSen = !!profGet("sen").pinned && profGet("sen").v !== "__any"; } catch(e){}
+    return pinnedRoles || pinnedSen;
+  } catch(e){ return false; }
+}
 function matrixToggle(){
   if (window.innerWidth > 560) return;   // desktop: the matrix always stays open
   var collapsed = !matrixCollapsed();
