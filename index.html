@@ -3990,6 +3990,9 @@ function setView(v){
 // open roles, pay transparency, posting freshness and how contested they are (interest
 // per open role, from our own engagement data). Clicking a studio drops you into the
 // filtered list. Everything is computed live from the same JOBS the board uses.
+// NOTE: moving this to a first-party host (api.devquest.gg) would need devquest.gg's DNS on
+// Cloudflare, which it is not — the zone lives elsewhere. Parked until that decision is made;
+// changing it before the hostname resolves breaks analytics AND the alert signup form.
 const ALERTS_BASE = "https://devquest-alerts.balesdestin.workers.dev";
 let INTEREST = null, _interestTried = false;
 function fetchInterest(){
@@ -5885,13 +5888,16 @@ try {
 </script>
 <!-- Studio intelligence panel: opens a drawer/sheet from any studio name -->
 <script src="studio-panel.js"></script>
-<!-- Cloudflare Web Analytics --><script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "95619b0dc4cf4d5c897a9ccd91097d8c"}'></script><!-- End Cloudflare Web Analytics -->
+<!-- Cloudflare Web Analytics removed: a third-party analytics beacon on every page
+     load, and a recognised tracker in Safari's protection lists — the most likely cause of
+     the "reduce advanced privacy protections" prompt on iOS. It was also redundant: /stats
+     is a richer first-party analytics surface. Re-add the one-line script tag to restore. -->
 <!-- ===== DevQuest alerts + cookieless event analytics (Phase 1) ===== -->
 <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
 <script>
 (function(){
   "use strict";
-  var ALERTS_API = "https://devquest-alerts.balesdestin.workers.dev";
+  var ALERTS_API = "https://devquest-alerts.balesdestin.workers.dev";   // see ALERTS_BASE note above
   // Spam guard. Paste the Turnstile SITE key here to turn it on (public key, safe in client code).
   // Leave "" to keep the signup working with no challenge until you're ready.
   var TURNSTILE_SITEKEY = "0x4AAAAAADgYBtcO1AW8_rq_";
