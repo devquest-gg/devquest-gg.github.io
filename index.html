@@ -2454,6 +2454,9 @@ function setMatrixMetric(m){
 function mtxMedian(a){ if(!a.length) return 0; const s=[...a].sort((x,y)=>x-y), m=Math.floor(s.length/2); return s.length%2 ? s[m] : Math.round((s[m-1]+s[m])/2); }
 function mtxParsePay(str){
   if(!str || /hour|hr\b|\/h/i.test(str)) return 0;
+  // Non-USD ranges (\u00a3/\u20ac) are shown on the card verbatim but excluded from every $K
+  // average/median on the site, so a London range can never be mixed into a dollar figure.
+  if(/[\u00a3\u20ac]|\bGBP\b|\bEUR\b|\bCAD\b/i.test(String(str))) return 0;
   const nums = String(str).replace(/,/g,"").match(/\d+(?:\.\d+)?/g); if(!nums) return 0;
   const k = /k/i.test(str);
   const v = nums.map(n=>{ let x=parseFloat(n); if(!k && x>=1000) x/=1000; return x; }).filter(x=>x>=10 && x<=2000);

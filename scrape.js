@@ -1899,6 +1899,12 @@ function extractSalary(text) {
   // caller passes text that didn't go through stripHtml (e.g. a verbatim source pay string).
   text = String(text).replace(/&amp;/g, "&").replace(/&mdash;|&#8212;|&#x2014;/gi, "—").replace(/&ndash;|&#8211;|&#x2013;/gi, "–");
   let lo = null, hi = null;
+  // Pattern 3 below already matched EUR/GBP/CAD amounts, but the formatter hard-coded "$", so
+  // "60,000 - 80,000 GBP" was published as "$60K-$80K" — pounds relabelled as dollars. Track the
+  // currency and format with it. CAD renders as "CAD 60K", not "CA$60K", because anything
+  // containing "$NNK-$NNK" is matched by the board's display regexes and would be swept back
+  // into the USD averages.
+  let curSym = "$";
   // 1) adjacent range: "$120,000 - $150,000", "$120K to $150K", "$134,320 – $248,404"
   let m = text.match(/\$\s?([\d][\d,.]*)\s*([kK])?\s*(?:-|–|—|to|through)\s*\$?\s?([\d][\d,.]*)\s*([kK])?/);
   if (m) {
@@ -1920,10 +1926,16 @@ function extractSalary(text) {
     // 3) currency-suffixed range with NO dollar sign: "151,300.00 - 264,700.00 USD
     // annually" (Amazon). Require comma-grouped thousands + an explicit currency
     // word so we never match stray numbers.
-    const m3 = text.match(/([\d]{1,3}(?:,\d{3})+(?:\.\d+)?)\s*(?:-|–|—|to)\s*([\d]{1,3}(?:,\d{3})+(?:\.\d+)?)\s*(?:USD|CAD|EUR|GBP)\b/i);
-    if (m3) { lo = parseFloat(m3[1].replace(/,/g, "")); hi = parseFloat(m3[2].replace(/,/g, "")); }
+    const m3 = text.match(/([\d]{1,3}(?:,\d{3})+(?:\.\d+)?)\s*(?:-|–|—|to)\s*([\d]{1,3}(?:,\d{3})+(?:\.\d+)?)\s*(USD|CAD|EUR|GBP)\b/i);
+    if (m3) { lo = parseFloat(m3[1].replace(/,/g, "")); hi = parseFloat(m3[2].replace(/,/g, ""));
+      const cc = (m3[3] || "USD").toUpperCase();
+      curSym = cc === "GBP" ? "\u00a3" : cc === "EUR" ? "\u20ac" : cc === "CAD" ? "CAD " : "$"; }
   }
   if (lo == null || hi == null) {
+    // 3b) non-USD range (GBP/EUR). Tried before the single-figure USD fallback so a European
+    // listing yields a real range instead of falling through to null.
+    const nu = extractNonUsdSalary(text);
+    if (nu) return nu;
     // 4) single annual figure, anchored to a salary keyword so we never grab stray $ amounts
     // (sign-on bonuses, budgets, etc.). e.g. careers-page bodies: "Salary: $156,000 USD".
     const m4 = text.match(/(?:salary|compensation|base\s*pay|base\s*salary|total\s*comp(?:ensation)?)\b[^$]{0,40}\$\s?([\d][\d,.]*)\s*([kK])?/i);
@@ -1935,8 +1947,59 @@ function extractSalary(text) {
   }
   // sanity: annual USD salaries only (skip hourly rates and nonsense)
   if (!(lo >= 10000 && hi > lo && hi <= 2000000)) return null;
-  const f = n => "$" + Math.round(n / 1000) + "K";
+  const f = n => curSym + Math.round(n / 1000) + "K";
   return f(lo) + "–" + f(hi);
+}
+
+// Parse a number written in either convention: "45,000" / "45.000" / "45 000" -> 45000,
+// while "45.5" / "45,5" stay 45.5. Rule: a separator followed by exactly three digits is a
+// thousands separator; when BOTH . and , appear, the last one is the decimal point.
+function _parseAmount(raw) {
+  let s = String(raw).replace(/[  \s]/g, "");
+  const d = s.lastIndexOf("."), c = s.lastIndexOf(",");
+  if (d >= 0 && c >= 0) s = (d > c) ? s.replace(/,/g, "") : s.replace(/\./g, "").replace(",", ".");
+  else if (c >= 0)      s = /,\d{3}(?!\d)/.test(s) ? s.replace(/,/g, "") : s.replace(",", ".");
+  else if (d >= 0)      s = /\.\d{3}(?!\d)/.test(s) ? s.replace(/\./g, "") : s;
+  const n = parseFloat(s);
+  return isFinite(n) ? n : null;
+}
+
+// Non-USD salary ranges (GBP + EUR). extractSalary above is anchored on "$" in three of its four
+// patterns and the fourth needs comma-grouped thousands plus a currency word, so "£45,000 – £60,000"
+// and "45.000 - 60.000 €" were invisible: Europe read as 0-for-700 roles listing pay, which is a
+// parser gap, not a market truth.
+//
+// Two deliberate limits:
+//  1. An explicit currency marker MUST sit beside one of the numbers. Without that anchor a bare
+//     "45 000 - 60 000" would cheerfully match years, headcounts or ticket ranges.
+//  2. GBP and EUR only. Sweden, Poland and Japan commonly quote salaries MONTHLY, and silently
+//     republishing a monthly figure as an annual salary is worse than publishing nothing at all.
+//     Those need per-market handling before they can be trusted.
+// The currency is preserved in the output ("£45K–£60K"), never rewritten as dollars.
+function extractNonUsdSalary(text) {
+  if (!text) return null;
+  const t = String(text);
+  if (!/[£€]|\bGBP\b|\bEUR\b/i.test(t)) return null;          // fast reject: no currency anchor
+  const SYM = "(?:£|€|GBP|EUR)";
+  const N   = "\\d[\\d.,\\u00A0\\u202F ]{0,13}\\d|\\d";
+  const SEP = "\\s*(?:-|–|—|to|up to)\\s*";
+  const pats = [
+    new RegExp("(" + SYM + ")\\s*(" + N + ")\\s*([kK])?" + SEP + "(?:" + SYM + ")?\\s*(" + N + ")\\s*([kK])?", "i"), // £45,000 - £60,000
+    new RegExp("(" + N + ")\\s*([kK])?" + SEP + "(" + N + ")\\s*([kK])?\\s*(" + SYM + ")", "i")                      // 45.000 - 60.000 €
+  ];
+  for (let i = 0; i < pats.length; i++) {
+    const m = t.match(pats[i]);
+    if (!m) continue;
+    const sym = (i === 0 ? m[1] : m[5]);
+    let lo, hi;
+    if (i === 0) { lo = _parseAmount(m[2]); hi = _parseAmount(m[4]); if (m[3]) lo *= 1000; if (m[5]) hi *= 1000; }
+    else         { lo = _parseAmount(m[1]); hi = _parseAmount(m[3]); if (m[2]) lo *= 1000; if (m[4]) hi *= 1000; }
+    if (lo == null || hi == null) continue;
+    if (!(lo >= 10000 && hi > lo && hi <= 2000000)) continue;   // same annual sanity window as USD
+    const s = /£|GBP/i.test(sym) ? "£" : "€";
+    return s + Math.round(lo / 1000) + "K–" + s + Math.round(hi / 1000) + "K";
+  }
+  return null;
 }
 
 // Collapse any salary string we display to one compact shape ("$120K–$150K" or "$120K").
@@ -2166,7 +2229,10 @@ async function fetchLever(studio) {
     const desc = [j.descriptionPlain, j.additionalPlain, j.openingPlain].filter(Boolean).join(" ");
     let salary = null;
     if (j.salaryRange && j.salaryRange.min && j.salaryRange.max) {
-      const f = n => "$" + Math.round(n / 1000) + "K";
+      // Lever states the currency outright; honour it instead of stamping every range "$".
+      const _lc = String(j.salaryRange.currency || "USD").toUpperCase();
+      const _ls = _lc === "GBP" ? "\u00a3" : _lc === "EUR" ? "\u20ac" : _lc === "USD" ? "$" : (_lc + " ");
+      const f = n => _ls + Math.round(n / 1000) + "K";
       salary = f(j.salaryRange.min) + "–" + f(j.salaryRange.max);
     } else salary = extractSalary(desc);
     return {
