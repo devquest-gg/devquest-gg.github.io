@@ -229,7 +229,11 @@ const STUDIOS = [
   { name: "LightFury Games", type: "keka", token: "lightfury", city: "Bengaluru, India" }, // AAA game-tech studio (India/UK) — Keka careers portal, clean JSON API (/careers/api/jobs/default/active). ~14 roles (mostly Engineering/Design/Product in Bengaluru); real per-job URLs + posted dates + YOE, no salary. Promoted from Island 2026-07-05 — spot-check first scrape
   { name: "Madbox", type: "teamtailor", theme: "cards", token: "madbox", team: "Madbox", host: "careers.madbox.io", city: "Paris, France" }, // hypercasual/casual mobile (Pocket Champs) — Teamtailor "cards" theme; team name is a prefix on office tokens ("Madbox Paris"/"Madbox Barcelona"), all roles Hybrid across Paris + Barcelona (~13). Promoted from Island 2026-07-05 — spot-check first scrape
   { name: "Anshar Studios", type: "traffit", token: "anshar", careersUrl: "https://ansharstudios.com/careers/", city: "Katowice, Poland" }, // Co-dev (Larian, Saber, PCF partners) — WP careers page server-renders offers linking to its Traffit board (ansharstudios.traffit.com); ~10 roles (Art/Animation/Eng/Design), category tag drives discipline, all Katowice. Promoted from Island 2026-07-05 — spot-check first scrape
-  { name: "Nekki", type: "nekki", careersUrl: "https://nekki.com/vacancy", city: "Limassol, Cyprus" }, // Shadow Fight, Vector — self-hosted WordPress careers page (nekki.com/vacancy), server-rendered vacancy list; ~10 roles, all Remote (QA/Game design/Art/Programming/Marketing). Discipline from title. Promoted from Island 2026-07-05 — spot-check first scrape
+  // Shadow Fight, Vector — self-hosted WordPress, server-rendered vacancy list; roles are Remote.
+  // The /vacancy INDEX has been 404ing on every run since this was added (individual /vacancy/<slug>/
+  // pages are fine, only the listing page is gone). The list now lives on the homepage, and the parser
+  // needed no change at all — it finds all 8 there. This one at least failed loudly, as an HTTP 404.
+  { name: "Nekki", type: "nekki", careersUrl: "https://nekki.com/", city: "Limassol, Cyprus" },
   { name: "Plarium", type: "plarium", careersUrl: "https://company.plarium.com/en/career/", city: "Herzliya, Israel" }, // RAID: Shadow Legends — Next.js careers site; vacancies live in the RSC flight payload (direction + offices + remoteLocation + hybrid). ~12 roles across Ukraine/Poland/Israel/Spain. Promoted from Island 2026-07-05 — spot-check first scrape
   { name: "Hello Games", type: "hellogames", careersUrl: "https://hellogames.org/join-us/", city: "Guildford, UK" }, // No Man's Sky — self-hosted static careers page (hellogames.org/join-us), server-rendered <a href="/jobs/slug/"> list; ~8 roles (Eng/Art/QA/Production), all Guildford. Discipline from title. Promoted from Island 2026-07-05 — spot-check first scrape
   { name: "Torpor Games", type: "hibob", token: "torporgames", city: "Berlin, Germany" }, // The Conformist, Project Vanguard — HiBob (Bob) ATS; clean JSON API (torporgames.careers.hibob.com/api/job-ad). ~6 roles (Writing/Design/Eng/Finance), all Berlin HQ, Hybrid; posted dates + workspaceType. Skips speculative applications. Promoted from Island 2026-07-05 — spot-check first scrape
@@ -265,7 +269,11 @@ const STUDIOS = [
   { name: "Square Enix (Japan)", type: "hrmos", token: "square-enix", city: "Tokyo, Japan", parentCompany: "Square Enix" }, // Final Fantasy, Dragon Quest — Japan HQ careers run on HRMOS (hrmos.co/pages/square-enix, ~35 JP roles incl. game dev + publishing/manga/EC). Same fetcher as GAME FREAK. Promoted from Island 2026-07-04 — spot-check first scrape
   { name: "Spike Chunsoft", type: "hrmos", token: "spchun", city: "Tokyo, Japan" }, // Danganronpa, Zero Escape, Shiren the Wanderer — HRMOS board (hrmos.co/pages/spchun, ~19 JP roles: producers, designers/animators, planners, sales/licensing/legal/HR). Same fetcher as GAME FREAK. Promoted from Island 2026-07-05 — spot-check first scrape
   { name: "Owlcat Games", type: "owlcat", city: "Nicosia, Cyprus" }, // Pathfinder, Rogue Trader — owlcat.games/careers Next.js site; jobs embedded in __NEXT_DATA__ (~7 roles, real dates + per-job URLs). Promoted from Island 2026-07-04 — spot-check first scrape
-  { name: "Moon Active", type: "comeet", token: "A2.00C", comeetToken: "2ACD5C02AC10081008AB01560180C804", city: "Tel Aviv, Israel" }, // Coin Master — Comeet ATS public positions API (~29 roles across Tel Aviv/Barcelona/Kyiv/Warsaw/Remote). Promoted from Island 2026-07-04 — spot-check first scrape
+  // Coin Master. WAS Comeet (company A2.00C) — they migrated to Ashby around 2026-07-29 and their
+  // Comeet feed now answers 200 with an empty array on every endpoint variant, which is exactly the
+  // failure mode that reads as "no open roles" instead of "moved house". The careers page still
+  // carries dead Comeet globals, but the live board is Ashby (28 roles, matching the site's count).
+  { name: "Moon Active", type: "ashby", token: "moonactive", city: "Tel Aviv, Israel" },
   { name: "Overwolf", type: "comeet", token: "B1.001", comeetToken: "1B16C4BD7005131B1A26F391B1", city: "Ramat Gan, Israel" }, // CurseForge, Tebex — Comeet ATS (~13 roles across Ramat Gan/London/Hoboken). Same fetcher as Moon Active. Promoted from Island 2026-07-04 — spot-check first scrape
   { name: "SayGames", type: "huntflow", token: "saygameshr", city: "Limassol, Cyprus" }, // hybrid-casual publisher — Huntflow board, public /api/vacancy JSON (~24 roles, no per-job city → studio HQ). Promoted from Island 2026-07-04 — spot-check first scrape
   { name: "Gearbox Software", type: "greenhouse", token: "gearbox" },
@@ -491,7 +499,12 @@ const STUDIOS = [
   // ---- 2026-06-19 batch (requested) ----
   { name: "Ludia", type: "bamboohr", token: "ludia", city: "Montréal, Canada" },                // mobile (Jurassic World Alive, DragonVale) — BambooHR
   { name: "Astrid Entertainment", type: "workable", token: "astrid-entertainment", city: "United Kingdom" }, // co-op open-world studio (UK, remote) — Workable
-  { name: "Creative Assembly", type: "jobvite", token: "creative-assembly", city: "Horsham, UK" },           // Total War, Alien (SEGA) — promoted from Island 2026-06-19, Jobvite
+  // Total War, Alien (SEGA). WAS Jobvite ("creative-assembly"), which is dead — the token 302s to an
+  // invalid-account page and CA's own careers site no longer lists vacancies at all, it just points at
+  // SEGA. Moved onto the same careers.sega.co.uk feed its sibling SEGA Europe studios already use.
+  // NOTE the facet is "The Creative Assembly", with the article — "Creative Assembly" matches nothing,
+  // which is worth knowing because a wrong facet fails the silent way (200 OK, empty list, no error).
+  { name: "Creative Assembly", type: "segacareers", token: "creative-assembly", studioFacet: "The Creative Assembly", city: "Horsham, UK", parentCompany: "SEGA" },
   // ---- 2026-06-19 studio batch ----
   { name: "Torn Banner Studios", type: "bamboohr", token: "tornbanner", city: "Toronto, Canada" },          // Chivalry, No More Room in Hell 2
   { name: "Devoted Studios", type: "workable", token: "devoted-studios-1", city: "Los Angeles, CA" },        // distributed co-dev / production management
@@ -4935,7 +4948,20 @@ async function fetchHibob(studio) {
   const token = studio.token;
   let arr;
   if (SAMPLE_FILE) { const d = loadSample(studio); if (!d) return []; arr = d.jobAdDetails || (Array.isArray(d) ? d : []); }
-  else { const d = await fetchJson(`https://${token}.careers.hibob.com/api/job-ad`); arr = (d && d.jobAdDetails) || []; }
+  else {
+    // HiBob 401s the plain fetchJson request (bare "DevQuest/0.1" UA, no Accept). The identical URL
+    // answers 200 with the full feed from a browser, so the gate is header-based, not auth. Which
+    // header exactly can't be isolated from outside — CORS blocks reading a cross-origin response —
+    // so send all three a real browser sends: browser UA, JSON Accept, and a same-site Referer.
+    const base = `https://${token}.careers.hibob.com`;
+    const res = await fetchRetry(`${base}/api/job-ad`, { headers: {
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36",
+      "Accept": "application/json, text/plain, */*",
+      "Referer": base + "/",
+    } });
+    const d = await res.json();
+    arr = (d && d.jobAdDetails) || [];
+  }
   const out = [], seen = new Set();
   for (const j of arr) {
     if (!j || !j.id || seen.has(j.id)) continue;
