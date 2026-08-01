@@ -617,6 +617,28 @@
   .qchip.new.on { background: rgba(63,185,80,.15); border-color: rgba(63,185,80,.7); color: var(--green); font-weight: 700; }
   .qchip.new.on:hover { background: rgba(63,185,80,.22); border-color: var(--green); color: var(--green); }
   .qchip.new .subn { opacity: .7; font-weight: 700; margin-left: 3px; }
+  /* One-line For You entry point, occupying part of the space the collapsed grid gives back. */
+  #fyStrip { display: none; align-items: center; gap: 10px; margin-bottom: 14px; padding: 9px 13px;
+             background: rgba(224,178,58,.08); border: 1px solid rgba(224,178,58,.35); border-radius: 10px; }
+  #fyStrip .fysic { font-size: 15px; line-height: 1; }
+  #fyStrip .fystxt { font-size: 13px; color: var(--text); min-width: 0; }
+  #fyStrip .fystxt b { color: #e0b23a; }
+  #fyStrip .fyscta { margin-left: auto; background: transparent; border: 1px solid rgba(224,178,58,.5); color: #e0b23a;
+                     font-size: 12px; font-weight: 700; padding: 6px 11px; border-radius: 7px; cursor: pointer; white-space: nowrap; }
+  #fyStrip .fyscta:hover { background: rgba(224,178,58,.14); }
+  #fyStrip .fysx { background: none; border: none; color: var(--muted); font-size: 13px; cursor: pointer; padding: 2px 4px; }
+  #fyStrip .fysx:hover { color: var(--text); }
+  /* On a phone a wrapped full-width CTA doubled this row to 96px, eating 40% of what the
+     collapsed grid gave back. Below 520px the whole strip is the tap target and the button is
+     replaced by a chevron, keeping it to one line. */
+  #fyStrip { cursor: pointer; }
+  #fyStrip .fyschev { display: none; margin-left: auto; color: #e0b23a; font-weight: 700; }
+  @media (max-width: 520px) {
+    #fyStrip { gap: 8px; padding: 8px 11px; }
+    #fyStrip .fyscta { display: none; }
+    #fyStrip .fyschev { display: inline; }
+    #fyStrip .fystxt { font-size: 12.5px; }
+  }
   #subbar { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; margin-bottom: 16px; padding: 9px 12px; background: rgba(88,166,255,.05); border: 1px dashed var(--border); border-radius: 10px; }
   .qchip.sub { padding: 5px 11px; font-size: 12px; }
   .qchip.sub.on { background: var(--green); border-color: var(--green); color: #0d1117; }
@@ -1007,6 +1029,7 @@
     <div id="onboardCard"></div>
     <div id="followWrap"></div>
     <div id="matrixWrap"></div>
+    <div id="fyStrip"></div>
     <div id="cityStrip"></div>
     <div id="regionBar"></div>
     <div id="quickbar"></div>
@@ -1684,8 +1707,12 @@ window.__fyOnFilter = function(c){
   if (!_fyQualifies(c)) return;
   _fyCount++;
   if (_fyCount < 2) return;
-  try { if (window.__emailAskActive) return; } catch(e){}                 // email bar is up -> defer
-  try { if (typeof canAskEmail === "function" && canAskEmail()) return; } catch(e){} // email ask still eligible -> let it go first
+  try { if (window.__emailAskActive) return; } catch(e){}                 // email bar is actually on screen -> defer
+  // Previously this also bailed whenever canAskEmail() was merely TRUE — but that returns true for
+  // any visitor who isn't subscribed, hasn't hit the ask cap and isn't in cooldown, i.e. almost
+  // everyone almost always. The nudge was therefore suppressed near-permanently: 209 impressions
+  // across 23,164 page loads. Deferring to an email bar that is genuinely visible is the real
+  // intent, and __emailAskActive above already covers it.
   showForYouNudge(_fyDisc(c));
 };
 function showForYouNudge(disc){
@@ -2240,6 +2267,7 @@ function render(){
   try{ renderCityStrip(); }catch(e){}
   renderHubbar(availHubs);
   renderSubbar(availSubs);
+  try{ renderFyStrip(); }catch(e){}
   renderActiveFilters();
 
   const groups = {};
@@ -2617,6 +2645,50 @@ function renderQuickbar(newCount){
   document.getElementById("quickbar").innerHTML = `<span class="qlabel">${funnel}Quick filters:</span>${chips}`;
 }
 
+// One-line For You entry point, shown in the space the collapsed grid gives back.
+// 15,211 profile edits produced only 529 For You visits: people tell us their craft and level and
+// then never see what it bought them, because the payoff lives behind a tab. This puts it on the
+// List, where 89% of tab views are. Deliberately one line (~40px) against the 295px the collapsed
+// grid frees, and only shown when ALL of these hold, so it never becomes clutter:
+//   · we're on List, and the grid is actually collapsed (so we're spending reclaimed space)
+//   · the visitor has explicitly pinned a craft or a level (same .pinned test as matrixCollapsed)
+//   · there are real matches to point at
+//   · they haven't dismissed it
+function fyStripDismissed(){ try { return !!store.get("dq-fystrip-off", false); } catch(e){ return false; } }
+function fyStripDismiss(){ try { store.set("dq-fystrip-off", true); } catch(e){}
+  try { window.dqTrack && window.dqTrack("fystrip_dismiss", {}); } catch(e){}
+  const el = document.getElementById("fyStrip"); if (el){ el.innerHTML = ""; el.style.display = "none"; } }
+function fyStripGo(){
+  try { window.dqTrack && window.dqTrack("fystrip_click", {}); } catch(e){}
+  try { setView("bestfit"); } catch(e){}
+  try { window.scrollTo({ top: 0, behavior: "smooth" }); } catch(e){}
+}
+function renderFyStrip(){
+  const el = document.getElementById("fyStrip"); if (!el) return;
+  const hide = () => { el.innerHTML = ""; el.style.display = "none"; };
+  if (typeof view !== "undefined" && view !== "list") return hide();
+  if (fyStripDismissed() || !matrixCollapsed()) return hide();
+  let disc = null, sen = null;
+  try { if (profGet("roles").pinned) disc = (profGet("roles").v || [])[0] || null; } catch(e){}
+  try { const s = profGet("sen"); if (s.pinned && s.v && s.v !== "__any") sen = s.v; } catch(e){}
+  if (!disc && !sen) return hide();
+  const pool = (typeof JOBS !== "undefined" && JOBS) ? JOBS : [];
+  const match = pool.filter(j => (!disc || j.d === disc) && (!sen || j.sen === sen));
+  if (match.length < 3) return hide();                       // nothing worth pointing at
+  const studios = new Set(match.map(j => j.s).filter(Boolean)).size;
+  if (studios < 2) return hide();
+  const who = [sen, disc].filter(Boolean).join(" ") || "you";
+  el.style.display = "flex";   // NB: the CSS default for #fyStrip is display:none, so setting "" here
+                               // would fall straight back to hidden. Must name the display mode.
+  el.innerHTML = '<span class="fysic">🎯</span>'
+    + '<span class="fystxt"><b>' + studios + ' studios</b> hiring ' + _h(who) + '</span>'
+    + '<button class="fyscta" onclick="event.stopPropagation();fyStripGo()">See your best matches →</button>'
+    + '<span class="fyschev" aria-hidden="true">›</span>'
+    + '<button class="fysx" onclick="event.stopPropagation();fyStripDismiss()" data-tip="Hide this" aria-label="Hide">✕</button>';
+  el.onclick = fyStripGo;   // whole row is the tap target on phones, where the button is hidden
+  try { window.dqTrack && window.dqTrack("fystrip_show", { d: disc || "", s: sen || "" }); } catch(e){}
+}
+
 // sub-discipline chips: only rendered when a sub-bearing square is selected
 function renderSubbar(availSubs){
   const el = document.getElementById("subbar");
@@ -2631,7 +2703,10 @@ function renderSubbar(availSubs){
 // below the fold, so we show the busiest few and hide the tail behind a "+N more" toggle. Anything
 // currently SELECTED is always rendered, even when it's outside the top slice — a filter you can't
 // see is a filter you can't turn off.
-const HUBS_COLLAPSED = 8;
+// 8 chips fits one row on a desktop but wraps to ~148px on a 390px phone — measured, and that
+// made this the second-largest block above the first job card despite only 35 hub filters all
+// week. Show half as many on narrow screens; the "+N more" toggle still reaches every hub.
+function hubsCollapsedCount(){ try { return (window.innerWidth <= 520) ? 4 : 8; } catch(e){ return 8; } }
 function renderHubbar(availHubs){
   const el = document.getElementById("hubbar");
   const keys = Object.keys(availHubs).sort((a,b)=>availHubs[b]-availHubs[a]);
@@ -2639,6 +2714,7 @@ function renderHubbar(availHubs){
   el.style.display = "";
   const chip = h => `<button class="qchip hub ${selHubs.has(h)?'on':''}" onclick="toggleHub('${h.replace(/'/g,"\\'")}')">${h} <span class="subn">${availHubs[h]}</span></button>`;
   let shown = keys, hidden = 0;
+  const HUBS_COLLAPSED = hubsCollapsedCount();
   if (!hubsExpanded && keys.length > HUBS_COLLAPSED + 1){
     const top = keys.slice(0, HUBS_COLLAPSED);
     const picked = keys.filter(h => selHubs.has(h) && !top.includes(h));   // never hide an active filter
