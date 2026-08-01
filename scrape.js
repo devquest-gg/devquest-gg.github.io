@@ -3398,7 +3398,11 @@ async function fetchTechland(studio) {
   let html;
   if (SAMPLE_FILE) { const d = loadSample(studio); if (!d) return []; html = typeof d === "string" ? d : (d.html || ""); }
   else { html = await fetchText("https://techland.net/job-offers", 15000, TECHLAND_UA); }
-  const re = /<a\b[^>]*href="(?:https:\/\/techland\.net)?\/job-offers\/([a-z0-9][a-z0-9-]*)"[^>]*>([\s\S]*?)<\/a>/gi;
+  // Techland's markup uses RELATIVE hrefs resolved by a <base> tag: href="job-offers/<slug>" with
+  // NO leading slash. The old pattern required one, so it matched nothing and the studio silently
+  // reported 0 roles from the day it was added (28 live offers went unseen). The leading slash and
+  // the host prefix are both optional now, and either quote style is accepted.
+  const re = /<a\b[^>]*href=['"](?:https?:\/\/techland\.net)?\/?job-offers\/([a-z0-9][a-z0-9-]*)['"][^>]*>([\s\S]*?)<\/a>/gi;
   const out = []; const seen = new Set(); let m;
   while ((m = re.exec(html))) {
     const slug = m[1];
@@ -3588,11 +3592,15 @@ async function fetchKrafton(studio){
     let html;
     if (SAMPLE_FILE) { const d = loadSample(studio); if (!d) break; html = typeof d === "string" ? d : (d.html || ""); }
     else { html = await fetchText(`${KRAFTON_BASE}/en/careers/jobs/?var_page=${p}&search_list_cnt=50`); }
-    const chunks = String(html).split(/class="RecruitList-item/).slice(1);
+    // KRAFTON's theme emits SINGLE-quoted attributes: <li class='RecruitList-item'>. This split
+    // hard-coded a double quote, so it matched nothing, returned [], and — because returning an
+    // empty array is not an error — the studio was recorded as "fetched OK, 0 roles" every run
+    // since it was added. 219 live roles were invisible. Match either quote style here and below.
+    const chunks = String(html).split(/class=['"]RecruitList-item/).slice(1);
     if (!chunks.length) break;
     let added = 0;
     for (const c of chunks){
-      const href = (c.match(/href="([^"]*recruit-detail[^"]*)"/i) || [])[1];
+      const href = (c.match(/href=['"]([^'"]*recruit-detail[^'"]*)['"]/i) || [])[1];
       const jid  = href && (href.match(/job=(\d+)/) || [])[1];
       if (!jid || seen.has(jid)) continue;
       const title = decodeEnt((c.match(/RecruitItemTitle-title[^>]*>([\s\S]*?)<\/[a-z0-9]+>/i) || [,""])[1].replace(/<[^>]+>/g, " ")).replace(/\s+/g, " ").trim();
@@ -5461,10 +5469,20 @@ function buildTrends(runCounts, okSet, discCounts, healthy, salInfo, skillCounts
   const d7 = snapNearest(7), d30 = snapNearest(30);
   const out = { asOf: today, span: days.length, studios: {}, disc: {}, salary: null, skills: {} };
   for (const name of Object.keys(cur)) {
+    // `ever` / `obs` exist to catch scrapers that NEVER worked. A studio that has been configured
+    // for weeks and has not produced a single role on any recorded day is almost certainly a broken
+    // parser, not a quiet studio — you don't add a studio to the board unless it had roles at the
+    // time. Without this, a never-worked source is indistinguishable from a genuinely empty one
+    // (both are just zeros), which is how KRAFTON and Techland sat broken and unnoticed.
+    // `series` only spans 30 days, so the look-back has to be computed over the full store.
+    let ever = 0, obs = 0;
+    for (const d of days) { const v = d.counts[name]; if (v == null) continue; obs++; if (v > ever) ever = v; }
     out.studios[name] = {
       now: cur[name],
       d7: d7 ? (d7.counts[name] ?? null) : null,
       d30: d30 ? (d30.counts[name] ?? null) : null,
+      ever,                                            // most roles ever seen on any recorded day
+      obs,                                             // days of history we actually have for it
       series: days.slice(-30).map(d => (d.counts[name] ?? null)),
     };
   }
