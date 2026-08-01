@@ -164,7 +164,14 @@
     .pulse-full { display: none; }
     .pulse-mini { display: inline-flex; align-items: center; gap: 5px; }
     .bico-m { display: inline; }
-    .wnbtn .btxt, .aboutbtn .btxt, .catbtn .btxt, .feedbackbtn .btxt { display: none; }
+    .wnbtn .btxt, .aboutbtn .btxt, .feedbackbtn .btxt { display: none; }
+    /* Categories keeps its label on mobile. Install / What's new / Feedback are guessable from
+       their glyphs and are meta actions; "🗂" alone communicates nothing, and this is the entry
+       point to ~340 category and studio pages — both the browse affordance and the only internal
+       link into that SEO cluster. It fits: four icons + one short label sits inside 390px. */
+    .catbtn .btxt { display: inline; font-size: 13px; }
+    .catbtn .bico-m { margin-right: 5px; }
+    header .catbtn { padding: 6px 11px !important; font-size: 13px !important; }
     header .headeractions { gap: 8px !important; justify-content: flex-end; }
     header .wnbtn, header .aboutbtn, header .catbtn, header .feedbackbtn { padding: 6px 10px !important; font-size: 15px !important; }
     #pulseStrip, #quickbar { display: none !important; }
@@ -617,6 +624,16 @@
   .qchip.new.on { background: rgba(63,185,80,.15); border-color: rgba(63,185,80,.7); color: var(--green); font-weight: 700; }
   .qchip.new.on:hover { background: rgba(63,185,80,.22); border-color: var(--green); color: var(--green); }
   .qchip.new .subn { opacity: .7; font-weight: 700; margin-left: 3px; }
+  /* The grid scrolls sideways on phones, but Lead and Director+ sit off-screen behind a small
+     "swipe →" hint that's easy to miss — and those columns carry real demand (Design Director+ is
+     45 grid clicks a week, Production Lead 57). A fade on the right edge is the conventional signal
+     that content continues; JS clears it once you've scrolled to the end so it isn't a permanent smudge. */
+  .mxscroll { position: relative; }
+  .mxfade { position: relative; }
+  .mxfade::after { content: ""; position: absolute; top: 0; right: 0; bottom: 0; width: 44px; pointer-events: none;
+                   background: linear-gradient(to right, rgba(22,27,34,0), var(--panel, #161b22) 82%);
+                   opacity: 0; transition: opacity .18s ease; }
+  .mxfade.canscroll::after { opacity: 1; }
   /* One-line For You entry point, occupying part of the space the collapsed grid gives back. */
   #fyStrip { display: none; align-items: center; gap: 10px; margin-bottom: 14px; padding: 9px 13px;
              background: rgba(224,178,58,.08); border: 1px solid rgba(224,178,58,.35); border-radius: 10px; }
@@ -2288,7 +2305,9 @@ function render(){
   } catch(e){}
   document.getElementById("count").textContent = showDismissed
     ? (list.length + " dismissed job" + (list.length!==1?"s":"") + " — click ↩ on a row to restore it")
-    : (list.length + " roles shown (" + JOBS.length + " total)" + cellNote + _mpMini +
+    // "20 roles shown (5214 total)" reads as if the page cut 5,214 down to 20 on its own, rather
+    // than your filters doing it. "20 of 5,214 roles" states the relationship directly.
+    : (list.length.toLocaleString() + " of " + JOBS.length.toLocaleString() + " roles" + cellNote + _mpMini +
        (newCount ? " · " + newCount + " new since your last visit" : ""));
 
   // "🔥 Hot jobs for you": a personalized highlight atop the *default* browse state, for returning
@@ -2522,7 +2541,7 @@ function renderMatrix(base){
   const heat = n => n===0 ? "transparent" : `rgba(88,166,255,${0.10 + 0.6*Math.sqrt(n/cmax)})`;
   let h = `<div class="matrixhead" onclick="matrixToggle()"><div class="mh-text"><span class="mh-title">Where are the jobs right now?</span><span class="mhint">Tap any role × seniority cell to filter · brighter = more roles · hover a label<span class="swipehint"> · swipe →</span></span></div><span class="mh-toggle" id="mhToggle" aria-hidden="true">${matrixCollapsed()?"▸":"▾"}</span></div>`;
   if (!discOrder.length) { document.getElementById("matrixWrap").innerHTML = h + `<div class="xhint">No roles in the current filters.</div>`; return; }
-  h += `<div class="matrixbody"><div style="overflow-x:auto"><table class="xtab"><tr><th></th>${seniorities.map(sn=>{
+  h += `<div class="matrixbody"><div class="mxscroll" style="overflow-x:auto"><table class="xtab"><tr><th></th>${seniorities.map(sn=>{
     const info = SEN_INFO[sn];
     return info ? `<th class="senh" data-tip="${escTip(info)}"><span>${sn}</span></th>` : `<th>${sn}</th>`;
   }).join("")}<th>Total</th></tr>`;
@@ -2536,7 +2555,7 @@ function renderMatrix(base){
     }).join("") + `<td class="xtot">${rowTotal}</td></tr>`;
   }
   h += `</table></div></div>`;
-  var _mw = document.getElementById("matrixWrap"); _mw.innerHTML = h; _mw.classList.toggle("mcollapsed", matrixCollapsed());
+  var _mw = document.getElementById("matrixWrap"); _mw.innerHTML = h; _mw.classList.toggle("mcollapsed", matrixCollapsed()); try{ mxFadeSync(); }catch(e){}
 }
 
 // Dashboard matrix: same grid + multi-select + instant filter as renderMatrix, but each cell can be
@@ -2620,7 +2639,7 @@ function renderMatrixDash(base){
   // Preserve the horizontal scroll position across the re-render (tapping a cell calls render(),
   // which rebuilds this innerHTML — without this the grid snaps back to the left, very jarring on mobile).
   const _prevScroll = (function(){ var s = _mw.querySelector(".mxscroll"); return s ? s.scrollLeft : 0; })();
-  _mw.innerHTML = h; _mw.classList.toggle("mcollapsed", matrixCollapsed());
+  _mw.innerHTML = h; _mw.classList.toggle("mcollapsed", matrixCollapsed()); try{ mxFadeSync(); }catch(e){}
   if (_prevScroll){ var _ns = _mw.querySelector(".mxscroll"); if (_ns) _ns.scrollLeft = _prevScroll; }
 }
 
@@ -2644,6 +2663,28 @@ function renderQuickbar(newCount){
   const funnel = `<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style="vertical-align:-1px;margin-right:5px;opacity:.8"><path d="M3 4h18l-7 8.5V20l-4-2v-5.5z"/></svg>`;
   document.getElementById("quickbar").innerHTML = `<span class="qlabel">${funnel}Quick filters:</span>${chips}`;
 }
+
+// Right-edge fade on the grid's horizontal scroller, so it's visible that Lead / Director+ exist
+// off-screen. Wraps each .mxscroll once, then keeps the fade in sync with scroll position and
+// resize. Cheap and idempotent: re-running after a grid re-render just re-binds.
+function mxFadeSync(){
+  try {
+    document.querySelectorAll(".mxscroll").forEach(function(sc){
+      var wrap = sc.parentNode;
+      if (!wrap || !wrap.classList || !wrap.classList.contains("mxfade")){
+        wrap = document.createElement("div"); wrap.className = "mxfade";
+        sc.parentNode.insertBefore(wrap, sc); wrap.appendChild(sc);
+      }
+      var upd = function(){
+        var more = sc.scrollWidth - sc.clientWidth - sc.scrollLeft > 8;
+        wrap.classList.toggle("canscroll", more);
+      };
+      if (!sc._mxBound){ sc._mxBound = true; sc.addEventListener("scroll", upd, { passive: true }); }
+      upd();
+    });
+  } catch(e){}
+}
+try { window.addEventListener("resize", function(){ try { mxFadeSync(); } catch(e){} }); } catch(e){}
 
 // One-line For You entry point, shown in the space the collapsed grid gives back.
 // 15,211 profile edits produced only 529 For You visits: people tell us their craft and level and
