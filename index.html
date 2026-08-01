@@ -201,6 +201,19 @@
        nothing (notebook / ✓💬⊘ status / hide) falls off the right edge on phones */
     .rtop { flex-wrap: wrap; }
     .rmain { flex-basis: 100%; min-width: 0; }
+    /* ===== Mobile-only card slimming. Desktop keeps every control; it has the width. =====
+       Ranked by this board's own usage, so what goes is what nobody reaches for:
+         dismissed 1,999 · tracked 726 · followed 333 · "who do I know?" 314 · SAVED 268
+       Save is both the least-used control and the one whose job Track already does, so it's the one
+       that goes. The ✕ stays: dismissing is the second-most-used action on the whole site, and it
+       was only ever orphaned onto its own line because the row was over-full. */
+    .row .save { display: none; }
+    /* The little vertical rule between Track and ✕ is decoration that was costing real width,
+       and it was enough to bounce the ✕ onto a line of its own with nothing beside it. */
+    .row .actsep { display: none; }
+    /* And drop the seniority chip when the list is already filtered to a level — on a filtered
+       board every single card was repeating the same word back at you. */
+    body.senfiltered .row .tag.tsen { display: none; }
   }
   aside { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 18px; height: fit-content; position: sticky; top: 80px; max-height: calc(100vh - 100px); overflow-y: auto; }
   /* Drop the Filters box so its top lines up with the "Where are the jobs" card (below the tabs +
@@ -2275,6 +2288,9 @@ function render(){
     return false;
   };
   const d = checked("f-d"), w = checked("f-w"), s = checked("f-s");
+  // When the list is already filtered to a level, every card repeats it ("Director+" on all 12).
+  // Mobile drops that chip via this hook; desktop has the width to keep showing it.
+  try { document.body.classList.toggle("senfiltered", (s && s.size > 0) || selCells.size > 0); } catch(e){}
   const r = document.getElementById("region").value;
   const maxDays = parseInt(document.getElementById("age").value, 10);  const hideTracked = document.getElementById("hideTracked").checked;
   const showDismissed = document.getElementById("showDismissed").checked;
@@ -3647,7 +3663,7 @@ function rowHtml(j, mjStage){
     <div class="rtags">
       ${j.w==="Remote"?`<span class="tag wt remote">🏠 Remote</span>`:j.w==="Hybrid"?`<span class="tag wt hybrid">⇄ Hybrid</span>`:""}
       ${locChips}
-      <span class="tag">${j.sen}</span>
+      <span class="tag tsen">${j.sen}</span>
       ${j.salary?`<span class="tag salary">${j.salary}</span>`:""}
       ${j.yoe?`<span class="tag">${j.yoe}+ yrs</span>`:""}
       ${relistChip}
