@@ -57,11 +57,11 @@
   "description": "An independent, ad-free job board for the video game industry, aggregating openings directly from studio career pages."
 }
 </script>
-<!-- Warm up the map CDN connection early (small page-speed win; speed is a ranking signal). -->
-<link rel="preconnect" href="https://unpkg.com" crossorigin>
-<link rel="dns-prefetch" href="https://unpkg.com">
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<!-- Leaflet used to load here on every page view: ~150KB of JS+CSS, a render-blocking <script>, plus
+     a preconnect and dns-prefetch that opened a TCP+TLS connection to unpkg before the page even
+     drew. The Map is 2.6% of views, so 97.4% of visitors paid all of that for a feature they never
+     opened. It is now fetched by loadLeaflet() the first time renderMap actually needs it — see
+     renderMap, which already knew how to cope with L being absent. Nothing here on load. -->
 <style>
   :root {
     --bg: #0d1117; --panel: #161b22; --border: #30363d; --text: #e6edf3;
@@ -5617,13 +5617,49 @@ function renderMapDream(){
   el.style.display = "";
   el.innerHTML = `<div class="mp-dream"><div class="dh">🧭 Dream Move</div><div class="ds">Best places to land your next ${bfEsc(roles.join(", "))} role${homeCol!=null?", with cost of living vs "+bfEsc(homeLoc):""}.</div><ol>${items}</ol></div>`;
 }
+// ---- Leaflet, fetched on first use ------------------------------------------------------------
+// Resolves true once L exists, false if the CDN can't be reached. On failure the promise is cleared
+// so a later attempt can retry rather than being stuck with a permanently rejected cache.
+let _leafletP = null;
+function loadLeaflet(){
+  if (typeof L !== "undefined") return Promise.resolve(true);
+  if (_leafletP) return _leafletP;
+  _leafletP = new Promise(function(resolve){
+    const css = document.createElement("link");
+    css.rel = "stylesheet";
+    css.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
+    document.head.appendChild(css);
+    const s = document.createElement("script");
+    s.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
+    s.onload  = function(){ resolve(true); };
+    s.onerror = function(){ _leafletP = null; resolve(false); };
+    document.head.appendChild(s);
+  });
+  return _leafletP;
+}
 function renderMap(skipBar){
   if(!skipBar) renderMapCityBar();   // skip when called from live typing so the input keeps focus
   const _stats = mapCityStats();
   renderMapDream();
   renderMapPanel(_stats);
   if (typeof L === "undefined") {
-    document.getElementById("map").innerHTML = '<div class="empty">Map requires an internet connection (loads OpenStreetMap tiles).</div>';
+    const host = document.getElementById("map");
+    if (!host) return;
+    // First open: go and get Leaflet, then re-enter with skipBar so the city bar built above is
+    // left alone (rebuilding it would steal focus from the filter input).
+    if (!host.dataset.dqLoading) {
+      host.dataset.dqLoading = "1";
+      host.innerHTML = '<div class="empty">Loading map…</div>';
+      loadLeaflet().then(function(ok){
+        delete host.dataset.dqLoading;
+        if (ok){
+          host.innerHTML = "";     // L.map() adds its own panes but won't remove the placeholder
+          renderMap(true);
+        } else {
+          host.innerHTML = '<div class="empty">Map requires an internet connection (loads OpenStreetMap tiles).</div>';
+        }
+      });
+    }
     return;
   }
   if (!map) {
@@ -5893,7 +5929,11 @@ try {
      the "reduce advanced privacy protections" prompt on iOS. It was also redundant: /stats
      is a richer first-party analytics surface. Re-add the one-line script tag to restore. -->
 <!-- ===== DevQuest alerts + cookieless event analytics (Phase 1) ===== -->
-<script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
+<!-- Turnstile used to load here on every page view, though only the two signup forms ever use it.
+     Worse than the wasted bytes: if it failed to load, nothing said so. window.turnstile stayed
+     undefined, no widget rendered, getResponse() returned "", and the submit handler answered
+     "finishing a quick security check, tap again" — forever, with no way through. It is now fetched
+     when a form actually opens, and a failure to load is reported as a failure. -->
 <script>
 (function(){
   "use strict";
@@ -5902,6 +5942,59 @@ try {
   // Leave "" to keep the signup working with no challenge until you're ready.
   var TURNSTILE_SITEKEY = "0x4AAAAAADgYBtcO1AW8_rq_";
   var _tsWidget = null;
+  var _tsFailed = false;        // the script itself would not load — distinct from "not solved yet"
+
+  // Resolves true once window.turnstile exists, false if the script can't be fetched.
+  var _tsP = null;
+  function loadTurnstile(){
+    if (!TURNSTILE_SITEKEY) return Promise.resolve(false);
+    if (window.turnstile) return Promise.resolve(true);
+    if (_tsP) return _tsP;
+    _tsP = new Promise(function(resolve){
+      var s = document.createElement("script");
+      s.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
+      s.async = true; s.defer = true;
+      s.onload = function(){
+        // The script sets window.turnstile asynchronously, so poll briefly rather than assume.
+        var tries = 0;
+        (function wait(){
+          if (window.turnstile) return resolve(true);
+          if (++tries > 40) { _tsFailed = true; return resolve(false); }   // ~4s
+          setTimeout(wait, 100);
+        })();
+      };
+      s.onerror = function(){ _tsFailed = true; _tsP = null; resolve(false); };
+      document.head.appendChild(s);
+    });
+    return _tsP;
+  }
+  // Shared by both forms: render the widget into `boxId`, or explain why there isn't one.
+  // `onWidget` receives the widget id so the caller can read getResponse(widget) on submit.
+  function mountTurnstile(boxId, msgId, onWidget){
+    if (!TURNSTILE_SITEKEY) return;
+    loadTurnstile().then(function(ok){
+      var msg = document.getElementById(msgId);
+      if (!ok){
+        if (msg){
+          msg.textContent = "Couldn't load the security check — an ad blocker, privacy extension or network filter may be blocking it.";
+          msg.style.color = "#f778ba";
+        }
+        return;
+      }
+      if (!document.getElementById(boxId)) return;    // form was closed while we were fetching
+      try {
+        onWidget(window.turnstile.render("#" + boxId, {
+          sitekey: TURNSTILE_SITEKEY, theme: "dark", appearance: "interaction-only",
+          retry: "auto", "retry-interval": 3000, "refresh-expired": "auto",
+          "error-callback": function(){
+            var m = document.getElementById(msgId);
+            if (m){ m.textContent = "Verification hiccup — it'll retry automatically. Give it a moment, then try again."; m.style.color = "#8b949e"; }
+            return true;
+          }
+        }));
+      } catch(e){ _tsFailed = true; }
+    });
+  }
 
   // Watchlist email bridge: a weekly job alert pre-filled with the visitor's followed studios.
   window.dqStudioAlertForm = function(cid, studios){
@@ -5918,7 +6011,7 @@ try {
       + (TURNSTILE_SITEKEY ? '<div id="wlTurnstile" style="margin-top:8px"></div>' : '')
       + '<div id="wlMsg" style="font-size:13px;min-height:16px;margin-top:6px;color:var(--muted)"></div>';
     var wts = null;
-    if (TURNSTILE_SITEKEY && window.turnstile){ try { wts = window.turnstile.render("#wlTurnstile", { sitekey: TURNSTILE_SITEKEY, theme: "dark", appearance: "interaction-only", retry: "auto", "retry-interval": 3000, "refresh-expired": "auto", "error-callback": function(){ var m=document.getElementById("wlMsg"); if(m){ m.textContent="Verification hiccup — it'll retry automatically. Give it a moment, then try again."; m.style.color="#8b949e"; } return true; } }); } catch(e){} }
+    mountTurnstile("wlTurnstile", "wlMsg", function(id){ wts = id; });
     var btn = document.getElementById("wlBtn");
     if (btn) btn.onclick = function(){
       var email = (document.getElementById("wlEmail").value || "").trim();
@@ -5927,7 +6020,16 @@ try {
       var consentEl = document.getElementById("wlConsent");
       if (consentEl && !consentEl.checked){ msg.textContent = "Please tick the consent box."; msg.style.color = "#f778ba"; return; }
       var tok = "";
-      if (TURNSTILE_SITEKEY){ try { tok = window.turnstile ? window.turnstile.getResponse(wts) : ""; } catch(e){} if (!tok){ msg.textContent = "Just a sec — finishing a quick security check. Tap again."; msg.style.color = "#f778ba"; return; } }
+      if (TURNSTILE_SITEKEY){
+        try { tok = window.turnstile ? window.turnstile.getResponse(wts) : ""; } catch(e){}
+        // "Tap again" is only honest advice when the check exists and simply hasn't finished. If the
+        // script never loaded, tapping again will never work, so say what's actually wrong.
+        if (!tok && (_tsFailed || !window.turnstile)){
+          msg.textContent = "Couldn't load the security check — an ad blocker, privacy extension or network filter may be blocking it.";
+          msg.style.color = "#f778ba"; return;
+        }
+        if (!tok){ msg.textContent = "Just a sec — finishing a quick security check. Tap again."; msg.style.color = "#f778ba"; return; }
+      }
       msg.textContent = "Sending…"; msg.style.color = "var(--muted)";
       try { track("alert_signup", { src: "following", n: studios.length }); } catch(e){}
       fetch(ALERTS_API + "/subscribe", { method:"POST", headers:{ "Content-Type":"application/json" }, body: JSON.stringify({ email: email, criteria: { studios: studios, src: "watchlist" }, label: label, token: tok }) })
@@ -6099,9 +6201,7 @@ try {
       (TURNSTILE_SITEKEY?'<div id="alertTurnstile" style="margin-top:2px"></div>':'')+
       '<div id="alertMsg" style="font-size:13px;min-height:16px"></div></form>';
     _tsWidget=null;
-    if(TURNSTILE_SITEKEY && window.turnstile){
-      try{ _tsWidget=window.turnstile.render("#alertTurnstile",{sitekey:TURNSTILE_SITEKEY,theme:"dark",appearance:"interaction-only",retry:"auto","retry-interval":3000,"refresh-expired":"auto","error-callback":function(){ var m=document.getElementById("alertMsg"); if(m){ m.textContent="Verification hiccup — it'll retry automatically. Give it a moment, then try again."; m.style.color="#8b949e"; } return true; }}); }catch(e){}
-    }
+    mountTurnstile("alertTurnstile", "alertMsg", function(id){ _tsWidget = id; });
     document.getElementById("alertForm").onsubmit=function(ev){
       ev.preventDefault();
       var email=document.getElementById("alertEmail").value.trim();
@@ -6111,6 +6211,7 @@ try {
       var tsToken="";
       if(TURNSTILE_SITEKEY){
         try{ tsToken=window.turnstile?window.turnstile.getResponse(_tsWidget):""; }catch(e){ tsToken=""; }
+        if(!tsToken && (_tsFailed || !window.turnstile)){ msg.textContent="Couldn't load the security check — an ad blocker, privacy extension or network filter may be blocking it."; msg.style.color="#c87878"; return; }
         if(!tsToken){ msg.textContent="Just a sec — finishing a quick security check. Tap again."; msg.style.color="#c87878"; return; }
       }
       msg.textContent="Sending…"; msg.style.color="#7a8878";
