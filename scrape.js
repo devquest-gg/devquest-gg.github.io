@@ -1885,10 +1885,22 @@ ${cards.join("\n")}
     var labLines = lab.map(function(l,i){ return '<text x="80" y="'+(y + i*58)+'" font-size="46" font-weight="600" fill="#e6edf3">'+esc(l)+'</text>'; }).join("");
     var ny = y + lab.length*58 + 44;
     var noteLines = note.map(function(l,i){ return '<text x="80" y="'+(ny + i*40)+'" font-size="30" fill="#8b949e">'+esc(l)+'</text>'; }).join("");
+    // Brand mark: same 3x3 grid + wordmark the /stats share cards use, so both card families read
+    // as one set on LinkedIn. CSS custom properties do not resolve inside an SVG rasterised through
+    // canvas, so the gold and accent are literals here.
+    var gx = 80, gy = 74, cell = 26, gap = 10, mark = "";
+    for (var gr = 0; gr < 3; gr++){
+      for (var gc = 0; gc < 3; gc++){
+        mark += '<rect x="'+(gx + gc*(cell+gap))+'" y="'+(gy + gr*(cell+gap))+'" width="'+cell+'" height="'+cell+'" rx="4" fill="'+(gr === gc ? "#e0b23a" : "#2d333b")+'"/>';
+      }
+    }
+    var wx = gx + 3*(cell+gap) + 20;
     return '<svg xmlns="http://www.w3.org/2000/svg" width="'+S+'" height="'+S+'" viewBox="0 0 '+S+' '+S+'">'
       + '<rect width="'+S+'" height="'+S+'" fill="#0d1117"/>'
       + '<rect x="0" y="0" width="'+S+'" height="10" fill="'+col+'"/>'
-      + '<text x="80" y="130" font-size="34" font-weight="800" fill="#e6edf3" font-family="-apple-system,Segoe UI,Roboto,sans-serif">DevQuest<tspan fill="#58a6ff">.gg</tspan></text>'
+      + mark
+      + '<text x="'+wx+'" y="118" font-size="46" font-weight="800" letter-spacing="-0.7" fill="#e6edf3" font-family="-apple-system,Segoe UI,Roboto,sans-serif">Dev<tspan fill="#58a6ff">Quest</tspan><tspan fill="#e0b23a">.gg</tspan></text>'
+      + '<text x="'+wx+'" y="150" font-size="22" fill="#8b949e" font-family="-apple-system,Segoe UI,Roboto,sans-serif">Fresh, honest, trackable.</text>'
       + '<text x="80" y="250" font-size="28" font-weight="800" letter-spacing="4" fill="#8b949e" font-family="-apple-system,Segoe UI,Roboto,sans-serif">'+esc(String(d.eyebrow||"").toUpperCase())+'</text>'
       + '<text x="80" y="400" font-size="'+bigSize+'" font-weight="800" fill="'+col+'" font-family="-apple-system,Segoe UI,Roboto,sans-serif">'+esc(big)+'</text>'
       + '<g font-family="-apple-system,Segoe UI,Roboto,sans-serif">'+labLines+noteLines+'</g>'
