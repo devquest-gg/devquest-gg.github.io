@@ -1547,41 +1547,60 @@ function renderHiringReport(all){
   const title = `Game Industry Hiring: ${nf(d.total)} Open Roles, ${mon} · DevQuest`;
   const desc = `${d.usPct}% of US game jobs publish a salary; outside the US, ${d.restPct}%. Only ${d.entryPct}% of roles are entry level. Live figures from ${nf(d.studioTotal)} studios' own careers pages, refreshed hourly.`;
   const cards = [];
-  const card = (cls, html) => cards.push(`<div class="c ${cls}">${html}</div>`);
+  // `sh` is the share payload for a card: the exact caption that gets copied, and the pieces the
+  // 1080x1080 PNG is drawn from. Cards without one simply get no share controls.
+  const card = (cls, html, sh) => {
+    // NB: double quotes on data-share, not single. escHtml escapes & < > and " but NOT ' — and these
+    // captions contain apostrophes ("it's", "studios'"), which silently truncated the JSON mid-attribute
+    // when this used single quotes. Same trap that bit bfEsc on the job board.
+    const payload = escHtml(JSON.stringify(sh || {}));
+    const bar = sh ? `<div class="sharebar"><button class="sb" data-share="${payload}" data-act="copy">Copy</button>`
+      + `<button class="sb" data-share="${payload}" data-act="img">Image</button></div>` : "";
+    cards.push(`<div class="c ${cls}">${bar}${html}</div>`);
+  };
   const eb = t => `<div class="eyebrow">${escHtml(t)}</div>`;
   const bar2 = (a, colA) => `<div class="split"><div style="flex:${a};background:${colA}"></div><div style="flex:${100 - a};background:rgba(139,148,158,.22)"></div></div>`;
 
   // 1 — pay transparency. Only claims a legislative split while one actually exists.
   if (d.usN >= 200 && d.restN >= 200 && d.usPct - d.restPct >= 25){
     const ca = d.countries.find(c => c.cc === "CA");
-    card("w6 hero-card", `<span class="share">↗ most shared</span>` + eb("Pay transparency")
+    card("w6 hero-card", eb("Pay transparency")
       + `<div class="big"><span class="g">${d.usPct}%</span> <span class="vs">vs</span> <span class="o">${d.restPct}%</span></div>`
       + `<div class="cap">of US game jobs publish a salary. Outside the US, almost none do.</div>`
       + bar2(d.usPct, "var(--green)")
       + `<div class="note">This tracks legislation, not generosity. Colorado, California, New York and
          Washington require pay ranges in job ads, and US employers comply.${ca ? ` Canada sits at ${ca.pct}% as British Columbia and Ontario phase their rules in.` : ""}
-         Based on ${nf(d.usN)} US roles and ${nf(d.restN)} elsewhere.</div>`);
+         Based on ${nf(d.usN)} US roles and ${nf(d.restN)} elsewhere.</div>`,
+      { cap: `${d.usPct}% of US game jobs publish a salary. Outside the US it's ${d.restPct}%.\n\nThis tracks legislation, not generosity — Colorado, California, New York and Washington require pay ranges in job ads.\n\nLive figures from ${nf(d.studioTotal)} studios' careers pages:`,
+        eyebrow: "Pay transparency", big: `${d.usPct}% vs ${d.restPct}%`, lab: "of US game jobs publish a salary. Outside the US, almost none do.",
+        note: `Based on ${nf(d.usN)} US roles and ${nf(d.restN)} elsewhere.`, col: "#3fb950" });
   }
   // 2 — the junior problem. Only a story while entry level is genuinely scarce.
   if (d.entryPct <= 12 && d.entry > 0){
     const ratio = d.entry ? Math.round(d.mid / d.entry) : 0;
     const lit = Math.max(1, Math.round(d.entryPct / 5));
-    card("w3", `<span class="share">↗</span>` + eb("The junior problem")
+    card("w3", eb("The junior problem")
       + `<div class="big"><span class="pk">${d.entryPct}%</span></div>`
       + `<div class="cap">of open game jobs are entry level</div>`
       + `<div class="dots">${Array.from({length:20},(_,i)=>`<i${i<lit?' class="on"':''}></i>`).join("")}</div>`
       + `<div class="note">${nf(d.entry)} of ${nf(d.total)} roles. Mid-level alone is ${nf(d.mid)}${ratio>=3?` — about ${ratio}× as many`:""}.
-         The industry is hiring experience, not training it.</div>`);
+         The industry is hiring experience, not training it.</div>`,
+      { cap: `Only ${d.entryPct}% of open game jobs are entry level — ${nf(d.entry)} out of ${nf(d.total)}.\n\nMid-level alone is ${nf(d.mid)}.\n\nThe industry is hiring experience, not training it.`,
+        eyebrow: "The junior problem", big: `${d.entryPct}%`, lab: "of open game jobs are entry level",
+        note: `${nf(d.entry)} of ${nf(d.total)} roles. Mid-level alone is ${nf(d.mid)}.`, col: "#f778ba" });
   }
   // 3 — ghost listings. Only interesting above roughly one in seven.
   if (d.d90Pct >= 14){
     const oneIn = Math.round(100 / d.d90Pct);
-    card("w3", `<span class="share">↗</span>` + eb("Ghost listings")
+    card("w3", eb("Ghost listings")
       + `<div class="big"><span class="rd">1 in ${oneIn}</span></div>`
       + `<div class="cap">roles have been open 90+ days</div>`
       + bar2(d.d90Pct, "var(--red)")
       + `<div class="note">${nf(d.d90)} listings have sat on a careers page for over three months, and
-         ${nf(d.d60)} are past sixty days. Some are real and slow. Some were never going to be filled.</div>`);
+         ${nf(d.d60)} are past sixty days. Some are real and slow. Some were never going to be filled.</div>`,
+      { cap: `1 in ${Math.round(100/d.d90Pct)} open game jobs has been listed for 90+ days.\n\n${nf(d.d90)} listings have sat on a careers page for over three months. ${nf(d.d60)} are past sixty days.\n\nSome are real and slow. Some were never going to be filled.`,
+        eyebrow: "Ghost listings", big: `1 in ${Math.round(100/d.d90Pct)}`, lab: "roles have been open 90+ days",
+        note: `${nf(d.d90)} listings past three months.`, col: "#e06c5e" });
   }
   // 4 — the pay ladder
   if (d.pay.length >= 3){
@@ -1595,11 +1614,14 @@ function renderHiringReport(all){
   }
   // 5 — countries at zero
   if (d.zero.length >= 3){
-    card("w2", `<span class="share">↗</span>` + eb("Silence")
+    card("w2", eb("Silence")
       + `<div class="big sm"><span class="o">${d.zero.length}</span></div>`
       + `<div class="cap">countries where not one game job lists pay</div>`
       + `<div class="note">${d.zero.slice(0,8).map(c=>escHtml(c.name)).join(", ")}${d.zero.length>8?" and more":""}.
-         Zero out of ${nf(d.zero.reduce((a,c)=>a+c.n,0))} roles between them.</div>`);
+         Zero out of ${nf(d.zero.reduce((a,c)=>a+c.n,0))} roles between them.</div>`,
+      { cap: `${d.zero.length} countries where not one advertised game job publishes a salary.\n\n${d.zero.slice(0,6).map(c=>c.name).join(", ")} and more. Zero out of ${nf(d.zero.reduce((a,c)=>a+c.n,0))} roles between them.`,
+        eyebrow: "Silence", big: `${d.zero.length}`, lab: "countries where not one game job lists pay",
+        note: d.zero.slice(0,5).map(c=>c.name).join(", ") + " and more.", col: "#d29922" });
   }
   // 6 — remote
   {
@@ -1612,7 +1634,7 @@ function renderHiringReport(all){
   }
   // 7 — experience
   if (d.yoeMed && d.yoeN >= 200){
-    card("w2", `<span class="share">↗</span>` + eb("Experience asked")
+    card("w2", eb("Experience asked")
       + `<div class="big sm"><span class="pu">${d.yoeMed} yrs</span></div>`
       + `<div class="cap">median, where a number is stated</div>`
       + `<div class="note">Of ${nf(d.yoeN)} roles naming a figure. ${nf(d.yoe10)} of them ask for a decade or more.</div>`);
@@ -1636,7 +1658,7 @@ function renderHiringReport(all){
   }
   // 10 — top city
   if (d.cities.length >= 3){
-    card("w2", `<span class="share">↗</span>` + eb("Where the jobs are")
+    card("w2", eb("Where the jobs are")
       + `<div class="big sm">${escHtml(d.cities[0].k)}</div>`
       + `<div class="cap">${nf(d.cities[0].v)} open roles — the largest single city</div>`
       + `<div class="note">${d.cities.slice(1,4).map(c=>escHtml(c.k)+" "+nf(c.v)).join(", ")}. The centre of gravity is not where most job boards look.</div>`);
@@ -1651,24 +1673,31 @@ function renderHiringReport(all){
   // 13 — studios with no entry-level role at all. The sharpest version of the junior story: it is
   // not that entry roles are scarce, it is that most studios are not hiring juniors at any level.
   if (d.entrySt.total >= 50 && d.entrySt.withPct <= 55){
-    card("w3", `<span class="share">↗</span>` + eb("Nobody is training anyone")
+    card("w3", eb("Nobody is training anyone")
       + `<div class="big"><span class="pk">${nf(d.entrySt.none)}</span></div>`
       + `<div class="cap">of ${nf(d.entrySt.total)} studios have <b>no</b> entry-level role open</div>`
       + bar2(100 - d.entrySt.withPct, "var(--pink)")
       + `<div class="note">Only ${nf(d.entrySt.withAny)} studios — ${d.entrySt.withPct}% — are advertising a
          single junior position. The 5% figure understates it: the shortage is not spread thinly across
-         the industry, it is concentrated in a handful of studios that still hire beginners.</div>`);
+         the industry, it is concentrated in a handful of studios that still hire beginners.</div>`,
+      { cap: `${nf(d.entrySt.none)} of ${nf(d.entrySt.total)} game studios have ZERO entry-level roles open.\n\nNot "few". Zero.\n\nOnly ${nf(d.entrySt.withAny)} studios — ${d.entrySt.withPct}% — are advertising a single junior position.`,
+        eyebrow: "Nobody is training anyone", big: nf(d.entrySt.none), lab: `of ${nf(d.entrySt.total)} studios have no entry-level role open`,
+        note: `Only ${nf(d.entrySt.withAny)} studios are hiring juniors at all.`, col: "#f778ba" });
   }
   // 14 — engine demand. Only claims a lead when one engine is meaningfully ahead.
   if (d.unreal >= 100 && d.unity >= 100){
     const lead = d.unreal >= d.unity ? "Unreal" : "Unity";
     const hi = Math.max(d.unreal, d.unity), lo = Math.min(d.unreal, d.unity);
-    card("w3", `<span class="share">↗</span>` + eb("Engine demand")
+    card("w3", eb("Engine demand")
       + `<div class="big"><span class="pu">${(hi/lo).toFixed(2)}:1</span></div>`
       + `<div class="cap">${escHtml(lead)} roles per ${escHtml(lead === "Unreal" ? "Unity" : "Unreal")} role</div>`
       + `<div class="split"><div style="flex:${d.unreal};background:var(--purple)"></div><div style="flex:${d.unity};background:var(--accent)"></div></div>`
       + `<div class="note"><b>Unreal ${nf(d.unreal)}</b> · <b>Unity ${nf(d.unity)}</b>. Counted where the posting
-         names the engine in its title or requirements — so this is demand for the skill, not a headcount of studios.</div>`);
+         names the engine in its title or requirements — so this is demand for the skill, not a headcount of studios.</div>`,
+      { cap: `Unreal ${nf(d.unreal)} roles. Unity ${nf(d.unity)}.\n\nThat's ${(Math.max(d.unreal,d.unity)/Math.min(d.unreal,d.unity)).toFixed(2)} ${d.unreal>=d.unity?"Unreal":"Unity"} roles for every ${d.unreal>=d.unity?"Unity":"Unreal"} one, across ${nf(d.studioTotal)} studios' live openings.`,
+        eyebrow: "Engine demand", big: `${(Math.max(d.unreal,d.unity)/Math.min(d.unreal,d.unity)).toFixed(2)}:1`,
+        lab: `${d.unreal>=d.unity?"Unreal":"Unity"} roles per ${d.unreal>=d.unity?"Unity":"Unreal"} role`,
+        note: `Unreal ${nf(d.unreal)} · Unity ${nf(d.unity)}`, col: "#a371f7" });
   }
   // 15 — market concentration
   if (d.conc.owners >= 50 && d.conc.top20Pct >= 35){
@@ -1677,7 +1706,10 @@ function renderHiringReport(all){
       + `<div class="cap">of all open roles sit with just 20 companies</div>`
       + bar2(d.conc.top20Pct, "var(--gold)")
       + `<div class="note">Out of ${nf(d.conc.owners)} hiring companies. The top 10 alone hold
-         ${d.conc.top10Pct}%, and the top 5 hold ${d.conc.top5Pct}%. Most studios are hiring one or two people.</div>`);
+         ${d.conc.top10Pct}%, and the top 5 hold ${d.conc.top5Pct}%. Most studios are hiring one or two people.</div>`,
+      { cap: `${d.conc.top20Pct}% of all open game industry roles sit with just 20 companies — out of ${nf(d.conc.owners)} that are hiring.\n\nThe top 10 hold ${d.conc.top10Pct}%. The top 5 hold ${d.conc.top5Pct}%.`,
+        eyebrow: "Concentration", big: `${d.conc.top20Pct}%`, lab: "of all open roles sit with just 20 companies",
+        note: `Out of ${nf(d.conc.owners)} hiring companies.`, col: "#d29922" });
   }
   // 16 — skills
   if (d.skills.length >= 6 && d.skills[0].v >= 100){
@@ -1775,7 +1807,16 @@ function renderHiringReport(all){
   .ring{width:96px;height:96px;margin:10px auto 0;position:relative}
   .ring svg{transform:rotate(-90deg)}
   .ring .lbl{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:23px;font-weight:800;letter-spacing:-.5px}
-  .share{position:absolute;top:14px;right:16px;font-size:10.5px;color:var(--muted);opacity:.55;border:1px solid var(--border);border-radius:6px;padding:2px 7px}
+  .sharebar{position:absolute;top:12px;right:14px;display:flex;gap:6px;opacity:0;transition:opacity .15s}
+  .c:hover .sharebar,.sharebar:focus-within{opacity:1}
+  /* Reveal-on-hover is fine with a mouse, but a device that cannot hover would show nothing to tap.
+     Gating only on hover:none is not enough — some touch devices still report hover capability —
+     so narrow viewports get the same fallback regardless. */
+  @media(hover:none),(max-width:900px){.sharebar{opacity:.8}}
+  .sb{font:inherit;font-size:11px;font-weight:700;color:var(--muted);background:rgba(139,148,158,.13);
+      border:0;border-radius:6px;padding:4px 9px;cursor:pointer;letter-spacing:.01em}
+  .sb:hover{background:var(--accent);color:#0d1117}
+  .sb.done{background:var(--green);color:#0d1117}
   .method{margin-top:30px;background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:20px 22px;font-size:13px;color:var(--muted)}
   .method b{color:var(--text)}.method p{margin:8px 0}
   .cta{margin-top:22px;background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:24px;text-align:center}
@@ -1819,6 +1860,77 @@ ${cards.join("\n")}
   </div>
 </div>
 <footer>DevQuest · game dev jobs, fresh and filtered · updated hourly</footer>
+<script>
+(function(){
+  "use strict";
+  var URL_ = ${JSON.stringify(url)};
+  // SVG -> data URI -> <img> -> canvas -> PNG. Same route the /stats share cards take, and it needs
+  // no library: an SVG data URI has no external references, so it never taints the canvas.
+  function esc(t){ return String(t==null?"":t).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+  // SVG has no text wrapping, so lines are measured and broken by hand.
+  function wrap(t, perLine){
+    var w = String(t||"").split(" ").filter(Boolean), out = [], line = "";
+    for (var i=0;i<w.length;i++){
+      var trial = line ? line + " " + w[i] : w[i];
+      if (trial.length > perLine && line){ out.push(line); line = w[i]; } else line = trial;
+    }
+    if (line) out.push(line);
+    return out;
+  }
+  function svgFor(d){
+    var S = 1080, col = d.col || "#58a6ff";
+    var big = String(d.big||""), bigSize = big.length > 9 ? 118 : big.length > 6 ? 150 : 196;
+    var lab = wrap(d.lab, 30), note = wrap(d.note, 46);
+    var y = 470;
+    var labLines = lab.map(function(l,i){ return '<text x="80" y="'+(y + i*58)+'" font-size="46" font-weight="600" fill="#e6edf3">'+esc(l)+'</text>'; }).join("");
+    var ny = y + lab.length*58 + 44;
+    var noteLines = note.map(function(l,i){ return '<text x="80" y="'+(ny + i*40)+'" font-size="30" fill="#8b949e">'+esc(l)+'</text>'; }).join("");
+    return '<svg xmlns="http://www.w3.org/2000/svg" width="'+S+'" height="'+S+'" viewBox="0 0 '+S+' '+S+'">'
+      + '<rect width="'+S+'" height="'+S+'" fill="#0d1117"/>'
+      + '<rect x="0" y="0" width="'+S+'" height="10" fill="'+col+'"/>'
+      + '<text x="80" y="130" font-size="34" font-weight="800" fill="#e6edf3" font-family="-apple-system,Segoe UI,Roboto,sans-serif">DevQuest<tspan fill="#58a6ff">.gg</tspan></text>'
+      + '<text x="80" y="250" font-size="28" font-weight="800" letter-spacing="4" fill="#8b949e" font-family="-apple-system,Segoe UI,Roboto,sans-serif">'+esc(String(d.eyebrow||"").toUpperCase())+'</text>'
+      + '<text x="80" y="400" font-size="'+bigSize+'" font-weight="800" fill="'+col+'" font-family="-apple-system,Segoe UI,Roboto,sans-serif">'+esc(big)+'</text>'
+      + '<g font-family="-apple-system,Segoe UI,Roboto,sans-serif">'+labLines+noteLines+'</g>'
+      + '<text x="80" y="1010" font-size="28" fill="#58a6ff" font-family="-apple-system,Segoe UI,Roboto,sans-serif">'+esc(URL_.split("://").pop())+'</text>'
+      + '<text x="80" y="960" font-size="26" fill="#8b949e" font-family="-apple-system,Segoe UI,Roboto,sans-serif">Live from '+esc(String(d.src||"studio careers pages"))+' · updated hourly</text>'
+      + '</svg>';
+  }
+  function flash(btn, txt){ var o = btn.textContent; btn.textContent = txt; btn.classList.add("done");
+    setTimeout(function(){ btn.textContent = o; btn.classList.remove("done"); }, 1400); }
+  document.addEventListener("click", function(ev){
+    var btn = ev.target.closest ? ev.target.closest(".sb") : null;
+    if (!btn) return;
+    var d; try { d = JSON.parse(btn.getAttribute("data-share")); } catch(e){ return; }
+    if (btn.getAttribute("data-act") === "copy"){
+      // Escape sequences written here are consumed by the surrounding template literal before the
+      // script is emitted, so the separator is built from a char code instead.
+      var NL = String.fromCharCode(10);
+      var text = d.cap + NL + NL + URL_;
+      if (navigator.clipboard && navigator.clipboard.writeText){
+        navigator.clipboard.writeText(text).then(function(){ flash(btn, "Copied"); }, function(){ flash(btn, "Press Ctrl+C"); });
+      } else {
+        var ta = document.createElement("textarea"); ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
+        document.body.appendChild(ta); ta.select();
+        try { document.execCommand("copy"); flash(btn, "Copied"); } catch(e){ flash(btn, "Press Ctrl+C"); }
+        document.body.removeChild(ta);
+      }
+      return;
+    }
+    var img = new Image();
+    img.onload = function(){
+      var cv = document.createElement("canvas"); cv.width = 1080; cv.height = 1080;
+      cv.getContext("2d").drawImage(img, 0, 0, 1080, 1080);
+      var a = document.createElement("a");
+      a.href = cv.toDataURL("image/png");
+      a.download = "devquest-" + String(d.eyebrow||"stat").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"") + ".png";
+      a.click(); flash(btn, "Saved");
+    };
+    img.onerror = function(){ flash(btn, "Failed"); };
+    img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svgFor(d));
+  });
+})();
+</script>
 </body>
 </html>`;
 }
