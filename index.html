@@ -277,7 +277,11 @@
   .group-header:hover { background: rgba(88,166,255,.06); }
   .arrow { display: inline-block; transition: transform .15s; color: var(--muted); }
   .arrow.open { transform: rotate(90deg); }
-  .gcount { background: var(--bg); border: 1px solid var(--border); border-radius: 999px; padding: 1px 10px; font-size: 12px; color: var(--muted); }
+  /* Brought into the job-list chip system: it is a label, not a control, so it takes the same
+     borderless 13%-alpha fill at 6px as every chip on the cards below it. The pressable things in
+     this area (.qchip, .trackchip) deliberately keep their borders — a border is a real affordance
+     signal for "you can click this", and there is no reason to spend it on a number. */
+  .gcount { background: rgba(139,148,158,.13); border: 0; border-radius: 6px; padding: 1px 10px; font-size: 12px; color: var(--muted); }
   .row { display: flex; flex-direction: column; gap: 7px; padding: 10px 16px; border-top: 1px solid var(--border); cursor: pointer; }
   .rtop { display: flex; align-items: center; gap: 10px; }
   .row:nth-child(odd) { background: rgba(13,17,23,.45); }
