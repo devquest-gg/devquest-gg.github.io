@@ -3,19 +3,19 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Game Industry Hiring: 5,913 Open Roles, August 2026 · DevQuest</title>
+<title>Game Industry Hiring: 5,912 Open Roles, August 2026 · DevQuest</title>
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <meta name="description" content="70% of US game jobs publish a salary; outside the US, 9%. Only 5% of roles are entry level. Live figures from 265 studios' own careers pages, refreshed hourly.">
 <link rel="canonical" href="https://devquest.gg/game-industry-hiring-report">
 <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large">
 <meta property="og:type" content="article">
 <meta property="og:site_name" content="DevQuest">
-<meta property="og:title" content="Game Industry Hiring: 5,913 Open Roles, August 2026 · DevQuest">
+<meta property="og:title" content="Game Industry Hiring: 5,912 Open Roles, August 2026 · DevQuest">
 <meta property="og:description" content="70% of US game jobs publish a salary; outside the US, 9%. Only 5% of roles are entry level. Live figures from 265 studios' own careers pages, refreshed hourly.">
 <meta property="og:image" content="https://devquest.gg/og-image-v4.png">
 <meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Game Industry Hiring: 5,913 Open Roles, August 2026 · DevQuest">
+<meta name="twitter:title" content="Game Industry Hiring: 5,912 Open Roles, August 2026 · DevQuest">
 <meta name="twitter:image" content="https://devquest.gg/og-image-v4.png">
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"Dataset","name":"Game Industry Hiring Report","description":"70% of US game jobs publish a salary; outside the US, 9%. Only 5% of roles are entry level. Live figures from 265 studios' own careers pages, refreshed hourly.","url":"https://devquest.gg/game-industry-hiring-report","dateModified":"2026-08-02","isAccessibleForFree":true,"creator":{"@type":"Organization","name":"DevQuest","url":"https://devquest.gg/"},"temporalCoverage":"2026-08-02","variableMeasured":["open roles","salary transparency rate","median advertised pay","remote share","entry-level share","listing age"]}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"DevQuest","item":"https://devquest.gg/"},{"@type":"ListItem","position":2,"name":"Hiring report","item":"https://devquest.gg/game-industry-hiring-report"}]}</script>
@@ -71,7 +71,16 @@
   .ring{width:96px;height:96px;margin:10px auto 0;position:relative}
   .ring svg{transform:rotate(-90deg)}
   .ring .lbl{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:23px;font-weight:800;letter-spacing:-.5px}
-  .share{position:absolute;top:14px;right:16px;font-size:10.5px;color:var(--muted);opacity:.55;border:1px solid var(--border);border-radius:6px;padding:2px 7px}
+  .sharebar{position:absolute;top:12px;right:14px;display:flex;gap:6px;opacity:0;transition:opacity .15s}
+  .c:hover .sharebar,.sharebar:focus-within{opacity:1}
+  /* Reveal-on-hover is fine with a mouse, but a device that cannot hover would show nothing to tap.
+     Gating only on hover:none is not enough — some touch devices still report hover capability —
+     so narrow viewports get the same fallback regardless. */
+  @media(hover:none),(max-width:900px){.sharebar{opacity:.8}}
+  .sb{font:inherit;font-size:11px;font-weight:700;color:var(--muted);background:rgba(139,148,158,.13);
+      border:0;border-radius:6px;padding:4px 9px;cursor:pointer;letter-spacing:.01em}
+  .sb:hover{background:var(--accent);color:#0d1117}
+  .sb.done{background:var(--green);color:#0d1117}
   .method{margin-top:30px;background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:20px 22px;font-size:13px;color:var(--muted)}
   .method b{color:var(--text)}.method p{margin:8px 0}
   .cta{margin-top:22px;background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:24px;text-align:center}
@@ -83,39 +92,39 @@
 <body>
 <header>
   <a class="logo" href="/">DevQuest<span>.gg</span></a>
-  <a class="backbtn" href="/">Browse 5,913 open roles →</a>
+  <a class="backbtn" href="/">Browse 5,912 open roles →</a>
 </header>
 <div class="wrap">
   <div class="hero">
     <div class="kicker">The state of game industry hiring</div>
-    <h1>5,913 open roles.<br>265 studios. One honest look.</h1>
+    <h1>5,912 open roles.<br>265 studios. One honest look.</h1>
     <p class="sub">Counted hourly from studios' own careers pages — not aggregator feeds, not recruiter
     reposts. Every number below is live right now.</p>
     <div class="live"><span class="pulse"></span> Updated 2 August 2026 · refreshes hourly</div>
   </div>
   <div class="grid">
-<div class="c w6 hero-card"><span class="share">↗ most shared</span><div class="eyebrow">Pay transparency</div><div class="big"><span class="g">70%</span> <span class="vs">vs</span> <span class="o">9%</span></div><div class="cap">of US game jobs publish a salary. Outside the US, almost none do.</div><div class="split"><div style="flex:70;background:var(--green)"></div><div style="flex:30;background:rgba(139,148,158,.22)"></div></div><div class="note">This tracks legislation, not generosity. Colorado, California, New York and
+<div class="c w6 hero-card"><div class="sharebar"><button class="sb" data-share="{&quot;cap&quot;:&quot;70% of US game jobs publish a salary. Outside the US it's 9%.\n\nThis tracks legislation, not generosity — Colorado, California, New York and Washington require pay ranges in job ads.\n\nLive figures from 265 studios' careers pages:&quot;,&quot;eyebrow&quot;:&quot;Pay transparency&quot;,&quot;big&quot;:&quot;70% vs 9%&quot;,&quot;lab&quot;:&quot;of US game jobs publish a salary. Outside the US, almost none do.&quot;,&quot;note&quot;:&quot;Based on 1,204 US roles and 3,719 elsewhere.&quot;,&quot;col&quot;:&quot;#3fb950&quot;}" data-act="copy">Copy</button><button class="sb" data-share="{&quot;cap&quot;:&quot;70% of US game jobs publish a salary. Outside the US it's 9%.\n\nThis tracks legislation, not generosity — Colorado, California, New York and Washington require pay ranges in job ads.\n\nLive figures from 265 studios' careers pages:&quot;,&quot;eyebrow&quot;:&quot;Pay transparency&quot;,&quot;big&quot;:&quot;70% vs 9%&quot;,&quot;lab&quot;:&quot;of US game jobs publish a salary. Outside the US, almost none do.&quot;,&quot;note&quot;:&quot;Based on 1,204 US roles and 3,719 elsewhere.&quot;,&quot;col&quot;:&quot;#3fb950&quot;}" data-act="img">Image</button></div><div class="eyebrow">Pay transparency</div><div class="big"><span class="g">70%</span> <span class="vs">vs</span> <span class="o">9%</span></div><div class="cap">of US game jobs publish a salary. Outside the US, almost none do.</div><div class="split"><div style="flex:70;background:var(--green)"></div><div style="flex:30;background:rgba(139,148,158,.22)"></div></div><div class="note">This tracks legislation, not generosity. Colorado, California, New York and
          Washington require pay ranges in job ads, and US employers comply. Canada sits at 37% as British Columbia and Ontario phase their rules in.
-         Based on 1,204 US roles and 3,720 elsewhere.</div></div>
-<div class="c w3"><span class="share">↗</span><div class="eyebrow">The junior problem</div><div class="big"><span class="pk">5%</span></div><div class="cap">of open game jobs are entry level</div><div class="dots"><i class="on"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><div class="note">283 of 5,913 roles. Mid-level alone is 2,737 — about 10× as many.
+         Based on 1,204 US roles and 3,719 elsewhere.</div></div>
+<div class="c w3"><div class="sharebar"><button class="sb" data-share="{&quot;cap&quot;:&quot;Only 5% of open game jobs are entry level — 283 out of 5,912.\n\nMid-level alone is 2,736.\n\nThe industry is hiring experience, not training it.&quot;,&quot;eyebrow&quot;:&quot;The junior problem&quot;,&quot;big&quot;:&quot;5%&quot;,&quot;lab&quot;:&quot;of open game jobs are entry level&quot;,&quot;note&quot;:&quot;283 of 5,912 roles. Mid-level alone is 2,736.&quot;,&quot;col&quot;:&quot;#f778ba&quot;}" data-act="copy">Copy</button><button class="sb" data-share="{&quot;cap&quot;:&quot;Only 5% of open game jobs are entry level — 283 out of 5,912.\n\nMid-level alone is 2,736.\n\nThe industry is hiring experience, not training it.&quot;,&quot;eyebrow&quot;:&quot;The junior problem&quot;,&quot;big&quot;:&quot;5%&quot;,&quot;lab&quot;:&quot;of open game jobs are entry level&quot;,&quot;note&quot;:&quot;283 of 5,912 roles. Mid-level alone is 2,736.&quot;,&quot;col&quot;:&quot;#f778ba&quot;}" data-act="img">Image</button></div><div class="eyebrow">The junior problem</div><div class="big"><span class="pk">5%</span></div><div class="cap">of open game jobs are entry level</div><div class="dots"><i class="on"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><div class="note">283 of 5,912 roles. Mid-level alone is 2,736 — about 10× as many.
          The industry is hiring experience, not training it.</div></div>
-<div class="c w3"><span class="share">↗</span><div class="eyebrow">Ghost listings</div><div class="big"><span class="rd">1 in 5</span></div><div class="cap">roles have been open 90+ days</div><div class="split"><div style="flex:21;background:var(--red)"></div><div style="flex:79;background:rgba(139,148,158,.22)"></div></div><div class="note">1,239 listings have sat on a careers page for over three months, and
+<div class="c w3"><div class="sharebar"><button class="sb" data-share="{&quot;cap&quot;:&quot;1 in 5 open game jobs has been listed for 90+ days.\n\n1,239 listings have sat on a careers page for over three months. 1,897 are past sixty days.\n\nSome are real and slow. Some were never going to be filled.&quot;,&quot;eyebrow&quot;:&quot;Ghost listings&quot;,&quot;big&quot;:&quot;1 in 5&quot;,&quot;lab&quot;:&quot;roles have been open 90+ days&quot;,&quot;note&quot;:&quot;1,239 listings past three months.&quot;,&quot;col&quot;:&quot;#e06c5e&quot;}" data-act="copy">Copy</button><button class="sb" data-share="{&quot;cap&quot;:&quot;1 in 5 open game jobs has been listed for 90+ days.\n\n1,239 listings have sat on a careers page for over three months. 1,897 are past sixty days.\n\nSome are real and slow. Some were never going to be filled.&quot;,&quot;eyebrow&quot;:&quot;Ghost listings&quot;,&quot;big&quot;:&quot;1 in 5&quot;,&quot;lab&quot;:&quot;roles have been open 90+ days&quot;,&quot;note&quot;:&quot;1,239 listings past three months.&quot;,&quot;col&quot;:&quot;#e06c5e&quot;}" data-act="img">Image</button></div><div class="eyebrow">Ghost listings</div><div class="big"><span class="rd">1 in 5</span></div><div class="cap">roles have been open 90+ days</div><div class="split"><div style="flex:21;background:var(--red)"></div><div style="flex:79;background:rgba(139,148,158,.22)"></div></div><div class="note">1,239 listings have sat on a careers page for over three months, and
          1,897 are past sixty days. Some are real and slow. Some were never going to be filled.</div></div>
-<div class="c w4"><div class="eyebrow">What the ladder actually pays</div><div class="lad"><div class="r"><span class="lb">Entry</span><span class="tr"><span class="fl" style="width:45%"></span></span><span class="vv">$103K</span></div><div class="r"><span class="lb">Mid</span><span class="tr"><span class="fl" style="width:54%"></span></span><span class="vv">$124K</span></div><div class="r"><span class="lb">Senior</span><span class="tr"><span class="fl" style="width:83%"></span></span><span class="vv">$190K</span></div><div class="r"><span class="lb">Lead</span><span class="tr"><span class="fl" style="width:95%"></span></span><span class="vv">$218K</span></div><div class="r"><span class="lb">Director+</span><span class="tr"><span class="fl" style="width:100%"></span></span><span class="vv">$229K</span></div></div><div class="note">Median advertised midpoint, from the 1,266 roles that publish a range. The step from mid to senior is <b>+53%</b> — the largest jump on the ladder.</div></div>
-<div class="c w2"><span class="share">↗</span><div class="eyebrow">Silence</div><div class="big sm"><span class="o">12</span></div><div class="cap">countries where not one game job lists pay</div><div class="note">Japan, South Korea, France, Poland, India, Vietnam, Serbia, Sweden and more.
+<div class="c w4"><div class="eyebrow">What the ladder actually pays</div><div class="lad"><div class="r"><span class="lb">Entry</span><span class="tr"><span class="fl" style="width:45%"></span></span><span class="vv">$103K</span></div><div class="r"><span class="lb">Mid</span><span class="tr"><span class="fl" style="width:54%"></span></span><span class="vv">$124K</span></div><div class="r"><span class="lb">Senior</span><span class="tr"><span class="fl" style="width:83%"></span></span><span class="vv">$189K</span></div><div class="r"><span class="lb">Lead</span><span class="tr"><span class="fl" style="width:95%"></span></span><span class="vv">$218K</span></div><div class="r"><span class="lb">Director+</span><span class="tr"><span class="fl" style="width:100%"></span></span><span class="vv">$229K</span></div></div><div class="note">Median advertised midpoint, from the 1,267 roles that publish a range. The step from mid to senior is <b>+52%</b> — the largest jump on the ladder.</div></div>
+<div class="c w2"><div class="sharebar"><button class="sb" data-share="{&quot;cap&quot;:&quot;12 countries where not one advertised game job publishes a salary.\n\nJapan, South Korea, France, Poland, India, Vietnam and more. Zero out of 1,796 roles between them.&quot;,&quot;eyebrow&quot;:&quot;Silence&quot;,&quot;big&quot;:&quot;12&quot;,&quot;lab&quot;:&quot;countries where not one game job lists pay&quot;,&quot;note&quot;:&quot;Japan, South Korea, France, Poland, India and more.&quot;,&quot;col&quot;:&quot;#d29922&quot;}" data-act="copy">Copy</button><button class="sb" data-share="{&quot;cap&quot;:&quot;12 countries where not one advertised game job publishes a salary.\n\nJapan, South Korea, France, Poland, India, Vietnam and more. Zero out of 1,796 roles between them.&quot;,&quot;eyebrow&quot;:&quot;Silence&quot;,&quot;big&quot;:&quot;12&quot;,&quot;lab&quot;:&quot;countries where not one game job lists pay&quot;,&quot;note&quot;:&quot;Japan, South Korea, France, Poland, India and more.&quot;,&quot;col&quot;:&quot;#d29922&quot;}" data-act="img">Image</button></div><div class="eyebrow">Silence</div><div class="big sm"><span class="o">12</span></div><div class="cap">countries where not one game job lists pay</div><div class="note">Japan, South Korea, France, Poland, India, Vietnam, Serbia, Sweden and more.
          Zero out of 1,796 roles between them.</div></div>
 <div class="c w2"><div class="eyebrow">Remote</div><div class="ring"><svg width="96" height="96" aria-hidden="true"><circle cx="48" cy="48" r="40" fill="none" stroke="rgba(139,148,158,.16)" stroke-width="11"/><circle cx="48" cy="48" r="40" fill="none" stroke="#58a6ff" stroke-width="11" stroke-linecap="round" stroke-dasharray="251.3" stroke-dashoffset="221.1"/></svg><div class="lbl a">12%</div></div><div class="note center">705 fully remote roles. Studios label hybrid and on-site far more readily, so read this as a floor.</div></div>
-<div class="c w2"><span class="share">↗</span><div class="eyebrow">Experience asked</div><div class="big sm"><span class="pu">5 yrs</span></div><div class="cap">median, where a number is stated</div><div class="note">Of 1,846 roles naming a figure. 226 of them ask for a decade or more.</div></div>
-<div class="c w2"><div class="eyebrow">Craft concentration</div><div class="big sm"><span class="a">30%</span></div><div class="cap">of every open role is Engineering</div><div class="note">1,751 roles. Art is second at 849. QA is 151 and Audio is 62 — a rounding error by comparison.</div></div>
+<div class="c w2"><div class="eyebrow">Experience asked</div><div class="big sm"><span class="pu">5 yrs</span></div><div class="cap">median, where a number is stated</div><div class="note">Of 1,846 roles naming a figure. 226 of them ask for a decade or more.</div></div>
+<div class="c w2"><div class="eyebrow">Craft concentration</div><div class="big sm"><span class="a">30%</span></div><div class="cap">of every open role is Engineering</div><div class="note">1,751 roles. Art is second at 848. QA is 151 and Audio is 62 — a rounding error by comparison.</div></div>
 <div class="c w2"><div class="eyebrow">Biggest hirer</div><div class="big sm">370</div><div class="cap">open roles at Electronic Arts</div><div class="note">Then Ubisoft 279, Roblox 223, Sony Interactive 202, KRAFTON 190.</div></div>
-<div class="c w2"><span class="share">↗</span><div class="eyebrow">Where the jobs are</div><div class="big sm">Tokyo</div><div class="cap">333 open roles — the largest single city</div><div class="note">Montréal 312, San Mateo 254, Seoul 194. The centre of gravity is not where most job boards look.</div></div>
+<div class="c w2"><div class="eyebrow">Where the jobs are</div><div class="big sm">Tokyo</div><div class="cap">333 open roles — the largest single city</div><div class="note">Montréal 311, San Mateo 254, Seoul 194. The centre of gravity is not where most job boards look.</div></div>
 <div class="c w3"><div class="eyebrow">Churn</div><div class="big sm"><span class="g">656</span></div><div class="cap">roles opened in the last 7 days</div><div class="note">11% of the board turns over weekly. A job search that checks monthly misses most of what appears.</div></div>
-<div class="c w3"><span class="share">↗</span><div class="eyebrow">Nobody is training anyone</div><div class="big"><span class="pk">188</span></div><div class="cap">of 265 studios have <b>no</b> entry-level role open</div><div class="split"><div style="flex:71;background:var(--pink)"></div><div style="flex:29;background:rgba(139,148,158,.22)"></div></div><div class="note">Only 77 studios — 29% — are advertising a
+<div class="c w3"><div class="sharebar"><button class="sb" data-share="{&quot;cap&quot;:&quot;188 of 265 game studios have ZERO entry-level roles open.\n\nNot \&quot;few\&quot;. Zero.\n\nOnly 77 studios — 29% — are advertising a single junior position.&quot;,&quot;eyebrow&quot;:&quot;Nobody is training anyone&quot;,&quot;big&quot;:&quot;188&quot;,&quot;lab&quot;:&quot;of 265 studios have no entry-level role open&quot;,&quot;note&quot;:&quot;Only 77 studios are hiring juniors at all.&quot;,&quot;col&quot;:&quot;#f778ba&quot;}" data-act="copy">Copy</button><button class="sb" data-share="{&quot;cap&quot;:&quot;188 of 265 game studios have ZERO entry-level roles open.\n\nNot \&quot;few\&quot;. Zero.\n\nOnly 77 studios — 29% — are advertising a single junior position.&quot;,&quot;eyebrow&quot;:&quot;Nobody is training anyone&quot;,&quot;big&quot;:&quot;188&quot;,&quot;lab&quot;:&quot;of 265 studios have no entry-level role open&quot;,&quot;note&quot;:&quot;Only 77 studios are hiring juniors at all.&quot;,&quot;col&quot;:&quot;#f778ba&quot;}" data-act="img">Image</button></div><div class="eyebrow">Nobody is training anyone</div><div class="big"><span class="pk">188</span></div><div class="cap">of 265 studios have <b>no</b> entry-level role open</div><div class="split"><div style="flex:71;background:var(--pink)"></div><div style="flex:29;background:rgba(139,148,158,.22)"></div></div><div class="note">Only 77 studios — 29% — are advertising a
          single junior position. The 5% figure understates it: the shortage is not spread thinly across
          the industry, it is concentrated in a handful of studios that still hire beginners.</div></div>
-<div class="c w3"><span class="share">↗</span><div class="eyebrow">Engine demand</div><div class="big"><span class="pu">1.44:1</span></div><div class="cap">Unreal roles per Unity role</div><div class="split"><div style="flex:507;background:var(--purple)"></div><div style="flex:351;background:var(--accent)"></div></div><div class="note"><b>Unreal 507</b> · <b>Unity 351</b>. Counted where the posting
+<div class="c w3"><div class="sharebar"><button class="sb" data-share="{&quot;cap&quot;:&quot;Unreal 507 roles. Unity 351.\n\nThat's 1.44 Unreal roles for every Unity one, across 265 studios' live openings.&quot;,&quot;eyebrow&quot;:&quot;Engine demand&quot;,&quot;big&quot;:&quot;1.44:1&quot;,&quot;lab&quot;:&quot;Unreal roles per Unity role&quot;,&quot;note&quot;:&quot;Unreal 507 · Unity 351&quot;,&quot;col&quot;:&quot;#a371f7&quot;}" data-act="copy">Copy</button><button class="sb" data-share="{&quot;cap&quot;:&quot;Unreal 507 roles. Unity 351.\n\nThat's 1.44 Unreal roles for every Unity one, across 265 studios' live openings.&quot;,&quot;eyebrow&quot;:&quot;Engine demand&quot;,&quot;big&quot;:&quot;1.44:1&quot;,&quot;lab&quot;:&quot;Unreal roles per Unity role&quot;,&quot;note&quot;:&quot;Unreal 507 · Unity 351&quot;,&quot;col&quot;:&quot;#a371f7&quot;}" data-act="img">Image</button></div><div class="eyebrow">Engine demand</div><div class="big"><span class="pu">1.44:1</span></div><div class="cap">Unreal roles per Unity role</div><div class="split"><div style="flex:507;background:var(--purple)"></div><div style="flex:351;background:var(--accent)"></div></div><div class="note"><b>Unreal 507</b> · <b>Unity 351</b>. Counted where the posting
          names the engine in its title or requirements — so this is demand for the skill, not a headcount of studios.</div></div>
-<div class="c w3"><div class="eyebrow">Concentration</div><div class="big sm"><span class="o">52%</span></div><div class="cap">of all open roles sit with just 20 companies</div><div class="split"><div style="flex:52;background:var(--gold)"></div><div style="flex:48;background:rgba(139,148,158,.22)"></div></div><div class="note">Out of 265 hiring companies. The top 10 alone hold
+<div class="c w3"><div class="sharebar"><button class="sb" data-share="{&quot;cap&quot;:&quot;52% of all open game industry roles sit with just 20 companies — out of 265 that are hiring.\n\nThe top 10 hold 35%. The top 5 hold 21%.&quot;,&quot;eyebrow&quot;:&quot;Concentration&quot;,&quot;big&quot;:&quot;52%&quot;,&quot;lab&quot;:&quot;of all open roles sit with just 20 companies&quot;,&quot;note&quot;:&quot;Out of 265 hiring companies.&quot;,&quot;col&quot;:&quot;#d29922&quot;}" data-act="copy">Copy</button><button class="sb" data-share="{&quot;cap&quot;:&quot;52% of all open game industry roles sit with just 20 companies — out of 265 that are hiring.\n\nThe top 10 hold 35%. The top 5 hold 21%.&quot;,&quot;eyebrow&quot;:&quot;Concentration&quot;,&quot;big&quot;:&quot;52%&quot;,&quot;lab&quot;:&quot;of all open roles sit with just 20 companies&quot;,&quot;note&quot;:&quot;Out of 265 hiring companies.&quot;,&quot;col&quot;:&quot;#d29922&quot;}" data-act="img">Image</button></div><div class="eyebrow">Concentration</div><div class="big sm"><span class="o">52%</span></div><div class="cap">of all open roles sit with just 20 companies</div><div class="split"><div style="flex:52;background:var(--gold)"></div><div style="flex:48;background:rgba(139,148,158,.22)"></div></div><div class="note">Out of 265 hiring companies. The top 10 alone hold
          35%, and the top 5 hold 21%. Most studios are hiring one or two people.</div></div>
 <div class="c w3"><div class="eyebrow">Most-asked-for skills</div><div class="ftab"><div class="frow"><span>Unreal</span><b>501</b></div><div class="frow"><span>C++</span><b>427</b></div><div class="frow"><span>Python</span><b>413</b></div><div class="frow"><span>Live Ops</span><b>313</b></div><div class="frow"><span>Monetization</span><b>291</b></div><div class="frow"><span>Multiplayer</span><b>288</b></div></div><div class="note">Extracted from the requirements text of every open posting.</div></div>
 <div class="c w3"><div class="eyebrow">Transparency by country</div><div class="ftab"><div class="frow"><span>United States</span><b class="g">70%</b></div><div class="frow"><span>Canada</span><b class="o">37%</b></div><div class="frow"><span>United Kingdom</span><b class="o">5%</b></div><div class="frow"><span>Japan</span><b class="mut">0%</b></div><div class="frow"><span>South Korea</span><b class="mut">0%</b></div><div class="frow"><span>France</span><b class="mut">0%</b></div></div><div class="note">Share of that country's open roles publishing a salary range.</div></div>
@@ -135,9 +144,80 @@
   <div class="cta">
     <h2>See the roles behind the numbers</h2>
     <p style="color:var(--muted)">Every role counted here is live and searchable — by craft, level, city and studio.</p>
-    <a class="btn" href="/">Browse 5,913 open game jobs →</a>
+    <a class="btn" href="/">Browse 5,912 open game jobs →</a>
   </div>
 </div>
 <footer>DevQuest · game dev jobs, fresh and filtered · updated hourly</footer>
+<script>
+(function(){
+  "use strict";
+  var URL_ = "https://devquest.gg/game-industry-hiring-report";
+  // SVG -> data URI -> <img> -> canvas -> PNG. Same route the /stats share cards take, and it needs
+  // no library: an SVG data URI has no external references, so it never taints the canvas.
+  function esc(t){ return String(t==null?"":t).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+  // SVG has no text wrapping, so lines are measured and broken by hand.
+  function wrap(t, perLine){
+    var w = String(t||"").split(" ").filter(Boolean), out = [], line = "";
+    for (var i=0;i<w.length;i++){
+      var trial = line ? line + " " + w[i] : w[i];
+      if (trial.length > perLine && line){ out.push(line); line = w[i]; } else line = trial;
+    }
+    if (line) out.push(line);
+    return out;
+  }
+  function svgFor(d){
+    var S = 1080, col = d.col || "#58a6ff";
+    var big = String(d.big||""), bigSize = big.length > 9 ? 118 : big.length > 6 ? 150 : 196;
+    var lab = wrap(d.lab, 30), note = wrap(d.note, 46);
+    var y = 470;
+    var labLines = lab.map(function(l,i){ return '<text x="80" y="'+(y + i*58)+'" font-size="46" font-weight="600" fill="#e6edf3">'+esc(l)+'</text>'; }).join("");
+    var ny = y + lab.length*58 + 44;
+    var noteLines = note.map(function(l,i){ return '<text x="80" y="'+(ny + i*40)+'" font-size="30" fill="#8b949e">'+esc(l)+'</text>'; }).join("");
+    return '<svg xmlns="http://www.w3.org/2000/svg" width="'+S+'" height="'+S+'" viewBox="0 0 '+S+' '+S+'">'
+      + '<rect width="'+S+'" height="'+S+'" fill="#0d1117"/>'
+      + '<rect x="0" y="0" width="'+S+'" height="10" fill="'+col+'"/>'
+      + '<text x="80" y="130" font-size="34" font-weight="800" fill="#e6edf3" font-family="-apple-system,Segoe UI,Roboto,sans-serif">DevQuest<tspan fill="#58a6ff">.gg</tspan></text>'
+      + '<text x="80" y="250" font-size="28" font-weight="800" letter-spacing="4" fill="#8b949e" font-family="-apple-system,Segoe UI,Roboto,sans-serif">'+esc(String(d.eyebrow||"").toUpperCase())+'</text>'
+      + '<text x="80" y="400" font-size="'+bigSize+'" font-weight="800" fill="'+col+'" font-family="-apple-system,Segoe UI,Roboto,sans-serif">'+esc(big)+'</text>'
+      + '<g font-family="-apple-system,Segoe UI,Roboto,sans-serif">'+labLines+noteLines+'</g>'
+      + '<text x="80" y="1010" font-size="28" fill="#58a6ff" font-family="-apple-system,Segoe UI,Roboto,sans-serif">'+esc(URL_.split("://").pop())+'</text>'
+      + '<text x="80" y="960" font-size="26" fill="#8b949e" font-family="-apple-system,Segoe UI,Roboto,sans-serif">Live from '+esc(String(d.src||"studio careers pages"))+' · updated hourly</text>'
+      + '</svg>';
+  }
+  function flash(btn, txt){ var o = btn.textContent; btn.textContent = txt; btn.classList.add("done");
+    setTimeout(function(){ btn.textContent = o; btn.classList.remove("done"); }, 1400); }
+  document.addEventListener("click", function(ev){
+    var btn = ev.target.closest ? ev.target.closest(".sb") : null;
+    if (!btn) return;
+    var d; try { d = JSON.parse(btn.getAttribute("data-share")); } catch(e){ return; }
+    if (btn.getAttribute("data-act") === "copy"){
+      // Escape sequences written here are consumed by the surrounding template literal before the
+      // script is emitted, so the separator is built from a char code instead.
+      var NL = String.fromCharCode(10);
+      var text = d.cap + NL + NL + URL_;
+      if (navigator.clipboard && navigator.clipboard.writeText){
+        navigator.clipboard.writeText(text).then(function(){ flash(btn, "Copied"); }, function(){ flash(btn, "Press Ctrl+C"); });
+      } else {
+        var ta = document.createElement("textarea"); ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
+        document.body.appendChild(ta); ta.select();
+        try { document.execCommand("copy"); flash(btn, "Copied"); } catch(e){ flash(btn, "Press Ctrl+C"); }
+        document.body.removeChild(ta);
+      }
+      return;
+    }
+    var img = new Image();
+    img.onload = function(){
+      var cv = document.createElement("canvas"); cv.width = 1080; cv.height = 1080;
+      cv.getContext("2d").drawImage(img, 0, 0, 1080, 1080);
+      var a = document.createElement("a");
+      a.href = cv.toDataURL("image/png");
+      a.download = "devquest-" + String(d.eyebrow||"stat").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"") + ".png";
+      a.click(); flash(btn, "Saved");
+    };
+    img.onerror = function(){ flash(btn, "Failed"); };
+    img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svgFor(d));
+  });
+})();
+</script>
 </body>
 </html>
