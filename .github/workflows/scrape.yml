@@ -46,6 +46,10 @@ jobs:
           git config user.name  "devquest-bot"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add jobs.js jobs.json seen.json trends.json sitemap.xml *-jobs.html jobs.html
+          # The hiring report does NOT end in "-jobs.html", so the glob above misses it. It was
+          # being regenerated every run, never committed, and listed in sitemap.xml regardless —
+          # which pointed Google at a URL that 404s. Any future page whose name breaks the
+          # "-jobs.html" convention needs adding here too.
           git add game-industry-hiring-report.html 2>/dev/null || true
           git add data/jobs 2>/dev/null || true
           git add job 2>/dev/null || true
