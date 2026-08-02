@@ -2802,11 +2802,19 @@ function renderMatrixDash(base){
     if (!v) return "transparent";
     return `rgba(${RGB[matrixMetric]},${(0.10 + 0.55*Math.sqrt(v/mx)).toFixed(3)})`;
   };
+  // Three different marks used to mean three different kinds of "nothing", with no way to tell them
+  // apart: "·" for a cell whose roles publish no salary, a bare blank for a cell with no NEW roles,
+  // and (after the empty-cell fix) "0" for a cell with no roles at all. Now there are exactly two
+  // symbols and they never overlap:
+  //   –   no roles in this combination at all        (drawn by the mcell-empty branch below)
+  //   ·   roles exist, but this metric is unknown    (only possible for Pay: nobody published one)
+  //   0   roles exist and the metric is really zero  (Fresh: none new this week)
+  // A blank cell is now impossible, which is the point — blank was doing three jobs at once.
   const cellTxt = d => {
-    if (matrixMetric==="n") return d.n||"";
+    if (matrixMetric==="n") return d.n||"0";
     if (matrixMetric==="pay") return d.pay ? "$"+d.pay+"K" : "·";
-    if (matrixMetric==="rem") return d.n ? d.rem+"%" : "";
-    return d.fresh ? "+"+d.fresh : "";
+    if (matrixMetric==="rem") return d.n ? d.rem+"%" : "0%";
+    return d.fresh ? "+"+d.fresh : "0";
   };
   const lenses = [["n","Jobs"],["pay","Pay"],["rem","Remote"],["fr","Fresh"]];
   // The lens lives in the matrix title row (not a page-level toggle): a quiet "View by" segmented
@@ -2831,10 +2839,12 @@ function renderMatrixDash(base){
     const dCell = dInfo ? `<span class="tipname" data-tip="${escTip(dInfo)}">${dn}</span>` : dn;
     h += `<tr><td class="xname" style="color:${discColor(dn)};overflow:hidden;text-overflow:ellipsis">${dCell}</td>` + seniorities.map(sn=>{
       const key = dn+"|"+sn, d = der[key], sel = selCells.has(key);
-      // A blank cell reads as a rendering fault — as though the number failed to load. A dim zero
-      // answers the question the grid is being asked. Deliberately not clickable: filtering to a
-      // combination with nothing in it would just produce an empty board.
-      if (!d) return `<td class="mcell mcell-empty" data-tip="${escTip(`<b>${dn} · ${sn}</b><br><span style="color:var(--muted)">No open roles right now.</span>`)}">0</td>`;
+      // A blank cell reads as a rendering fault — as though the number failed to load. This says
+      // "nothing here" instead. An en dash rather than a 0 because this mark has to survive all four
+      // lenses: "0" is honest under Jobs and Fresh, but under Pay it reads as "$0K" and under Remote
+      // as "0% remote", both of which are claims about roles that do not exist. Deliberately not
+      // clickable — filtering to a combination with nothing in it just produces an empty board.
+      if (!d) return `<td class="mcell mcell-empty" data-tip="${escTip(`<b>${dn} · ${sn}</b><br><span style="color:var(--muted)">No open roles in this combination right now.</span>`)}">–</td>`;
       const payTxt = d.pay ? `$${d.pay}K median` : (d.paysN ? `~$${d.payAny}K · ${d.paysN} role${d.paysN===1?'':'s'} list${d.paysN===1?'s':''} pay` : `no salary data`);
       const tip = `<b>${dn} · ${sn}</b><br>`
         + `<span style="color:var(--gold)">${payTxt}</span> · `
