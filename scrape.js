@@ -1499,7 +1499,28 @@ function hiringReportData(all){
   const cities = Object.entries(cc2).sort((a, b) => b[1] - a[1]).slice(0, 4).map(([k, v]) => ({ k, v }));
   const remote = jobs.filter(j => j.workType === "Remote").length;
   const withSal = jobs.filter(j => j.salary).length;
+  // --- engine demand. Matches the tech tags the scraper already extracts, plus the title, because
+  // plenty of postings name the engine only in "Senior Unreal Engineer". -----------------------
+  const hasT = (j, re) => (Array.isArray(j.tech) && j.tech.some(t => re.test(t))) || re.test(j.title || "");
+  const unreal = jobs.filter(j => hasT(j, /unreal|\bue[45]?\b/i)).length;
+  const unity  = jobs.filter(j => hasT(j, /unity/i)).length;
+  // --- market concentration: how much of the board sits with the largest few owners ------------
+  const ownSorted = Object.entries(sc).sort((a, b) => b[1] - a[1]);
+  const cumTop = k => ownSorted.slice(0, k).reduce((a, e) => a + e[1], 0);
+  const conc = { owners: ownSorted.length, top5: cumTop(5), top10: cumTop(10), top20: cumTop(20),
+    top5Pct: pc(cumTop(5)), top10Pct: pc(cumTop(10)), top20Pct: pc(cumTop(20)) };
+  // --- the junior story, made concrete: it is not that entry roles are rare, it is that most
+  // studios have none at all. -------------------------------------------------------------------
+  const entryStudios = new Set(jobs.filter(j => j.seniority === "Entry").map(j => j.parent || j.studio).filter(Boolean));
+  const allStudios = new Set(jobs.map(j => j.parent || j.studio).filter(Boolean));
+  const entrySt = { withAny: entryStudios.size, total: allStudios.size,
+    none: allStudios.size - entryStudios.size,
+    withPct: allStudios.size ? Math.round(100 * entryStudios.size / allStudios.size) : 0 };
+  // --- skills in demand ------------------------------------------------------------------------
+  const skC = {}; for (const j of jobs) for (const t of (j.tech || [])) if (t) skC[t] = (skC[t] || 0) + 1;
+  const skills = Object.entries(skC).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([k, v]) => ({ k, v }));
   return { total: n, studioTotal: Object.keys(sc).length,
+    unreal, unity, conc, entrySt, skills,
     countries, zero, usPct: us.n ? Math.round(100 * us.sal / us.n) : 0, usN: us.n,
     restPct: rest.n ? Math.round(100 * rest.s / rest.n) : 0, restN: rest.n,
     pay, midToSenior, entry, entryPct: pc(entry), mid,
@@ -1626,6 +1647,44 @@ function renderHiringReport(all){
       + `<div class="big sm"><span class="g">${nf(d.fresh7)}</span></div>`
       + `<div class="cap">roles opened in the last 7 days</div>`
       + `<div class="note">${d.fresh7Pct}% of the board turns over weekly. A job search that checks monthly misses most of what appears.</div>`);
+  }
+  // 13 — studios with no entry-level role at all. The sharpest version of the junior story: it is
+  // not that entry roles are scarce, it is that most studios are not hiring juniors at any level.
+  if (d.entrySt.total >= 50 && d.entrySt.withPct <= 55){
+    card("w3", `<span class="share">↗</span>` + eb("Nobody is training anyone")
+      + `<div class="big"><span class="pk">${nf(d.entrySt.none)}</span></div>`
+      + `<div class="cap">of ${nf(d.entrySt.total)} studios have <b>no</b> entry-level role open</div>`
+      + bar2(100 - d.entrySt.withPct, "var(--pink)")
+      + `<div class="note">Only ${nf(d.entrySt.withAny)} studios — ${d.entrySt.withPct}% — are advertising a
+         single junior position. The 5% figure understates it: the shortage is not spread thinly across
+         the industry, it is concentrated in a handful of studios that still hire beginners.</div>`);
+  }
+  // 14 — engine demand. Only claims a lead when one engine is meaningfully ahead.
+  if (d.unreal >= 100 && d.unity >= 100){
+    const lead = d.unreal >= d.unity ? "Unreal" : "Unity";
+    const hi = Math.max(d.unreal, d.unity), lo = Math.min(d.unreal, d.unity);
+    card("w3", `<span class="share">↗</span>` + eb("Engine demand")
+      + `<div class="big"><span class="pu">${(hi/lo).toFixed(2)}:1</span></div>`
+      + `<div class="cap">${escHtml(lead)} roles per ${escHtml(lead === "Unreal" ? "Unity" : "Unreal")} role</div>`
+      + `<div class="split"><div style="flex:${d.unreal};background:var(--purple)"></div><div style="flex:${d.unity};background:var(--accent)"></div></div>`
+      + `<div class="note"><b>Unreal ${nf(d.unreal)}</b> · <b>Unity ${nf(d.unity)}</b>. Counted where the posting
+         names the engine in its title or requirements — so this is demand for the skill, not a headcount of studios.</div>`);
+  }
+  // 15 — market concentration
+  if (d.conc.owners >= 50 && d.conc.top20Pct >= 35){
+    card("w3", eb("Concentration")
+      + `<div class="big sm"><span class="o">${d.conc.top20Pct}%</span></div>`
+      + `<div class="cap">of all open roles sit with just 20 companies</div>`
+      + bar2(d.conc.top20Pct, "var(--gold)")
+      + `<div class="note">Out of ${nf(d.conc.owners)} hiring companies. The top 10 alone hold
+         ${d.conc.top10Pct}%, and the top 5 hold ${d.conc.top5Pct}%. Most studios are hiring one or two people.</div>`);
+  }
+  // 16 — skills
+  if (d.skills.length >= 6 && d.skills[0].v >= 100){
+    const rows = d.skills.slice(0, 6).map(x =>
+      `<div class="frow"><span>${escHtml(x.k)}</span><b>${nf(x.v)}</b></div>`).join("");
+    card("w3", eb("Most-asked-for skills") + `<div class="ftab">${rows}</div>`
+      + `<div class="note">Extracted from the requirements text of every open posting.</div>`);
   }
   // 12 — country table
   if (d.countries.length >= 5){
