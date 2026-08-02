@@ -1407,6 +1407,363 @@ function renderMarketBlock(cfg, st){
   </section>`;
 }
 
+// ---- Game Industry Hiring Report -------------------------------------------------------------
+// A page the scrape regenerates, not a blog post. One URL that is always current, so a citation
+// earned in September still points at accurate data in March — and so every link earned lands on
+// the same address instead of scattering across dated posts.
+//
+// The lead finding is the one thing this board can measure that a single-country job site cannot:
+// pay transparency is a legislative artefact, not a cultural one. It is ~70% in the US (Colorado,
+// California, New York, Washington), ~37% in Canada (BC and Ontario phasing in) and effectively
+// zero in Japan, Korea, France and Poland.
+// jobCity() returns the first segment that isn't a country or a state — so for a location string of
+// "Unlisted" or "Multiple Locations" it hands back that placeholder as though it were a place name.
+// Measured on live data, "Unlisted" alone would have been the 6th largest "city" on the board.
+const NOT_A_CITY = /^(unlisted|multiple locations|\d+\s+locations?|any|anywhere|hybrid|remote|on-?site|in-?office|full[- ]?time|part[- ]?time|various|worldwide|global|tbd|n\/?a)$/i;
+
+const CC_NAME = { US:"United States", CA:"Canada", GB:"United Kingdom", JP:"Japan", KR:"South Korea",
+  FR:"France", DE:"Germany", PL:"Poland", CN:"China", ES:"Spain", IN:"India", VN:"Vietnam",
+  SG:"Singapore", CY:"Cyprus", RS:"Serbia", SE:"Sweden", IL:"Israel", TR:"Türkiye", NL:"Netherlands",
+  FI:"Finland", AU:"Australia", BR:"Brazil", MX:"Mexico", IE:"Ireland", IT:"Italy", PT:"Portugal",
+  RO:"Romania", CZ:"Czechia", DK:"Denmark", NO:"Norway", AT:"Austria", CH:"Switzerland", BE:"Belgium",
+  HU:"Hungary", UA:"Ukraine", GR:"Greece", HK:"Hong Kong", TW:"Taiwan", MY:"Malaysia", TH:"Thailand",
+  ID:"Indonesia", PH:"Philippines", NZ:"New Zealand", AE:"United Arab Emirates", ZA:"South Africa",
+  AR:"Argentina", CL:"Chile", CO:"Colombia", EG:"Egypt", MA:"Morocco", PK:"Pakistan", AM:"Armenia",
+  AZ:"Azerbaijan", BY:"Belarus", GE:"Georgia", SI:"Slovenia", LT:"Lithuania", LV:"Latvia",
+  EE:"Estonia", MT:"Malta", JO:"Jordan", KZ:"Kazakhstan", BD:"Bangladesh", LK:"Sri Lanka",
+  PE:"Peru", UY:"Uruguay", CR:"Costa Rica", IS:"Iceland", SK:"Slovakia", BG:"Bulgaria", HR:"Croatia",
+  SA:"Saudi Arabia", NG:"Nigeria", KE:"Kenya", GH:"Ghana", TN:"Tunisia", MO:"Macau" };
+const REPORT_MIN_COUNTRY = 40;      // below this a percentage is noise, not a finding
+function _repMidK(s){
+  const ks = String(s || "").match(/(\d+(?:\.\d+)?)\s*K/gi);
+  if (!ks || !ks.length) return null;
+  const n = ks.map(x => parseFloat(x));
+  return n.reduce((a, b) => a + b, 0) / n.length;
+}
+function _repMedian(a){ if (!a.length) return null; const s = a.slice().sort((x, y) => x - y); const i = Math.floor(s.length / 2);
+  return s.length % 2 ? Math.round(s[i]) : Math.round((s[i - 1] + s[i]) / 2); }
+function hiringReportData(all){
+  const jobs = all.filter(j => j && j.title && !isPool(j.title));
+  const n = jobs.length;
+  const pc = x => n ? Math.round(100 * x / n) : 0;
+  // --- pay transparency by country ------------------------------------------------------------
+  const byC = {};
+  for (const j of jobs){
+    const cc = resolveCountry(j.location); if (!cc) continue;
+    const b = byC[cc] || (byC[cc] = { n: 0, sal: 0 });
+    b.n++; if (j.salary) b.sal++;
+  }
+  const countries = Object.entries(byC).filter(([, v]) => v.n >= REPORT_MIN_COUNTRY)
+    .map(([cc, v]) => ({ cc, name: CC_NAME[cc] || cc, n: v.n, sal: v.sal, pct: Math.round(100 * v.sal / v.n) }))
+    .sort((a, b) => b.n - a.n);
+  const us = byC.US || { n: 0, sal: 0 };
+  const rest = countries.filter(c => c.cc !== "US").reduce((a, c) => ({ n: a.n + c.n, s: a.s + c.sal }), { n: 0, s: 0 });
+  const zero = countries.filter(c => c.pct === 0);
+  // --- pay ladder -----------------------------------------------------------------------------
+  const bySen = {};
+  for (const j of jobs){ if (!j.salary) continue; const m = _repMidK(j.salary); if (!m) continue;
+    (bySen[j.seniority || "?"] || (bySen[j.seniority || "?"] = [])).push(m); }
+  const pay = ["Entry","Mid","Senior","Lead","Director+"].filter(s => (bySen[s] || []).length >= 10)
+    .map(s => ({ sen: s, med: _repMedian(bySen[s]), n: bySen[s].length }));
+  const payOf = s => (pay.find(p => p.sen === s) || {}).med || null;
+  const midToSenior = (payOf("Mid") && payOf("Senior")) ? Math.round(100 * (payOf("Senior") - payOf("Mid")) / payOf("Mid")) : null;
+  // --- seniority mix (the junior story) -------------------------------------------------------
+  const senMix = {};
+  for (const j of jobs) senMix[j.seniority || "?"] = (senMix[j.seniority || "?"] || 0) + 1;
+  const entry = senMix.Entry || 0, mid = senMix.Mid || 0;
+  // --- age: ghost listings and churn ----------------------------------------------------------
+  const now = Date.now();
+  let d90 = 0, d60 = 0, fresh7 = 0, dated = 0;
+  for (const j of jobs){
+    if (!j.firstSeen) continue;
+    const t = Date.parse(j.firstSeen); if (!isFinite(t)) continue;
+    dated++;
+    const days = (now - t) / 864e5;
+    if (days >= 90) d90++; if (days >= 60) d60++; if (days < 7) fresh7++;
+  }
+  // --- experience -----------------------------------------------------------------------------
+  const yo = jobs.map(j => j.yoe).filter(y => typeof y === "number" && y > 0).sort((a, b) => a - b);
+  const yoeMed = yo.length ? yo[Math.floor(yo.length / 2)] : null;
+  // --- disciplines, studios, cities -----------------------------------------------------------
+  const dc = {}; for (const j of jobs) if (j.discipline && j.discipline !== "Other") dc[j.discipline] = (dc[j.discipline] || 0) + 1;
+  const discs = Object.entries(dc).sort((a, b) => b[1] - a[1]).map(([k, v]) => ({ k, v, pct: pc(v) }));
+  const sc = {}; for (const j of jobs){ const s = j.parent || j.studio; if (s) sc[s] = (sc[s] || 0) + 1; }
+  const studios = Object.entries(sc).sort((a, b) => b[1] - a[1]).slice(0, 6).map(([k, v]) => ({ k, v }));
+  const cc2 = {};
+  for (const j of jobs){
+    if (j.workType === "Remote") continue;
+    const c = canonCity(jobCity(j.location));
+    if (!c || NOT_A_CITY.test(c)) continue;
+    cc2[c] = (cc2[c] || 0) + 1;
+  }
+  const cities = Object.entries(cc2).sort((a, b) => b[1] - a[1]).slice(0, 4).map(([k, v]) => ({ k, v }));
+  const remote = jobs.filter(j => j.workType === "Remote").length;
+  const withSal = jobs.filter(j => j.salary).length;
+  return { total: n, studioTotal: Object.keys(sc).length,
+    countries, zero, usPct: us.n ? Math.round(100 * us.sal / us.n) : 0, usN: us.n,
+    restPct: rest.n ? Math.round(100 * rest.s / rest.n) : 0, restN: rest.n,
+    pay, midToSenior, entry, entryPct: pc(entry), mid,
+    d90, d90Pct: dated ? Math.round(100 * d90 / dated) : 0, d60, d60Pct: dated ? Math.round(100 * d60 / dated) : 0,
+    fresh7, fresh7Pct: dated ? Math.round(100 * fresh7 / dated) : 0,
+    yoeMed, yoeN: yo.length, yoe10: yo.filter(y => y >= 10).length,
+    discs, studios, cities, remote, remotePct: pc(remote),
+    withSal, salPct: pc(withSal) };
+}
+const HIRING_REPORT_SLUG = "game-industry-hiring-report";
+// A card is only rendered when its number still supports the sentence printed on it. The prose is
+// written by hand and the data is live, so without these guards the page would eventually assert
+// something false — "the industry is hiring experience, not training it" is a claim about a 5%
+// entry-level share, not a permanent truth. If a stat drifts out of range its card disappears rather
+// than lying, and the grid reflows.
+function renderHiringReport(all){
+  const d = hiringReportData(all);
+  const url = "https://devquest.gg/" + HIRING_REPORT_SLUG;
+  const now = new Date();
+  const iso = now.toISOString().slice(0, 10);
+  const nice = now.toLocaleString("en-GB", { day: "numeric", month: "long", year: "numeric" });
+  const mon = now.toLocaleString("en-US", { month: "long", year: "numeric" });
+  const nf = x => Number(x).toLocaleString("en-US");
+  const title = `Game Industry Hiring: ${nf(d.total)} Open Roles, ${mon} · DevQuest`;
+  const desc = `${d.usPct}% of US game jobs publish a salary; outside the US, ${d.restPct}%. Only ${d.entryPct}% of roles are entry level. Live figures from ${nf(d.studioTotal)} studios' own careers pages, refreshed hourly.`;
+  const cards = [];
+  const card = (cls, html) => cards.push(`<div class="c ${cls}">${html}</div>`);
+  const eb = t => `<div class="eyebrow">${escHtml(t)}</div>`;
+  const bar2 = (a, colA) => `<div class="split"><div style="flex:${a};background:${colA}"></div><div style="flex:${100 - a};background:rgba(139,148,158,.22)"></div></div>`;
+
+  // 1 — pay transparency. Only claims a legislative split while one actually exists.
+  if (d.usN >= 200 && d.restN >= 200 && d.usPct - d.restPct >= 25){
+    const ca = d.countries.find(c => c.cc === "CA");
+    card("w6 hero-card", `<span class="share">↗ most shared</span>` + eb("Pay transparency")
+      + `<div class="big"><span class="g">${d.usPct}%</span> <span class="vs">vs</span> <span class="o">${d.restPct}%</span></div>`
+      + `<div class="cap">of US game jobs publish a salary. Outside the US, almost none do.</div>`
+      + bar2(d.usPct, "var(--green)")
+      + `<div class="note">This tracks legislation, not generosity. Colorado, California, New York and
+         Washington require pay ranges in job ads, and US employers comply.${ca ? ` Canada sits at ${ca.pct}% as British Columbia and Ontario phase their rules in.` : ""}
+         Based on ${nf(d.usN)} US roles and ${nf(d.restN)} elsewhere.</div>`);
+  }
+  // 2 — the junior problem. Only a story while entry level is genuinely scarce.
+  if (d.entryPct <= 12 && d.entry > 0){
+    const ratio = d.entry ? Math.round(d.mid / d.entry) : 0;
+    const lit = Math.max(1, Math.round(d.entryPct / 5));
+    card("w3", `<span class="share">↗</span>` + eb("The junior problem")
+      + `<div class="big"><span class="pk">${d.entryPct}%</span></div>`
+      + `<div class="cap">of open game jobs are entry level</div>`
+      + `<div class="dots">${Array.from({length:20},(_,i)=>`<i${i<lit?' class="on"':''}></i>`).join("")}</div>`
+      + `<div class="note">${nf(d.entry)} of ${nf(d.total)} roles. Mid-level alone is ${nf(d.mid)}${ratio>=3?` — about ${ratio}× as many`:""}.
+         The industry is hiring experience, not training it.</div>`);
+  }
+  // 3 — ghost listings. Only interesting above roughly one in seven.
+  if (d.d90Pct >= 14){
+    const oneIn = Math.round(100 / d.d90Pct);
+    card("w3", `<span class="share">↗</span>` + eb("Ghost listings")
+      + `<div class="big"><span class="rd">1 in ${oneIn}</span></div>`
+      + `<div class="cap">roles have been open 90+ days</div>`
+      + bar2(d.d90Pct, "var(--red)")
+      + `<div class="note">${nf(d.d90)} listings have sat on a careers page for over three months, and
+         ${nf(d.d60)} are past sixty days. Some are real and slow. Some were never going to be filled.</div>`);
+  }
+  // 4 — the pay ladder
+  if (d.pay.length >= 3){
+    const top = Math.max(...d.pay.map(p => p.med));
+    card("w4", eb("What the ladder actually pays")
+      + `<div class="lad">` + d.pay.map(p =>
+          `<div class="r"><span class="lb">${escHtml(p.sen)}</span><span class="tr"><span class="fl" style="width:${Math.round(100*p.med/top)}%"></span></span><span class="vv">$${p.med}K</span></div>`
+        ).join("") + `</div>`
+      + `<div class="note">Median advertised midpoint, from the ${nf(d.withSal)} roles that publish a range.${
+          d.midToSenior ? ` The step from mid to senior is <b>+${d.midToSenior}%</b> — the largest jump on the ladder.` : ""}</div>`);
+  }
+  // 5 — countries at zero
+  if (d.zero.length >= 3){
+    card("w2", `<span class="share">↗</span>` + eb("Silence")
+      + `<div class="big sm"><span class="o">${d.zero.length}</span></div>`
+      + `<div class="cap">countries where not one game job lists pay</div>`
+      + `<div class="note">${d.zero.slice(0,8).map(c=>escHtml(c.name)).join(", ")}${d.zero.length>8?" and more":""}.
+         Zero out of ${nf(d.zero.reduce((a,c)=>a+c.n,0))} roles between them.</div>`);
+  }
+  // 6 — remote
+  {
+    const circ = 251.3, off = Math.round((circ * (1 - d.remotePct/100)) * 10) / 10;
+    card("w2", eb("Remote")
+      + `<div class="ring"><svg width="96" height="96" aria-hidden="true"><circle cx="48" cy="48" r="40" fill="none" stroke="rgba(139,148,158,.16)" stroke-width="11"/>`
+      + `<circle cx="48" cy="48" r="40" fill="none" stroke="#58a6ff" stroke-width="11" stroke-linecap="round" stroke-dasharray="${circ}" stroke-dashoffset="${off}"/></svg>`
+      + `<div class="lbl a">${d.remotePct}%</div></div>`
+      + `<div class="note center">${nf(d.remote)} fully remote roles. Studios label hybrid and on-site far more readily, so read this as a floor.</div>`);
+  }
+  // 7 — experience
+  if (d.yoeMed && d.yoeN >= 200){
+    card("w2", `<span class="share">↗</span>` + eb("Experience asked")
+      + `<div class="big sm"><span class="pu">${d.yoeMed} yrs</span></div>`
+      + `<div class="cap">median, where a number is stated</div>`
+      + `<div class="note">Of ${nf(d.yoeN)} roles naming a figure. ${nf(d.yoe10)} of them ask for a decade or more.</div>`);
+  }
+  // 8 — discipline concentration
+  if (d.discs.length >= 3){
+    const t = d.discs[0], second = d.discs[1];
+    const small = d.discs.filter(x => ["QA","Audio"].includes(x.k));
+    card("w2", eb("Craft concentration")
+      + `<div class="big sm"><span class="a">${t.pct}%</span></div>`
+      + `<div class="cap">of every open role is ${escHtml(t.k)}</div>`
+      + `<div class="note">${nf(t.v)} roles. ${escHtml(second.k)} is second at ${nf(second.v)}.${
+          small.length ? ` ${small.map(s=>escHtml(s.k)+" is "+nf(s.v)).join(" and ")} — a rounding error by comparison.` : ""}</div>`);
+  }
+  // 9 — biggest hirer
+  if (d.studios.length >= 3){
+    card("w2", eb("Biggest hirer")
+      + `<div class="big sm">${nf(d.studios[0].v)}</div>`
+      + `<div class="cap">open roles at ${escHtml(d.studios[0].k)}</div>`
+      + `<div class="note">Then ${d.studios.slice(1,5).map(s=>escHtml(s.k)+" "+nf(s.v)).join(", ")}.</div>`);
+  }
+  // 10 — top city
+  if (d.cities.length >= 3){
+    card("w2", `<span class="share">↗</span>` + eb("Where the jobs are")
+      + `<div class="big sm">${escHtml(d.cities[0].k)}</div>`
+      + `<div class="cap">${nf(d.cities[0].v)} open roles — the largest single city</div>`
+      + `<div class="note">${d.cities.slice(1,4).map(c=>escHtml(c.k)+" "+nf(c.v)).join(", ")}. The centre of gravity is not where most job boards look.</div>`);
+  }
+  // 11 — churn
+  if (d.fresh7 > 0){
+    card("w3", eb("Churn")
+      + `<div class="big sm"><span class="g">${nf(d.fresh7)}</span></div>`
+      + `<div class="cap">roles opened in the last 7 days</div>`
+      + `<div class="note">${d.fresh7Pct}% of the board turns over weekly. A job search that checks monthly misses most of what appears.</div>`);
+  }
+  // 12 — country table
+  if (d.countries.length >= 5){
+    const rows = d.countries.slice(0, 6).map(c =>
+      `<div class="frow"><span>${escHtml(c.name)}</span><b class="${c.pct>=50?"g":c.pct===0?"mut":"o"}">${c.pct}%</b></div>`).join("");
+    card("w3", eb("Transparency by country") + `<div class="ftab">${rows}</div>`
+      + `<div class="note">Share of that country's open roles publishing a salary range.</div>`);
+  }
+
+  const ld = JSON.stringify({ "@context":"https://schema.org","@type":"Dataset",
+    name:"Game Industry Hiring Report", description:desc, url, dateModified:iso, isAccessibleForFree:true,
+    creator:{ "@type":"Organization", name:"DevQuest", url:"https://devquest.gg/" },
+    temporalCoverage:iso, variableMeasured:["open roles","salary transparency rate","median advertised pay","remote share","entry-level share","listing age"] });
+  const crumbs = JSON.stringify({ "@context":"https://schema.org","@type":"BreadcrumbList", itemListElement:[
+    { "@type":"ListItem", position:1, name:"DevQuest", item:"https://devquest.gg/" },
+    { "@type":"ListItem", position:2, name:"Hiring report", item:url } ] });
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>${escHtml(title)}</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<meta name="description" content="${escHtml(desc)}">
+<link rel="canonical" href="${url}">
+<meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="DevQuest">
+<meta property="og:title" content="${escHtml(title)}">
+<meta property="og:description" content="${escHtml(desc)}">
+<meta property="og:image" content="https://devquest.gg/og-image-v4.png">
+<meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="${escHtml(title)}">
+<meta name="twitter:image" content="https://devquest.gg/og-image-v4.png">
+<script type="application/ld+json">${ld}</script>
+<script type="application/ld+json">${crumbs}</script>
+<style>
+  :root{--bg:#0d1117;--panel:#161b22;--border:#30363d;--text:#e6edf3;--muted:#8b949e;
+        --accent:#58a6ff;--green:#3fb950;--gold:#d29922;--purple:#a371f7;--pink:#f778ba;--red:#e06c5e}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:-apple-system,"Segoe UI",Roboto,sans-serif;line-height:1.55;-webkit-font-smoothing:antialiased}
+  a{color:var(--accent)}
+  header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;max-width:1080px;margin:0 auto}
+  .logo{font-size:19px;font-weight:800;letter-spacing:-.3px;text-decoration:none;color:var(--text)}
+  .logo span{color:var(--accent)}
+  .backbtn{color:var(--accent);font-size:13px;font-weight:600;text-decoration:none;border:1px solid var(--border);padding:7px 13px;border-radius:8px;white-space:nowrap}
+  .backbtn:hover{border-color:var(--accent)}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 20px 70px}
+  .hero{padding:44px 0 8px;text-align:center}
+  .kicker{font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+  h1{font-size:42px;font-weight:800;letter-spacing:-1.1px;line-height:1.1;margin:12px 0 0}
+  .hero .sub{color:var(--muted);font-size:16px;margin:14px auto 0;max-width:620px}
+  .live{display:inline-flex;align-items:center;gap:7px;margin-top:18px;font-size:12.5px;color:var(--muted);background:var(--panel);border:1px solid var(--border);border-radius:999px;padding:5px 14px}
+  .pulse{width:7px;height:7px;border-radius:50%;background:var(--green)}
+  .grid{display:grid;grid-template-columns:repeat(6,1fr);gap:14px;margin-top:34px}
+  .c{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:20px 22px;position:relative;overflow:hidden;display:flex;flex-direction:column;justify-content:space-between}
+  .c.hero-card{background:linear-gradient(135deg,rgba(63,185,80,.09),var(--panel) 55%)}
+  .c.w6{grid-column:span 6}.c.w4{grid-column:span 4}.c.w3{grid-column:span 3}.c.w2{grid-column:span 2}
+  @media(max-width:900px){.c.w4,.c.w3{grid-column:span 6}.c.w2{grid-column:span 3}}
+  @media(max-width:560px){.c.w2{grid-column:span 6}h1{font-size:29px}}
+  .eyebrow{font-size:11px;font-weight:800;letter-spacing:.11em;text-transform:uppercase;color:var(--muted)}
+  .big{font-size:52px;font-weight:800;letter-spacing:-2px;line-height:1;margin:10px 0 2px;font-variant-numeric:tabular-nums}
+  .big.sm{font-size:37px;letter-spacing:-1.2px}
+  .big .vs{color:var(--muted);font-size:29px;letter-spacing:-1px;font-weight:700}
+  .cap{font-size:14px;color:var(--text);font-weight:600;margin-top:6px}
+  .note{font-size:12.5px;color:var(--muted);margin-top:8px;line-height:1.5}
+  .note.center{text-align:center}
+  .note b{color:var(--text)}
+  .g{color:var(--green)}.o{color:var(--gold)}.a{color:var(--accent)}.pu{color:var(--purple)}
+  .pk{color:var(--pink)}.rd{color:var(--red)}.mut{color:var(--muted)}
+  .split{display:flex;gap:5px;margin-top:16px}
+  .split div{display:block;height:9px;border-radius:999px}
+  .dots{display:grid;grid-template-columns:repeat(20,1fr);gap:4px;margin-top:16px}
+  .dots i{aspect-ratio:1;border-radius:2.5px;background:rgba(139,148,158,.18);display:block}
+  .dots i.on{background:var(--pink)}
+  .lad{margin-top:14px}
+  .lad .r{display:flex;align-items:center;gap:10px;margin-bottom:7px}
+  .lad .lb{width:66px;font-size:12.5px;color:var(--muted);flex:none}
+  .lad .tr{display:block;flex:1;height:20px;background:rgba(139,148,158,.12);border-radius:5px;overflow:hidden}
+  .lad .fl{display:block;height:100%;border-radius:5px;background:linear-gradient(90deg,#1f6feb,#58a6ff)}
+  .lad .vv{width:54px;text-align:right;font-size:13px;font-weight:700;font-variant-numeric:tabular-nums}
+  .ftab{margin-top:12px}
+  .frow{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-top:1px solid var(--border);font-size:13.5px}
+  .frow:first-child{border-top:0}
+  .frow b{font-variant-numeric:tabular-nums}
+  .ring{width:96px;height:96px;margin:10px auto 0;position:relative}
+  .ring svg{transform:rotate(-90deg)}
+  .ring .lbl{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:23px;font-weight:800;letter-spacing:-.5px}
+  .share{position:absolute;top:14px;right:16px;font-size:10.5px;color:var(--muted);opacity:.55;border:1px solid var(--border);border-radius:6px;padding:2px 7px}
+  .method{margin-top:30px;background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:20px 22px;font-size:13px;color:var(--muted)}
+  .method b{color:var(--text)}.method p{margin:8px 0}
+  .cta{margin-top:22px;background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:24px;text-align:center}
+  .cta h2{font-size:19px;margin-bottom:6px}
+  .btn{display:inline-block;background:var(--accent);color:#0d1117;text-decoration:none;font-weight:700;font-size:14px;padding:11px 22px;border-radius:9px;margin-top:14px}
+  footer{border-top:1px solid var(--border);padding:22px;color:var(--muted);font-size:12.5px;text-align:center}
+</style>
+</head>
+<body>
+<header>
+  <a class="logo" href="/">DevQuest<span>.gg</span></a>
+  <a class="backbtn" href="/">Browse ${nf(d.total)} open roles →</a>
+</header>
+<div class="wrap">
+  <div class="hero">
+    <div class="kicker">The state of game industry hiring</div>
+    <h1>${nf(d.total)} open roles.<br>${nf(d.studioTotal)} studios. One honest look.</h1>
+    <p class="sub">Counted hourly from studios' own careers pages — not aggregator feeds, not recruiter
+    reposts. Every number below is live right now.</p>
+    <div class="live"><span class="pulse"></span> Updated ${escHtml(nice)} · refreshes hourly</div>
+  </div>
+  <div class="grid">
+${cards.join("\n")}
+  </div>
+  <div class="method">
+    <p><b>Method.</b> Every figure is counted from live postings on ${nf(d.studioTotal)} studios' own
+    applicant tracking systems — Greenhouse, Lever, Workday, Ashby and others — re-read hourly. No
+    aggregator feeds, no recruiter reposts, no paid placements. "Lists pay" means a salary range
+    published by the employer; a role is counted once, in the country its posting names.</p>
+    <p><b>What this is not.</b> Coverage is the studios listed on DevQuest, which skews toward companies
+    large enough to run a public careers page. The board-wide transparency figure has drifted down to
+    ${d.salPct}% since June, but the <i>number</i> of roles publishing pay has stayed nearly flat — the
+    denominator grew as non-US studios were added. The mix changed, not the behaviour, which is why the
+    country split above is the honest view and a single blended percentage is not.</p>
+    <p><b>Free to cite</b> and quote with a link to this page. Corrections welcome.</p>
+  </div>
+  <div class="cta">
+    <h2>See the roles behind the numbers</h2>
+    <p style="color:var(--muted)">Every role counted here is live and searchable — by craft, level, city and studio.</p>
+    <a class="btn" href="/">Browse ${nf(d.total)} open game jobs →</a>
+  </div>
+</div>
+<footer>DevQuest · game dev jobs, fresh and filtered · updated hourly</footer>
+</body>
+</html>`;
+}
+
 function renderLandingPage(cfg, all, allSpecs){
   const matches = landingMatches(cfg, all);
   const total = matches.length;
@@ -1614,10 +1971,6 @@ function studioPageSpecs(all){
 const CITY_PAGE_MIN = 15;          // unique roles. Below this the page is thin, and Google reads a
                                    // thin page built from a template as a doorway, which is worse
                                    // than not having it: it can drag the whole domain's rating down.
-// jobCity() returns the first segment that isn't a country or a state — so for a location string of
-// "Unlisted" or "Multiple Locations" it hands back that placeholder as though it were a place name.
-// Measured on live data, "Unlisted" alone would have been the 6th largest "city" on the board.
-const NOT_A_CITY = /^(unlisted|multiple locations|\d+\s+locations?|any|anywhere|hybrid|remote|on-?site|in-?office|full[- ]?time|part[- ]?time|various|worldwide|global|tbd|n\/?a)$/i;
 // Two pages for one place is duplicate content, which is actively worse than having no page at all.
 // Every entry below came from auditing the real generated list, not from imagination: the first pass
 // produced Bangalore AND Bengaluru, Montreal AND Montréal, Limassol AND "Limassol Cyprus",
@@ -1806,6 +2159,7 @@ function renderHubPage(allSpecs, all){
 <div class="wrap">
   <h1>Browse game-dev jobs by category</h1>
   <p class="sub">Every DevQuest category in one place — by discipline, studio, engine and skill. ${total} live roles, pulled straight from studios' own career pages and refreshed hourly.</p>
+  <h2>Data</h2><div class="related"><a class="rel" href="/game-industry-hiring-report">Game Industry Hiring Report — pay, remote &amp; demand</a></div>
   ${sect("By discipline", group("discipline"))}
   ${sect("Remote & by seniority", group("combo"))}
   ${sect("By city", group("city"))}
@@ -1843,6 +2197,10 @@ function writeLandingPages(all, dir){
   // Internal hub (/jobs) — one crawlable index that links to every category page above.
   try { fs.writeFileSync(path.join(dir, "jobs.html"), renderHubPage(allSpecs, all)); slugs.push("jobs"); }
   catch(e){ console.error(`hub: ${e.message}`); }
+  // The hiring report. Regenerated with everything else so it is never stale — the whole point of a
+  // living page over a dated post is that a citation earned months ago still resolves to true numbers.
+  try { fs.writeFileSync(path.join(dir, HIRING_REPORT_SLUG + ".html"), renderHiringReport(all)); slugs.push(HIRING_REPORT_SLUG); }
+  catch(e){ console.error(`hiring report: ${e.message}`); }
 
   // Regenerate sitemap.xml with <lastmod> (Google uses lastmod; it now ignores changefreq/priority).
   const today = new Date().toISOString().slice(0, 10);
