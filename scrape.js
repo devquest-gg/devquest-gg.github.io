@@ -1607,6 +1607,88 @@ function studioPageSpecs(all){
   return specs.sort((a,b)=> a.h1.localeCompare(b.h1));
 }
 
+// One page per city with real inventory. "<city> game jobs" is a durable, high-intent query, and the
+// differentiating content writes itself from data already held: which studios are actually there and
+// what they hire for. Remote roles are excluded — they have their own remote-* family, and a remote
+// role is not "in" a city.
+const CITY_PAGE_MIN = 15;          // unique roles. Below this the page is thin, and Google reads a
+                                   // thin page built from a template as a doorway, which is worse
+                                   // than not having it: it can drag the whole domain's rating down.
+// jobCity() returns the first segment that isn't a country or a state — so for a location string of
+// "Unlisted" or "Multiple Locations" it hands back that placeholder as though it were a place name.
+// Measured on live data, "Unlisted" alone would have been the 6th largest "city" on the board.
+const NOT_A_CITY = /^(unlisted|multiple locations|\d+\s+locations?|any|anywhere|hybrid|remote|on-?site|in-?office|full[- ]?time|part[- ]?time|various|worldwide|global|tbd|n\/?a)$/i;
+// Two pages for one place is duplicate content, which is actively worse than having no page at all.
+// Every entry below came from auditing the real generated list, not from imagination: the first pass
+// produced Bangalore AND Bengaluru, Montreal AND Montréal, Limassol AND "Limassol Cyprus",
+// Leamington Spa AND Royal Leamington Spa, plus "Vancouver - Great Northern Way" (a street address).
+const CITY_ALIAS = {
+  "bengaluru": "Bangalore", "bangalore": "Bangalore",
+  "montreal": "Montréal", "quebec": "Québec City", "quebec city": "Québec City",
+  "royal leamington spa": "Leamington Spa",
+  "manhattan": "New York", "new york city": "New York", "brooklyn": "New York",
+  "ho chi minh": "Ho Chi Minh City", "saigon": "Ho Chi Minh City",
+  "bengaluru urban": "Bangalore", "gurgaon": "Gurugram",
+  // Districts that are not the name anyone searches for: nobody types "Sariyer game jobs".
+  "sariyer": "Istanbul", "kadikoy": "Istanbul", "shibuya": "Tokyo", "shinjuku": "Tokyo",
+};
+// A trailing country name repeated inside the city segment ("Limassol Cyprus") — the country is
+// already captured separately, so it is noise in a page title.
+const CITY_TRAILING_COUNTRY = /\s+(cyprus|viet ?nam|india|canada|australia|japan|germany|deutschland|france|spain|espana|españa|portugal|poland|polska|sweden|finland|denmark|norway|iceland|ireland|england|scotland|wales|brazil|brasil|mexico|méxico|singapore|malaysia|indonesia|thailand|philippines|turkey|israel|greece|romania|serbia|croatia|hungary|austria|switzerland|netherlands|belgium|czechia|czech republic|slovakia|ukraine|armenia|azerbaijan|belarus|georgia|slovenia|jordan|pakistan|lithuania|latvia|estonia|malta|korea|south korea|china|taiwan|hong kong|new zealand|united states|usa|uk|united kingdom)$/i;
+function canonCity(raw){
+  let c = String(raw || "").trim();
+  c = c.split(/\s+[-–—]\s+/)[0].trim();          // "Vancouver - Great Northern Way" -> "Vancouver"
+  c = c.replace(CITY_TRAILING_COUNTRY, "").trim(); // "Limassol Cyprus" -> "Limassol"
+  // Fold accents for the lookup only, so "Montreal" and "Montréal" collapse to one canonical spelling.
+  const key = c.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  return CITY_ALIAS[key] || c;
+}
+function cityPageSpecs(all, existingSlugs){
+  const studioNames = new Set();
+  for (const j of all){ if (j.studio) studioNames.add(String(j.studio).toLowerCase()); if (j.parent) studioNames.add(String(j.parent).toLowerCase()); }
+  const by = {};
+  for (const j of all){
+    if (isPool(j.title)) continue;
+    if (j.workType === "Remote") continue;
+    const city = canonCity(jobCity(j.location));
+    if (!city || NOT_A_CITY.test(city)) continue;
+    // Some feeds put the company name in the location field ("NEOWIZ"), which sailed straight past a
+    // static blocklist and produced a city page for a studio. Checking against the board's own studio
+    // names catches that and anything like it in future, without needing to know the name in advance.
+    if (studioNames.has(city.toLowerCase())) continue;
+    // Keyed by city AND country: "San Jose" is two different places, and merging them would put
+    // Costa Rican roles on a Silicon Valley page.
+    // Separator is a TAB, not a space: city names contain spaces, so splitting
+    // "Los Angeles\tUS" on a space would yield the city "Los".
+    const key = city + "\t" + (resolveCountry(j.location) || "");
+    (by[key] || (by[key] = [])).push(j);
+  }
+  const specs = [];
+  for (const key of Object.keys(by)){
+    const jobs = by[key];
+    const city = key.split("\t")[0], cc = key.split("\t")[1] || "";
+    const n = new Set(jobs.map(j => (j.studio || "") + "|" + (j.title || ""))).size;
+    if (n < CITY_PAGE_MIN) continue;
+    const slug = slugify(city + " game jobs");
+    if (existingSlugs.has(slug)) continue;
+    const scount = {}; jobs.forEach(j => { const s = j.parent || j.studio; if (s) scount[s] = (scount[s] || 0) + 1; });
+    const studios = Object.keys(scount).sort((a, b) => scount[b] - scount[a]).slice(0, 5);
+    const nStudios = Object.keys(scount).length;
+    const dcount = {}; jobs.forEach(j => { if (j.discipline && j.discipline !== "Other") dcount[j.discipline] = (dcount[j.discipline] || 0) + 1; });
+    const discs = Object.keys(dcount).sort((a, b) => dcount[b] - dcount[a]).slice(0, 4);
+    const blurb = `${city} has ${n} open game industry role${n === 1 ? "" : "s"} right now across ${nStudios} studio${nStudios === 1 ? "" : "s"}`
+      + (discs.length ? `, led by ${discs.join(", ")}` : "") + ". "
+      + (studios.length ? `Studios hiring in ${city}: ${studios.join(", ")}${nStudios > studios.length ? " and more" : ""}. ` : "")
+      + `Every listing is pulled straight from the studio's own careers page and refreshed hourly — you apply on their site, not ours.`;
+    existingSlugs.add(slug);
+    specs.push({ slug, h1: `Game Jobs in ${city}`, noun: `${city} game industry`, kind: "city",
+      breadcrumb: city, blurb,
+      match: (j) => j.workType !== "Remote" && canonCity(jobCity(j.location)) === city
+                 && (resolveCountry(j.location) || "") === cc });
+  }
+  return specs.sort((a, b) => a.h1.localeCompare(b.h1));
+}
+
 // One page per curated skill/engine/tool with >=5 live roles carrying the tag.
 function skillPageSpecs(all){
   const specs = [];
@@ -1681,8 +1763,8 @@ function renderHubPage(allSpecs, all){
     + specs.map(s=>`<a class="rel" href="/${escHtml(s.slug)}">${escHtml(s.h1)}</a>`).join("") + `</div>` : "";
   const total = new Set(all.filter(j=>!isPool(j.title)).map(j=>(j.studio||"")+"|"+(j.title||""))).size;
   const url = "https://devquest.gg/jobs";
-  const title = "Browse Game Dev Jobs by Category, Studio & Skill · DevQuest";
-  const desc = `Every game-dev job category on DevQuest — by discipline, studio, game engine and skill. ${total} live roles, pulled from studio career pages and refreshed hourly. No ads.`;
+  const title = "Browse Game Dev Jobs by Category, City, Studio & Skill · DevQuest";
+  const desc = `Every game-dev job category on DevQuest — by discipline, city, studio, game engine and skill. ${total} live roles, pulled from studio career pages and refreshed hourly. No ads.`;
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1726,6 +1808,7 @@ function renderHubPage(allSpecs, all){
   <p class="sub">Every DevQuest category in one place — by discipline, studio, engine and skill. ${total} live roles, pulled straight from studios' own career pages and refreshed hourly.</p>
   ${sect("By discipline", group("discipline"))}
   ${sect("Remote & by seniority", group("combo"))}
+  ${sect("By city", group("city"))}
   ${sect("By engine & skill", group("skill"))}
   ${sect("By studio", group("studio"))}
 </div>
@@ -1742,9 +1825,14 @@ function writeLandingPages(all, dir){
   const taken = new Set([...discSpecs, ...skillSpecs].map(s => s.slug));   // combos skip already-taken slugs
   const comboSpecs  = comboPageSpecs(all, taken);
   const studioSpecs = studioPageSpecs(all);
+  // City pages are generated LAST and are handed every slug already claimed, so a city can never
+  // take a slug a studio or discipline page wanted. (A studio literally named after its city would
+  // otherwise collide.)
+  for (const sp of studioSpecs) taken.add(sp.slug);
+  const citySpecs = cityPageSpecs(all, taken);
   // Dedupe by slug (first wins: discipline > skill > combo > studio).
   const bySlug = new Map();
-  for (const s of [...discSpecs, ...skillSpecs, ...comboSpecs, ...studioSpecs]) if (!bySlug.has(s.slug)) bySlug.set(s.slug, s);
+  for (const s of [...discSpecs, ...skillSpecs, ...comboSpecs, ...studioSpecs, ...citySpecs]) if (!bySlug.has(s.slug)) bySlug.set(s.slug, s);
   const allSpecs = [...bySlug.values()];
 
   const slugs = [];
@@ -1765,7 +1853,7 @@ function writeLandingPages(all, dir){
     + urls.map(u => `  <url><loc>${u}</loc><lastmod>${today}</lastmod></url>`).join("\n")
     + `\n</urlset>\n`;
   fs.writeFileSync(path.join(dir, "sitemap.xml"), sm);
-  console.log(`Wrote ${slugs.length} SEO pages (${studioSpecs.length} studio, ${skillSpecs.length} skill, ${comboSpecs.length} combo, +hub) + sitemap.xml`);
+  console.log(`Wrote ${slugs.length} SEO pages (${studioSpecs.length} studio, ${citySpecs.length} city, ${skillSpecs.length} skill, ${comboSpecs.length} combo, +hub) + sitemap.xml`);
 }
 
 // ---- Normalization helpers -------------------------------------------------

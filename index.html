@@ -69,6 +69,20 @@
     --gold: #d29922; --purple: #a371f7;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; scrollbar-width: thin; scrollbar-color: #30363d transparent; }
+  /* ==== Document outline ======================================================================
+     The List view had ZERO headings — h1 through h6, not one. Google reads heading structure as a
+     primary signal of what a page is about, and screen readers use it as the only way to navigate a
+     page without scrolling through all 5,297 nodes linearly. Real heading elements are used below,
+     with .hx neutralising the two UA defaults the `*` reset above doesn't already cover, so the
+     markup gains semantics and the page does not move by a pixel. Declared here, before every rule
+     that styles these classes, so those rules still win. */
+  .hx { font-size: inherit; font-weight: inherit; }
+  /* Visually hidden but still read by screen readers and indexed — deliberately NOT display:none,
+     which would remove it from both. Used for the h1: the visible tagline it would otherwise sit on
+     is display:none below 1000px, and Google indexes mobile-first, so an h1 there would be invisible
+     to exactly the crawler that matters. */
+  .vh { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden;
+        clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; border: 0; }
   ::-webkit-scrollbar { width: 8px; height: 8px; }
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: #30363d; border-radius: 999px; }
@@ -1120,7 +1134,7 @@
     <div class="fpin"><label class="flabel">Search</label>
       <input type="text" id="q" placeholder="Title, studio, keyword…" oninput="render()"></div>
     <div class="fpin"><label class="flabel">Posted</label>
-      <select id="age" onchange="render()">
+      <select id="age" aria-label="Filter by when the role was posted" onchange="render()">
         <option value="0" selected>Any time</option>
         <option value="1">Past 24 hours</option>
         <option value="7">Past week</option>
@@ -1159,7 +1173,7 @@
 
     <div class="acc" data-sec="region">
       <button type="button" class="acch" onclick="toggleAcc(this)"><span class="t">Region</span><span class="bdg"></span><span class="chev">▸</span></button>
-      <div class="accb"><select id="region" onchange="render()"><option value="">All regions</option></select></div>
+      <div class="accb"><select id="region" aria-label="Filter by region" onchange="render()"><option value="">All regions</option></select></div>
     </div>
 
     <div class="acc" data-sec="country">
@@ -1193,6 +1207,7 @@
   </aside>
 
   <main>
+    <h1 class="vh">Game dev jobs — open roles across the game industry, refreshed hourly</h1>
     <div class="viewtabsbar">
     <!-- Filters used to be its own full-width primary button above this row. On mobile that made
          the least-used control the most visually dominant thing on the page: 805 distinct visitors
@@ -1815,7 +1830,7 @@ function renderHotSection(hot, P, mode){
   return `<div id="hotGroup" class="group" style="border:1px solid rgba(255,138,61,.35);border-radius:12px;background:linear-gradient(180deg,rgba(255,138,61,.07),transparent);margin-bottom:14px">
       <div class="group-header" onclick="toggleHot()" style="cursor:pointer">
         <span class="arrow ${hotOpen?'open':''}">▸</span>
-        <span style="color:#ff8a3d;font-weight:800;letter-spacing:.2px">🔥 Hot jobs for you</span>
+        <h2 class="hx" style="color:#ff8a3d;font-weight:800;letter-spacing:.2px;display:inline">🔥 Hot jobs for you</h2>
         <span class="gcount">${hot.length}</span>
         ${baseWhy?`<span style="color:var(--muted);font-weight:400;font-size:12px;margin-left:8px">${baseWhy}</span>`:""}
       </div>
@@ -2596,7 +2611,7 @@ function render(){
     const rest = jobs.length - n;
     return `<div class="group">
       <div class="group-header" onclick="toggleGroup(${gi})">
-        <span class="arrow ${open?'open':''}">▸</span> <span style="color:${discColor(dn)}">${dn}</span>
+        <span class="arrow ${open?'open':''}">▸</span> <h2 class="hx" style="color:${discColor(dn)};display:inline">${dn}</h2>
         <span class="gcount">${jobs.length}</span>
       </div>
       ${open ? jobs.slice(0,n).map(rowHtml).join("") : ""}
@@ -2746,7 +2761,7 @@ function renderMatrix(base){
   const cell = {}; for (const j of base) cell[j.d+"|"+j.sen] = (cell[j.d+"|"+j.sen]||0)+1;
   const cmax = Math.max(1, ...Object.values(cell));
   const heat = n => n===0 ? "transparent" : `rgba(88,166,255,${0.10 + 0.6*Math.sqrt(n/cmax)})`;
-  let h = `<div class="matrixhead" onclick="matrixToggle()"><div class="mh-text"><span class="mh-title">Where are the jobs right now?</span><span class="mhint">Tap any role × seniority cell to filter · brighter = more roles · hover a label<span class="swipehint"> · swipe →</span></span></div><span class="mh-toggle" id="mhToggle" aria-hidden="true">${matrixCollapsed()?"▸":"▾"}</span></div>`;
+  let h = `<div class="matrixhead" onclick="matrixToggle()"><div class="mh-text"><h2 class="hx mh-title">Where are the jobs right now?</h2><span class="mhint">Tap any role × seniority cell to filter · brighter = more roles · hover a label<span class="swipehint"> · swipe →</span></span></div><span class="mh-toggle" id="mhToggle" aria-hidden="true">${matrixCollapsed()?"▸":"▾"}</span></div>`;
   if (!discOrder.length) { document.getElementById("matrixWrap").innerHTML = h + `<div class="xhint">No roles in the current filters.</div>`; return; }
   h += `<div class="matrixbody"><div class="mxscroll" style="overflow-x:auto"><table class="xtab"><tr><th></th>${seniorities.map(sn=>{
     const info = SEN_INFO[sn];
@@ -2822,7 +2837,7 @@ function renderMatrixDash(base){
   const lensBar = `<div class="mtx-lensbar" onclick="event.stopPropagation()"><span class="mtx-lens-label">View by</span><span class="mtx-lenses">`
     + lenses.map(([m,l])=>`<button type="button" class="mtx-lens ${matrixMetric===m?'on':''}" onclick="setMatrixMetric('${m}')">${l}</button>`).join("")
     + `</span></div>`;
-  let h = `<div class="matrixhead" onclick="matrixToggle()"><div class="mh-text"><span class="mh-title">Where are the jobs right now?</span><span class="mhint">Tap cells to filter<span class="hoverhint"> · hover any cell for detail</span><span class="swipehint"> · swipe →</span></span></div>${lensBar}<span class="mh-toggle" id="mhToggle" aria-hidden="true">${matrixCollapsed()?"▸":"▾"}</span></div>`;
+  let h = `<div class="matrixhead" onclick="matrixToggle()"><div class="mh-text"><h2 class="hx mh-title">Where are the jobs right now?</h2><span class="mhint">Tap cells to filter<span class="hoverhint"> · hover any cell for detail</span><span class="swipehint"> · swipe →</span></span></div>${lensBar}<span class="mh-toggle" id="mhToggle" aria-hidden="true">${matrixCollapsed()?"▸":"▾"}</span></div>`;
   const _mw = document.getElementById("matrixWrap");
   _mw.classList.toggle("mtx-dash", MATRIX_RESTYLE);
   if (!discOrder.length){ _mw.innerHTML = h + `<div class="xhint">No roles in the current filters.</div>`; _mw.classList.toggle("mcollapsed", matrixCollapsed()); return; }
