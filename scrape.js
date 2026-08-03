@@ -3546,7 +3546,13 @@ async function fetchTeamtailor(studio) {
   const all = {};
   let firstHtml = "";
   for (let page = 1; page <= 25; page++) {
-    const res = await fetch(`https://${studio.host}/jobs?page=${page}`, { headers });
+    // Page 1 is requested as bare /jobs, NOT /jobs?page=1. On Teamtailor's newer theme those are not
+    // equivalent: /jobs renders the list while /jobs?page=1 returns a shell with zero job anchors, so
+    // this loop broke on the first request and the board looked empty. Raw Fury sat at 0 with 2 live
+    // roles because of it. On the older theme the two are byte-identical (verified against Paradox:
+    // 20 job ids either way), so page-1 behaviour is unchanged for boards that already worked.
+    const url = page === 1 ? `https://${studio.host}/jobs` : `https://${studio.host}/jobs?page=${page}`;
+    const res = await fetch(url, { headers });
     if (!res.ok) { if (page === 1) throw new Error(`HTTP ${res.status}`); break; }
     const html = await res.text();
     if (page === 1) firstHtml = html;
