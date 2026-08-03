@@ -357,7 +357,10 @@ const STUDIOS = [
   { name: "Asobo Studio", type: "lever", token: "asobostudio", region: "eu" }, // MS Flight Sim, A Plague Tale (public feed on Lever EU host)
   // LEGO Digital Play is the LEGO Group's in-house GAMES studio — its own Teamtailor careers
   // site, so we get games-only roles without filtering LEGO corporate's giant Workday board.
-  { name: "LEGO Digital Play", type: "teamtailor", token: "legodigitalplay", host: "careers.legodigitalplay.com" },
+  // `team` set because this board's meta reads "LEGO Digital Play · LEGO Digital Play London Office ·
+  // Hybrid" — without it the office name keeps the company prefix and the work type lands in the
+  // location. With it: location "London Office", workType "Hybrid". (Verified against the live board.)
+  { name: "LEGO Digital Play", type: "teamtailor", token: "legodigitalplay", host: "careers.legodigitalplay.com", team: "LEGO Digital Play", city: "London, UK" },
   { name: "Focus Entertainment", type: "recruitee", token: "focusentertainment" }, // FR publisher/dev (Recruitee)
 
   // ---- June 2026 batch 2 (verified live feeds; a few have valid boards sitting at 0 today) ----
@@ -3475,8 +3478,12 @@ function parseTeamtailor(html, studio) {
   if (studio.theme === "cards") return parseTeamtailorCards(html, studio);
   const re = /<a[^>]*href="(https?:\/\/[^"]*\/jobs\/(\d+)-[^"]*)"[^>]*>([\s\S]*?)<\/a>/g;
   const out = [], seen = new Set();
-  let m;
-  while ((m = re.exec(html))) {
+  // Collected up front (rather than a while/exec loop) so each anchor knows where the NEXT one starts.
+  // That boundary is what makes the sibling-meta fallback below safe: without it the slice would run
+  // on into the following job and steal its title as a location.
+  const anchors = [...html.matchAll(re)];
+  for (let ai = 0; ai < anchors.length; ai++) {
+    const m = anchors[ai];
     const url = m[1], id = m[2], inner = m[3];
     if (seen.has(id)) continue;
     // title: prefer the link-style span's title attribute (one Teamtailor theme);
@@ -3493,9 +3500,30 @@ function parseTeamtailor(html, studio) {
     // department + location from the "mt-1" meta div (spans split by ·)
     let dept = null, location = "Unlisted", metaWorkType = null;
     const meta = inner.match(/<div class="mt-1[^"]*">([\s\S]*?)<\/div>/);
+    // Newer Teamtailor themes moved the meta OUT of the anchor into a sibling, and the wrapper class
+    // is not stable across them: Embark / Cast Iron / Raw Fury use <div class="mt-1 text-md">, Paradox
+    // uses <span class="text-base">. Matching on class is what left 105 of 247 Teamtailor roles (43%,
+    // 16 studios, several at 100%) with location "Unlisted". So when the anchor holds no meta, read the
+    // markup between this anchor and the next job anchor and treat it as the meta — class-agnostic, and
+    // bounded so it cannot swallow the next listing. Boards whose meta IS inside the anchor (Stillfront,
+    // Beffio, Madbox, Yodo1, Fatshark, Triband — all currently 0% unlisted) never reach this branch.
+    let metaText = null;
     if (meta) {
+      metaText = meta[1];
+    } else {
+      const end = m.index + m[0].length;
+      const next = anchors[ai + 1] ? anchors[ai + 1].index : Math.min(end + 600, html.length);
+      const slice = next > end ? html.slice(end, next) : "";
+      // The sibling slice is unstructured markup, so accept it only when it actually looks like meta:
+      // it must carry the "·" separator every Teamtailor variant uses between department, location and
+      // work type. Without that gate a stray badge or blank gap would land in `location` as junk, which
+      // is worse than "Unlisted" — a wrong city pollutes the map, the filters and the city pages.
+      const probe = decodeEnt(slice.replace(/<[^>]*>/g, " ")).replace(/\s+/g, " ").trim();
+      if (probe.includes("·") && probe.length <= 200) metaText = slice;
+    }
+    if (metaText != null) {
       // decode entities first (so · separators are real), strip tags, split on the bullet
-      const text = decodeEnt(meta[1].replace(/<[^>]*>/g, " ")).replace(/\s+/g, " ").trim();
+      const text = decodeEnt(metaText.replace(/<[^>]*>/g, " ")).replace(/\s+/g, " ").trim();
       let parts = text.split("·").map(s => s.trim()).filter(Boolean);
       // Opt-in cleaning (studios with a team token, e.g. Snowprint whose meta reads
       // "Code · Snowprint Stockholm · Hybrid"): pull the work-type out of the parts and
