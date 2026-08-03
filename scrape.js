@@ -441,7 +441,10 @@ const STUDIOS = [
   // ---- batch 2 verification pass (real ATS tokens confirmed from each careers page) ----
   { name: "Atari", type: "greenhouse", token: "atariinc" },                        // 9 live
   { name: "Digital Eclipse", type: "greenhouse", token: "digitaleclipse" },        // Atari-owned (remasters)
-  { name: "Bloober Team", type: "teamtailor", token: "blooberteam", host: "careers.blooberteam.com" }, // Silent Hill 2 remake (PL) — migrated Recruitee→Teamtailor Jun 2026
+  // Silent Hill 2 remake (PL). Config said Teamtailor from a Jun 2026 migration, but careers.blooberteam.com
+  // now 301s back to blooberteam.recruitee.com — the move was reverted and we returned 0 for ~56 days
+  // while 3 real roles were live. Verified 2026-08-03 against the Recruitee offers API.
+  { name: "Bloober Team", type: "recruitee", token: "blooberteam", city: "Kraków, Poland" },
   { name: "11 bit studios", type: "recruitee", token: "11bitstudios" },            // Frostpunk (PL)
   { name: "Raw Fury", type: "teamtailor", token: "rawfury", host: "jobs.rawfury.com" }, // indie publisher (SE)
   { name: "Wargaming", type: "greenhouse", token: "wargamingen" },                 // World of Tanks (public board API ~0 today — recheck)
@@ -480,7 +483,8 @@ const STUDIOS = [
   // CIG left Workday for a self-hosted GraphQL board (2026-06-18); see fetchCig.
   { name: "Cloud Imperium Games", type: "cig", token: "cig" }, // Star Citizen, Squadron 42
   // ---- July 2026 batch 2: promoted to Mainland (confirmed live on a supported ATS) — spot-check first scrape ----
-  { name: "Tripledot Studios", type: "greenhouse", token: "tripledotstudios" }, // aggregate board across acquired studios (~58 roles; standard greenhouse API works despite the EU display host)
+  // (Tripledot Studios removed here 2026-08-03 — an exact duplicate of the entry above: same name, same
+  // greenhouse token, so every run fetched the same board twice.)
   { name: "Rocket Science", type: "ashby", token: "rocketsciencegg" }, // co-dev group incl. Atomic Theory
   { name: "Volka", type: "ashby", token: "volka", city: "Limassol, Cyprus" }, // Taonga — mobile
   { name: "Companion Group", type: "recruitee", token: "companiongroupltd" },
@@ -3873,6 +3877,34 @@ function parseJazzHr(html, studio) {
       id: `jazz-${studio.token}-${(url.match(/apply\/([A-Za-z0-9]+)/) || [])[1] || url.slice(-8)}`,
       title, studio: studio.name,
       discipline: mapDiscipline(null, title),
+      workType: inferWorkType(title, location, []),
+      location, region: inferRegion(location),
+      seniority: inferSeniority(title),
+      salary: null, yoe: null, postedAt: null, url,
+    });
+  }
+  if (out.length) return out;
+  // JazzHR serves two board templates and the card layout above only matches one of them. The other is a
+  // plain table (<td class="resumator-job-title-column"><a ...>Title</a></td> ... <td class="resumator-job-
+  // location-column">Location</td>). Next Level Games sat at 0 for 37 days because of this, with 7 real
+  // roles live. Only run it when the card parse found nothing, so a board using both never double-counts.
+  const tre = /<td class="resumator-job-title-column">\s*<a href="([^"]+\/apply\/[^"]+)"[^>]*>([\s\S]*?)<\/a>\s*<\/td>([\s\S]*?)<\/tr>/g;
+  let t;
+  while ((t = tre.exec(html))) {
+    const url = t[1];
+    const title = decodeEnt(t[2].replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim());
+    // Same evergreen-placeholder skip the BambooHR / Personio / Kenjo fetchers apply. No JazzHR board
+    // currently surfaces one, so this only removes new junk (NLG's "General Application"), not live rows.
+    if (!title || isPool(title)) continue;
+    const locCell = (t[3].match(/<td class="resumator-job-location-column">([\s\S]*?)<\/td>/) || [])[1] || "";
+    const location = decodeEnt(locCell.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim()) || "Unlisted";
+    const deptCell = (t[3].match(/<td class="resumator-department-column">([\s\S]*?)<\/td>/) || [])[1] || "";
+    let dept = decodeEnt(deptCell.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim());
+    if (/^\(?none\)?$/i.test(dept)) dept = "";
+    out.push({
+      id: `jazz-${studio.token}-${(url.match(/apply\/([A-Za-z0-9]+)/) || [])[1] || url.slice(-8)}`,
+      title, studio: studio.name,
+      discipline: mapDiscipline(dept || null, title),
       workType: inferWorkType(title, location, []),
       location, region: inferRegion(location),
       seniority: inferSeniority(title),
