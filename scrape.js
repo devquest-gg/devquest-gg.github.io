@@ -12,6 +12,7 @@
 
 const fs = require("fs");
 const path = require("path");
+const crypto = require("crypto");   // AES-128-CBC — Moka (mokahr.com) ships its job list encrypted; see fetchMoka
 
 const sampleIdx = process.argv.indexOf("--sample");
 const SAMPLE_FILE = sampleIdx > -1 ? process.argv[sampleIdx + 1] : null;
@@ -120,6 +121,22 @@ const DIRECTORY = [
   // (Anshar Studios promoted to mainland 2026-07-05 — WP careers page → Traffit board; see fetchTraffit.)
   // (Overwolf promoted to mainland 2026-07-04 — Comeet ATS, same fetcher as Moon Active; see fetchComeet.)
   // (Nekki promoted to mainland 2026-07-05 — self-hosted WordPress careers page; see fetchNekki.)
+
+  // ---- August 2026: Feishu (Lark) ATS — link-outs, and they have to stay link-outs -----------------
+  // Both of these run on ByteDance's Feishu recruitment portal (<tenant>.jobs.feishu.cn). Their job
+  // list IS a clean JSON API — POST /api/v1/search/job/posts?...&portal_type=6&portal_entrance=1 —
+  // but it is behind ByteDance's anti-bot edge, and it cannot be called from a plain server-side
+  // fetcher. Verified on 2026-08-05 against BOTH tenants:
+  //   * every POST we issue returns 405, with or without a copied (even freshly-minted) _signature
+  //   * GET on the same path falls through to the SPA's HTML catch-all
+  //   * in-page, `window.fetch` is NOT native — their SDK wraps it, and only requests routed through
+  //     that wrapper get a valid signature appended. Reproducing it in Node would mean porting
+  //     ByteDance's obfuscated signer, which would be brittle, high-maintenance, and is plainly the
+  //     thing the gate exists to prevent.
+  // So: link-outs. If we ever run a headless browser in the scrape job (which is how competitors most
+  // likely get these), both become mainland candidates worth ~290 roles between them.
+  { name: "MoonTon Games", url: "https://moonton.jobs.feishu.cn/index", note: "Mobile Legends: Bang Bang — Shanghai (~162 roles). Feishu ATS, signature-gated; see note above", city: "Shanghai, China" },
+  { name: "Lilith Games", url: "https://lilithgames.jobs.feishu.cn/career", note: "AFK Journey, Rise of Kingdoms — Shanghai (~128 roles). Feishu ATS, signature-gated; see note above", city: "Shanghai, China" },
 ];
 
 // ---- "The Moon": smaller / indie studios, often ones who reached out to be listed.
@@ -599,6 +616,110 @@ const STUDIOS = [
   { name: "Game District", type: "jazzhr", token: "gamedistrict", city: "Lahore, Pakistan" },                // Pakistani mobile game dev/publisher (JazzHR board, gamedistrict.applytojob.com)
   { name: "Ares Interactive", type: "rippling", token: "ares-interactive-careers", city: "San Francisco, CA" }, // The Walking Dead: Aftermath — game dev/publisher, SF + Berlin (Rippling ATS)
   { name: "Lightfox Games", type: "lightfox", token: "lightfox", city: "Seattle, WA" },                      // ex-King Seattle vets; mobile studio, Seattle + Vancouver (self-hosted /roles.json)
+
+  // ---- August 2026 batch — from the gamesjobsindex.com gap sweep (see gamesjobsindex-gap-2026-08.md) ----
+  // Every token below was read from the studio's LIVE careers URL (via that directory's outbound link),
+  // not guessed — and then each feed was fetched and eyeballed on 2026-08-05, so the counts in the
+  // comments are real. Each source still has its own try/catch: a bad token shows 0 roles, it can't
+  // break a run. After the first scrape, check the Health tab and fix or demote anything at 0.
+  //
+  // Eight candidates from that sweep were checked and REJECTED — recorded here so a future sweep
+  // doesn't "rediscover" them and add them by mistake:
+  //   CatFace (catface.bamboohr) ......... Markiplier's media co; its 7 roles are showrunner/cinematographer/video-editor, not game dev
+  //   Dream Machine FX (dmfx.bamboohr) ... VFX/animation house (Montréal 3D + Toronto finance)
+  //   Singing Frog Studio (bamboohr) ..... VFX/compositing house
+  //   Magnopus (lever) ................... virtual production / immersive tech; their own copy says not traditional game dev
+  //   Stormind Games (bamboohr) .......... board holds ONLY "Spontaneous Applications" -> 0 real rows after the skip filter
+  //   Outplay Entertainment (jazzhr) ..... board holds ONLY "Speculative Applications", and parseJazzHr has no skip filter -> would add a junk row
+  //   Swift Games (teamtailor) ........... "No open positions right now"
+  //   ustwo games (hibob token "ustwo") .. that board is the ustwo design AGENCY (finance/marketing/strategy), not the games arm. The directory mislabels it.
+
+  // Japan — HRMOS (fetchHrmos already exists; these are token-only adds).
+  // Owner decision 2026-08-05: JP/CN-language postings go in as REAL mainland rows, not link-outs,
+  // because the board's region filter keeps them out of non-native speakers' default results anyway.
+  { name: "Colorful Palette", type: "hrmos", token: "colorfulpalette", city: "Tokyo, Japan" },               // Project SEKAI COLORFUL STAGE! feat. Hatsune Miku — CyberAgent studio, ~100 JP roles. Biggest single add in this batch.
+  { name: "Now Production", type: "hrmos", token: "nowproduction", city: "Osaka, Japan" },                   // Tokyo Psychodemic, Deadly Premonition 2 — ~23 JP roles (planner/3D/programmer/producer). Osaka HQ, so city is Osaka (fetchHrmos maps 大阪→Osaka, 東京→Tokyo).
+  { name: "Silicon Studio", type: "hrmos", token: "siliconstudiohr", city: "Tokyo, Japan" },                 // Real-time 3DCG tech (Mizuchi, Yebis) + game dev — ~9 JP roles, mostly graphics/tools engineering. NOTE token is siliconstudiohr, not siliconstudio (that 404s).
+
+  // Workable
+  { name: "Vertigo Games", type: "workable", token: "vertigogames", city: "Rotterdam, Netherlands" },        // Arizona Sunshine, Metro Awakening — VR specialist (Embracer). ~22 roles; largest Western add in this batch.
+  { name: "Komodo", type: "workable", token: "komodo-co-dot-ltd", city: "Tokyo, Japan" },                    // Japanese publisher/localiser (Densha de Go!, Hatsune Miku PD) — ~17 roles
+  { name: "Goliath Games", type: "workable", token: "goliathgroup", city: "Guildford, UK" },                 // ~16 roles
+  { name: "Crazy Maple Studio", type: "workable", token: "crazymaplestudio", city: "Sunnyvale, CA" },        // Chapters, Kiss Scandal — interactive fiction (COL Group). ~8 roles
+  { name: "Pulse Games", type: "workable", token: "pulsegames", city: "United Kingdom" },                    // ~8 roles
+  { name: "Hardsuit Labs", type: "workable", token: "hardsuit-labs-1", city: "Seattle, WA" },                // Bloodlines 2 (former), Blacklight — ~6 roles. NOTE the "-1" is part of the token.
+  { name: "Mythwright", type: "workable", token: "mythwright", city: "United Kingdom" },                     // ~5 roles
+  { name: "Tentworks Interactive", type: "workable", token: "tentworks-interactive", city: "India" },        // ~5 roles
+  { name: "Cool Games", type: "workable", token: "coolgames", city: "Amsterdam, Netherlands" },              // HTML5/instant games — ~4 roles
+  { name: "Sawhorse Productions", type: "workable", token: "sawhorse-productions", city: "Los Angeles, CA" },// branded Roblox/Fortnite experiences — ~4 roles
+  { name: "High Voltage Studios", type: "workable", token: "high-voltage-software", city: "Hoffman Estates, IL" }, // co-dev (Zombie Army, Ben 10). NOTE token is high-voltage-software, not -studios.
+  { name: "Smoking Gun Interactive", type: "workable", token: "smoking-gun-interactive-1", city: "Vancouver, BC" }, // NOTE the "-1" is part of the token.
+
+  // BambooHR
+  { name: "Offworld Industries", type: "bamboohr", token: "owi", city: "Vancouver, BC" },                    // Squad, Beyond the Wire — ~11 roles. NOTE token is "owi", not "offworldindustries".
+  { name: "iniBuilds", type: "bamboohr", token: "inibuilds", city: "United Kingdom" },                       // flight-sim aircraft/scenery (MSFS) — ~6 roles
+  { name: "Budge Studios", type: "bamboohr", token: "budge", city: "Montréal, QC" },                         // kids' mobile — ~5 roles
+  { name: "Soul Assembly", type: "bamboohr", token: "soulassembly", city: "Leamington Spa, UK" },             // VR (Drop Dead) — board shows 5, but 4 are speculative pools the BambooHR skip filter drops, so expect ~1 row
+  { name: "Entity Games", type: "bamboohr", token: "entitygames", city: "United Kingdom" },                  // ~4 roles
+  { name: "Endless Studios", type: "bamboohr", token: "endlessstudios", city: "Abu Dhabi, UAE" },            // ~4 roles
+  { name: "Uken Games", type: "bamboohr", token: "uken", city: "Toronto, ON" },                              // ~3 roles (its evergreen "Express Your Interest!" entry is why the BambooHR skip regex gained an express-interest clause in this batch)
+  { name: "Game Mode One", type: "bamboohr", token: "gamemodeone", city: "Canada" },                         // ~3 roles
+  { name: "Rockbite Games", type: "bamboohr", token: "rockbitegames", city: "Yerevan, Armenia" },            // Deep Town, Sandship — ~1 role
+  { name: "Exient", type: "bamboohr", token: "exient", city: "Malta" },                                      // ~1 role
+  { name: "Megazebra", type: "bamboohr", token: "megazebragmbh", city: "Munich, Germany" },                  // ~1 role. NOTE token carries the "gmbh" suffix.
+  { name: "Infinity Plus Two", type: "bamboohr", token: "infinityplustwo", city: "Melbourne, Australia" },    // Puzzle Quest 3 — ~1 role
+  { name: "Reforged Studios", type: "bamboohr", token: "reforgedstudios", city: "Helsinki, Finland" },       // ~1 role
+  { name: "Seismic Squirrel", type: "bamboohr", token: "seismicsquirrel", city: "Issaquah, WA" },                  // ~1 role
+
+  // Teamtailor (host is required — see fetchTeamtailor). Theme left default/classic; if one of these
+  // sits at 0 with roles visible on the site, try theme: "cards" (same fix as Sloclap/Madbox).
+  { name: "Vira Games", type: "teamtailor", token: "viragames", host: "viragames.teamtailor.com", city: "Kyiv, Ukraine" },                       // ~11 roles
+  { name: "Twin Harbour Interactive", type: "teamtailor", token: "twinharbour", host: "twinharbour.teamtailor.com", city: "Hamburg, Germany" },           // ~10 roles
+  { name: "Plummy Games", type: "teamtailor", token: "plummygames", host: "plummygames.teamtailor.com", city: "Chișinău, Moldova" },             // ~4 roles
+  { name: "Zaibatsu Interactive", type: "teamtailor", token: "zaibatsuinteractiveoy", host: "zaibatsuinteractiveoy.teamtailor.com", city: "Finland" }, // ~1 role. NOTE token carries the "oy" suffix.
+
+  // Lever
+  { name: "Grand Games", type: "lever", token: "grand", city: "Istanbul, Türkiye" },                         // mobile puzzle — ~11 roles. NOTE token is just "grand".
+  { name: "Spyke Games", type: "lever", token: "spyke-games", city: "Istanbul, Türkiye" },                    // ~10 roles
+  { name: "Loop Games", type: "lever", token: "loopgames", city: "Istanbul, Türkiye" },                        // ~5 roles
+  { name: "Fishlabs", type: "lever", token: "fishlabs", region: "eu", city: "Hamburg, Germany" },                            // Chorus, Aquanox — Deep Silver Fishlabs (Embracer). ~1 role
+
+  // SmartRecruiters
+  { name: "Old Skull Games", type: "smartrecruiters", token: "OldSkullGames1", city: "Lyon, France" },        // ~5 roles. NOTE the capitalisation and trailing "1" are both part of the token.
+  { name: "Umanaia Interactive", type: "smartrecruiters", token: "umanaia", city: "Canada" },                  // ~2 roles
+  { name: "Nvizzio Creations", type: "smartrecruiters", token: "nvizziocreations", city: "Montréal, QC" },     // ~1 role
+  { name: "Playwing", type: "smartrecruiters", token: "playwing", city: "Bordeaux, France" },                  // ~1 role
+
+  // Breezy
+  { name: "Turbulent", type: "breezy", token: "turbulent", city: "Montréal, QC" },                             // Star Citizen web/platform co-dev — ~4 roles
+  { name: "Preloaded", type: "breezy", token: "preloaded", city: "London, UK" },                               // purpose-driven games (Framestore) — ~2 roles
+  { name: "Puzzle Cats", type: "breezy", token: "puzzle-cats", city: "Canada" },                               // ~1 role
+  { name: "Dreamforge Games", type: "breezy", token: "dreamforge-games-corporation", city: "United States" },   // ~1 role. NOTE the long "-corporation" token.
+
+  // Personio
+  { name: "Chimera Entertainment", type: "personio", token: "remotecontrol", city: "Munich, Germany" },        // Angry Birds Epic, Warhammer: Chaos & Conquest. NOTE the token is the parent group's (Remote Control Productions) — but the board's 4 postings are all Chimera's own, so the studio name is Chimera, not the group. Verified 2026-08-05; 1 of the 4 is a speculative pool that PERSONIO_SKIP drops, so expect ~3 rows.
+  { name: "Airborn Studios", type: "personio", token: "airbornstudios", city: "Berlin, Germany" },             // game art co-dev (same profile as Beffio) — ~1 role
+
+  // HiBob
+  { name: "Nexus Mods", type: "hibob", token: "nexusmods", city: "Exeter, UK" },                               // modding platform — ~14 roles, mostly engineering
+
+  // JazzHR / ApplyToJob
+  { name: "Iron Galaxy", type: "jazzhr", token: "irongalaxy", city: "Chicago, IL" },                            // Rumbleverse, co-dev (Overwatch 2 ports, Diablo II Resurrected)
+
+  // Moka (mokahr.com) — Chinese ATS; see fetchMoka. `token` is the orgId and `siteId` the numeric
+  // site in the careers URL: https://<host>/social-recruitment/<token>/<siteId>. Note the two hosts
+  // behave differently (app.* encrypts the payload, hire-r1.* does not) — the fetcher handles both.
+  { name: "Yoka Games", type: "moka", token: "yokagames", siteId: "41939", host: "app.mokahr.com", city: "Shanghai, China" },        // 游卡 — Three Kingdoms Kill (三国杀); ~165 roles, biggest board in this batch
+  { name: "Hero Games", type: "moka", token: "yingxionghr", siteId: "39426", host: "app.mokahr.com", city: "Beijing, China" },       // 英雄互娱 — publisher (Bright Memory, Sand Land); ~69 roles, mostly English-titled overseas-publishing posts
+  { name: "Yostar Games", type: "moka", token: "yostar", siteId: "145292", host: "app.mokahr.com", city: "Shanghai, China" },        // Arknights, Azur Lane, Blue Archive (publishing); ~33 roles
+  { name: "FirstFun", type: "moka", token: "firstfun", siteId: "100000617", host: "hire-r1.mokahr.com", city: "Boston, MA" },        // mobile publisher (Last Fortress); ~24 roles, English titles, many US-based — hire-r1 host, so plaintext payload
+  { name: "Seasun Games", type: "moka", token: "seasungames", siteId: "100000106", host: "hire-r1.mokahr.com", city: "Beijing, China" }, // 西山居 (Kingsoft) — JX Online, Sword of Justice; ~14 roles
+
+  // Greenhouse
+  { name: "Ravenwake Games", type: "greenhouse", token: "ravenwakegames", city: "Vancouver, BC" },                      // ~5 roles
+
+  // Ashby
+  { name: "Bold Games", type: "ashby", token: "boldgames", city: "Türkiye" },                                    // ~3 roles
 ];
 
 // ---- Studio type tags (Michelle's idea) ------------------------------------
@@ -3846,7 +3967,7 @@ async function fetchBambooHr(studio) {
   if (SAMPLE_FILE) { const d = loadSample(studio); if (!d) return []; result = d.result || []; }
   else { const d = await fetchJson(`https://${studio.token}.bamboohr.com/careers/list`); result = d.result || []; }
   // drop evergreen "speculative / open / general application" placeholders (not real openings)
-  result = result.filter(j => !/speculative|spontaneous|open application|general application|talent pool|future opportunit/i.test(j.jobOpeningName || ""));
+  result = result.filter(j => !/speculative|spontaneous|open application|general application|talent pool|future opportunit|express(?:ion|ing)? (?:of )?(?:your )?interest|candidature spontan/i.test(j.jobOpeningName || ""));
   return result.map(j => {
     const loc = j.location ? [j.location.city, j.location.state].filter(Boolean).join(", ") : "";
     const location = loc || "Unlisted";
@@ -4939,6 +5060,169 @@ async function fetchHrmos(studio) {
     });
   }
   return out;
+}
+
+// ---- Moka (mokahr.com) — Chinese ATS behind Yoka, Hero, Yostar, FirstFun, Seasun ----------------
+// Moka runs two public hosts and they behave DIFFERENTLY, which is the whole reason this fetcher
+// exists in the shape it does:
+//   app.mokahr.com     -> job payload is AES-ENCRYPTED (see below)
+//   hire-r1.mokahr.com -> same endpoint, same request, but the payload comes back as plain JSON
+// So: decrypt only when the response carries a `necromancer` field, otherwise use `data` as-is.
+//
+// The board is a hash-route SPA (#/jobs), so there is no server-rendered list to scrape. The list
+// endpoint is a POST:
+//   POST https://<host>/api/outer/ats-apply/website/jobs/v2
+//   {orgId, siteId, limit, offset, needStat:true, jobIdTopList:[], customFields:{}, site:"social", locale:"zh-CN"}
+// `limit` is capped at 50 — 100 is rejected with code 102 ("参数错误"), so page in 50s. The response
+// carries data.jobStats.total, which we use purely as a sanity check in the run log.
+//
+// The encryption (read out of their bundle, function `we`): AES-128-CBC / PKCS7, base64 ciphertext in
+// `data`, the KEY is the per-response `necromancer` string (16 ASCII chars = 128 bits), and the IV is
+// `aesIv` — a 16-hex-char value embedded in the recruitment page's HTML as HTML-escaped JSON
+// (&quot;aesIv&quot;:&quot;...&quot;). Both hosts currently serve the same IV, but it is read live per
+// studio rather than hardcoded, because it is clearly a server-side constant they can rotate.
+//
+// Fields: titles are Chinese on the CN-facing boards (Yoka, Yostar) and English on the
+// publishing-facing ones (Hero, FirstFun, Seasun); real posted dates (openedAt/publishedAt), so these
+// rows are NOT date-n/a. No salary. `department` is only present on the hire-r1 shape. Locations come
+// as Chinese district/province/country names, so they are mapped to English below — otherwise
+// inferRegion() cannot place them and every row lands in "Other".
+const MOKA_PLACE = {
+  // countries / territories
+  "中国": "China", "美国": "United States", "日本": "Japan", "韩国": "South Korea", "新加坡": "Singapore",
+  "加拿大": "Canada", "英国": "United Kingdom", "德国": "Germany", "法国": "France", "澳大利亚": "Australia",
+  "越南": "Vietnam", "泰国": "Thailand", "马来西亚": "Malaysia", "印度尼西亚": "Indonesia", "菲律宾": "Philippines",
+  "中国香港": "Hong Kong", "中国台湾": "Taiwan", "中国澳门": "Macau", "阿联酋": "UAE", "荷兰": "Netherlands",
+  // Chinese provinces / municipalities / SARs (province level is as precise as we go — the API's
+  // cityName is usually a district like 武侯区, which means nothing to a reader outside China)
+  "北京市": "Beijing", "北京": "Beijing", "上海市": "Shanghai", "上海": "Shanghai",
+  "天津市": "Tianjin", "重庆市": "Chongqing", "广东": "Guangdong", "浙江": "Zhejiang", "江苏": "Jiangsu",
+  "四川": "Sichuan", "福建": "Fujian", "湖北": "Hubei", "湖南": "Hunan", "山东": "Shandong", "河南": "Henan",
+  "河北": "Hebei", "陕西": "Shaanxi", "安徽": "Anhui", "江西": "Jiangxi", "辽宁": "Liaoning", "吉林": "Jilin",
+  "黑龙江": "Heilongjiang", "山西": "Shanxi", "云南": "Yunnan", "贵州": "Guizhou", "广西": "Guangxi",
+  "海南": "Hainan", "甘肃": "Gansu", "青海": "Qinghai", "新疆": "Xinjiang", "西藏": "Tibet",
+  "内蒙古": "Inner Mongolia", "宁夏": "Ningxia", "香港": "Hong Kong", "澳门": "Macau", "台湾": "Taiwan",
+  // a few cities worth naming outright
+  "杭州市": "Hangzhou", "广州市": "Guangzhou", "深圳市": "Shenzhen", "成都市": "Chengdu", "波士顿": "Boston",
+  // US states seen on the publishing boards
+  "马萨诸塞州": "Massachusetts", "加利福尼亚州": "California", "华盛顿州": "Washington", "纽约州": "New York", "得克萨斯州": "Texas",
+};
+// Chinese title -> discipline. ORDER MATTERS and is the fiddly part:
+//   * Animation before Art, so 动效/动作 don't get eaten by the art rules.
+//   * Art-strong (原画/美术/模型/地编…) before Engineering, so 技术美术 (technical artist) is Art.
+//   * Engineering before Design, so 系统开发 is Engineering while 系统策划 (系统 + 策划) is Design.
+//   * Design (策划) before the weak 设计师 art rule, so 战斗/角色策划 is Design, not Art via 角色.
+//   * Marketing before Production, because 运营 (operations) is used for BOTH live-ops and
+//     social/community/e-commerce ops — the marketing tokens disambiguate the latter.
+const MOKA_CN_RULES = [
+  [/音效|音频|配乐|作曲|声音|音乐/, "Audio"],
+  [/测试|品质|质量保障/, "QA"],
+  [/数据分析|数据运营|数据开发|数据架构|数据仓库|用户研究|用研|分析师/, "Data & Analytics"],
+  [/动画|动作|动效/, "Animation"],
+  [/原画|美宣|插画|模型|地编|场景|特效|主美|三渲二|美术|平面设计|视频设计|界面/, "Art"],
+  [/开发|工程师|程序|主程|架构|服务器|服务端|客户端|后端|前端|引擎|运维/, "Engineering"],
+  [/策划|关卡|数值|战斗|剧情|文案|编剧|交互设计/, "Design"],
+  [/设计师|设计/, "Art"],
+  [/市场|营销|品牌|广告|投放|推广|电商|直播|社群|社媒|新媒体|渠道|用户增长|公关|赛事|电竞|主播/, "Marketing"],
+  [/制作人|制片|项目管理|导演|编导|责编|运营|发行|产品经理|产品组长|管培生/, "Production"],
+  [/客服|玩家支持|客户支持/, "Player Support"],
+  [/招聘|人事|人力资源|薪酬|HRBP|\bHR\b/i, "People & Ops"],
+  [/法务|财务|会计|内审|采购|商务|税务|行政|资产管理|合规|翻译|审校/, "Business & Ops"],
+];
+function mokaDiscipline(title, dept) {
+  for (const [re, d] of MOKA_CN_RULES) if (re.test(title)) return d;
+  return mapDiscipline(dept || "", title || "");     // English titles (Hero/FirstFun/Seasun) fall through to the normal mapper
+}
+function mokaSeniority(title, commitment) {
+  if (/实习|应届|管培生/.test(title) || commitment === "实习") return "Entry";
+  if (/总监|负责人|主程|主美|主策划|组长|指导|专家/.test(title)) return "Lead";
+  if (/资深|高级/.test(title)) return "Senior";
+  return inferSeniority(title);
+}
+function mokaLocation(job, studio) {
+  const seen = [];
+  for (const L of (job.locations || []).slice(0, 3)) {
+    const parts = [];
+    for (const raw of [L.cityName, L.provinceName, L.country]) {
+      if (!raw) continue;
+      const mapped = MOKA_PLACE[raw];
+      // Keep an unmapped name only if it is already ASCII (the publishing boards post "Boston",
+      // "Tokyo" etc. in English). Never emit raw Chinese — inferRegion can't read it and the row
+      // would silently land in "Other".
+      if (mapped) parts.push(mapped);
+      else if (/^[\x20-\x7E]+$/.test(raw)) parts.push(raw);
+    }
+    const s = [...new Set(parts)].join(", ");
+    if (s && !seen.includes(s)) seen.push(s);
+  }
+  return seen.join("; ") || studio.city || "Unlisted";
+}
+async function mokaAesIv(host, org, site) {
+  const html = await fetchText(`https://${host}/social-recruitment/${org}/${site}`);
+  const m = html.match(/(?:&quot;|")aesIv(?:&quot;|")\s*:\s*(?:&quot;|")([0-9a-fA-F]{16})(?:&quot;|")/);
+  return m ? m[1] : null;
+}
+function mokaDecrypt(b64, key, iv) {
+  const d = crypto.createDecipheriv("aes-128-cbc", Buffer.from(key, "utf8"), Buffer.from(iv, "utf8"));
+  return Buffer.concat([d.update(Buffer.from(b64, "base64")), d.final()]).toString("utf8");
+}
+async function fetchMoka(studio) {
+  const host = studio.host || "app.mokahr.com";
+  const org = studio.token, site = String(studio.siteId);
+  let jobs = [];
+  if (SAMPLE_FILE) { const d = loadSample(studio); if (!d) return []; jobs = d.jobs || (Array.isArray(d) ? d : []); }
+  else {
+    let iv = null;                                        // only fetched if this host actually encrypts
+    let offset = 0, total = null;
+    while (offset < 1000) {
+      const res = await fetchRetry(`https://${host}/api/outer/ats-apply/website/jobs/v2`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Accept": "application/json",
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36",
+          "Origin": `https://${host}`, "Referer": `https://${host}/social-recruitment/${org}/${site}` },
+        body: JSON.stringify({ orgId: org, siteId: site, limit: 50, offset, needStat: true, jobIdTopList: [], customFields: {}, site: "social", locale: "zh-CN" }),
+      });
+      const raw = await res.json();
+      let payload = raw;
+      if (raw && raw.necromancer) {
+        if (!iv) iv = await mokaAesIv(host, org, site);
+        if (!iv) throw new Error("moka: encrypted payload but no aesIv in page HTML");
+        payload = JSON.parse(mokaDecrypt(raw.data, raw.necromancer, iv));
+      }
+      const data = (payload && payload.data) || {};
+      if (total === null && data.jobStats) total = data.jobStats.total;
+      const page = data.jobs || [];
+      jobs.push(...page);
+      if (page.length < 50) break;
+      offset += 50;
+    }
+    if (total !== null && jobs.length !== total) console.log(`  note: ${studio.name} (moka) returned ${jobs.length} of ${total} advertised`);
+  }
+  return jobs.filter(j => !j.status || j.status === "open").map(j => {
+    const title = String(j.title || "").trim();
+    const location = mokaLocation(j, studio);
+    const desc = stripHtml(j.jobDescription || "");        // only present on the hire-r1 shape
+    const posted = j.openedAt || j.publishedAt || j.createdAt || null;
+    let postedAt = null;
+    if (posted) { const dt = new Date(posted); if (!isNaN(dt)) postedAt = dt.toISOString(); }
+    return {
+      id: `moka-${org}-${j.id}`,
+      title,
+      tech: extractTech(title + " " + desc),
+      desc,
+      studio: studio.name,
+      discipline: mokaDiscipline(title, (j.department && j.department.name) || ""),
+      workType: inferWorkType(title, location, [], desc.slice(0, 1200)),
+      location,
+      region: inferRegion(location),
+      seniority: mokaSeniority(title, j.commitment),
+      salary: null,                                        // Moka exposes salaryUnit but never a range
+      yoe: extractYoe(desc),
+      postedAt,
+      // The plain path 404s — this board is a hash-route SPA, so the #/job/<id> form IS the real link.
+      url: `https://${host}/social-recruitment/${org}/${site}#/job/${j.id}`,
+    };
+  }).filter(j => j.title);
 }
 
 // ---- Garena (Free Fire, Arena of Valor — Sea Ltd) — custom Nuxt careers site + JSON API ----------
@@ -6090,7 +6374,7 @@ async function fetchTrailmix(studio) {
   }
   return out;
 }
-const FETCHERS = { greenhouse: fetchGreenhouse, lever: fetchLever, workday: fetchWorkday, avature: fetchAvature, smartrecruiters: fetchSmartRecruiters, workable: fetchWorkable, phenom: fetchPhenom, teamtailor: fetchTeamtailor, eightfold: fetchEightfold, amazonjobs: fetchAmazonJobs, ashby: fetchAshby, zenimax: fetchZenimax, bamboohr: fetchBambooHr, jobscore: fetchJobScore, jazzhr: fetchJazzHr, jobvite: fetchJobvite, recruitee: fetchRecruitee, personio: fetchPersonio, rippling: fetchRippling, breezy: fetchBreezy, manatal: fetchManatal, sumodigital: fetchSumoDigital, pinpoint: fetchPinpoint, playground: fetchPlayground, obsidian: fetchObsidian, techland: fetchTechland, oracle: fetchOracle, cig: fetchCig, critpath: fetchCritpath, krafton: fetchKrafton, eidos: fetchEidos, hiringthing: fetchHiringThing, segacareers: fetchSegaCareers, turn10: fetchTurn10, mscareers: fetchMicrosoftCareers, lightfox: fetchLightfox, hrworks: fetchHRworks, smilegate: fetchSmilegate, cygames: fetchCygames, hrmos: fetchHrmos, garena: fetchGarena, shiftup: fetchShiftUp, miniclip: fetchMiniclip, playrix: fetchPlayrix, superplay: fetchSuperPlay, atlus: fetchAtlus, kojima: fetchKojima, owlcat: fetchOwlcat, comeet: fetchComeet, huntflow: fetchHuntflow, keka: fetchKeka, traffit: fetchTraffit, nekki: fetchNekki, plarium: fetchPlarium, hellogames: fetchHelloGames, hibob: fetchHibob, flix: fetchFlix, fromsoftware: fetchFromSoftware, grindinggear: fetchGrindingGear, konami: fetchKonami, madhead: fetchMadHead, kenjo: fetchKenjo, trailmix: fetchTrailmix };
+const FETCHERS = { greenhouse: fetchGreenhouse, lever: fetchLever, workday: fetchWorkday, avature: fetchAvature, smartrecruiters: fetchSmartRecruiters, workable: fetchWorkable, phenom: fetchPhenom, teamtailor: fetchTeamtailor, eightfold: fetchEightfold, amazonjobs: fetchAmazonJobs, ashby: fetchAshby, zenimax: fetchZenimax, bamboohr: fetchBambooHr, jobscore: fetchJobScore, jazzhr: fetchJazzHr, jobvite: fetchJobvite, recruitee: fetchRecruitee, personio: fetchPersonio, rippling: fetchRippling, breezy: fetchBreezy, manatal: fetchManatal, sumodigital: fetchSumoDigital, pinpoint: fetchPinpoint, playground: fetchPlayground, obsidian: fetchObsidian, techland: fetchTechland, oracle: fetchOracle, cig: fetchCig, critpath: fetchCritpath, krafton: fetchKrafton, eidos: fetchEidos, hiringthing: fetchHiringThing, segacareers: fetchSegaCareers, turn10: fetchTurn10, mscareers: fetchMicrosoftCareers, lightfox: fetchLightfox, hrworks: fetchHRworks, smilegate: fetchSmilegate, cygames: fetchCygames, hrmos: fetchHrmos, moka: fetchMoka, garena: fetchGarena, shiftup: fetchShiftUp, miniclip: fetchMiniclip, playrix: fetchPlayrix, superplay: fetchSuperPlay, atlus: fetchAtlus, kojima: fetchKojima, owlcat: fetchOwlcat, comeet: fetchComeet, huntflow: fetchHuntflow, keka: fetchKeka, traffit: fetchTraffit, nekki: fetchNekki, plarium: fetchPlarium, hellogames: fetchHelloGames, hibob: fetchHibob, flix: fetchFlix, fromsoftware: fetchFromSoftware, grindinggear: fetchGrindingGear, konami: fetchKonami, madhead: fetchMadHead, kenjo: fetchKenjo, trailmix: fetchTrailmix };
 
 // ---- Ghost-job tracking -----------------------------------------------------
 // Because we scrape on a schedule, we can see how long a listing has REALLY been
@@ -6417,7 +6701,7 @@ async function checkLinkHealth(all) {
 
 // Expose the classifier for the test fixture (test-classify.js). When this file is `require()`d
 // instead of run directly, skip the actual scrape and just export the pure functions.
-module.exports = { mapDiscipline, strongTitleDiscipline, normDisc };
+module.exports = { mapDiscipline, strongTitleDiscipline, normDisc, mokaDecrypt, mokaDiscipline, mokaSeniority, mokaLocation };
 (async () => {
   if (require.main !== module) return;   // required for tests → don't run the scrape
   const all = [];
