@@ -137,6 +137,20 @@ const DIRECTORY = [
   // likely get these), both become mainland candidates worth ~290 roles between them.
   { name: "MoonTon Games", url: "https://moonton.jobs.feishu.cn/index", note: "Mobile Legends: Bang Bang — Shanghai (~162 roles). Feishu ATS, signature-gated; see note above", city: "Shanghai, China" },
   { name: "Lilith Games", url: "https://lilithgames.jobs.feishu.cn/career", note: "AFK Journey, Rise of Kingdoms — Shanghai (~128 roles). Feishu ATS, signature-gated; see note above", city: "Shanghai, China" },
+
+  // ---- August 2026: probed for a custom fetcher, not built. Reasons recorded so nobody re-probes. --
+  // 4A Games: careers page is a Squarespace layout where each role is a free-form <h1> inside a text
+  // block, interleaved with tagline <h3>s and a separate <h1> for "(ON-SITE ONLY)". No per-job URLs,
+  // no dates, no structure to anchor on — any parser would be guesswork and would break the next time
+  // someone edits the page. Link-out until they move to a real ATS.
+  { name: "4A Games", url: "https://www.4a-games.com.mt/careers", note: "Metro series — Malta + Kyiv (~27 roles). Careers page is hand-laid-out, nothing stable to scrape", city: "Sliema, Malta" },
+  // Alkimia Interactive (Gothic Remake, THQ Nordic Barcelona): deliberately NOT added. Their site has
+  // no job board at all — every path (/careers, /jobs, /join-us) 404s and the only route in is a
+  // mailto:jobs@thqnordicbcn.com. A link-out would send people to a page with no jobs on it. The ~21
+  // roles the competitor credits to Alkimia are almost certainly counted off a THQ Nordic board.
+  // Bugbear Entertainment (Wreckfest): NOT added. bugbeargames.com and www.bugbeargames.com both fail
+  // TLS in a current browser (cert privacy error), so the scraper couldn't fetch it and a link-out
+  // would send people to a security warning. Revisit if they fix the certificate.
 ];
 
 // ---- "The Moon": smaller / indie studios, often ones who reached out to be listed.
@@ -714,6 +728,12 @@ const STUDIOS = [
   { name: "Yostar Games", type: "moka", token: "yostar", siteId: "145292", host: "app.mokahr.com", city: "Shanghai, China" },        // Arknights, Azur Lane, Blue Archive (publishing); ~33 roles
   { name: "FirstFun", type: "moka", token: "firstfun", siteId: "100000617", host: "hire-r1.mokahr.com", city: "Boston, MA" },        // mobile publisher (Last Fortress); ~24 roles, English titles, many US-based — hire-r1 host, so plaintext payload
   { name: "Seasun Games", type: "moka", token: "seasungames", siteId: "100000106", host: "hire-r1.mokahr.com", city: "Beijing, China" }, // 西山居 (Kingsoft) — JX Online, Sword of Justice; ~14 roles
+
+  // Custom-site fetchers built 2026-08-05 (see gamesjobsindex-gap-2026-08.md, Addendum 3)
+  { name: "Aiming", type: "hrmos", token: "aiming", city: "Tokyo, Japan" },                          // 株式会社Aiming — NO custom fetcher needed: recruit.aiming-inc.com/career/entry links straight out to hrmos.co/pages/aiming (~83 JP roles). Found while probing it as a "custom site".
+  { name: "Nordcurrent", type: "nordcurrent", city: "Vilnius, Lithuania" },                          // Cooking Fever, Airplane Chefs — WordPress REST (/wp-json/wp/v2/careers); ~22 roles across Vilnius/Warsaw/Dnipro/Remote with real posted dates
+  { name: "Welevel", type: "welevel", city: "Munich, Germany" },                                     // Unreal open-world studio — self-hosted SSR careers site, clean .job-card markup; ~25 roles, explicit Onsite/Hybrid/Remote per role
+  { name: "Bohemia Interactive", type: "bohemia", city: "Prague, Czechia" },                         // Arma, DayZ — SSR careers site; ~14 roles across Prague/Brno with their own discipline + project labels
 
   // Greenhouse
   { name: "Ravenwake Games", type: "greenhouse", token: "ravenwakegames", city: "Vancouver, BC" },                      // ~5 roles
@@ -2703,7 +2723,7 @@ function inferRegion(location) {
   if (/(united states|usa|\b(ca|wa|tx|ny|md|fl|il|ma|nc|ga)\b|los angeles|seattle|austin|new york|san (francisco|mateo|diego)|bellevue|irvine|burbank|santa monica|redmond|mercer island|atlanta|chicago|boston|novato)/.test(l)) return "North America";
   if (/(canada|montreal|montréal|toronto|vancouver|quebec)/.test(l)) return "North America";
   if (/(mexico|brazil|são paulo|sao paulo|argentina|chile|colombia)/.test(l)) return "Latin America";
-  if (/(uk|united kingdom|london|oxford|horsham|brighton|derby|sheffield|leamington|ireland|dublin|france|paris|lyon|germany|berlin|poland|warsaw|romania|bucharest|spain|barcelona|madrid|portugal|lisbon|porto|belgium|ghent|netherlands|amsterdam|zoetermeer|finland|espoo|helsinki|sweden|stockholm|turkey|türkiye|istanbul|czech|prague|cyprus|nicosia|limassol|ukraine|kyiv|kiev|kharkiv|lviv|serbia|belgrade|beograd|novi sad|warrington|cheshire|\beurope\b)/.test(l)) return "Europe";
+  if (/(uk|united kingdom|london|oxford|horsham|brighton|derby|sheffield|leamington|ireland|dublin|france|paris|lyon|germany|berlin|poland|warsaw|romania|bucharest|spain|barcelona|madrid|portugal|lisbon|porto|belgium|ghent|netherlands|amsterdam|zoetermeer|finland|espoo|helsinki|sweden|stockholm|turkey|türkiye|istanbul|czech|prague|cyprus|nicosia|limassol|ukraine|kyiv|kiev|kharkiv|lviv|dnipro|odesa|odessa|serbia|belgrade|beograd|novi sad|warrington|cheshire|munich|münchen|hamburg|cologne|köln|frankfurt|stuttgart|düsseldorf|brno|czechia|bratislava|vilnius|kaunas|lithuania|latvia|riga|estonia|tallinn|malta|valletta|ljubljana|zagreb|sofia|budapest|bordeaux|montpellier|nantes|toulouse|turin|bologna|malmö|gothenburg|göteborg|aarhus|odense|bergen|oslo|trondheim|reykjavik|iceland|zürich|zurich|vienna|graz|antwerp|brussels|rotterdam|utrecht|eindhoven|kraków|krakow|wrocław|wroclaw|poznań|poznan|gdańsk|gdansk|łódź|katowice|cluj|iași|iasi|timișoara|belfast|dundee|guildford|nottingham|\beurope\b)/.test(l)) return "Europe";
   if (/(japan|tokyo|china|shanghai|guangzhou|beijing|hong kong|korea|seoul|singapore|taiwan|taipei|australia|sydney|melbourne|new zealand|auckland|wellington|india|bangalore|mumbai|vietnam|hanoi|ho chi minh|thailand|bangkok|malaysia|philippines|manila|indonesia|jakarta|bangladesh|dhaka)/.test(l)) return "Asia-Pacific";
   if (/(dubai|uae|saudi|riyadh|israel|tel aviv|herzliya|south africa|morocco|casablanca)/.test(l)) return "Middle East & Africa";
   if (/remote/.test(l)) return "Remote";
@@ -3242,11 +3262,26 @@ function eaStudioFromDept(dept) {
   return /^sports$/i.test(d) ? "EA Sports" : d;
 }
 
+// Accented named entities, added 2026-08-05. European boards emit these constantly ("M&uuml;nchen",
+// "Bord&eacute;aux", "Malm&ouml;") and without them the raw entity ends up in a location string, which
+// then fails inferRegion's city match and silently drops the row into region "Other".
+const NAMED_ENT = {
+  uuml: "ü", Uuml: "Ü", ouml: "ö", Ouml: "Ö", auml: "ä", Auml: "Ä", szlig: "ß",
+  eacute: "é", Eacute: "É", egrave: "è", Egrave: "È", ecirc: "ê", agrave: "à", Agrave: "À",
+  acirc: "â", ccedil: "ç", Ccedil: "Ç", iacute: "í", oacute: "ó", uacute: "ú", aacute: "á",
+  ntilde: "ñ", Ntilde: "Ñ", oslash: "ø", Oslash: "Ø", aring: "å", Aring: "Å", aelig: "æ", AElig: "Æ",
+  ocirc: "ô", icirc: "î", ucirc: "û", iuml: "ï", euml: "ë", yacute: "ý", scaron: "š", zcaron: "ž",
+  ccaron: "č", rcaron: "ř", ndash: "–", mdash: "—", hellip: "…", rsquo: "\u2019", lsquo: "\u2018",
+  ldquo: "\u201C", rdquo: "\u201D", deg: "°", euro: "€", pound: "£", reg: "®", copy: "©",
+};
 function decodeEnt(s) {
   return (s || "").replace(/&amp;/g, "&").replace(/&#8482;|&trade;/g, "™")
     .replace(/&quot;/g, '"').replace(/&#39;|&apos;/g, "'")
     .replace(/&middot;|&#183;|&#8226;|&bull;/g, "·")
-    .replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&nbsp;/g, " ");
+    .replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&nbsp;/g, " ")
+    .replace(/&([A-Za-z]+);/g, (m, n) => (Object.prototype.hasOwnProperty.call(NAMED_ENT, n) ? NAMED_ENT[n] : m))
+    .replace(/&#x([0-9a-fA-F]+);/g, (m, h) => { const c = parseInt(h, 16); return c > 0 && c <= 0x10FFFF ? String.fromCodePoint(c) : m; })
+    .replace(/&#(\d+);/g, (m, d) => { const c = parseInt(d, 10); return c > 0 && c <= 0x10FFFF ? String.fromCodePoint(c) : m; });
 }
 
 function parseAvaturePage(html, studio) {
@@ -5062,6 +5097,148 @@ async function fetchHrmos(studio) {
   return out;
 }
 
+// ---- Nordcurrent (Vilnius/Warsaw/Dnipro mobile + premium) — WordPress REST -----------------------
+// Their careers pages are a WP custom post type, and the REST API is open:
+//   /wp-json/wp/v2/careers?per_page=100      -> [{ id, date, link, title:{rendered}, content:{rendered},
+//                                                 locations:[termId], role:[termId], salary:[], employment:[] }]
+// The four taxonomies resolve at /wp-json/wp/v2/{locations,role,salary,employment}. We only need
+// `locations` (Vilnius / Warsaw / Dnipro / Remote) and `role` (their own discipline: Development, Art,
+// Game Design, Quality Assurance, Marketing, Finance, Administration, E-commerce) — two extra calls.
+//
+// NOTE on salary: Nordcurrent is unusual in publishing pay, but the `salary` taxonomy is a MONTHLY
+// FLOOR ("From 1800 EUR/month (gross)"), not a range. The board's salary field is a formatted range
+// string, and extractSalary deliberately rejects anything under 10,000 so monthly figures can't be
+// mistaken for annual ones. Rather than invent a range or a new format — and risk EUR monthly floors
+// being swept into the board's USD averages, exactly the bug the extractSalary comments warn about —
+// we leave salary to the normal description mining. The taxonomy is here if we ever add a
+// "from / monthly" display.
+async function fetchNordcurrent(studio) {
+  const BASE = "https://nordcurrent.com/wp-json/wp/v2";
+  let jobs, locTerms, roleTerms;
+  if (SAMPLE_FILE) {
+    const d = loadSample(studio); if (!d) return [];
+    jobs = d.jobs || []; locTerms = d.locations || []; roleTerms = d.role || [];
+  } else {
+    [jobs, locTerms, roleTerms] = await Promise.all([
+      fetchJson(`${BASE}/careers?per_page=100`),
+      fetchJson(`${BASE}/locations?per_page=100`),
+      fetchJson(`${BASE}/role?per_page=100`),
+    ]);
+  }
+  if (!Array.isArray(jobs)) return [];
+  const term = arr => { const m = {}; for (const t of (arr || [])) m[t.id] = t.name; return m; };
+  const LOC = term(locTerms), ROLE = term(roleTerms);
+  return jobs.filter(j => !j.status || j.status === "publish").map(j => {
+    const title = decodeEnt(String((j.title && j.title.rendered) || "").replace(/<[^>]+>/g, " ")).replace(/\s+/g, " ").trim();
+    const desc = stripHtml((j.content && j.content.rendered) || "");
+    const location = (j.locations || []).map(id => LOC[id]).filter(Boolean).join("; ") || studio.city || "Unlisted";
+    const role = (j.role || []).map(id => ROLE[id]).filter(Boolean).join(" ");
+    return {
+      id: `nc-${j.id}`,
+      title, tech: extractTech(title + " " + desc), desc, studio: studio.name,
+      discipline: mapDiscipline(role, title),
+      // "Remote" is a real location term here, so the location string alone is a trustworthy signal.
+      workType: inferWorkType(title, location, [], desc.slice(0, 1200)),
+      location, region: inferRegion(location),
+      seniority: inferSeniority(title),
+      salary: extractSalary(desc), yoe: extractYoe(desc),
+      postedAt: j.date || null,
+      url: j.link || "",
+    };
+  }).filter(j => j.title);
+}
+
+// ---- Welevel (Munich, Unreal open-world) — self-hosted SSR careers site --------------------------
+// career.welevel.com server-renders the whole list, and the markup is about as clean as it gets:
+//   <a class="job-card" href="/jobs/<slug>">
+//     <div><div class="title">Art Lead (m/f/d)</div>
+//          <div class="meta">München, Germany · Full-time · Onsite</div></div>...
+//   </a>
+// The meta line is "location · employment · worktype", middle-dot separated. The third field is an
+// explicit Onsite/Hybrid/Remote, which is better than guessing — it's appended to the location text so
+// inferWorkType sees it as a high-trust signal. No posted dates on the list (date-n/a) and no salary.
+// Locations are a mix of "München, Germany" and "Munich" on the same board; both resolve to Europe.
+function parseWelevel(html, studio) {
+  const out = [], seen = new Set();
+  for (const m of String(html).matchAll(/<a\s+class="job-card"\s+href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/gi)) {
+    const href = m[1], body = m[2];
+    if (seen.has(href)) continue;
+    seen.add(href);
+    const pick = cls => { const x = body.match(new RegExp(`<div[^>]*class="${cls}"[^>]*>([\\s\\S]*?)</div>`, "i")); return x ? decodeEnt(x[1].replace(/<[^>]+>/g, " ")).replace(/\s+/g, " ").trim() : ""; };
+    const title = pick("title");
+    if (!title) continue;
+    const meta = pick("meta");
+    const parts = meta.split("·").map(x => x.trim()).filter(Boolean);
+    const location = parts[0] || studio.city || "Unlisted";
+    const workHint = parts[2] || "";                      // "Onsite" / "Hybrid" / "Remote"
+    out.push({
+      id: `welevel-${href.split("/").pop()}`,
+      title, tech: extractTech(title), desc: "", studio: studio.name,
+      discipline: mapDiscipline("", title),
+      workType: inferWorkType(title, `${location} ${workHint}`, []),
+      location, region: inferRegion(location),
+      seniority: inferSeniority(title),
+      salary: null, yoe: null, postedAt: null,
+      url: `https://career.welevel.com${href}`,
+    });
+  }
+  return out;
+}
+async function fetchWelevel(studio) {
+  if (SAMPLE_FILE) { const d = loadSample(studio); if (!d) return []; return parseWelevel(typeof d === "string" ? d : (d.html || ""), studio); }
+  return parseWelevel(await fetchText("https://career.welevel.com/"), studio);
+}
+
+// ---- Bohemia Interactive (Arma, DayZ) — SSR React-Router careers site ----------------------------
+// careers.bohemia.net/en/open-positions server-renders a card per role. The page ALSO ships a
+// React-Router streaming payload, but that is escaped and unstable — the rendered cards are the
+// dependable surface, so we parse those and dedupe by slug:
+//   <a class="block rounded-lg..." href="/en/open-positions/<slug>">
+//     <span class="...careers-label-text-sm">Medior</span>          <- seniority band
+//     <h3 ...>Technical Animator (Rigging/Skinning)</h3>            <- real title
+//     ...<span>Arma 4</span>          (project)
+//     ...<p>Art &amp; Animation</p>   (their own discipline)
+//     ...<span><span>Prague, CZ</span></span>   (location)
+// Their seniority band is Junior/Medior/Senior, so "Medior" maps to Mid rather than falling through
+// inferSeniority, which has never seen the word. No posted dates and no salary on the list.
+const BOHEMIA_SENIORITY = { junior: "Entry", medior: "Mid", senior: "Senior", lead: "Lead" };
+function parseBohemia(html, studio) {
+  const out = [], seen = new Set();
+  for (const m of String(html).matchAll(/<a\s+class="block rounded-lg[^"]*"\s+href="(\/[a-z]{2}\/open-positions\/[^"]+)"[^>]*>([\s\S]*?)<\/a>/gi)) {
+    const href = m[1], body = m[2].replace(/<svg[\s\S]*?<\/svg>/gi, " ");
+    const slug = href.split("/").pop();
+    if (seen.has(slug)) continue;
+    const h3 = body.match(/<h3[^>]*>([\s\S]*?)<\/h3>/i);
+    if (!h3) continue;
+    const title = decodeEnt(h3[1].replace(/<[^>]+>/g, " ")).replace(/\s+/g, " ").trim();
+    if (!title) continue;
+    seen.add(slug);
+    // Every label in the card shares one class; in DOM order they are:
+    // [0] seniority band, [1] project, [2] discipline, [3] location.
+    const labels = [...body.matchAll(/class="[^"]*careers-label-text-sm[^"]*"[^>]*>([\s\S]*?)<\/(?:span|p|div)>/gi)]
+      .map(x => decodeEnt(x[1].replace(/<[^>]+>/g, " ")).replace(/\s+/g, " ").trim())
+      .filter(Boolean);
+    const band = (labels[0] || "").toLowerCase();
+    const location = labels[3] || labels[labels.length - 1] || studio.city || "Unlisted";
+    const dept = labels[2] || "";
+    out.push({
+      id: `bohemia-${slug}`,
+      title, tech: extractTech(title), desc: "", studio: studio.name,
+      discipline: mapDiscipline(dept, title),
+      workType: inferWorkType(title, location, []),
+      location, region: inferRegion(location),
+      seniority: BOHEMIA_SENIORITY[band] || inferSeniority(title),
+      salary: null, yoe: null, postedAt: null,
+      url: `https://careers.bohemia.net${href}`,
+    });
+  }
+  return out;
+}
+async function fetchBohemia(studio) {
+  if (SAMPLE_FILE) { const d = loadSample(studio); if (!d) return []; return parseBohemia(typeof d === "string" ? d : (d.html || ""), studio); }
+  return parseBohemia(await fetchText("https://careers.bohemia.net/en/open-positions"), studio);
+}
+
 // ---- Moka (mokahr.com) — Chinese ATS behind Yoka, Hero, Yostar, FirstFun, Seasun ----------------
 // Moka runs two public hosts and they behave DIFFERENTLY, which is the whole reason this fetcher
 // exists in the shape it does:
@@ -6374,7 +6551,7 @@ async function fetchTrailmix(studio) {
   }
   return out;
 }
-const FETCHERS = { greenhouse: fetchGreenhouse, lever: fetchLever, workday: fetchWorkday, avature: fetchAvature, smartrecruiters: fetchSmartRecruiters, workable: fetchWorkable, phenom: fetchPhenom, teamtailor: fetchTeamtailor, eightfold: fetchEightfold, amazonjobs: fetchAmazonJobs, ashby: fetchAshby, zenimax: fetchZenimax, bamboohr: fetchBambooHr, jobscore: fetchJobScore, jazzhr: fetchJazzHr, jobvite: fetchJobvite, recruitee: fetchRecruitee, personio: fetchPersonio, rippling: fetchRippling, breezy: fetchBreezy, manatal: fetchManatal, sumodigital: fetchSumoDigital, pinpoint: fetchPinpoint, playground: fetchPlayground, obsidian: fetchObsidian, techland: fetchTechland, oracle: fetchOracle, cig: fetchCig, critpath: fetchCritpath, krafton: fetchKrafton, eidos: fetchEidos, hiringthing: fetchHiringThing, segacareers: fetchSegaCareers, turn10: fetchTurn10, mscareers: fetchMicrosoftCareers, lightfox: fetchLightfox, hrworks: fetchHRworks, smilegate: fetchSmilegate, cygames: fetchCygames, hrmos: fetchHrmos, moka: fetchMoka, garena: fetchGarena, shiftup: fetchShiftUp, miniclip: fetchMiniclip, playrix: fetchPlayrix, superplay: fetchSuperPlay, atlus: fetchAtlus, kojima: fetchKojima, owlcat: fetchOwlcat, comeet: fetchComeet, huntflow: fetchHuntflow, keka: fetchKeka, traffit: fetchTraffit, nekki: fetchNekki, plarium: fetchPlarium, hellogames: fetchHelloGames, hibob: fetchHibob, flix: fetchFlix, fromsoftware: fetchFromSoftware, grindinggear: fetchGrindingGear, konami: fetchKonami, madhead: fetchMadHead, kenjo: fetchKenjo, trailmix: fetchTrailmix };
+const FETCHERS = { greenhouse: fetchGreenhouse, lever: fetchLever, workday: fetchWorkday, avature: fetchAvature, smartrecruiters: fetchSmartRecruiters, workable: fetchWorkable, phenom: fetchPhenom, teamtailor: fetchTeamtailor, eightfold: fetchEightfold, amazonjobs: fetchAmazonJobs, ashby: fetchAshby, zenimax: fetchZenimax, bamboohr: fetchBambooHr, jobscore: fetchJobScore, jazzhr: fetchJazzHr, jobvite: fetchJobvite, recruitee: fetchRecruitee, personio: fetchPersonio, rippling: fetchRippling, breezy: fetchBreezy, manatal: fetchManatal, sumodigital: fetchSumoDigital, pinpoint: fetchPinpoint, playground: fetchPlayground, obsidian: fetchObsidian, techland: fetchTechland, oracle: fetchOracle, cig: fetchCig, critpath: fetchCritpath, krafton: fetchKrafton, eidos: fetchEidos, hiringthing: fetchHiringThing, segacareers: fetchSegaCareers, turn10: fetchTurn10, mscareers: fetchMicrosoftCareers, lightfox: fetchLightfox, hrworks: fetchHRworks, smilegate: fetchSmilegate, cygames: fetchCygames, hrmos: fetchHrmos, moka: fetchMoka, nordcurrent: fetchNordcurrent, welevel: fetchWelevel, bohemia: fetchBohemia, garena: fetchGarena, shiftup: fetchShiftUp, miniclip: fetchMiniclip, playrix: fetchPlayrix, superplay: fetchSuperPlay, atlus: fetchAtlus, kojima: fetchKojima, owlcat: fetchOwlcat, comeet: fetchComeet, huntflow: fetchHuntflow, keka: fetchKeka, traffit: fetchTraffit, nekki: fetchNekki, plarium: fetchPlarium, hellogames: fetchHelloGames, hibob: fetchHibob, flix: fetchFlix, fromsoftware: fetchFromSoftware, grindinggear: fetchGrindingGear, konami: fetchKonami, madhead: fetchMadHead, kenjo: fetchKenjo, trailmix: fetchTrailmix };
 
 // ---- Ghost-job tracking -----------------------------------------------------
 // Because we scrape on a schedule, we can see how long a listing has REALLY been
@@ -6701,7 +6878,7 @@ async function checkLinkHealth(all) {
 
 // Expose the classifier for the test fixture (test-classify.js). When this file is `require()`d
 // instead of run directly, skip the actual scrape and just export the pure functions.
-module.exports = { mapDiscipline, strongTitleDiscipline, normDisc, mokaDecrypt, mokaDiscipline, mokaSeniority, mokaLocation };
+module.exports = { mapDiscipline, strongTitleDiscipline, normDisc, inferRegion, decodeEnt, mokaDecrypt, mokaDiscipline, mokaSeniority, mokaLocation, parseWelevel, parseBohemia };
 (async () => {
   if (require.main !== module) return;   // required for tests → don't run the scrape
   const all = [];
