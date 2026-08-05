@@ -2522,12 +2522,26 @@ function mapDiscipline(raw, title) {
   return "Other";
 }
 
+// "Lead" is not always a rank. In "Localization Language Lead, Russian" it names the scope the person
+// owns (one language), not a position on the org chart — 2K's own posting for that exact title says
+// "This is an individual contributor role within the Content Localization (CLOC) team". Tagging it
+// Lead put four 2K linguist roles in a "Lead Production · Director+ Production" alert alongside EA
+// Development Directors. Same failure shape as the `assistant` guard below: a title word that reads
+// as rank but isn't. "Lead generation" is the marketing equivalent (a sales lead, not a leader).
+// Language Lead resolves to Senior rather than Mid because the role explicitly sits above the people
+// it supervises — 2K's posting has it "supervising entry- and mid-level linguists and vendors".
+const LEAD_IS_SCOPE_NOT_RANK = /\blanguage lead\b/;
+const LEAD_NOT_A_RANK = /\blanguage lead\b|\blead gen(eration)?\b/;
 function inferSeniority(title) {
   const t = title.toLowerCase();
+  if (LEAD_IS_SCOPE_NOT_RANK.test(t) && !/\b(director|head of|vp|chief)\b/.test(t)) return "Senior";
   // An assistant TO a leader (e.g. "Executive Assistant – General Manager") is not the leader.
   const assistant = /\bassistant\b/.test(t);
   if (!assistant && /\b(director|head of|vp|chief|executive producer|general manager|studio head|distinguished)\b/.test(t)) return "Director+"; // "distinguished" = top IC rung (Distinguished Engineer), director/exec-tier, not Mid
-  if (/\b(lead|principal|staff)\b/.test(t)) return "Lead";
+  // Strip the non-rank uses of "lead" before the rank test so "Lead Generation Manager" is not a Lead,
+  // while "Senior Lead Generation Manager" still resolves to Senior on the line below.
+  const tr = t.replace(LEAD_NOT_A_RANK, " ");
+  if (/\b(lead|principal|staff)\b/.test(tr)) return "Lead";
   if (/\b(senior|sr\.?)\b/.test(t)) return "Senior";
   if (/\b(junior|jr\.?|associate|intern|entry|apprentice)\b/.test(t)) return "Entry";
   return "Mid";
