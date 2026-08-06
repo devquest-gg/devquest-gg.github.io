@@ -46,13 +46,10 @@ const DIRECTORY = [
   // batch 3 (2026-06-08): self-hosted / no-API boards — browse directly
   { name: "Void Interactive", url: "https://voidinteractive.net/careers/", note: "Ready or Not (Dublin)", city: "Dublin, Ireland" },
   { name: "Grip Studios", url: "https://grip-studios.com/hiring.php", note: "Co-development on Indiana Jones and Civ VII (Prague)", city: "Prague, Czechia" },
-  { name: "Mad Head Games", type: "madhead", city: "Belgrade, Serbia" }, // Scars Above, Pavilion — self-hosted careers site; jobs via an AJAX "JobList" endpoint (X-Requested-With header). ~5 roles in Belgrade (Art/Animation/Design/People), all Hybrid; skips "Open application". Promoted from Island 2026-07-05 — spot-check first scrape
-  { name: "Trailmix Games", type: "trailmix", careersUrl: "https://www.trailmixgames.com/careers", city: "London, UK" }, // Love & Pies — mobile; self-hosted Webflow careers page, <a> links to /jobs/<slug>. ~3 roles (London + Berlin), discipline/location from title. Promoted from Island 2026-07-05 — spot-check first scrape
   // (LightFury Games promoted to mainland 2026-07-05 — Keka careers JSON API; see fetchKeka.)
   // 2026-06-19 batch: custom sites / unsupported ATS (Paylocity, HiringThing, Talentsoft, Webflow) — link-outs
   // (Trailmix Games promoted to mainland 2026-07-05 — self-hosted Webflow careers page; see fetchTrailmix.)
   { name: "Gunfire Games", url: "https://gunfiregames.com/careers", note: "Remnant, Darksiders — Paylocity board", city: "Austin, TX" },
-  { name: "10:10 Games", type: "bamboohr", token: "1010games", city: "Warrington, UK" }, // ex-Playtonic / Crash devs — BambooHR board (1010games.bamboohr.com); ~3 roles in Warrington (Art/Design). Skips speculative applications. Promoted from Island 2026-07-05 — spot-check first scrape
   // batch 4 (2026-06-09): notable + mobile studios on custom / region-specific ATS — browse directly
   // (Kojima Productions promoted to mainland 2026-07-04 — kojimaproductions.jp POST /kjpviewloader/load; see fetchKojima.)
   // (Cygames promoted to mainland 2026-07-04 — recruit.cygames.co.jp/career server-renders all roles; see fetchCygames.)
@@ -89,7 +86,6 @@ const DIRECTORY = [
   // (Codemasters is EA-owned, covered by the EA board.)
   // (Kepler Interactive promoted to mainland 2026-07-05 — classic Teamtailor theme; see fetchTeamtailor.)
   // (Sloclap promoted to mainland 2026-07-05 — Teamtailor "cards" theme; roles deduped off Kepler's aggregator board. See fetchTeamtailor.)
-  { name: "Deck13 Interactive", type: "kenjo", token: "deck13jobs", city: "Frankfurt, Germany" }, // Lords of the Fallen, The Surge — Kenjo careers site, public positions JSON API (/api/controller/career-site/public/deck13jobs/positions). ~2 roles (Art/Tech), Frankfurt + remote-in-Germany (Hybrid). Skips General Application. Promoted from Island 2026-07-05 — spot-check first scrape
   { name: "Gameforge", url: "https://corporate.gameforge.com/en/career/", note: "browser/MMO publisher (AION, Metin2)", city: "Karlsruhe, Germany" },
   { name: "DeNA", url: "https://herp.careers/v1/dena/", note: "mobile publisher (Pokémon Masters EX) — HERP board (JP)", city: "Tokyo, Japan" },
   // (Spike Chunsoft promoted to mainland 2026-07-05 — HRMOS board (hrmos.co/pages/spchun); same fetchHrmos as GAME FREAK / Square Enix.)
@@ -112,7 +108,8 @@ const DIRECTORY = [
   { name: "Enduring Games", url: "https://enduring.games/jobs/", note: "Console co-dev & ports — email apply, no ATS feed", city: "Austin, TX" },
   { name: "Tarsier Studios", url: "https://tarsier.recruitment.simployer.com/careers", note: "Little Nightmares 1 & 2 — Simployer ATS (no scrapeable feed)", city: "Malmö, Sweden" },
   { name: "Room 8 Studio", url: "https://room8studio.com/careers/", note: "Game art & co-development services (CoD, Diablo, AC) — WordPress careers, no ATS feed", city: "" },
-  { name: "Critical Path Games", url: "https://critpath.com/careers", note: "Unannounced multiplayer, cross-platform game (Vancouver indie). Custom Astro site, no scrapeable ATS feed. Requested by studio 2026-07-14", city: "Vancouver, BC" }, // COO Jeanne-Marie Owens emailed studios@; ~1 real role (Senior Animator) plus a General Applications catch-all, hardcoded static pages, nothing to scrape, so Island
+  // (Critical Path Games promoted to mainland 2026-07-14 — custom static careers site, see fetchCritpath.
+  //  Its Island entry was left behind by that promotion and was double-listing the studio; removed 2026-08-06.)
   { name: "Webcore Games", url: "https://www.webcoregames.com/careers/", note: "Co-dev, porting & LiveOps studio (São Paulo, since 2004). Applies via a ClickUp form, no scrapeable ATS feed. Requested 2026-07-15", city: "São Paulo, Brazil" }, // apply link goes to forms.clickup.com; ~1 role (Game Engineer) + talent-bank form. No ATS feed to scrape, so Island. Same co-dev pattern as Room 8 / Enduring.
   { name: "Arcanaut Studios", url: "https://www.arcanautstudios.com/careers", note: "Star Wars: Fate of the Old Republic (Casey Hudson / ex-BioWare, with Lucasfilm Games). applytojobs.ca board, no fetcher yet; no open roles as of 2026-07-15", city: "Edmonton, Canada" }, // Webflow careers page embeds arcanautstudios.applytojobs.ca (/v1/embedded). Notable studio, promotable to mainland once they post roles + a fetcher exists. Requested 2026-07-15
   { name: "Rezzil", url: "https://rezzil.com/careers/", note: "VR sports-performance training (Rezzil Player on Quest) — Unity/XR roles. Charlie HR Recruit ATS, no fetcher yet", city: "Manchester, UK" }, // vacancies are an iframe of rezzil.recruit.charliehr.com/job-openings; unsupported ATS and only a handful of roles, so Island. Promotable if a Charlie HR fetcher ever earns its keep. Added 2026-07-31
@@ -137,6 +134,59 @@ const DIRECTORY = [
   // likely get these), both become mainland candidates worth ~290 roles between them.
   { name: "MoonTon Games", url: "https://moonton.jobs.feishu.cn/index", note: "Mobile Legends: Bang Bang — Shanghai (~162 roles). Feishu ATS, signature-gated; see note above", city: "Shanghai, China" },
   { name: "Lilith Games", url: "https://lilithgames.jobs.feishu.cn/career", note: "AFK Journey, Rise of Kingdoms — Shanghai (~128 roles). Feishu ATS, signature-gated; see note above", city: "Shanghai, China" },
+
+  // ---- August 2026 link-out batch (gamesjobsindex.com sweep, Addendum 4) --------------------------
+  // Notable studios that were missing from the board ENTIRELY — not on a supported ATS, and none worth
+  // a bespoke fetcher on current volume. Every URL below was read from the studio's live careers link
+  // and then network-checked on 2026-08-06: all 47 resolve (no DNS/TLS failures of the Bugbear kind).
+  // Promote any of these to STUDIOS the moment it turns up on an ATS we already scrape.
+  { name: "4J Studios", url: "https://4jstudios.com/careers/", note: "Minecraft console editions, Reforged", city: "Dundee, Scotland" },
+  { name: "Awaceb", url: "https://www.awaceb.com/", note: "Tchia — New Caledonia-inspired adventure", city: "Bordeaux, France" },
+  { name: "Blowfish Studios", url: "https://www.blowfishstudios.com/careers", note: "Morphies Law, Projection — Australian dev/publisher", city: "Sydney, Australia" },
+  { name: "Bossa Studios", url: "https://www.bossagames.com/jobs", note: "Surgeon Simulator, I Am Fish", city: "London, UK" },
+  { name: "Cyanide Studios", url: "https://cyanide-studio.com/en/join-us/", note: "Blood Bowl, Werewolf: The Apocalypse — Nacon studio", city: "Nanterre, France" },
+  { name: "Deck Nine", url: "https://www.deckninegames.com/", note: "Life is Strange: True Colors / Double Exposure", city: "Westminster, CO" },
+  { name: "Far From Home", url: "https://www.farfromhomegames.com/en/ofertypracy", note: "Forever Skies", city: "Warsaw, Poland" },
+  { name: "Feral Interactive", url: "https://jobs.feralinteractive.com/", note: "Mac/Linux/mobile ports of AAA titles", city: "London, UK" },
+  { name: "Frictional Games", url: "https://frictionalgames.com/", note: "Amnesia, SOMA", city: "Malmö, Sweden" },
+  { name: "Gaijin Entertainment", url: "https://www.gaijinent.com/job", note: "War Thunder, Enlisted", city: "Budapest, Hungary" },
+  { name: "Giant Sparrow", url: "https://www.giantsparrow.com/jobs/", note: "What Remains of Edith Finch, The Unfinished Swan", city: "Los Angeles, CA" },
+  { name: "Grimlore Games", url: "https://grimloregames.com/jobs/", note: "SpellForce 3 — THQ Nordic studio", city: "Munich, Germany" },
+  { name: "Grove Street Games", url: "https://grovestreetgames.com/careers/", note: "GTA Definitive Edition, co-dev and porting", city: "Gainesville, FL" },
+  { name: "Gunzilla Games", url: "https://gunzillagames.com/en/careers/", note: "Off The Grid", city: "Frankfurt, Germany" },
+  { name: "HandyGames", url: "https://www.handy-games.com/en/jobs/", note: "THQ Nordic's indie publishing arm", city: "Giebelstadt, Germany" },
+  { name: "Hinterland Studio", url: "https://www.hinterland.com/about#current-openings", note: "The Long Dark", city: "Vancouver, BC" },
+  { name: "Iceberg Interactive", url: "https://www.iceberg-games.com/jobs/", note: "Publisher — Starpoint Gemini, Killing Floor 3", city: "Haarlem, Netherlands" },
+  { name: "Ironwood Studios", url: "https://www.ironwoodstudios.com/hiring", note: "Pacific Drive", city: "Seattle, WA" },
+  { name: "Jyamma Games", url: "http://jyammagames.com/careersjyamma/", note: "Enotria: The Last Song", city: "Milan, Italy" },
+  { name: "MadFinger Games", url: "https://www.madfingergames.com/careers", note: "Shadowgun, Dead Trigger", city: "Brno, Czechia" },
+  { name: "Magic Design Studios", url: "https://www.magicdesignstudios.com/jobs-alert", note: "Have a Nice Death, Unruly Heroes", city: "Montpellier, France" },
+  { name: "Marvelous", url: "https://job.axol.jp/qd/c/marv/job/search", note: "Story of Seasons, Rune Factory — JP-language board on axol.jp", city: "Tokyo, Japan" },
+  { name: "Microids", url: "https://www.microids.com/jobs/", note: "Publisher — Syberia, Asterix", city: "Paris, France" },
+  { name: "Movie Games", url: "https://mov.gs/jobs/", note: "Drug Dealer Simulator, Lust series", city: "Warsaw, Poland" },
+  { name: "Nacon", url: "https://corporate.nacongaming.com/career/", note: "Publisher + studio group (RIG, Test Drive, Terminator)", city: "Lesquin, France" },
+  { name: "Nekcom Games", url: "https://careers-cn.nekcomgames.com/", note: "Showa American Story — CN-language board", city: "Wuhan, China" },
+  { name: "Nimble Giant", url: "https://careers.nimblegiant.com/", note: "Quantum League, Master of Orion", city: "Buenos Aires, Argentina" },
+  { name: "Nine Dots Studio", url: "https://www.ninedotsstudio.com/careers", note: "Outward", city: "Sherbrooke, QC" },
+  { name: "Pixel Federation", url: "https://career.pixelfederation.com/", note: "Trainstation, Diggy's Adventure", city: "Bratislava, Slovakia" },
+  { name: "PQube", url: "https://pqube.co.uk/join-us/", note: "Publisher — anime/Japanese titles in the West", city: "Letchworth, UK" },
+  { name: "Q-Games", url: "https://www.q-games.com/en/recruit/", note: "PixelJunk series, Tempopo", city: "Kyoto, Japan" },
+  { name: "Redbit Games", url: "https://www.redbitgames.com/careers/", note: "Mobile dev/publisher", city: "Rome, Italy" },
+  { name: "Reflector Entertainment", url: "https://emplois.reflectorentertainment.com/l/en", note: "Unknown 9: Awakening — Bandai Namco studio", city: "Montreal, QC" },
+  { name: "Resolution Games", url: "https://jobs.resolutiongames.com/", note: "Demeo, Blaston — VR specialist", city: "Stockholm, Sweden" },
+  { name: "Rusty Lake", url: "https://www.rustylake.com/jobs/", note: "Rusty Lake / Cube Escape series", city: "Amsterdam, Netherlands" },
+  { name: "Serenity Forge", url: "https://serenityforge.com/careers", note: "Publisher + dev — Doki Doki Literature Club Plus", city: "Boulder, CO" },
+  { name: "Shiro Games", url: "https://shirogames.com/jobs/", note: "Northgard, Wartales, Dune: Spice Wars", city: "Bordeaux, France" },
+  { name: "Siege Camp", url: "https://www.siegecamp.com/careers", note: "Foxhole", city: "Toronto, ON" },
+  { name: "Skybound Entertainment", url: "https://www.skybound.com/careers", note: "The Walking Dead IP — games, comics, TV", city: "Los Angeles, CA" },
+  { name: "Slitherine", url: "https://www6.slitherine.com/job/postings", note: "Strategy/wargame publisher — Matrix Games", city: "Epsom, UK" },
+  { name: "SOEDESCO", url: "https://www.soedesco.com/careers", note: "Publisher — Owlboy, Real Farm", city: "Rotterdam, Netherlands" },
+  { name: "Star Vault", url: "https://starvault.se/job-listings/", note: "Mortal Online 2", city: "Malmö, Sweden" },
+  { name: "Studio MDHR", url: "https://studiomdhr.com/careers", note: "Cuphead", city: "Oakville, ON" },
+  { name: "The Game Kitchen", url: "https://thegamekitchen.com/jobs/", note: "Blasphemous 1 & 2", city: "Seville, Spain" },
+  { name: "Untold Tales", url: "https://untoldtales.games/careers/", note: "Publisher — narrative and story-driven indies", city: "Wroclaw, Poland" },
+  { name: "Whitethorn Games", url: "https://www.whitethorngames.com/careers", note: "Publisher — cozy / wholesome games", city: "Pittsburgh, PA" },
+  { name: "Yellow Brick Games", url: "https://yellowbrickgames.ca/jobs/", note: "Eternal Strands — founded by ex-BioWare/Ubisoft leads", city: "Quebec City, QC" },
 
   // ---- August 2026: probed for a custom fetcher, not built. Reasons recorded so nobody re-probes. --
   // 4A Games: careers page is a Squarespace layout where each role is a free-form <h1> inside a text
@@ -728,6 +778,16 @@ const STUDIOS = [
   { name: "Yostar Games", type: "moka", token: "yostar", siteId: "145292", host: "app.mokahr.com", city: "Shanghai, China" },        // Arknights, Azur Lane, Blue Archive (publishing); ~33 roles
   { name: "FirstFun", type: "moka", token: "firstfun", siteId: "100000617", host: "hire-r1.mokahr.com", city: "Boston, MA" },        // mobile publisher (Last Fortress); ~24 roles, English titles, many US-based — hire-r1 host, so plaintext payload
   { name: "Seasun Games", type: "moka", token: "seasungames", siteId: "100000106", host: "hire-r1.mokahr.com", city: "Beijing, China" }, // 西山居 (Kingsoft) — JX Online, Sword of Justice; ~14 roles
+
+  // ---- BUG FIX 2026-08-06: these four were promoted from Island to mainland on 2026-07-05 (their own
+  // comments say so, and fetchMadHead / fetchTrailmix / fetchKenjo were written for them) but the entries
+  // were pasted into DIRECTORY instead of STUDIOS. DIRECTORY is never handed to FETCHERS, so they were
+  // never scraped — and because a DIRECTORY entry needs a `url`, which these lack, the Island card had
+  // nothing to link to either. Confirmed absent from the live jobs.json. Moved here where they belong.
+  { name: "Mad Head Games", type: "madhead", city: "Belgrade, Serbia" }, // Scars Above, Pavilion — self-hosted careers site; jobs via an AJAX "JobList" endpoint (X-Requested-With header). ~5 roles in Belgrade (Art/Animation/Design/People), all Hybrid; skips "Open application". Promoted from Island 2026-07-05 — spot-check first scrape
+  { name: "Trailmix Games", type: "trailmix", careersUrl: "https://www.trailmixgames.com/careers", city: "London, UK" }, // Love & Pies — mobile; self-hosted Webflow careers page, <a> links to /jobs/<slug>. ~3 roles (London + Berlin), discipline/location from title. Promoted from Island 2026-07-05 — spot-check first scrape
+  { name: "10:10 Games", type: "bamboohr", token: "1010games", city: "Warrington, UK" }, // ex-Playtonic / Crash devs — BambooHR board (1010games.bamboohr.com); ~3 roles in Warrington (Art/Design). Skips speculative applications. Promoted from Island 2026-07-05 — spot-check first scrape
+  { name: "Deck13 Interactive", type: "kenjo", token: "deck13jobs", city: "Frankfurt, Germany" }, // Lords of the Fallen, The Surge — Kenjo careers site, public positions JSON API (/api/controller/career-site/public/deck13jobs/positions). ~2 roles (Art/Tech), Frankfurt + remote-in-Germany (Hybrid). Skips General Application. Promoted from Island 2026-07-05 — spot-check first scrape
 
   // Custom-site fetchers built 2026-08-05 (see gamesjobsindex-gap-2026-08.md, Addendum 3)
   { name: "Aiming", type: "hrmos", token: "aiming", city: "Tokyo, Japan" },                          // 株式会社Aiming — NO custom fetcher needed: recruit.aiming-inc.com/career/entry links straight out to hrmos.co/pages/aiming (~83 JP roles). Found while probing it as a "custom site".
