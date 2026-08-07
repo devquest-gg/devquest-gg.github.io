@@ -75,3 +75,19 @@ jobs:
           done
           echo "::error::Push still rejected after 5 attempts." >&2
           exit 1
+
+      # Fast path: tell the alerts Worker that fresh jobs.json has landed, so
+      # #new-jobs fills within ~2 min instead of waiting for the hourly cron.
+      # The Worker's "17 * * * *" cron runs the same job as a safety net, and the
+      # announced ledger makes it idempotent, so double-firing is harmless.
+      - name: Announce new jobs to Discord
+        if: success()
+        env:
+          WORKER_BASE: https://devquest-alerts.balesdestin.workers.dev
+          RUN_KEY: ${{ secrets.RUN_KEY }}
+        run: |
+          # GitHub Pages needs a moment to publish the new jobs.json before the
+          # Worker reads it. Without this the Worker sees the previous run's data.
+          sleep 90
+          # Never fail the workflow on a failed ping — the cron will catch it.
+          curl -sS -m 30 "$WORKER_BASE/announce?key=$RUN_KEY" || echo "announce ping failed; hourly cron will catch it"
