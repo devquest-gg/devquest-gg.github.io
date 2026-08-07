@@ -1903,8 +1903,8 @@ function showApplyNudge(studio, disc){
   if (!bar){ bar = document.createElement("div"); bar.id = "applyNudge"; bar.style.cssText = "margin:10px 0 8px;padding:11px 14px;border:1px solid #2a3a28;border-radius:8px;background:#141816"; jobsEl.parentNode.insertBefore(bar, jobsEl); }
   var d = disc || "matching";
   bar.innerHTML = '<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;color:#d0dcc8">'
-    + '<span style="font-size:14px">Applying at <b>'+_h(studio)+'</b>? Get new <b>'+_h(d)+'</b> roles in one email a week — never miss one.</span>'
-    + '<button id="anYes" style="margin-left:auto;background:#1f6feb;color:#fff;border:0;border-radius:6px;padding:7px 14px;font-weight:600;cursor:pointer">Email me weekly</button>'
+    + '<span style="font-size:14px">Applying at <b>'+_h(studio)+'</b>? Get told when new <b>'+_h(d)+'</b> roles open — Discord DM or weekly email.</span>'
+    + '<button id="anYes" style="margin-left:auto;background:#1f6feb;color:#fff;border:0;border-radius:6px;padding:7px 14px;font-weight:600;cursor:pointer">Notify me of new jobs</button>'
     + '<button id="anNo" style="background:transparent;color:#6e7681;border:0;font-size:13px;cursor:pointer">No thanks</button></div>';
   bar.style.display = "block";
   // "No thanks" spends a strike + starts the shared quiet window; "Email me" opens the pre-filled form.
@@ -6351,8 +6351,8 @@ try {
       // Already subscribed on this device: go quiet, but stay available so they can add an
       // alert for a NEW search. Muted styling, low-key "+ Add alert" instead of the loud prompt.
       var qmsg = (n===0)
-        ? 'You\'re subscribed. Get an email when a <b style="color:#9fb499">'+escapeH(label)+'</b> role opens?'
-        : 'You\'re subscribed. Want <b style="color:#9fb499">'+escapeH(label)+'</b> emailed too?';
+        ? 'You\'re set up. Get notified when a <b style="color:#9fb499">'+escapeH(label)+'</b> role opens?'
+        : 'You\'re set up. Want alerts for <b style="color:#9fb499">'+escapeH(label)+'</b> too?';
       bar.innerHTML='<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;color:#7a8878;font-size:13px">'+
         '<span>'+qmsg+'</span>'+
         '<button id="alertCta" style="margin-left:auto;background:transparent;color:#58a6ff;border:0;font-size:13px;font-weight:600;cursor:pointer;padding:2px 4px">'+(n===0?'+ Notify me':'+ Add alert')+'</button>'+
@@ -6364,14 +6364,14 @@ try {
     var msg, btnLabel;
     if(n===0){
       msg = fresh
-        ? '📬 Get new <b>'+escapeH(label)+'</b> roles in one email a week — be first when they open.'
-        : '🔔 No <b>'+escapeH(label)+'</b> roles open right now — we\'ll email you, one a week, when they do.';
-      btnLabel='Email me weekly';
+        ? '📬 Get new <b>'+escapeH(label)+'</b> roles the moment they open — by Discord DM, or one email a week.'
+        : '🔔 No <b>'+escapeH(label)+'</b> roles open right now — we\'ll tell you when one does.';
+      btnLabel='Notify me of new jobs';
     } else {
       msg = fresh
-        ? '📬 <b style="color:#fff">'+n+' new '+escapeH(label)+'</b> role'+(n===1?'':'s')+' this week. Get fresh matches in one email a week — never miss one.'
-        : '🔔 <b style="color:#fff">'+n+' '+escapeH(label)+'</b> role'+(n===1?'':'s')+' '+(n===1?'matches':'match')+'. One email a week as new ones open.';
-      btnLabel='Email me weekly';
+        ? '📬 <b style="color:#fff">'+n+' new '+escapeH(label)+'</b> role'+(n===1?'':'s')+' this week. Get told the moment fresh ones open.'
+        : '🔔 <b style="color:#fff">'+n+' '+escapeH(label)+'</b> role'+(n===1?'':'s')+' '+(n===1?'matches':'match')+'. Get notified as new ones open.';
+      btnLabel='Notify me of new jobs';
     }
     bar.innerHTML='<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;color:#d0dcc8">'+
       '<span style="font-size:14px;flex:1;min-width:180px">'+msg+'</span>'+
@@ -6383,30 +6383,62 @@ try {
   }
   function openForm(label, c, src){
     bar.setAttribute("data-state","form");
-    bar.innerHTML='<form id="alertForm" style="display:flex;flex-direction:column;gap:8px;color:#d0dcc8">'+
-      '<div style="font-size:14px">🔔 Weekly email of new <b>'+escapeH(label)+'</b> roles:</div>'+
-      '<div style="display:flex;gap:8px;flex-wrap:wrap"><input id="alertEmail" type="email" required placeholder="you@email.com" style="flex:1;min-width:200px;padding:8px 10px;border:1px solid #2a3a28;border-radius:6px;background:#0d0f0e;color:#d0dcc8">'+
-      '<button type="submit" style="background:#1f6feb;color:#fff;border:0;border-radius:6px;padding:8px 16px;font-weight:600;cursor:pointer">Subscribe</button></div>'+
-      '<label style="font-size:12px;color:#7a8878;display:flex;gap:6px;align-items:flex-start"><input id="alertConsent" type="checkbox" required style="margin-top:2px">I agree to receive a weekly job-alert email. Unsubscribe anytime; no spam.</label>'+
-      (TURNSTILE_SITEKEY?'<div id="alertTurnstile" style="margin-top:2px"></div>':'')+
-      '<div id="alertMsg" style="font-size:13px;min-height:16px"></div>'+
-      // Discord path: no email, no consent box, no Turnstile. The OAuth consent screen IS
-      // the confirmation, which is also why it has no "check your inbox" step to leak on.
-      '<div style="display:flex;align-items:center;gap:8px;margin:2px 0"><div style="flex:1;height:1px;background:#2a3a28"></div><span style="font-size:11px;color:#6e7d6c">or</span><div style="flex:1;height:1px;background:#2a3a28"></div></div>'+
-      '<button type="button" id="alertDiscord" style="background:#5865F2;color:#fff;border:0;border-radius:6px;padding:8px 16px;font-weight:600;cursor:pointer">Get these as a Discord DM</button>'+
-      '<div style="font-size:11.5px;color:#6e7d6c;text-align:center;margin-top:-2px">Real time instead of weekly. No email address needed.</div></form>';
-    var _dbtn=document.getElementById("alertDiscord");
-    if(_dbtn) _dbtn.onclick=function(){
-      try{ track("alert_signup",{ src:(src||"filter")+"_discord", ch:"discord" }); }catch(e){}
-      location.href = ALERTS_API+"/discord/start?criteria="+encodeURIComponent(JSON.stringify(c))+"&label="+encodeURIComponent(label);
-    };
+    // Email and Discord are independent choices, not alternatives — the schema has always
+    // allowed several alerts per person, so there is no reason to force an either/or. Pick
+    // both and you get two rows with the same criteria, one per channel.
+    var CH_ON  = "border:1px solid #1f6feb;background:#16233a;color:#cfe0ff";
+    var CH_OFF = "border:1px solid #2a3a28;background:transparent;color:#7a8878";
+    var CH_DON = "border:1px solid #5865F2;background:#20244a;color:#dfe2ff";
+    var chBase = "border-radius:999px;padding:7px 14px;font-size:13px;font-weight:600;cursor:pointer;";
+    bar.innerHTML='<form id="alertForm" style="display:flex;flex-direction:column;gap:9px;color:#d0dcc8">'+
+      '<div style="font-size:14px">🔔 Notify me about new <b>'+escapeH(label)+'</b> roles:</div>'+
+      '<div style="display:flex;gap:8px;flex-wrap:wrap">'+
+        '<button type="button" id="chEmail" data-on="1" style="'+chBase+CH_ON+'">✉ Email · weekly</button>'+
+        '<button type="button" id="chDisc" data-on="0" style="'+chBase+CH_OFF+'">💬 Discord DM · real time</button>'+
+      '</div>'+
+      '<div id="emailBlock" style="display:flex;flex-direction:column;gap:8px">'+
+        '<div style="display:flex;gap:8px;flex-wrap:wrap"><input id="alertEmail" type="email" placeholder="you@email.com" style="flex:1;min-width:200px;padding:8px 10px;border:1px solid #2a3a28;border-radius:6px;background:#0d0f0e;color:#d0dcc8"></div>'+
+        '<label style="font-size:12px;color:#7a8878;display:flex;gap:6px;align-items:flex-start"><input id="alertConsent" type="checkbox" style="margin-top:2px">I agree to receive a weekly job-alert email. Unsubscribe anytime; no spam.</label>'+
+        (TURNSTILE_SITEKEY?'<div id="alertTurnstile"></div>':'')+
+      '</div>'+
+      '<button type="submit" id="alertGo" style="background:#1f6feb;color:#fff;border:0;border-radius:6px;padding:9px 16px;font-weight:600;cursor:pointer">Turn on alerts</button>'+
+      '<div id="alertMsg" style="font-size:13px;min-height:16px"></div></form>';
+
+    var chEmail=document.getElementById("chEmail"), chDisc=document.getElementById("chDisc");
+    var emailBlock=document.getElementById("emailBlock"), go=document.getElementById("alertGo");
+    function on(el){ return el.getAttribute("data-on")==="1"; }
+    function paint(){
+      chEmail.setAttribute("style", chBase + (on(chEmail)?CH_ON:CH_OFF));
+      chDisc.setAttribute("style",  chBase + (on(chDisc)?CH_DON:CH_OFF));
+      emailBlock.style.display = on(chEmail) ? "flex" : "none";
+      go.textContent = (!on(chEmail)&&!on(chDisc)) ? "Turn on alerts"
+                     : (on(chEmail)&&on(chDisc))   ? "Turn on both"
+                     : on(chDisc)                  ? "Continue with Discord" : "Turn on alerts";
+      go.style.background = (on(chDisc)&&!on(chEmail)) ? "#5865F2" : "#1f6feb";
+    }
+    function toggle(el){ el.setAttribute("data-on", on(el)?"0":"1"); paint(); }
+    chEmail.onclick=function(){ toggle(chEmail); }; chDisc.onclick=function(){ toggle(chDisc); };
+    paint();
+
     _tsWidget=null;
     mountTurnstile("alertTurnstile", "alertMsg", function(id){ _tsWidget = id; });
+
+    function goDiscord(){
+      try{ track("alert_signup",{ src:(src||"filter")+"_discord", ch:"discord" }); }catch(e){}
+      location.href = ALERTS_API+"/discord/start?criteria="+encodeURIComponent(JSON.stringify(c))+"&label="+encodeURIComponent(label);
+    }
+
     document.getElementById("alertForm").onsubmit=function(ev){
       ev.preventDefault();
+      var msg=document.getElementById("alertMsg");
+      var wantEmail=on(chEmail), wantDisc=on(chDisc);
+      if(!wantEmail && !wantDisc){ msg.textContent="Pick at least one way to be notified."; msg.style.color="#c87878"; return; }
+      // Discord only: nothing to validate, nothing to POST — hand straight to OAuth.
+      if(!wantEmail){ goDiscord(); return; }
+
       var email=document.getElementById("alertEmail").value.trim();
       var consent=document.getElementById("alertConsent").checked;
-      var msg=document.getElementById("alertMsg");
+      if(!email || email.indexOf("@")<1){ msg.textContent="Enter a valid email."; msg.style.color="#c87878"; return; }
       if(!consent){ msg.textContent="Please tick the consent box."; msg.style.color="#c87878"; return; }
       var tsToken="";
       if(TURNSTILE_SITEKEY){
@@ -6415,11 +6447,20 @@ try {
         if(!tsToken){ msg.textContent="Just a sec — finishing a quick security check. Tap again."; msg.style.color="#c87878"; return; }
       }
       msg.textContent="Sending…"; msg.style.color="#7a8878";
-      track("alert_signup",{ src: src || "filter" });
+      track("alert_signup",{ src: src || "filter", ch: wantDisc ? "both" : "email" });
       fetch(ALERTS_API+"/subscribe",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email:email,criteria:c,label:label,token:tsToken})})
         .then(function(r){ return r.json().catch(function(){return{};}).then(function(j){ return {ok:r.ok,j:j}; }); })
         .then(function(res){
-          if(res.ok&&res.j&&res.j.ok){ try{ store.set("luj-subscribed",1); }catch(e){} bar.setAttribute("data-state","done"); bar.innerHTML='<div style="font-size:14px;color:#58a6ff">✓ Almost there. Check your inbox and click the confirmation link to start your weekly alert.</div>'; }
+          if(res.ok&&res.j&&res.j.ok){
+            try{ store.set("luj-subscribed",1); }catch(e){}
+            // Email first, THEN navigate — leaving the page kills an in-flight fetch, so the
+            // Discord hop has to wait for /subscribe to actually come back ok.
+            if(wantDisc){ msg.textContent="Email alert created. Sending you to Discord…"; msg.style.color="#7a8878"; goDiscord(); return; }
+            bar.setAttribute("data-state","done");
+            // "Almost there" is load-bearing: offerFollowAlert() text-matches it to know the
+            // signup converted and close its modal. Do not reword it.
+            bar.innerHTML='<div style="font-size:14px;color:#58a6ff">✓ Almost there. Check your inbox and click the confirmation link to start your weekly alert.</div>';
+          }
           else { msg.textContent="That didn’t go through. Please try again in a moment."; msg.style.color="#c87878"; }
         }).catch(function(){ msg.textContent="Network hiccup. Please try again."; msg.style.color="#c87878"; });
     };
