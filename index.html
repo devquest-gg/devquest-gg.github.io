@@ -1445,7 +1445,7 @@ function buildStudioDash(){
     + `</div>`
     + `<div class="wlchips">${chips}</div>`
     + moversLine
-    + `<div class="wlcta"><button class="wlbtn primary" onclick="window.dqShowFollowEmail()">🔔 Get a weekly job alert for these studios</button></div>`
+    + `<div class="wlcta"><button class="wlbtn primary" onclick="window.dqShowFollowEmail()">🔔 Get a weekly job alert for these studios</button>${window.dqManageBtn ? window.dqManageBtn() : ""}</div>`
     + `<div id="followEmailBox" style="display:none;margin-top:12px"></div>`
     + `<div class="wlnote">Tap a studio to browse its roles, the ★ to unfollow. The alert button sets up a weekly job alert pre-filled with these studios. Saved on this device.</div>`
     + `</div>`;
@@ -6151,7 +6151,15 @@ try {
       + '<button id="wlBtn" style="background:var(--accent);color:#0d1117;border:0;border-radius:6px;padding:8px 16px;font-weight:700;cursor:pointer">Create alert</button></div>'
       + '<label style="font-size:12px;color:var(--muted);display:flex;gap:6px;align-items:flex-start;margin-top:6px"><input id="wlConsent" type="checkbox" style="margin-top:2px">I agree to receive a weekly job-alert email. Unsubscribe anytime; no spam.</label>'
       + (TURNSTILE_SITEKEY ? '<div id="wlTurnstile" style="margin-top:8px"></div>' : '')
-      + '<div id="wlMsg" style="font-size:13px;min-height:16px;margin-top:6px;color:var(--muted)"></div>';
+      + '<div id="wlMsg" style="font-size:13px;min-height:16px;margin-top:6px;color:var(--muted)"></div>'
+      + '<div style="display:flex;align-items:center;gap:8px;margin:10px 0 8px"><div style="flex:1;height:1px;background:var(--border)"></div><span style="font-size:11px;color:var(--muted)">or</span><div style="flex:1;height:1px;background:var(--border)"></div></div>'
+      + '<button type="button" id="wlDiscord" style="background:#5865F2;color:#fff;border:0;border-radius:6px;padding:8px 16px;font-weight:700;cursor:pointer;width:100%">Get these as a Discord DM</button>'
+      + '<div style="font-size:11.5px;color:var(--muted);text-align:center;margin-top:5px">Real time instead of weekly. No email address needed.</div>';
+    var _wd = document.getElementById("wlDiscord");
+    if (_wd) _wd.onclick = function(){
+      try{ track("alert_signup", { src:"following_discord", ch:"discord", n:studios.length }); }catch(e){}
+      location.href = ALERTS_API+"/discord/start?criteria="+encodeURIComponent(JSON.stringify({ studios: studios, src: "watchlist" }))+"&label="+encodeURIComponent(label);
+    };
     var wts = null;
     mountTurnstile("wlTurnstile", "wlMsg", function(id){ wts = id; });
     var btn = document.getElementById("wlBtn");
@@ -6190,6 +6198,45 @@ try {
     }catch(e){}
   }
   window.dqTrack = track;
+
+  // ---- Alert ids this browser owns. The id IS the manage token, so keeping it locally is
+  // what lets "Manage my alerts" work without making anyone dig up an old email or DM.
+  function dqAlertIds(){ try { return store.get("dq-alert-ids", []) || []; } catch(e){ return []; } }
+  window.dqManageUrl = function(){
+    var a = dqAlertIds();
+    return a.length ? ALERTS_API + "/manage?token=" + encodeURIComponent(a[a.length-1]) : "";
+  };
+  window.dqManageBtn = function(){
+    var u = window.dqManageUrl();
+    return u ? ' <a class="wlbtn" href="'+u+'" target="_blank" rel="noopener" style="display:inline-block;text-decoration:none">\u2699 Manage my alerts</a>' : '';
+  };
+
+  // Returning from the Discord handshake. Store the id, then STRIP IT FROM THE URL: it is a
+  // bearer token, and a token sitting in the address bar gets pasted into chats where a link
+  // crawler will follow it. (That exact class of bug unsubscribed a live user in 902ms.)
+  try {
+    var _dq = new URLSearchParams(location.search);
+    var _da = _dq.get("dqalert");
+    if (_da){
+      var _ids = dqAlertIds();
+      if (_ids.indexOf(_da) === -1) _ids.push(_da);
+      try { store.set("dq-alert-ids", _ids); } catch(e){}
+      try { store.set("luj-subscribed", 1); } catch(e){}
+      try { store.set("dq-follow-alert-done", 1); } catch(e){}   // don't re-offer after they've converted
+      var _blocked = _dq.get("dm") === "blocked";
+      _dq.delete("dqalert"); _dq.delete("dm"); _dq.delete("dj");
+      var _qs = _dq.toString();
+      try { history.replaceState(null, "", location.pathname + (_qs ? "?"+_qs : "") + location.hash); } catch(e){}
+      track("alert_confirmed", { ch: "discord", blocked: _blocked ? 1 : 0 });
+      setTimeout(function(){
+        try {
+          if (typeof dqToast !== "function") return;
+          if (_blocked) dqToast("Linked \u2014 but Discord is blocking my DMs. Open Discord Settings \u203a Content & Social and allow DMs from server members.");
+          else dqToast("Discord alerts are on \u2014 check your DMs.", null, { label:"Manage", icon:"\u2699", fn:function(){ var u=window.dqManageUrl(); if(u) window.open(u,"_blank","noopener"); } });
+        } catch(e){}
+      }, 700);
+    }
+  } catch(e){}
   // Owner self-exclude: visit /?dqstat=off on each of your own browsers to keep your visits out of
   // analytics (stored per-browser; no events are sent). /?dqstat=on re-enables. Identity-based, so it
   // never affects a real visitor who happens to live in your city.
@@ -6308,7 +6355,8 @@ try {
         : 'You\'re subscribed. Want <b style="color:#9fb499">'+escapeH(label)+'</b> emailed too?';
       bar.innerHTML='<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;color:#7a8878;font-size:13px">'+
         '<span>'+qmsg+'</span>'+
-        '<button id="alertCta" style="margin-left:auto;background:transparent;color:#58a6ff;border:0;font-size:13px;font-weight:600;cursor:pointer;padding:2px 4px">'+(n===0?'+ Notify me':'+ Add alert')+'</button></div>';
+        '<button id="alertCta" style="margin-left:auto;background:transparent;color:#58a6ff;border:0;font-size:13px;font-weight:600;cursor:pointer;padding:2px 4px">'+(n===0?'+ Notify me':'+ Add alert')+'</button>'+
+        (window.dqManageUrl && window.dqManageUrl() ? '<a href="'+window.dqManageUrl()+'" target="_blank" rel="noopener" style="color:#7a8878;font-size:12.5px;text-decoration:none;padding:2px 4px">\u2699 Manage</a>' : '')+'</div>';
       var qbtn=document.getElementById("alertCta"); if(qbtn) qbtn.onclick=function(){ openForm(label, c, "readd"); };
       window.__emailAskActive=false;
       return;
@@ -6341,7 +6389,17 @@ try {
       '<button type="submit" style="background:#1f6feb;color:#fff;border:0;border-radius:6px;padding:8px 16px;font-weight:600;cursor:pointer">Subscribe</button></div>'+
       '<label style="font-size:12px;color:#7a8878;display:flex;gap:6px;align-items:flex-start"><input id="alertConsent" type="checkbox" required style="margin-top:2px">I agree to receive a weekly job-alert email. Unsubscribe anytime; no spam.</label>'+
       (TURNSTILE_SITEKEY?'<div id="alertTurnstile" style="margin-top:2px"></div>':'')+
-      '<div id="alertMsg" style="font-size:13px;min-height:16px"></div></form>';
+      '<div id="alertMsg" style="font-size:13px;min-height:16px"></div>'+
+      // Discord path: no email, no consent box, no Turnstile. The OAuth consent screen IS
+      // the confirmation, which is also why it has no "check your inbox" step to leak on.
+      '<div style="display:flex;align-items:center;gap:8px;margin:2px 0"><div style="flex:1;height:1px;background:#2a3a28"></div><span style="font-size:11px;color:#6e7d6c">or</span><div style="flex:1;height:1px;background:#2a3a28"></div></div>'+
+      '<button type="button" id="alertDiscord" style="background:#5865F2;color:#fff;border:0;border-radius:6px;padding:8px 16px;font-weight:600;cursor:pointer">Get these as a Discord DM</button>'+
+      '<div style="font-size:11.5px;color:#6e7d6c;text-align:center;margin-top:-2px">Real time instead of weekly. No email address needed.</div></form>';
+    var _dbtn=document.getElementById("alertDiscord");
+    if(_dbtn) _dbtn.onclick=function(){
+      try{ track("alert_signup",{ src:(src||"filter")+"_discord", ch:"discord" }); }catch(e){}
+      location.href = ALERTS_API+"/discord/start?criteria="+encodeURIComponent(JSON.stringify(c))+"&label="+encodeURIComponent(label);
+    };
     _tsWidget=null;
     mountTurnstile("alertTurnstile", "alertMsg", function(id){ _tsWidget = id; });
     document.getElementById("alertForm").onsubmit=function(ev){
