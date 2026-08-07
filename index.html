@@ -6363,11 +6363,15 @@ try {
   var jobsEl=document.getElementById("jobs");
   if(jobsEl&&jobsEl.parentNode) jobsEl.parentNode.insertBefore(bar, jobsEl);
 
+  var _seenBar = {};
   function buildCta(label, c, n, fresh){
     var subbed=false; try{ subbed=!!store.get("luj-subscribed",0); }catch(e){}
     // The shared one-ask budget: hide entirely if not subscribed and we're in the quiet window / capped.
     if(!subbed && !canAskEmail()){ bar.style.display="none"; bar.removeAttribute("data-state"); window.__emailAskActive=false; return; }
     bar.setAttribute("data-state","cta"); bar.style.display="block";
+    // Impression = the denominator for every conversion rate below. Deduped per distinct
+    // search per page load, because renderBar fires on every single filter change.
+    try{ if(!_seenBar[label]){ _seenBar[label]=1; track("alert_bar_shown",{ sub: subbed?1:0, n:(typeof n==="number"?n:null) }); } }catch(e){}
     if(subbed){
       // Already subscribed on this device: go quiet, but stay available so they can add an
       // alert for a NEW search. Muted styling, low-key "+ Add alert" instead of the loud prompt.
@@ -6404,6 +6408,7 @@ try {
   }
   function openForm(label, c, src){
     bar.setAttribute("data-state","form");
+    try{ track("alert_form_open",{ src: src||"filter" }); }catch(e){}
     // Real checkboxes, not styled chips. The chip version read as decoration — people could
     // not tell they were selectable. Each option carries a plain-language line saying what
     // actually arrives, including the honest downside (cadence).
