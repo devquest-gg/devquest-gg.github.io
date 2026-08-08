@@ -367,7 +367,7 @@ const STUDIOS = [
   { name: "Arrowhead Game Studios", type: "teamtailor", token: "arrowhead", host: "jobs.arrowheadgamestudios.com" },
   { name: "Fatshark", type: "teamtailor", token: "fatshark", host: "jobs.fatsharkgames.com" },
   { name: "Sharkmob", type: "teamtailor", token: "sharkmob", host: "career.sharkmob.com" },
-  { name: "Embark Studios", type: "teamtailor", token: "embark", host: "careers.embark-studios.com" },
+  { name: "Embark Studios", type: "teamtailor", token: "embark", host: "careers.embark-studios.com", city: "Stockholm, Sweden" },  // ARC Raiders, The Finals — city added 2026-08-08; its board leaves 2 roles location-less
   { name: "CI Games", type: "teamtailor", token: "cigames", host: "cigames.teamtailor.com" },
   { name: "Fortis Games", type: "greenhouse", token: "fortisgames" },
   { name: "Gameloft", type: "smartrecruiters", token: "Gameloft" },
@@ -390,7 +390,7 @@ const STUDIOS = [
   { name: "Warner Bros. Games", type: "phenom", token: "wbgames", host: "careers.wbd.com",
     path: "/global/en/search-results", categories: ["Game Development"] },
   // Niche-platform studios promoted by the June 7 2026 island re-audit.
-  { name: "Studio Wildcard", type: "bamboohr", token: "studiowildcard" },
+  { name: "Studio Wildcard", type: "bamboohr", token: "studiowildcard", city: "Redmond, WA" },   // ARK — BambooHR sends no location object at all on 5 roles
   { name: "Nexon", type: "jobscore", token: "nexonamericainc" },
   { name: "Certain Affinity", type: "jazzhr", token: "certainaffinityinc" },
   { name: "Capcom", type: "jobvite", token: "capcomusa" },
@@ -469,9 +469,9 @@ const STUDIOS = [
   { name: "Kolibri Games", type: "lever", token: "kolibrigames" },                 // Idle Miner Tycoon (Berlin)
   { name: "Demiurge Studios", type: "lever", token: "demiurgestudios" },           // Marvel Puzzle Quest
   // christran sweep, round 3 (full-list probe; each feed peeked to confirm game-dev, June 2026).
-  { name: "Peak Games", type: "lever", token: "peakgames" },                       // Toon Blast (Zynga, Istanbul)
+  { name: "Peak Games", type: "lever", token: "peakgames", city: "Istanbul, Turkey" },   // Toon Blast (Zynga) — its Lever board puts the employment type ("Full-time") in the location field on all 20 roles
   { name: "Easybrain", type: "lever", token: "easybrain" },                        // mobile puzzle (Cyprus)
-  { name: "Fanatee", type: "lever", token: "fanatee" },                            // CodyCross (mobile)
+  { name: "Fanatee", type: "lever", token: "fanatee", city: "Sao Paulo, Brazil" },  // CodyCross (mobile) — plain ASCII on purpose: this string is substring-matched by the board's filters
   { name: "Limit Break", type: "lever", token: "limitbreak" },                     // mobile (Tokyo)
   { name: "Sun Studio", type: "lever", token: "sunstudio" },                       // casual games (Vietnam)
   { name: "Voldex", type: "ashby", token: "voldex" },                              // Roblox games (Brookhaven)
@@ -513,7 +513,7 @@ const STUDIOS = [
   { name: "Panic Button", type: "greenhouse", token: "panicbutton" },              // porting studio (Austin) — Doom Switch
   { name: "SkyBox Labs", type: "lever", token: "skyboxlabs" },                     // Minecraft/Halo co-dev (Vancouver)
   { name: "Keen Games", type: "teamtailor", token: "keengames", host: "jobs.keengames.com" }, // Enshrouded (Frankfurt) — not Keen Software House
-  { name: "Neowiz", type: "lever", token: "neowiz" },                              // Lies of P / ROUND8 Studio (Korea) — from Alexander Rehm sweep
+  { name: "Neowiz", type: "lever", token: "neowiz", city: "Seongnam, South Korea" }, // Lies of P / ROUND8 Studio — from Alexander Rehm sweep. Its Lever board sets location to the literal string "NEOWIZ" on all 34 roles
   // From the Animation/VFX/Game community spreadsheet (2026-06-11) — only feeds that verified live.
   { name: "Tango Gameworks", type: "greenhouse", token: "tangogameworks" },        // Hi-Fi Rush, The Evil Within (Krafton, Tokyo)
   { name: "Bigger Games", type: "ashby", token: "biggergames" },                   // mobile (Istanbul)
@@ -2762,9 +2762,21 @@ function cleanLocation(loc) {
   if (!loc) return loc;
   // Workday remote format e.g. "US-Remote(WA-Seattle Area)" -> "Seattle Area, US" (drops the state prefix).
   loc = String(loc).replace(/^([A-Za-z]{2})-Remote\(([^)]+)\)\s*$/, (m, cc, inner) => `${inner.replace(/^[A-Za-z]{2}-/, "").trim()}, ${cc.toUpperCase()}`);
-  const isJunk = p => !p || /^(blank|n\/?a|null|undefined|unlisted|tbd|various)$/i.test(p);
+  // Two tiers, deliberately.
+  // HARD: pure noise — always dropped.
+  // SOFT: not a place, but more informative to a human than the "Unlisted" they would collapse
+  //   to, so they are dropped only when a real place survives alongside them. "Austin, TX,
+  //   Multiple Locations" -> "Austin, TX"; a bare "2 Locations" is left standing.
+  // Neither tier lists "Remote", "Hybrid", "Onsite", "Anywhere" or "Worldwide". Those are also
+  // not cities, but inferWorkType reads the location field and the Microsoft fetcher cleans
+  // BEFORE it infers (L4910 vs L4928) — stripping them here would silently destroy the
+  // work-type signal. Work-type badges are dropped at the fetcher, after being captured.
+  const HARD_JUNK = /^(blank|n\/?a|null|undefined|unlisted|tbd|various)$/i;
+  const SOFT_JUNK = /^(unknown|any|multiple locations|\d+\s*locations?|full[- ]?time|part[- ]?time)$/i;
+  const isJunk = p => !p || HARD_JUNK.test(p);
   const cleanOne = one => {
-    const parts = one.split(",").map(p => p.trim()).filter(p => !isJunk(p));
+    const kept = one.split(",").map(p => p.trim()).filter(p => !isJunk(p));
+    const parts = kept.some(p => !SOFT_JUNK.test(p)) ? kept.filter(p => !SOFT_JUNK.test(p)) : kept;
     const out = [];
     for (const p of parts) if (!out.length || out[out.length - 1].toLowerCase() !== p.toLowerCase()) out.push(p);
     return out.join(", ");
@@ -2773,6 +2785,32 @@ function cleanLocation(loc) {
   const dedup = [];
   for (const p of locs) if (!dedup.some(x => x.toLowerCase() === p.toLowerCase())) dedup.push(p);
   return dedup.length ? dedup.join("; ") : "Unlisted";
+}
+
+// Some feeds put something that is not a place in the location field: a placeholder
+// ("Unlisted"), an employment type ("Full-time" — Peak Games on Lever), a work-type badge
+// ("Hybrid" — six Teamtailor studios), or the company's own name ("NEOWIZ"). Measured
+// 2026-08-08 across 6,476 live rows: 235 roles, every one of which failed every country
+// filter and most region filters on the board.
+//
+// placeOr() swaps those for the studio's registered city when the registry has one, and
+// leaves the honest "Unlisted" when it doesn't — a guessed city is worse than no city.
+//
+// TWO RULES, both learned the hard way:
+//  1. ORDER. "Hybrid"/"Onsite" are junk as a place but real as a work type, and inferWorkType
+//     reads the location field. Capture the work type — or pass the RAW string to
+//     inferWorkType — BEFORE calling this, or the classification silently disappears.
+//  2. "Remote"/"Anywhere"/"Worldwide" are NOT in this list. They are not cities either, but
+//     they drive the Remote region (185 live roles) and swapping them for an office address
+//     would be a factual lie about the job.
+const PLACE_JUNK = /^(unlisted|unknown|blank|n\/?a|null|undefined|tbd|various|any|multiple locations|\d+\s*locations?|full[- ]?time|part[- ]?time|hybrid|on-?site|in-?office)$/i;
+function placeOr(loc, studio) {
+  const t = String(loc == null ? "" : loc).trim();
+  const fallback = (studio && studio.city) || "Unlisted";
+  if (!t || PLACE_JUNK.test(t)) return fallback;
+  // A NEOWIZ posting whose location reads "NEOWIZ" tells you nothing you didn't already know.
+  if (studio && studio.name && t.toLowerCase() === String(studio.name).toLowerCase()) return fallback;
+  return t;
 }
 
 // ISO2 -> region. TOTAL over every code resolveCountry can emit (79 as of 2026-08-08), so a
@@ -3114,7 +3152,16 @@ async function fetchGreenhouse(studio) {
   // deptInclude keeps only the departments belonging to the studio we actually want (regex on dept name).
   if (studio.deptInclude) { const re = new RegExp(studio.deptInclude, "i"); jobs = jobs.filter(j => (j.departments || []).some(d => re.test(d.name || ""))); }
   return jobs.map(j => {
-    const location = j.location?.name || "Unlisted";
+    // Epic's board returns location.name = "Multiple Locations" on 45 roles while the offices
+    // array (present because we request ?content=true) carries the real cities. Prefer offices
+    // whenever the location field is a placeholder.
+    // NO studio-city fallback here, unlike the other fetchers: "Multiple Locations" is a true
+    // statement about the job, and collapsing 45 multi-site roles onto one HQ would not be.
+    // If offices is absent or itself junk, the row is left exactly as it was.
+    const rawLoc = j.location?.name || "Unlisted";
+    const ghOffices = (j.offices || []).map(o => String((o && o.name) || "").trim())
+      .filter(n => n && !PLACE_JUNK.test(n));
+    const location = (PLACE_JUNK.test(rawLoc) && ghOffices.length) ? ghOffices.join("; ") : rawLoc;
     const craft = ["Craft", "Career Page - Sub Department", "Job Family", "Job Family Group"]
       .map(f => metaValue(j.metadata, f)).find(v => v) || null;
     const desc = stripHtml(j.content);
@@ -3241,7 +3288,11 @@ async function fetchLever(studio) {
     : await fetchJson(`https://${studio.region === "eu" ? "api.eu.lever.co" : "api.lever.co"}/v0/postings/${studio.token}?mode=json`); // some studios (Frontier) post on Lever's EU host
   if (!data) return [];
   return data.map(j => {
-    const location = (j.categories?.allLocations || [j.categories?.location]).filter(Boolean).join("; ") || "Unlisted";
+    // Lever's location field is free text the studio types, so it collects everything except a
+    // place: "NEOWIZ" (34 roles), "Any" (Larian, 23), "Full-time" (Peak Games, 20), "Hybrid" (3).
+    // rawLoc is kept alongside so inferWorkType below still sees the badge we just discarded.
+    const rawLoc = (j.categories?.allLocations || [j.categories?.location]).filter(Boolean).join("; ") || "";
+    const location = placeOr(rawLoc, studio);
     const dept = j.categories?.team || j.categories?.department;
     const wt = (j.workplaceType || "").toLowerCase();
     const desc = [j.descriptionPlain, j.additionalPlain, j.openingPlain].filter(Boolean).join(" ");
@@ -3262,7 +3313,7 @@ async function fetchLever(studio) {
       studio: studio.name,
       discipline: mapDiscipline(dept, j.text),
       workType: wt === "remote" ? "Remote" : wt === "hybrid" ? "Hybrid" : wt === "onsite" ? "Onsite"
-        : inferWorkType(j.text, location, [], desc),
+        : inferWorkType(j.text, rawLoc || location, [], desc),   // rawLoc, so a "Hybrid" location still classifies
       location,
       region: inferRegion(location),
       seniority: inferSeniority(j.text),
@@ -3819,14 +3870,27 @@ function parseTeamtailor(html, studio) {
       if (parts.length >= 2) { dept = parts[0]; location = parts.slice(1).join(", "); }
       else if (parts.length === 1) location = parts[0];
     }
+    // 13 live roles across six studios ended up with location "Hybrid" — the meta read
+    // "Department · Hybrid" with no office in between. They classified correctly only by
+    // accident, because inferWorkType reads the location field. Promote the badge to a real
+    // metaWorkType FIRST, so placeOr() can then swap the junk string for the studio's city
+    // without losing the classification. Deliberately does not touch "Remote": a remote role's
+    // location is genuinely "Remote", and placeOr leaves it alone.
+    const rawLoc = String(location || "").trim();
+    if (!metaWorkType) {
+      const pl = rawLoc.toLowerCase();
+      if (pl === "hybrid") metaWorkType = "Hybrid";
+      else if (/^(on[-\s]?site|onsite|in[-\s]?office|in office)$/.test(pl)) metaWorkType = "Onsite";
+    }
+    const place = placeOr(rawLoc, studio);
     out.push({
       id: `tt-${studio.token}-${id}`,
       title,
       studio: studio.name,
       discipline: mapDiscipline(dept, title),
-      workType: metaWorkType || inferWorkType(title, location, []),
-      location,
-      region: inferRegion(location),
+      workType: metaWorkType || inferWorkType(title, rawLoc, []),
+      location: place,
+      region: inferRegion(place),
       seniority: inferSeniority(title),
       salary: null,
       yoe: null,
@@ -4111,13 +4175,15 @@ async function fetchBambooHr(studio) {
   result = result.filter(j => !/speculative|spontaneous|open application|general application|talent pool|future opportunit|express(?:ion|ing)? (?:of )?(?:your )?interest|candidature spontan/i.test(j.jobOpeningName || ""));
   return result.map(j => {
     const loc = j.location ? [j.location.city, j.location.state].filter(Boolean).join(", ") : "";
-    const location = loc || "Unlisted";
+    // 36 live roles across 12 studios come through with no location object at all. Most of those
+    // studios are single-site and already carry a city in the registry, so use it.
+    const location = placeOr(loc, studio);
     return {
       id: `bamboo-${studio.token}-${j.id}`,
       title: j.jobOpeningName,
       studio: studio.name,
       discipline: mapDiscipline(j.departmentLabel, j.jobOpeningName || ""),
-      workType: inferWorkType(j.jobOpeningName || "", location, []),
+      workType: inferWorkType(j.jobOpeningName || "", loc || location, []),
       location,
       region: inferRegion(location),
       seniority: inferSeniority(j.jobOpeningName || ""),
@@ -7106,7 +7172,14 @@ module.exports = { mapDiscipline, strongTitleDiscipline, normDisc, inferRegion, 
   // uses an ISO2 table), and clobbering those unconditionally could downgrade a good answer.
   // We only fill in the ones that came out unknown.
   for (const j of all) {
-    if (j.location) { const c = cleanLocation(j.location); if (c !== j.location) { j.location = c; j.region = inferRegion(c); } }
+    if (j.location) {
+      const c = cleanLocation(j.location);
+      // Re-infer only when the cleaned string still says something. cleanLocation can reduce a
+      // location to "Unlisted", and assigning inferRegion("Unlisted") unconditionally would
+      // clobber a good region that a fetcher had resolved by other means (comeetRegion, an
+      // explicit country facet) with "Other". Upgrade, never downgrade.
+      if (c !== j.location) { j.location = c; const r = inferRegion(c); if (r && r !== "Other") j.region = r; }
+    }
     if (!j.region || j.region === "Other") { const r = inferRegion(j.location || ""); if (r) j.region = r; }
     // Omit rather than write "" — jobs.js ships to every page view, and 460 empty keys is
     // 6KB of nothing. Consumers must treat a missing country as unknown, not as a filter miss.

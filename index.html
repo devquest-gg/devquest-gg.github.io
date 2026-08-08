@@ -1606,6 +1606,11 @@ const LIVE = window.JOBS_DATA && window.JOBS_DATA.jobs && window.JOBS_DATA.jobs.
 const RAW = LIVE ? window.JOBS_DATA.jobs.map(j => ({
   id: j.id, t: j.title, s: j.studio, p: j.parent || j.studio, d: normDisc(j.discipline), w: j.workType || "Unknown",
   l: j.location, r: j.region, sen: j.seniority, url: j.url,
+  // ISO2 country stamped by the scraper (2026-08-08 onward). It sees the raw feed and a ~200-city
+  // hub table, so it resolves places inferCountry() below never will — "Redmond, WA",
+  // "Los Angeles, USA" and "San Francisco Bay Area" contain no country name at all. Absent on
+  // rows scraped before that date, so every consumer must treat missing as "unknown".
+  cc: j.country || "",
   salary: j.salary || null, yoe: j.yoe || null, tech: j.tech || [],
   ts: j.postedAt ? new Date(j.postedAt).getTime() : 0, // 0 = date unknown (e.g. EA)
   fseen: j.firstSeen ? Date.parse(j.firstSeen) : 0,    // when WE first saw it (reliable age)
@@ -1621,14 +1626,17 @@ for (const j of RAW) {
   const k = j.s + "|" + j.t;
   if (byKey[k]) {
     const m = byKey[k];
-    if (!m.places.some(p=>p.l===j.l)) m.places.push({ l: j.l, r: j.r, url: j.url });
+    // cc travels WITH the place, not with the merged job: a role listed in Warsaw and Vancouver
+    // has one country per location, and hanging a single j.cc off the merged record would stamp
+    // whichever source row happened to land first onto both.
+    if (!m.places.some(p=>p.l===j.l)) m.places.push({ l: j.l, r: j.r, url: j.url, cc: j.cc });
     if (!m.regions.includes(j.r)) m.regions.push(j.r);
     m.ts = Math.max(m.ts, j.ts);
     if (j.fseen && (!m.fseen || j.fseen < m.fseen)) m.fseen = j.fseen; // earliest sighting wins
     m.relisted = m.relisted || j.relisted;
     m.relistCount = Math.max(m.relistCount, j.relistCount);
     if (!m.salary && j.salary) m.salary = j.salary;
-  } else byKey[k] = { ...j, places: [{ l: j.l, r: j.r, url: j.url }], regions: [j.r] };
+  } else byKey[k] = { ...j, places: [{ l: j.l, r: j.r, url: j.url, cc: j.cc }], regions: [j.r] };
 }
 const JOBS = Object.values(byKey);
 JOBS.forEach(j => { j.locs = j.places.map(p=>p.l); }); // keep .locs for search/map
@@ -2017,11 +2025,34 @@ JOBS.forEach(j => { j.sub = subOf(j.d, j.t); });
 
 // derive country from a location string (for the country filter)
 const US_STATES = /\b(AL|AK|AZ|AR|CA|CO|CT|DE|FL|GA|HI|ID|IL|IN|IA|KS|KY|LA|ME|MD|MA|MI|MN|MS|MO|MT|NE|NV|NH|NJ|NM|NY|NC|ND|OH|OK|OR|PA|RI|SC|SD|TN|TX|UT|VT|VA|WA|WV|WI|WY)\b/;
+// ISO2 -> the display name this filter uses. TOTAL over every code scrape.js can stamp (79 as of
+// 2026-08-08) plus "uk" as an alias for "gb". Two callers: the "IL - Tel Aviv" prefix branch in
+// inferCountry(), and the j.cc upgrade below. Keep it total — a code with no name here silently
+// drops that role back into "Other", which is the exact bug this whole change exists to fix.
+const CC_NAME = {
+  us:"United States", ca:"Canada", mx:"Mexico", br:"Brazil", ar:"Argentina", cl:"Chile",
+  co:"Colombia", pe:"Peru", uy:"Uruguay", cr:"Costa Rica",
+  gb:"United Kingdom", uk:"United Kingdom", ie:"Ireland", fr:"France", de:"Germany", es:"Spain",
+  pt:"Portugal", it:"Italy", nl:"Netherlands", be:"Belgium", se:"Sweden", no:"Norway",
+  dk:"Denmark", fi:"Finland", is:"Iceland", pl:"Poland", cz:"Czech Republic", sk:"Slovakia",
+  at:"Austria", ch:"Switzerland", ro:"Romania", bg:"Bulgaria", hu:"Hungary", ua:"Ukraine",
+  rs:"Serbia", hr:"Croatia", gr:"Greece", tr:"Turkey", cy:"Cyprus", si:"Slovenia",
+  lt:"Lithuania", lv:"Latvia", ee:"Estonia", mt:"Malta", am:"Armenia", az:"Azerbaijan",
+  ge:"Georgia", by:"Belarus",
+  cn:"China", jp:"Japan", kr:"South Korea", sg:"Singapore", in:"India", vn:"Vietnam",
+  my:"Malaysia", ph:"Philippines", th:"Thailand", id:"Indonesia", tw:"Taiwan", hk:"Hong Kong",
+  mo:"Macau", au:"Australia", nz:"New Zealand", pk:"Pakistan", bd:"Bangladesh", lk:"Sri Lanka",
+  kz:"Kazakhstan", uz:"Uzbekistan",
+  il:"Israel", ae:"UAE", sa:"Saudi Arabia", jo:"Jordan", za:"South Africa", eg:"Egypt",
+  ma:"Morocco", tn:"Tunisia", gh:"Ghana", ng:"Nigeria", ke:"Kenya", st:"Sao Tome and Principe",
+};
+// The buckets that mean "we could not tell" — the only ones j.cc is allowed to overwrite.
+const COUNTRY_UNKNOWN = { "Other":1, "Unlisted / multiple":1 };
 function inferCountry(loc){
   const s = (loc||"").toLowerCase();
   if (/united states|u\.?s\.?a\.?|, us\b|\bus -|remote \(us\)|america(?!n samoa)/.test(s)) return "United States";
   // Leading ISO country-code prefix ("IL - Tel Aviv" = Israel not Illinois; "IN - Bangalore" = India not Indiana). Must beat the US_STATES check below.
-  { const pm = s.match(/^([a-z]{2})\s*-\s+/); if (pm) { const CCN = { us:"United States",ca:"Canada",mx:"Mexico",br:"Brazil",ar:"Argentina",cl:"Chile",co:"Colombia",gb:"United Kingdom",uk:"United Kingdom",ie:"Ireland",fr:"France",de:"Germany",es:"Spain",pt:"Portugal",pl:"Poland",ro:"Romania",nl:"Netherlands",be:"Belgium",fi:"Finland",se:"Sweden",cz:"Czech Republic",cy:"Cyprus",ua:"Ukraine",rs:"Serbia",it:"Italy",ch:"Switzerland",at:"Austria",dk:"Denmark",no:"Norway",tr:"Turkey",bg:"Bulgaria",hu:"Hungary",lt:"Lithuania",ee:"Estonia",hr:"Croatia",is:"Iceland",gr:"Greece",il:"Israel",ae:"UAE",sa:"Saudi Arabia",za:"South Africa",ma:"Morocco",eg:"Egypt",in:"India",jp:"Japan",cn:"China",kr:"South Korea",sg:"Singapore",au:"Australia",nz:"New Zealand",vn:"Vietnam",th:"Thailand",my:"Malaysia",ph:"Philippines",tw:"Taiwan",hk:"Hong Kong",bd:"Bangladesh",id:"Indonesia" }; if (CCN[pm[1]]) return CCN[pm[1]]; } }
+  { const pm = s.match(/^([a-z]{2})\s*-\s+/); if (pm && CC_NAME[pm[1]]) return CC_NAME[pm[1]]; }
   if (/,\s*ca\b/i.test(s) && /\b(montr[eé]al|toronto|ottawa|calgary|edmonton|winnipeg|qu[eé]bec|halifax|mississauga|brampton|laval|gatineau|saskatoon|regina|vancouver|victoria|burnaby|markham|kitchener)\b/i.test(s)) return "Canada"; // "Montreal, CA" etc.: trailing CA is the Canada country code, not California
   if (US_STATES.test(loc||"") && !/canada|ontario|quebec|alberta|british columbia/i.test(loc||"")) return "United States";
   if (/canada|ontario|quebec|québec|alberta|british columbia|manitoba|saskatchewan|nova scotia/.test(s)) return "Canada";
@@ -2076,7 +2107,17 @@ function inferCountry(loc){
   return "Other";
 }
 JOBS.forEach(j => {
-  j.places.forEach(p => p.country = inferCountry(p.l));
+  j.places.forEach(p => {
+    p.country = inferCountry(p.l);
+    // UPGRADE ONLY. The substring list above stays authoritative wherever it produced a real
+    // answer; the scraper's stamped code is used solely to rescue places it bucketed as unknown.
+    // That ordering matters: this file knows things the scraper doesn't (the "Montreal, CA is
+    // Canada, not California" rule), and a blind overwrite would undo them.
+    // "Remote/Unspecified" is deliberately NOT rescued — a remote role belongs in the remote
+    // bucket even when the text happens to name a country.
+    if (COUNTRY_UNKNOWN[p.country] && p.cc && CC_NAME[String(p.cc).toLowerCase()])
+      p.country = CC_NAME[String(p.cc).toLowerCase()];
+  });
   j.countries = [...new Set(j.places.map(p=>p.country))];
 });
 
