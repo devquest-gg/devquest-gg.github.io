@@ -1062,6 +1062,13 @@ const HUB_CTRY = { london:"GB", brighton:"GB", guildford:"GB", leamington:"GB", 
 // Words that describe HOW you work, not WHERE — they carry no geography and must not stop us reading
 // the geography sitting next to them.
 const LOC_NOISE = /\b(fully\s+)?remote(ly)?\b|\bwork from home\b|\bwfh\b|\banywhere\b|\bunlisted\b|\bmultiple locations\b|\b\d+\s+locations?\b|\bworldwide\b|\bhybrid\b|\bon[- ]?site\b|\bin[- ]?office\b|\bfull[- ]time\b|\bpart[- ]time\b|\bany\b/gi;
+// Longest key first. The loose substring passes below would otherwise be decided by object key
+// order: "Australia-New South Wales-Sydney" contains BOTH "australia" and "wales", and "wales"
+// wins on insertion order, making every Sydney role British. Sorting by length means the more
+// specific match always beats the shorter one it contains.
+const CTRY_KEYS_LONGEST = Object.keys(CTRY).sort((a, b) => b.length - a.length);
+const HUB_KEYS_LONGEST  = Object.keys(HUB_CTRY).sort((a, b) => b.length - a.length);
+
 function resolveCountry(loc){
   const raw = String(loc || "").toLowerCase();
   // The old guard was `!t || /unlisted|multiple locations|remote/.test(t) && !/,/.test(t)`, which by
@@ -1077,9 +1084,9 @@ function resolveCountry(loc){
   for (const p of parts) if (CTRY[p]) return CTRY[p];              // an exact segment is the strongest signal
   for (const p of parts) if (US_ST.has(p)) return "US";            // "El Segundo, CA"
   for (const p of parts) if (p.length === 2 && ISO2.has(p.toUpperCase())) return p.toUpperCase();
-  for (const k in CTRY) if (new RegExp("\\b" + k.replace(/[.]/g, "\\.") + "\\b").test(t)) return CTRY[k];
+  for (const k of CTRY_KEYS_LONGEST) if (new RegExp("\\b" + k.replace(/[.]/g, "\\.") + "\\b").test(t)) return CTRY[k];
   for (const p of parts) if (HUB_CTRY[p]) return HUB_CTRY[p];
-  for (const k in HUB_CTRY) if (new RegExp("\\b" + k + "\\b").test(t)) return HUB_CTRY[k];
+  for (const k of HUB_KEYS_LONGEST) if (new RegExp("\\b" + k + "\\b").test(t)) return HUB_CTRY[k];
   return "";
 }
 function jobCity(loc){
@@ -2768,8 +2775,34 @@ function cleanLocation(loc) {
   return dedup.length ? dedup.join("; ") : "Unlisted";
 }
 
+// ISO2 -> region. TOTAL over every code resolveCountry can emit (79 as of 2026-08-08), so a
+// resolved country always yields a real region and can never fall through to "Other".
+// If you add a country to CTRY or HUB_CTRY, add it here too — the test at the bottom of
+// this comment block is: every value in those maps must be a key in this one.
+// Caucasus + Belarus sit under Europe rather than Asia-Pacific or MEA: that is how the
+// games industry, and those studios themselves, describe their location.
+const CC_REGION = {
+  US:"North America", CA:"North America",
+  MX:"Latin America", BR:"Latin America", AR:"Latin America", CL:"Latin America",
+  CO:"Latin America", PE:"Latin America", UY:"Latin America", CR:"Latin America",
+  GB:"Europe", IE:"Europe", FR:"Europe", DE:"Europe", ES:"Europe", PT:"Europe", IT:"Europe",
+  NL:"Europe", BE:"Europe", SE:"Europe", NO:"Europe", DK:"Europe", FI:"Europe", IS:"Europe",
+  PL:"Europe", CZ:"Europe", SK:"Europe", AT:"Europe", CH:"Europe", RO:"Europe", BG:"Europe",
+  HU:"Europe", UA:"Europe", RS:"Europe", HR:"Europe", GR:"Europe", TR:"Europe", CY:"Europe",
+  SI:"Europe", LT:"Europe", LV:"Europe", EE:"Europe", MT:"Europe",
+  AM:"Europe", AZ:"Europe", GE:"Europe", BY:"Europe",
+  CN:"Asia-Pacific", JP:"Asia-Pacific", KR:"Asia-Pacific", SG:"Asia-Pacific", IN:"Asia-Pacific",
+  VN:"Asia-Pacific", MY:"Asia-Pacific", PH:"Asia-Pacific", TH:"Asia-Pacific", ID:"Asia-Pacific",
+  TW:"Asia-Pacific", HK:"Asia-Pacific", MO:"Asia-Pacific", AU:"Asia-Pacific", NZ:"Asia-Pacific",
+  PK:"Asia-Pacific", BD:"Asia-Pacific", LK:"Asia-Pacific", KZ:"Asia-Pacific", UZ:"Asia-Pacific",
+  IL:"Middle East & Africa", AE:"Middle East & Africa", SA:"Middle East & Africa",
+  JO:"Middle East & Africa", ZA:"Middle East & Africa", EG:"Middle East & Africa",
+  MA:"Middle East & Africa", TN:"Middle East & Africa", GH:"Middle East & Africa",
+  NG:"Middle East & Africa", KE:"Middle East & Africa", ST:"Middle East & Africa",
+};
+
 function inferRegion(location) {
-  const l = location.toLowerCase();
+  const l = String(location || "").toLowerCase();
   // Leading ISO country-code prefix like "IL - Tel Aviv" / "ES - Spain" / "US - ...".
   // Must run before the US-state check, else "IL"(Israel) matches Illinois, "IN"(India) Indiana, etc.
   const pm = l.match(/^([a-z]{2})\s*[-–]\s+/);
@@ -2780,6 +2813,19 @@ function inferRegion(location) {
       in: "Asia-Pacific", jp: "Asia-Pacific", cn: "Asia-Pacific", kr: "Asia-Pacific", sg: "Asia-Pacific", au: "Asia-Pacific", nz: "Asia-Pacific", vn: "Asia-Pacific", th: "Asia-Pacific", my: "Asia-Pacific", ph: "Asia-Pacific", id: "Asia-Pacific", tw: "Asia-Pacific", hk: "Asia-Pacific", bd: "Asia-Pacific" };
     if (CC[pm[1]]) return CC[pm[1]];
   }
+
+  // Country first, but only AFTER the prefix check above: resolveCountry splits "IL - Tel Aviv"
+  // into ["il","tel aviv"] and US_ST claims "il" as Illinois before anything else runs.
+  //
+  // resolveCountry knows ~80 countries (incl. native spellings) and ~200 cities that the regex
+  // cascade below has never heard of — Pangyo, Baku, Yerevan, Bengaluru, Kuala Lumpur, Lahore,
+  // Minsk. It also strips work-type noise ("Remote", "Hybrid", "Multiple Locations") before
+  // reading geography. All of that data already existed in this file; it was only ever used by
+  // the JSON-LD and hiring-report code, never by region inference, which is why 604 live roles
+  // sat in "Other" while resolveCountry could name their country perfectly well.
+  const cc = resolveCountry(location);
+  if (cc && CC_REGION[cc]) return CC_REGION[cc];
+
   if (/(united states|usa|\b(ca|wa|tx|ny|md|fl|il|ma|nc|ga)\b|los angeles|seattle|austin|new york|san (francisco|mateo|diego)|bellevue|irvine|burbank|santa monica|redmond|mercer island|atlanta|chicago|boston|novato)/.test(l)) return "North America";
   if (/(canada|montreal|montréal|toronto|vancouver|quebec)/.test(l)) return "North America";
   if (/(mexico|brazil|são paulo|sao paulo|argentina|chile|colombia)/.test(l)) return "Latin America";
@@ -7051,7 +7097,22 @@ module.exports = { mapDiscipline, strongTitleDiscipline, normDisc, inferRegion, 
   // Workday, Teamtailor, Workable…) fall back to title-based tagging so every job has the field.
   for (const j of all) if (!j.tech) j.tech = extractTech(j.title || "");
   // Scrub placeholder location tokens (e.g. "BLANK") from any feed; re-infer region if it changed.
-  for (const j of all) { if (j.location) { const c = cleanLocation(j.location); if (c !== j.location) { j.location = c; j.region = inferRegion(c); } } }
+  // Then stamp a country on every role. resolveCountry has existed since the JSON-LD work but was
+  // never applied to the job object, so the board could only filter countries by substring-matching
+  // free text — which is why "United States" missed ~30% of US roles ("Los Angeles, USA",
+  // "Redmond, WA", "San Francisco Bay Area" all contain no such string).
+  //
+  // Region is UPGRADE-ONLY here: a few fetchers resolve region by their own means (comeetRegion
+  // uses an ISO2 table), and clobbering those unconditionally could downgrade a good answer.
+  // We only fill in the ones that came out unknown.
+  for (const j of all) {
+    if (j.location) { const c = cleanLocation(j.location); if (c !== j.location) { j.location = c; j.region = inferRegion(c); } }
+    if (!j.region || j.region === "Other") { const r = inferRegion(j.location || ""); if (r) j.region = r; }
+    // Omit rather than write "" — jobs.js ships to every page view, and 460 empty keys is
+    // 6KB of nothing. Consumers must treat a missing country as unknown, not as a filter miss.
+    const cc = resolveCountry(j.location || "");
+    if (cc) j.country = cc;
+  }
   applyListingHistory(all); // stamp first-seen dates + flag re-lists (writes seen.json)
   await backfillSalaries(all); // open detail pages for jobs missing salary; cache in seen.json
   for (const j of all) if (j.salary) j.salary = prettySalary(j.salary); // one consistent salary format
