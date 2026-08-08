@@ -6449,8 +6449,11 @@ try {
     _tsWidget=null;
     mountTurnstile("alertTurnstile", "alertMsg", function(id){ _tsWidget = id; });
 
-    function goDiscord(){
-      try{ track("alert_signup",{ src:(src||"filter")+"_discord", ch:"discord" }); }catch(e){}
+    // `silent` when the email path already logged the submission. Without it a "both"
+    // signup fires alert_signup twice — once as "both", once as "discord" ~300ms later —
+    // which inflates the total and corrupts the channel split. Observed live 2026-08-07.
+    function goDiscord(silent){
+      if (!silent) try{ track("alert_signup",{ src:(src||"filter")+"_discord", ch:"discord" }); }catch(e){}
       // Stash the search before handing off. If OAuth fails, or they close Discord's consent
       // screen, they return here with nothing to show for it — and on a Discord-only signup we
       // have no email address to send a recovery link to. This is the recovery.
@@ -6483,7 +6486,7 @@ try {
             try{ store.set("luj-subscribed",1); }catch(e){}
             // Email first, THEN navigate — leaving the page kills an in-flight fetch, so the
             // Discord hop has to wait for /subscribe to actually come back ok.
-            if(alsoDisc){ msg.textContent="Email alert created. Sending you to Discord…"; msg.style.color="#7a8878"; goDiscord(); return; }
+            if(alsoDisc){ msg.textContent="Email alert created. Sending you to Discord…"; msg.style.color="#7a8878"; goDiscord(true); return; }
             bar.setAttribute("data-state","done");
             // "Almost there" is load-bearing: offerFollowAlert() text-matches it to know the
             // signup converted and close its modal. Do not reword it.
