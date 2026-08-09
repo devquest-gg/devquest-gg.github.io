@@ -151,6 +151,17 @@
     border-radius: 10px; padding: 8px 14px; font-size: 13.5px; font-weight: 700; cursor: pointer;
     white-space: nowrap; font-family: inherit; }
   #notifyTop:hover, #notifyTop:focus-visible { background: rgba(88,166,255,.26); outline: none; }
+  /* Same shine as the "✨ NEW!" badge — literally the same @keyframes nfyShine, reused rather
+     than reinvented so the two read as one visual language.
+     THREE passes, not infinite. A permanent call-to-action that never stops moving is an advert,
+     and the feedback that started this whole thread was that the page already has too much going
+     on. It also stops for good once someone has subscribed on this device (dqNotifyShine).
+     Honours prefers-reduced-motion, same as the badge. */
+  #notifyTop.shine { position: relative; overflow: hidden; }
+  #notifyTop.shine::after { content: ""; position: absolute; inset: 0; border-radius: inherit;
+    background: linear-gradient(100deg, transparent 30%, rgba(255,255,255,.30) 50%, transparent 70%);
+    transform: translateX(-130%); animation: nfyShine 2.8s ease-in-out 3; pointer-events: none; }
+  @media (prefers-reduced-motion: reduce) { #notifyTop.shine::after { animation: none; } }
   @media (max-width: 560px){ #notifyTop { padding: 8px 11px; font-size: 13px; margin-left: 6px; } }
   /* CLS fix: reserve space for JS-rendered content so the layout does not jump as data loads */
   #heroSub { min-height: 3.5em; }
@@ -2483,7 +2494,17 @@ function searchVariants(nq){
 // that IIFE via window.dqOpenAlertForm, so there is only ever ONE form implementation.
 // Not gated by canAskEmail(): that budget exists to stop nagging, and this is a passive control
 // someone has to seek out and click. Suppressing it is what made alerts hard to find.
+// Three shine passes per page load to catch the eye, then still. Removed permanently once the
+// person has subscribed on this device — at that point the button is a utility, not a pitch.
+function dqNotifyShine(){
+  try {
+    var b = document.getElementById("notifyTop"); if (!b) return;
+    var subbed = false; try { subbed = !!store.get("luj-subscribed", 0); } catch(e){}
+    if (subbed) b.classList.remove("shine"); else b.classList.add("shine");
+  } catch(e){}
+}
 function dqCountAlertChip(){
+  dqNotifyShine();
   try {
     var el = document.getElementById("count");
     if (!el) return;
