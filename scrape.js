@@ -2968,23 +2968,32 @@ function paySymbol(currency) {
   // board's USD averages by its display regexes.
   return cc === "GBP" ? "£" : cc === "EUR" ? "€" : cc === "USD" ? "$" : (cc + " ");
 }
+// Rough units-per-USD, used ONLY to scale the plausibility window for currencies where an
+// ordinary salary runs to seven or eight digits. Never used to convert a displayed figure — a
+// band is always shown in the currency the studio stated.
+// Added 2026-08-09 after the first version's flat "annual <= 2,000,000" ceiling — sane for USD,
+// EUR and GBP — silently dropped ₩80,000,000 (Xsolla, APAC) and ¥8,497,000 (Kwalee). Any flat
+// numeric bound on money is a USD assumption wearing a disguise.
+const PAY_SCALE = { KRW: 1300, JPY: 150, VND: 25000, IDR: 16000, INR: 85, HUF: 360, CLP: 950,
+  COP: 4000, PHP: 58, THB: 36, TWD: 32, RUB: 90, TRY: 40, CZK: 23, ISK: 140, RSD: 108, UAH: 41 };
 function payBand(min, max, currency, interval) {
   const lo = Number(min), hi = Number(max);
   if (!isFinite(lo) || !isFinite(hi) || lo <= 0 || hi < lo) return null;
   const sym = paySymbol(currency);
+  const sc = PAY_SCALE[String(currency || "USD").toUpperCase()] || 1;
   const iv = String(interval == null ? "" : interval).toLowerCase();
   const perHour = /hour|hourly|\bhr\b/.test(iv);
   const perYear = /year|annual/.test(iv);
-  // No interval and a figure under 1000 cannot be an annual salary in any currency we carry.
-  if (perHour || (!iv && hi < 1000)) {
-    if (!(hi < 2000)) return null;                       // "hourly" at 2000+ is a mislabelled band
+  // No interval, and too small to be an annual salary in this currency -> read it as hourly.
+  if (perHour || (!iv && hi < 1000 * sc)) {
+    if (!(hi < 2000 * sc)) return null;                  // "hourly" that high is a mislabelled band
     // Both endpoints share a format: "£18.50–£22.00/hr", never "£18.5–£22/hr".
     const dec = !Number.isInteger(lo) || !Number.isInteger(hi);
     const f = n => sym + (dec ? n.toFixed(2) : String(n));
     return (hi === lo ? f(lo) : f(lo) + "–" + f(hi)) + "/hr";
   }
   if (perYear || !iv) {
-    if (!(lo >= 10000 && hi <= 2000000)) return null;     // same floor extractSalary enforces
+    if (!(lo >= 10000 * sc && hi <= 2000000 * sc)) return null;   // extractSalary's floor, scaled
     const f = n => sym + Math.round(n / 1000) + "K";
     return f(lo) + "–" + f(hi);
   }
