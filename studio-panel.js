@@ -94,6 +94,11 @@ body.sp-open #sp-drawer{transform:translateX(0)}
     var lc={}; roles.forEach(function(r){ r.locs.forEach(function(c){ lc[c]=(lc[c]||0)+1; }); });
     var locs = Object.keys(lc).map(function(k){return [k,lc[k]];}).sort(function(a,b){return b[1]-a[1];});
     return { name:name, parent:meta.parent, open:open, postings:postings, mom:mom, remotePct: open?Math.round(100*remote/open):0, newWk:newWk,
+      // Two different counts, deliberately. salCount = roles that contributed to the $K range
+      // (annual, parseable). payCount = roles that disclosed pay AT ALL, which includes hourly
+      // bands like "$30–$36/hr" — parseSal rejects those on purpose so an hourly 30 is never
+      // averaged against an annual 30K, but the studio did disclose and should get the credit.
+      payCount:raw.filter(function(j){return !!j.salary;}).length,
       salCount:sals.length, salMin:sals.length?Math.min.apply(null,sals.map(function(x){return x[0];})):null, salMax:sals.length?Math.max.apply(null,sals.map(function(x){return x[1];})):null,
       disc:grp(function(j){return j.d;}), sen:grp(function(j){return j.sen;}), locs:locs, various:meta.various,
       months:monthSeries(raw), roles:roles };
@@ -126,7 +131,7 @@ body.sp-open #sp-drawer{transform:translateX(0)}
     var momUp=s.mom>0, momFlat=s.mom===0;
     var discMax=Math.max.apply(null,s.disc.map(function(d){return d[1];}).concat([1]));
     var senMax=Math.max.apply(null,s.sen.map(function(d){return d[1];}).concat([1]));
-    var salLine = s.salCount>0 ? '<b>$'+s.salMin+'k–$'+s.salMax+'k</b> · '+s.salCount+' of '+s.open+' roles list pay' : 'Only '+s.salCount+' of '+s.open+' roles list pay so far';
+    var salLine = s.salCount>0 ? '<b>$'+s.salMin+'k–$'+s.salMax+'k</b> · '+s.payCount+' of '+s.open+' roles list pay' : 'Only '+s.payCount+' of '+s.open+' roles list pay so far';
     var chartHtml = chart(s.months);
     var locHtml = (s.various?'<button class="sploc" disabled style="cursor:default">Multiple locations</button>':'') + s.locs.slice(0,10).map(function(l){
       return '<button class="sploc'+(curLoc&&curLoc.toLowerCase()===l[0].toLowerCase()?' on':'')+'" data-loc="'+esc(l[0]).replace(/"/g,'&quot;')+'">'+esc(l[0])+' <b>'+l[1]+'</b></button>';

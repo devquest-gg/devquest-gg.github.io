@@ -2949,6 +2949,65 @@ function stripHtml(s) {
     .replace(/<[^>]*>/g, " ");
 }
 
+// ---- pay formatting -------------------------------------------------------------------------
+// One place where a structured pay band becomes a display string. Before this existed, each
+// fetcher did `Math.round(n / 1000) + "K"` inline with no sanity check, so an HOURLY band of
+// 25–35 rendered as "$0K–$0K". Twelve live roles were showing that on 2026-08-09 — every one a
+// contract, freelance or intern posting, i.e. exactly the roles that quote an hourly rate.
+//
+// Interval strings are matched loosely, never by equality: Lever's own API docs confirm
+// salaryRange carries `interval` but do not enumerate its values, so an exact-match check would
+// silently fail the day they add one. Magnitude is the backstop when the field is missing.
+//
+// Month / week / day bands return null rather than being annualised. Multiplying a monthly figure
+// by 12 is wrong in Spain, Portugal and Austria (14 and 13 month years), and quietly publishing a
+// number the studio never stated is worse than publishing nothing.
+function paySymbol(currency) {
+  const cc = String(currency || "USD").toUpperCase();
+  // CAD renders as "CAD 60K", not "CA$60K": anything matching "$NNK–$NNK" gets swept into the
+  // board's USD averages by its display regexes.
+  return cc === "GBP" ? "£" : cc === "EUR" ? "€" : cc === "USD" ? "$" : (cc + " ");
+}
+function payBand(min, max, currency, interval) {
+  const lo = Number(min), hi = Number(max);
+  if (!isFinite(lo) || !isFinite(hi) || lo <= 0 || hi < lo) return null;
+  const sym = paySymbol(currency);
+  const iv = String(interval == null ? "" : interval).toLowerCase();
+  const perHour = /hour|hourly|\bhr\b/.test(iv);
+  const perYear = /year|annual/.test(iv);
+  // No interval and a figure under 1000 cannot be an annual salary in any currency we carry.
+  if (perHour || (!iv && hi < 1000)) {
+    if (!(hi < 2000)) return null;                       // "hourly" at 2000+ is a mislabelled band
+    // Both endpoints share a format: "£18.50–£22.00/hr", never "£18.5–£22/hr".
+    const dec = !Number.isInteger(lo) || !Number.isInteger(hi);
+    const f = n => sym + (dec ? n.toFixed(2) : String(n));
+    return (hi === lo ? f(lo) : f(lo) + "–" + f(hi)) + "/hr";
+  }
+  if (perYear || !iv) {
+    if (!(lo >= 10000 && hi <= 2000000)) return null;     // same floor extractSalary enforces
+    const f = n => sym + Math.round(n / 1000) + "K";
+    return f(lo) + "–" + f(hi);
+  }
+  return null;
+}
+// Pull an hourly rate out of free text, for feeds that hand us a sentence rather than a band
+// ("From $30.00 to $36.00 per hour" — JobScore/Nexon). Only called once an annual parse has
+// already failed, so a posting quoting both keeps its annual figure.
+function hourlyFromText(s) {
+  const t = String(s == null ? "" : s);
+  if (!/per\s*hour|hourly|\/\s*hr\b|\/\s*hour\b|\ban\s+hour\b/i.test(t)) return null;
+  const sym = (t.match(/[$£€]/) || ["$"])[0];
+  const nums = [...t.matchAll(/[$£€]\s?([\d][\d,]*(?:\.\d+)?)/g)]
+    .map(m => parseFloat(m[1].replace(/,/g, "")));
+  if (!nums.length) return null;
+  const lo = nums[0], hi = nums.length > 1 ? nums[nums.length - 1] : null;
+  if (!(lo > 0 && lo < 2000)) return null;
+  if (hi != null && !(hi >= lo && hi < 2000)) return null;
+  const dec = !Number.isInteger(lo) || (hi != null && !Number.isInteger(hi));
+  const f = n => sym + (dec ? n.toFixed(2) : String(n));
+  return (hi != null && hi !== lo) ? f(lo) + "–" + f(hi) + "/hr" : f(lo) + "/hr";
+}
+
 function extractSalary(text) {
   if (!text) return null;
   // Defensive: normalize entity dashes to real dashes so a range separator is never lost, even if the
@@ -3064,8 +3123,15 @@ function extractNonUsdSalary(text) {
 // board stays visually consistent. Hourly / non-USD / unparseable strings are left untouched.
 function prettySalary(s) {
   if (!s) return s;
+  if (/\/hr$/.test(String(s))) return s;            // already normalised by payBand
   const range = extractSalary(s);
   if (range) return range;
+  // Annual first, always: a posting quoting both keeps the annual figure. Only once no annual
+  // range can be found do we look for an hourly rate — which is how "From $30.00 to $36.00 per
+  // hour" (JobScore/Nexon) becomes "$30–$36/hr" instead of sitting there as a raw sentence,
+  // invisible to every pay statistic on the site.
+  const hr = hourlyFromText(s);
+  if (hr) return hr;
   const m = String(s).match(/\$\s?([\d][\d,]*)\s*([kK])?\s*\/?\s*(?:yr|year|annually|annum|per\s*year|\/yr)/i);
   if (m) { let n = parseFloat(m[1].replace(/,/g, "")); if (m[2]) n *= 1000;
     if (n >= 10000 && n <= 2000000) return "$" + Math.round(n / 1000) + "K"; }
@@ -3298,11 +3364,11 @@ async function fetchLever(studio) {
     const desc = [j.descriptionPlain, j.additionalPlain, j.openingPlain].filter(Boolean).join(" ");
     let salary = null;
     if (j.salaryRange && j.salaryRange.min && j.salaryRange.max) {
-      // Lever states the currency outright; honour it instead of stamping every range "$".
-      const _lc = String(j.salaryRange.currency || "USD").toUpperCase();
-      const _ls = _lc === "GBP" ? "\u00a3" : _lc === "EUR" ? "\u20ac" : _lc === "USD" ? "$" : (_lc + " ");
-      const f = n => _ls + Math.round(n / 1000) + "K";
-      salary = f(j.salaryRange.min) + "–" + f(j.salaryRange.max);
+      // Lever states currency AND interval outright. The interval was ignored until 2026-08-09,
+      // which is what produced "$0K–$0K" on Kabam, Xsolla, Fanatee and Exploding Kittens.
+      // An unusable band falls back to the description rather than publishing nonsense.
+      salary = payBand(j.salaryRange.min, j.salaryRange.max, j.salaryRange.currency, j.salaryRange.interval)
+            || extractSalary(desc);
     } else salary = extractSalary(desc);
     return {
       id: `lever-${studio.token}-${j.id}`,
@@ -4453,10 +4519,10 @@ async function fetchPinpoint(studio) {
       : wt ? "Onsite" : inferWorkType(p.title || "", location, []);
     let salary = null;
     if (p.compensation_visible) {
-      if (p.compensation_currency === "USD" && p.compensation_frequency === "year"
-          && p.compensation_minimum && p.compensation_maximum)
-        salary = `$${Math.round(p.compensation_minimum/1000)}K–$${Math.round(p.compensation_maximum/1000)}K`;
-      else if (p.compensation) salary = p.compensation;
+      // Was gated on USD + "year" exactly, so every other currency and every hourly band fell
+      // through to the raw string. payBand covers both, and returns null rather than a bogus band.
+      salary = payBand(p.compensation_minimum, p.compensation_maximum, p.compensation_currency, p.compensation_frequency)
+            || (p.compensation || null);
     }
     return {
       id: `pp-${studio.token}-${p.id}`,
@@ -7249,7 +7315,11 @@ module.exports = { mapDiscipline, strongTitleDiscipline, normDisc, inferRegion, 
   // ---- Phase-0 snapshot fields: work-type mix, years-of-experience distribution, and salary by
   // seniority — banked daily so trend history accrues for future public cards (remote trend, pay
   // bands over time). Salaries are normalized to "$120K–$160K" form, so parse the K figures out. ----
-  const salToK = (s) => { if (!s) return null; const ks = []; const re = /(\d[\d,]*(?:\.\d+)?)\s*[kK]/g; let m; while ((m = re.exec(String(s)))) ks.push(Math.round(parseFloat(m[1].replace(/,/g, "")))); if (!ks.length) { const re2 = /(\d[\d,]{4,})/g; let m2; while ((m2 = re2.exec(String(s)))) { const n = parseInt(m2[1].replace(/,/g, ""), 10); if (n >= 10000) ks.push(Math.round(n / 1000)); } } return ks.length ? [ks[0], ks[ks.length - 1]] : null; };
+  // Hourly bands are excluded from every ANNUAL statistic — the medians, the pay-by-seniority
+  // bands and the per-discipline bands. A 30 that means $30/hr must never be averaged against a
+  // 30 that means $30K. They still count toward pay transparency below (salN), because the studio
+  // did disclose the rate; it is only the arithmetic they must stay out of.
+  const salToK = (s) => { if (!s || /\/hr$/.test(String(s))) return null; const ks = []; const re = /(\d[\d,]*(?:\.\d+)?)\s*[kK]/g; let m; while ((m = re.exec(String(s)))) ks.push(Math.round(parseFloat(m[1].replace(/,/g, "")))); if (!ks.length) { const re2 = /(\d[\d,]{4,})/g; let m2; while ((m2 = re2.exec(String(s)))) { const n = parseInt(m2[1].replace(/,/g, ""), 10); if (n >= 10000) ks.push(Math.round(n / 1000)); } } return ks.length ? [ks[0], ks[ks.length - 1]] : null; };
   const medOf = (a) => { if (!a.length) return null; const s = a.slice().sort((x, y) => x - y); const i = Math.floor(s.length / 2); return s.length % 2 ? s[i] : Math.round((s[i - 1] + s[i]) / 2); };
   const workCounts = {};
   for (const j of all) { const w = j.workType || "Unknown"; workCounts[w] = (workCounts[w] || 0) + 1; }
