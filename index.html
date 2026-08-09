@@ -143,6 +143,15 @@
   /* Tabs that don't use the sidebar facets (For You, My Jobs, Hiring Trends) hide it; the column stays
      reserved so the centered content doesn't move. */
   .layout.nofilters #sidebar, .layout.nofilters #filterToggle { display: none; }
+  /* Deliberately NOT covered by .nofilters above: alerts must stay reachable on For You and
+     My Jobs, which is precisely where the count-line chip does not exist (#count is hidden
+     whenever the view is not List). Accent fill so it reads as the primary action in that row. */
+  #notifyTop { display: inline-flex; align-items: center; gap: 6px; margin-left: 10px;
+    background: rgba(88,166,255,.14); color: var(--accent); border: 1px solid rgba(88,166,255,.5);
+    border-radius: 10px; padding: 8px 14px; font-size: 13.5px; font-weight: 700; cursor: pointer;
+    white-space: nowrap; font-family: inherit; }
+  #notifyTop:hover, #notifyTop:focus-visible { background: rgba(88,166,255,.26); outline: none; }
+  @media (max-width: 560px){ #notifyTop { padding: 8px 11px; font-size: 13px; margin-left: 6px; } }
   /* CLS fix: reserve space for JS-rendered content so the layout does not jump as data loads */
   #heroSub { min-height: 3.5em; }
   #matrixWrap { min-height: 410px; }
@@ -1245,6 +1254,16 @@
            button shows the active view's name when you're inside one, so you always know where you are. -->
       <button id="tabMore" class="tabmore" data-view="more" aria-haspopup="true" aria-expanded="false" onclick="toggleMoreTabs(event)">⋯ <span id="tabMoreLabel">More</span></button>
     </div>
+    <!-- The findable alert entry point. It lives beside the view tabs because that row is the
+         only thing on the page that is (a) near the top in EVERY view, (b) never relocated to the
+         mobile footer the way .headeractions is by metaFooterSync, and (c) not hidden by
+         .layout.nofilters on For You / My Jobs. Measured on the live site 2026-08-09: the
+         count-line chip sat at y=797 against a 791px viewport after one matrix click, i.e. six
+         pixels below the fold. That chip stays as contextual reinforcement; this is the one
+         anyone can actually find. -->
+    <button id="notifyTop" type="button" aria-label="Notify me about new roles matching this search"
+      data-tip="Get told when new roles match this search — Discord DM, or one email a week"
+      onclick="try{ window.dqOpenAlertForm && window.dqOpenAlertForm('toprow'); }catch(e){}">🔔 Notify me</button>
     <button id="filterToggle" onclick="toggleFilters()">⚙ Filters</button>
     <div id="moreTabs" class="moremenu" role="menu" aria-label="More views">
       <button role="menuitem" data-view="map" onclick="setView('map');closeMoreTabs()">🗺️ Map</button>
@@ -6706,6 +6725,10 @@ try {
     // Reads inside the form's "Notify me about new ___ roles" sentence, so it has to be a noun
     // phrase. "new" produced "new new roles" — caught in the headless run, not by reading it.
     if (!label){ label = "game dev"; c = {}; }     // no filters yet: alert on everything new
+    // The alert bar lives above #jobs, which setView() hides outside List. Opening from the top
+    // row on For You or My Jobs would otherwise drop the form into a hidden region. Switch first;
+    // filters are shared across views so the criteria carry over unchanged.
+    try { if (typeof view !== "undefined" && view !== "list" && typeof setView === "function") setView("list"); } catch(e){}
     __dqIntent = true;                             // opening the form IS the intent signal
     bar.style.display = "block";
     openForm(label, c, src || "count");
