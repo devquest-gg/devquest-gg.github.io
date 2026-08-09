@@ -334,6 +334,10 @@
   .tag.longwarn { color: var(--gold); border-color: rgba(210,153,34,.5); }
   .tag.longbad { color: #f0883e; border-color: rgba(240,136,62,.6); font-weight: 700; }
   .tag.relist { color: var(--pink); border-color: rgba(247,120,186,.5); cursor: help; }
+  /* "N openings" — a merged row standing for several distinct requisitions. Muted on purpose:
+     it is a factual footnote, not a warning, and gold is reserved for caution (see .relist). */
+  .tag.openings { color: var(--muted); cursor: help; }
+  .tag.openings[onclick] { cursor: pointer; }
   .poolbadge { background: rgba(139,148,158,.18); color: var(--muted); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; padding: 2px 8px; border-radius: 999px; margin-left: 8px; vertical-align: middle; cursor: help; }
   .row.dismissed { opacity: .6; }
   .dismissedbadge { background: rgba(247,120,186,.15); color: var(--pink); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; padding: 2px 8px; border-radius: 999px; margin-left: 8px; vertical-align: middle; }
@@ -391,6 +395,8 @@
   .row .rtags .tag.relist { background: rgba(210,153,34,.12); color: var(--gold); }
   /* The location chip is a link, so it may use the action colour — on hover, via fill not border. */
   .row .rtags .tag.locchip[onclick]:hover { background: rgba(88,166,255,.16); color: var(--accent); }
+  .row .rtags .tag.openings { background: rgba(139,148,158,.13); color: var(--muted); }
+  .row .rtags .tag.openings[onclick]:hover { background: rgba(88,166,255,.16); color: var(--accent); }
   .row .rtags .knowbtn { background: transparent; }
   .row:hover .rtags .knowbtn { background: rgba(88,166,255,.12); }
   /* At 390px a 17.5px title wraps to a third line often enough to cost more height than the
@@ -1630,13 +1636,24 @@ for (const j of RAW) {
     // has one country per location, and hanging a single j.cc off the merged record would stamp
     // whichever source row happened to land first onto both.
     if (!m.places.some(p=>p.l===j.l)) m.places.push({ l: j.l, r: j.r, url: j.url, cc: j.cc });
+    // Same title AND same location, but a DIFFERENT requisition — studios routinely open two or
+    // three headcount against one role. The location chip already exists, so without this the
+    // second posting vanished completely: no chip, no apply link, nothing. 82 live postings across
+    // 34 studios were invisible this way (measured 2026-08-09, found because a tester counted
+    // Riot's careers page and got 164 against our 160).
+    // Keep them out of `places` on purpose — places drives the location chips, the map, hubs and
+    // countries, and a duplicate city there would double-count all four.
+    else if (j.url && j.url !== m.url && !(m.alts || []).some(x => x.url === j.url)) {
+      (m.alts = m.alts || []).push({ l: j.l, url: j.url });
+    }
+    m.n = (m.n || 1) + 1;                  // postings behind this row; drives the "N openings" chip
     if (!m.regions.includes(j.r)) m.regions.push(j.r);
     m.ts = Math.max(m.ts, j.ts);
     if (j.fseen && (!m.fseen || j.fseen < m.fseen)) m.fseen = j.fseen; // earliest sighting wins
     m.relisted = m.relisted || j.relisted;
     m.relistCount = Math.max(m.relistCount, j.relistCount);
     if (!m.salary && j.salary) m.salary = j.salary;
-  } else byKey[k] = { ...j, places: [{ l: j.l, r: j.r, url: j.url, cc: j.cc }], regions: [j.r] };
+  } else byKey[k] = { ...j, n: 1, alts: [], places: [{ l: j.l, r: j.r, url: j.url, cc: j.cc }], regions: [j.r] };
 }
 const JOBS = Object.values(byKey);
 JOBS.forEach(j => { j.locs = j.places.map(p=>p.l); }); // keep .locs for search/map
@@ -3765,6 +3782,40 @@ function jobCities(j){
   });
   return { cities: [...new Set(out)], various: various };
 }
+// ---- merged rows: several requisitions behind one card -------------------------------------
+// The board shows one row per studio+title. Usually the extra postings are the same role in other
+// cities, and the location chips already reach each one. But when two postings share a title AND a
+// city they are still DIFFERENT requisitions with different apply URLs, and those had no way in at
+// all — 82 live postings across 34 studios (2026-08-09). j.alts holds them; this is their door.
+//
+// Cycles rather than opening the first every time, so every posting is reachable however many
+// there are. Live maximum is 4; 63 of the 70 affected rows have exactly 2.
+//
+// The chip is shown ONLY when j.alts is non-empty — i.e. only where a posting would otherwise be
+// unreachable. A role listed in two cities also has n=2, but both are already one click away on
+// the location chips, and tagging all 338 of those rows would be noise that buries the 67 that
+// carry real news. The aggregate reconciliation (160 roles / 164 postings) lives in the studio
+// panel instead, which is where anyone comparing against a careers page is actually looking.
+const _dqAltIdx = {};
+function dqOpenAlt(id){
+  const j = JOB_BY_ID[id];
+  if (!j || !j.alts || !j.alts.length) return;
+  const i = (_dqAltIdx[id] || 0) % j.alts.length;
+  _dqAltIdx[id] = i + 1;
+  try { trackApply(id); } catch(e){}          // same accounting as any other apply-click
+  window.open(j.alts[i].url, "_blank", "noopener");
+}
+function openingsTip(j){
+  const n = j.n || 1;
+  const where = [...new Set((j.places || []).map(p => p.l).concat((j.alts || []).map(a => a.l)))].filter(Boolean);
+  const alts = (j.alts || []).length;
+  return "<b>" + n + " separate postings</b> for this title at " + j.s
+    + " — different requisitions, often different teams."
+    + (where.length ? "<br>" + where.join("<br>") : "")
+    + (alts ? ("<br><br>The title opens the first. Click this chip to open the other"
+               + (alts > 1 ? "s — one per click." : ".")) : "");
+}
+
 function rowHtml(j, mjStage){
   const h = hoursAgo(j);
   const noDate = !j.ts;
@@ -3851,6 +3902,7 @@ function rowHtml(j, mjStage){
     <div class="rtags">
       ${j.w==="Remote"?`<span class="tag wt remote">🏠 Remote</span>`:j.w==="Hybrid"?`<span class="tag wt hybrid">⇄ Hybrid</span>`:""}
       ${locChips}
+      ${(j.alts && j.alts.length) ? `<span class="tag openings" onclick="event.stopPropagation(); dqOpenAlt('${j.id}')" data-tip="${escTip(openingsTip(j))}">${j.n} openings</span>` : ""}
       <span class="tag tsen">${j.sen}</span>
       ${j.salary?`<span class="tag salary">${j.salary}</span>`:""}
       ${j.yoe?`<span class="tag">${j.yoe}+ yrs</span>`:""}
@@ -6265,15 +6317,36 @@ try {
       try { store.set("luj-subscribed", 1); } catch(e){}
       try { store.set("dq-follow-alert-done", 1); } catch(e){}   // don't re-offer after they've converted
       var _blocked = _dq.get("dm") === "blocked";
-      _dq.delete("dqalert"); _dq.delete("dm"); _dq.delete("dj");
+      // WHY it was blocked. "Allow DMs from server members" is only true for dm_closed. Told to
+      // someone who hit Discord's server cap it sends them off to change a setting that was never
+      // the problem; they see no change and quietly give up. That is exactly what happened to the
+      // first tester who hit it (2026-08-09). _inv carries the public invite when one is set.
+      var _why = _dq.get("why") || "";
+      var _inv = _dq.get("inv") || "";
+      _dq.delete("dqalert"); _dq.delete("dm"); _dq.delete("dj"); _dq.delete("why"); _dq.delete("inv");
       var _qs = _dq.toString();
       try { history.replaceState(null, "", location.pathname + (_qs ? "?"+_qs : "") + location.hash); } catch(e){}
       try { store.set("dq-pending-discord", null); } catch(e){}   // completed — nothing to recover
-      track("alert_confirmed", { ch: "discord", blocked: _blocked ? 1 : 0 });
+      track("alert_confirmed", { ch: "discord", blocked: _blocked ? 1 : 0, why: _why });
       setTimeout(function(){
         try {
           if (typeof dqToast !== "function") return;
-          if (_blocked) dqToast("Linked \u2014 but Discord is blocking my DMs. Open Discord Settings \u203a Content & Social and allow DMs from server members.");
+          if (_blocked){
+            // A Join button only makes sense for the two membership cases. For dm_closed they are
+            // already in the server, so offering a join link would just be confusing.
+            var _join = (_inv && _why !== "dm_closed")
+              ? { label:"Join server", icon:"\uD83D\uDCAC", ms: 14000, fn:function(){
+                    try{ track("discord_join_manual", { why:_why }); }catch(e){}
+                    window.open(_inv, "_blank", "noopener");
+                  } }
+              : null;
+            var _msg = (_why === "guild_cap")
+              ? "Saved \u2014 but you're in the maximum number of Discord servers, so I couldn't add you to DevQuest. Leave one server, then join and your alerts start automatically."
+              : (_why === "not_member")
+              ? "Saved \u2014 but I couldn't add you to the DevQuest server, and Discord only lets me DM people I share a server with. Join and your alerts start automatically."
+              : "Linked \u2014 but Discord is blocking my DMs. Open Discord Settings \u203a Content & Social and allow DMs from server members.";
+            dqToast(_msg, null, _join);
+          }
           else dqToast("Discord alerts are on \u2014 check your DMs.", null, { label:"Manage", icon:"\u2699", fn:function(){ var u=window.dqManageUrl(); if(u) window.open(u,"_blank","noopener"); } });
         } catch(e){}
       }, 700);

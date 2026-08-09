@@ -73,6 +73,12 @@ body.sp-open #sp-drawer{transform:translateX(0)}
   function profile(name){
     var raw = (typeof JOBS!=="undefined"?JOBS:[]).filter(function(j){return j.s===name;});
     var open = raw.length, now=Date.now();
+    // The board shows one row per studio+title, so "open roles" is a count of ROLES, not of
+    // postings. A studio's own careers page counts postings, and the two legitimately differ:
+    // Riot list 164, we show 160, because four R&D roles are posted in both Guangzhou and
+    // Shanghai. That gap read as missing data to a tester, so state both numbers rather than
+    // making people work it out. j.n is the posting count behind each merged row.
+    var postings = raw.reduce(function(n,j){ return n + (j.n||1); }, 0);
     var remote = raw.filter(function(j){return j.w==="Remote";}).length;
     var newWk = raw.filter(function(j){return (j.fseen||j.ts||0) >= now-7*864e5;}).length;
     var sals = raw.map(function(j){return parseSal(j.salary);}).filter(Boolean);
@@ -87,7 +93,7 @@ body.sp-open #sp-drawer{transform:translateX(0)}
     }).sort(function(a,b){ return (a.days==null?1e9:a.days)-(b.days==null?1e9:b.days); });
     var lc={}; roles.forEach(function(r){ r.locs.forEach(function(c){ lc[c]=(lc[c]||0)+1; }); });
     var locs = Object.keys(lc).map(function(k){return [k,lc[k]];}).sort(function(a,b){return b[1]-a[1];});
-    return { name:name, parent:meta.parent, open:open, mom:mom, remotePct: open?Math.round(100*remote/open):0, newWk:newWk,
+    return { name:name, parent:meta.parent, open:open, postings:postings, mom:mom, remotePct: open?Math.round(100*remote/open):0, newWk:newWk,
       salCount:sals.length, salMin:sals.length?Math.min.apply(null,sals.map(function(x){return x[0];})):null, salMax:sals.length?Math.max.apply(null,sals.map(function(x){return x[1];})):null,
       disc:grp(function(j){return j.d;}), sen:grp(function(j){return j.sen;}), locs:locs, various:meta.various,
       months:monthSeries(raw), roles:roles };
@@ -136,7 +142,7 @@ body.sp-open #sp-drawer{transform:translateX(0)}
     +(s.parent&&name.indexOf(s.parent)<0?'<div class="spparent">🏢 Part of <b>'+esc(s.parent)+'</b></div>':'')+'</div>'
     +'<div class="spbody">'
     +'<div class="spstats">'
-    +'<div class="spstat"><b>'+s.open+'</b><span>open roles</span></div>'
+    +'<div class="spstat"><b>'+s.open+'</b><span>open roles'+(s.postings>s.open?' <span class="spnote">'+s.postings+' postings</span>':'')+'</span></div>'
     +'<div class="spstat"><b class="'+(momFlat?'spflat':(momUp?'spup':'spdown'))+'">'+(momFlat?'—':(momUp?'+'+s.mom:s.mom))+'</b><span>vs last month</span></div>'
     +'<div class="spstat"><b>'+s.remotePct+'%</b><span>remote</span></div>'
     +'<div class="spstat"><b class="spup">+'+s.newWk+'</b><span>new this week</span></div>'
