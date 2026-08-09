@@ -5790,18 +5790,42 @@ function playrixDiscipline(title) {
   for (const [re, d] of PLAYRIX_DISC) if (re.test(title)) return d;
   return "Other";
 }
+// Playrix job URLs are /job/open/<sectionCode>/<jobCode> — NOT /job/<jobCode>/, which is what this
+// fetcher built until 2026-08-09 and which 404s. All 25 links were dead for two months and the
+// link-health check could not see it: playrix.com is a client-rendered SPA that answers HTTP 200
+// with a byte-identical 3,042-byte shell for every path, including made-up ones. Verified in a
+// real browser — the live job, the old-format URL and a nonsense slug were indistinguishable to
+// any status-or-body probe; only the rendered DOM differs ("This page doesn't exist").
+//
+// The job record carries a numeric parentId, not the slug. job/getSectionList maps id -> code.
+// Codes are used VERBATIM: one is "c++-development" (the + is legal in a path and must not be
+// percent-encoded) and another is "Analytics" with a capital A.
+//
+// Rule verified against all 25 canonical hrefs Playrix itself renders on /job/open/ — 25/25 exact.
+const PLAYRIX_API = "https://playrix.com/api/v1/index.php?action=";
+const PLAYRIX_HDRS = { "Accept": "application/json",
+  "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36",
+  "Origin": "https://playrix.com", "Referer": "https://playrix.com/job/open/" };
+async function playrixSections() {
+  try {
+    const res = await fetchRetry(PLAYRIX_API + "job%2FgetSectionList", { method: "POST", headers: PLAYRIX_HDRS });
+    const data = await res.json();
+    const map = {};
+    for (const s of (data.items || [])) if (s && s.id != null && s.code) map[String(s.id)] = String(s.code);
+    return map;
+  } catch (e) { console.warn("Playrix: section list unavailable —", e.message); return {}; }
+}
 async function fetchPlayrix(studio) {
-  let items = [];
-  if (SAMPLE_FILE) { const d = loadSample(studio); if (!d) return []; items = d.items || (Array.isArray(d) ? d : []); }
+  let items = [], sections = {};
+  if (SAMPLE_FILE) { const d = loadSample(studio); if (!d) return []; items = d.items || (Array.isArray(d) ? d : []); sections = d.sections || {}; }
   else {
-    const res = await fetchRetry("https://playrix.com/api/v1/index.php?action=job%2FgetList", {
-      method: "POST",
-      headers: { "Accept": "application/json",
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36",
-        "Origin": "https://playrix.com", "Referer": "https://playrix.com/job/open/" },
-    });
+    const [res, secs] = await Promise.all([
+      fetchRetry(PLAYRIX_API + "job%2FgetList", { method: "POST", headers: PLAYRIX_HDRS }),
+      playrixSections()
+    ]);
     const data = await res.json();
     items = data.items || [];
+    sections = secs;
   }
   const out = [];
   for (const x of items) {
@@ -5817,7 +5841,11 @@ async function fetchPlayrix(studio) {
       location: "Remote", region: "Remote",
       seniority: inferSeniority(title),
       salary: null, yoe: null, postedAt,
-      url: `https://playrix.com/job/${x.code}/`,
+      // No section code (new category, or the section endpoint was down) -> link to the real
+      // index rather than guessing a slug. A link that lands somewhere true beats a 404.
+      url: sections[String(x.parentId)]
+        ? `https://playrix.com/job/open/${sections[String(x.parentId)]}/${x.code}`
+        : "https://playrix.com/job/open/",
     });
   }
   return out;
@@ -7016,6 +7044,20 @@ async function probeUrl(url) {
   } catch (e) { return "error"; }   // timeout / network error — never treated as broken
   finally { clearTimeout(to); }
 }
+// Turn a real apply URL into one that CANNOT exist, by replacing its last path segment.
+// If a site answers "ok" for this, its answers carry no information and probeUrl's verdicts on
+// that host are worthless. Playrix returned an identical 200 shell for the live job, the dead
+// link and a nonsense slug alike — the canary is the only thing that can tell you that.
+function canaryUrl(u) {
+  try {
+    const x = new URL(u);
+    x.search = ""; x.hash = "";
+    const p = x.pathname.replace(/\/+$/, "");
+    if (!/\/[^/]+$/.test(p)) return "";
+    x.pathname = p.replace(/[^/]*$/, "dq-link-canary-9f3a2b-not-a-real-job");
+    return x.toString();
+  } catch (e) { return ""; }
+}
 async function checkLinkHealth(all) {
   let state = {};
   try { state = JSON.parse(fs.readFileSync(LINKHEALTH_FILE, "utf8")); } catch (e) { state = {}; }
@@ -7032,18 +7074,28 @@ async function checkLinkHealth(all) {
     const picks = [...new Set([sorted[0], sorted[Math.floor(sorted.length / 2)], sorted[sorted.length - 1]].filter(Boolean).map(j => j.url))].slice(0, 3);
     const results = [];
     for (const u of picks) { if (Date.now() > DEADLINE) break; results.push(await probeUrl(u)); await new Promise(r => setTimeout(r, 150)); }
+    // Canary FIRST in the verdict order. A client-rendered SPA returns 200 + an identical shell
+    // for every path, so "some sample came back ok" is meaningless there — that is precisely how
+    // 25 dead Playrix links sat for two months while this function reported them healthy.
+    // "unverifiable" is the honest answer: we genuinely cannot tell from the outside.
+    let canaryRes = "skip";
+    const canary = canaryUrl(picks[0] || "");
+    if (canary && Date.now() <= DEADLINE) { canaryRes = await probeUrl(canary); await new Promise(r => setTimeout(r, 150)); }
     const fetched = results.filter(r => r === "ok" || r === "dead");
     let verdict = "unknown";
-    if (results.some(r => r === "ok")) verdict = "ok";
+    if (canaryRes === "ok") verdict = "unverifiable";
+    else if (results.some(r => r === "ok")) verdict = "ok";
     else if (fetched.length >= 2 && fetched.every(r => r === "dead")) verdict = "broken";  // every sample dead = systemic, not staleness
     state[studio] = { ts: Date.now(), verdict, url: picks[0] || "" };
   }
   try { fs.writeFileSync(LINKHEALTH_FILE, JSON.stringify(state)); } catch (e) { console.error("Could not write linkhealth.json:", e.message); }
-  const broken = Object.keys(state)
-    .filter(s => state[s].verdict === "broken" && byStudio[s])
+  const pick = v => Object.keys(state)
+    .filter(s => state[s].verdict === v && byStudio[s])
     .map(s => ({ studio: s, jobs: byStudio[s].length, sample: state[s].url }));
+  const broken = pick("broken"), unverifiable = pick("unverifiable");
   if (broken.length) console.warn("Apply-link health: " + broken.length + " studio(s) with dead links — " + broken.map(b => b.studio).join(", "));
-  return broken;
+  if (unverifiable.length) console.warn("Apply-link health: " + unverifiable.length + " studio(s) UNVERIFIABLE (SPA — 200s for any URL) — " + unverifiable.map(b => b.studio).join(", "));
+  return { broken, unverifiable };
 }
 
 // ---- Main -------------------------------------------------------------------
@@ -7222,8 +7274,12 @@ module.exports = { mapDiscipline, strongTitleDiscipline, normDisc, inferRegion, 
   const trends = buildTrends(runCounts, okSet, discCounts, healthy, salInfo, skillCounts, workCounts, yoeInfo, salSen, discSal, cityCounts); // per-studio + per-discipline + salary + skills momentum (writes trends.json)
   all.sort((a, b) => new Date(b.postedAt) - new Date(a.postedAt));
   // Apply-link health (isolated; never blocks or breaks the scrape).
-  let linkHealth = [];
-  try { linkHealth = await checkLinkHealth(all); } catch (e) { console.error("Link-health check skipped:", e.message); }
+  let linkHealth = [], linkUnverifiable = [];
+  try {
+    const lh = await checkLinkHealth(all);
+    linkHealth = lh.broken || [];
+    linkUnverifiable = lh.unverifiable || [];
+  } catch (e) { console.error("Link-health check skipped:", e.message); }
 
   const out = {
     scrapedAt: new Date().toISOString(),
@@ -7231,6 +7287,7 @@ module.exports = { mapDiscipline, strongTitleDiscipline, normDisc, inferRegion, 
     jobCount: all.length,
     errors,
     linkHealth,
+    linkUnverifiable,   // SPA studios whose apply links CANNOT be checked from outside — not "healthy"
     jobs: all,
     directory: DIRECTORY,
     moon: MOON,
