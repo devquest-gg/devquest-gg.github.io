@@ -795,6 +795,9 @@ const STUDIOS = [
   { name: "Welevel", type: "welevel", city: "Munich, Germany" },                                     // Unreal open-world studio — self-hosted SSR careers site, clean .job-card markup; ~25 roles, explicit Onsite/Hybrid/Remote per role
   { name: "Bohemia Interactive", type: "bohemia", city: "Prague, Czechia" },                         // Arma, DayZ — SSR careers site; ~14 roles across Prague/Brno with their own discipline + project labels
 
+  // Studio-requested add 2026-08-17 (Cyborn reached out directly)
+  { name: "Cyborn", type: "cyborn", careersUrl: "https://cyborn.be/job.html", city: "Antwerp, Belgium" }, // Hubris (VR) + film/AR-VR service work — hand-built static careers site, one <a> per opening at /jobs/<slug>.html with a REAL posted date on each page; 5 senior roles (Eng/Design/Art), all onsite Antwerp. The "Internship" slot is a mailto with no page and is skipped.
+
   // Greenhouse
   { name: "Ravenwake Games", type: "greenhouse", token: "ravenwakegames", city: "Vancouver, BC" },                      // ~5 roles
 
@@ -859,6 +862,7 @@ const STUDIO_KIND = {
   "Voodoo": ["publisher", "dev"],
   "Homa Games": ["publisher", "dev"],
   "Tripledot Studios": ["publisher", "dev"],
+  "Cyborn": ["dev", "codev"],   // own VR titles (Hubris) plus 3D/AR/VR + film service work for other clients
 };
 
 // ---- Tech-stack tagging -----------------------------------------------------
@@ -2648,7 +2652,14 @@ function strongTitleDiscipline(t) {
       && !/\b(engineer|programmer|developer|pipeline|backend|infrastructure|sdk|platform)\b/.test(t)) return "Art";
   // "Generalist" in games almost always means a 3D/art generalist (e.g. "3D Unreal Generalist") —
   // EXCEPT corporate generalists (HR/People/Talent/etc.), which we guard out so they don't become Art.
-  if (/\bgeneralist\b/.test(t) && !/\b(hr|human resources|people|talent|recruit|payroll|benefits|office|business|marketing|finance|legal|it|sales|community|player support)\b/.test(t)) return "Art";
+  // Second guard added 2026-08-17: a generalist PROGRAMMER is not an artist. This rule sits above the
+  // engineering rule, so before the guard existed "Generalist Software Engineer - EA Sports FC",
+  // "Senior Generalist Programmer" (Ubisoft / Behaviour / Snowed In), "Generalist Gameplay Programmer"
+  // and 9 more live rows were all filed under Art — the most-browsed discipline on the board.
+  // Found while adding Cyborn, whose "Senior Generalist Unreal Engine Programmer" hit the same path.
+  if (/\bgeneralist\b/.test(t)
+      && !/\b(hr|human resources|people|talent|recruit|payroll|benefits|office|business|marketing|finance|legal|it|sales|community|player support)\b/.test(t)
+      && !/\b(programmer|programmeur|programmeuse|engineer|engineering|software|developer|coder)\b/.test(t)) return "Art";
   if (/\banimator\b|animation (director|lead|manager|supervisor)|\brigging\b|cinematics? (director|lead|supervisor|manager|animator|designer|editor|artist|coordinator)|\bcinematic editor\b|\bmocap\b|motion[ -]?capture/.test(t)) return "Animation";
   if (/game design|level design|systems? design|technical design|narrative design|\bwriter\b|\bscénariste\b|encounter design|combat design|content design|economy design|quality design|gameplay design|ux design|ui design|concepteur|conceptrice|conception de jeu|world build|world design|environment design|game (direct(or|ion)|lead)|creative direct(or|ion)|directeur (créatif|creatif)|directrice (créative|creative)/.test(t)) return "Design";
   // "Feature Lead / Feature Designer" at a game studio is design leadership (owns a game feature).
@@ -5486,6 +5497,97 @@ async function fetchBohemia(studio) {
   return parseBohemia(await fetchText("https://careers.bohemia.net/en/open-positions"), studio);
 }
 
+// ---- Cyborn (Antwerp, Belgium — Hubris) — hand-built static careers site, no ATS ----------------
+// Added 2026-08-17 after the studio asked to be listed. cyborn.be is plain static HTML, so this is
+// the Critical Path shape: read the slug list, then read each job page.
+//   /job.html   -> <a href="./jobs/<slug>.html"><div class="job"><img alt="TITLE">
+//                    <p class="title">TITLE</p><p class="summary">…</p></div></a>
+//   /jobs/<slug>.html -> <main class="detail"><div class="job"><div class="text">
+//                    <p class="title">TITLE</p>
+//                    <p class="date">July 17th, 2026</p>          <- a REAL posted date
+//                    <div class="description">…</div><p class="extra">…</p><a class="mail">…</a>
+// Three things this fetcher has to handle that the markup above doesn't hand over for free:
+//   * Dates. "July 17th, 2026" is not parseable by Date.parse (the ordinal suffix kills it), so
+//     cybornDate() reads it by hand. Worth the ten lines: postedAt here is a true posted date, not
+//     the firstSeen fallback most hand-built sites leave us with.
+//   * SHOUTING. Titles are authored in caps ("SENIOR PROP ARTIST (HARD SURFACE &amp; SCULPTING)").
+//     cybornTitle() title-cases them and keeps acronyms (NPC, UE, VR) intact — same courtesy
+//     kraftonStudioName does for caps studio names. Only rewrites when the whole string is caps, so
+//     the day they start writing titles normally we leave them alone.
+//   * stripHtml() removes TAGS but not the CONTENTS of <script>, and every page carries a gtag
+//     snippet in <head>. Feeding the whole document to stripHtml would put "window.dataLayer =
+//     window.dataLayer || []" at the front of the description shard and into extractTech's input, so
+//     the description is cut to the <div class="description"> block (up to the mailto link) first.
+// Application is by email from the job page; the /jobs/<slug>.html URL is the apply link, which
+// keeps the link checker happy (a mailto: would not be verifiable).
+// Cyborn also does film and AR/VR service work — hence the "codev" tag — but the openings
+// themselves are game-dev roles on their own VR titles.
+const CYBORN_MONTHS = { january: 0, february: 1, march: 2, april: 3, may: 4, june: 5, july: 6, august: 7, september: 8, october: 9, november: 10, december: 11 };
+const CYBORN_ACRONYM = /^(npc|ai|ml|vr|ar|xr|mr|ui|ux|qa|qc|vfx|fx|sfx|ue|ue4|ue5|2d|3d|pc|ps5|hr|it|api|sdk|gpu|cpu|ik|pbr|dcc|hlsl|lod)$/i;
+function cybornText(s) { return decodeEnt(String(s || "").replace(/<[^>]+>/g, " ")).replace(/\s+/g, " ").trim(); }
+function cybornTitle(raw) {
+  const s = cybornText(raw);
+  if (!s || s !== s.toUpperCase()) return s;              // only rewrite when the site shouted
+  return s.replace(/[A-Za-z0-9][A-Za-z0-9']*/g, w => CYBORN_ACRONYM.test(w) ? w.toUpperCase() : w[0].toUpperCase() + w.slice(1).toLowerCase());
+}
+function cybornDate(raw) {
+  const m = cybornText(raw).match(/([A-Za-z]+)\s+(\d{1,2})(?:st|nd|rd|th)?,?\s*(\d{4})/);
+  const mo = m ? CYBORN_MONTHS[m[1].toLowerCase()] : null;
+  if (mo == null) return null;
+  const t = Date.UTC(+m[3], mo, +m[2]);
+  return isFinite(t) ? new Date(t).toISOString() : null;
+}
+function parseCybornJob(html, slug, studio) {
+  const s = String(html);
+  const pick = cls => { const x = s.match(new RegExp(`<p[^>]*class="${cls}"[^>]*>([\\s\\S]*?)</p>`, "i")); return x ? x[1] : ""; };
+  const title = cybornTitle(pick("title"));
+  if (!title) return null;
+  // Description = the authored block only. Fall back to <main> and then to the whole document, but
+  // always drop <script>/<style> contents first (see the note above).
+  // Lookahead, not a match, on the mailto anchor: capturing it would leave the literal text
+  // `<a class="mail"` on the end of every description — stripHtml only removes COMPLETE <...> tags,
+  // and that fragment has no closing bracket.
+  const block = (s.match(/<div[^>]*class="description"[\s\S]*?(?=<a[^>]*class="mail")/i) || [])[0]
+             || (s.match(/<main[\s\S]*?<\/main>/i) || [])[0]
+             || s;
+  const desc = stripHtml(block.replace(/<(script|style)\b[\s\S]*?<\/\1>/gi, " ")).replace(/\s+/g, " ").trim();
+  const location = studio.city || "Antwerp, Belgium";
+  return {
+    id: `cyborn-${slug}`,
+    title,
+    tech: extractTech(`${title} ${desc}`),
+    desc,
+    studio: studio.name,
+    discipline: mapDiscipline(null, title),
+    workType: inferWorkType(title, location, [], desc.slice(0, 1200)),
+    location,
+    region: inferRegion(location),
+    seniority: inferSeniority(title),
+    salary: extractSalary(desc),
+    yoe: extractYoe(desc),
+    postedAt: cybornDate(pick("date")),
+    url: `https://cyborn.be/jobs/${slug}.html`,
+  };
+}
+// Slug list off /job.html. The internship slot is a bare mailto with no page, so it simply never
+// matches — nothing to skip explicitly. Kept separate from the fetch so it can be unit-tested.
+function cybornSlugs(html) {
+  return [...new Set([...String(html).matchAll(/href="\.?\/?jobs\/([a-z0-9][a-z0-9-]*)\.html"/gi)].map(m => m[1].toLowerCase()))];
+}
+async function fetchCyborn(studio) {
+  const list = SAMPLE_FILE ? (loadSample(studio) || "") : await fetchText(studio.careersUrl || "https://cyborn.be/job.html");
+  const slugs = cybornSlugs(list);
+  const out = [];
+  for (const slug of slugs) {
+    const html = await fetchText(`https://cyborn.be/jobs/${slug}.html`);
+    if (!html) continue;
+    const job = parseCybornJob(html, slug, studio);
+    if (job) out.push(job);
+    await sleep(200);                                     // polite throttle — this is somebody's small web host
+  }
+  return out;
+}
+
 // ---- Moka (mokahr.com) — Chinese ATS behind Yoka, Hero, Yostar, FirstFun, Seasun ----------------
 // Moka runs two public hosts and they behave DIFFERENTLY, which is the whole reason this fetcher
 // exists in the shape it does:
@@ -6826,7 +6928,7 @@ async function fetchTrailmix(studio) {
   }
   return out;
 }
-const FETCHERS = { greenhouse: fetchGreenhouse, lever: fetchLever, workday: fetchWorkday, avature: fetchAvature, smartrecruiters: fetchSmartRecruiters, workable: fetchWorkable, phenom: fetchPhenom, teamtailor: fetchTeamtailor, eightfold: fetchEightfold, amazonjobs: fetchAmazonJobs, ashby: fetchAshby, zenimax: fetchZenimax, bamboohr: fetchBambooHr, jobscore: fetchJobScore, jazzhr: fetchJazzHr, jobvite: fetchJobvite, recruitee: fetchRecruitee, personio: fetchPersonio, rippling: fetchRippling, breezy: fetchBreezy, manatal: fetchManatal, sumodigital: fetchSumoDigital, pinpoint: fetchPinpoint, playground: fetchPlayground, obsidian: fetchObsidian, techland: fetchTechland, oracle: fetchOracle, cig: fetchCig, critpath: fetchCritpath, krafton: fetchKrafton, eidos: fetchEidos, hiringthing: fetchHiringThing, segacareers: fetchSegaCareers, turn10: fetchTurn10, mscareers: fetchMicrosoftCareers, lightfox: fetchLightfox, hrworks: fetchHRworks, smilegate: fetchSmilegate, cygames: fetchCygames, hrmos: fetchHrmos, moka: fetchMoka, nordcurrent: fetchNordcurrent, welevel: fetchWelevel, bohemia: fetchBohemia, garena: fetchGarena, shiftup: fetchShiftUp, miniclip: fetchMiniclip, playrix: fetchPlayrix, superplay: fetchSuperPlay, atlus: fetchAtlus, kojima: fetchKojima, owlcat: fetchOwlcat, comeet: fetchComeet, huntflow: fetchHuntflow, keka: fetchKeka, traffit: fetchTraffit, nekki: fetchNekki, plarium: fetchPlarium, hellogames: fetchHelloGames, hibob: fetchHibob, flix: fetchFlix, fromsoftware: fetchFromSoftware, grindinggear: fetchGrindingGear, konami: fetchKonami, madhead: fetchMadHead, kenjo: fetchKenjo, trailmix: fetchTrailmix };
+const FETCHERS = { greenhouse: fetchGreenhouse, lever: fetchLever, workday: fetchWorkday, avature: fetchAvature, smartrecruiters: fetchSmartRecruiters, workable: fetchWorkable, phenom: fetchPhenom, teamtailor: fetchTeamtailor, eightfold: fetchEightfold, amazonjobs: fetchAmazonJobs, ashby: fetchAshby, zenimax: fetchZenimax, bamboohr: fetchBambooHr, jobscore: fetchJobScore, jazzhr: fetchJazzHr, jobvite: fetchJobvite, recruitee: fetchRecruitee, personio: fetchPersonio, rippling: fetchRippling, breezy: fetchBreezy, manatal: fetchManatal, sumodigital: fetchSumoDigital, pinpoint: fetchPinpoint, playground: fetchPlayground, obsidian: fetchObsidian, techland: fetchTechland, oracle: fetchOracle, cig: fetchCig, critpath: fetchCritpath, krafton: fetchKrafton, eidos: fetchEidos, hiringthing: fetchHiringThing, segacareers: fetchSegaCareers, turn10: fetchTurn10, mscareers: fetchMicrosoftCareers, lightfox: fetchLightfox, hrworks: fetchHRworks, smilegate: fetchSmilegate, cygames: fetchCygames, hrmos: fetchHrmos, moka: fetchMoka, nordcurrent: fetchNordcurrent, welevel: fetchWelevel, bohemia: fetchBohemia, garena: fetchGarena, shiftup: fetchShiftUp, miniclip: fetchMiniclip, playrix: fetchPlayrix, superplay: fetchSuperPlay, atlus: fetchAtlus, kojima: fetchKojima, owlcat: fetchOwlcat, comeet: fetchComeet, huntflow: fetchHuntflow, keka: fetchKeka, traffit: fetchTraffit, nekki: fetchNekki, plarium: fetchPlarium, hellogames: fetchHelloGames, hibob: fetchHibob, flix: fetchFlix, fromsoftware: fetchFromSoftware, grindinggear: fetchGrindingGear, konami: fetchKonami, madhead: fetchMadHead, kenjo: fetchKenjo, trailmix: fetchTrailmix, cyborn: fetchCyborn };
 
 // ---- Ghost-job tracking -----------------------------------------------------
 // Because we scrape on a schedule, we can see how long a listing has REALLY been
@@ -7177,7 +7279,7 @@ async function checkLinkHealth(all) {
 
 // Expose the classifier for the test fixture (test-classify.js). When this file is `require()`d
 // instead of run directly, skip the actual scrape and just export the pure functions.
-module.exports = { mapDiscipline, strongTitleDiscipline, normDisc, inferRegion, decodeEnt, mokaDecrypt, mokaDiscipline, mokaSeniority, mokaLocation, parseWelevel, parseBohemia };
+module.exports = { mapDiscipline, strongTitleDiscipline, normDisc, inferRegion, decodeEnt, mokaDecrypt, mokaDiscipline, mokaSeniority, mokaLocation, parseWelevel, parseBohemia, parseCybornJob, cybornSlugs, cybornTitle, cybornDate, fetchCyborn };
 (async () => {
   if (require.main !== module) return;   // required for tests → don't run the scrape
   const all = [];
