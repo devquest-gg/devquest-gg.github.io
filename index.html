@@ -4259,6 +4259,18 @@ function setView(v){
   document.getElementById("hubbar").style.display = v==="list" ? "" : "none";
   document.getElementById("subbar").style.display = v==="list" ? "" : "none";
   document.getElementById("pulseStrip").style.display = v==="list" ? "" : "none";
+  // "🔥 Hot jobs for you" is a List section too, and it was missing from this list until 2026-08-17.
+  // It only bit on For You, because setView() runs render() for list/follow/map/stats — and render()
+  // blanks #hotWrap for any non-list view — so every OTHER view cleared it by side effect. For You is
+  // the one view that skips that call, so it kept the List's rendered block (12 rows, ~1,170px)
+  // sitting above its own panel. Then the first click on anything in it (hide ✕, save, follow star,
+  // track chip) reached render(), where hotOK is `view === "list"`, the section blanked, and the For
+  // You profile card jumped ~1,100px up into where the cursor was — reported as "the ✕ takes you to
+  // your profile". Collapsing was unrecoverable for the same reason: toggleHot() flips hotOpen, then
+  // render() empties the container again, so it could never be re-expanded without a trip to List.
+  // If For You ever wants a hot section, give it its own render path and widen hotOK — do not reuse
+  // the List's DOM.
+  document.getElementById("hotWrap").style.display = v==="list" ? "" : "none";
   document.getElementById("followWrap").style.display = v==="follow" ? "block" : "none";
   document.getElementById("mapWrap").style.display = v==="map" ? "block" : "none";
   document.getElementById("statsWrap").style.display = v==="stats" ? "block" : "none";
