@@ -3171,9 +3171,29 @@ function renderSubbar(availSubs){
 // made this the second-largest block above the first job card despite only 35 hub filters all
 // week. Show half as many on narrow screens; the "+N more" toggle still reaches every hub.
 function hubsCollapsedCount(){ try { return (window.innerWidth <= 520) ? 4 : 8; } catch(e){ return 8; } }
+// Which hub the visitor actually lives in, from the city they set on the closest-city strip.
+// "" when they never set one — most visitors, so this only ever adds precision, never removes it.
+function hubHome(){ try { const c = profGet("loc").v; return c ? hubOf(String(c)) : ""; } catch(e){ return ""; } }
+// Rank hubs by relevance to THIS visitor before volume. A pure busiest-first sort is a global one,
+// and the collapsed row only has 8 slots (4 on a phone): worldwide that is Tokyo, SF Bay, Montréal,
+// LA, Seoul, London, Paris, Vancouver — so Seattle, 15th worldwide but 5th in North America with
+// 104 open roles, never appeared, and a Seattle visitor reasonably read the bar as "no jobs here"
+// (reported 2026-08-27). Tier 0 = their own city, tier 1 = their region, tier 2 = everywhere else;
+// busiest-first still decides within a tier, and "+N more" still reaches every hub. Region scope
+// already narrows this for auto-detected visitors — the tiers are what save the ones on Worldwide,
+// and the phone's 4 slots, where even a region-scoped Seattle fell off the end.
+function hubRank(availHubs){
+  const keys = Object.keys(availHubs);
+  let home = "", hreg = "";
+  try { home = hubHome(); } catch(e){}
+  try { hreg = (typeof HOME_REGION !== "undefined" && HOME_REGION) || ""; } catch(e){}
+  if (!home && !hreg) return keys.sort((a,b)=>availHubs[b]-availHubs[a]);
+  const tier = h => h === home ? 0 : ((hreg && HUB_REGION[h] === hreg) ? 1 : 2);
+  return keys.sort((a,b)=> tier(a)-tier(b) || availHubs[b]-availHubs[a] || (a<b?-1:a>b?1:0));
+}
 function renderHubbar(availHubs){
   const el = document.getElementById("hubbar");
-  const keys = Object.keys(availHubs).sort((a,b)=>availHubs[b]-availHubs[a]);
+  const keys = hubRank(availHubs);
   if (!keys.length) { el.innerHTML = ""; el.style.display = "none"; return; }
   el.style.display = "";
   const chip = h => `<button class="qchip hub ${selHubs.has(h)?'on':''}" onclick="toggleHub('${h.replace(/'/g,"\\'")}')">${h} <span class="subn">${availHubs[h]}</span></button>`;
@@ -4708,7 +4728,20 @@ function profGet(f){
 // last-filters for the personalized "Hot jobs for you" + Trends hero. Returns null if not pinned.
 function profPinnedRoles(){ try { var r = profGet("roles"); return (r.pinned && r.v && r.v.length) ? r.v.slice() : null; } catch(e){ return null; } }
 function profHotLabel(){ var roles=profPinnedRoles(); if(!roles) return ""; var sen=profGet("sen"); var senL=(sen.pinned && sen.v!=="__any")?(sen.v+" "):""; return "your profile · "+senL+roles.join(", "); }
-function profSet(f, val){ PROFILE.pinned[f]=true; PROFILE[f]=val; profSave(); profMark(f,true); try{ window.dqTrack && window.dqTrack("profile_set", { f:f }); }catch(e){} }
+var _profTrackT = {};
+function profSet(f, val){
+  PROFILE.pinned[f]=true; PROFILE[f]=val; profSave(); profMark(f,true);
+  // ⚠ Do NOT track inline here. This is called from oninput on the "Based in" field, so an
+  // inline dqTrack fires once per keystroke — 588,650 D1 rows/day as measured 2026-09-03,
+  // and it filled the profile_set stats with half-typed city names. Debounced: one event per
+  // field once the user stops. State above is still written immediately, so nothing feels laggy.
+  try{
+    clearTimeout(_profTrackT[f]);
+    _profTrackT[f] = setTimeout(function(){
+      try{ window.dqTrack && window.dqTrack("profile_set", { f:f }); }catch(e){}
+    }, 1200);
+  }catch(e){ try{ window.dqTrack && window.dqTrack("profile_set", { f:f }); }catch(e2){} }
+}
 // Matrix interaction IS profile-setting: selecting craft x level on the grid sets your profile (recency
 // = your latest intent), so Hot jobs / For You follow what you just sought. Guardrails: an EMPTY grid
 // never wipes the profile (clearing filters to browse everything keeps your personalization), and the
