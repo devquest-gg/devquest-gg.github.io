@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Technical Designer (12-month contract) · DICE Stockholm · DevQuest</title>
+<meta name="description" content="Technical Designer (12-month contract) at DICE Stockholm in Stockholm. Technical Designer (12-month contract) - 215288 - Electronic Arts
+     
+                    
+ 
+ 
+/*…">
+<link rel="canonical" href="https://devquest.gg/job/av-ea-215288">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<meta property="og:title" content="Technical Designer (12-month contract) · DICE Stockholm">
+<meta property="og:description" content="Technical Designer (12-month contract) at DICE Stockholm in Stockholm. Technical Designer (12-month contract) - 215288 - Electronic Arts
+     
+                    
+ 
+ 
+/*…">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://devquest.gg/job/av-ea-215288">
+<script type="application/ld+json">
+{"@context":"https://schema.org/","@type":"JobPosting","title":"Technical Designer (12-month contract)","description":"<p>Technical Designer (12-month contract) - 215288 - Electronic Arts</p>\n<p>/* ===========================================================================</p>\n<p>ELEMENTS</p>\n<p>--------------------------------------------------------------------------</p>\n<p>Buttons</p>\n<p>: Actions</p>\n<p>: Add</p>\n<p>: Delete</p>\n<p>: Edit</p>\n<p>: Remove</p>\n<p>: Iconographics</p>\n<p>: Close</p>\n<p>: Vendors</p>\n<p>: Registration/application</p>\n<p>: Customizables</p>\n<p>External</p>\n<p>: Thumbnails</p>\n<p>Fields</p>\n<p>COMPONENTS</p>\n<p>--------------------------------------------------------------------------</p>\n<p>Navigation</p>\n<p>: Menu (Dynamic)</p>\n<p>MODULES</p>\n<p>--------------------------------------------------------------------------</p>\n<p>Banner</p>\n<p>: Home</p>\n<p>PAGETYPES</p>\n<p>--------------------------------------------------------------------------</p>\n<p>Login</p>\n<p>=========================================================================== */</p>\n<p>/*</p>\n<p>ELEMENTS/Buttons: Actions</p>\n<p>*/</p>\n<p>/* to de deleted after we migrate to typographic icons (this is here and not in core.css due to a FF bug) */</p>\n<p>.action:before,</p>\n<p>.addDatasetRow:before,</p>\n<p>.removeDatasetRow:before,</p>\n<p>.removeFile:before,</p>\n<p>[id*=&quot;dropboxRemove_&quot;]:before,</p>\n<p>.fileInputCancelButton:before {</p>\n<p>mask-image: var(--action__icon--background--image);</p>\n<p>-webkit-mask-image: var(--action__icon--background--image);</p>\n<p>}</p>\n<p>/*</p>\n<p>ELEMENTS/Buttons: Actions: Add</p>\n<p>*/</p>\n<p>.addDatasetRow,</p>\n<p>.action--add {</p>\n<p>--action__icon--background--image: url(https://jobs.ea.com/portal/4/images/icon--add.webp);</p>\n<p>}</p>\n<p>/*</p>\n<p>ELEMENTS/Buttons: Actions: Delete</p>\n<p>*/</p>\n<p>.action--delete {</p>\n<p>--action__icon--background--image: url(https://jobs.ea.com/portal/4/images/icon--remove.webp);</p>\n<p>}</p>\n<p>/*</p>\n<p>ELEMENTS/Buttons: Actions: Edit</p>\n<p>*/</p>\n<p>.action--edit {</p>\n<p>--action__icon--background--image: url(https://jobs.ea.com/portal/4/images/icon--edit.svg);</p>\n<p>}</p>\n<p>/*</p>\n<p>ELEMENTS/Buttons: Actions: Remove</p>\n<p>*/</p>\n<p>.removeDatasetRow,</p>\n<p>.removeFile,</p>\n<p>[id*=&quot;dropboxRemove_&quot;],</p>\n<p>.fileInputCancelButton,</p>\n<p>.action--remove {</p>\n<p>--action__icon--background--image: url(https://jobs.ea.com/portal/4/images/icon--remove.webp);</p>\n<p>}</p>\n<p>/*</p>\n<p>ELEMENTS/Buttons: Iconographics: Close</p>\n<p>*/</p>\n<p>.ui-button.ui-dialog-titlebar-close,</p>\n<p>.TIN_display_CloserButton_NotificationAndDialog,</p>\n<p>.autoschedule_editor_availability_header_Container_HeaderButton {</p>\n<p>--button__icon--background--image: url(https://jobs.ea.com/portal/4/images/close.svg);</p>\n<p>}</p>\n<p>/*</p>\n<p>ELEMENTS/Buttons: Vendors: Registration/application: Customizables</p>\n<p>*/</p>\n<p>.methodButton--later {</p>\n<p>--buttons__icon--background--image: url(https://jobs.ea.com/portal/4/images/icon--later.svg);</p>\n<p>}</p>\n<p>.methodButton--file {</p>\n<p>--buttons__icon--background--image: url(https://jobs.ea.com/portal/4/images/icon--file.svg);</p>\n<p>}</p>\n<p>.methodButton--paste {</p>\n<p>--buttons__icon--background--image: url(https://jobs.ea.com/portal/4/images/icon--paste.svg);</p>\n<p>}</p>\n<p>/* to de deleted after we migrate to typographic icons (this is here and not in core.css due to a FF bug) */</p>\n<p>.methodButton--later:before,</p>\n<p>.methodButton--file:before,</p>\n<p>.methodButton--paste:before {</p>\n<p>mask-image: var(--buttons__icon--background--image);</p>\n<p>-webkit-mask-image: var(--buttons__icon--background--image);</p>\n<p>}</p>\n<p>/*</p>\n<p>ELEMENTS/Icons: Shrare buttons</p>\n<p>*/</p>\n<p>:root {</p>\n<p>--icon--share--whatsapp: url(https://jobs.ea.com/portal/4/images/icon--share--whatsapp.svg);</p>\n<p>--icon--share--linkedin: url(https://jobs.ea.com/portal/4/images/icon--share--linkedin.svg);</p>\n<p>}</p>\n<p>/*</p>\n<p>ELEMENTS/External: Thumbnails</p>\n<p>*/</p>\n<p>:root {</p>\n<p>--thumbnail--border--radius: 100%;</p>\n<p>--thumbnail--border--width: 0;</p>\n<p>--thumbnail--border--color: transparent;</p>\n<p>--thumbnail--width: calc(var(--sizing--basis) * 8); /* 3.2rem +doc+ */</p>\n<p>--thumbnail--height: calc(var(--sizing--basis) * 8); /* 3.2rem +doc+ */</p>\n<p>}</p>\n<p>/*</p>\n<p>ELEMENTS/External: Thumbnails (Within LAYOUTS/Structures: Section)</p>\n<p>*/</p>\n<p>.section__header__image {</p>\n<p>--thumbnail--width: calc(var(--sizing--basis) * 14); /* 5.6rem +doc+ */</p>\n<p>--thumbnail--height: calc(var(--sizing--basis) * 14); /* 5.6rem +doc+ */</p>\n<p>}</p>\n<p>/*</p>\n<p>ELEMENTS/External: Thumbnails (Within COMPONENTS/Cards)</p>\n<p>*/</p>\n<p>.table--cards {</p>\n<p>--thumbnail--width: calc(var(--sizing--basis) * 10); /* 4rem +doc+ */</p>\n<p>--thumbnail--height: calc(var(--sizing--basis) * 10); /* 4rem +doc+ */</p>\n<p>}</p>\n<p>/*</p>\n<p>ELEMENTS/External: Thumbnails (Within COMPONENTS/Navigation: Menu)</p>\n<p>*/</p>\n<p>.menu__link {</p>\n<p>--thumbnail--width: calc(var(--sizing--basis) * 6); /* 2.4rem +doc+ */</p>\n<p>--thumbnail--height: calc(var(--sizing--basis) * 6); /* 2.4rem +doc+ */</p>\n<p>}</p>\n<p>.submenu__link,</p>\n<p>.portalLanguages__link {</p>\n<p>--thumbnail--width: calc(var(--sizing--basis) * 4); /* 1.6rem +doc+ */</p>\n<p>--thumbnail--height: calc(var(--sizing--basis) * 4); /* 1.6rem +doc+ */</p>\n<p>}</p>\n<p>/*</p>\n<p>ELEMENTS/External: Thumbnails (Within WIDGETS/Forms: Types: FileField)</p>\n<p>*/</p>\n<p>.FileField {</p>\n<p>--thumbnail--background--image: url(https://jobs.ea.com/portal/4/images/icon--user.svg);</p>\n<p>}</p>\n<p>/*</p>\n<p>ELEMENTS/External: Thumbnails (Within MODULES/Banner)</p>\n<p>*/</p>\n<p>.banner {</p>\n<p>--thumbnail--border--width: .2rem;</p>\n<p>--thumbnail--border--color: var(--color--white);</p>\n<p>--thumbnail--width: calc(var(--sizing--basis) * 16); /* 6.2rem +doc+ */</p>\n<p>--thumbnail--height: calc(var(--sizing--basis) * 16); /* 6.2rem +doc+ */</p>\n<p>}</p>\n<p>.banner--scrolling {</p>\n<p>--thumbnail--width: calc(var(--sizing--basis) * 10); /* 4rem +doc+ */</p>\n<p>--thumbnail--height: calc(var(--sizing--basis) * 10); /* 4rem +doc+ */</p>\n<p>}</p>\n<p>/* Media query to target mobile and tablet */</p>\n<p>@media all and (max-width:1024px) {</p>\n<p>.banner {</p>\n<p>--thumbnail--width: calc(var(--sizing--basis) * 10); /* 4rem +doc+ */</p>\n<p>--thumbnail--height: calc(var(--sizing--basis) * 10); /* 4rem +doc+ */</p>\n<p>}</p>\n<p>}</p>\n<p>/*</p>\n<p>ELEMENTS/Fields</p>\n<p>*/</p>\n<p>:root {</p>\n<p>--fields--icon--caret--down: url(https://jobs.ea.com/portal/4/images/icon--caret--down.svg);</p>\n<p>--fields--icon--caret--down--disabled: url(https://jobs.ea.com/portal/4/images/icon--caret--down--disabled.svg);</p>\n<p>--fields--icon--caret--up: url(https://jobs.ea.com/portal/4/images/icon--caret--up.svg);</p>\n<p>--fields--icon--clear: url(https://jobs.ea.com/portal/4/images/icon--clear.svg);</p>\n<p>}</p>\n<p>/*</p>\n<p>COMPONENTS/Navigation: Menu (Dynamic)</p>\n<p>*/</p>\n<p>@media all and (max-width:1024px) {</p>\n<p>:root {</p>\n<p>--header--height: 5.5rem;</p>\n<p>}</p>\n<p>}</p>\n<p>@media all and (min-width:1024px) {</p>\n<p>.body--menu--threshold .menu--visible .menu__panel {</p>\n<p>flex-wrap: nowrap;</p>\n<p>justify-content: flex-end;</p>\n<p>align-items: flex-start;</p>\n<p>border-top: solid .1rem var(--dividers--border--color);</p>\n<p>padding-top: var(--header--padding--top);</p>\n<p>margin-top: var(--header--padding--top);</p>\n<p>}</p>\n<p>.body--menu--threshold .menu__list {</p>\n<p>flex-wrap: wrap;</p>\n<p>justify-content: flex-start;</p>\n<p>}</p>\n<p>.body--menu--threshold .header__content {</p>\n<p>flex-direction: column;</p>\n<p>align-items: flex-start;</p>\n<p>}</p>\n<p>.body--menu--threshold .header__menu {</p>\n<p>width: 100%;</p>\n<p>}</p>\n<p>.body--menu--threshold .menu--visible .menu__list {</p>\n<p>flex-grow: 1;</p>\n<p>}</p>\n<p>}</p>\n<p>/*</p>\n<p>PAGETYPES/Login</p>\n<p>*/</p>\n<p>:root {</p>\n<p>--login__body--background--image: url(https://jobs.ea.com/portal/4/images/login--bg--desktop.webp);</p>\n<p>}</p>\n<p>/* Media query to target only tablet */</p>\n<p>@media all and (min-width:751px) and (max-width:1024px) {</p>\n<p>:root {</p>\n<p>--login__body--background--image: url(https://jobs.ea.com/portal/4/images/login--bg--desktop.webp);</p>\n<p>}</p>\n<p>}</p>\n<p>/* Media query to target only mobile */</p>\n<p>@media all and (max-width:750px) {</p>\n<p>:root {</p>\n<p>--login__body--background--image: url(https://jobs.ea.com/portal/4/images/login--bg--desktop.webp);</p>\n<p>}</p>\n<p>}</p>\n<p>EventManager.getInstance().addEventHandler(EventManager.EVENT_LOAD_NAME, function () {</p>\n<p>}, EventManager.PRIORITY_HIGH);</p>\n<p>Skip to content</p>\n<p>Electronic Arts</p>\n<p>Open Roles</p>\n<p>About EA</p>\n<p>EA Careers</p>\n<p>EA News</p>\n<p>Login</p>\n<p>English - US</p>\n<p>Chinese    English - US    Finnish    Français    Italian    Korean    Malay    Polish    Romanian    Spanish    Swedish</p>\n<p>Technical Designer (12-month contract)</p>\n<p>Home</p>\n<p>...</p>\n<p>Open Roles</p>\n<p>Role Detail</p>\n<p>General Information</p>\n<p>Locations : Stockholm, Stockholm County, Sweden</p>\n<p>Role ID</p>\n<p>215288</p>\n<p>Worker Type</p>\n<p>Temporary - with Benefits (EU &amp; Malaysia)</p>\n<p>Studio/Department</p>\n<p>EA Studios - DICE Stockholm</p>\n<p>Work Model</p>\n<p>Hybrid</p>\n<p>Description &amp; Requirements</p>\n<p>Electronic Arts creates next-level entertainment experiences that inspire players and fans around the world. Here, everyone is part of the story. Part of a community that connects across the globe. A place where creativity thrives, new perspectives are invited, and ideas matter. A team where everyone makes play happen.</p>\n<p>Battlefield is a storied franchise renowned for uncompromising combat gameplay and all-out warfare, for over two decades. 100 million players and 5 billion hours played later, Battlefield Studios is defining the future of the first-person shooter with the biggest launch in franchise history with Battlefield 6, and a new era beginning with Battlefield REDSEC.</p>\n<p>United under the banner of Battlefield Studios, 4 world-class teams across Criterion, DICE, Motive, and Ripple Effect have come together to focus on the future of the franchise, a connected Battlefield universe filled with immersive experiences built on our unique DNA.</p>\n<p>LET’S PUSH THINGS FORWARD         DICE is a creative studio with offices in Stockholm and Gothenburg. We believe in the power of inclusion and welcome game creators from all backgrounds to collaborate with us as we unlock the potential for the future of Battlefield!         We’re always pushing to be at the forefront of creative entertainment - blending digital art, design, and technology to push boundaries. Our collaborative culture is fueled by passion, driving innovation and making a positive difference for our players and community.</p>\n<p>At DICE, your ideas matter. We offer an inclusive space where you can thrive, be yourself, and grow alongside a team dedicated to making a meaningful impact to the world of gaming.</p>\n<p>We’re all-in on the future and our most ambitious Battlefield yet. Want to be part of something special? Read on.</p>\n<p>Role Overview      Join us at Electronic Arts, where you will help inspire the world to play as part of DICE's multiplayer team. You will guide the implementation quality, stability, and scalability of gameplay systems for the next iteration of Battlefield. Reporting to the Senior Technical Design Director, you will bridge design and engineering, ensuring robust, maintainable features built for iteration and long-term evolution. We value creativity, inclusion, and personal growth, empowering you to make a real impact on iconic franchises.</p>\n<p>Responsibilities      • You will own implementation quality and stability for complex multiplayer gameplay systems, ensuring features reach a robust, testable state.</p>\n<p>• You will conduct technical design reviews, resolve gameplay bugs and integration issues, and proactively identify systemic risks.</p>\n<p>• You will establish best practices and drive technical consistency across interconnected gameplay systems.</p>\n<p>• You will support and mentor designers in engine workflows, scripting standards, and debugging practices.</p>\n<p>• You will enable fast iteration by validating setups, supporting playtests, and closing the loop on feedback and fixes.</p>\n<p>• You will contribute to system tuning and ensure scalable solutions that support long-term player engagement.</p>\n<p>Required Qualifications    • 5+ years of professional game development experience in a technical design role with ownership of complex multiplayer systems.</p>\n<p>• Experience working in game engines and visual scripting tools such as Frostbite, Unreal, or Unity.</p>\n<p>• Experience collaborating with engineering and cross-discipline partners to deliver scalable gameplay features.</p>\n<p>• Strong debugging skills and the ability to anticipate technical risks in interconnected systems.</p>\n<p>• Experience mentoring designers and improving implementation standards across multiplayer or large-scale online titles.</p>\n<p>About Electronic Arts        We’re proud to have an extensive portfolio of games and experiences, locations around the world, and opportunities across EA. We value adaptability, resilience, creativity, and curiosity. From leadership that brings out your potential, to creating space for learning and experimenting, we empower you to do great work and pursue opportunities for growth.</p>\n<p>We adopt a holistic approach to our benefits programs, emphasizing physical, emotional, financial, career, and community wellness to support a balanced life. Our packages are tailored to meet local needs and may include healthcare coverage, mental well-being support, retirement savings, paid time off, family leaves, complimentary games, and more. We nurture environments where our teams can always bring their best to what they do.</p>\n<p>Electronic Arts is an equal opportunity employer. All employment decisions are made without regard to race, color, national origin, ancestry, sex, gender, gender identity or expression, sexual orientation, age, genetic information, religion, disability, medical condition, pregnancy, marital status, family status, veteran status, or any other characteristic protected by law. We will also consider employment qualified applicants with criminal records in accordance with applicable law. EA also makes workplace accommodations for qualified individuals with disabilities as required by applicable law.</p>\n<p>Post To</p>\n<p>External careers site, Internal careers site</p>\n<p>LinkedInID</p>\n<p>1449</p>\n<p>Back to Role List</p>\n<p>Apply</p>\n<p>Share this role:</p>\n<p>LinkedIn</p>\n<p>X</p>\n<p>WhatsApp</p>\n<p>Email</p>\n<p>Facebook</p>\n<p>2026</p>\n<p>Electronic Arts Inc.</p>\n<p>Copyright</p>\n<p>2026</p>\n<p>Candidate Privacy Notice</p>\n<p>|</p>\n<p>Notice at Collection (California)</p>\n<p>/**</p>\n<p>* This variable will define every property we need to pass to Templates core library as we can't define twig variables on JS files.</p>\n<p>*/</p>\n<p>var twigConfig = {</p>\n<p>&quot;pageParameters&quot;: {</p>\n<p>&quot;personSort&quot;: null,</p>\n<p>&quot;personSortDirection&quot;: null,</p>\n<p>&quot;jobSort&quot;: null,</p>\n<p>&quot;jobSortDirection&quot;: null,</p>\n<p>&quot;jobRecordsPerPage&quot;: &quot;&quot;,</p>\n<p>&quot;personRecordsPerPage&quot;: &quot;&quot;</p>\n<p>},</p>\n<p>&quot;jobLabel&quot;: &quot;job&quot;,</p>\n<p>&quot;STEP_INDEX&quot;: &quot;&quot; || null,</p>\n<p>&quot;wizardModalViewEnabled&quot;: &quot;&quot; || false,</p>\n<p>&quot;wizardHasErrors&quot;: &quot;&quot; || false,</p>\n<p>&quot;sortedBy&quot;: &quot;Sorted by &quot;,</p>\n<p>&quot;loading&quot;: &quot;Loading &quot;,</p>\n<p>&quot;plugins&quot;: {</p>\n<p>&quot;popper&quot;: {</p>\n<p>&quot;js&quot;: &quot;https://templates-static-assets.avacdn.net/jsLibrary/plugins/tippy/popper.min.js&quot;</p>\n<p>},</p>\n<p>&quot;tooltip&quot;: {</p>\n<p>&quot;js&quot;: &quot;https://templates-static-assets.avacdn.net/jsLibrary/plugins/tippy/tippy-bundle.umd.js&quot;,</p>\n<p>&quot;css&quot;: &quot;https://templates-static-assets.avacdn.net/jsLibrary/plugins/tippy/tippy.css&quot;</p>\n<p>},</p>\n<p>&quot;popup&quot;: {</p>\n<p>&quot;js&quot;: &quot;https://templates-static-assets.avacdn.net/jsLibrary/plugins/glightbox/glightbox.min.js&quot;,</p>\n<p>&quot;css&quot;: &quot;https://templates-static-assets.avacdn.net/jsLibrary/plugins/glightbox/glightbox.min.css&quot;</p>\n<p>},</p>\n<p>&quot;slider&quot;: {</p>\n<p>&quot;js&quot;: &quot;https://templates-static-assets.avacdn.net/jsLibrary/plugins/swiper/swiper-bundle.min.js&quot;,</p>\n<p>&quot;css&quot;: &quot;https://templates-static-assets.avacdn.net/jsLibrary/plugins/swiper/swiper-bundle.min.css&quot;</p>\n<p>},</p>\n<p>&quot;google&quot;: {</p>\n<p>&quot;jsMarkerCluster&quot;: &quot;https://templates-static-assets.avacdn.net/jsLibrary/plugins/googlemaps/markerclusterer.js&quot;,</p>\n<p>&quot;apiKey&quot;: &quot;&quot;</p>\n<p>}</p>\n<p>},</p>\n<p>&quot;menu&quot;: {&quot;typeByDefault&quot;:&quot;visible&quot;,&quot;itemsThreshold&quot;:8,&quot;headerHeightDefault&quot;:5.5,&quot;typeBelowBreakpoint&quot;:{&quot;enabled&quot;:true,&quot;type&quot;:&quot;toggleable&quot;,&quot;breakpoint&quot;:1024},&quot;toggleSide&quot;:&quot;right&quot;,&quot;panelFrom&quot;:&quot;right&quot;,&quot;panelEffect&quot;:&quot;over&quot;},</p>\n<p>&quot;search&quot;: {&quot;typeByDefault&quot;:&quot;visible&quot;,&quot;typeBelowBreakpoint&quot;:{&quot;enabled&quot;:true,&quot;type&quot;:&quot;toggleable&quot;,&quot;breakpoint&quot;:1024,&quot;preventTabsConflicts&quot;:true}},</p>\n<p>&quot;results&quot;: {&quot;resultsDisplayTypeByDefault&quot;:&quot;listed&quot;,&quot;resultsDisplayTypeBelowBreakpoint&quot;:{&quot;enabled&quot;:true,&quot;type&quot;:&quot;grided&quot;,&quot;breakpoint&quot;:750},&quot;resultsItemTypeByDefault&quot;:&quot;result&quot;,&quot;resultsItemTypeBelowBreakpoint&quot;:{&quot;enabled&quot;:true,&quot;type&quot;:&quot;card&quot;,&quot;breakpoint&quot;:750}},</p>\n<p>&quot;stickyAside&quot;: 0,</p>\n<p>&quot;stickyHeader&quot;: 1,</p>\n<p>&quot;stickyBanner&quot;: 0,</p>\n<p>&quot;page&quot;: {</p>\n<p>&quot;PORTAL_BASE_REAL_URL&quot;: &quot;https://jobs.ea.com/portal/4&quot;,</p>\n<p>&quot;wizardPageBackTo&quot;: &quot;&quot;,</p>\n<p>},</p>\n<p>&quot;relatedJobs&quot;: {</p>\n<p>&quot;relatedJobsEnabled&quot;: 1,</p>\n<p>&quot;url&quot;: &quot;https://jobs.ea.com/en_US/careers/WidgetRelatedJobs?3_139_3=8304&amp;jobId=215288&quot;,</p>\n<p>&quot;selector&quot;: &quot;#relatedJobs&quot;</p>\n<p>},</p>\n<p>&quot;convertDatesToUserTZ&quot;: {</p>\n<p>&quot;CSSClass&quot;: &quot;timelocal&quot;,</p>\n<p>&quot;convertDatesToUserTZEnabled&quot;: 1,</p>\n<p>&quot;loggedUserTZ&quot;: Intl.DateTimeFormat().resolvedOptions().timeZone,</p>\n<p>&quot;weekday&quot;: &quot;long&quot;,</p>\n<p>&quot;day&quot;: &quot;numeric&quot;,</p>\n<p>&quot;month&quot;: &quot;long&quot;,</p>\n<p>&quot;hour&quot;: &quot;numeric&quot;,</p>\n<p>&quot;minute&quot;: &quot;numeric&quot;,</p>\n<p>&quot;hour12&quot;: &quot;1&quot;,</p>\n<p>},</p>\n<p>&quot;userLang&quot;: &quot;en_US&quot;,</p>\n<p>&quot;breadcrumbsEnabled&quot;: 1,</p>\n<p>&quot;googleMapsEnabled&quot;: 0,</p>\n<p>&quot;googleMarkerClusterEnabled&quot;: 0,</p>\n<p>&quot;googleParameters&quot;: {</p>\n<p>&quot;dataUrl&quot;: &quot;//jobs.ea.com/en_US/careers/Home/215288&quot;,</p>\n<p>&quot;centerLatitude&quot;: 0,</p>\n<p>&quot;centerLongitude&quot;: 0,</p>\n<p>&quot;startZoom&quot;: 3,</p>\n<p>&quot;infoWindowCSSClassDiv&quot;: &quot;info-window&quot;,</p>\n<p>&quot;infoWindowCSSClassHeader&quot;: &quot;info-window__header&quot;,</p>\n<p>&quot;infoWindowCSSClassLink&quot;: &quot;link info-window__link&quot;</p>\n<p>},</p>\n<p>&quot;browsingHistory&quot;: {</p>\n<p>&quot;browsingHistoryEnabled&quot;: 1,</p>\n<p>&quot;url&quot;: &quot;https://jobs.ea.com/en_US/careers/BrowsingHistoryList?3_139_3=%5B8304%5D&quot;,</p>\n<p>&quot;selector&quot;: &quot;#browsingHistory&quot;</p>\n<p>},</p>\n<p>&quot;widgetRelatedJobs&quot;: {</p>\n<p>&quot;relatedJobsEnabled&quot;: 1,</p>\n<p>&quot;url&quot;: &quot;https://jobs.ea.com/en_US/careers/WidgetRelatedJobs?3_139_3=8304&amp;jobId=215288&quot;,</p>\n<p>&quot;selector&quot;: &quot;#widgetRelatedJobs&quot;</p>\n<p>},</p>\n<p>&quot;widgetOpenPositions&quot;:{</p>\n<p>&quot;url&quot;: &quot;&quot;,</p>\n<p>&quot;selector&quot;: &quot;#widgetOpenPositions&quot;</p>\n<p>},</p>\n<p>&quot;widgetRecommendations&quot;:{</p>\n<p>&quot;widgetRecommendationsEnabled&quot;: 1,</p>\n<p>&quot;url&quot;: &quot;&quot;,</p>\n<p>&quot;selector&quot;: &quot;#widgetRecommendations&quot;</p>\n<p>},</p>\n<p>&quot;languageSwitcherFlagsPath&quot;: &quot;https://templates-static-assets.avacdn.net/assets/flags&quot;,</p>\n<p>&quot;enableLanguageSwitcherFlags&quot;: 0,</p>\n<p>&quot;enableSectionCollapsibleAccordionDisplay&quot;: 0</p>\n<p>};</p>\n<p>var lightbox;</p>\n<p>var slider;</p>\n<p>var Templates;</p>\n<p>pjQuery(function() { var domManager = new DomManager(); domManager.run(); });</p>\n<p>var service = EventManager.getInstance();</p>","datePosted":"2026-07-07T13:23:47.729Z","identifier":{"@type":"PropertyValue","name":"DICE Stockholm","value":"av-ea-215288"},"hiringOrganization":{"@type":"Organization","name":"DICE Stockholm"},"directApply":false,"jobLocation":{"@type":"Place","address":{"@type":"PostalAddress","addressCountry":"SE","addressLocality":"Stockholm"}},"employmentType":"CONTRACTOR"}
+</script>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"DevQuest","item":"https://devquest.gg/"},{"@type":"ListItem","position":2,"name":"Jobs","item":"https://devquest.gg/jobs"},{"@type":"ListItem","position":3,"name":"DICE Stockholm","item":"https://devquest.gg/electronic-arts-jobs"}]}
+</script>
+<style>
+  :root{--bg:#0a0d14;--panel:#11161f;--border:#232a35;--text:#e6edf3;--muted:#8b949e;--accent:#58a6ff;--gold:#e0b23a}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;line-height:1.6}
+  header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 22px;border-bottom:1px solid var(--border)}
+  .logo{display:flex;align-items:center;gap:8px;color:var(--text);text-decoration:none;font-weight:800}
+  .logo span span{color:var(--accent)} .logo .tld{color:var(--gold)}
+  .wrap{max-width:820px;margin:0 auto;padding:26px 22px 60px}
+  .crumbs{font-size:13px;color:var(--muted);margin-bottom:14px}
+  .crumbs a{color:var(--muted)}
+  h1{font-size:27px;line-height:1.25;margin:0 0 8px}
+  .sub{color:var(--muted);font-size:15px;margin:0 0 14px}
+  .tags{display:flex;flex-wrap:wrap;gap:7px;margin:0 0 20px}
+  .tag{font-size:12px;font-weight:700;color:var(--muted);border:1px solid var(--border);border-radius:999px;padding:4px 11px}
+  .tag.sal{color:var(--gold);border-color:rgba(224,178,58,.4)}
+  .tag.remote{color:#4ad38b;border-color:rgba(74,211,139,.4)}
+  .apply{display:inline-block;font-weight:800;border-radius:10px;padding:12px 22px;background:linear-gradient(135deg,#7cc0ff,#58a6ff);color:#04121f;text-decoration:none}
+  .desc{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:18px 20px;margin:22px 0}
+  .desc p{margin:0 0 12px;color:#c9d1d9;font-size:15px}
+  .note{color:var(--muted);font-size:13px;margin-top:18px}
+  .more{margin-top:26px;padding-top:18px;border-top:1px solid var(--border)}
+  .more a{color:var(--accent)}
+  footer{border-top:1px solid var(--border);padding:20px 22px;text-align:center;color:var(--muted);font-size:13px}
+  footer a{color:var(--muted)}
+</style>
+</head>
+<body>
+<header>
+  <a class="logo" href="/"><span>Dev<span>Quest</span></span><span class="tld">.gg</span></a>
+  <a class="apply" href="https://jobs.ea.com/en_US/careers/JobDetail/Technical-Designer/215288" target="_blank" rel="noopener nofollow">Apply on DICE Stockholm&rsquo;s site →</a>
+</header>
+<div class="wrap">
+  <nav class="crumbs"><a href="/">DevQuest</a> › <a href="/jobs">Jobs</a> › <a href="/electronic-arts-jobs">DICE Stockholm</a></nav>
+  <h1>Technical Designer (12-month contract)</h1>
+  <p class="sub">DICE Stockholm · Stockholm</p>
+  <div class="tags">
+    <span class="tag">Mid</span>
+    <span class="tag">Design</span>
+    
+    
+    <span class="tag">Posted 2026-07-07</span>
+    <span class="tag">Contractor</span>
+    
+  </div>
+  <a class="apply" href="https://jobs.ea.com/en_US/careers/JobDetail/Technical-Designer/215288" target="_blank" rel="noopener nofollow">Apply on DICE Stockholm&rsquo;s site →</a>
+  <div class="desc">
+<p>Technical Designer (12-month contract) - 215288 - Electronic Arts</p>
+<p>/* ===========================================================================</p>
+<p>ELEMENTS</p>
+<p>--------------------------------------------------------------------------</p>
+<p>Buttons</p>
+<p>: Actions</p>
+<p>: Add</p>
+<p>: Delete</p>
+<p>: Edit</p>
+<p>: Remove</p>
+<p>: Iconographics</p>
+<p>: Close</p>
+<p>: Vendors</p>
+<p>: Registration/application</p>
+<p>: Customizables</p>
+<p>External</p>
+<p>: Thumbnails</p>
+<p>Fields</p>
+<p>COMPONENTS</p>
+<p>--------------------------------------------------------------------------</p>
+<p>Navigation</p>
+<p>: Menu (Dynamic)</p>
+<p>MODULES</p>
+<p>--------------------------------------------------------------------------</p>
+<p>Banner</p>
+<p>: Home</p>
+<p>PAGETYPES</p>
+<p>--------------------------------------------------------------------------</p>
+<p>Login</p>
+<p>=========================================================================== */</p>
+<p>/*</p>
+<p>ELEMENTS/Buttons: Actions</p>
+<p>*/</p>
+<p>/* to de deleted after we migrate to typographic icons (this is here and not in core.css due to a FF bug) */</p>
+<p>.action:before,</p>
+<p>.addDatasetRow:before,</p>
+<p>.removeDatasetRow:before,</p>
+<p>.removeFile:before,</p>
+<p>[id*=&quot;dropboxRemove_&quot;]:before,</p>
+<p>.fileInputCancelButton:before {</p>
+<p>mask-image: var(--action__icon--background--image);</p>
+<p>-webkit-mask-image: var(--action__icon--background--image);</p>
+<p>}</p>
+<p>/*</p>
+<p>ELEMENTS/Buttons: Actions: Add</p>
+<p>*/</p>
+<p>.addDatasetRow,</p>
+<p>.action--add {</p>
+<p>--action__icon--background--image: url(https://jobs.ea.com/portal/4/images/icon--add.webp);</p>
+<p>}</p>
+<p>/*</p>
+<p>ELEMENTS/Buttons: Actions: Delete</p>
+<p>*/</p>
+<p>.action--delete {</p>
+<p>--action__icon--background--image: url(https://jobs.ea.com/portal/4/images/icon--remove.webp);</p>
+<p>}</p>
+<p>/*</p>
+<p>ELEMENTS/Buttons: Actions: Edit</p>
+<p>*/</p>
+<p>.action--edit {</p>
+<p>--action__icon--background--image: url(https://jobs.ea.com/portal/4/images/icon--edit.svg);</p>
+<p>}</p>
+<p>/*</p>
+<p>ELEMENTS/Buttons: Actions: Remove</p>
+<p>*/</p>
+<p>.removeDatasetRow,</p>
+<p>.removeFile,</p>
+<p>[id*=&quot;dropboxRemove_&quot;],</p>
+<p>.fileInputCancelButton,</p>
+<p>.action--remove {</p>
+<p>--action__icon--background--image: url(https://jobs.ea.com/portal/4/images/icon--remove.webp);</p>
+<p>}</p>
+<p>/*</p>
+<p>ELEMENTS/Buttons: Iconographics: Close</p>
+<p>*/</p>
+<p>.ui-button.ui-dialog-titlebar-close,</p>
+<p>.TIN_display_CloserButton_NotificationAndDialog,</p>
+<p>.autoschedule_editor_availability_header_Container_HeaderButton {</p>
+<p>--button__icon--background--image: url(https://jobs.ea.com/portal/4/images/close.svg);</p>
+<p>}</p>
+<p>/*</p>
+<p>ELEMENTS/Buttons: Vendors: Registration/application: Customizables</p>
+<p>*/</p>
+<p>.methodButton--later {</p>
+<p>--buttons__icon--background--image: url(https://jobs.ea.com/portal/4/images/icon--later.svg);</p>
+<p>}</p>
+<p>.methodButton--file {</p>
+<p>--buttons__icon--background--image: url(https://jobs.ea.com/portal/4/images/icon--file.svg);</p>
+<p>}</p>
+<p>.methodButton--paste {</p>
+<p>--buttons__icon--background--image: url(https://jobs.ea.com/portal/4/images/icon--paste.svg);</p>
+<p>}</p>
+<p>/* to de deleted after we migrate to typographic icons (this is here and not in core.css due to a FF bug) */</p>
+<p>.methodButton--later:before,</p>
+<p>.methodButton--file:before,</p>
+<p>.methodButton--paste:before {</p>
+<p>mask-image: var(--buttons__icon--background--image);</p>
+<p>-webkit-mask-image: var(--buttons__icon--background--image);</p>
+<p>}</p>
+<p>/*</p>
+<p>ELEMENTS/Icons: Shrare buttons</p>
+<p>*/</p>
+<p>:root {</p>
+<p>--icon--share--whatsapp: url(https://jobs.ea.com/portal/4/images/icon--share--whatsapp.svg);</p>
+<p>--icon--share--linkedin: url(https://jobs.ea.com/portal/4/images/icon--share--linkedin.svg);</p>
+<p>}</p>
+<p>/*</p>
+<p>ELEMENTS/External: Thumbnails</p>
+<p>*/</p>
+<p>:root {</p>
+<p>--thumbnail--border--radius: 100%;</p>
+<p>--thumbnail--border--width: 0;</p>
+<p>--thumbnail--border--color: transparent;</p>
+<p>--thumbnail--width: calc(var(--sizing--basis) * 8); /* 3.2rem +doc+ */</p>
+<p>--thumbnail--height: calc(var(--sizing--basis) * 8); /* 3.2rem +doc+ */</p>
+<p>}</p>
+<p>/*</p>
+<p>ELEMENTS/External: Thumbnails (Within LAYOUTS/Structures: Section)</p>
+<p>*/</p>
+<p>.section__header__image {</p>
+<p>--thumbnail--width: calc(var(--sizing--basis) * 14); /* 5.6rem +doc+ */</p>
+<p>--thumbnail--height: calc(var(--sizing--basis) * 14); /* 5.6rem +doc+ */</p>
+<p>}</p>
+<p>/*</p>
+<p>ELEMENTS/External: Thumbnails (Within COMPONENTS/Cards)</p>
+<p>*/</p>
+<p>.table--cards {</p>
+<p>--thumbnail--width: calc(var(--sizing--basis) * 10); /* 4rem +doc+ */</p>
+<p>--thumbnail--height: calc(var(--sizing--basis) * 10); /* 4rem +doc+ */</p>
+<p>}</p>
+<p>/*</p>
+<p>ELEMENTS/External: Thumbnails (Within COMPONENTS/Navigation: Menu)</p>
+<p>*/</p>
+<p>.menu__link {</p>
+<p>--thumbnail--width: calc(var(--sizing--basis) * 6); /* 2.4rem +doc+ */</p>
+<p>--thumbnail--height: calc(var(--sizing--basis) * 6); /* 2.4rem +doc+ */</p>
+<p>}</p>
+<p>.submenu__link,</p>
+<p>.portalLanguages__link {</p>
+<p>--thumbnail--width: calc(var(--sizing--basis) * 4); /* 1.6rem +doc+ */</p>
+<p>--thumbnail--height: calc(var(--sizing--basis) * 4); /* 1.6rem +doc+ */</p>
+<p>}</p>
+<p>/*</p>
+<p>ELEMENTS/External: Thumbnails (Within WIDGETS/Forms: Types: FileField)</p>
+<p>*/</p>
+<p>.FileField {</p>
+<p>--thumbnail--background--image: url(https://jobs.ea.com/portal/4/images/icon--user.svg);</p>
+<p>}</p>
+<p>/*</p>
+<p>ELEMENTS/External: Thumbnails (Within MODULES/Banner)</p>
+<p>*/</p>
+<p>.banner {</p>
+<p>--thumbnail--border--width: .2rem;</p>
+<p>--thumbnail--border--color: var(--color--white);</p>
+<p>--thumbnail--width: calc(var(--sizing--basis) * 16); /* 6.2rem +doc+ */</p>
+<p>--thumbnail--height: calc(var(--sizing--basis) * 16); /* 6.2rem +doc+ */</p>
+<p>}</p>
+<p>.banner--scrolling {</p>
+<p>--thumbnail--width: calc(var(--sizing--basis) * 10); /* 4rem +doc+ */</p>
+<p>--thumbnail--height: calc(var(--sizing--basis) * 10); /* 4rem +doc+ */</p>
+<p>}</p>
+<p>/* Media query to target mobile and tablet */</p>
+<p>@media all and (max-width:1024px) {</p>
+<p>.banner {</p>
+<p>--thumbnail--width: calc(var(--sizing--basis) * 10); /* 4rem +doc+ */</p>
+<p>--thumbnail--height: calc(var(--sizing--basis) * 10); /* 4rem +doc+ */</p>
+<p>}</p>
+<p>}</p>
+<p>/*</p>
+<p>ELEMENTS/Fields</p>
+<p>*/</p>
+<p>:root {</p>
+<p>--fields--icon--caret--down: url(https://jobs.ea.com/portal/4/images/icon--caret--down.svg);</p>
+<p>--fields--icon--caret--down--disabled: url(https://jobs.ea.com/portal/4/images/icon--caret--down--disabled.svg);</p>
+<p>--fields--icon--caret--up: url(https://jobs.ea.com/portal/4/images/icon--caret--up.svg);</p>
+<p>--fields--icon--clear: url(https://jobs.ea.com/portal/4/images/icon--clear.svg);</p>
+<p>}</p>
+<p>/*</p>
+<p>COMPONENTS/Navigation: Menu (Dynamic)</p>
+<p>*/</p>
+<p>@media all and (max-width:1024px) {</p>
+<p>:root {</p>
+<p>--header--height: 5.5rem;</p>
+<p>}</p>
+<p>}</p>
+<p>@media all and (min-width:1024px) {</p>
+<p>.body--menu--threshold .menu--visible .menu__panel {</p>
+<p>flex-wrap: nowrap;</p>
+<p>justify-content: flex-end;</p>
+<p>align-items: flex-start;</p>
+<p>border-top: solid .1rem var(--dividers--border--color);</p>
+<p>padding-top: var(--header--padding--top);</p>
+<p>margin-top: var(--header--padding--top);</p>
+<p>}</p>
+<p>.body--menu--threshold .menu__list {</p>
+<p>flex-wrap: wrap;</p>
+<p>justify-content: flex-start;</p>
+<p>}</p>
+<p>.body--menu--threshold .header__content {</p>
+<p>flex-direction: column;</p>
+<p>align-items: flex-start;</p>
+<p>}</p>
+<p>.body--menu--threshold .header__menu {</p>
+<p>width: 100%;</p>
+<p>}</p>
+<p>.body--menu--threshold .menu--visible .menu__list {</p>
+<p>flex-grow: 1;</p>
+<p>}</p>
+<p>}</p>
+<p>/*</p>
+<p>PAGETYPES/Login</p>
+<p>*/</p>
+<p>:root {</p>
+<p>--login__body--background--image: url(https://jobs.ea.com/portal/4/images/login--bg--desktop.webp);</p>
+<p>}</p>
+<p>/* Media query to target only tablet */</p>
+<p>@media all and (min-width:751px) and (max-width:1024px) {</p>
+<p>:root {</p>
+<p>--login__body--background--image: url(https://jobs.ea.com/portal/4/images/login--bg--desktop.webp);</p>
+<p>}</p>
+<p>}</p>
+<p>/* Media query to target only mobile */</p>
+<p>@media all and (max-width:750px) {</p>
+<p>:root {</p>
+<p>--login__body--background--image: url(https://jobs.ea.com/portal/4/images/login--bg--desktop.webp);</p>
+<p>}</p>
+<p>}</p>
+<p>EventManager.getInstance().addEventHandler(EventManager.EVENT_LOAD_NAME, function () {</p>
+<p>}, EventManager.PRIORITY_HIGH);</p>
+<p>Skip to content</p>
+<p>Electronic Arts</p>
+<p>Open Roles</p>
+<p>About EA</p>
+<p>EA Careers</p>
+<p>EA News</p>
+<p>Login</p>
+<p>English - US</p>
+<p>Chinese    English - US    Finnish    Français    Italian    Korean    Malay    Polish    Romanian    Spanish    Swedish</p>
+<p>Technical Designer (12-month contract)</p>
+<p>Home</p>
+<p>...</p>
+<p>Open Roles</p>
+<p>Role Detail</p>
+<p>General Information</p>
+<p>Locations : Stockholm, Stockholm County, Sweden</p>
+<p>Role ID</p>
+<p>215288</p>
+<p>Worker Type</p>
+<p>Temporary - with Benefits (EU &amp; Malaysia)</p>
+<p>Studio/Department</p>
+<p>EA Studios - DICE Stockholm</p>
+<p>Work Model</p>
+<p>Hybrid</p>
+<p>Description &amp; Requirements</p>
+<p>Electronic Arts creates next-level entertainment experiences that inspire players and fans around the world. Here, everyone is part of the story. Part of a community that connects across the globe. A place where creativity thrives, new perspectives are invited, and ideas matter. A team where everyone makes play happen.</p>
+<p>Battlefield is a storied franchise renowned for uncompromising combat gameplay and all-out warfare, for over two decades. 100 million players and 5 billion hours played later, Battlefield Studios is defining the future of the first-person shooter with the biggest launch in franchise history with Battlefield 6, and a new era beginning with Battlefield REDSEC.</p>
+<p>United under the banner of Battlefield Studios, 4 world-class teams across Criterion, DICE, Motive, and Ripple Effect have come together to focus on the future of the franchise, a connected Battlefield universe filled with immersive experiences built on our unique DNA.</p>
+<p>LET’S PUSH THINGS FORWARD         DICE is a creative studio with offices in Stockholm and Gothenburg. We believe in the power of inclusion and welcome game creators from all backgrounds to collaborate with us as we unlock the potential for the future of Battlefield!         We’re always pushing to be at the forefront of creative entertainment - blending digital art, design, and technology to push boundaries. Our collaborative culture is fueled by passion, driving innovation and making a positive difference for our players and community.</p>
+<p>At DICE, your ideas matter. We offer an inclusive space where you can thrive, be yourself, and grow alongside a team dedicated to making a meaningful impact to the world of gaming.</p>
+<p>We’re all-in on the future and our most ambitious Battlefield yet. Want to be part of something special? Read on.</p>
+<p>Role Overview      Join us at Electronic Arts, where you will help inspire the world to play as part of DICE's multiplayer team. You will guide the implementation quality, stability, and scalability of gameplay systems for the next iteration of Battlefield. Reporting to the Senior Technical Design Director, you will bridge design and engineering, ensuring robust, maintainable features built for iteration and long-term evolution. We value creativity, inclusion, and personal growth, empowering you to make a real impact on iconic franchises.</p>
+<p>Responsibilities      • You will own implementation quality and stability for complex multiplayer gameplay systems, ensuring features reach a robust, testable state.</p>
+<p>• You will conduct technical design reviews, resolve gameplay bugs and integration issues, and proactively identify systemic risks.</p>
+<p>• You will establish best practices and drive technical consistency across interconnected gameplay systems.</p>
+<p>• You will support and mentor designers in engine workflows, scripting standards, and debugging practices.</p>
+<p>• You will enable fast iteration by validating setups, supporting playtests, and closing the loop on feedback and fixes.</p>
+<p>• You will contribute to system tuning and ensure scalable solutions that support long-term player engagement.</p>
+<p>Required Qualifications    • 5+ years of professional game development experience in a technical design role with ownership of complex multiplayer systems.</p>
+<p>• Experience working in game engines and visual scripting tools such as Frostbite, Unreal, or Unity.</p>
+<p>• Experience collaborating with engineering and cross-discipline partners to deliver scalable gameplay features.</p>
+<p>• Strong debugging skills and the ability to anticipate technical risks in interconnected systems.</p>
+<p>• Experience mentoring designers and improving implementation standards across multiplayer or large-scale online titles.</p>
+<p>About Electronic Arts        We’re proud to have an extensive portfolio of games and experiences, locations around the world, and opportunities across EA. We value adaptability, resilience, creativity, and curiosity. From leadership that brings out your potential, to creating space for learning and experimenting, we empower you to do great work and pursue opportunities for growth.</p>
+<p>We adopt a holistic approach to our benefits programs, emphasizing physical, emotional, financial, career, and community wellness to support a balanced life. Our packages are tailored to meet local needs and may include healthcare coverage, mental well-being support, retirement savings, paid time off, family leaves, complimentary games, and more. We nurture environments where our teams can always bring their best to what they do.</p>
+<p>Electronic Arts is an equal opportunity employer. All employment decisions are made without regard to race, color, national origin, ancestry, sex, gender, gender identity or expression, sexual orientation, age, genetic information, religion, disability, medical condition, pregnancy, marital status, family status, veteran status, or any other characteristic protected by law. We will also consider employment qualified applicants with criminal records in accordance with applicable law. EA also makes workplace accommodations for qualified individuals with disabilities as required by applicable law.</p>
+<p>Post To</p>
+<p>External careers site, Internal careers site</p>
+<p>LinkedInID</p>
+<p>1449</p>
+<p>Back to Role List</p>
+<p>Apply</p>
+<p>Share this role:</p>
+<p>LinkedIn</p>
+<p>X</p>
+<p>WhatsApp</p>
+<p>Email</p>
+<p>Facebook</p>
+<p>2026</p>
+<p>Electronic Arts Inc.</p>
+<p>Copyright</p>
+<p>2026</p>
+<p>Candidate Privacy Notice</p>
+<p>|</p>
+<p>Notice at Collection (California)</p>
+<p>/**</p>
+<p>* This variable will define every property we need to pass to Templates core library as we can't define twig variables on JS files.</p>
+<p>*/</p>
+<p>var twigConfig = {</p>
+<p>&quot;pageParameters&quot;: {</p>
+<p>&quot;personSort&quot;: null,</p>
+<p>&quot;personSortDirection&quot;: null,</p>
+<p>&quot;jobSort&quot;: null,</p>
+<p>&quot;jobSortDirection&quot;: null,</p>
+<p>&quot;jobRecordsPerPage&quot;: &quot;&quot;,</p>
+<p>&quot;personRecordsPerPage&quot;: &quot;&quot;</p>
+<p>},</p>
+<p>&quot;jobLabel&quot;: &quot;job&quot;,</p>
+<p>&quot;STEP_INDEX&quot;: &quot;&quot; || null,</p>
+<p>&quot;wizardModalViewEnabled&quot;: &quot;&quot; || false,</p>
+<p>&quot;wizardHasErrors&quot;: &quot;&quot; || false,</p>
+<p>&quot;sortedBy&quot;: &quot;Sorted by &quot;,</p>
+<p>&quot;loading&quot;: &quot;Loading &quot;,</p>
+<p>&quot;plugins&quot;: {</p>
+<p>&quot;popper&quot;: {</p>
+<p>&quot;js&quot;: &quot;https://templates-static-assets.avacdn.net/jsLibrary/plugins/tippy/popper.min.js&quot;</p>
+<p>},</p>
+<p>&quot;tooltip&quot;: {</p>
+<p>&quot;js&quot;: &quot;https://templates-static-assets.avacdn.net/jsLibrary/plugins/tippy/tippy-bundle.umd.js&quot;,</p>
+<p>&quot;css&quot;: &quot;https://templates-static-assets.avacdn.net/jsLibrary/plugins/tippy/tippy.css&quot;</p>
+<p>},</p>
+<p>&quot;popup&quot;: {</p>
+<p>&quot;js&quot;: &quot;https://templates-static-assets.avacdn.net/jsLibrary/plugins/glightbox/glightbox.min.js&quot;,</p>
+<p>&quot;css&quot;: &quot;https://templates-static-assets.avacdn.net/jsLibrary/plugins/glightbox/glightbox.min.css&quot;</p>
+<p>},</p>
+<p>&quot;slider&quot;: {</p>
+<p>&quot;js&quot;: &quot;https://templates-static-assets.avacdn.net/jsLibrary/plugins/swiper/swiper-bundle.min.js&quot;,</p>
+<p>&quot;css&quot;: &quot;https://templates-static-assets.avacdn.net/jsLibrary/plugins/swiper/swiper-bundle.min.css&quot;</p>
+<p>},</p>
+<p>&quot;google&quot;: {</p>
+<p>&quot;jsMarkerCluster&quot;: &quot;https://templates-static-assets.avacdn.net/jsLibrary/plugins/googlemaps/markerclusterer.js&quot;,</p>
+<p>&quot;apiKey&quot;: &quot;&quot;</p>
+<p>}</p>
+<p>},</p>
+<p>&quot;menu&quot;: {&quot;typeByDefault&quot;:&quot;visible&quot;,&quot;itemsThreshold&quot;:8,&quot;headerHeightDefault&quot;:5.5,&quot;typeBelowBreakpoint&quot;:{&quot;enabled&quot;:true,&quot;type&quot;:&quot;toggleable&quot;,&quot;breakpoint&quot;:1024},&quot;toggleSide&quot;:&quot;right&quot;,&quot;panelFrom&quot;:&quot;right&quot;,&quot;panelEffect&quot;:&quot;over&quot;},</p>
+<p>&quot;search&quot;: {&quot;typeByDefault&quot;:&quot;visible&quot;,&quot;typeBelowBreakpoint&quot;:{&quot;enabled&quot;:true,&quot;type&quot;:&quot;toggleable&quot;,&quot;breakpoint&quot;:1024,&quot;preventTabsConflicts&quot;:true}},</p>
+<p>&quot;results&quot;: {&quot;resultsDisplayTypeByDefault&quot;:&quot;listed&quot;,&quot;resultsDisplayTypeBelowBreakpoint&quot;:{&quot;enabled&quot;:true,&quot;type&quot;:&quot;grided&quot;,&quot;breakpoint&quot;:750},&quot;resultsItemTypeByDefault&quot;:&quot;result&quot;,&quot;resultsItemTypeBelowBreakpoint&quot;:{&quot;enabled&quot;:true,&quot;type&quot;:&quot;card&quot;,&quot;breakpoint&quot;:750}},</p>
+<p>&quot;stickyAside&quot;: 0,</p>
+<p>&quot;stickyHeader&quot;: 1,</p>
+<p>&quot;stickyBanner&quot;: 0,</p>
+<p>&quot;page&quot;: {</p>
+<p>&quot;PORTAL_BASE_REAL_URL&quot;: &quot;https://jobs.ea.com/portal/4&quot;,</p>
+<p>&quot;wizardPageBackTo&quot;: &quot;&quot;,</p>
+<p>},</p>
+<p>&quot;relatedJobs&quot;: {</p>
+<p>&quot;relatedJobsEnabled&quot;: 1,</p>
+<p>&quot;url&quot;: &quot;https://jobs.ea.com/en_US/careers/WidgetRelatedJobs?3_139_3=8304&amp;jobId=215288&quot;,</p>
+<p>&quot;selector&quot;: &quot;#relatedJobs&quot;</p>
+<p>},</p>
+<p>&quot;convertDatesToUserTZ&quot;: {</p>
+<p>&quot;CSSClass&quot;: &quot;timelocal&quot;,</p>
+<p>&quot;convertDatesToUserTZEnabled&quot;: 1,</p>
+<p>&quot;loggedUserTZ&quot;: Intl.DateTimeFormat().resolvedOptions().timeZone,</p>
+<p>&quot;weekday&quot;: &quot;long&quot;,</p>
+<p>&quot;day&quot;: &quot;numeric&quot;,</p>
+<p>&quot;month&quot;: &quot;long&quot;,</p>
+<p>&quot;hour&quot;: &quot;numeric&quot;,</p>
+<p>&quot;minute&quot;: &quot;numeric&quot;,</p>
+<p>&quot;hour12&quot;: &quot;1&quot;,</p>
+<p>},</p>
+<p>&quot;userLang&quot;: &quot;en_US&quot;,</p>
+<p>&quot;breadcrumbsEnabled&quot;: 1,</p>
+<p>&quot;googleMapsEnabled&quot;: 0,</p>
+<p>&quot;googleMarkerClusterEnabled&quot;: 0,</p>
+<p>&quot;googleParameters&quot;: {</p>
+<p>&quot;dataUrl&quot;: &quot;//jobs.ea.com/en_US/careers/Home/215288&quot;,</p>
+<p>&quot;centerLatitude&quot;: 0,</p>
+<p>&quot;centerLongitude&quot;: 0,</p>
+<p>&quot;startZoom&quot;: 3,</p>
+<p>&quot;infoWindowCSSClassDiv&quot;: &quot;info-window&quot;,</p>
+<p>&quot;infoWindowCSSClassHeader&quot;: &quot;info-window__header&quot;,</p>
+<p>&quot;infoWindowCSSClassLink&quot;: &quot;link info-window__link&quot;</p>
+<p>},</p>
+<p>&quot;browsingHistory&quot;: {</p>
+<p>&quot;browsingHistoryEnabled&quot;: 1,</p>
+<p>&quot;url&quot;: &quot;https://jobs.ea.com/en_US/careers/BrowsingHistoryList?3_139_3=%5B8304%5D&quot;,</p>
+<p>&quot;selector&quot;: &quot;#browsingHistory&quot;</p>
+<p>},</p>
+<p>&quot;widgetRelatedJobs&quot;: {</p>
+<p>&quot;relatedJobsEnabled&quot;: 1,</p>
+<p>&quot;url&quot;: &quot;https://jobs.ea.com/en_US/careers/WidgetRelatedJobs?3_139_3=8304&amp;jobId=215288&quot;,</p>
+<p>&quot;selector&quot;: &quot;#widgetRelatedJobs&quot;</p>
+<p>},</p>
+<p>&quot;widgetOpenPositions&quot;:{</p>
+<p>&quot;url&quot;: &quot;&quot;,</p>
+<p>&quot;selector&quot;: &quot;#widgetOpenPositions&quot;</p>
+<p>},</p>
+<p>&quot;widgetRecommendations&quot;:{</p>
+<p>&quot;widgetRecommendationsEnabled&quot;: 1,</p>
+<p>&quot;url&quot;: &quot;&quot;,</p>
+<p>&quot;selector&quot;: &quot;#widgetRecommendations&quot;</p>
+<p>},</p>
+<p>&quot;languageSwitcherFlagsPath&quot;: &quot;https://templates-static-assets.avacdn.net/assets/flags&quot;,</p>
+<p>&quot;enableLanguageSwitcherFlags&quot;: 0,</p>
+<p>&quot;enableSectionCollapsibleAccordionDisplay&quot;: 0</p>
+<p>};</p>
+<p>var lightbox;</p>
+<p>var slider;</p>
+<p>var Templates;</p>
+<p>pjQuery(function() { var domManager = new DomManager(); domManager.run(); });</p>
+<p>var service = EventManager.getInstance();</p>
+  </div>
+  <p class="note">Posted by DICE Stockholm and synced from their own careers page. DevQuest doesn&rsquo;t take a fee, doesn&rsquo;t sit between you and the studio, and doesn&rsquo;t sell your data — you apply directly with them.</p>
+  <div class="more">
+    <p>More like this: <a href="/game-design-jobs">Design jobs</a> · <a href="/electronic-arts-jobs">All DICE Stockholm openings</a> · <a href="/jobs">Browse every category</a></p>
+  </div>
+</div>
+<footer>DevQuest.gg · <a href="/">Browse all jobs</a> · <a href="/jobs">All categories</a> · <a href="/about">Our mission</a></footer>
+</body>
+</html>
