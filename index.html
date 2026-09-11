@@ -6682,6 +6682,15 @@ try {
   }
   function openForm(label, c, src){
     bar.setAttribute("data-state","form");
+    // ⚠ This used to rely on the bar ALREADY being visible — true for its own CTA button, false
+    // for window.dqAlertForm, which is the path the post-apply nudge uses. The nudge hides this
+    // bar (it stands down, see __dqYieldAlertBar) and then asks it to host the form, so without
+    // the line below the visitor taps "Notify me of new jobs" and nothing happens — while
+    // alert_form_open still fires. That pairing would have read in the data as "people open the
+    // form and abandon it" and sent the next fix in precisely the wrong direction.
+    // It was always latent: renderBar's no-filters branch and buildCta's no-intent branch both
+    // leave the bar hidden with __emailAskActive false, which the nudge's old gate allowed.
+    bar.style.display="block";
     try{ track("alert_form_open",{ src: src||"filter" }); }catch(e){}
     // Real checkboxes, not styled chips. The chip version read as decoration — people could
     // not tell they were selectable. Each option carries a plain-language line saying what
