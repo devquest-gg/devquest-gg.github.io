@@ -1944,16 +1944,34 @@ function openApply(id, url){
 // Apply opens the studio in a NEW tab, so DevQuest stays open underneath and this waits on the
 // tab for their return. Shown at most once; "No thanks" or subscribing is remembered (localStorage)
 // so it never nags again.
-var _applyNudgeShown = false;
-var APPLY_NUDGE_MAX = 3, APPLY_NUDGE_COOLDOWN = 7*864e5; // up to 3 declines, a week apart, then never again
+var _applyNudgeShown = false, _applyNudgeLogged = false;
+// Reserved for giving this nudge its OWN dismissal budget. Deliberately still unused: this change
+// moves ONE variable (the suppression below) so the telemetry it adds measures that and nothing
+// else. Until then the shared dq-emailask bank in canAskEmail() governs both surfaces.
+var APPLY_NUDGE_MAX = 3, APPLY_NUDGE_COOLDOWN = 7*864e5;
 function _h(s){ return String(s==null?"":s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];}); }
+// One row per page load that saw an apply, recording whether the nudge rendered and, when it did
+// not, WHICH gate stopped it. Without `why` this feature is a black box: 25,576 apply clicks and
+// zero signups tagged "apply" reads identically whether it never shows or shows and fails, and
+// those need opposite fixes. Logged once per load so shown and blocked share a denominator.
+function _applyNudgeLog(shown, why){
+  if (_applyNudgeLogged) return;
+  _applyNudgeLogged = true;
+  try { window.dqTrack && window.dqTrack('apply_nudge', { shown: shown ? 1 : 0, why: why || '' }); } catch(e){}
+}
 function showApplyNudge(studio, disc){
   if (_applyNudgeShown) return;
-  if (!canAskEmail()) return;             // shared budget: subscribed / in cooldown / capped -> never nudge
-  if (window.__emailAskActive) return;    // the alert bar is already asking -> don't stack a second prompt
+  if (emailSubscribed()) { _applyNudgeLog(0, 'subscribed'); return; }
+  if (!canAskEmail())    { _applyNudgeLog(0, 'budget');     return; }  // capped, or inside the 14-day quiet window
+  // An apply is a stronger signal than the grid click that armed the alert bar, so the generic ask
+  // STANDS DOWN for the specific one rather than blocking it. This was `return` until now, and
+  // because a grid-square click sets __emailAskActive for the rest of the page load, the board's
+  // single most common path guaranteed this nudge never fired. Yielding is not a dismissal: it
+  // deliberately does NOT call dismissEmailAsk(), so it spends no strike and starts no cooldown.
+  if (window.__emailAskActive) { try { window.__dqYieldAlertBar && window.__dqYieldAlertBar(); } catch(e){} }
   _applyNudgeShown = true;
   var jobsEl = document.getElementById("jobs");
-  if (!jobsEl || !jobsEl.parentNode) return;
+  if (!jobsEl || !jobsEl.parentNode) { _applyNudgeLog(0, 'nodom'); return; }
   var bar = document.getElementById("applyNudge");
   if (!bar){ bar = document.createElement("div"); bar.id = "applyNudge"; bar.style.cssText = "margin:10px 0 8px;padding:11px 14px;border:1px solid #2a3a28;border-radius:8px;background:#141816"; jobsEl.parentNode.insertBefore(bar, jobsEl); }
   var d = disc || "matching";
@@ -1962,9 +1980,18 @@ function showApplyNudge(studio, disc){
     + '<button id="anYes" style="margin-left:auto;background:#1f6feb;color:#fff;border:0;border-radius:6px;padding:7px 14px;font-weight:600;cursor:pointer">Notify me of new jobs</button>'
     + '<button id="anNo" style="background:transparent;color:#6e7681;border:0;font-size:13px;cursor:pointer">No thanks</button></div>';
   bar.style.display = "block";
+  _applyNudgeLog(1, '');
   // "No thanks" spends a strike + starts the shared quiet window; "Email me" opens the pre-filled form.
-  document.getElementById("anYes").onclick = function(){ bar.style.display="none"; try{ window.dqAlertForm && window.dqAlertForm(d, { disc: (disc?[disc]:[]) }, "apply"); }catch(e){} };
-  document.getElementById("anNo").onclick = function(){ try{ dismissEmailAsk(); }catch(e){} bar.style.display = "none"; };
+  document.getElementById("anYes").onclick = function(){
+    try{ window.dqTrack && window.dqTrack('apply_nudge_click', { d: d }); }catch(e){}
+    bar.style.display="none";
+    try{ window.dqAlertForm && window.dqAlertForm(d, { disc: (disc?[disc]:[]) }, "apply"); }catch(e){}
+  };
+  document.getElementById("anNo").onclick = function(){
+    try{ window.dqTrack && window.dqTrack('apply_nudge_dismiss', { d: d }); }catch(e){}
+    try{ dismissEmailAsk(); }catch(e){}
+    bar.style.display = "none";
+  };
 }
 // ---- List -> "For You" (Best Fit) contextual nudge --------------------------------
 // Fires after the visitor has actively filtered discipline/seniority a couple of times AND has
@@ -6587,7 +6614,23 @@ try {
   // Survives filter changes within the page load: once someone is hunting, they stay hunting.
   var __dqIntent = false;
   window.__dqSignalAlertIntent = function(){ __dqIntent = true; };
+
+  // ---- Standing down for a higher-intent ask ---------------------------------------------------
+  // Called by showApplyNudge when someone actually clicks through to apply. That is a stronger
+  // signal than the grid click that put this bar up, so the generic ask gets out of the way.
+  // _yielded must be sticky for the page load: renderBar is driven by a MutationObserver on the
+  // job list, so without it the very next re-render would rebuild this bar on top of the nudge.
+  // This is NOT a dismissal — no strike is spent and no cooldown starts, so the visitor's shared
+  // ask budget is untouched and the bar returns on their next visit.
+  var _yielded = false;
+  window.__dqYieldAlertBar = function(){
+    _yielded = true;
+    try{ bar.style.display="none"; bar.removeAttribute("data-state"); }catch(e){}
+    window.__emailAskActive = false;
+  };
   function buildCta(label, c, n, fresh){
+    // Stood down for the post-apply nudge — stay down for the rest of this page load.
+    if(_yielded){ bar.style.display="none"; bar.removeAttribute("data-state"); window.__emailAskActive=false; return; }
     var subbed=false; try{ subbed=!!store.get("luj-subscribed",0); }catch(e){}
     // The shared one-ask budget: hide entirely if not subscribed and we're in the quiet window / capped.
     if(!subbed && !canAskEmail()){ bar.style.display="none"; bar.removeAttribute("data-state"); window.__emailAskActive=false; return; }
