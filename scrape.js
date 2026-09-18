@@ -3610,11 +3610,28 @@ async function fetchAvature(studio) {
 // ---- SmartRecruiters (Ubisoft) ------------------------------------------------
 // Public JSON API, paginated: /v1/companies/<id>/postings?limit=100&offset=N
 
-const SR_COUNTRY = { us:"United States", ca:"Canada", gb:"United Kingdom", fr:"France", de:"Germany",
-  es:"Spain", it:"Italy", ro:"Romania", pl:"Poland", se:"Sweden", fi:"Finland", ua:"Ukraine",
-  cn:"China", jp:"Japan", kr:"Korea", sg:"Singapore", in:"India", au:"Australia", nz:"New Zealand",
-  br:"Brazil", mx:"Mexico", ae:"UAE", sa:"Saudi Arabia", nl:"Netherlands", be:"Belgium", dk:"Denmark",
-  cz:"Czech Republic", pt:"Portugal", ma:"Morocco", ph:"Philippines", vn:"Vietnam" };
+// SmartRecruiters gives the country as an ISO2 code. This was a 33-entry hand-kept table whose
+// fallback emitted the BARE code, and that fallback is the bug: "Yogyakarta, ID" resolved to
+// Idaho, because resolveCountry's US_ST pass claims "id" long before anything reads the city. The
+// role went out on the North America 48h share card (found live 2026-09-18). Seven codes the
+// table was missing sit in exactly that trap — ID AR CO IL TN AZ MT, i.e. Indonesia, Argentina,
+// Colombia, Israel, Tunisia, Azerbaijan, Malta (plus MO, Macau) — and a role silently stamped US
+// is worse than one we decline to place.
+//
+// CC_NAME (~76 codes, defined above for the hiring report) already names every one of them, so
+// there is no second table left to drift. Two rules keep this strictly additive:
+//   - Publish a name only if resolveCountry reads it BACK as the same code. CC_NAME calls GE
+//     "Georgia", which CTRY deliberately does not list (US_ST owns the state), so that name would
+//     resolve to nothing while the bare "GE" resolves fine.
+//   - Otherwise pass the raw code through, exactly as before. A code CC_NAME cannot name is far
+//     more likely a mis-set US state in the country field than an exotic country, and dropping it
+//     would move 39 state codes from North America to "Other".
+function srCountry(raw){
+  const c = String(raw || "").trim().toLowerCase(), CC = c.toUpperCase();
+  if (!c) return "";
+  const name = CC_NAME[CC];
+  return (name && resolveCountry(name) === CC) ? name : CC;
+}
 
 async function fetchSmartRecruiters(studio) {
   let content = [];
@@ -3633,7 +3650,7 @@ async function fetchSmartRecruiters(studio) {
     }
   }
   return content.map(j => {
-    const country = SR_COUNTRY[(j.location?.country || "").toLowerCase()] || (j.location?.country || "").toUpperCase();
+    const country = srCountry(j.location?.country);
     const location = [j.location?.city, country].filter(Boolean).join(", ") || "Unlisted";
     // Prefer the studio's own "department" (e.g. "Level Design") over SmartRecruiters' generic
     // "function" taxonomy, which studios sometimes mis-set — People Can Fly tagged a Level Design
