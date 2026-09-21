@@ -2689,6 +2689,14 @@ function strongTitleDiscipline(t) {
   // "Development Director/Manager/Lead" = game-production leadership — but NOT HR "Learning & Development"
   // or "Business Development" (sales). Guarded so those stay out of Production.
   if ((/\bdevelopment (director|manager|lead)\b/.test(t) || /\bdirector of (core|game|studio|title|content|product|live) development\b/.test(t)) && !/business|learning|talent|\bl&d\b|\bpeople\b|organi[sz]ation/.test(t)) return "Production"; // also catches reversed order "Director of Core Development" (e.g. Kabam)
+  // Exec-tier "… of Development" — "Vice President of Development" (KingsIsle), "Head of Development",
+  // "SVP, Development". Same intent as the rule above (game-production leadership) in the one title
+  // shape it missed: the rank word is VP/President/Head/Chief, not Director/Manager/Lead, so neither
+  // alternative above fires and the title falls through to the Business & Ops catch-all. Guards keep
+  // the sales sense ("VP of Business Development"), the HR sense ("Head of Learning & Development")
+  // and the engineering sense ("VP of Software Development" -> Engineering, one rule further down).
+  if (/\b(vice president|vp|svp|evp|president|head|chief)(?:\s+of|,)?\s+(?:core|game|studio|title|content|live|product)?\s*development\b/.test(t)
+      && !/business|learning|talent|\bl&d\b|\bpeople\b|organi[sz]ation|software|engineering|technolog|\bsales\b|market|corporate|partner/.test(t)) return "Production";
   // Reversed-order product leadership ("Senior Manager, Product"), but not product MARKETING.
   if (/\b(manager|director|lead|owner|vp),?\s+product\b/.test(t) && !/marketing/.test(t)) return "Production";
   if (/\b(project|programme?|delivery|release|portfolio)\s+(manager|management|coordinator|lead|director|assistant)\b|technical (program|project) manager|scrum master|agile coach|\bpmo\b|\bproducer\b|production (coordinator|manager|director|assistant)|product (manager|owner|management|director|lead)|director,? of product|director,?\s+product|(vp|head) of product|game manager|producteur|productrice|réalisat(eur|rice)|gestionnaire de (projet|programme)|chef de (projet|produit)|coordonnateur de projet/.test(t)) return "Production";
@@ -2756,7 +2764,7 @@ function inferSeniority(title) {
   if (LEAD_IS_SCOPE_NOT_RANK.test(t) && !/\b(director|head of|vp|chief)\b/.test(t)) return "Senior";
   // An assistant TO a leader (e.g. "Executive Assistant – General Manager") is not the leader.
   const assistant = /\bassistant\b/.test(t);
-  if (!assistant && /\b(director|head of|vp|chief|executive producer|general manager|studio head|distinguished)\b/.test(t)) return "Director+"; // "distinguished" = top IC rung (Distinguished Engineer), director/exec-tier, not Mid
+  if (!assistant && /\b(director|head of|vp|svp|evp|president|chief|executive producer|general manager|studio head|distinguished)\b/.test(t)) return "Director+"; // "distinguished" = top IC rung (Distinguished Engineer), director/exec-tier, not Mid
   // Strip the non-rank uses of "lead" before the rank test so "Lead Generation Manager" is not a Lead,
   // while "Senior Lead Generation Manager" still resolves to Senior on the line below.
   const tr = t.replace(LEAD_NOT_A_RANK, " ");
@@ -7296,7 +7304,7 @@ async function checkLinkHealth(all) {
 
 // Expose the classifier for the test fixture (test-classify.js). When this file is `require()`d
 // instead of run directly, skip the actual scrape and just export the pure functions.
-module.exports = { mapDiscipline, strongTitleDiscipline, normDisc, inferRegion, decodeEnt, mokaDecrypt, mokaDiscipline, mokaSeniority, mokaLocation, parseWelevel, parseBohemia, parseCybornJob, cybornSlugs, cybornTitle, cybornDate, fetchCyborn };
+module.exports = { mapDiscipline, strongTitleDiscipline, inferSeniority, normDisc, inferRegion, decodeEnt, mokaDecrypt, mokaDiscipline, mokaSeniority, mokaLocation, parseWelevel, parseBohemia, parseCybornJob, cybornSlugs, cybornTitle, cybornDate, fetchCyborn };
 (async () => {
   if (require.main !== module) return;   // required for tests → don't run the scrape
   const all = [];

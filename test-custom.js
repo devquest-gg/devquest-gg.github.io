@@ -133,6 +133,25 @@ t('disc.generalist.artist-still-art', M.mapDiscipline(null, 'Generalist Artist')
 t('disc.generalist.cg-still-art', M.mapDiscipline(null, 'CG Generalist'), 'Art');
 t('disc.generalist.hr-unchanged', M.mapDiscipline(null, 'Senior HR Generalist'), 'People & Ops');
 
+// ---------- exec-tier "… of Development" (2026-09-21) ----------
+// KingsIsle's "Vice President of Development" read as Mid / Business & Ops: inferSeniority knew
+// "vp" but not "vice president"/"president", and strongTitleDiscipline's development rule only
+// covered Director/Manager/Lead. Both fixed; the guards below are the point of the test.
+t('sen.vice-president', M.inferSeniority('Vice President of Development'), 'Director+');
+t('sen.vp-comma', M.inferSeniority('Vice President, Global Compensation'), 'Director+');
+t('sen.svp', M.inferSeniority('SVP, Development'), 'Director+');
+t('sen.president', M.inferSeniority('President of Marketing'), 'Director+');
+t('sen.vp-abbrev-unchanged', M.inferSeniority('VP of Marketing'), 'Director+');
+t('sen.assistant-to-president-not-exec', M.inferSeniority('Executive Assistant to the President'), 'Mid');
+t('sen.mid-unchanged', M.inferSeniority('Development Manager'), 'Mid');
+t('disc.vp-development', M.mapDiscipline(null, 'Vice President of Development'), 'Production');
+t('disc.head-of-development', M.mapDiscipline(null, 'Head of Development'), 'Production');
+t('disc.svp-development', M.mapDiscipline(null, 'SVP, Development'), 'Production');
+t('disc.vp-business-development-not-production', M.mapDiscipline('Business Development', 'VP of Business Development'), 'Other'); // unchanged: falls to the catch-all, which the board renders as Business & Ops
+t('disc.head-learning-development-not-production', M.mapDiscipline('People', 'Head of Learning & Development'), 'People & Ops');
+t('disc.vp-software-development-stays-eng', M.mapDiscipline('Engineering', 'VP of Software Development'), 'Engineering');
+t('disc.development-director-unchanged', M.mapDiscipline(null, 'Development Director'), 'Production');
+
 // ---------- decodeEnt / inferRegion: shared-code changes made for these fetchers ----------
 t('ent.uuml', M.decodeEnt('M&uuml;nchen'), 'München');
 t('ent.numeric', M.decodeEnt('caf&#233;'), 'café');
