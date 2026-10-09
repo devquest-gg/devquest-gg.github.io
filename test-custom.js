@@ -171,5 +171,32 @@ for (const [loc, want] of [['Austin, TX','North America'],['Cambridge, MA','Nort
                            ['São Paulo, Brazil','Latin America'],['Remote','Remote']])
   t('region-guard:'+loc, M.inferRegion(loc), want);
 
+
+// ---------- Generic WordPress job post type: shape copied from goodname.lt/wp-json/wp/v2/job (2026-10-08) ----------
+const WP_ITEMS = [
+  { id: 1321, date: '2026-01-08T20:02:38', date_gmt: '2026-01-08T18:02:38', status: 'publish', type: 'job',
+    link: 'https://goodname.lt/jobs/senior-concept-artist-character-on-site-only/',
+    title: { rendered: 'Senior Concept Artist, Character (On-site Only)' },
+    content: { rendered: '\n<script>window.dataLayer = window.dataLayer || [];</script><p>In this position, you will collaborate closely with Art Director to develop early-stage<br>ideas for game projects. As a <strong>Senior Concept Artist, Characters</strong>, you will be responsible for<br>transforming briefing materials into final artwork. 5+ years of experience in Photoshop.</p>' } },
+  { id: 9, date_gmt: '2026-01-01T00:00:00', status: 'draft', link: 'https://goodname.lt/jobs/x/', title: { rendered: 'Draft &amp; Hidden' }, content: { rendered: '' } },
+  { id: 10, date_gmt: '2026-02-01T00:00:00', status: 'publish', link: 'https://goodname.lt/jobs/3d/', title: { rendered: '3D Artist &#8211; Props' }, content: { rendered: '<p>Remote friendly.</p>' } },
+];
+const GN = { name: 'Goodname', type: 'wpjobs', wpBase: 'https://goodname.lt', wpType: 'job', city: 'Vilnius, Lithuania' };
+const gn = M.parseWpJobs(WP_ITEMS, GN);
+t('wp.count', gn.length, 2);                                       // draft dropped
+t('wp.title', gn[0].title, 'Senior Concept Artist, Character (On-site Only)');
+t('wp.entity', gn[1].title, '3D Artist – Props');                  // &#8211; decodes
+t('wp.id', gn[0].id, 'wp-goodname-lt-1321');
+t('wp.url', gn[0].url, 'https://goodname.lt/jobs/senior-concept-artist-character-on-site-only/');
+t('wp.date.gmt', gn[0].postedAt, '2026-01-08T18:02:38Z');          // date_gmt, not site-local date
+t('wp.location', gn[0].location, 'Vilnius, Lithuania');
+t('wp.region', gn[0].region, 'Europe');
+t('wp.disc', gn[0].discipline, 'Art');
+t('wp.sen', gn[0].seniority, 'Senior');
+t('wp.worktype', gn[0].workType, 'Onsite');
+t('wp.noScript', /dataLayer/.test(gn[0].desc), false);
+t('wp.noTags', /[<>]/.test(gn[0].desc), false);
+t('wp.nonArray', M.parseWpJobs({code:'rest_no_route'}, GN), []);
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail?1:0);

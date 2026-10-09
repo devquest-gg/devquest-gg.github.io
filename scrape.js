@@ -798,6 +798,10 @@ const STUDIOS = [
   // Studio-requested add 2026-08-17 (Cyborn reached out directly)
   { name: "Cyborn", type: "cyborn", careersUrl: "https://cyborn.be/job.html", city: "Antwerp, Belgium" }, // Hubris (VR) + film/AR-VR service work — hand-built static careers site, one <a> per opening at /jobs/<slug>.html with a REAL posted date on each page; 5 senior roles (Eng/Design/Art), all onsite Antwerp. The "Internship" slot is a mailto with no page and is skipped.
 
+  // Studio-requested adds 2026-10-08 (user request, alongside Cyborn which was already live)
+  { name: "Cross Key Games", type: "workable", token: "cross-key-games" },                                     // UK, remote-first — plain Workable account; 2 Technical Designer roles at add time, both flagged remote
+  { name: "Goodname", type: "wpjobs", wpBase: "https://goodname.lt", wpType: "job", city: "Vilnius, Lithuania" }, // Goodname Digital Art Studio — game concept art/illustration services. WordPress with a public `job` post type at /wp-json/wp/v2/job: real posted dates + per-job URLs. 1 role at add time (Senior Concept Artist, on-site)
+
   // Greenhouse
   { name: "Ravenwake Games", type: "greenhouse", token: "ravenwakegames", city: "Vancouver, BC" },                      // ~5 roles
 
@@ -862,7 +866,8 @@ const STUDIO_KIND = {
   "Voodoo": ["publisher", "dev"],
   "Homa Games": ["publisher", "dev"],
   "Tripledot Studios": ["publisher", "dev"],
-  "Cyborn": ["dev", "codev"],   // own VR titles (Hubris) plus 3D/AR/VR + film service work for other clients
+  "Cyborn": ["dev", "codev"],
+  "Goodname": ["codev"],        // concept art / illustration studio working on other companies' games, no titles of its own   // own VR titles (Hubris) plus 3D/AR/VR + film service work for other clients
 };
 
 // ---- Tech-stack tagging -----------------------------------------------------
@@ -2665,6 +2670,21 @@ function strongTitleDiscipline(t) {
   // "Feature Lead / Feature Designer" at a game studio is design leadership (owns a game feature).
   // Adjacent "feature lead" only, so "Feature Engineering Lead" still falls to Engineering below.
   if (/\bfeature (team )?(lead|owner)\b|\bfeature design(er)?\b/.test(t)) return "Design";
+  // A product-management title is Production whatever DOMAIN it manages — product managers,
+  // producers, dev directors and DMs are deliberately one category (see the production rule at the
+  // bottom of this function). The problem is that the domain word arrives first in the title, and
+  // the two rules below key on exactly those words: "Senior/Principal Product Manager, Engine
+  // Networking" was filed under Engineering by the IT rule matching "Networking", and the same trap
+  // waits for "Product Manager, Infrastructure", ", Security" and ", Graphics Programming". So this
+  // has to sit ABOVE them. Found 2026-09-24 from one miscategorised Roblox card; 16 live rows moved,
+  // every one of them a real product-management role, zero regressions.
+  //
+  // Deliberately NARROW. The full production rule further down also contains `\bproducer\b`, and
+  // lifting that up here instead would drag "Senior Marketing Artist | Video Ad Producer" out of Art
+  // and "Producer (Audio)" out of Audio — measured, 5 regressions. Domain-qualified PM titles only.
+  // The marketing guard keeps "Product Marketing Manager" out, which is a Marketing role.
+  if (/\bproduct (manager|owner|management|director|lead)\b|\b(vp|head) of product\b/.test(t)
+      && !/marketing/.test(t)) return "Production";
   if ((/(engineers?|engineering|programmers?|programming|developers?|architects?)\b|architecte|ingénieur|programmeur|développeur|tech(nical)? (director|lead|manager)|\bback[ -]?end\b|\bfront[ -]?end\b|\bfull[ -]?stack\b|\bcoder\b|\bcoding\b|\b(gameplay|engine|tools?|graphics|rendering|networking?|systems?|game|gpu|simulation) code\b/.test(t)) && !/\bsales\b|customer success|account exec|solutions? consultant|product developer|developer (program|programme|community|ecosystem|partnership)|business develop(er|ment)|analytics developer/.test(t)) return "Engineering";
   // Game-engine programming roles where the title says "development" (noun), not "developer" —
   // e.g. "Lead Unity Game Development". Engine + a dev/programming signal, excluding art/design/audio
@@ -2768,6 +2788,28 @@ function inferSeniority(title) {
   // Strip the non-rank uses of "lead" before the rank test so "Lead Generation Manager" is not a Lead,
   // while "Senior Lead Generation Manager" still resolves to Senior on the line below.
   const tr = t.replace(LEAD_NOT_A_RANK, " ");
+  // Principal / Staff on a MANAGEMENT title is Director+, not Lead. Measured 2026-09-24 across the
+  // live board: principal roles median $275K against $172K for the Leads they were bucketed with,
+  // and $230K for Director+. The single rank below was crushing the best-paid tier on the board
+  // into the worst-paid of the four.
+  //
+  // Deliberately NOT a blanket principal -> Director+. 164 of the 184 affected rows are senior IC
+  // craft titles (Principal Cinematic Animator, Principal UX Designer, Principal Client Platform
+  // Engineer) and they out-earn the management-shaped ones by $53K — but moving them would fill
+  // Director+ Art, Animation and Design with individual contributors and change what that tier
+  // means to anyone browsing or subscribed to it. The honest reading of the pay curve is that the
+  // ladder is missing a Principal rung between Lead and Director+; this rule is the narrow fix, not
+  // that redesign.
+  //
+  // ⚠ The management word must sit in the HEAD of the title — before the first comma, dash or
+  // paren — or the DOMAIN gets read as the role. "Staff Software Engineer — Identity & Access
+  // Management" and "Principal Software Engineer, Compute Fleet Management" are IC engineers and
+  // must stay Lead. Exactly the same trap as mapDiscipline, where "…, Engine Networking" was filed
+  // under Engineering by a rule keying on the domain. Measured: 22 rows without the head anchor,
+  // 18 with it, and the 4 it drops are all genuine ICs.
+  const headOf = tr.split(/[,–—]|\s[-‐]\s|\(/)[0];
+  if (!assistant && /\b(principal|staff)\b/.test(tr)
+      && /\b(manager|management|director|head|producer)\b/.test(headOf)) return "Director+";
   if (/\b(lead|principal|staff)\b/.test(tr)) return "Lead";
   if (/\b(senior|sr\.?)\b/.test(t)) return "Senior";
   if (/\b(junior|jr\.?|associate|intern|entry|apprentice)\b/.test(t)) return "Entry";
@@ -6953,7 +6995,44 @@ async function fetchTrailmix(studio) {
   }
   return out;
 }
-const FETCHERS = { greenhouse: fetchGreenhouse, lever: fetchLever, workday: fetchWorkday, avature: fetchAvature, smartrecruiters: fetchSmartRecruiters, workable: fetchWorkable, phenom: fetchPhenom, teamtailor: fetchTeamtailor, eightfold: fetchEightfold, amazonjobs: fetchAmazonJobs, ashby: fetchAshby, zenimax: fetchZenimax, bamboohr: fetchBambooHr, jobscore: fetchJobScore, jazzhr: fetchJazzHr, jobvite: fetchJobvite, recruitee: fetchRecruitee, personio: fetchPersonio, rippling: fetchRippling, breezy: fetchBreezy, manatal: fetchManatal, sumodigital: fetchSumoDigital, pinpoint: fetchPinpoint, playground: fetchPlayground, obsidian: fetchObsidian, techland: fetchTechland, oracle: fetchOracle, cig: fetchCig, critpath: fetchCritpath, krafton: fetchKrafton, eidos: fetchEidos, hiringthing: fetchHiringThing, segacareers: fetchSegaCareers, turn10: fetchTurn10, mscareers: fetchMicrosoftCareers, lightfox: fetchLightfox, hrworks: fetchHRworks, smilegate: fetchSmilegate, cygames: fetchCygames, hrmos: fetchHrmos, moka: fetchMoka, nordcurrent: fetchNordcurrent, welevel: fetchWelevel, bohemia: fetchBohemia, garena: fetchGarena, shiftup: fetchShiftUp, miniclip: fetchMiniclip, playrix: fetchPlayrix, superplay: fetchSuperPlay, atlus: fetchAtlus, kojima: fetchKojima, owlcat: fetchOwlcat, comeet: fetchComeet, huntflow: fetchHuntflow, keka: fetchKeka, traffit: fetchTraffit, nekki: fetchNekki, plarium: fetchPlarium, hellogames: fetchHelloGames, hibob: fetchHibob, flix: fetchFlix, fromsoftware: fetchFromSoftware, grindinggear: fetchGrindingGear, konami: fetchKonami, madhead: fetchMadHead, kenjo: fetchKenjo, trailmix: fetchTrailmix, cyborn: fetchCyborn };
+// ---- Generic WordPress "jobs" custom post type --------------------------------------------------
+// Added 2026-10-08 for Goodname. Many small studios run WordPress with a theme that registers a
+// `job`/`career` post type, and WordPress exposes it at /wp-json/wp/v2/<rest_base> for free. Check
+// /wp-json/wp/v2/types on any WordPress careers page before writing a scraper. Config:
+//   wpBase: site origin, wpType: the rest_base from /types, city: fallback location (these sites
+//   rarely carry a location taxonomy). Taxonomies are NOT resolved here; if a future site has useful
+//   ones (like Nordcurrent's locations/role), give it its own fetcher rather than growing this one.
+// postedAt uses date_gmt (WordPress's `date` is site-local with no offset). Title-level work-type
+// hints such as "(On-site Only)" are picked up by inferWorkType from the title + description.
+function parseWpJobs(items, studio) {
+  if (!Array.isArray(items)) return [];
+  const host = String(studio.wpBase || "").replace(/^https?:\/\//, "").replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "");
+  return items.filter(j => !j.status || j.status === "publish").map(j => {
+    const title = decodeEnt(String((j.title && j.title.rendered) || "").replace(/<[^>]+>/g, " ")).replace(/\s+/g, " ").trim();
+    const html = String((j.content && j.content.rendered) || "").replace(/<(script|style)\b[\s\S]*?<\/\1>/gi, " ");
+    const desc = stripHtml(html);
+    const location = studio.city || "Unlisted";
+    const gmt = j.date_gmt ? j.date_gmt.replace(/Z?$/, "Z") : null;
+    return {
+      id: `wp-${host}-${j.id}`,
+      title, tech: extractTech(title + " " + desc), desc, studio: studio.name,
+      discipline: mapDiscipline(null, title),
+      workType: inferWorkType(title, location, [], desc.slice(0, 1200)),
+      location, region: inferRegion(location),
+      seniority: inferSeniority(title),
+      salary: extractSalary(desc), yoe: extractYoe(desc),
+      postedAt: gmt || j.date || null,
+      url: j.link || "",
+    };
+  }).filter(j => j.title && j.url);
+}
+async function fetchWpJobs(studio) {
+  const items = SAMPLE_FILE ? loadSample(studio)
+    : await fetchJson(`${studio.wpBase}/wp-json/wp/v2/${studio.wpType || "job"}?per_page=100`);
+  return parseWpJobs(items, studio);
+}
+
+const FETCHERS = { greenhouse: fetchGreenhouse, lever: fetchLever, workday: fetchWorkday, avature: fetchAvature, smartrecruiters: fetchSmartRecruiters, workable: fetchWorkable, phenom: fetchPhenom, teamtailor: fetchTeamtailor, eightfold: fetchEightfold, amazonjobs: fetchAmazonJobs, ashby: fetchAshby, zenimax: fetchZenimax, bamboohr: fetchBambooHr, jobscore: fetchJobScore, jazzhr: fetchJazzHr, jobvite: fetchJobvite, recruitee: fetchRecruitee, personio: fetchPersonio, rippling: fetchRippling, breezy: fetchBreezy, manatal: fetchManatal, sumodigital: fetchSumoDigital, pinpoint: fetchPinpoint, playground: fetchPlayground, obsidian: fetchObsidian, techland: fetchTechland, oracle: fetchOracle, cig: fetchCig, critpath: fetchCritpath, krafton: fetchKrafton, eidos: fetchEidos, hiringthing: fetchHiringThing, segacareers: fetchSegaCareers, turn10: fetchTurn10, mscareers: fetchMicrosoftCareers, lightfox: fetchLightfox, hrworks: fetchHRworks, smilegate: fetchSmilegate, cygames: fetchCygames, hrmos: fetchHrmos, moka: fetchMoka, nordcurrent: fetchNordcurrent, welevel: fetchWelevel, bohemia: fetchBohemia, garena: fetchGarena, shiftup: fetchShiftUp, miniclip: fetchMiniclip, playrix: fetchPlayrix, superplay: fetchSuperPlay, atlus: fetchAtlus, kojima: fetchKojima, owlcat: fetchOwlcat, comeet: fetchComeet, huntflow: fetchHuntflow, keka: fetchKeka, traffit: fetchTraffit, nekki: fetchNekki, plarium: fetchPlarium, hellogames: fetchHelloGames, hibob: fetchHibob, flix: fetchFlix, fromsoftware: fetchFromSoftware, grindinggear: fetchGrindingGear, konami: fetchKonami, madhead: fetchMadHead, kenjo: fetchKenjo, trailmix: fetchTrailmix, cyborn: fetchCyborn, wpjobs: fetchWpJobs };
 
 // ---- Ghost-job tracking -----------------------------------------------------
 // Because we scrape on a schedule, we can see how long a listing has REALLY been
@@ -7304,7 +7383,7 @@ async function checkLinkHealth(all) {
 
 // Expose the classifier for the test fixture (test-classify.js). When this file is `require()`d
 // instead of run directly, skip the actual scrape and just export the pure functions.
-module.exports = { mapDiscipline, strongTitleDiscipline, inferSeniority, normDisc, inferRegion, decodeEnt, mokaDecrypt, mokaDiscipline, mokaSeniority, mokaLocation, parseWelevel, parseBohemia, parseCybornJob, cybornSlugs, cybornTitle, cybornDate, fetchCyborn };
+module.exports = { mapDiscipline, strongTitleDiscipline, inferSeniority, normDisc, inferRegion, decodeEnt, mokaDecrypt, mokaDiscipline, mokaSeniority, mokaLocation, parseWelevel, parseBohemia, parseCybornJob, cybornSlugs, cybornTitle, cybornDate, fetchCyborn, parseWpJobs };
 (async () => {
   if (require.main !== module) return;   // required for tests → don't run the scrape
   const all = [];
