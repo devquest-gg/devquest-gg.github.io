@@ -6031,8 +6031,10 @@ function renderMap(skipBar){
   }
   if (!map) {
     map = L.map("map", { worldCopyJump: true }).setView([39, -35], 3);
-    L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
+    // CARTO basemaps require a key since Aug 2026 (unkeyed tiles return an "API KEY REQUIRED" watermark).
+    // Key is referer-restricted to devquest.gg in the CARTO dashboard.
+    L.tileLayer("https://basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}{r}.png?key=cb1_4s7l_1_059937d060bad3379b8bf28e", {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
       maxZoom: 12,
     }).addTo(map);
     markerLayer = L.layerGroup().addTo(map);
