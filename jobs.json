@@ -1,11 +1,12 @@
 {
-  "scrapedAt": "2026-11-14T01:25:03.569Z",
+  "scrapedAt": "2026-11-14T02:26:26.146Z",
   "studios": 378,
-  "jobCount": 6039,
+  "jobCount": 6037,
   "errors": [
     "ZeniMax / Bethesda: 0 jobs parsed (Zenimax page may have changed layout)",
     "Unity: HTTP 521 — keeping 135 roles from the last good run",
     "LightSpeed Studios: HTTP 521 — keeping 51 roles from the last good run",
+    "Mojang Studios: HTTP 429 — keeping 6 roles from the last good run",
     "OtherSide Entertainment: HTTP 404",
     "Tripwire Interactive: HTTP 404",
     "Singularity 6: HTTP 404",
@@ -76,7 +77,7 @@
     },
     {
       "studio": "Activision (HQ)",
-      "jobs": 25,
+      "jobs": 27,
       "sample": "https://xboxgaming.wd1.myworkdayjobs.com/en-US/External/job/London---King---Ampersand/Employee-Relations-Specialist--6-month-FTC-_R028355-2"
     },
     {
@@ -86,7 +87,7 @@
     },
     {
       "studio": "Warner Bros. Games",
-      "jobs": 18,
+      "jobs": 16,
       "sample": "https://warnerbros.wd5.myworkdayjobs.com/en-US/global/job/Montreal-888-boul-De-Maisonneuve-Est/Cheffe-d-quipe--conception-technique---Lead-Technical-Designer_R000109849"
     },
     {
@@ -176,7 +177,7 @@
     },
     {
       "studio": "Elsewhere Entertainment",
-      "jobs": 11,
+      "jobs": 10,
       "sample": "https://xboxgaming.wd1.myworkdayjobs.com/en-US/External/job/Malm/Senior-Technical-Artist_R028305-1"
     },
     {
@@ -236,7 +237,7 @@
     },
     {
       "studio": "Sledgehammer Games",
-      "jobs": 9,
+      "jobs": 10,
       "sample": "https://xboxgaming.wd1.myworkdayjobs.com/en-US/External/job/San-Mateo/Technical-Sound-Designer--Contract----Sledgehammer-Games_R028256"
     },
     {
@@ -406,7 +407,7 @@
     },
     {
       "studio": "Treyarch",
-      "jobs": 3,
+      "jobs": 1,
       "sample": "https://xboxgaming.wd1.myworkdayjobs.com/en-US/External/job/Vancouver/IT-Technician--Contractor----Treyarch---Vancouver--BC_R028092"
     },
     {
@@ -697,6 +698,76 @@
   ],
   "jobs": [
     {
+      "id": "comeet-B1.001-64.F67",
+      "title": "Content Moderator - UK",
+      "tech": [],
+      "studio": "Overwolf",
+      "discipline": "Other",
+      "workType": "Remote",
+      "location": "London",
+      "region": "Europe",
+      "seniority": "Mid",
+      "salary": null,
+      "yoe": null,
+      "postedAt": "2026-11-14T02:12:27.000Z",
+      "url": "https://www.comeet.com/jobs/overwolf/B1.001/content-moderator---uk/64.F67",
+      "parent": "Overwolf",
+      "_src": "Overwolf",
+      "country": "GB",
+      "firstSeen": "2026-08-02T11:34:43.000Z",
+      "discoveredAt": "2026-08-02T11:42:30.622Z",
+      "daysListed": 103,
+      "relistCount": 0,
+      "relisted": false
+    },
+    {
+      "id": "gh-roblox-8350723",
+      "title": "Senior Software Engineer, Roblox OS",
+      "tech": [],
+      "studio": "Roblox",
+      "discipline": "Engineering",
+      "workType": "Unknown",
+      "location": "San Mateo, CA, United States",
+      "region": "North America",
+      "seniority": "Senior",
+      "salary": "$197K–$243K",
+      "yoe": 4,
+      "postedAt": "2026-11-13T20:56:05-05:00",
+      "deadline": null,
+      "url": "https://careers.roblox.com/jobs/8350723?gh_jid=8350723",
+      "parent": "Roblox",
+      "_src": "Roblox",
+      "country": "US",
+      "firstSeen": "2026-11-14T01:56:05.000Z",
+      "discoveredAt": "2026-11-14T02:25:34.372Z",
+      "daysListed": 0,
+      "relistCount": 0,
+      "relisted": false
+    },
+    {
+      "id": "js-nexonamericainc-in-game-merchandising-specialist-afH7iB96rm7Q49HRV9jNqT?ref=rss&amp;sid=68",
+      "title": "In-Game Merchandising Specialist",
+      "studio": "Nexon",
+      "discipline": "Other",
+      "workType": "Hybrid",
+      "location": "El Segundo, CA",
+      "region": "North America",
+      "seniority": "Mid",
+      "salary": "$75K–$95K",
+      "yoe": null,
+      "postedAt": "2026-11-14T01:15:36Z",
+      "url": "https://careers.jobscore.com/careers/nexonamericainc/jobs/in-game-merchandising-specialist-afH7iB96rm7Q49HRV9jNqT?ref=rss&amp;sid=68",
+      "parent": "Nexon",
+      "_src": "Nexon",
+      "tech": [],
+      "country": "US",
+      "firstSeen": "2026-06-04T22:36:26.000Z",
+      "discoveredAt": "2026-07-07T01:46:04.158Z",
+      "daysListed": 162,
+      "relistCount": 3,
+      "relisted": true
+    },
+    {
       "id": "gh-2k-8204087003",
       "title": "Senior Technical UI Designer",
       "tech": [
@@ -777,29 +848,6 @@
       "relisted": false
     },
     {
-      "id": "comeet-B1.001-64.F67",
-      "title": "Content Moderator - UK",
-      "tech": [],
-      "studio": "Overwolf",
-      "discipline": "Other",
-      "workType": "Remote",
-      "location": "London",
-      "region": "Europe",
-      "seniority": "Mid",
-      "salary": null,
-      "yoe": null,
-      "postedAt": "2026-11-14T00:34:26.000Z",
-      "url": "https://www.comeet.com/jobs/overwolf/B1.001/content-moderator---uk/64.F67",
-      "parent": "Overwolf",
-      "_src": "Overwolf",
-      "country": "GB",
-      "firstSeen": "2026-08-02T11:34:43.000Z",
-      "discoveredAt": "2026-08-02T11:42:30.622Z",
-      "daysListed": 103,
-      "relistCount": 0,
-      "relisted": false
-    },
-    {
       "id": "gh-roblox-8366921",
       "title": "Senior Software Engineer, Data Engineering",
       "tech": [
@@ -871,7 +919,7 @@
       "daysListed": 0,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2616310",
@@ -895,7 +943,7 @@
       "daysListed": 0,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2616294",
@@ -919,7 +967,7 @@
       "daysListed": 0,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2616462",
@@ -944,7 +992,7 @@
       "daysListed": 93,
       "relistCount": 2,
       "relisted": true,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2616695",
@@ -968,7 +1016,7 @@
       "daysListed": 0,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2616536",
@@ -991,7 +1039,7 @@
       "daysListed": 52,
       "relistCount": 1,
       "relisted": true,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2616655",
@@ -1014,7 +1062,7 @@
       "daysListed": 15,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2615956",
@@ -1038,7 +1086,7 @@
       "daysListed": 71,
       "relistCount": 1,
       "relisted": true,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "gh-sonyinteractiveentertainmentglobal-6260717004",
@@ -2445,7 +2493,7 @@
       "daysListed": 45,
       "relistCount": 1,
       "relisted": true,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2616690",
@@ -2469,7 +2517,7 @@
       "daysListed": 1,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2616715",
@@ -2493,7 +2541,7 @@
       "daysListed": 1,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2616717",
@@ -2516,7 +2564,7 @@
       "daysListed": 1,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2616785",
@@ -2539,7 +2587,7 @@
       "daysListed": 3,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2616605",
@@ -2565,7 +2613,7 @@
       "daysListed": 1,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "gh-sonyinteractiveentertainmentglobal-6255386004",
@@ -3731,7 +3779,8 @@
       "discoveredAt": "2026-11-03T17:30:43.281Z",
       "daysListed": 10,
       "relistCount": 0,
-      "relisted": false
+      "relisted": false,
+      "_carry": 1
     },
     {
       "id": "lever-frontier-de121486-4c06-4186-8c2c-c2f086619cc3",
@@ -4562,7 +4611,7 @@
       "daysListed": 15,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2616575",
@@ -4586,7 +4635,7 @@
       "daysListed": 2,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2616576",
@@ -4610,7 +4659,7 @@
       "daysListed": 2,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2616613",
@@ -4634,7 +4683,7 @@
       "daysListed": 32,
       "relistCount": 1,
       "relisted": true,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2616779",
@@ -4658,7 +4707,7 @@
       "daysListed": 3,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "ph-blizzard-R028355",
@@ -4992,7 +5041,8 @@
       "discoveredAt": "2026-11-11T22:24:43.392Z",
       "daysListed": 2,
       "relistCount": 0,
-      "relisted": false
+      "relisted": false,
+      "_carry": 1
     },
     {
       "id": "gh-mobentertainment-5282815007",
@@ -5122,7 +5172,8 @@
       "discoveredAt": "2026-11-11T21:25:37.048Z",
       "daysListed": 2,
       "relistCount": 0,
-      "relisted": false
+      "relisted": false,
+      "_carry": 1
     },
     {
       "id": "gh-riotgames-8356525",
@@ -6161,7 +6212,7 @@
       "country": "CA",
       "firstSeen": "2026-11-11T01:59:17.000Z",
       "discoveredAt": "2026-11-11T02:25:07.904Z",
-      "daysListed": 2,
+      "daysListed": 3,
       "relistCount": 0,
       "relisted": false
     },
@@ -6212,10 +6263,10 @@
       "country": "US",
       "firstSeen": "2026-11-11T02:20:58.493Z",
       "discoveredAt": "2026-11-11T02:25:07.904Z",
-      "daysListed": 2,
+      "daysListed": 3,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2616642",
@@ -6238,7 +6289,7 @@
       "daysListed": 30,
       "relistCount": 1,
       "relisted": true,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2615752",
@@ -6262,7 +6313,7 @@
       "daysListed": 136,
       "relistCount": 2,
       "relisted": true,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "gh-roblox-8356764",
@@ -8177,7 +8228,7 @@
       "daysListed": 4,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2515475",
@@ -8202,7 +8253,7 @@
       "daysListed": 137,
       "relistCount": 3,
       "relisted": true,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "ph-blizzard-R028350",
@@ -8270,6 +8321,29 @@
       "firstSeen": "2026-11-10T00:00:00.000Z",
       "discoveredAt": "2026-11-10T14:25:00.881Z",
       "daysListed": 4,
+      "relistCount": 0,
+      "relisted": false
+    },
+    {
+      "id": "ph-wbgames-R000109849",
+      "title": "Chef.fe d’équipe, conception technique / Lead Technical Designer",
+      "tech": [],
+      "studio": "Warner Bros. Games",
+      "discipline": "Design",
+      "workType": "Unknown",
+      "location": "Montreal, Quebec, Canada",
+      "region": "North America",
+      "seniority": "Lead",
+      "salary": null,
+      "yoe": null,
+      "postedAt": "2026-11-10T00:00:00.000+0000",
+      "url": "https://warnerbros.wd5.myworkdayjobs.com/en-US/global/job/Montreal-888-boul-De-Maisonneuve-Est/Cheffe-d-quipe--conception-technique---Lead-Technical-Designer_R000109849",
+      "parent": "Warner Bros. Games",
+      "_src": "Warner Bros. Games",
+      "country": "CA",
+      "firstSeen": "2026-11-06T00:00:00.000Z",
+      "discoveredAt": "2026-11-06T21:25:15.579Z",
+      "daysListed": 8,
       "relistCount": 0,
       "relisted": false
     },
@@ -8850,7 +8924,8 @@
       "discoveredAt": "2026-09-17T19:24:40.300Z",
       "daysListed": 57,
       "relistCount": 1,
-      "relisted": true
+      "relisted": true,
+      "_carry": 1
     },
     {
       "id": "gh-riotgames-8359392",
@@ -10305,7 +10380,7 @@
       "seniority": "Entry",
       "salary": null,
       "yoe": null,
-      "postedAt": "2026-11-07T01:22:07.506Z",
+      "postedAt": "2026-11-07T02:23:10.859Z",
       "url": "https://sega.wd3.myworkdayjobs.com/en-US/SEGA_Careers/job/Horsham-RH12-1JW/Associate-Community-Manager_JR100230",
       "parent": "Sega",
       "_src": "Sega",
@@ -10338,7 +10413,7 @@
       "daysListed": 7,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-lightspeed-R108349",
@@ -10362,7 +10437,7 @@
       "daysListed": 7,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-lightspeed-R108351",
@@ -10385,7 +10460,7 @@
       "daysListed": 7,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-lightspeed-R108352",
@@ -10409,7 +10484,7 @@
       "daysListed": 7,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-lightspeed-R108356",
@@ -10433,7 +10508,7 @@
       "daysListed": 7,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-lightspeed-R108355",
@@ -10459,7 +10534,7 @@
       "daysListed": 7,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2616516",
@@ -10484,7 +10559,7 @@
       "daysListed": 7,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2616754",
@@ -10508,7 +10583,7 @@
       "daysListed": 7,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "gh-sonyinteractiveentertainmentglobal-6251328004",
@@ -11620,6 +11695,29 @@
       "relisted": false
     },
     {
+      "id": "wd-sega-JR100229",
+      "title": "Creator Engagement Manager",
+      "studio": "Sega",
+      "discipline": "Other",
+      "workType": "Unknown",
+      "location": "London, W4 5AN",
+      "region": "Europe",
+      "seniority": "Mid",
+      "salary": null,
+      "yoe": null,
+      "postedAt": "2026-11-06T02:23:10.859Z",
+      "url": "https://sega.wd3.myworkdayjobs.com/en-US/SEGA_Careers/job/London-W4-5AN/Creator-Engagement-Manager_JR100229",
+      "parent": "Sega",
+      "_src": "Sega",
+      "tech": [],
+      "country": "GB",
+      "firstSeen": "2026-11-05T12:23:14.915Z",
+      "discoveredAt": "2026-11-05T12:25:37.849Z",
+      "daysListed": 8,
+      "relistCount": 0,
+      "relisted": false
+    },
+    {
       "id": "gh-scopely-5467729008",
       "title": "Technical Artist, Pokémon GO",
       "tech": [
@@ -11645,7 +11743,7 @@
       "country": "JP",
       "firstSeen": "2026-11-06T02:15:44.000Z",
       "discoveredAt": "2026-11-06T02:24:21.368Z",
-      "daysListed": 7,
+      "daysListed": 8,
       "relistCount": 0,
       "relisted": false
     },
@@ -11668,7 +11766,7 @@
       "_src": "Roblox",
       "firstSeen": "2026-11-06T02:05:25.000Z",
       "discoveredAt": "2026-11-06T02:24:21.368Z",
-      "daysListed": 7,
+      "daysListed": 8,
       "relistCount": 0,
       "relisted": false
     },
@@ -11715,29 +11813,6 @@
       "country": "KR",
       "firstSeen": "2026-11-06T01:30:58.343Z",
       "discoveredAt": "2026-11-06T01:43:40.400Z",
-      "daysListed": 7,
-      "relistCount": 0,
-      "relisted": false
-    },
-    {
-      "id": "wd-sega-JR100229",
-      "title": "Creator Engagement Manager",
-      "studio": "Sega",
-      "discipline": "Other",
-      "workType": "Unknown",
-      "location": "London, W4 5AN",
-      "region": "Europe",
-      "seniority": "Mid",
-      "salary": null,
-      "yoe": null,
-      "postedAt": "2026-11-06T01:22:07.506Z",
-      "url": "https://sega.wd3.myworkdayjobs.com/en-US/SEGA_Careers/job/London-W4-5AN/Creator-Engagement-Manager_JR100229",
-      "parent": "Sega",
-      "_src": "Sega",
-      "tech": [],
-      "country": "GB",
-      "firstSeen": "2026-11-05T12:23:14.915Z",
-      "discoveredAt": "2026-11-05T12:25:37.849Z",
       "daysListed": 8,
       "relistCount": 0,
       "relisted": false
@@ -11819,7 +11894,7 @@
       "daysListed": 8,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2616621",
@@ -11842,7 +11917,7 @@
       "daysListed": 49,
       "relistCount": 1,
       "relisted": true,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2616530",
@@ -11868,7 +11943,7 @@
       "daysListed": 8,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2616691",
@@ -11892,7 +11967,7 @@
       "daysListed": 16,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2616683",
@@ -11915,10 +11990,10 @@
       "country": "SG",
       "firstSeen": "2026-10-09T02:18:30.776Z",
       "discoveredAt": "2026-10-09T02:22:56.790Z",
-      "daysListed": 35,
+      "daysListed": 36,
       "relistCount": 1,
       "relisted": true,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "gh-riotgames-8214979",
@@ -12840,30 +12915,6 @@
       "relisted": false
     },
     {
-      "id": "gh-roblox-8331413",
-      "title": "Moderation Escalation Specialist",
-      "tech": [],
-      "studio": "Roblox",
-      "discipline": "Other",
-      "workType": "Unknown",
-      "location": "Gurugram, Haryana, India",
-      "region": "Asia-Pacific",
-      "seniority": "Mid",
-      "salary": null,
-      "yoe": 3,
-      "postedAt": "2026-11-04T20:30:04-05:00",
-      "deadline": null,
-      "url": "https://careers.roblox.com/jobs/8331413?gh_jid=8331413",
-      "parent": "Roblox",
-      "_src": "Roblox",
-      "country": "IN",
-      "firstSeen": "2026-11-05T01:30:04.000Z",
-      "discoveredAt": "2026-11-05T02:25:06.837Z",
-      "daysListed": 8,
-      "relistCount": 0,
-      "relisted": false
-    },
-    {
       "id": "wd-sega-JR100227",
       "title": "Junior Paid Influencer Manager",
       "studio": "Sega",
@@ -12874,7 +12925,7 @@
       "seniority": "Entry",
       "salary": null,
       "yoe": null,
-      "postedAt": "2026-11-05T01:22:07.506Z",
+      "postedAt": "2026-11-05T02:23:10.859Z",
       "url": "https://sega.wd3.myworkdayjobs.com/en-US/SEGA_Careers/job/London-W4-5AN/Junior-Paid-Influencer-Manager_JR100227",
       "parent": "Sega",
       "_src": "Sega",
@@ -12897,7 +12948,7 @@
       "seniority": "Director+",
       "salary": null,
       "yoe": null,
-      "postedAt": "2026-11-05T01:22:07.506Z",
+      "postedAt": "2026-11-05T02:23:10.859Z",
       "url": "https://sega.wd3.myworkdayjobs.com/en-US/SEGA_Careers/job/Horsham-RH12-1JW/Executive-Producer_JR100228",
       "parent": "Sega",
       "_src": "Sega",
@@ -12905,6 +12956,30 @@
       "country": "GB",
       "firstSeen": "2026-11-04T08:22:44.894Z",
       "discoveredAt": "2026-11-04T08:25:10.506Z",
+      "daysListed": 9,
+      "relistCount": 0,
+      "relisted": false
+    },
+    {
+      "id": "gh-roblox-8331413",
+      "title": "Moderation Escalation Specialist",
+      "tech": [],
+      "studio": "Roblox",
+      "discipline": "Other",
+      "workType": "Unknown",
+      "location": "Gurugram, Haryana, India",
+      "region": "Asia-Pacific",
+      "seniority": "Mid",
+      "salary": null,
+      "yoe": 3,
+      "postedAt": "2026-11-04T20:30:04-05:00",
+      "deadline": null,
+      "url": "https://careers.roblox.com/jobs/8331413?gh_jid=8331413",
+      "parent": "Roblox",
+      "_src": "Roblox",
+      "country": "IN",
+      "firstSeen": "2026-11-05T01:30:04.000Z",
+      "discoveredAt": "2026-11-05T02:25:06.837Z",
       "daysListed": 9,
       "relistCount": 0,
       "relisted": false
@@ -12956,7 +13031,7 @@
       "daysListed": 29,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2616697",
@@ -12981,7 +13056,7 @@
       "daysListed": 10,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2616581",
@@ -13004,7 +13079,7 @@
       "daysListed": 9,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2615690",
@@ -13027,7 +13102,7 @@
       "daysListed": 137,
       "relistCount": 3,
       "relisted": true,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "gh-nintendo-4453756009",
@@ -14933,7 +15008,7 @@
       "country": "US",
       "firstSeen": "2026-11-04T01:46:00.000Z",
       "discoveredAt": "2026-11-04T02:24:27.879Z",
-      "daysListed": 9,
+      "daysListed": 10,
       "relistCount": 0,
       "relisted": false
     },
@@ -14957,7 +15032,7 @@
       "country": "US",
       "firstSeen": "2026-11-04T01:49:06.000Z",
       "discoveredAt": "2026-11-04T02:24:27.879Z",
-      "daysListed": 9,
+      "daysListed": 10,
       "relistCount": 0,
       "relisted": false
     },
@@ -15007,10 +15082,10 @@
       "country": "US",
       "firstSeen": "2026-11-04T02:19:53.998Z",
       "discoveredAt": "2026-11-04T02:24:27.879Z",
-      "daysListed": 9,
+      "daysListed": 10,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2616743",
@@ -15034,7 +15109,7 @@
       "daysListed": 10,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2616700",
@@ -15058,7 +15133,7 @@
       "daysListed": 10,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "gh-sonyinteractiveentertainmentglobal-6233298004",
@@ -16736,7 +16811,7 @@
       "country": "VN",
       "firstSeen": "2026-11-03T02:15:55.872Z",
       "discoveredAt": "2026-11-03T02:24:46.981Z",
-      "daysListed": 10,
+      "daysListed": 11,
       "relistCount": 0,
       "relisted": false
     },
@@ -16787,7 +16862,7 @@
       "daysListed": 11,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2616768",
@@ -16811,7 +16886,7 @@
       "daysListed": 11,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2616662",
@@ -16835,7 +16910,7 @@
       "daysListed": 11,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "ph-blizzard-R028070",
@@ -16858,52 +16933,6 @@
       "country": "US",
       "firstSeen": "2026-09-01T00:00:00.000Z",
       "discoveredAt": "2026-09-02T12:24:49.452Z",
-      "daysListed": 74,
-      "relistCount": 1,
-      "relisted": true
-    },
-    {
-      "id": "ph-activision-R028092",
-      "title": "IT Technician (Contractor) - Treyarch - Vancouver, BC",
-      "tech": [],
-      "studio": "Treyarch",
-      "discipline": "Engineering",
-      "workType": "Unknown",
-      "location": "Vancouver, British Columbia, Canada",
-      "region": "North America",
-      "seniority": "Mid",
-      "salary": "$69K–$137K",
-      "yoe": 5,
-      "postedAt": "2026-11-03T00:00:00.000+0000",
-      "url": "https://xboxgaming.wd1.myworkdayjobs.com/en-US/External/job/Vancouver/IT-Technician--Contractor----Treyarch---Vancouver--BC_R028092",
-      "parent": "Activision",
-      "_src": "Activision (HQ)",
-      "country": "CA",
-      "firstSeen": "2026-09-01T00:00:00.000Z",
-      "discoveredAt": "2026-09-02T01:25:18.084Z",
-      "daysListed": 74,
-      "relistCount": 1,
-      "relisted": true
-    },
-    {
-      "id": "ph-activision-R028092",
-      "title": "IT Technician (Contractor) - Treyarch - Vancouver, BC",
-      "tech": [],
-      "studio": "Treyarch",
-      "discipline": "Engineering",
-      "workType": "Unknown",
-      "location": "Vancouver, British Columbia, Canada",
-      "region": "North America",
-      "seniority": "Mid",
-      "salary": "$69K–$137K",
-      "yoe": 5,
-      "postedAt": "2026-11-03T00:00:00.000+0000",
-      "url": "https://xboxgaming.wd1.myworkdayjobs.com/en-US/External/job/Vancouver/IT-Technician--Contractor----Treyarch---Vancouver--BC_R028092",
-      "parent": "Activision",
-      "_src": "Activision (HQ)",
-      "country": "CA",
-      "firstSeen": "2026-09-01T00:00:00.000Z",
-      "discoveredAt": "2026-09-02T01:25:18.084Z",
       "daysListed": 74,
       "relistCount": 1,
       "relisted": true
@@ -18202,7 +18231,7 @@
       "country": "US",
       "firstSeen": "2026-10-31T01:53:30.000Z",
       "discoveredAt": "2026-10-31T02:24:51.897Z",
-      "daysListed": 13,
+      "daysListed": 14,
       "relistCount": 0,
       "relisted": false
     },
@@ -18227,7 +18256,7 @@
       "daysListed": 14,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "gh-roblox-8303922",
@@ -20564,7 +20593,7 @@
       "daysListed": 15,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2616733",
@@ -20587,7 +20616,7 @@
       "daysListed": 15,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2616011",
@@ -20610,7 +20639,7 @@
       "daysListed": 137,
       "relistCount": 2,
       "relisted": true,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2616415",
@@ -20636,7 +20665,7 @@
       "daysListed": 81,
       "relistCount": 2,
       "relisted": true,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2616424",
@@ -20660,7 +20689,7 @@
       "daysListed": 81,
       "relistCount": 2,
       "relisted": true,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "ph-activision-R028287",
@@ -22674,7 +22703,7 @@
       "daysListed": 16,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2616630",
@@ -22698,7 +22727,7 @@
       "daysListed": 29,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "ph-activision-R028329",
@@ -23836,7 +23865,7 @@
       "country": "AU",
       "firstSeen": "2026-10-28T01:55:30.660Z",
       "discoveredAt": "2026-10-28T02:24:53.142Z",
-      "daysListed": 16,
+      "daysListed": 17,
       "relistCount": 0,
       "relisted": false
     },
@@ -23927,7 +23956,7 @@
       "daysListed": 93,
       "relistCount": 3,
       "relisted": true,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2616652",
@@ -23951,7 +23980,7 @@
       "daysListed": 17,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "ph-activision-R027907",
@@ -25280,10 +25309,10 @@
       "country": "AU",
       "firstSeen": "2026-10-26T02:04:33.902Z",
       "discoveredAt": "2026-10-26T02:08:29.345Z",
-      "daysListed": 18,
+      "daysListed": 19,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2616349",
@@ -25306,7 +25335,7 @@
       "daysListed": 85,
       "relistCount": 1,
       "relisted": true,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2615753",
@@ -25330,7 +25359,7 @@
       "daysListed": 136,
       "relistCount": 4,
       "relisted": true,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "gh-riotgames-8302342",
@@ -26805,7 +26834,7 @@
       "daysListed": 100,
       "relistCount": 2,
       "relisted": true,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "ph-activision-R028316",
@@ -27325,7 +27354,7 @@
       "daysListed": 20,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "sr-Ubisoft2-744000157619569",
@@ -28543,7 +28572,7 @@
       "daysListed": 29,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2616561",
@@ -28567,7 +28596,7 @@
       "daysListed": 38,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "ph-blizzard-R028327",
@@ -30157,31 +30186,6 @@
       "firstSeen": "2026-10-22T00:44:49.000Z",
       "discoveredAt": "2026-10-22T01:25:11.171Z",
       "daysListed": 23,
-      "relistCount": 0,
-      "relisted": false
-    },
-    {
-      "id": "ph-activision-R028305",
-      "title": "Senior Technical Artist",
-      "tech": [
-        "Technical Art"
-      ],
-      "studio": "Elsewhere Entertainment",
-      "discipline": "Art",
-      "workType": "Unknown",
-      "location": "Malmö, Sweden",
-      "region": "Europe",
-      "seniority": "Senior",
-      "salary": null,
-      "yoe": null,
-      "postedAt": "2026-10-22T00:00:00.000+0000",
-      "url": "https://xboxgaming.wd1.myworkdayjobs.com/en-US/External/job/Malm/Senior-Technical-Artist_R028305-1",
-      "parent": "Activision",
-      "_src": "Activision (HQ)",
-      "country": "SE",
-      "firstSeen": "2026-10-20T00:00:00.000Z",
-      "discoveredAt": "2026-10-20T17:26:00.755Z",
-      "daysListed": 25,
       "relistCount": 0,
       "relisted": false
     },
@@ -31990,7 +31994,7 @@
       "daysListed": 24,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2616057",
@@ -32013,7 +32017,7 @@
       "daysListed": 137,
       "relistCount": 2,
       "relisted": true,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2616639",
@@ -32037,7 +32041,7 @@
       "daysListed": 24,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2616238",
@@ -32061,7 +32065,7 @@
       "daysListed": 24,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "lever-neowiz-c67b3931-fbcb-4071-a696-9ba85b779eaf",
@@ -32109,6 +32113,29 @@
       "daysListed": 25,
       "relistCount": 0,
       "relisted": false
+    },
+    {
+      "id": "ph-activision-R027967",
+      "title": "Animation Director - Sledgehammer Games",
+      "tech": [],
+      "studio": "Sledgehammer Games",
+      "discipline": "Animation",
+      "workType": "Unknown",
+      "location": "San Mateo, California, United States of America",
+      "region": "North America",
+      "seniority": "Director+",
+      "salary": "$137K–$253K",
+      "yoe": 12,
+      "postedAt": "2026-10-21T00:00:00.000+0000",
+      "url": "https://xboxgaming.wd1.myworkdayjobs.com/en-US/External/job/San-Mateo/Animation-Director---Sledgehammer-Games_R027967",
+      "parent": "Activision",
+      "_src": "Activision (HQ)",
+      "country": "US",
+      "firstSeen": "2026-08-14T00:00:00.000Z",
+      "discoveredAt": "2026-08-14T22:17:34.567Z",
+      "daysListed": 92,
+      "relistCount": 1,
+      "relisted": true
     },
     {
       "id": "ph-wbgames-R000106740",
@@ -32222,29 +32249,6 @@
       "firstSeen": "2026-08-11T00:00:00.000Z",
       "discoveredAt": "2026-08-11T15:26:01.008Z",
       "daysListed": 95,
-      "relistCount": 1,
-      "relisted": true
-    },
-    {
-      "id": "ph-wbgames-R000107465",
-      "title": "Performance Marketing Analyst  Creatives (Mobile)",
-      "tech": [],
-      "studio": "Warner Bros. Games",
-      "discipline": "Marketing",
-      "workType": "Unknown",
-      "location": "Burbank, California, United States of America",
-      "region": "North America",
-      "seniority": "Mid",
-      "salary": "$63K–$117K",
-      "yoe": 3,
-      "postedAt": "2026-10-21T00:00:00.000+0000",
-      "url": "https://warnerbros.wd5.myworkdayjobs.com/en-US/global/job/CA-Burbank-Bldg-750-Second-Century-Tower-2/Marketing-Analyst_R000107465-1",
-      "parent": "Warner Bros. Games",
-      "_src": "Warner Bros. Games",
-      "country": "US",
-      "firstSeen": "2026-08-07T00:00:00.000Z",
-      "discoveredAt": "2026-08-07T15:19:27.865Z",
-      "daysListed": 99,
       "relistCount": 1,
       "relisted": true
     },
@@ -33782,7 +33786,7 @@
       "country": "US",
       "firstSeen": "2026-10-20T01:25:29.000Z",
       "discoveredAt": "2026-10-20T02:25:37.155Z",
-      "daysListed": 24,
+      "daysListed": 25,
       "relistCount": 0,
       "relisted": false
     },
@@ -33862,7 +33866,7 @@
       "daysListed": 84,
       "relistCount": 2,
       "relisted": true,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "ph-blizzard-R028303",
@@ -35790,7 +35794,7 @@
       "daysListed": 28,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-lightspeed-R108263",
@@ -35814,7 +35818,7 @@
       "daysListed": 28,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2616029",
@@ -35837,7 +35841,7 @@
       "daysListed": 30,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2616452",
@@ -35861,7 +35865,7 @@
       "daysListed": 28,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2616457",
@@ -35885,7 +35889,7 @@
       "daysListed": 28,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2616392",
@@ -35908,7 +35912,7 @@
       "daysListed": 73,
       "relistCount": 1,
       "relisted": true,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2615824",
@@ -35932,7 +35936,7 @@
       "daysListed": 136,
       "relistCount": 4,
       "relisted": true,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "lever-kabam-31feb253-f6e7-4664-8b77-8232b96acaeb",
@@ -36844,7 +36848,7 @@
       "country": "CN",
       "firstSeen": "2026-10-16T02:22:17.379Z",
       "discoveredAt": "2026-10-16T02:25:18.185Z",
-      "daysListed": 28,
+      "daysListed": 29,
       "relistCount": 0,
       "relisted": false
     },
@@ -36870,7 +36874,7 @@
       "daysListed": 36,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2616678",
@@ -36893,7 +36897,7 @@
       "daysListed": 29,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "ph-activision-R028297",
@@ -36967,50 +36971,25 @@
       "relisted": true
     },
     {
-      "id": "ph-wbgames-R000101923",
-      "title": "Senior Devops Engineer",
-      "tech": [
-        "Unreal"
-      ],
+      "id": "ph-wbgames-R000107616",
+      "title": "UI Artist",
+      "tech": [],
       "studio": "Warner Bros. Games",
-      "discipline": "Engineering",
+      "discipline": "Art",
       "workType": "Unknown",
       "location": "London, City of, United Kingdom",
       "region": "Europe",
-      "seniority": "Senior",
-      "salary": null,
-      "yoe": null,
-      "postedAt": "2026-10-16T00:00:00.000+0000",
-      "url": "https://warnerbros.wd5.myworkdayjobs.com/en-US/global/job/London-Rocksteady-Studios-Limited/Engine-Programmer_R000101923",
-      "parent": "Warner Bros. Games",
-      "_src": "Warner Bros. Games",
-      "country": "GB",
-      "firstSeen": "2026-05-26T00:00:00.000Z",
-      "discoveredAt": "2026-07-07T01:46:04.158Z",
-      "daysListed": 172,
-      "relistCount": 1,
-      "relisted": true
-    },
-    {
-      "id": "ph-wbgames-R000104758",
-      "title": "Animateur.trice avancé.e / Advanced Animator",
-      "tech": [],
-      "studio": "Warner Bros. Games",
-      "discipline": "Animation",
-      "workType": "Unknown",
-      "location": "Montreal, Quebec, Canada",
-      "region": "North America",
       "seniority": "Mid",
       "salary": null,
       "yoe": null,
       "postedAt": "2026-10-16T00:00:00.000+0000",
-      "url": "https://warnerbros.wd5.myworkdayjobs.com/en-US/global/job/Montreal-888-boul-De-Maisonneuve-Est/Animateurtrice-avance---Advanced-Animator_R000104758-1",
+      "url": "https://warnerbros.wd5.myworkdayjobs.com/en-US/global/job/London-Rocksteady-Studios-Limited/UI-Artist_R000107616",
       "parent": "Warner Bros. Games",
       "_src": "Warner Bros. Games",
-      "country": "CA",
-      "firstSeen": "2026-05-26T00:00:00.000Z",
-      "discoveredAt": "2026-07-07T01:46:04.158Z",
-      "daysListed": 172,
+      "country": "GB",
+      "firstSeen": "2026-09-24T00:00:00.000Z",
+      "discoveredAt": "2026-09-24T16:25:30.896Z",
+      "daysListed": 51,
       "relistCount": 1,
       "relisted": true
     },
@@ -37105,29 +37084,6 @@
       "daysListed": 43,
       "relistCount": 0,
       "relisted": false
-    },
-    {
-      "id": "ph-wbgames-R000107418",
-      "title": "Senior Gameplay Programmer",
-      "tech": [],
-      "studio": "Warner Bros. Games",
-      "discipline": "Engineering",
-      "workType": "Unknown",
-      "location": "London, City of, United Kingdom",
-      "region": "Europe",
-      "seniority": "Senior",
-      "salary": null,
-      "yoe": null,
-      "postedAt": "2026-10-16T00:00:00.000+0000",
-      "url": "https://warnerbros.wd5.myworkdayjobs.com/en-US/global/job/London-Rocksteady-Studios-Limited/Senior-Gameplay-Programmer_R000107418",
-      "parent": "Warner Bros. Games",
-      "_src": "Warner Bros. Games",
-      "country": "GB",
-      "firstSeen": "2026-08-06T00:00:00.000Z",
-      "discoveredAt": "2026-08-06T21:25:51.249Z",
-      "daysListed": 100,
-      "relistCount": 1,
-      "relisted": true
     },
     {
       "id": "ph-wbgames-R000107418",
@@ -37350,7 +37306,8 @@
       "discoveredAt": "2026-10-15T22:51:19.624Z",
       "daysListed": 29,
       "relistCount": 0,
-      "relisted": false
+      "relisted": false,
+      "_carry": 1
     },
     {
       "id": "mscareers-1970393557041533",
@@ -37380,7 +37337,8 @@
       "discoveredAt": "2026-10-15T22:51:19.624Z",
       "daysListed": 29,
       "relistCount": 0,
-      "relisted": false
+      "relisted": false,
+      "_carry": 1
     },
     {
       "id": "gh-sonyinteractiveentertainmentglobal-6223950004",
@@ -38481,7 +38439,7 @@
       "seniority": "Mid",
       "salary": null,
       "yoe": null,
-      "postedAt": "2026-10-15T01:22:07.507Z",
+      "postedAt": "2026-10-15T02:23:10.859Z",
       "url": "https://sega.wd3.myworkdayjobs.com/en-US/SEGA_Careers/job/London-W4-5AN/Localisation-QA-Language-Specialist---Spanish-LATAM_JR100107",
       "parent": "Sega",
       "_src": "Sega",
@@ -38506,7 +38464,7 @@
       "seniority": "Senior",
       "salary": null,
       "yoe": null,
-      "postedAt": "2026-10-15T01:22:07.507Z",
+      "postedAt": "2026-10-15T02:23:10.859Z",
       "url": "https://sega.wd3.myworkdayjobs.com/en-US/SEGA_Careers/job/Senior-UI-UX-Designer_JR100220",
       "parent": "Sega",
       "_src": "Sega",
@@ -38528,7 +38486,7 @@
       "seniority": "Mid",
       "salary": null,
       "yoe": null,
-      "postedAt": "2026-10-15T01:22:07.507Z",
+      "postedAt": "2026-10-15T02:23:10.859Z",
       "url": "https://sega.wd3.myworkdayjobs.com/en-US/SEGA_Careers/job/UI-UX-Designer_JR100219-1",
       "parent": "Sega",
       "_src": "Sega",
@@ -38647,7 +38605,7 @@
       "daysListed": 137,
       "relistCount": 2,
       "relisted": true,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2616601",
@@ -38671,7 +38629,7 @@
       "daysListed": 30,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "ph-blizzard-R028280",
@@ -39691,6 +39649,144 @@
       "relisted": false
     },
     {
+      "id": "wd-sega-JR100144",
+      "title": "Senior Producer (Design)",
+      "studio": "Sega",
+      "discipline": "Production",
+      "workType": "Unknown",
+      "location": "Greater London, E15 2GW",
+      "region": "Europe",
+      "seniority": "Senior",
+      "salary": null,
+      "yoe": null,
+      "postedAt": "2026-10-14T02:23:10.862Z",
+      "url": "https://sega.wd3.myworkdayjobs.com/en-US/SEGA_Careers/job/Greater-London-E15-2GW/Senior-Producer--Design-_JR100144",
+      "parent": "Sega",
+      "_src": "Sega",
+      "tech": [],
+      "country": "GB",
+      "firstSeen": "2026-06-22T13:20:44.812Z",
+      "discoveredAt": "2026-07-07T01:46:04.158Z",
+      "daysListed": 144,
+      "relistCount": 0,
+      "relisted": false
+    },
+    {
+      "id": "wd-sega-JR100193",
+      "title": "Senior Software Engineer (Match AI & Simulation)",
+      "studio": "Sega",
+      "discipline": "Engineering",
+      "workType": "Unknown",
+      "location": "Greater London, E15 2GW",
+      "region": "Europe",
+      "seniority": "Senior",
+      "salary": null,
+      "yoe": null,
+      "postedAt": "2026-10-14T02:23:10.861Z",
+      "url": "https://sega.wd3.myworkdayjobs.com/en-US/SEGA_Careers/job/Greater-London-E15-2GW/Senior-Software-Engineer--Match-AI---Simulation-_JR100193",
+      "parent": "Sega",
+      "_src": "Sega",
+      "tech": [],
+      "country": "GB",
+      "firstSeen": "2026-09-02T07:22:51.545Z",
+      "discoveredAt": "2026-09-02T07:25:40.946Z",
+      "daysListed": 72,
+      "relistCount": 0,
+      "relisted": false
+    },
+    {
+      "id": "wd-sega-JR100103",
+      "title": "Franchise Design Director",
+      "studio": "Sega",
+      "discipline": "Design",
+      "workType": "Unknown",
+      "location": "Horsham, RH12 1JW",
+      "region": "Europe",
+      "seniority": "Director+",
+      "salary": null,
+      "yoe": null,
+      "postedAt": "2026-10-14T02:23:10.861Z",
+      "url": "https://sega.wd3.myworkdayjobs.com/en-US/SEGA_Careers/job/Horsham-RH12-1JW/Franchise-Design-Director_JR100103-1",
+      "parent": "Sega",
+      "_src": "Sega",
+      "tech": [],
+      "country": "GB",
+      "firstSeen": "2026-08-07T13:22:42.143Z",
+      "discoveredAt": "2026-08-07T13:25:32.990Z",
+      "daysListed": 98,
+      "relistCount": 0,
+      "relisted": false
+    },
+    {
+      "id": "wd-sega-JR100167",
+      "title": "Consumer Insights Manager",
+      "studio": "Sega",
+      "discipline": "Data & Analytics",
+      "workType": "Unknown",
+      "location": "London, W4 5AN",
+      "region": "Europe",
+      "seniority": "Mid",
+      "salary": null,
+      "yoe": null,
+      "postedAt": "2026-10-14T02:23:10.861Z",
+      "url": "https://sega.wd3.myworkdayjobs.com/en-US/SEGA_Careers/job/London-W4-5AN/Consumer-Insights-Manager_JR100167",
+      "parent": "Sega",
+      "_src": "Sega",
+      "tech": [],
+      "country": "GB",
+      "firstSeen": "2026-07-28T12:20:15.456Z",
+      "discoveredAt": "2026-07-28T12:21:52.736Z",
+      "daysListed": 108,
+      "relistCount": 0,
+      "relisted": false
+    },
+    {
+      "id": "wd-sega-JR100048",
+      "title": "Head of UI/UX",
+      "studio": "Sega",
+      "discipline": "Design",
+      "workType": "Unknown",
+      "location": "Horsham, RH12 1JW",
+      "region": "Europe",
+      "seniority": "Director+",
+      "salary": null,
+      "yoe": null,
+      "postedAt": "2026-10-14T02:23:10.861Z",
+      "url": "https://sega.wd3.myworkdayjobs.com/en-US/SEGA_Careers/job/Horsham-RH12-1JW/Head-of-UI-UX_JR100048",
+      "parent": "Sega",
+      "_src": "Sega",
+      "tech": [],
+      "country": "GB",
+      "firstSeen": "2026-05-07T16:22:42.965Z",
+      "discoveredAt": "2026-07-07T01:46:04.158Z",
+      "daysListed": 190,
+      "relistCount": 1,
+      "relisted": true
+    },
+    {
+      "id": "wd-sega-JR100207",
+      "title": "FP&A Project Manager - 12 Month FTC",
+      "studio": "Sega",
+      "discipline": "Production",
+      "workType": "Unknown",
+      "location": "London, W4 5AN",
+      "region": "Europe",
+      "seniority": "Mid",
+      "salary": null,
+      "yoe": null,
+      "postedAt": "2026-10-14T02:23:10.859Z",
+      "url": "https://sega.wd3.myworkdayjobs.com/en-US/SEGA_Careers/job/London-W4-5AN/FP-A-Project-Manager---12-Month-FTC_JR100207-1",
+      "parent": "Sega",
+      "_src": "Sega",
+      "tech": [],
+      "country": "GB",
+      "firstSeen": "2026-09-25T09:22:18.829Z",
+      "discoveredAt": "2026-09-25T09:24:49.515Z",
+      "daysListed": 49,
+      "relistCount": 0,
+      "relisted": false
+    },
+    {
       "id": "lever-neowiz-69324ad9-976d-4453-9b71-23bed969f218",
       "title": "[네오위즈] Financial Assistant (인턴)",
       "empType": "Internship",
@@ -39710,7 +39806,7 @@
       "country": "KR",
       "firstSeen": "2026-10-14T02:10:26.124Z",
       "discoveredAt": "2026-10-14T07:23:54.086Z",
-      "daysListed": 30,
+      "daysListed": 31,
       "relistCount": 0,
       "relisted": false
     },
@@ -39734,7 +39830,7 @@
       "country": "SG",
       "firstSeen": "2026-10-14T01:49:00.000Z",
       "discoveredAt": "2026-10-14T02:06:59.442Z",
-      "daysListed": 30,
+      "daysListed": 31,
       "relistCount": 0,
       "relisted": false
     },
@@ -39758,145 +39854,7 @@
       "country": "KR",
       "firstSeen": "2026-10-14T01:41:50.352Z",
       "discoveredAt": "2026-10-14T02:06:59.442Z",
-      "daysListed": 30,
-      "relistCount": 0,
-      "relisted": false
-    },
-    {
-      "id": "wd-sega-JR100193",
-      "title": "Senior Software Engineer (Match AI & Simulation)",
-      "studio": "Sega",
-      "discipline": "Engineering",
-      "workType": "Unknown",
-      "location": "Greater London, E15 2GW",
-      "region": "Europe",
-      "seniority": "Senior",
-      "salary": null,
-      "yoe": null,
-      "postedAt": "2026-10-14T01:22:07.508Z",
-      "url": "https://sega.wd3.myworkdayjobs.com/en-US/SEGA_Careers/job/Greater-London-E15-2GW/Senior-Software-Engineer--Match-AI---Simulation-_JR100193",
-      "parent": "Sega",
-      "_src": "Sega",
-      "tech": [],
-      "country": "GB",
-      "firstSeen": "2026-09-02T07:22:51.545Z",
-      "discoveredAt": "2026-09-02T07:25:40.946Z",
-      "daysListed": 72,
-      "relistCount": 0,
-      "relisted": false
-    },
-    {
-      "id": "wd-sega-JR100103",
-      "title": "Franchise Design Director",
-      "studio": "Sega",
-      "discipline": "Design",
-      "workType": "Unknown",
-      "location": "Horsham, RH12 1JW",
-      "region": "Europe",
-      "seniority": "Director+",
-      "salary": null,
-      "yoe": null,
-      "postedAt": "2026-10-14T01:22:07.508Z",
-      "url": "https://sega.wd3.myworkdayjobs.com/en-US/SEGA_Careers/job/Horsham-RH12-1JW/Franchise-Design-Director_JR100103-1",
-      "parent": "Sega",
-      "_src": "Sega",
-      "tech": [],
-      "country": "GB",
-      "firstSeen": "2026-08-07T13:22:42.143Z",
-      "discoveredAt": "2026-08-07T13:25:32.990Z",
-      "daysListed": 98,
-      "relistCount": 0,
-      "relisted": false
-    },
-    {
-      "id": "wd-sega-JR100167",
-      "title": "Consumer Insights Manager",
-      "studio": "Sega",
-      "discipline": "Data & Analytics",
-      "workType": "Unknown",
-      "location": "London, W4 5AN",
-      "region": "Europe",
-      "seniority": "Mid",
-      "salary": null,
-      "yoe": null,
-      "postedAt": "2026-10-14T01:22:07.508Z",
-      "url": "https://sega.wd3.myworkdayjobs.com/en-US/SEGA_Careers/job/London-W4-5AN/Consumer-Insights-Manager_JR100167",
-      "parent": "Sega",
-      "_src": "Sega",
-      "tech": [],
-      "country": "GB",
-      "firstSeen": "2026-07-28T12:20:15.456Z",
-      "discoveredAt": "2026-07-28T12:21:52.736Z",
-      "daysListed": 108,
-      "relistCount": 0,
-      "relisted": false
-    },
-    {
-      "id": "wd-sega-JR100048",
-      "title": "Head of UI/UX",
-      "studio": "Sega",
-      "discipline": "Design",
-      "workType": "Unknown",
-      "location": "Horsham, RH12 1JW",
-      "region": "Europe",
-      "seniority": "Director+",
-      "salary": null,
-      "yoe": null,
-      "postedAt": "2026-10-14T01:22:07.508Z",
-      "url": "https://sega.wd3.myworkdayjobs.com/en-US/SEGA_Careers/job/Horsham-RH12-1JW/Head-of-UI-UX_JR100048",
-      "parent": "Sega",
-      "_src": "Sega",
-      "tech": [],
-      "country": "GB",
-      "firstSeen": "2026-05-07T16:22:42.965Z",
-      "discoveredAt": "2026-07-07T01:46:04.158Z",
-      "daysListed": 190,
-      "relistCount": 1,
-      "relisted": true
-    },
-    {
-      "id": "wd-sega-JR100144",
-      "title": "Senior Producer (Design)",
-      "studio": "Sega",
-      "discipline": "Production",
-      "workType": "Unknown",
-      "location": "Greater London, E15 2GW",
-      "region": "Europe",
-      "seniority": "Senior",
-      "salary": null,
-      "yoe": null,
-      "postedAt": "2026-10-14T01:22:07.508Z",
-      "url": "https://sega.wd3.myworkdayjobs.com/en-US/SEGA_Careers/job/Greater-London-E15-2GW/Senior-Producer--Design-_JR100144",
-      "parent": "Sega",
-      "_src": "Sega",
-      "tech": [],
-      "country": "GB",
-      "firstSeen": "2026-06-22T13:20:44.812Z",
-      "discoveredAt": "2026-07-07T01:46:04.158Z",
-      "daysListed": 144,
-      "relistCount": 0,
-      "relisted": false
-    },
-    {
-      "id": "wd-sega-JR100207",
-      "title": "FP&A Project Manager - 12 Month FTC",
-      "studio": "Sega",
-      "discipline": "Production",
-      "workType": "Unknown",
-      "location": "London, W4 5AN",
-      "region": "Europe",
-      "seniority": "Mid",
-      "salary": null,
-      "yoe": null,
-      "postedAt": "2026-10-14T01:22:07.507Z",
-      "url": "https://sega.wd3.myworkdayjobs.com/en-US/SEGA_Careers/job/London-W4-5AN/FP-A-Project-Manager---12-Month-FTC_JR100207-1",
-      "parent": "Sega",
-      "_src": "Sega",
-      "tech": [],
-      "country": "GB",
-      "firstSeen": "2026-09-25T09:22:18.829Z",
-      "discoveredAt": "2026-09-25T09:24:49.515Z",
-      "daysListed": 49,
+      "daysListed": 31,
       "relistCount": 0,
       "relisted": false
     },
@@ -39947,7 +39905,7 @@
       "daysListed": 180,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-lightspeed-R105151",
@@ -39971,7 +39929,7 @@
       "daysListed": 180,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-lightspeed-R104908",
@@ -39995,7 +39953,7 @@
       "daysListed": 152,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-lightspeed-R107518",
@@ -40019,7 +39977,7 @@
       "daysListed": 162,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-lightspeed-R107485",
@@ -40043,7 +40001,7 @@
       "daysListed": 178,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-lightspeed-R107266",
@@ -40067,7 +40025,7 @@
       "daysListed": 180,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-lightspeed-R107229",
@@ -40092,7 +40050,7 @@
       "daysListed": 180,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-lightspeed-R105955",
@@ -40115,7 +40073,7 @@
       "daysListed": 180,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-lightspeed-R104655",
@@ -40139,7 +40097,7 @@
       "daysListed": 180,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-lightspeed-R106470",
@@ -40163,7 +40121,7 @@
       "daysListed": 180,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-lightspeed-R104366",
@@ -40186,7 +40144,7 @@
       "daysListed": 180,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-lightspeed-R106420",
@@ -40210,7 +40168,7 @@
       "daysListed": 180,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-lightspeed-R105957",
@@ -40233,7 +40191,7 @@
       "daysListed": 180,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-lightspeed-R105956",
@@ -40256,7 +40214,7 @@
       "daysListed": 180,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-lightspeed-R105686",
@@ -40281,7 +40239,7 @@
       "daysListed": 180,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-lightspeed-R105688",
@@ -40307,7 +40265,7 @@
       "daysListed": 180,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-lightspeed-R105952",
@@ -40330,7 +40288,7 @@
       "daysListed": 180,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-lightspeed-R106377",
@@ -40353,7 +40311,7 @@
       "daysListed": 180,
       "relistCount": 1,
       "relisted": true,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-lightspeed-R107344",
@@ -40377,7 +40335,7 @@
       "daysListed": 177,
       "relistCount": 2,
       "relisted": true,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-lightspeed-R107363",
@@ -40401,7 +40359,7 @@
       "daysListed": 176,
       "relistCount": 2,
       "relisted": true,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-lightspeed-R108164",
@@ -40425,7 +40383,7 @@
       "daysListed": 56,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-lightspeed-R108155",
@@ -40445,10 +40403,10 @@
       "tech": [],
       "firstSeen": "2026-09-16T02:20:22.485Z",
       "discoveredAt": "2026-09-16T02:24:48.179Z",
-      "daysListed": 58,
+      "daysListed": 59,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-lightspeed-R104428",
@@ -40471,7 +40429,7 @@
       "daysListed": 180,
       "relistCount": 1,
       "relisted": true,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-lightspeed-R107659",
@@ -40495,7 +40453,7 @@
       "daysListed": 60,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-lightspeed-R107127",
@@ -40519,7 +40477,7 @@
       "daysListed": 93,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-lightspeed-R107982",
@@ -40542,7 +40500,7 @@
       "daysListed": 87,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-lightspeed-R107810",
@@ -40566,7 +40524,7 @@
       "daysListed": 119,
       "relistCount": 1,
       "relisted": true,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-lightspeed-R107837",
@@ -40590,7 +40548,7 @@
       "daysListed": 114,
       "relistCount": 1,
       "relisted": true,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-lightspeed-R107836",
@@ -40614,7 +40572,7 @@
       "daysListed": 114,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-lightspeed-R107842",
@@ -40637,7 +40595,7 @@
       "daysListed": 107,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-lightspeed-R107830",
@@ -40661,7 +40619,7 @@
       "daysListed": 114,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-lightspeed-R107833",
@@ -40685,7 +40643,7 @@
       "daysListed": 114,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-lightspeed-R107813",
@@ -40709,7 +40667,7 @@
       "daysListed": 119,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-lightspeed-R107812",
@@ -40733,7 +40691,7 @@
       "daysListed": 119,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-lightspeed-R107811",
@@ -40757,7 +40715,7 @@
       "daysListed": 119,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-lightspeed-R107808",
@@ -40781,7 +40739,7 @@
       "daysListed": 119,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-lightspeed-R107809",
@@ -40805,7 +40763,7 @@
       "daysListed": 119,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2616560",
@@ -40828,7 +40786,7 @@
       "daysListed": 44,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2616656",
@@ -40852,7 +40810,7 @@
       "daysListed": 45,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2616414",
@@ -40876,7 +40834,7 @@
       "daysListed": 42,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2616529",
@@ -40900,7 +40858,7 @@
       "daysListed": 53,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2616606",
@@ -40924,7 +40882,7 @@
       "daysListed": 44,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2616284",
@@ -40948,7 +40906,7 @@
       "daysListed": 52,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2615964",
@@ -40972,7 +40930,7 @@
       "daysListed": 127,
       "relistCount": 2,
       "relisted": true,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2616286",
@@ -40997,7 +40955,7 @@
       "daysListed": 65,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2615661",
@@ -41022,7 +40980,7 @@
       "daysListed": 66,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2616596",
@@ -41047,7 +41005,7 @@
       "daysListed": 49,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2616598",
@@ -41072,7 +41030,7 @@
       "daysListed": 49,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2616599",
@@ -41097,7 +41055,7 @@
       "daysListed": 49,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2616280",
@@ -41123,7 +41081,7 @@
       "daysListed": 49,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2616551",
@@ -41147,7 +41105,7 @@
       "daysListed": 50,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2515085",
@@ -41170,7 +41128,7 @@
       "daysListed": 137,
       "relistCount": 3,
       "relisted": true,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2615749",
@@ -41194,7 +41152,7 @@
       "daysListed": 137,
       "relistCount": 1,
       "relisted": true,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2616456",
@@ -41218,7 +41176,7 @@
       "daysListed": 80,
       "relistCount": 1,
       "relisted": true,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2616154",
@@ -41244,7 +41202,7 @@
       "daysListed": 106,
       "relistCount": 2,
       "relisted": true,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2616124",
@@ -41267,7 +41225,7 @@
       "daysListed": 128,
       "relistCount": 2,
       "relisted": true,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2616485",
@@ -41291,7 +41249,7 @@
       "daysListed": 67,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2616040",
@@ -41317,7 +41275,7 @@
       "daysListed": 137,
       "relistCount": 1,
       "relisted": true,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2616269",
@@ -41343,7 +41301,7 @@
       "daysListed": 86,
       "relistCount": 1,
       "relisted": true,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2616200",
@@ -41367,7 +41325,7 @@
       "daysListed": 126,
       "relistCount": 1,
       "relisted": true,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2514972",
@@ -41391,7 +41349,7 @@
       "daysListed": 88,
       "relistCount": 1,
       "relisted": true,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2615941",
@@ -41417,7 +41375,7 @@
       "daysListed": 137,
       "relistCount": 1,
       "relisted": true,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2616590",
@@ -41442,7 +41400,7 @@
       "daysListed": 59,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2616594",
@@ -41467,7 +41425,7 @@
       "daysListed": 59,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2616587",
@@ -41491,7 +41449,7 @@
       "daysListed": 60,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2616445",
@@ -41514,7 +41472,7 @@
       "daysListed": 63,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2616052",
@@ -41539,7 +41497,7 @@
       "daysListed": 137,
       "relistCount": 2,
       "relisted": true,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2616540",
@@ -41563,7 +41521,7 @@
       "daysListed": 65,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2616426",
@@ -41587,7 +41545,7 @@
       "daysListed": 71,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2616333",
@@ -41611,7 +41569,7 @@
       "daysListed": 78,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2615914",
@@ -41635,7 +41593,7 @@
       "daysListed": 101,
       "relistCount": 1,
       "relisted": true,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2616358",
@@ -41661,7 +41619,7 @@
       "daysListed": 80,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2616386",
@@ -41684,7 +41642,7 @@
       "daysListed": 84,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2616171",
@@ -41708,7 +41666,7 @@
       "daysListed": 137,
       "relistCount": 2,
       "relisted": true,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2616230",
@@ -41732,7 +41690,7 @@
       "daysListed": 108,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2615802",
@@ -41756,7 +41714,7 @@
       "daysListed": 136,
       "relistCount": 1,
       "relisted": true,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2616260",
@@ -41780,7 +41738,7 @@
       "daysListed": 108,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2616140",
@@ -41804,7 +41762,7 @@
       "daysListed": 137,
       "relistCount": 1,
       "relisted": true,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2616041",
@@ -41829,7 +41787,7 @@
       "daysListed": 137,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2615595",
@@ -41853,7 +41811,7 @@
       "daysListed": 137,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2615965",
@@ -41878,7 +41836,7 @@
       "daysListed": 123,
       "relistCount": 2,
       "relisted": true,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2616442",
@@ -41901,7 +41859,7 @@
       "daysListed": 84,
       "relistCount": 1,
       "relisted": true,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2616447",
@@ -41924,7 +41882,7 @@
       "daysListed": 84,
       "relistCount": 1,
       "relisted": true,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2616623",
@@ -41948,7 +41906,7 @@
       "daysListed": 32,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2616666",
@@ -41972,7 +41930,7 @@
       "daysListed": 43,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2616680",
@@ -41997,7 +41955,7 @@
       "daysListed": 35,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2616359",
@@ -42023,7 +41981,7 @@
       "daysListed": 86,
       "relistCount": 2,
       "relisted": true,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2616327",
@@ -42047,7 +42005,7 @@
       "daysListed": 86,
       "relistCount": 1,
       "relisted": true,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2616091",
@@ -42072,7 +42030,7 @@
       "daysListed": 39,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2616660",
@@ -42095,7 +42053,7 @@
       "daysListed": 35,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2616647",
@@ -42118,7 +42076,7 @@
       "daysListed": 35,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2616009",
@@ -42142,7 +42100,7 @@
       "daysListed": 130,
       "relistCount": 2,
       "relisted": true,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2616244",
@@ -42165,7 +42123,7 @@
       "daysListed": 85,
       "relistCount": 2,
       "relisted": true,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2616466",
@@ -42189,7 +42147,7 @@
       "daysListed": 43,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2616258",
@@ -42213,7 +42171,7 @@
       "daysListed": 129,
       "relistCount": 3,
       "relisted": true,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2616588",
@@ -42237,7 +42195,7 @@
       "daysListed": 36,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2616646",
@@ -42261,7 +42219,7 @@
       "daysListed": 36,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2615987",
@@ -42284,7 +42242,7 @@
       "daysListed": 37,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2616552",
@@ -42308,7 +42266,7 @@
       "daysListed": 37,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2615890",
@@ -42334,7 +42292,7 @@
       "daysListed": 113,
       "relistCount": 1,
       "relisted": true,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2616198",
@@ -42358,7 +42316,7 @@
       "daysListed": 127,
       "relistCount": 1,
       "relisted": true,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2616344",
@@ -42381,7 +42339,7 @@
       "daysListed": 107,
       "relistCount": 1,
       "relisted": true,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2616263",
@@ -42405,7 +42363,7 @@
       "daysListed": 73,
       "relistCount": 1,
       "relisted": true,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2615888",
@@ -42429,7 +42387,7 @@
       "daysListed": 130,
       "relistCount": 2,
       "relisted": true,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2615997",
@@ -42453,7 +42411,7 @@
       "daysListed": 52,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-unity-JOBREQ-2616160",
@@ -42477,7 +42435,7 @@
       "daysListed": 115,
       "relistCount": 2,
       "relisted": true,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "ph-blizzard-R028301",
@@ -43322,7 +43280,7 @@
       "country": "US",
       "firstSeen": "2026-10-13T01:36:59.000Z",
       "discoveredAt": "2026-10-13T02:24:34.955Z",
-      "daysListed": 31,
+      "daysListed": 32,
       "relistCount": 0,
       "relisted": false
     },
@@ -45450,7 +45408,7 @@
       "country": "US",
       "firstSeen": "2026-10-09T01:33:21.000Z",
       "discoveredAt": "2026-10-09T02:22:56.790Z",
-      "daysListed": 35,
+      "daysListed": 36,
       "relistCount": 0,
       "relisted": false
     },
@@ -49249,7 +49207,7 @@
       "country": "SG",
       "firstSeen": "2026-10-05T01:26:51.000Z",
       "discoveredAt": "2026-10-05T02:24:51.570Z",
-      "daysListed": 39,
+      "daysListed": 40,
       "relistCount": 0,
       "relisted": false
     },
@@ -54680,7 +54638,7 @@
       "country": "US",
       "firstSeen": "2026-09-26T01:47:41.000Z",
       "discoveredAt": "2026-09-26T02:23:27.534Z",
-      "daysListed": 48,
+      "daysListed": 49,
       "relistCount": 0,
       "relisted": false
     },
@@ -54704,7 +54662,7 @@
       "country": "US",
       "firstSeen": "2026-09-26T01:36:14.000Z",
       "discoveredAt": "2026-09-26T01:46:34.391Z",
-      "daysListed": 48,
+      "daysListed": 49,
       "relistCount": 0,
       "relisted": false
     },
@@ -56432,7 +56390,7 @@
       "country": "US",
       "firstSeen": "2026-09-24T02:16:47.000Z",
       "discoveredAt": "2026-09-24T02:23:49.072Z",
-      "daysListed": 50,
+      "daysListed": 51,
       "relistCount": 0,
       "relisted": false
     },
@@ -56456,7 +56414,7 @@
       "country": "JP",
       "firstSeen": "2026-09-24T01:50:55.000Z",
       "discoveredAt": "2026-09-24T02:02:34.424Z",
-      "daysListed": 50,
+      "daysListed": 51,
       "relistCount": 0,
       "relisted": false
     },
@@ -56484,7 +56442,7 @@
       "country": "US",
       "firstSeen": "2026-09-24T01:34:48.000Z",
       "discoveredAt": "2026-09-24T02:02:34.424Z",
-      "daysListed": 50,
+      "daysListed": 51,
       "relistCount": 0,
       "relisted": false
     },
@@ -56510,7 +56468,7 @@
       "country": "US",
       "firstSeen": "2026-09-24T01:33:52.000Z",
       "discoveredAt": "2026-09-24T02:02:34.424Z",
-      "daysListed": 50,
+      "daysListed": 51,
       "relistCount": 0,
       "relisted": false
     },
@@ -59171,6 +59129,52 @@
       "daysListed": 53,
       "relistCount": 0,
       "relisted": false
+    },
+    {
+      "id": "ph-activision-R028080",
+      "title": "Senior Manager, Emergency Management & Resilience",
+      "tech": [],
+      "studio": "Activision (HQ)",
+      "discipline": "Other",
+      "workType": "Unknown",
+      "location": "Santa Monica, California, United States of America",
+      "region": "North America",
+      "seniority": "Senior",
+      "salary": "$107K–$199K",
+      "yoe": 13,
+      "postedAt": "2026-09-21T00:00:00.000+0000",
+      "url": "https://xboxgaming.wd1.myworkdayjobs.com/en-US/External/job/Santa-Monica/Senior-Manager--Emergency-Management---Resilience_R028080",
+      "parent": "Activision",
+      "_src": "Activision (HQ)",
+      "country": "US",
+      "firstSeen": "2026-09-01T00:00:00.000Z",
+      "discoveredAt": "2026-09-01T21:24:21.953Z",
+      "daysListed": 74,
+      "relistCount": 1,
+      "relisted": true
+    },
+    {
+      "id": "ph-activision-R028080",
+      "title": "Senior Manager, Emergency Management & Resilience",
+      "tech": [],
+      "studio": "Activision (HQ)",
+      "discipline": "Other",
+      "workType": "Unknown",
+      "location": "Santa Monica, California, United States of America",
+      "region": "North America",
+      "seniority": "Senior",
+      "salary": "$107K–$199K",
+      "yoe": 13,
+      "postedAt": "2026-09-21T00:00:00.000+0000",
+      "url": "https://xboxgaming.wd1.myworkdayjobs.com/en-US/External/job/Santa-Monica/Senior-Manager--Emergency-Management---Resilience_R028080",
+      "parent": "Activision",
+      "_src": "Activision (HQ)",
+      "country": "US",
+      "firstSeen": "2026-09-01T00:00:00.000Z",
+      "discoveredAt": "2026-09-01T21:24:21.953Z",
+      "daysListed": 74,
+      "relistCount": 1,
+      "relisted": true
     },
     {
       "id": "wk-rebellion-04AC8EE295",
@@ -65035,6 +65039,31 @@
       "relisted": false
     },
     {
+      "id": "ph-activision-R028075",
+      "title": "Activision 2027 Summer Internships - Tech Art",
+      "tech": [
+        "Technical Art"
+      ],
+      "studio": "Activision (HQ)",
+      "discipline": "Other",
+      "workType": "Unknown",
+      "location": "Middleton, Wisconsin, United States of America",
+      "region": "North America",
+      "seniority": "Mid",
+      "salary": null,
+      "yoe": null,
+      "postedAt": "2026-09-09T00:00:00.000+0000",
+      "url": "https://xboxgaming.wd1.myworkdayjobs.com/en-US/External/job/Middleton/Activision-2027-Summer-Internships---Tech-Art_R028075",
+      "parent": "Activision",
+      "_src": "Activision (HQ)",
+      "country": "US",
+      "firstSeen": "2026-09-09T00:00:00.000Z",
+      "discoveredAt": "2026-09-10T01:25:41.705Z",
+      "daysListed": 66,
+      "relistCount": 0,
+      "relisted": false
+    },
+    {
       "id": "ph-activision-R028087",
       "title": "Senior Level Designer - Raven - Middleton, WI",
       "tech": [],
@@ -65076,31 +65105,6 @@
       "country": "US",
       "firstSeen": "2026-09-09T00:00:00.000Z",
       "discoveredAt": "2026-09-09T17:04:08.514Z",
-      "daysListed": 66,
-      "relistCount": 0,
-      "relisted": false
-    },
-    {
-      "id": "ph-activision-R028075",
-      "title": "Activision 2027 Summer Internships - Tech Art",
-      "tech": [
-        "Technical Art"
-      ],
-      "studio": "Activision (HQ)",
-      "discipline": "Other",
-      "workType": "Unknown",
-      "location": "Middleton, Wisconsin, United States of America",
-      "region": "North America",
-      "seniority": "Mid",
-      "salary": null,
-      "yoe": null,
-      "postedAt": "2026-09-09T00:00:00.000+0000",
-      "url": "https://xboxgaming.wd1.myworkdayjobs.com/en-US/External/job/Middleton/Activision-2027-Summer-Internships---Tech-Art_R028075",
-      "parent": "Activision",
-      "_src": "Activision (HQ)",
-      "country": "US",
-      "firstSeen": "2026-09-09T00:00:00.000Z",
-      "discoveredAt": "2026-09-10T01:25:41.705Z",
       "daysListed": 66,
       "relistCount": 0,
       "relisted": false
@@ -65716,7 +65720,7 @@
       "country": "NZ",
       "firstSeen": "2026-06-25T02:17:33.000Z",
       "discoveredAt": "2026-07-07T01:46:04.158Z",
-      "daysListed": 141,
+      "daysListed": 142,
       "relistCount": 1,
       "relisted": true
     },
@@ -66394,7 +66398,7 @@
       "country": "US",
       "firstSeen": "2026-09-04T01:49:48.000Z",
       "discoveredAt": "2026-09-04T02:24:51.548Z",
-      "daysListed": 70,
+      "daysListed": 71,
       "relistCount": 0,
       "relisted": false
     },
@@ -67977,7 +67981,7 @@
       "country": "US",
       "firstSeen": "2026-09-01T01:32:07.000Z",
       "discoveredAt": "2026-09-01T02:24:18.149Z",
-      "daysListed": 73,
+      "daysListed": 74,
       "relistCount": 0,
       "relisted": false
     },
@@ -71683,7 +71687,7 @@
       "country": "ES",
       "firstSeen": "2026-08-21T02:09:12.000Z",
       "discoveredAt": "2026-08-21T02:21:34.315Z",
-      "daysListed": 84,
+      "daysListed": 85,
       "relistCount": 0,
       "relisted": false
     },
@@ -71707,7 +71711,7 @@
       "country": "US",
       "firstSeen": "2026-08-21T01:25:40.245Z",
       "discoveredAt": "2026-08-21T02:06:54.224Z",
-      "daysListed": 84,
+      "daysListed": 85,
       "relistCount": 0,
       "relisted": false
     },
@@ -74053,7 +74057,7 @@
       "country": "US",
       "firstSeen": "2026-08-15T02:12:38.849Z",
       "discoveredAt": "2026-08-15T02:25:34.959Z",
-      "daysListed": 90,
+      "daysListed": 91,
       "relistCount": 0,
       "relisted": false
     },
@@ -77089,7 +77093,7 @@
       "country": "KR",
       "firstSeen": "2026-08-05T01:26:36.411Z",
       "discoveredAt": "2026-08-05T22:26:06.550Z",
-      "daysListed": 100,
+      "daysListed": 101,
       "relistCount": 0,
       "relisted": false
     },
@@ -77706,7 +77710,7 @@
       "country": "CN",
       "firstSeen": "2026-08-03T01:56:35.000Z",
       "discoveredAt": "2026-08-03T02:24:08.438Z",
-      "daysListed": 102,
+      "daysListed": 103,
       "relistCount": 0,
       "relisted": false
     },
@@ -78582,29 +78586,6 @@
       "daysListed": 107,
       "relistCount": 0,
       "relisted": false
-    },
-    {
-      "id": "js-nexonamericainc-in-game-merchandising-specialist-afH7iB96rm7Q49HRV9jNqT?ref=rss&amp;sid=68",
-      "title": "In-Game Merchandising Specialist",
-      "studio": "Nexon",
-      "discipline": "Other",
-      "workType": "Hybrid",
-      "location": "El Segundo, CA",
-      "region": "North America",
-      "seniority": "Mid",
-      "salary": "$75K–$95K",
-      "yoe": null,
-      "postedAt": "2026-07-29T17:20:04Z",
-      "url": "https://careers.jobscore.com/careers/nexonamericainc/jobs/in-game-merchandising-specialist-afH7iB96rm7Q49HRV9jNqT?ref=rss&amp;sid=68",
-      "parent": "Nexon",
-      "_src": "Nexon",
-      "tech": [],
-      "country": "US",
-      "firstSeen": "2026-06-04T22:36:26.000Z",
-      "discoveredAt": "2026-07-07T01:46:04.158Z",
-      "daysListed": 162,
-      "relistCount": 2,
-      "relisted": true
     },
     {
       "id": "ashby-supercell-09df5324-2d80-44a0-82ab-df13a7f1c5a7",
@@ -80015,7 +79996,7 @@
       "country": "SG",
       "firstSeen": "2026-07-24T02:19:13.000Z",
       "discoveredAt": "2026-07-24T02:23:56.008Z",
-      "daysListed": 112,
+      "daysListed": 113,
       "relistCount": 0,
       "relisted": false
     },
@@ -81873,7 +81854,7 @@
       "country": "US",
       "firstSeen": "2026-07-15T02:25:31.000Z",
       "discoveredAt": "2026-07-15T03:22:37.786Z",
-      "daysListed": 121,
+      "daysListed": 122,
       "relistCount": 0,
       "relisted": false
     },
@@ -85700,50 +85681,50 @@
       "relisted": true
     },
     {
-      "id": "ph-activision-R026708",
-      "title": "Lead UX Designer",
+      "id": "ph-activision-R027666",
+      "title": "Senior Lead Architect",
       "tech": [],
       "studio": "Activision (HQ)",
-      "discipline": "Design",
+      "discipline": "Engineering",
       "workType": "Unknown",
       "location": "Santa Monica, California, United States of America",
       "region": "North America",
       "seniority": "Lead",
-      "salary": "$122K–$225K",
+      "salary": "$146K–$270K",
       "yoe": 10,
       "postedAt": "2026-06-23T00:00:00.000+0000",
-      "url": "https://xboxgaming.wd1.myworkdayjobs.com/en-US/External/job/Santa-Monica/Lead-UX-Designer_R026708-2",
+      "url": "https://xboxgaming.wd1.myworkdayjobs.com/en-US/External/job/Santa-Monica/Senior-Lead-Architect_R027666",
       "parent": "Activision",
       "_src": "Activision (HQ)",
       "country": "US",
-      "firstSeen": "2026-02-12T00:00:00.000Z",
+      "firstSeen": "2026-06-15T00:00:00.000Z",
       "discoveredAt": "2026-07-07T01:46:04.158Z",
-      "daysListed": 275,
-      "relistCount": 1,
-      "relisted": true
+      "daysListed": 152,
+      "relistCount": 0,
+      "relisted": false
     },
     {
-      "id": "ph-activision-R026708",
-      "title": "Lead UX Designer",
+      "id": "ph-activision-R027666",
+      "title": "Senior Lead Architect",
       "tech": [],
       "studio": "Activision (HQ)",
-      "discipline": "Design",
+      "discipline": "Engineering",
       "workType": "Unknown",
       "location": "Santa Monica, California, United States of America",
       "region": "North America",
       "seniority": "Lead",
-      "salary": "$122K–$225K",
+      "salary": "$146K–$270K",
       "yoe": 10,
       "postedAt": "2026-06-23T00:00:00.000+0000",
-      "url": "https://xboxgaming.wd1.myworkdayjobs.com/en-US/External/job/Santa-Monica/Lead-UX-Designer_R026708-2",
+      "url": "https://xboxgaming.wd1.myworkdayjobs.com/en-US/External/job/Santa-Monica/Senior-Lead-Architect_R027666",
       "parent": "Activision",
       "_src": "Activision (HQ)",
       "country": "US",
-      "firstSeen": "2026-02-12T00:00:00.000Z",
+      "firstSeen": "2026-06-15T00:00:00.000Z",
       "discoveredAt": "2026-07-07T01:46:04.158Z",
-      "daysListed": 275,
-      "relistCount": 1,
-      "relisted": true
+      "daysListed": 152,
+      "relistCount": 0,
+      "relisted": false
     },
     {
       "id": "gh-riotgames-8003927",
@@ -89397,7 +89378,7 @@
       "country": "US",
       "firstSeen": "2026-06-04T01:28:31.000Z",
       "discoveredAt": "2026-07-07T01:46:04.158Z",
-      "daysListed": 162,
+      "daysListed": 163,
       "relistCount": 0,
       "relisted": false
     },
@@ -92254,7 +92235,7 @@
       "country": "JP",
       "firstSeen": "2026-05-13T02:05:38.000Z",
       "discoveredAt": "2026-07-07T01:46:04.158Z",
-      "daysListed": 184,
+      "daysListed": 185,
       "relistCount": 0,
       "relisted": false
     },
@@ -93805,7 +93786,7 @@
       "country": "CN",
       "firstSeen": "2026-04-29T02:20:09.000Z",
       "discoveredAt": "2026-07-07T01:46:04.158Z",
-      "daysListed": 198,
+      "daysListed": 199,
       "relistCount": 0,
       "relisted": false
     },
@@ -94600,7 +94581,7 @@
       "country": "JP",
       "firstSeen": "2026-04-23T01:27:08.000Z",
       "discoveredAt": "2026-07-07T01:46:04.158Z",
-      "daysListed": 204,
+      "daysListed": 205,
       "relistCount": 0,
       "relisted": false
     },
@@ -94753,7 +94734,7 @@
       "country": "VN",
       "firstSeen": "2026-04-22T02:16:53.270Z",
       "discoveredAt": "2026-07-07T01:46:04.158Z",
-      "daysListed": 205,
+      "daysListed": 206,
       "relistCount": 0,
       "relisted": false
     },
@@ -97555,7 +97536,7 @@
       "country": "AU",
       "firstSeen": "2026-03-18T02:10:14.000Z",
       "discoveredAt": "2026-10-15T07:24:50.554Z",
-      "daysListed": 240,
+      "daysListed": 241,
       "relistCount": 0,
       "relisted": false
     },
@@ -97779,7 +97760,7 @@
       "_src": "Roblox",
       "firstSeen": "2026-03-12T01:54:31.000Z",
       "discoveredAt": "2026-07-07T01:46:04.158Z",
-      "daysListed": 246,
+      "daysListed": 247,
       "relistCount": 0,
       "relisted": false
     },
@@ -98757,7 +98738,7 @@
       "country": "CN",
       "firstSeen": "2026-02-24T02:15:44.000Z",
       "discoveredAt": "2026-07-08T08:09:25.633Z",
-      "daysListed": 262,
+      "daysListed": 263,
       "relistCount": 0,
       "relisted": false
     },
@@ -101164,7 +101145,7 @@
       "country": "HK",
       "firstSeen": "2025-12-12T01:38:19.000Z",
       "discoveredAt": "2026-07-07T01:46:04.158Z",
-      "daysListed": 336,
+      "daysListed": 337,
       "relistCount": 0,
       "relisted": false
     },
@@ -103182,7 +103163,7 @@
       "country": "KR",
       "firstSeen": "2025-09-30T02:22:20.242Z",
       "discoveredAt": "2026-07-07T01:46:04.158Z",
-      "daysListed": 409,
+      "daysListed": 410,
       "relistCount": 0,
       "relisted": false
     },
@@ -103235,7 +103216,7 @@
       "country": "CN",
       "firstSeen": "2025-09-24T02:09:31.000Z",
       "discoveredAt": "2026-07-07T01:46:04.158Z",
-      "daysListed": 415,
+      "daysListed": 416,
       "relistCount": 0,
       "relisted": false
     },
@@ -103332,7 +103313,7 @@
       "country": "KR",
       "firstSeen": "2025-09-22T01:50:48.579Z",
       "discoveredAt": "2026-07-07T01:46:04.158Z",
-      "daysListed": 417,
+      "daysListed": 418,
       "relistCount": 0,
       "relisted": false
     },
@@ -103356,7 +103337,7 @@
       "country": "KR",
       "firstSeen": "2025-09-22T01:43:38.917Z",
       "discoveredAt": "2026-07-07T01:46:04.158Z",
-      "daysListed": 417,
+      "daysListed": 418,
       "relistCount": 0,
       "relisted": false
     },
@@ -104078,7 +104059,7 @@
       "country": "CN",
       "firstSeen": "2025-07-25T01:55:38.000Z",
       "discoveredAt": "2026-07-07T01:46:04.158Z",
-      "daysListed": 476,
+      "daysListed": 477,
       "relistCount": 0,
       "relisted": false
     },
@@ -106163,7 +106144,7 @@
       "country": "NZ",
       "firstSeen": "2025-01-28T01:50:41.820Z",
       "discoveredAt": "2026-07-07T01:46:04.158Z",
-      "daysListed": 654,
+      "daysListed": 655,
       "relistCount": 0,
       "relisted": false
     },
@@ -110009,7 +109990,7 @@
       "country": "CA",
       "firstSeen": "2026-10-27T01:25:49.369Z",
       "discoveredAt": "2026-10-27T01:25:49.369Z",
-      "daysListed": 17,
+      "daysListed": 18,
       "relistCount": 0,
       "relisted": false
     },
@@ -110824,7 +110805,7 @@
       "country": "CA",
       "firstSeen": "2026-10-05T02:24:51.570Z",
       "discoveredAt": "2026-10-05T02:24:51.570Z",
-      "daysListed": 39,
+      "daysListed": 40,
       "relistCount": 0,
       "relisted": false
     },
@@ -110847,7 +110828,7 @@
       "country": "CA",
       "firstSeen": "2026-10-05T02:24:51.570Z",
       "discoveredAt": "2026-10-05T02:24:51.570Z",
-      "daysListed": 39,
+      "daysListed": 40,
       "relistCount": 0,
       "relisted": false
     },
@@ -111226,7 +111207,7 @@
       "country": "CA",
       "firstSeen": "2026-09-23T01:24:39.474Z",
       "discoveredAt": "2026-09-23T01:24:39.474Z",
-      "daysListed": 51,
+      "daysListed": 52,
       "relistCount": 0,
       "relisted": false
     },
@@ -112536,7 +112517,7 @@
       "country": "CN",
       "firstSeen": "2026-09-14T02:24:43.713Z",
       "discoveredAt": "2026-09-14T02:24:43.713Z",
-      "daysListed": 60,
+      "daysListed": 61,
       "relistCount": 0,
       "relisted": false
     },
@@ -112720,7 +112701,7 @@
       "country": "CA",
       "firstSeen": "2026-09-29T01:25:17.667Z",
       "discoveredAt": "2026-09-29T01:25:17.667Z",
-      "daysListed": 45,
+      "daysListed": 46,
       "relistCount": 0,
       "relisted": false
     },
@@ -113807,7 +113788,7 @@
       "country": "CN",
       "firstSeen": "2026-09-14T02:24:43.713Z",
       "discoveredAt": "2026-09-14T02:24:43.713Z",
-      "daysListed": 60,
+      "daysListed": 61,
       "relistCount": 0,
       "relisted": false
     },
@@ -113878,7 +113859,7 @@
       "country": "US",
       "firstSeen": "2026-11-10T02:24:13.856Z",
       "discoveredAt": "2026-11-10T02:24:13.856Z",
-      "daysListed": 3,
+      "daysListed": 4,
       "relistCount": 0,
       "relisted": false
     },
@@ -114292,7 +114273,7 @@
       "country": "CN",
       "firstSeen": "2026-09-14T02:24:43.713Z",
       "discoveredAt": "2026-09-14T02:24:43.713Z",
-      "daysListed": 60,
+      "daysListed": 61,
       "relistCount": 0,
       "relisted": false
     },
@@ -115287,7 +115268,7 @@
       "country": "US",
       "firstSeen": "2026-11-10T02:24:13.856Z",
       "discoveredAt": "2026-11-10T02:24:13.856Z",
-      "daysListed": 3,
+      "daysListed": 4,
       "relistCount": 0,
       "relisted": false
     },
@@ -115475,7 +115456,7 @@
       "country": "CN",
       "firstSeen": "2026-09-14T02:24:43.713Z",
       "discoveredAt": "2026-09-14T02:24:43.713Z",
-      "daysListed": 60,
+      "daysListed": 61,
       "relistCount": 0,
       "relisted": false
     },
@@ -118700,7 +118681,7 @@
       "tech": [],
       "firstSeen": "2026-07-15T02:23:00.014Z",
       "discoveredAt": "2026-07-15T02:23:00.014Z",
-      "daysListed": 121,
+      "daysListed": 122,
       "relistCount": 0,
       "relisted": false
     },
@@ -118725,7 +118706,7 @@
       ],
       "firstSeen": "2026-07-15T02:23:00.014Z",
       "discoveredAt": "2026-07-15T02:23:00.014Z",
-      "daysListed": 121,
+      "daysListed": 122,
       "relistCount": 0,
       "relisted": false
     },
@@ -118747,7 +118728,7 @@
       "tech": [],
       "firstSeen": "2026-07-15T02:23:00.014Z",
       "discoveredAt": "2026-07-15T02:23:00.014Z",
-      "daysListed": 121,
+      "daysListed": 122,
       "relistCount": 0,
       "relisted": false
     },
@@ -118859,7 +118840,7 @@
       "country": "KR",
       "firstSeen": "2026-11-09T02:23:46.748Z",
       "discoveredAt": "2026-11-09T02:23:46.748Z",
-      "daysListed": 4,
+      "daysListed": 5,
       "relistCount": 0,
       "relisted": false
     },
@@ -118882,7 +118863,7 @@
       "country": "KR",
       "firstSeen": "2026-11-09T02:23:46.748Z",
       "discoveredAt": "2026-11-09T02:23:46.748Z",
-      "daysListed": 4,
+      "daysListed": 5,
       "relistCount": 0,
       "relisted": false
     },
@@ -118905,7 +118886,7 @@
       "country": "KR",
       "firstSeen": "2026-11-09T02:23:46.748Z",
       "discoveredAt": "2026-11-09T02:23:46.748Z",
-      "daysListed": 4,
+      "daysListed": 5,
       "relistCount": 0,
       "relisted": false
     },
@@ -118928,7 +118909,7 @@
       "country": "KR",
       "firstSeen": "2026-11-09T02:23:46.748Z",
       "discoveredAt": "2026-11-09T02:23:46.748Z",
-      "daysListed": 4,
+      "daysListed": 5,
       "relistCount": 0,
       "relisted": false
     },
@@ -118951,7 +118932,7 @@
       "country": "KR",
       "firstSeen": "2026-11-09T02:23:46.748Z",
       "discoveredAt": "2026-11-09T02:23:46.748Z",
-      "daysListed": 4,
+      "daysListed": 5,
       "relistCount": 0,
       "relisted": false
     },
@@ -118974,7 +118955,7 @@
       "country": "IN",
       "firstSeen": "2026-11-09T02:23:46.748Z",
       "discoveredAt": "2026-11-09T02:23:46.748Z",
-      "daysListed": 4,
+      "daysListed": 5,
       "relistCount": 0,
       "relisted": false
     },
@@ -119203,7 +119184,7 @@
       "country": "KR",
       "firstSeen": "2026-10-27T02:24:59.237Z",
       "discoveredAt": "2026-10-27T02:24:59.237Z",
-      "daysListed": 17,
+      "daysListed": 18,
       "relistCount": 0,
       "relisted": false
     },
@@ -119226,7 +119207,7 @@
       "country": "KR",
       "firstSeen": "2026-10-27T02:24:59.237Z",
       "discoveredAt": "2026-10-27T02:24:59.237Z",
-      "daysListed": 17,
+      "daysListed": 18,
       "relistCount": 0,
       "relisted": false
     },
@@ -119272,7 +119253,7 @@
       "country": "KR",
       "firstSeen": "2026-10-27T02:24:59.237Z",
       "discoveredAt": "2026-10-27T02:24:59.237Z",
-      "daysListed": 17,
+      "daysListed": 18,
       "relistCount": 0,
       "relisted": false
     },
@@ -119295,7 +119276,7 @@
       "country": "CA",
       "firstSeen": "2026-10-27T02:24:59.237Z",
       "discoveredAt": "2026-10-27T02:24:59.237Z",
-      "daysListed": 17,
+      "daysListed": 18,
       "relistCount": 0,
       "relisted": false
     },
@@ -119318,7 +119299,7 @@
       "country": "CA",
       "firstSeen": "2026-10-27T02:24:59.237Z",
       "discoveredAt": "2026-10-27T02:24:59.237Z",
-      "daysListed": 17,
+      "daysListed": 18,
       "relistCount": 0,
       "relisted": false
     },
@@ -119341,7 +119322,7 @@
       "country": "CA",
       "firstSeen": "2026-10-27T02:24:59.237Z",
       "discoveredAt": "2026-10-27T02:24:59.237Z",
-      "daysListed": 17,
+      "daysListed": 18,
       "relistCount": 0,
       "relisted": false
     },
@@ -119364,7 +119345,7 @@
       "country": "CA",
       "firstSeen": "2026-10-27T02:24:59.237Z",
       "discoveredAt": "2026-10-27T02:24:59.237Z",
-      "daysListed": 17,
+      "daysListed": 18,
       "relistCount": 0,
       "relisted": false
     },
@@ -119387,7 +119368,7 @@
       "country": "KR",
       "firstSeen": "2026-10-27T02:24:59.237Z",
       "discoveredAt": "2026-10-27T02:24:59.237Z",
-      "daysListed": 17,
+      "daysListed": 18,
       "relistCount": 0,
       "relisted": false
     },
@@ -119410,7 +119391,7 @@
       "country": "KR",
       "firstSeen": "2026-10-27T02:24:59.237Z",
       "discoveredAt": "2026-10-27T02:24:59.237Z",
-      "daysListed": 17,
+      "daysListed": 18,
       "relistCount": 0,
       "relisted": false
     },
@@ -119433,7 +119414,7 @@
       "country": "KR",
       "firstSeen": "2026-10-27T02:24:59.237Z",
       "discoveredAt": "2026-10-27T02:24:59.237Z",
-      "daysListed": 17,
+      "daysListed": 18,
       "relistCount": 0,
       "relisted": false
     },
@@ -119456,7 +119437,7 @@
       "country": "KR",
       "firstSeen": "2026-10-27T02:24:59.237Z",
       "discoveredAt": "2026-10-27T02:24:59.237Z",
-      "daysListed": 17,
+      "daysListed": 18,
       "relistCount": 0,
       "relisted": false
     },
@@ -119479,7 +119460,7 @@
       "country": "KR",
       "firstSeen": "2026-10-27T02:24:59.237Z",
       "discoveredAt": "2026-10-27T02:24:59.237Z",
-      "daysListed": 17,
+      "daysListed": 18,
       "relistCount": 0,
       "relisted": false
     },
@@ -119525,7 +119506,7 @@
       "country": "KR",
       "firstSeen": "2026-10-15T02:25:17.076Z",
       "discoveredAt": "2026-10-15T02:25:17.076Z",
-      "daysListed": 29,
+      "daysListed": 30,
       "relistCount": 0,
       "relisted": false
     },
@@ -119548,7 +119529,7 @@
       "country": "IN",
       "firstSeen": "2026-10-15T02:25:17.076Z",
       "discoveredAt": "2026-10-15T02:25:17.076Z",
-      "daysListed": 29,
+      "daysListed": 30,
       "relistCount": 0,
       "relisted": false
     },
@@ -119571,7 +119552,7 @@
       "country": "KR",
       "firstSeen": "2026-10-15T02:25:17.076Z",
       "discoveredAt": "2026-10-15T02:25:17.076Z",
-      "daysListed": 29,
+      "daysListed": 30,
       "relistCount": 0,
       "relisted": false
     },
@@ -119594,7 +119575,7 @@
       "country": "KR",
       "firstSeen": "2026-10-15T02:25:17.076Z",
       "discoveredAt": "2026-10-15T02:25:17.076Z",
-      "daysListed": 29,
+      "daysListed": 30,
       "relistCount": 0,
       "relisted": false
     },
@@ -119617,7 +119598,7 @@
       "country": "KR",
       "firstSeen": "2026-10-15T02:25:17.076Z",
       "discoveredAt": "2026-10-15T02:25:17.076Z",
-      "daysListed": 29,
+      "daysListed": 30,
       "relistCount": 0,
       "relisted": false
     },
@@ -119640,7 +119621,7 @@
       "country": "KR",
       "firstSeen": "2026-10-15T02:25:17.076Z",
       "discoveredAt": "2026-10-15T02:25:17.076Z",
-      "daysListed": 29,
+      "daysListed": 30,
       "relistCount": 0,
       "relisted": false
     },
@@ -119663,7 +119644,7 @@
       "country": "KR",
       "firstSeen": "2026-10-15T02:25:17.076Z",
       "discoveredAt": "2026-10-15T02:25:17.076Z",
-      "daysListed": 29,
+      "daysListed": 30,
       "relistCount": 0,
       "relisted": false
     },
@@ -119686,7 +119667,7 @@
       "country": "IN",
       "firstSeen": "2026-10-15T02:25:17.076Z",
       "discoveredAt": "2026-10-15T02:25:17.076Z",
-      "daysListed": 29,
+      "daysListed": 30,
       "relistCount": 0,
       "relisted": false
     },
@@ -120033,7 +120014,7 @@
       "country": "KR",
       "firstSeen": "2026-09-16T01:25:21.171Z",
       "discoveredAt": "2026-09-16T01:25:21.171Z",
-      "daysListed": 58,
+      "daysListed": 59,
       "relistCount": 0,
       "relisted": false
     },
@@ -120540,7 +120521,7 @@
       "country": "KR",
       "firstSeen": "2026-09-04T01:24:41.702Z",
       "discoveredAt": "2026-09-04T01:24:41.702Z",
-      "daysListed": 70,
+      "daysListed": 71,
       "relistCount": 0,
       "relisted": false
     },
@@ -120836,7 +120817,7 @@
       "country": "KR",
       "firstSeen": "2026-09-04T01:24:41.702Z",
       "discoveredAt": "2026-09-04T01:24:41.702Z",
-      "daysListed": 70,
+      "daysListed": 71,
       "relistCount": 0,
       "relisted": false
     },
@@ -121041,7 +121022,7 @@
       "country": "IN",
       "firstSeen": "2026-09-04T01:24:41.702Z",
       "discoveredAt": "2026-09-04T01:24:41.702Z",
-      "daysListed": 70,
+      "daysListed": 71,
       "relistCount": 0,
       "relisted": false
     },
@@ -121202,7 +121183,7 @@
       "country": "KR",
       "firstSeen": "2026-10-15T02:25:17.076Z",
       "discoveredAt": "2026-10-15T02:25:17.076Z",
-      "daysListed": 29,
+      "daysListed": 30,
       "relistCount": 0,
       "relisted": false
     },
@@ -122313,7 +122294,7 @@
       "country": "KR",
       "firstSeen": "2026-10-27T02:24:59.237Z",
       "discoveredAt": "2026-10-27T02:24:59.237Z",
-      "daysListed": 17,
+      "daysListed": 18,
       "relistCount": 0,
       "relisted": false
     },
@@ -129138,7 +129119,7 @@
       "country": "SG",
       "firstSeen": "2026-10-23T02:24:22.616Z",
       "discoveredAt": "2026-10-23T02:24:22.616Z",
-      "daysListed": 21,
+      "daysListed": 22,
       "relistCount": 0,
       "relisted": false
     },
@@ -131410,7 +131391,7 @@
       "country": "US",
       "firstSeen": "2026-11-03T01:24:41.280Z",
       "discoveredAt": "2026-11-03T01:24:41.280Z",
-      "daysListed": 10,
+      "daysListed": 11,
       "relistCount": 0,
       "relisted": false
     },
@@ -132616,7 +132597,7 @@
       "country": "JP",
       "firstSeen": "2026-10-26T02:08:29.345Z",
       "discoveredAt": "2026-10-26T02:08:29.345Z",
-      "daysListed": 18,
+      "daysListed": 19,
       "relistCount": 0,
       "relisted": false
     },
@@ -132869,7 +132850,7 @@
       "country": "JP",
       "firstSeen": "2026-10-30T02:20:54.512Z",
       "discoveredAt": "2026-10-30T02:20:54.512Z",
-      "daysListed": 14,
+      "daysListed": 15,
       "relistCount": 0,
       "relisted": false
     },
@@ -133191,7 +133172,7 @@
       "country": "JP",
       "firstSeen": "2026-07-13T02:22:41.767Z",
       "discoveredAt": "2026-07-13T02:22:41.767Z",
-      "daysListed": 123,
+      "daysListed": 124,
       "relistCount": 0,
       "relisted": false
     },
@@ -135742,30 +135723,6 @@
       "relisted": false
     },
     {
-      "id": "bamboo-innersloth-35",
-      "title": "Senior Networked Gameplay Programmer",
-      "studio": "Innersloth",
-      "discipline": "Engineering",
-      "workType": "Unknown",
-      "location": "Unlisted",
-      "region": "Other",
-      "seniority": "Senior",
-      "salary": null,
-      "yoe": null,
-      "postedAt": null,
-      "url": "https://innersloth.bamboohr.com/careers/35",
-      "parent": "Innersloth",
-      "_src": "Innersloth",
-      "tech": [
-        "Netcode"
-      ],
-      "firstSeen": "2026-10-20T18:24:52.081Z",
-      "discoveredAt": "2026-10-20T18:24:52.081Z",
-      "daysListed": 24,
-      "relistCount": 0,
-      "relisted": false
-    },
-    {
       "id": "bamboo-innersloth-36",
       "title": "UI/UX Designer",
       "studio": "Innersloth",
@@ -135793,7 +135750,7 @@
       "studio": "Coffee Stain Studios",
       "discipline": "Art",
       "workType": "Unknown",
-      "location": "Stockholm <h2 class=\"mb-16 text-4xl",
+      "location": "Stockholm <h2 class=\" font-company-header text-block-title",
       "region": "Europe",
       "seniority": "Mid",
       "salary": null,
@@ -136464,7 +136421,7 @@
       "country": "US",
       "firstSeen": "2026-09-02T01:25:18.084Z",
       "discoveredAt": "2026-09-02T01:25:18.084Z",
-      "daysListed": 72,
+      "daysListed": 73,
       "relistCount": 0,
       "relisted": false
     },
@@ -138523,7 +138480,7 @@
       "country": "US",
       "firstSeen": "2026-09-29T02:09:31.271Z",
       "discoveredAt": "2026-09-29T02:09:31.271Z",
-      "daysListed": 45,
+      "daysListed": 46,
       "relistCount": 0,
       "relisted": false
     },
@@ -139077,7 +139034,7 @@
       "country": "KR",
       "firstSeen": "2026-11-04T01:24:58.317Z",
       "discoveredAt": "2026-11-04T01:24:58.317Z",
-      "daysListed": 9,
+      "daysListed": 10,
       "relistCount": 0,
       "relisted": false
     },
@@ -139123,7 +139080,7 @@
       "country": "KR",
       "firstSeen": "2026-11-02T02:25:30.987Z",
       "discoveredAt": "2026-11-02T02:25:30.987Z",
-      "daysListed": 11,
+      "daysListed": 12,
       "relistCount": 0,
       "relisted": false
     },
@@ -139146,7 +139103,7 @@
       "country": "KR",
       "firstSeen": "2026-10-23T01:43:55.536Z",
       "discoveredAt": "2026-10-23T01:43:55.536Z",
-      "daysListed": 21,
+      "daysListed": 22,
       "relistCount": 0,
       "relisted": false
     },
@@ -139307,7 +139264,7 @@
       "country": "KR",
       "firstSeen": "2026-10-12T01:25:31.033Z",
       "discoveredAt": "2026-10-12T01:25:31.033Z",
-      "daysListed": 32,
+      "daysListed": 33,
       "relistCount": 0,
       "relisted": false
     },
@@ -139353,7 +139310,7 @@
       "country": "KR",
       "firstSeen": "2026-09-30T01:25:31.803Z",
       "discoveredAt": "2026-09-30T01:25:31.803Z",
-      "daysListed": 44,
+      "daysListed": 45,
       "relistCount": 0,
       "relisted": false
     },
@@ -139468,7 +139425,7 @@
       "country": "KR",
       "firstSeen": "2026-09-17T01:24:55.360Z",
       "discoveredAt": "2026-09-17T01:24:55.360Z",
-      "daysListed": 57,
+      "daysListed": 58,
       "relistCount": 0,
       "relisted": false
     },
@@ -140204,7 +140161,7 @@
       "country": "KR",
       "firstSeen": "2026-08-31T02:24:44.800Z",
       "discoveredAt": "2026-08-31T02:24:44.800Z",
-      "daysListed": 74,
+      "daysListed": 75,
       "relistCount": 0,
       "relisted": false
     },
@@ -140227,7 +140184,7 @@
       "country": "KR",
       "firstSeen": "2026-08-27T01:25:23.193Z",
       "discoveredAt": "2026-08-27T01:25:23.193Z",
-      "daysListed": 78,
+      "daysListed": 79,
       "relistCount": 0,
       "relisted": false
     },
@@ -143163,7 +143120,7 @@
       "country": "DE",
       "firstSeen": "2026-07-12T02:23:40.789Z",
       "discoveredAt": "2026-07-12T02:23:40.789Z",
-      "daysListed": 124,
+      "daysListed": 125,
       "relistCount": 0,
       "relisted": false
     },
@@ -149322,7 +149279,7 @@
       "country": "JP",
       "firstSeen": "2026-11-11T02:25:07.904Z",
       "discoveredAt": "2026-11-11T02:25:07.904Z",
-      "daysListed": 2,
+      "daysListed": 3,
       "relistCount": 0,
       "relisted": false
     },
@@ -153090,7 +153047,7 @@
         ]
       },
       "Roblox": {
-        "now": 270,
+        "now": 271,
         "d7": 270,
         "d30": 259,
         "ever": 277,
@@ -153125,7 +153082,7 @@
           275,
           275,
           271,
-          270
+          271
         ]
       },
       "Discord": {
@@ -154377,7 +154334,7 @@
         ]
       },
       "Warner Bros. Games": {
-        "now": 18,
+        "now": 16,
         "d7": 16,
         "d30": 19,
         "ever": 26,
@@ -154412,7 +154369,7 @@
           14,
           16,
           13,
-          18
+          16
         ]
       },
       "Studio Wildcard": {
@@ -158511,7 +158468,7 @@
         ]
       },
       "Innersloth": {
-        "now": 2,
+        "now": 1,
         "d7": 2,
         "d30": 0,
         "ever": 2,
@@ -158546,7 +158503,7 @@
           2,
           2,
           2,
-          2
+          1
         ]
       },
       "Balor Games": {
@@ -167247,7 +167204,7 @@
         ]
       },
       "Engineering": {
-        "now": 1768,
+        "now": 1766,
         "d7": 1778,
         "d30": 1838,
         "series": [
@@ -167280,11 +167237,11 @@
           1774,
           1772,
           1764,
-          1768
+          1766
         ]
       },
       "Marketing": {
-        "now": 435,
+        "now": 434,
         "d7": 436,
         "d30": 452,
         "series": [
@@ -167317,7 +167274,7 @@
           437,
           438,
           433,
-          435
+          434
         ]
       },
       "Production": {
@@ -167358,7 +167315,7 @@
         ]
       },
       "Design": {
-        "now": 652,
+        "now": 651,
         "d7": 652,
         "d30": 647,
         "series": [
@@ -167391,7 +167348,7 @@
           654,
           645,
           648,
-          652
+          651
         ]
       },
       "Data & Analytics": {
@@ -167469,7 +167426,7 @@
         ]
       },
       "Other": {
-        "now": 807,
+        "now": 809,
         "d7": 813,
         "d30": 815,
         "series": [
@@ -167502,7 +167459,7 @@
           797,
           799,
           807,
-          807
+          809
         ]
       },
       "Audio": {
@@ -167730,7 +167687,7 @@
     },
     "salary": {
       "now": 22,
-      "nowN": 1334,
+      "nowN": 1335,
       "d7": 22,
       "d7N": 1332,
       "d30": 21,
@@ -167769,7 +167726,7 @@
     },
     "skills": {
       "Unreal": {
-        "now": 505,
+        "now": 504,
         "d7": 471,
         "d30": 496
       },
@@ -167894,7 +167851,7 @@
         "d30": 119
       },
       "Technical Art": {
-        "now": 163,
+        "now": 162,
         "d7": 157,
         "d30": 168
       },
@@ -167999,7 +167956,7 @@
         "d30": 4
       },
       "Netcode": {
-        "now": 45,
+        "now": 44,
         "d7": 46,
         "d30": 47
       },
