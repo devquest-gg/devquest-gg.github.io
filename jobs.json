@@ -1,11 +1,12 @@
 {
-  "scrapedAt": "2026-11-14T07:15:34.843Z",
+  "scrapedAt": "2026-11-14T07:24:14.998Z",
   "studios": 378,
-  "jobCount": 5854,
+  "jobCount": 5856,
   "errors": [
     "ZeniMax / Bethesda: 0 jobs parsed (Zenimax page may have changed layout)",
     "Unity: HTTP 521",
     "LightSpeed Studios: HTTP 521",
+    "Mojang Studios: HTTP 429 — keeping 6 roles from the last good run",
     "OtherSide Entertainment: HTTP 404",
     "Sega: Unexpected token '<', \"<!DOCTYPE \"... is not valid JSON — keeping 13 roles from the last good run",
     "Tripwire Interactive: HTTP 404",
@@ -72,7 +73,7 @@
     },
     {
       "studio": "Activision (HQ)",
-      "jobs": 25,
+      "jobs": 27,
       "sample": "https://xboxgaming.wd1.myworkdayjobs.com/en-US/External/job/London---King---Ampersand/Employee-Relations-Specialist--6-month-FTC-_R028355-2"
     },
     {
@@ -82,7 +83,7 @@
     },
     {
       "studio": "Warner Bros. Games",
-      "jobs": 17,
+      "jobs": 19,
       "sample": "https://warnerbros.wd5.myworkdayjobs.com/en-US/global/job/Montreal-888-boul-De-Maisonneuve-Est/Cheffe-d-quipe--conception-technique---Lead-Technical-Designer_R000109849"
     },
     {
@@ -172,7 +173,7 @@
     },
     {
       "studio": "Elsewhere Entertainment",
-      "jobs": 11,
+      "jobs": 9,
       "sample": "https://xboxgaming.wd1.myworkdayjobs.com/en-US/External/job/Malm/Senior-Technical-Artist_R028305-1"
     },
     {
@@ -232,7 +233,7 @@
     },
     {
       "studio": "Sledgehammer Games",
-      "jobs": 9,
+      "jobs": 11,
       "sample": "https://xboxgaming.wd1.myworkdayjobs.com/en-US/External/job/San-Mateo/Technical-Sound-Designer--Contract----Sledgehammer-Games_R028256"
     },
     {
@@ -397,7 +398,7 @@
     },
     {
       "studio": "Treyarch",
-      "jobs": 3,
+      "jobs": 1,
       "sample": "https://xboxgaming.wd1.myworkdayjobs.com/en-US/External/job/Vancouver/IT-Technician--Contractor----Treyarch---Vancouver--BC_R028092"
     },
     {
@@ -3452,7 +3453,8 @@
       "discoveredAt": "2026-11-03T17:30:43.281Z",
       "daysListed": 10,
       "relistCount": 0,
-      "relisted": false
+      "relisted": false,
+      "_carry": 1
     },
     {
       "id": "lever-frontier-de121486-4c06-4186-8c2c-c2f086619cc3",
@@ -4593,7 +4595,8 @@
       "discoveredAt": "2026-11-11T22:24:43.392Z",
       "daysListed": 2,
       "relistCount": 0,
-      "relisted": false
+      "relisted": false,
+      "_carry": 1
     },
     {
       "id": "gh-mobentertainment-5282815007",
@@ -4723,7 +4726,8 @@
       "discoveredAt": "2026-11-11T21:25:37.048Z",
       "daysListed": 2,
       "relistCount": 0,
-      "relisted": false
+      "relisted": false,
+      "_carry": 1
     },
     {
       "id": "gh-riotgames-8356525",
@@ -8350,7 +8354,8 @@
       "discoveredAt": "2026-09-17T19:24:40.300Z",
       "daysListed": 57,
       "relistCount": 1,
-      "relisted": true
+      "relisted": true,
+      "_carry": 1
     },
     {
       "id": "gh-riotgames-8359392",
@@ -9554,27 +9559,25 @@
       "relisted": false
     },
     {
-      "id": "ph-blizzard-R028279",
-      "title": "Principal Gameplay Engineer | Irvine, CA",
-      "tech": [
-        "C++"
-      ],
+      "id": "ph-blizzard-R028200",
+      "title": "Manager, Storyboard Department (SFD / Cinematics)",
+      "tech": [],
       "studio": "Blizzard Entertainment",
-      "discipline": "Engineering",
+      "discipline": "Art",
       "workType": "Unknown",
       "location": "Irvine, California, United States of America",
       "region": "North America",
-      "seniority": "Lead",
-      "salary": "$124K–$229K",
-      "yoe": 12,
+      "seniority": "Mid",
+      "salary": "$99K–$184K",
+      "yoe": 8,
       "postedAt": "2026-11-09T00:00:00.000+0000",
-      "url": "https://xboxgaming.wd1.myworkdayjobs.com/en-US/Blizzard_External_Careers/job/Irvine---Blizzard---Blizzard-Way/Senior-Gameplay-Engineer-II---Irvine--CA_R028279",
+      "url": "https://xboxgaming.wd1.myworkdayjobs.com/en-US/Blizzard_External_Careers/job/Irvine---Blizzard---Blizzard-Way/Manager--Storyboard-Department--SFD---Cinematics-_R028200-1",
       "parent": "Blizzard Entertainment",
       "_src": "Blizzard Entertainment",
       "country": "US",
-      "firstSeen": "2026-10-09T00:00:00.000Z",
-      "discoveredAt": "2026-10-11T07:24:06.346Z",
-      "daysListed": 36,
+      "firstSeen": "2026-09-25T00:00:00.000Z",
+      "discoveredAt": "2026-09-27T07:27:26.019Z",
+      "daysListed": 50,
       "relistCount": 1,
       "relisted": true
     },
@@ -9818,7 +9821,7 @@
       "daysListed": 8,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "gh-sonyinteractiveentertainmentglobal-6251328004",
@@ -10841,7 +10844,7 @@
       "daysListed": 8,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "gh-zyngacareers-6251244004",
@@ -12025,7 +12028,7 @@
       "daysListed": 15,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-sega-JR100228",
@@ -12049,7 +12052,7 @@
       "daysListed": 9,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "gh-riotgames-8351148",
@@ -15665,7 +15668,7 @@
       "country": "AZ",
       "firstSeen": "2026-11-03T07:22:03.446Z",
       "discoveredAt": "2026-11-03T08:24:15.600Z",
-      "daysListed": 10,
+      "daysListed": 11,
       "relistCount": 0,
       "relisted": false
     },
@@ -15808,52 +15811,6 @@
       "country": "US",
       "firstSeen": "2026-09-01T00:00:00.000Z",
       "discoveredAt": "2026-09-02T12:24:49.452Z",
-      "daysListed": 74,
-      "relistCount": 1,
-      "relisted": true
-    },
-    {
-      "id": "ph-activision-R028092",
-      "title": "IT Technician (Contractor) - Treyarch - Vancouver, BC",
-      "tech": [],
-      "studio": "Treyarch",
-      "discipline": "Engineering",
-      "workType": "Unknown",
-      "location": "Vancouver, British Columbia, Canada",
-      "region": "North America",
-      "seniority": "Mid",
-      "salary": "$69K–$137K",
-      "yoe": 5,
-      "postedAt": "2026-11-03T00:00:00.000+0000",
-      "url": "https://xboxgaming.wd1.myworkdayjobs.com/en-US/External/job/Vancouver/IT-Technician--Contractor----Treyarch---Vancouver--BC_R028092",
-      "parent": "Activision",
-      "_src": "Activision (HQ)",
-      "country": "CA",
-      "firstSeen": "2026-09-01T00:00:00.000Z",
-      "discoveredAt": "2026-09-02T01:25:18.084Z",
-      "daysListed": 74,
-      "relistCount": 1,
-      "relisted": true
-    },
-    {
-      "id": "ph-activision-R028092",
-      "title": "IT Technician (Contractor) - Treyarch - Vancouver, BC",
-      "tech": [],
-      "studio": "Treyarch",
-      "discipline": "Engineering",
-      "workType": "Unknown",
-      "location": "Vancouver, British Columbia, Canada",
-      "region": "North America",
-      "seniority": "Mid",
-      "salary": "$69K–$137K",
-      "yoe": 5,
-      "postedAt": "2026-11-03T00:00:00.000+0000",
-      "url": "https://xboxgaming.wd1.myworkdayjobs.com/en-US/External/job/Vancouver/IT-Technician--Contractor----Treyarch---Vancouver--BC_R028092",
-      "parent": "Activision",
-      "_src": "Activision (HQ)",
-      "country": "CA",
-      "firstSeen": "2026-09-01T00:00:00.000Z",
-      "discoveredAt": "2026-09-02T01:25:18.084Z",
       "daysListed": 74,
       "relistCount": 1,
       "relisted": true
@@ -28709,56 +28666,6 @@
       "relisted": false
     },
     {
-      "id": "ph-activision-R028305",
-      "title": "Senior Technical Artist",
-      "tech": [
-        "Technical Art"
-      ],
-      "studio": "Elsewhere Entertainment",
-      "discipline": "Art",
-      "workType": "Unknown",
-      "location": "Malmö, Sweden",
-      "region": "Europe",
-      "seniority": "Senior",
-      "salary": null,
-      "yoe": null,
-      "postedAt": "2026-10-22T00:00:00.000+0000",
-      "url": "https://xboxgaming.wd1.myworkdayjobs.com/en-US/External/job/Malm/Senior-Technical-Artist_R028305-1",
-      "parent": "Activision",
-      "_src": "Activision (HQ)",
-      "country": "SE",
-      "firstSeen": "2026-10-20T00:00:00.000Z",
-      "discoveredAt": "2026-10-20T17:26:00.755Z",
-      "daysListed": 25,
-      "relistCount": 0,
-      "relisted": false
-    },
-    {
-      "id": "ph-activision-R028305",
-      "title": "Senior Technical Artist",
-      "tech": [
-        "Technical Art"
-      ],
-      "studio": "Elsewhere Entertainment",
-      "discipline": "Art",
-      "workType": "Unknown",
-      "location": "Malmö, Sweden",
-      "region": "Europe",
-      "seniority": "Senior",
-      "salary": null,
-      "yoe": null,
-      "postedAt": "2026-10-22T00:00:00.000+0000",
-      "url": "https://xboxgaming.wd1.myworkdayjobs.com/en-US/External/job/Malm/Senior-Technical-Artist_R028305-1",
-      "parent": "Activision",
-      "_src": "Activision (HQ)",
-      "country": "SE",
-      "firstSeen": "2026-10-20T00:00:00.000Z",
-      "discoveredAt": "2026-10-20T17:26:00.755Z",
-      "daysListed": 25,
-      "relistCount": 0,
-      "relisted": false
-    },
-    {
       "id": "ph-activision-R027935",
       "title": "Stagiaire Programmation de Moteur - Beenox (Hiver 2027)",
       "tech": [],
@@ -30562,6 +30469,52 @@
       "daysListed": 25,
       "relistCount": 0,
       "relisted": false
+    },
+    {
+      "id": "ph-activision-R027967",
+      "title": "Animation Director - Sledgehammer Games",
+      "tech": [],
+      "studio": "Sledgehammer Games",
+      "discipline": "Animation",
+      "workType": "Unknown",
+      "location": "San Mateo, California, United States of America",
+      "region": "North America",
+      "seniority": "Director+",
+      "salary": "$137K–$253K",
+      "yoe": 12,
+      "postedAt": "2026-10-21T00:00:00.000+0000",
+      "url": "https://xboxgaming.wd1.myworkdayjobs.com/en-US/External/job/San-Mateo/Animation-Director---Sledgehammer-Games_R027967",
+      "parent": "Activision",
+      "_src": "Activision (HQ)",
+      "country": "US",
+      "firstSeen": "2026-08-14T00:00:00.000Z",
+      "discoveredAt": "2026-08-14T22:17:34.567Z",
+      "daysListed": 92,
+      "relistCount": 1,
+      "relisted": true
+    },
+    {
+      "id": "ph-activision-R027967",
+      "title": "Animation Director - Sledgehammer Games",
+      "tech": [],
+      "studio": "Sledgehammer Games",
+      "discipline": "Animation",
+      "workType": "Unknown",
+      "location": "San Mateo, California, United States of America",
+      "region": "North America",
+      "seniority": "Director+",
+      "salary": "$137K–$253K",
+      "yoe": 12,
+      "postedAt": "2026-10-21T00:00:00.000+0000",
+      "url": "https://xboxgaming.wd1.myworkdayjobs.com/en-US/External/job/San-Mateo/Animation-Director---Sledgehammer-Games_R027967",
+      "parent": "Activision",
+      "_src": "Activision (HQ)",
+      "country": "US",
+      "firstSeen": "2026-08-14T00:00:00.000Z",
+      "discoveredAt": "2026-08-14T22:17:34.567Z",
+      "daysListed": 92,
+      "relistCount": 1,
+      "relisted": true
     },
     {
       "id": "ph-wbgames-R000106740",
@@ -34949,7 +34902,7 @@
       "country": "IN",
       "firstSeen": "2026-10-16T07:20:11.893Z",
       "discoveredAt": "2026-10-16T07:30:35.633Z",
-      "daysListed": 28,
+      "daysListed": 29,
       "relistCount": 0,
       "relisted": false
     },
@@ -35161,6 +35114,54 @@
       "relisted": true
     },
     {
+      "id": "ph-wbgames-R000101923",
+      "title": "Senior Devops Engineer",
+      "tech": [
+        "Unreal"
+      ],
+      "studio": "Warner Bros. Games",
+      "discipline": "Engineering",
+      "workType": "Unknown",
+      "location": "London, City of, United Kingdom",
+      "region": "Europe",
+      "seniority": "Senior",
+      "salary": null,
+      "yoe": null,
+      "postedAt": "2026-10-16T00:00:00.000+0000",
+      "url": "https://warnerbros.wd5.myworkdayjobs.com/en-US/global/job/London-Rocksteady-Studios-Limited/Engine-Programmer_R000101923",
+      "parent": "Warner Bros. Games",
+      "_src": "Warner Bros. Games",
+      "country": "GB",
+      "firstSeen": "2026-05-26T00:00:00.000Z",
+      "discoveredAt": "2026-07-07T01:46:04.158Z",
+      "daysListed": 172,
+      "relistCount": 1,
+      "relisted": true
+    },
+    {
+      "id": "ph-wbgames-R000104758",
+      "title": "Animateur.trice avancé.e / Advanced Animator",
+      "tech": [],
+      "studio": "Warner Bros. Games",
+      "discipline": "Animation",
+      "workType": "Unknown",
+      "location": "Montreal, Quebec, Canada",
+      "region": "North America",
+      "seniority": "Mid",
+      "salary": null,
+      "yoe": null,
+      "postedAt": "2026-10-16T00:00:00.000+0000",
+      "url": "https://warnerbros.wd5.myworkdayjobs.com/en-US/global/job/Montreal-888-boul-De-Maisonneuve-Est/Animateurtrice-avance---Advanced-Animator_R000104758-1",
+      "parent": "Warner Bros. Games",
+      "_src": "Warner Bros. Games",
+      "country": "CA",
+      "firstSeen": "2026-05-26T00:00:00.000Z",
+      "discoveredAt": "2026-07-07T01:46:04.158Z",
+      "daysListed": 172,
+      "relistCount": 1,
+      "relisted": true
+    },
+    {
       "id": "ph-wbgames-R000108926",
       "title": "Senior UI Programmer",
       "tech": [],
@@ -35230,29 +35231,6 @@
       "relisted": true
     },
     {
-      "id": "ph-wbgames-R000109226",
-      "title": "Concepteur.trice technique avancé.e / Advanced Technical Designer",
-      "tech": [],
-      "studio": "Warner Bros. Games",
-      "discipline": "Design",
-      "workType": "Unknown",
-      "location": "Montreal, Quebec, Canada",
-      "region": "North America",
-      "seniority": "Mid",
-      "salary": null,
-      "yoe": null,
-      "postedAt": "2026-10-16T00:00:00.000+0000",
-      "url": "https://warnerbros.wd5.myworkdayjobs.com/en-US/global/job/Montreal-888-boul-De-Maisonneuve-Est/Concepteurtrice-technique-avance---Advanced-Technical-Designer_R000109226-2",
-      "parent": "Warner Bros. Games",
-      "_src": "Warner Bros. Games",
-      "country": "CA",
-      "firstSeen": "2026-10-02T00:00:00.000Z",
-      "discoveredAt": "2026-10-02T19:25:30.491Z",
-      "daysListed": 43,
-      "relistCount": 0,
-      "relisted": false
-    },
-    {
       "id": "ph-wbgames-R000109227",
       "title": "Programmeur.euse avancé.e, jouabilité / Advanced Gameplay Programmer",
       "tech": [],
@@ -35271,6 +35249,29 @@
       "country": "CA",
       "firstSeen": "2026-10-02T00:00:00.000Z",
       "discoveredAt": "2026-10-02T20:27:10.495Z",
+      "daysListed": 43,
+      "relistCount": 0,
+      "relisted": false
+    },
+    {
+      "id": "ph-wbgames-R000109226",
+      "title": "Concepteur.trice technique avancé.e / Advanced Technical Designer",
+      "tech": [],
+      "studio": "Warner Bros. Games",
+      "discipline": "Design",
+      "workType": "Unknown",
+      "location": "Montreal, Quebec, Canada",
+      "region": "North America",
+      "seniority": "Mid",
+      "salary": null,
+      "yoe": null,
+      "postedAt": "2026-10-16T00:00:00.000+0000",
+      "url": "https://warnerbros.wd5.myworkdayjobs.com/en-US/global/job/Montreal-888-boul-De-Maisonneuve-Est/Concepteurtrice-technique-avance---Advanced-Technical-Designer_R000109226-2",
+      "parent": "Warner Bros. Games",
+      "_src": "Warner Bros. Games",
+      "country": "CA",
+      "firstSeen": "2026-10-02T00:00:00.000Z",
+      "discoveredAt": "2026-10-02T19:25:30.491Z",
       "daysListed": 43,
       "relistCount": 0,
       "relisted": false
@@ -35519,7 +35520,8 @@
       "discoveredAt": "2026-10-15T22:51:19.624Z",
       "daysListed": 29,
       "relistCount": 0,
-      "relisted": false
+      "relisted": false,
+      "_carry": 1
     },
     {
       "id": "mscareers-1970393557041533",
@@ -35549,7 +35551,8 @@
       "discoveredAt": "2026-10-15T22:51:19.624Z",
       "daysListed": 29,
       "relistCount": 0,
-      "relisted": false
+      "relisted": false,
+      "_carry": 1
     },
     {
       "id": "gh-sonyinteractiveentertainmentglobal-6223950004",
@@ -36554,7 +36557,7 @@
       "daysListed": 177,
       "relistCount": 2,
       "relisted": true,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-sega-JR100220",
@@ -36577,7 +36580,7 @@
       "daysListed": 30,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-sega-JR100219",
@@ -36600,7 +36603,7 @@
       "daysListed": 30,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "gh-riotgames-8274642",
@@ -37782,7 +37785,7 @@
       "daysListed": 144,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-sega-JR100167",
@@ -37806,7 +37809,7 @@
       "daysListed": 108,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-sega-JR100048",
@@ -37830,7 +37833,7 @@
       "daysListed": 190,
       "relistCount": 1,
       "relisted": true,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-sega-JR100193",
@@ -37851,10 +37854,10 @@
       "country": "GB",
       "firstSeen": "2026-09-02T07:22:51.545Z",
       "discoveredAt": "2026-09-02T07:25:40.946Z",
-      "daysListed": 72,
+      "daysListed": 73,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-sega-JR100103",
@@ -37878,7 +37881,7 @@
       "daysListed": 98,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "wd-sega-JR100207",
@@ -37902,7 +37905,7 @@
       "daysListed": 49,
       "relistCount": 0,
       "relisted": false,
-      "_carry": 1
+      "_carry": 2
     },
     {
       "id": "gh-riotgames-8240678",
@@ -38053,29 +38056,6 @@
       "country": "MX",
       "firstSeen": "2026-10-14T00:28:28.000Z",
       "discoveredAt": "2026-10-14T01:26:03.760Z",
-      "daysListed": 31,
-      "relistCount": 0,
-      "relisted": false
-    },
-    {
-      "id": "ph-blizzard-R028301",
-      "title": "Product Marketing Manager, Overwatch eSports (Contract) | Irvine, CA",
-      "tech": [],
-      "studio": "Blizzard Entertainment",
-      "discipline": "Marketing",
-      "workType": "Unknown",
-      "location": "Irvine, California, United States of America",
-      "region": "North America",
-      "seniority": "Mid",
-      "salary": "$82K–$152K",
-      "yoe": 7,
-      "postedAt": "2026-10-14T00:00:00.000+0000",
-      "url": "https://xboxgaming.wd1.myworkdayjobs.com/en-US/Blizzard_External_Careers/job/Irvine---Blizzard---Blizzard-Way/Product-Marketing-Manager--Overwatch-eSports--Contract----Irvine--CA_R028301",
-      "parent": "Blizzard Entertainment",
-      "_src": "Blizzard Entertainment",
-      "country": "US",
-      "firstSeen": "2026-10-14T00:00:00.000Z",
-      "discoveredAt": "2026-10-15T07:24:50.554Z",
       "daysListed": 31,
       "relistCount": 0,
       "relisted": false
@@ -46731,29 +46711,6 @@
       "relisted": false
     },
     {
-      "id": "ph-blizzard-R028242",
-      "title": "Voice Over Designer | STARCRAFT | Irvine, CA",
-      "tech": [],
-      "studio": "Blizzard Entertainment",
-      "discipline": "Audio",
-      "workType": "Unknown",
-      "location": "Irvine, California, United States of America",
-      "region": "North America",
-      "seniority": "Mid",
-      "salary": null,
-      "yoe": null,
-      "postedAt": "2026-10-01T00:00:00.000+0000",
-      "url": "https://xboxgaming.wd1.myworkdayjobs.com/en-US/Blizzard_External_Careers/job/Irvine---Blizzard---Blizzard-Way/Voice-Over-Designer---STARCRAFT---Irvine--CA_R028242",
-      "parent": "Blizzard Entertainment",
-      "_src": "Blizzard Entertainment",
-      "country": "US",
-      "firstSeen": "2026-10-01T00:00:00.000Z",
-      "discoveredAt": "2026-10-02T07:24:52.801Z",
-      "daysListed": 44,
-      "relistCount": 0,
-      "relisted": false
-    },
-    {
       "id": "ph-blizzard-R028259",
       "title": "Senior Director, International Communications",
       "tech": [],
@@ -46767,6 +46724,52 @@
       "yoe": 12,
       "postedAt": "2026-10-01T00:00:00.000+0000",
       "url": "https://xboxgaming.wd1.myworkdayjobs.com/en-US/Blizzard_External_Careers/job/Irvine---Blizzard---Blizzard-Way/Senior-Director--International-Communications_R028259",
+      "parent": "Blizzard Entertainment",
+      "_src": "Blizzard Entertainment",
+      "country": "US",
+      "firstSeen": "2026-10-01T00:00:00.000Z",
+      "discoveredAt": "2026-10-02T07:24:52.801Z",
+      "daysListed": 44,
+      "relistCount": 0,
+      "relisted": false
+    },
+    {
+      "id": "ph-blizzard-R028230",
+      "title": "Senior Game Designer, Systems & Content (Contract) - World of Warcraft | Irvine, CA",
+      "tech": [],
+      "studio": "Blizzard Entertainment",
+      "discipline": "Design",
+      "workType": "Unknown",
+      "location": "Irvine, California, United States of America",
+      "region": "North America",
+      "seniority": "Senior",
+      "salary": "$82K–$152K",
+      "yoe": 5,
+      "postedAt": "2026-10-01T00:00:00.000+0000",
+      "url": "https://xboxgaming.wd1.myworkdayjobs.com/en-US/Blizzard_External_Careers/job/Irvine---Blizzard---Blizzard-Way/Senior-Game-Designer--Systems---Content--Contract----World-of-Warcraft---Irvine--CA_R028230",
+      "parent": "Blizzard Entertainment",
+      "_src": "Blizzard Entertainment",
+      "country": "US",
+      "firstSeen": "2026-09-28T00:00:00.000Z",
+      "discoveredAt": "2026-09-29T07:24:44.177Z",
+      "daysListed": 47,
+      "relistCount": 0,
+      "relisted": false
+    },
+    {
+      "id": "ph-blizzard-R028242",
+      "title": "Voice Over Designer | STARCRAFT | Irvine, CA",
+      "tech": [],
+      "studio": "Blizzard Entertainment",
+      "discipline": "Audio",
+      "workType": "Unknown",
+      "location": "Irvine, California, United States of America",
+      "region": "North America",
+      "seniority": "Mid",
+      "salary": null,
+      "yoe": null,
+      "postedAt": "2026-10-01T00:00:00.000+0000",
+      "url": "https://xboxgaming.wd1.myworkdayjobs.com/en-US/Blizzard_External_Careers/job/Irvine---Blizzard---Blizzard-Way/Voice-Over-Designer---STARCRAFT---Irvine--CA_R028242",
       "parent": "Blizzard Entertainment",
       "_src": "Blizzard Entertainment",
       "country": "US",
@@ -48532,29 +48535,6 @@
       "daysListed": 63,
       "relistCount": 0,
       "relisted": false
-    },
-    {
-      "id": "ph-blizzard-R027873",
-      "title": "2026 Intern Conversions",
-      "tech": [],
-      "studio": "Blizzard Entertainment",
-      "discipline": "Other",
-      "workType": "Unknown",
-      "location": "Irvine, California, United States of America",
-      "region": "North America",
-      "seniority": "Entry",
-      "salary": null,
-      "yoe": null,
-      "postedAt": "2026-09-29T00:00:00.000+0000",
-      "url": "https://xboxgaming.wd1.myworkdayjobs.com/en-US/Blizzard_External_Careers/job/Irvine---Blizzard---Blizzard-Way/XMLNAME-2026-Intern-Conversions_R027873",
-      "parent": "Blizzard Entertainment",
-      "_src": "Blizzard Entertainment",
-      "country": "US",
-      "firstSeen": "2026-09-08T00:00:00.000Z",
-      "discoveredAt": "2026-09-09T07:06:19.273Z",
-      "daysListed": 67,
-      "relistCount": 1,
-      "relisted": true
     },
     {
       "id": "wk-rebellion-16E47C04EE",
@@ -54774,6 +54754,52 @@
       "relisted": false
     },
     {
+      "id": "ph-activision-R028080",
+      "title": "Senior Manager, Emergency Management & Resilience",
+      "tech": [],
+      "studio": "Activision (HQ)",
+      "discipline": "Other",
+      "workType": "Unknown",
+      "location": "Santa Monica, California, United States of America",
+      "region": "North America",
+      "seniority": "Senior",
+      "salary": "$107K–$199K",
+      "yoe": 13,
+      "postedAt": "2026-09-21T00:00:00.000+0000",
+      "url": "https://xboxgaming.wd1.myworkdayjobs.com/en-US/External/job/Santa-Monica/Senior-Manager--Emergency-Management---Resilience_R028080",
+      "parent": "Activision",
+      "_src": "Activision (HQ)",
+      "country": "US",
+      "firstSeen": "2026-09-01T00:00:00.000Z",
+      "discoveredAt": "2026-09-01T21:24:21.953Z",
+      "daysListed": 74,
+      "relistCount": 1,
+      "relisted": true
+    },
+    {
+      "id": "ph-activision-R028080",
+      "title": "Senior Manager, Emergency Management & Resilience",
+      "tech": [],
+      "studio": "Activision (HQ)",
+      "discipline": "Other",
+      "workType": "Unknown",
+      "location": "Santa Monica, California, United States of America",
+      "region": "North America",
+      "seniority": "Senior",
+      "salary": "$107K–$199K",
+      "yoe": 13,
+      "postedAt": "2026-09-21T00:00:00.000+0000",
+      "url": "https://xboxgaming.wd1.myworkdayjobs.com/en-US/External/job/Santa-Monica/Senior-Manager--Emergency-Management---Resilience_R028080",
+      "parent": "Activision",
+      "_src": "Activision (HQ)",
+      "country": "US",
+      "firstSeen": "2026-09-01T00:00:00.000Z",
+      "discoveredAt": "2026-09-01T21:24:21.953Z",
+      "daysListed": 74,
+      "relistCount": 1,
+      "relisted": true
+    },
+    {
       "id": "wk-rebellion-04AC8EE295",
       "title": "Technical UI Designer",
       "studio": "Rebellion",
@@ -55770,6 +55796,29 @@
       "firstSeen": "2026-09-08T00:00:00.000Z",
       "discoveredAt": "2026-09-09T07:06:19.273Z",
       "daysListed": 67,
+      "relistCount": 0,
+      "relisted": false
+    },
+    {
+      "id": "ph-blizzard-R028139",
+      "title": "Mission Designer - STARCRAFT | Irvine, CA",
+      "tech": [],
+      "studio": "Blizzard Entertainment",
+      "discipline": "Design",
+      "workType": "Unknown",
+      "location": "Irvine, California, United States of America",
+      "region": "North America",
+      "seniority": "Mid",
+      "salary": null,
+      "yoe": null,
+      "postedAt": "2026-09-17T00:00:00.000+0000",
+      "url": "https://xboxgaming.wd1.myworkdayjobs.com/en-US/Blizzard_External_Careers/job/Irvine---Blizzard---Blizzard-Way/Mission-Designer---STARCRAFT---Irvine--CA_R028139",
+      "parent": "Blizzard Entertainment",
+      "_src": "Blizzard Entertainment",
+      "country": "US",
+      "firstSeen": "2026-09-17T00:00:00.000Z",
+      "discoveredAt": "2026-09-18T07:24:11.481Z",
+      "daysListed": 58,
       "relistCount": 0,
       "relisted": false
     },
@@ -57629,7 +57678,7 @@
       "country": "SG",
       "firstSeen": "2026-09-15T07:23:04.000Z",
       "discoveredAt": "2026-09-15T07:58:33.534Z",
-      "daysListed": 59,
+      "daysListed": 60,
       "relistCount": 0,
       "relisted": false
     },
@@ -57656,7 +57705,7 @@
       "country": "IN",
       "firstSeen": "2026-09-15T07:20:21.000Z",
       "discoveredAt": "2026-09-15T07:24:32.168Z",
-      "daysListed": 59,
+      "daysListed": 60,
       "relistCount": 0,
       "relisted": false
     },
@@ -60613,6 +60662,29 @@
       "relisted": false
     },
     {
+      "id": "ph-activision-R028095",
+      "title": "Systems Designer - Raven - Middleton, WI",
+      "tech": [],
+      "studio": "Activision (HQ)",
+      "discipline": "Design",
+      "workType": "Unknown",
+      "location": "Middleton, Wisconsin, United States of America",
+      "region": "North America",
+      "seniority": "Mid",
+      "salary": null,
+      "yoe": null,
+      "postedAt": "2026-09-09T00:00:00.000+0000",
+      "url": "https://xboxgaming.wd1.myworkdayjobs.com/en-US/External/job/Middleton/Systems-Designer---Raven---Middleton--WI_R028095-1",
+      "parent": "Activision",
+      "_src": "Activision (HQ)",
+      "country": "US",
+      "firstSeen": "2026-09-09T00:00:00.000Z",
+      "discoveredAt": "2026-09-09T17:04:08.514Z",
+      "daysListed": 66,
+      "relistCount": 0,
+      "relisted": false
+    },
+    {
       "id": "ph-activision-R028075",
       "title": "Activision 2027 Summer Internships - Tech Art",
       "tech": [
@@ -60633,52 +60705,6 @@
       "country": "US",
       "firstSeen": "2026-09-09T00:00:00.000Z",
       "discoveredAt": "2026-09-10T01:25:41.705Z",
-      "daysListed": 66,
-      "relistCount": 0,
-      "relisted": false
-    },
-    {
-      "id": "ph-activision-R028087",
-      "title": "Senior Level Designer - Raven - Middleton, WI",
-      "tech": [],
-      "studio": "Activision (HQ)",
-      "discipline": "Design",
-      "workType": "Unknown",
-      "location": "Middleton, Wisconsin, United States of America",
-      "region": "North America",
-      "seniority": "Senior",
-      "salary": "$82K–$152K",
-      "yoe": 5,
-      "postedAt": "2026-09-09T00:00:00.000+0000",
-      "url": "https://xboxgaming.wd1.myworkdayjobs.com/en-US/External/job/Middleton/Senior-Level-Designer---Raven---Middleton--WI_R028087",
-      "parent": "Activision",
-      "_src": "Activision (HQ)",
-      "country": "US",
-      "firstSeen": "2026-09-09T00:00:00.000Z",
-      "discoveredAt": "2026-09-09T17:04:08.514Z",
-      "daysListed": 66,
-      "relistCount": 0,
-      "relisted": false
-    },
-    {
-      "id": "ph-activision-R028095",
-      "title": "Systems Designer - Raven - Middleton, WI",
-      "tech": [],
-      "studio": "Activision (HQ)",
-      "discipline": "Design",
-      "workType": "Unknown",
-      "location": "Middleton, Wisconsin, United States of America",
-      "region": "North America",
-      "seniority": "Mid",
-      "salary": null,
-      "yoe": null,
-      "postedAt": "2026-09-09T00:00:00.000+0000",
-      "url": "https://xboxgaming.wd1.myworkdayjobs.com/en-US/External/job/Middleton/Systems-Designer---Raven---Middleton--WI_R028095-1",
-      "parent": "Activision",
-      "_src": "Activision (HQ)",
-      "country": "US",
-      "firstSeen": "2026-09-09T00:00:00.000Z",
-      "discoveredAt": "2026-09-09T17:04:08.514Z",
       "daysListed": 66,
       "relistCount": 0,
       "relisted": false
@@ -61428,7 +61454,7 @@
       "country": "IL",
       "firstSeen": "2026-09-07T07:21:29.424Z",
       "discoveredAt": "2026-09-07T08:26:02.996Z",
-      "daysListed": 67,
+      "daysListed": 68,
       "relistCount": 0,
       "relisted": false
     },
@@ -67237,7 +67263,7 @@
       "country": "SG",
       "firstSeen": "2026-08-21T07:17:21.000Z",
       "discoveredAt": "2026-08-21T07:38:55.783Z",
-      "daysListed": 84,
+      "daysListed": 85,
       "relistCount": 0,
       "relisted": false
     },
@@ -70979,6 +71005,29 @@
       "firstSeen": "2026-08-12T09:48:49.738Z",
       "discoveredAt": "2026-08-12T10:25:49.206Z",
       "daysListed": 93,
+      "relistCount": 0,
+      "relisted": false
+    },
+    {
+      "id": "ph-activision-R027959",
+      "title": "Senior Analyst, Strategy",
+      "tech": [],
+      "studio": "Activision (HQ)",
+      "discipline": "Other",
+      "workType": "Unknown",
+      "location": "Santa Monica, California, United States of America",
+      "region": "North America",
+      "seniority": "Senior",
+      "salary": "$95K–$175K",
+      "yoe": 2,
+      "postedAt": "2026-08-12T00:00:00.000+0000",
+      "url": "https://xboxgaming.wd1.myworkdayjobs.com/en-US/External/job/Santa-Monica/Senior-Analyst--Strategy_R027959",
+      "parent": "Activision",
+      "_src": "Activision (HQ)",
+      "country": "US",
+      "firstSeen": "2026-08-12T00:00:00.000Z",
+      "discoveredAt": "2026-08-13T01:24:58.748Z",
+      "daysListed": 94,
       "relistCount": 0,
       "relisted": false
     },
@@ -81255,27 +81304,27 @@
       "relisted": true
     },
     {
-      "id": "ph-activision-R027666",
-      "title": "Senior Lead Architect",
+      "id": "ph-activision-R026708",
+      "title": "Lead UX Designer",
       "tech": [],
       "studio": "Activision (HQ)",
-      "discipline": "Engineering",
+      "discipline": "Design",
       "workType": "Unknown",
       "location": "Santa Monica, California, United States of America",
       "region": "North America",
       "seniority": "Lead",
-      "salary": "$146K–$270K",
+      "salary": "$122K–$225K",
       "yoe": 10,
       "postedAt": "2026-06-23T00:00:00.000+0000",
-      "url": "https://xboxgaming.wd1.myworkdayjobs.com/en-US/External/job/Santa-Monica/Senior-Lead-Architect_R027666",
+      "url": "https://xboxgaming.wd1.myworkdayjobs.com/en-US/External/job/Santa-Monica/Lead-UX-Designer_R026708-2",
       "parent": "Activision",
       "_src": "Activision (HQ)",
       "country": "US",
-      "firstSeen": "2026-06-15T00:00:00.000Z",
+      "firstSeen": "2026-02-12T00:00:00.000Z",
       "discoveredAt": "2026-07-07T01:46:04.158Z",
-      "daysListed": 152,
-      "relistCount": 0,
-      "relisted": false
+      "daysListed": 275,
+      "relistCount": 1,
+      "relisted": true
     },
     {
       "id": "ph-activision-R027666",
@@ -85429,34 +85478,6 @@
       "relisted": false
     },
     {
-      "id": "gh-epicgames-6006487004",
-      "title": "Senior Game Designer",
-      "tech": [
-        "Unreal",
-        "VR",
-        "Live Ops",
-        "Accessibility"
-      ],
-      "studio": "Epic Games",
-      "discipline": "Design",
-      "workType": "Unknown",
-      "location": "Multiple Locations",
-      "region": "Other",
-      "seniority": "Senior",
-      "salary": "$145K–$212K",
-      "yoe": 5,
-      "postedAt": "2026-06-01T16:32:49-04:00",
-      "deadline": null,
-      "url": "https://epicgames.com/careers/jobs/6006487004?gh_jid=6006487004",
-      "parent": "Epic Games",
-      "_src": "Epic Games",
-      "firstSeen": "2026-06-01T20:32:49.000Z",
-      "discoveredAt": "2026-07-07T01:46:04.158Z",
-      "daysListed": 165,
-      "relistCount": 0,
-      "relisted": false
-    },
-    {
       "id": "gh-epicgames-6001593004",
       "title": "Senior Game Designer",
       "tech": [
@@ -85479,6 +85500,34 @@
       "parent": "Epic Games",
       "_src": "Epic Games",
       "country": "US",
+      "firstSeen": "2026-06-01T20:32:49.000Z",
+      "discoveredAt": "2026-07-07T01:46:04.158Z",
+      "daysListed": 165,
+      "relistCount": 0,
+      "relisted": false
+    },
+    {
+      "id": "gh-epicgames-6006487004",
+      "title": "Senior Game Designer",
+      "tech": [
+        "Unreal",
+        "VR",
+        "Live Ops",
+        "Accessibility"
+      ],
+      "studio": "Epic Games",
+      "discipline": "Design",
+      "workType": "Unknown",
+      "location": "Multiple Locations",
+      "region": "Other",
+      "seniority": "Senior",
+      "salary": "$145K–$212K",
+      "yoe": 5,
+      "postedAt": "2026-06-01T16:32:49-04:00",
+      "deadline": null,
+      "url": "https://epicgames.com/careers/jobs/6006487004?gh_jid=6006487004",
+      "parent": "Epic Games",
+      "_src": "Epic Games",
       "firstSeen": "2026-06-01T20:32:49.000Z",
       "discoveredAt": "2026-07-07T01:46:04.158Z",
       "daysListed": 165,
@@ -96830,7 +96879,7 @@
       "country": "KR",
       "firstSeen": "2025-12-10T07:19:44.000Z",
       "discoveredAt": "2026-07-07T01:46:04.158Z",
-      "daysListed": 338,
+      "daysListed": 339,
       "relistCount": 0,
       "relisted": false
     },
@@ -107203,7 +107252,7 @@
       "country": "CN",
       "firstSeen": "2026-08-25T07:19:20.892Z",
       "discoveredAt": "2026-08-25T07:19:20.892Z",
-      "daysListed": 80,
+      "daysListed": 81,
       "relistCount": 0,
       "relisted": false
     },
@@ -107226,7 +107275,7 @@
       "country": "CN",
       "firstSeen": "2026-08-25T07:19:20.892Z",
       "discoveredAt": "2026-08-25T07:19:20.892Z",
-      "daysListed": 80,
+      "daysListed": 81,
       "relistCount": 0,
       "relisted": false
     },
@@ -107736,7 +107785,7 @@
       "country": "KR",
       "firstSeen": "2026-06-19T07:21:09.204Z",
       "discoveredAt": "2026-07-07T01:46:04.158Z",
-      "daysListed": 147,
+      "daysListed": 148,
       "relistCount": 0,
       "relisted": false
     },
@@ -116072,7 +116121,7 @@
       "country": "KR",
       "firstSeen": "2026-08-19T07:16:01.807Z",
       "discoveredAt": "2026-08-19T07:16:01.807Z",
-      "daysListed": 86,
+      "daysListed": 87,
       "relistCount": 0,
       "relisted": false
     },
@@ -122771,7 +122820,7 @@
       "country": "JP",
       "firstSeen": "2026-08-18T07:14:56.817Z",
       "discoveredAt": "2026-08-18T07:14:56.817Z",
-      "daysListed": 87,
+      "daysListed": 88,
       "relistCount": 0,
       "relisted": false
     },
@@ -123323,7 +123372,7 @@
       "country": "JP",
       "firstSeen": "2026-07-09T07:22:27.363Z",
       "discoveredAt": "2026-07-09T07:22:27.363Z",
-      "daysListed": 127,
+      "daysListed": 128,
       "relistCount": 0,
       "relisted": false
     },
@@ -131324,7 +131373,7 @@
       "studio": "Coffee Stain Studios",
       "discipline": "Art",
       "workType": "Unknown",
-      "location": "Stockholm <h2 class=\" font-company-header text-block-title",
+      "location": "Stockholm <h2 class=\"mb-16 text-4xl",
       "region": "Europe",
       "seniority": "Mid",
       "salary": null,
@@ -149931,7 +149980,7 @@
         ]
       },
       "Warner Bros. Games": {
-        "now": 17,
+        "now": 19,
         "d7": 16,
         "d30": 19,
         "ever": 26,
@@ -149966,7 +150015,7 @@
           14,
           16,
           13,
-          17
+          19
         ]
       },
       "Studio Wildcard": {
@@ -162764,7 +162813,7 @@
     },
     "disc": {
       "Art": {
-        "now": 863,
+        "now": 862,
         "d7": 857,
         "d30": 872,
         "series": [
@@ -162797,11 +162846,11 @@
           856,
           866,
           875,
-          863
+          862
         ]
       },
       "Engineering": {
-        "now": 1681,
+        "now": 1678,
         "d7": 1778,
         "d30": 1838,
         "series": [
@@ -162834,11 +162883,11 @@
           1774,
           1772,
           1764,
-          1681
+          1678
         ]
       },
       "Marketing": {
-        "now": 421,
+        "now": 420,
         "d7": 436,
         "d30": 452,
         "series": [
@@ -162871,7 +162920,7 @@
           437,
           438,
           433,
-          421
+          420
         ]
       },
       "Production": {
@@ -162912,7 +162961,7 @@
         ]
       },
       "Design": {
-        "now": 640,
+        "now": 642,
         "d7": 652,
         "d30": 647,
         "series": [
@@ -162945,7 +162994,7 @@
           654,
           645,
           648,
-          640
+          642
         ]
       },
       "Data & Analytics": {
@@ -163023,7 +163072,7 @@
         ]
       },
       "Other": {
-        "now": 766,
+        "now": 768,
         "d7": 813,
         "d30": 815,
         "series": [
@@ -163056,7 +163105,7 @@
           797,
           799,
           807,
-          766
+          768
         ]
       },
       "Audio": {
@@ -163134,7 +163183,7 @@
         ]
       },
       "Animation": {
-        "now": 166,
+        "now": 169,
         "d7": 172,
         "d30": 183,
         "series": [
@@ -163167,7 +163216,7 @@
           169,
           165,
           164,
-          166
+          169
         ]
       },
       "Player Support": {
@@ -163284,7 +163333,7 @@
     },
     "salary": {
       "now": 21,
-      "nowN": 1249,
+      "nowN": 1251,
       "d7": 22,
       "d7N": 1332,
       "d30": 21,
@@ -163323,7 +163372,7 @@
     },
     "skills": {
       "Unreal": {
-        "now": 502,
+        "now": 503,
         "d7": 471,
         "d30": 496
       },
@@ -163373,7 +163422,7 @@
         "d30": 119
       },
       "C++": {
-        "now": 450,
+        "now": 449,
         "d7": 453,
         "d30": 447
       },
@@ -163448,7 +163497,7 @@
         "d30": 119
       },
       "Technical Art": {
-        "now": 158,
+        "now": 156,
         "d7": 157,
         "d30": 168
       },
