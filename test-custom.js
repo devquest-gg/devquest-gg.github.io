@@ -198,5 +198,40 @@ t('wp.noScript', /dataLayer/.test(gn[0].desc), false);
 t('wp.noTags', /[<>]/.test(gn[0].desc), false);
 t('wp.nonArray', M.parseWpJobs({code:'rest_no_route'}, GN), []);
 
+// ---------- Black Banner Studios (Legacy of Valor): shape copied from hr.legacyofvalorgame.com/api/positions (2026-11-20) ----------
+const LOV_LOC = 'České Budějovice, Czech Republic · Hybrid · Remote';
+const lovPos = (id, title, department, extra = {}) => ({ visible: true, id, title, department, location: LOV_LOC, employment: 'Full-time', posted: 'November 2026', summary: '',
+  aboutStudio: ['Black Banner Studios is an independent game development studio based in the Czech Republic.'],
+  about: ['Legacy of Valor is an ambitious medieval RPG and strategy game in Unreal Engine 5.'],
+  responsibilities: ['Own major gameplay systems end to end.'],
+  requirements: ['At least two shipped games in which you took technical ownership of major gameplay systems from design through release.', 'Excellent C++ skills.'],
+  niceToHave: [], offer: ['Flexible working arrangements, including remote work worldwide.'],
+  details: ['Location: Remote / International, with the option to work in the Czech Republic.', 'Compensation: Competitive, based on experience and expertise.'],
+  form: {}, questions: [], ...extra });
+const LOV = { positions: [
+  lovPos('lead-principal-gameplay-programmer', 'Lead / Principal Gameplay Programmer', 'Engineering'),
+  lovPos('senior-lead-character-artist', 'Senior / Lead Character Artist', 'Art'),
+  lovPos('senior-combat-designer', 'Senior Combat Designer', 'Design'),
+  lovPos('senior-lead-project-manager-art-production-focus', 'Senior / Lead Project Manager - Art Production Focus', 'Production'),
+  lovPos('senior-technical-animator', 'Senior / Lead Technical Animator', 'Animation'),
+  lovPos('draft-role', 'Draft Role', 'Art', { visible: false }),
+  lovPos('senior-combat-designer', 'Senior Combat Designer', 'Design'),   // dup id
+], general: { open: {}, form: {} } };
+const LV_STUDIO = { name: 'Black Banner Studios', type: 'lov', city: 'České Budějovice, Czechia' };
+const lv = M.parseLov(LOV, LV_STUDIO);
+t('lov.count', lv.length, 5);                                          // draft skipped, dup deduped
+t('lov.id', lv[0].id, 'lov-lead-principal-gameplay-programmer');
+t('lov.url', lv[0].url, 'https://legacyofvalorgame.com/careers/#lead-principal-gameplay-programmer');
+t('lov.location', lv[0].location, 'České Budějovice, Czech Republic'); // modes split off the place
+t('lov.region', lv[0].region, 'Europe');
+t('lov.worktype', lv[0].workType, 'Remote');                           // Remote wins over Hybrid
+t('lov.disc', lv.map(j => j.discipline), ['Engineering', 'Art', 'Design', 'Production', 'Animation']);
+t('lov.noDate', lv[0].postedAt, null);                                 // month-only "posted" is not a date
+t('lov.noBoilerplate', /independent game development studio/.test(lv[0].desc), false);
+t('lov.hasReqs', /Excellent C\+\+ skills/.test(lv[0].desc), true);
+t('lov.mode.hybrid', M.lovLocation('Prague, Czechia · Hybrid', 'x'), { place: 'Prague, Czechia', mode: 'Hybrid' });
+t('lov.mode.none', M.lovLocation('', 'Fallback City'), { place: 'Fallback City', mode: null });
+t('lov.nonArray', M.parseLov({ error: 'x' }, LV_STUDIO), []);
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exit(fail?1:0);

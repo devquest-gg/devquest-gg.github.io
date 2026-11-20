@@ -801,6 +801,10 @@ const STUDIOS = [
   // Studio-requested adds 2026-10-08 (user request, alongside Cyborn which was already live)
   { name: "Cross Key Games", type: "workable", token: "cross-key-games" },                                     // UK, remote-first — plain Workable account; 2 Technical Designer roles at add time, both flagged remote
   { name: "Goodname", type: "wpjobs", wpBase: "https://goodname.lt", wpType: "job", city: "Vilnius, Lithuania" }, // Goodname Digital Art Studio — game concept art/illustration services. WordPress with a public `job` post type at /wp-json/wp/v2/job: real posted dates + per-job URLs. 1 role at add time (Senior Concept Artist, on-site)
+  { name: "Gardens Interactive", type: "ashby", token: "gardens" },                                           // New distributed studio, unannounced shared-world 3D fantasy adventure. gardens.dev/careers is a Nuxt + Storyblok skin over Ashby (job links carry ?ashby_jid=). ⚠ WebFetch served a cached EMPTY board for this token on 2026-10-09; the live API returned 1 role with pay. Verify Ashby boards from the browser, not WebFetch.
+
+  // Studio-requested add 2026-11-20
+  { name: "Black Banner Studios", type: "lov", token: "blackbanner", feedUrl: "https://hr.legacyofvalorgame.com/api/positions", city: "České Budějovice, Czechia" }, // Legacy of Valor (UE5 medieval RPG/strategy). legacyofvalorgame.com/careers/ is a Next.js skin that loads a self-hosted JSON feed client-side; per-role links are /careers/#<id>. 15 senior/lead roles at add time (Art-heavy), all Hybrid/Remote, month-only posted dates.
 
   // Greenhouse
   { name: "Ravenwake Games", type: "greenhouse", token: "ravenwakegames", city: "Vancouver, BC" },                      // ~5 roles
@@ -5655,6 +5659,62 @@ async function fetchCyborn(studio) {
   return out;
 }
 
+// ---- Black Banner Studios (Legacy of Valor) — self-hosted JSON feed, no ATS ----------------------
+// Added 2026-11-20 on request. legacyofvalorgame.com/careers/ is a Next.js page that renders
+// "Loading open positions…" and then fills the list client-side from the studio's own HR app:
+//   GET https://hr.legacyofvalorgame.com/api/positions  ->  { positions: [...], general: {...} }
+// (base URL is NEXT_PUBLIC_HR_URL in their studio chunk). Plain JSON, no auth, no CORS needed
+// server-side. Each position: { visible, id, title, department, location, employment, posted,
+// about[], responsibilities[], requirements[], niceToHave[], details[], offer[], aboutStudio[] }.
+// The arrays are plain-text strings (no HTML, no entities as of add time).
+//   * location packs the work modes onto the end: "České Budějovice, Czech Republic · Hybrid · Remote".
+//     The modes are split off so the location string is a real place for inferRegion/hub chips.
+//     When "Remote" is one of the modes the row is Remote: their details say remote worldwide
+//     (contractor/B2B) is open, which is what a non-Czech candidate filtering on Remote needs to see.
+//   * posted is month-only ("November 2026"), so postedAt stays null and firstSeen applies —
+//     pinning it to the 1st would backdate fresh roles by up to a month on the card.
+//   * Per-role deep link is the hash route /careers/#<id> (verified: it opens the role detail view).
+//   * visible:false rows are their drafts; skipped.
+// The descriptions are long and structured, so desc is built from the role-specific arrays only
+// (about/responsibilities/requirements/niceToHave/details) — aboutStudio and offer are the same
+// boilerplate on every role and would drown the excerpt shard and extractTech.
+const LOV_MODES = /^(hybrid|remote|on-?site|onsite|in[- ]office)$/i;
+function lovLocation(raw, fallback) {
+  const parts = String(raw || "").split(/\s*[·•|]\s*/).map(s => s.trim()).filter(Boolean);
+  const modes = parts.filter(p => LOV_MODES.test(p)).map(p => p.toLowerCase());
+  const place = parts.filter(p => !LOV_MODES.test(p)).join(", ") || fallback || "Unlisted";
+  const mode = modes.includes("remote") ? "Remote" : modes.includes("hybrid") ? "Hybrid"
+             : modes.some(m => /site|office/.test(m)) ? "Onsite" : null;
+  return { place, mode };
+}
+function parseLov(data, studio) {
+  const out = [], seen = new Set();
+  for (const p of (data && Array.isArray(data.positions) ? data.positions : [])) {
+    if (!p || p.visible === false || !p.id || !p.title) continue;
+    if (seen.has(p.id)) continue;
+    seen.add(p.id);
+    const title = String(p.title).replace(/\s+/g, " ").trim();
+    const arr = k => (Array.isArray(p[k]) ? p[k] : []).map(s => String(s)).join(" ");
+    const desc = stripHtml([p.summary || "", arr("about"), arr("responsibilities"), arr("requirements"), arr("niceToHave"), arr("details")].join(" ")).replace(/\s+/g, " ").trim();
+    const { place, mode } = lovLocation(p.location, studio.city);
+    out.push({
+      id: `lov-${p.id}`,
+      title, tech: extractTech(`${title} ${desc}`), desc, studio: studio.name,
+      discipline: mapDiscipline(p.department || null, title),
+      workType: mode || inferWorkType(title, place, [], desc.slice(0, 1200)),
+      location: place, region: inferRegion(place),
+      seniority: inferSeniority(title),
+      salary: extractSalary(desc), yoe: extractYoe(desc), postedAt: null,
+      url: `https://legacyofvalorgame.com/careers/#${encodeURIComponent(p.id)}`,
+    });
+  }
+  return out;
+}
+async function fetchLov(studio) {
+  const data = SAMPLE_FILE ? loadSample(studio) : await fetchJson(studio.feedUrl || "https://hr.legacyofvalorgame.com/api/positions");
+  return parseLov(data, studio);
+}
+
 // ---- Moka (mokahr.com) — Chinese ATS behind Yoka, Hero, Yostar, FirstFun, Seasun ----------------
 // Moka runs two public hosts and they behave DIFFERENTLY, which is the whole reason this fetcher
 // exists in the shape it does:
@@ -7032,7 +7092,7 @@ async function fetchWpJobs(studio) {
   return parseWpJobs(items, studio);
 }
 
-const FETCHERS = { greenhouse: fetchGreenhouse, lever: fetchLever, workday: fetchWorkday, avature: fetchAvature, smartrecruiters: fetchSmartRecruiters, workable: fetchWorkable, phenom: fetchPhenom, teamtailor: fetchTeamtailor, eightfold: fetchEightfold, amazonjobs: fetchAmazonJobs, ashby: fetchAshby, zenimax: fetchZenimax, bamboohr: fetchBambooHr, jobscore: fetchJobScore, jazzhr: fetchJazzHr, jobvite: fetchJobvite, recruitee: fetchRecruitee, personio: fetchPersonio, rippling: fetchRippling, breezy: fetchBreezy, manatal: fetchManatal, sumodigital: fetchSumoDigital, pinpoint: fetchPinpoint, playground: fetchPlayground, obsidian: fetchObsidian, techland: fetchTechland, oracle: fetchOracle, cig: fetchCig, critpath: fetchCritpath, krafton: fetchKrafton, eidos: fetchEidos, hiringthing: fetchHiringThing, segacareers: fetchSegaCareers, turn10: fetchTurn10, mscareers: fetchMicrosoftCareers, lightfox: fetchLightfox, hrworks: fetchHRworks, smilegate: fetchSmilegate, cygames: fetchCygames, hrmos: fetchHrmos, moka: fetchMoka, nordcurrent: fetchNordcurrent, welevel: fetchWelevel, bohemia: fetchBohemia, garena: fetchGarena, shiftup: fetchShiftUp, miniclip: fetchMiniclip, playrix: fetchPlayrix, superplay: fetchSuperPlay, atlus: fetchAtlus, kojima: fetchKojima, owlcat: fetchOwlcat, comeet: fetchComeet, huntflow: fetchHuntflow, keka: fetchKeka, traffit: fetchTraffit, nekki: fetchNekki, plarium: fetchPlarium, hellogames: fetchHelloGames, hibob: fetchHibob, flix: fetchFlix, fromsoftware: fetchFromSoftware, grindinggear: fetchGrindingGear, konami: fetchKonami, madhead: fetchMadHead, kenjo: fetchKenjo, trailmix: fetchTrailmix, cyborn: fetchCyborn, wpjobs: fetchWpJobs };
+const FETCHERS = { greenhouse: fetchGreenhouse, lever: fetchLever, workday: fetchWorkday, avature: fetchAvature, smartrecruiters: fetchSmartRecruiters, workable: fetchWorkable, phenom: fetchPhenom, teamtailor: fetchTeamtailor, eightfold: fetchEightfold, amazonjobs: fetchAmazonJobs, ashby: fetchAshby, zenimax: fetchZenimax, bamboohr: fetchBambooHr, jobscore: fetchJobScore, jazzhr: fetchJazzHr, jobvite: fetchJobvite, recruitee: fetchRecruitee, personio: fetchPersonio, rippling: fetchRippling, breezy: fetchBreezy, manatal: fetchManatal, sumodigital: fetchSumoDigital, pinpoint: fetchPinpoint, playground: fetchPlayground, obsidian: fetchObsidian, techland: fetchTechland, oracle: fetchOracle, cig: fetchCig, critpath: fetchCritpath, krafton: fetchKrafton, eidos: fetchEidos, hiringthing: fetchHiringThing, segacareers: fetchSegaCareers, turn10: fetchTurn10, mscareers: fetchMicrosoftCareers, lightfox: fetchLightfox, hrworks: fetchHRworks, smilegate: fetchSmilegate, cygames: fetchCygames, hrmos: fetchHrmos, moka: fetchMoka, nordcurrent: fetchNordcurrent, welevel: fetchWelevel, bohemia: fetchBohemia, garena: fetchGarena, shiftup: fetchShiftUp, miniclip: fetchMiniclip, playrix: fetchPlayrix, superplay: fetchSuperPlay, atlus: fetchAtlus, kojima: fetchKojima, owlcat: fetchOwlcat, comeet: fetchComeet, huntflow: fetchHuntflow, keka: fetchKeka, traffit: fetchTraffit, nekki: fetchNekki, plarium: fetchPlarium, hellogames: fetchHelloGames, hibob: fetchHibob, flix: fetchFlix, fromsoftware: fetchFromSoftware, grindinggear: fetchGrindingGear, konami: fetchKonami, madhead: fetchMadHead, kenjo: fetchKenjo, trailmix: fetchTrailmix, cyborn: fetchCyborn, wpjobs: fetchWpJobs, lov: fetchLov };
 
 // ---- Ghost-job tracking -----------------------------------------------------
 // Because we scrape on a schedule, we can see how long a listing has REALLY been
@@ -7383,7 +7443,7 @@ async function checkLinkHealth(all) {
 
 // Expose the classifier for the test fixture (test-classify.js). When this file is `require()`d
 // instead of run directly, skip the actual scrape and just export the pure functions.
-module.exports = { mapDiscipline, strongTitleDiscipline, inferSeniority, normDisc, inferRegion, decodeEnt, mokaDecrypt, mokaDiscipline, mokaSeniority, mokaLocation, parseWelevel, parseBohemia, parseCybornJob, cybornSlugs, cybornTitle, cybornDate, fetchCyborn, parseWpJobs };
+module.exports = { mapDiscipline, strongTitleDiscipline, inferSeniority, normDisc, inferRegion, decodeEnt, mokaDecrypt, mokaDiscipline, mokaSeniority, mokaLocation, parseWelevel, parseBohemia, parseCybornJob, cybornSlugs, cybornTitle, cybornDate, fetchCyborn, parseWpJobs, parseLov, lovLocation };
 (async () => {
   if (require.main !== module) return;   // required for tests → don't run the scrape
   const all = [];
